@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Research Orchestrator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class', // Enable dark mode based on class
+        theme: {
+          extend: {
+            colors: {
+              // Dark Mode Palette
+              'dark-bg': '#111827', // A deep, cool gray (gray-900)
+              'dark-surface': '#1F2937', // A slightly lighter gray for cards/modals (gray-800)
+              'dark-border': '#374151', // A subtle border color (gray-700)
+              'dark-text-primary': '#F3F4F6', // Off-white for primary text (gray-100)
+              'dark-text-secondary': '#9CA3AF', // A muted gray for secondary text (gray-400)
+              'brand-accent': '#38BDF8', // A vibrant, accessible blue (sky-400)
+              'brand-primary': '#0284C7', // A slightly darker blue for accents (sky-600)
+              'brand-secondary': '#0369A1', // A deeper blue (sky-700)
+              
+              // Light Mode Palette (for potential future use)
+              'light-bg': '#F9FAFB', // gray-50
+              'light-surface': '#FFFFFF',
+              'light-border': '#E5E7EB', // gray-200
+              'light-text-primary': '#111827', // gray-900
+              'light-text-secondary': '#6B7280', // gray-500
+            },
+            keyframes: {
+              fadeIn: {
+                '0%': { opacity: '0', transform: 'translateY(10px)' },
+                '100%': { opacity: '1', transform: 'translateY(0)' },
+              },
+            },
+            animation: {
+              fadeIn: 'fadeIn 0.5s ease-out forwards',
+            },
+          }
+        }
+      }
+    </script>
+  <script type="importmap">
+{
+  "imports": {
+    "@google/genai": "https://esm.sh/@google/genai@^1.14.0",
+    "react/": "https://esm.sh/react@^19.1.1/",
+    "react": "https://esm.sh/react@^19.1.1",
+    "react-dom/": "https://esm.sh/react-dom@^19.1.1/",
+    "jspdf": "https://esm.sh/jspdf@^2.5.1"
+  }
+}
+</script>
+</head>
+  <body class="bg-gradient-to-br from-dark-bg to-gray-900 text-dark-text-primary antialiased">
+    <div id="root"></div>
+  </body>
+</html>
