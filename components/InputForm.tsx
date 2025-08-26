@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import type { ResearchInput } from '../types';
 import { SearchIcon } from './icons/SearchIcon';
 
 interface InputFormProps {
   onSubmit: (data: ResearchInput) => void;
   isLoading: boolean;
+  defaultMaxArticlesToScan: number;
+  defaultTopNToSynthesize: number;
 }
 
 const ARTICLE_TYPES = [
@@ -14,15 +16,41 @@ const ARTICLE_TYPES = [
   'Observational Study'
 ];
 
-export const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading }) => {
+export const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading, defaultMaxArticlesToScan, defaultTopNToSynthesize }) => {
   const [formData, setFormData] = useState<ResearchInput>({
     researchTopic: 'The effect of intermittent fasting on cognitive function in adults',
     dateRange: '5',
     articleTypes: ['Randomized Controlled Trial', 'Systematic Review'],
     synthesisFocus: 'overview',
-    maxArticlesToScan: 50,
-    topNToSynthesize: 5,
+    maxArticlesToScan: defaultMaxArticlesToScan,
+    topNToSynthesize: defaultTopNToSynthesize,
   });
+
+  // Store previous defaults to avoid overwriting user's custom input
+  const prevDefaultsRef = useRef({ max: defaultMaxArticlesToScan, top: defaultTopNToSynthesize });
+
+  useEffect(() => {
+    // This effect syncs the form state with new defaults from settings,
+    // but only if the user hasn't changed the value from the previous default.
+    setFormData(prevData => {
+      const newMax = (prevData.maxArticlesToScan === prevDefaultsRef.current.max)
+          ? defaultMaxArticlesToScan
+          : prevData.maxArticlesToScan;
+      const newTop = (prevData.topNToSynthesize === prevDefaultsRef.current.top)
+          ? defaultTopNToSynthesize
+          : prevData.topNToSynthesize;
+
+      return {
+          ...prevData,
+          maxArticlesToScan: newMax,
+          topNToSynthesize: newTop,
+      };
+    });
+    
+    // Update the ref for the next comparison
+    prevDefaultsRef.current = { max: defaultMaxArticlesToScan, top: defaultTopNToSynthesize };
+  }, [defaultMaxArticlesToScan, defaultTopNToSynthesize]);
+
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -50,31 +78,31 @@ export const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading }) => 
   };
 
   return (
-    <div className="bg-dark-surface rounded-lg border border-dark-border shadow-2xl shadow-black/20 p-6">
+    <div className="bg-surface rounded-lg border border-border shadow-2xl shadow-black/20 p-6">
       <h2 className="text-xl font-bold mb-4 text-brand-accent">Research Parameters</h2>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label htmlFor="researchTopic" className="block text-sm font-medium text-dark-text-secondary mb-1">Primary Research Topic or Question</label>
+          <label htmlFor="researchTopic" className="block text-sm font-medium text-text-secondary mb-1">Primary Research Topic or Question</label>
           <textarea
             id="researchTopic"
             name="researchTopic"
             rows={3}
             value={formData.researchTopic}
             onChange={handleChange}
-            className="block w-full bg-dark-bg border border-dark-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-brand-accent sm:text-sm placeholder-dark-text-secondary"
+            className="block w-full bg-background border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-brand-accent sm:text-sm placeholder-text-secondary"
             required
           />
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-                <label htmlFor="dateRange" className="block text-sm font-medium text-dark-text-secondary mb-1">Publication Date</label>
+                <label htmlFor="dateRange" className="block text-sm font-medium text-text-secondary mb-1">Publication Date</label>
                 <select 
                     id="dateRange"
                     name="dateRange"
                     value={formData.dateRange}
                     onChange={handleChange}
-                    className="block w-full bg-dark-bg border border-dark-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-brand-accent sm:text-sm"
+                    className="block w-full bg-background border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-brand-accent sm:text-sm"
                 >
                     <option value="any">Any Time</option>
                     <option value="1">Last Year</option>
@@ -83,13 +111,13 @@ export const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading }) => 
                 </select>
             </div>
             <div>
-                 <label htmlFor="synthesisFocus" className="block text-sm font-medium text-dark-text-secondary mb-1">Synthesis Focus</label>
+                 <label htmlFor="synthesisFocus" className="block text-sm font-medium text-text-secondary mb-1">Synthesis Focus</label>
                 <select 
                     id="synthesisFocus"
                     name="synthesisFocus"
                     value={formData.synthesisFocus}
                     onChange={handleChange}
-                    className="block w-full bg-dark-bg border border-dark-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-brand-accent sm:text-sm"
+                    className="block w-full bg-background border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-brand-accent sm:text-sm"
                 >
                     <option value="overview">Broad Overview</option>
                     <option value="clinical">Clinical Implications</option>
@@ -100,7 +128,7 @@ export const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading }) => 
         </div>
 
         <div>
-            <label className="block text-sm font-medium text-dark-text-secondary">Article Types</label>
+            <label className="block text-sm font-medium text-text-secondary">Article Types</label>
             <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-2">
                 {ARTICLE_TYPES.map(type => (
                     <div key={type} className="relative flex items-start">
@@ -111,11 +139,11 @@ export const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading }) => 
                                 type="checkbox"
                                 checked={formData.articleTypes.includes(type)}
                                 onChange={handleArticleTypeChange}
-                                className="h-4 w-4 rounded border-dark-border bg-dark-bg text-brand-accent focus:ring-brand-accent"
+                                className="h-4 w-4 rounded border-border bg-background text-brand-accent focus:ring-brand-accent"
                             />
                         </div>
                         <div className="ml-3 text-sm">
-                            <label htmlFor={type} className="font-medium text-dark-text-primary">{type}</label>
+                            <label htmlFor={type} className="font-medium text-text-primary">{type}</label>
                         </div>
                     </div>
                 ))}
@@ -124,7 +152,7 @@ export const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading }) => 
       
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label htmlFor="maxArticlesToScan" className="block text-sm font-medium text-dark-text-secondary mb-1">Max Articles to Scan</label>
+            <label htmlFor="maxArticlesToScan" className="block text-sm font-medium text-text-secondary mb-1">Max Articles to Scan</label>
             <input
               type="number"
               id="maxArticlesToScan"
@@ -133,12 +161,12 @@ export const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading }) => 
               onChange={handleChange}
               min="10"
               max="200"
-              className="block w-full bg-dark-bg border border-dark-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-brand-accent sm:text-sm"
+              className="block w-full bg-background border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-brand-accent sm:text-sm"
               required
             />
           </div>
           <div>
-            <label htmlFor="topNToSynthesize" className="block text-sm font-medium text-dark-text-secondary mb-1">Top Articles to Synthesize</label>
+            <label htmlFor="topNToSynthesize" className="block text-sm font-medium text-text-secondary mb-1">Top Articles to Synthesize</label>
             <input
               type="number"
               id="topNToSynthesize"
@@ -147,7 +175,7 @@ export const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading }) => 
               onChange={handleChange}
               min="1"
               max="20"
-              className="block w-full bg-dark-bg border border-dark-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-brand-accent sm:text-sm"
+              className="block w-full bg-background border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-brand-accent sm:text-sm"
               required
             />
           </div>
@@ -155,7 +183,7 @@ export const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading }) => 
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full inline-flex justify-center items-center py-2.5 px-4 border border-transparent shadow-sm text-sm font-semibold rounded-md text-dark-bg bg-brand-accent hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-surface focus:ring-brand-accent disabled:bg-dark-border disabled:text-dark-text-secondary disabled:cursor-not-allowed transition-colors"
+          className="w-full inline-flex justify-center items-center py-2.5 px-4 border border-transparent shadow-sm text-sm font-semibold rounded-md text-brand-text-on-accent bg-brand-accent hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface focus:ring-brand-accent disabled:bg-border disabled:text-text-secondary disabled:cursor-not-allowed transition-colors"
         >
           {isLoading ? (
             <>

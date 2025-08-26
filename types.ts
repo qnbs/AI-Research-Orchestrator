@@ -1,3 +1,4 @@
+
 export interface ResearchInput {
   researchTopic: string;
   dateRange: string;
@@ -24,6 +25,7 @@ export interface RankedArticle {
   relevanceExplanation: string;
   keywords: string[];
   isOpenAccess: boolean;
+  customTags?: string[]; // New: for user-added tags
 }
 
 export interface OverallKeyword {
@@ -39,6 +41,34 @@ export interface ResearchReport {
   overallKeywords: OverallKeyword[];
 }
 
+export interface KnowledgeBaseEntry {
+  input: ResearchInput;
+  report: ResearchReport;
+}
+
 export type AggregatedArticle = RankedArticle & {
     sourceReportTopic: string;
 };
+
+export interface Settings {
+  theme: 'dark' | 'light';
+  performance: {
+    enableAnimations: boolean;
+  };
+  notifications: {
+      position: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
+      duration: number; // in ms
+  };
+  ai: {
+    model: 'gemini-2.5-flash';
+    customPreamble: string;
+    temperature: number;
+    aiLanguage: 'English' | 'German' | 'French' | 'Spanish';
+    aiPersona: 'Neutral Scientist' | 'Concise Expert' | 'Detailed Analyst' | 'Creative Synthesizer';
+  };
+  defaults: {
+    maxArticlesToScan: number;
+    topNToSynthesize: number;
+    autoSaveReports: boolean;
+  };
+}

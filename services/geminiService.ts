@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import type { ResearchInput, ResearchReport } from '../types';
+import type { ResearchInput, ResearchReport, Settings } from '../types';
 
 if (!process.env.API_KEY) {
   throw new Error("API_KEY environment variable not set");
@@ -80,7 +80,7 @@ const responseSchema = {
   required: ["generatedQueries", "rankedArticles", "synthesis", "aiGeneratedInsights", "overallKeywords"]
 };
 
-const buildPrompt = (input: ResearchInput): string => {
+const buildPrompt = (input: ResearchInput, aiConfig: Settings['ai']): string => {
   const dateFilter = input.dateRange !== 'any' ? `published in the last ${input.dateRange} years` : 'published at any time';
   const articleTypesText = input.articleTypes.length > 0 ? `The following article types: ${input.articleTypes.join(', ')}.` : 'Any article type.';
   const synthesisFocusText: { [key: string]: string } = {
@@ -89,9 +89,23 @@ const buildPrompt = (input: ResearchInput): string => {
       'future': 'future research directions and unanswered questions.',
       'gaps': 'contradictions, debates, and gaps in the current literature.'
   };
+  
+  const preamble = aiConfig.customPreamble ? `**User-Defined Preamble:**\n${aiConfig.customPreamble}\n\n---\n\n` : '';
+
+  const personaInstructions: {[key: string]: string} = {
+    'Neutral Scientist': 'Adopt a neutral, objective, and strictly scientific tone.',
+    'Concise Expert': 'Be brief and to the point. Focus on delivering the most critical information without verbosity.',
+    'Detailed Analyst': 'Provide in-depth analysis. Explore nuances, methodologies, and potential implications thoroughly.',
+    'Creative Synthesizer': 'Identify and highlight novel connections, cross-disciplinary links, and innovative perspectives found in the literature.'
+  };
 
   return `
+    ${preamble}
     You are an AI Research Orchestrator, an expert system designed to manage a swarm of specialized agents to conduct comprehensive literature reviews using the PubMed database. Your primary objective is to collect, curate, and synthesize scientific research based on user-defined criteria, delivering a structured and actionable report in JSON format. Your process should prioritize open-access and freely available research where possible.
+
+    **Core Directives:**
+    1.  **Language:** All output, including explanations, synthesis, and insights, MUST be in **${aiConfig.aiLanguage}**.
+    2.  **Persona:** ${personaInstructions[aiConfig.aiPersona]}
 
     **Your Mission:**
     Execute a multi-agent workflow to produce a detailed literature review report for the given research objective. Adhere strictly to the specified JSON output schema.
@@ -128,17 +142,17 @@ const buildPrompt = (input: ResearchInput): string => {
   `;
 };
 
-export const generateResearchReport = async (input: ResearchInput): Promise<ResearchReport> => {
+export const generateResearchReport = async (input: ResearchInput, config: Settings['ai']): Promise<ResearchReport> => {
   try {
-    const prompt = buildPrompt(input);
+    const prompt = buildPrompt(input, config);
     
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: config.model,
       contents: prompt,
       config: {
         responseMimeType: 'application/json',
         responseSchema: responseSchema,
-        temperature: 0.2,
+        temperature: config.temperature,
       },
     });
 
