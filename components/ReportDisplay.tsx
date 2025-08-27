@@ -1,11 +1,12 @@
 
-import React, { useState } from 'react';
+import React, { useState, useId } from 'react';
 import type { ResearchReport, RankedArticle, ResearchInput } from '../types';
 import { ChevronDownIcon } from './icons/ChevronDownIcon';
 import { UnlockIcon } from './icons/UnlockIcon';
 import { SearchIcon } from './icons/SearchIcon';
 import { BookmarkSquareIcon } from './icons/BookmarkSquareIcon';
 import { CheckCircleIcon } from './icons/CheckCircleIcon';
+import { ClipboardIcon } from './icons/ClipboardIcon';
 
 interface ReportDisplayProps {
   report: ResearchReport;
@@ -16,174 +17,210 @@ interface ReportDisplayProps {
 
 const AccordionSection: React.FC<{ title: string; children: React.ReactNode; defaultOpen?: boolean }> = ({ title, children, defaultOpen = false }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
+  const id = useId();
+  const panelId = `accordion-panel-${id}`;
+  const buttonId = `accordion-button-${id}`;
 
   return (
     <div className="border-b border-border">
       <button
+        id={buttonId}
         onClick={() => setIsOpen(!isOpen)}
+        aria-expanded={isOpen}
+        aria-controls={panelId}
         className="w-full flex justify-between items-center p-4 text-left text-lg font-semibold text-brand-accent hover:bg-surface-hover focus:outline-none transition-colors"
       >
         <span>{title}</span>
-        <ChevronDownIcon className={`h-6 w-6 transform transition-transform text-text-secondary ${isOpen ? 'rotate-180' : ''}`} />
+        <ChevronDownIcon className={`h-6 w-6 transform transition-transform duration-300 text-text-secondary ${isOpen ? 'rotate-180' : ''}`} />
       </button>
-      {isOpen && (
+      <div
+        id={panelId}
+        role="region"
+        aria-labelledby={buttonId}
+        className={`overflow-hidden transition-[max-height,opacity] duration-500 ease-in-out ${isOpen ? 'max-h-[5000px] opacity-100' : 'max-h-0 opacity-0'}`}
+      >
         <div className="p-4 bg-background/50">
-          {children}
+            {children}
         </div>
-      )}
+      </div>
     </div>
   );
 };
 
-const ArticleCard: React.FC<{ article: RankedArticle, rank: number }> = ({ article, rank }) => {
+const ArticleCard: React.FC<{ article: RankedArticle, rank: number }> = React.memo(({ article, rank }) => {
+    const [isExpanded, setIsExpanded] = useState(false);
+    const [isCopied, setIsCopied] = useState(false);
+
     const scoreColor = article.relevanceScore > 75 ? 'text-green-400' : article.relevanceScore > 50 ? 'text-yellow-400' : 'text-red-400';
     const articleLink = article.pmcId 
       ? `https://www.ncbi.nlm.nih.gov/pmc/articles/${article.pmcId}/`
       : `https://pubmed.ncbi.nlm.nih.gov/${article.pmid}/`;
 
+    const SUMMARY_CHAR_LIMIT = 250;
+    const isLongSummary = article.summary.length > SUMMARY_CHAR_LIMIT;
+
+    const displayedSummary = isLongSummary && !isExpanded
+        ? `${article.summary.substring(0, SUMMARY_CHAR_LIMIT)}...`
+        : article.summary;
+
+    const copyToClipboard = () => {
+        const citation = `${article.authors}. (${article.pubYear}). ${article.title}. ${article.journal}. PMID: ${article.pmid}.`;
+        navigator.clipboard.writeText(citation).then(() => {
+            setIsCopied(true);
+            setTimeout(() => setIsCopied(false), 2000);
+        });
+    };
+
     return (
-        <div className="bg-surface rounded-md border border-border p-4 mb-4 transition-all duration-300 hover:border-brand-accent hover:shadow-lg hover:shadow-brand-accent/10">
+        <div className="bg-background rounded-lg border border-border p-4 transition-shadow hover:shadow-lg">
             <div className="flex justify-between items-start">
-                <div className="pr-4">
-                    <h4 className="text-md font-bold text-text-primary">
-                        <span className="text-text-secondary mr-2">#{rank}</span>
-                        <a href={articleLink} target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-brand-accent">{article.title}</a>
-                    </h4>
-                     {article.isOpenAccess && (
-                        <div className="flex items-center mt-1 text-xs text-green-400">
-                            <UnlockIcon className="h-4 w-4 mr-1.5"/>
-                            Open Access
-                        </div>
-                    )}
+                <div className="flex-1 pr-4">
+                    <a href={articleLink} target="_blank" rel="noopener noreferrer" className="text-base font-semibold text-text-primary hover:text-brand-accent transition-colors">
+                        <span className="text-text-secondary">{rank}. </span>{article.title}
+                    </a>
+                    <div className="mt-1 text-xs text-text-secondary">
+                        <span>{article.authors}</span> &mdash; <span className="italic">{article.journal} ({article.pubYear})</span>
+                    </div>
                 </div>
-                <div className={`text-xl font-bold whitespace-nowrap ${scoreColor}`}>{article.relevanceScore} <span className="text-sm font-normal text-text-secondary">/ 100</span></div>
+                <div className="text-right flex-shrink-0">
+                    <div className={`text-2xl font-bold ${scoreColor}`}>{article.relevanceScore}</div>
+                    <div className="text-xs text-text-secondary">Relevance</div>
+                </div>
             </div>
-            <p className="text-sm text-text-secondary mt-1">{article.authors}</p>
-            <p className="text-sm text-text-secondary italic">{article.journal} ({article.pubYear})</p>
-            <p className="mt-3 text-base text-text-primary/90 leading-relaxed">{article.summary}</p>
-            <p className="mt-3 text-sm text-yellow-300 bg-yellow-500/10 border border-yellow-500/20 rounded p-3"><strong className="font-semibold text-yellow-200">Relevance:</strong> {article.relevanceExplanation}</p>
-             <div className="mt-3 flex flex-wrap gap-2">
-                {article.keywords.map(kw => (
-                    <span key={kw} className="bg-sky-500/10 text-sky-300 text-xs font-medium px-2.5 py-0.5 rounded-full border border-sky-500/20">{kw}</span>
-                ))}
+            {article.isOpenAccess && (
+                <div className="mt-2 flex items-center text-sm text-green-400">
+                    <UnlockIcon className="h-4 w-4 mr-1.5" />
+                    <span>Open Access</span>
+                </div>
+            )}
+            <p className="mt-3 text-sm text-text-secondary/90 leading-relaxed">
+                <strong className="text-text-secondary">Summary: </strong>{displayedSummary}
+                {isLongSummary && (
+                    <button onClick={() => setIsExpanded(!isExpanded)} className="ml-2 text-brand-accent text-xs font-semibold hover:underline">
+                        {isExpanded ? 'Show Less' : 'Show More'}
+                    </button>
+                )}
+            </p>
+            <p className="mt-2 text-sm text-text-secondary"><strong className="text-text-secondary">Scoring rationale: </strong>{article.relevanceExplanation}</p>
+            <div className="mt-3 flex items-center justify-between">
+                <div className="flex flex-wrap gap-2">
+                    {article.keywords.map(kw => (
+                        <span key={kw} className="bg-sky-500/10 text-sky-300 text-xs font-medium px-2.5 py-0.5 rounded-full border border-sky-500/20">{kw}</span>
+                    ))}
+                </div>
+                <button
+                    onClick={copyToClipboard}
+                    className="flex items-center text-xs text-text-secondary hover:text-brand-accent transition-colors"
+                    title="Copy Citation"
+                >
+                    {isCopied ? (
+                        <>
+                            <CheckCircleIcon className="h-4 w-4 mr-1.5 text-green-400"/> Copied!
+                        </>
+                    ) : (
+                        <>
+                            <ClipboardIcon className="h-4 w-4 mr-1.5" /> Copy
+                        </>
+                    )}
+                </button>
             </div>
         </div>
     );
-};
+});
 
 
 export const ReportDisplay: React.FC<ReportDisplayProps> = ({ report, input, isSaved, onSave }) => {
-    if (report.rankedArticles.length === 0) {
-        return (
-            <div className="flex flex-col items-center justify-center h-full text-center p-8 animate-fadeIn">
-                <SearchIcon className="h-24 w-24 text-border mb-6" />
-                <h2 className="text-3xl font-bold text-text-primary mb-3">No Articles Found</h2>
-                <p className="max-w-md mx-auto text-lg text-text-secondary">
-                    The AI agents could not find any articles matching your specific criteria.
-                </p>
-                <p className="max-w-md mx-auto text-lg text-text-secondary mt-2">
-                    Consider broadening your search parameters, such as extending the date range or selecting fewer article type restrictions.
-                </p>
-            </div>
-        );
-    }
-    
-    const dateRangeText: { [key: string]: string } = {
-        'any': 'Any Time',
-        '1': 'Last Year',
-        '5': 'Last 5 Years',
-        '10': 'Last 10 Years',
-    };
-
-    const synthesisFocusText: { [key: string]: string } = {
-        'overview': 'Broad Overview',
-        'clinical': 'Clinical Implications',
-        'future': 'Future Research Directions',
-        'gaps': 'Contradictions & Gaps'
-    };
-
   return (
-    <div className="animate-fadeIn">
-      <div className="md:flex md:items-start md:justify-between mb-4">
-        <div>
-          <h2 className="text-3xl font-bold text-brand-accent">Literature Review Report</h2>
-          <p className="text-lg text-text-primary mt-2"><strong>Topic:</strong> <span className="font-normal">{input.researchTopic}</span></p>
+    <div className="animate-fadeIn h-full flex flex-col">
+        <div className="flex-shrink-0 border-b border-border pb-4 mb-4">
+            <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-bold text-text-primary">Research Report</h2>
+                {isSaved ? (
+                    <div className="flex items-center px-4 py-2 text-sm font-medium rounded-md text-green-300 bg-green-500/10 border border-green-500/20">
+                        <CheckCircleIcon className="h-5 w-5 mr-2" />
+                        Saved in Knowledge Base
+                    </div>
+                ) : (
+                    <button onClick={onSave} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-brand-text-on-accent bg-brand-accent hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface focus:ring-brand-accent">
+                        <BookmarkSquareIcon className="h-5 w-5 mr-2" />
+                        Save to Knowledge Base
+                    </button>
+                )}
+            </div>
+            <p className="mt-1 text-text-secondary">Topic: <span className="font-semibold text-text-primary">{input.researchTopic}</span></p>
         </div>
-        <div className="mt-4 md:mt-0 md:ml-6 flex-shrink-0">
-            {isSaved ? (
-                <div className="inline-flex items-center px-4 py-2 border border-green-500/20 text-sm font-medium rounded-md text-green-300 bg-green-500/10">
-                    <CheckCircleIcon className="h-5 w-5 mr-2"/>
-                    Saved in Knowledge Base
+
+        <div className="flex-grow overflow-y-auto pr-2 -mr-2">
+            <AccordionSection title="Executive Synthesis" defaultOpen>
+              <div className="prose prose-sm prose-invert max-w-none text-text-secondary/90 leading-relaxed" dangerouslySetInnerHTML={{ __html: report.synthesis.replace(/\n/g, '<br />') }} />
+            </AccordionSection>
+            <AccordionSection title="AI-Generated Insights">
+                <div className="space-y-4">
+                    {report.aiGeneratedInsights.map((insight, index) => (
+                        <div key={index} className="bg-background p-3 rounded-md border border-border">
+                            <p className="font-semibold text-brand-accent text-sm">{insight.question}</p>
+                            <p className="mt-1 text-sm text-text-primary/90 leading-relaxed">{insight.answer}</p>
+                            <div className="mt-3 pt-2 border-t border-border/50">
+                                <p className="text-xs text-text-secondary font-semibold mb-1">Supporting Evidence (PMIDs):</p>
+                                <div className="flex flex-wrap gap-x-3 gap-y-1 items-center">
+                                    {insight.supportingArticles.map(pmid => (
+                                        <a href={`https://pubmed.ncbi.nlm.nih.gov/${pmid}/`} target="_blank" rel="noopener noreferrer" key={pmid} className="text-xs text-text-secondary hover:text-brand-accent hover:underline">
+                                            {pmid}
+                                        </a>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    ))}
                 </div>
-            ) : (
-                 <button onClick={onSave} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-semibold rounded-md shadow-sm text-brand-text-on-accent bg-brand-accent hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface focus:ring-brand-accent">
-                    <BookmarkSquareIcon className="h-5 w-5 mr-2"/>
-                    Save to Knowledge Base
-                </button>
-            )}
-        </div>
-      </div>
-      
-      <div className="mb-6 border-y border-border py-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-2 text-sm text-text-secondary">
-            <p><strong>Date Range:</strong> <span className="font-normal text-text-primary">{dateRangeText[input.dateRange]}</span></p>
-            <p><strong>Article Types:</strong> <span className="font-normal text-text-primary">{input.articleTypes.join(', ') || 'Any'}</span></p>
-            <p><strong>Synthesis Focus:</strong> <span className="font-normal text-text-primary">{synthesisFocusText[input.synthesisFocus]}</span></p>
-        </div>
-      </div>
-      
-      <div className="mb-6">
-        <h3 className="text-lg font-semibold text-text-primary mb-3">Key Report Themes</h3>
-        <div className="flex flex-wrap gap-2">
-            {report.overallKeywords.map(kw => (
-                <span key={kw.keyword} className="bg-brand-primary/20 text-brand-accent text-sm font-medium px-3 py-1 rounded-full border border-brand-primary/30">
-                    {kw.keyword} <span className="text-xs opacity-70 ml-1">({kw.frequency})</span>
-                </span>
-            ))}
-        </div>
-      </div>
-
-
-      <AccordionSection title="Executive Synthesis" defaultOpen>
-        <div className="prose prose-invert max-w-none text-text-primary/90 leading-relaxed">
-            <p>{report.synthesis}</p>
-        </div>
-      </AccordionSection>
-
-      <AccordionSection title="AI-Generated Insights" defaultOpen>
-        <div className="space-y-4">
-            {report.aiGeneratedInsights.map((qa, index) => (
-                <div key={index} className="bg-surface p-4 rounded-md border border-border">
-                    <p className="font-semibold text-brand-accent">{qa.question}</p>
-                    <p className="mt-2 text-text-primary/90 leading-relaxed">{qa.answer}</p>
-                    <p className="mt-3 text-xs text-text-secondary">
-                        Supporting Evidence: {qa.supportingArticles.map(pmid => (
-                            <a href={`https://pubmed.ncbi.nlm.nih.gov/${pmid}/`} target="_blank" rel="noopener noreferrer" key={pmid} className="text-brand-accent hover:underline mr-2">PMID:{pmid}</a>
-                        ))}
-                    </p>
+            </AccordionSection>
+            <AccordionSection title="Overall Keywords & Themes">
+                <div className="space-y-3 p-2">
+                    {report.overallKeywords && report.overallKeywords.length > 0 ? (
+                        report.overallKeywords
+                            .sort((a, b) => b.frequency - a.frequency)
+                            .map((kw, index) => (
+                                <div key={kw.keyword} className="grid grid-cols-4 items-center gap-4 text-sm animate-fadeIn" style={{ animationDelay: `${index * 50}ms` }}>
+                                    <span className="col-span-1 text-text-primary truncate font-medium" title={kw.keyword}>{kw.keyword}</span>
+                                    <div className="col-span-3 flex items-center">
+                                        <div className="w-full bg-border rounded-full h-4 relative overflow-hidden">
+                                            <div 
+                                                className="bg-brand-accent h-4 rounded-full transition-all duration-500 ease-out" 
+                                                style={{ width: `${(kw.frequency / Math.max(1, ...report.overallKeywords.map(k => k.frequency))) * 100}%` }}
+                                            ></div>
+                                        </div>
+                                        <span className="ml-3 font-mono text-xs text-text-secondary w-6 text-right">{kw.frequency}</span>
+                                    </div>
+                                </div>
+                            ))
+                    ) : (
+                        <p className="text-text-secondary italic">No overall keywords were identified.</p>
+                    )}
                 </div>
-            ))}
-        </div>
-      </AccordionSection>
-
-      <AccordionSection title={`Top ${input.topNToSynthesize} Ranked Articles`}>
-        <div>
-            {report.rankedArticles.map((article, index) => (
-                <ArticleCard key={article.pmid} article={article} rank={index + 1} />
-            ))}
-        </div>
-      </AccordionSection>
-
-      <AccordionSection title="Generated PubMed Queries">
-        <div className="space-y-4">
-            {report.generatedQueries.map((q, index) => (
-                <div key={index} className="bg-surface p-4 rounded-md border border-border">
-                    <p className="font-mono text-sm bg-background p-3 rounded break-words text-sky-300">{q.query}</p>
-                    <p className="mt-2 text-sm text-text-secondary">{q.explanation}</p>
+            </AccordionSection>
+            <AccordionSection title={`Ranked Articles (Top ${report.rankedArticles.length})`}>
+                <div className="space-y-4">
+                    {report.rankedArticles.map((article, index) => (
+                       <ArticleCard key={article.pmid} article={article} rank={index + 1} />
+                    ))}
                 </div>
-            ))}
+            </AccordionSection>
+            <AccordionSection title="Generated PubMed Queries">
+                <div className="space-y-4">
+                    {report.generatedQueries.map((q, index) => (
+                        <div key={index} className="bg-background p-3 rounded-md border border-border">
+                            <div className="flex items-start">
+                                <SearchIcon className="h-5 w-5 text-brand-accent mr-3 mt-0.5 flex-shrink-0"/>
+                                <div>
+                                    <p className="font-mono text-sm text-text-primary bg-surface border border-border rounded px-2 py-1">{q.query}</p>
+                                    <p className="mt-2 text-xs text-text-secondary">{q.explanation}</p>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </AccordionSection>
         </div>
-      </AccordionSection>
     </div>
   );
 };

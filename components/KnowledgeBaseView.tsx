@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import jsPDF from 'jspdf';
 import type { AggregatedArticle, KnowledgeBaseEntry } from '../types';
@@ -101,6 +102,53 @@ const MultiSelectFilter: React.FC<{ title: string, options: string[], selected: 
     );
 };
 
+interface ArticleListItemProps {
+    article: AggregatedArticle;
+    isSelected: boolean;
+    onSelect: (pmid: string) => void;
+    onViewDetails: (article: AggregatedArticle) => void;
+}
+
+const ArticleListItem: React.FC<ArticleListItemProps> = React.memo(({ article, isSelected, onSelect, onViewDetails }) => {
+    const scoreColor = article.relevanceScore > 75 ? 'text-green-400' : article.relevanceScore > 50 ? 'text-yellow-400' : 'text-red-400';
+
+    return (
+        <div className={`flex items-start gap-4 p-4 rounded-lg border transition-all duration-200 ${isSelected ? 'bg-brand-accent/10 border-brand-accent/30 shadow-md' : 'bg-background border-border hover:border-border'}`}>
+            <input 
+                type="checkbox" 
+                className="h-4 w-4 rounded border-border bg-surface text-brand-accent focus:ring-brand-accent mt-1 flex-shrink-0" 
+                checked={isSelected} 
+                onChange={() => onSelect(article.pmid)}
+                aria-label={`Select article: ${article.title}`}
+            />
+            <div className="flex-grow">
+                <button onClick={() => onViewDetails(article)} className="text-left w-full">
+                    <h4 className="font-semibold text-text-primary hover:text-brand-accent transition-colors">{article.title}</h4>
+                </button>
+                <p className="text-xs text-text-secondary mt-1">{article.authors} &mdash; <span className="italic">{article.journal} ({article.pubYear})</span></p>
+                <div className="flex justify-between items-center mt-3">
+                    <div className="flex items-center gap-2">
+                        {article.isOpenAccess && (
+                            <div className="flex items-center text-xs text-green-400" title="Open Access">
+                                <UnlockIcon className="h-4 w-4 mr-1" />
+                                Open Access
+                            </div>
+                        )}
+                        {(article.customTags || []).map(tag => (
+                            <span key={tag} className="bg-purple-500/10 text-purple-300 text-xs font-medium px-2 py-0.5 rounded-full border border-purple-500/20">{tag}</span>
+                        ))}
+                    </div>
+                    <p className="text-xs text-text-secondary">From: <span className="font-medium italic">{article.sourceReportTopic}</span></p>
+                </div>
+            </div>
+            <div className="text-right flex-shrink-0 pl-4">
+                <div className={`text-2xl font-bold ${scoreColor}`}>{article.relevanceScore}</div>
+                <div className="text-xs text-text-secondary">Relevance</div>
+            </div>
+        </div>
+    );
+});
+
 
 export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({ entries, onClear, onViewChange, onDeleteSelected, onTagsUpdate }) => {
     const [searchTerm, setSearchTerm] = useState('');
@@ -113,15 +161,27 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({ entries, o
     const [isExporting, setIsExporting] = useState<string | null>(null);
     const [sortConfig, setSortConfig] = useState<{ key: 'relevanceScore' | 'pubYear'; direction: 'asc' | 'desc' }>({ key: 'relevanceScore', direction: 'desc' });
 
-    const { uniqueArticles, allKeywords, uniqueReportTopics, allTags } = useMemo(() => {
+    const { uniqueArticles, allKeywords, uniqueReportTopics, allTags, insightsByPmid } = useMemo(() => {
         const articleMap = new Map<string, AggregatedArticle>();
         const keywordMap = new Map<string, number>();
         const reportTopics = new Set<string>();
         const tags = new Set<string>();
+        const insightsMap = new Map<string, { question: string, answer: string, supportingArticles: string[] }[]>();
 
         entries.forEach(entry => {
             const topic = entry.input.researchTopic;
             reportTopics.add(topic);
+
+            // Populate insights map for faster lookups
+            entry.report.aiGeneratedInsights.forEach(insight => {
+                insight.supportingArticles.forEach(pmid => {
+                    if (!insightsMap.has(pmid)) {
+                        insightsMap.set(pmid, []);
+                    }
+                    insightsMap.get(pmid)!.push(insight);
+                });
+            });
+
             entry.report.rankedArticles.forEach(article => {
                 if (!articleMap.has(article.pmid) || article.relevanceScore > (articleMap.get(article.pmid)?.relevanceScore || 0)) {
                     articleMap.set(article.pmid, {
@@ -142,7 +202,8 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({ entries, o
             uniqueArticles: Array.from(articleMap.values()),
             allKeywords: sortedKeywords,
             uniqueReportTopics: Array.from(reportTopics),
-            allTags: Array.from(tags).sort()
+            allTags: Array.from(tags).sort(),
+            insightsByPmid: insightsMap
         };
     }, [entries]);
     
@@ -170,22 +231,14 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({ entries, o
     }, [uniqueArticles, searchTerm, selectedKeywords, showOnlyOpenAccess, selectedReportTopics, selectedTags, sortConfig]);
 
     const findRelatedInsights = useCallback((pmid: string) => {
-        const insights: { question: string, answer: string, supportingArticles: string[] }[] = [];
-        entries.forEach(entry => {
-            entry.report.aiGeneratedInsights.forEach(insight => {
-                if (insight.supportingArticles.includes(pmid)) {
-                    insights.push(insight);
-                }
-            });
-        });
-        
-        if (insights.length === 0) {
+        const rawInsights = insightsByPmid.get(pmid) || [];
+        if (rawInsights.length === 0) {
             return [];
         }
 
         // De-duplicate insights while merging supporting articles to provide complete context
         const insightMap = new Map<string, { question: string; answer: string; supportingArticles: Set<string> }>();
-        for (const insight of insights) {
+        for (const insight of rawInsights) {
             const key = `${insight.question.trim()}-${insight.answer.trim()}`;
             const existing = insightMap.get(key);
             if (existing) {
@@ -203,7 +256,7 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({ entries, o
             ...insight,
             supportingArticles: Array.from(insight.supportingArticles).sort(),
         }));
-    }, [entries]);
+    }, [insightsByPmid]);
 
     const handleResetFilters = () => {
         setSearchTerm('');
@@ -511,46 +564,53 @@ ER  - `).join('\n\n');
                                {selectedArticles.size > 0 && (
                                    <>
                                         <button onClick={() => handleCitationExport('bibtex')} className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-brand-text-on-accent bg-brand-accent hover:bg-opacity-90">
-                                            <CitationIcon className="h-4 w-4 mr-2" /> Export as BibTeX
+                                            <CitationIcon className="h-4 w-4 mr-2" />BibTeX
                                         </button>
                                         <button onClick={() => handleCitationExport('ris')} className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-brand-text-on-accent bg-brand-accent hover:bg-opacity-90">
-                                            <CitationIcon className="h-4 w-4 mr-2" /> Export as RIS
+                                            <CitationIcon className="h-4 w-4 mr-2" />RIS
                                         </button>
-                                       <button onClick={handleDeleteSelected} className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700">
-                                           <TrashIcon className="h-4 w-4 mr-2" /> Delete ({selectedArticles.size})
-                                       </button>
+                                        <div className="h-5 w-px bg-border mx-1"></div>
+                                        <button onClick={handleDeleteSelected} className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700">
+                                            <TrashIcon className="h-4 w-4 mr-2" />Delete ({selectedArticles.size})
+                                        </button>
                                    </>
                                )}
-                                <button onClick={handlePdfExport} disabled={!!isExporting || !canExportPdf} className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-brand-text-on-accent bg-brand-accent hover:bg-opacity-90 disabled:bg-border disabled:opacity-50 disabled:cursor-not-allowed"><PdfIcon className="h-4 w-4 mr-2"/>PDF</button>
-                                <button onClick={handleCsvExport} disabled={!!isExporting} className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-brand-text-on-accent bg-brand-accent hover:bg-opacity-90 disabled:bg-border"><CsvIcon className="h-4 w-4 mr-2" />CSV</button>
+                                <button onClick={handlePdfExport} disabled={!canExportPdf} className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-brand-text-on-accent bg-brand-primary hover:bg-brand-secondary disabled:bg-border disabled:text-text-secondary">
+                                    <PdfIcon className="h-4 w-4 mr-2" />Export as PDF
+                                </button>
+                                <button onClick={handleCsvExport} className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-brand-text-on-accent bg-brand-primary hover:bg-brand-secondary">
+                                    <CsvIcon className="h-4 w-4 mr-2" />Export as CSV
+                                </button>
                            </div>
-                       </div>
+                        </div>
                     </div>
-                    <div className="p-4 space-y-3 bg-surface border border-t-0 border-border rounded-b-lg">
-                        {filteredArticles.length > 0 ? filteredArticles.map(article => (
-                            <div key={article.pmid} className={`relative p-4 rounded-md border flex items-center transition-all ${selectedArticles.has(article.pmid) ? 'bg-brand-accent/10 border-brand-accent' : 'bg-background border-border hover:border-brand-accent hover:bg-surface'}`}>
-                                <input type="checkbox" className="h-4 w-4 rounded border-border bg-surface text-brand-accent focus:ring-brand-accent mr-4 flex-shrink-0" checked={selectedArticles.has(article.pmid)} onChange={() => handleSelectArticle(article.pmid)} onClick={(e) => e.stopPropagation()} />
-                                <div onClick={() => setDetailedArticle(article)} className="cursor-pointer flex-grow">
-                                    <div className="flex items-start">
-                                        {article.isOpenAccess && <UnlockIcon className="h-5 w-5 text-green-400 mr-3 flex-shrink-0 mt-0.5" />}
-                                        <div className="flex-grow">
-                                            <h5 className="font-semibold text-text-primary">{article.title}</h5>
-                                            <p className="text-xs text-text-secondary mt-1">{article.authors} - <span className="italic">{article.journal} ({article.pubYear})</span></p>
-                                             {article.customTags && article.customTags.length > 0 && (
-                                                <div className="mt-2 flex flex-wrap gap-2 items-center">
-                                                    <TagIcon className="h-4 w-4 text-text-secondary" />
-                                                    {article.customTags.map(tag => <span key={tag} className="bg-purple-500/10 text-purple-300 text-xs font-medium px-2 py-0.5 rounded-full border border-purple-500/20">{tag}</span>)}
-                                                </div>
-                                             )}
-                                        </div>
-                                    </div>
-                                </div>
+                    <div className="space-y-4 p-4">
+                        {filteredArticles.length > 0 ? (
+                            filteredArticles.map(article => (
+                               <ArticleListItem
+                                    key={article.pmid}
+                                    article={article}
+                                    isSelected={selectedArticles.has(article.pmid)}
+                                    onSelect={handleSelectArticle}
+                                    onViewDetails={setDetailedArticle}
+                                />
+                            ))
+                        ) : (
+                            <div className="text-center py-12">
+                                <p className="text-lg font-semibold text-text-primary">No Articles Match Your Criteria</p>
+                                <p className="text-text-secondary mt-1">Try adjusting your search or filter settings.</p>
                             </div>
-                        )) : ( <div className="flex flex-col items-center justify-center min-h-[300px] text-center text-text-secondary p-8"><SearchIcon className="h-16 w-16 text-border mb-4"/> <h3 className="text-xl font-semibold">No Articles Found</h3><p>Try adjusting your search or filter criteria.</p></div>)}
+                        )}
                     </div>
                 </div>
-
-                {detailedArticle && <ArticleDetailPanel article={detailedArticle} onClose={() => setDetailedArticle(null)} findRelatedInsights={findRelatedInsights} onTagsUpdate={onTagsUpdate}/>}
+                {detailedArticle && (
+                    <ArticleDetailPanel 
+                        article={detailedArticle} 
+                        onClose={() => setDetailedArticle(null)}
+                        findRelatedInsights={findRelatedInsights}
+                        onTagsUpdate={onTagsUpdate}
+                    />
+                )}
             </div>
         </>
     );

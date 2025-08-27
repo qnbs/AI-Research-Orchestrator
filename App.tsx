@@ -12,9 +12,38 @@ import { SettingsView } from './components/SettingsView';
 import { SettingsProvider, useSettings } from './contexts/SettingsContext';
 import { HelpView } from './components/HelpView';
 import { Notification } from './components/Notification';
+import { DashboardView } from './components/DashboardView';
 
 
 const KNOWLEDGE_BASE_STORAGE_KEY = 'aiResearchKnowledgeBase';
+
+interface ConfirmationModalProps {
+    onConfirm: () => void;
+    onCancel: () => void;
+    title: string;
+    message: React.ReactNode;
+    confirmText: string;
+    confirmButtonClass?: string;
+    titleClass?: string;
+}
+
+const ConfirmationModal: React.FC<ConfirmationModalProps> = ({ onConfirm, onCancel, title, message, confirmText, confirmButtonClass = 'bg-red-600 hover:bg-red-700', titleClass = 'text-red-400' }) => (
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center backdrop-blur-sm animate-fadeIn" style={{ animationDuration: '150ms' }}>
+        <div className="bg-surface rounded-lg border border-border shadow-2xl p-6 w-full max-w-md m-4">
+            <h3 className={`text-lg font-bold ${titleClass}`}>{title}</h3>
+            <div className="mt-2 text-text-secondary">{message}</div>
+            <div className="mt-6 flex justify-end space-x-3">
+                <button onClick={onCancel} className="px-4 py-2 border border-border text-sm font-medium rounded-md shadow-sm text-text-primary bg-background hover:bg-surface-hover">
+                    Cancel
+                </button>
+                <button onClick={onConfirm} className={`px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white ${confirmButtonClass}`}>
+                    {confirmText}
+                </button>
+            </div>
+        </div>
+    </div>
+);
+
 
 const AppContent: React.FC = () => {
   const [researchInput, setResearchInput] = useState<ResearchInput | null>(null);
@@ -35,6 +64,11 @@ const AppContent: React.FC = () => {
   const { settings } = useSettings();
   const [notification, setNotification] = useState<{ id: number; message: string; type: 'success' | 'error' } | null>(null);
   const [isCurrentReportSaved, setIsCurrentReportSaved] = useState<boolean>(false);
+
+  // State for unsaved changes in Settings
+  const [isSettingsDirty, setIsSettingsDirty] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState<View | null>(null);
+  const [settingsResetToken, setSettingsResetToken] = useState(0);
 
 
   const showNotification = useCallback((message: string, type: 'success' | 'error' = 'success') => {
@@ -228,6 +262,17 @@ const AppContent: React.FC = () => {
       return uniquePmids.size;
   }, [knowledgeBase]);
 
+  const handleViewChange = useCallback((view: View) => {
+    if (currentView === 'settings' && isSettingsDirty && view !== 'settings') {
+      setPendingNavigation(view);
+    } else {
+      setCurrentView(view);
+      if (view === 'settings') {
+        setIsSettingsDirty(false);
+      }
+    }
+  }, [currentView, isSettingsDirty]);
+
 
   const renderMainContent = () => {
     switch (currentView) {
@@ -254,8 +299,19 @@ const AppContent: React.FC = () => {
         );
       case 'knowledgeBase':
         return <KnowledgeBaseView entries={knowledgeBase} onClear={handleClearKnowledgeBase} onViewChange={setCurrentView} onDeleteSelected={handleDeleteArticles} onTagsUpdate={handleTagsUpdate} />;
+      case 'dashboard':
+        return <DashboardView entries={knowledgeBase} />;
       case 'settings':
-        return <SettingsView knowledgeBase={knowledgeBase} setKnowledgeBase={setKnowledgeBase} onClearKnowledgeBase={handleClearKnowledgeBase} showNotification={showNotification} knowledgeBaseArticleCount={knowledgeBaseArticleCount} onMergeDuplicates={handleMergeDuplicates} />;
+        return <SettingsView 
+            knowledgeBase={knowledgeBase} 
+            setKnowledgeBase={setKnowledgeBase} 
+            onClearKnowledgeBase={handleClearKnowledgeBase} 
+            showNotification={showNotification} 
+            knowledgeBaseArticleCount={knowledgeBaseArticleCount} 
+            onMergeDuplicates={handleMergeDuplicates}
+            setIsSettingsDirty={setIsSettingsDirty}
+            resetToken={settingsResetToken}
+        />;
       case 'help':
         return <HelpView />;
       default:
@@ -267,9 +323,10 @@ const AppContent: React.FC = () => {
     <div className="min-h-screen font-sans">
       <Header 
         currentView={currentView}
-        onViewChange={setCurrentView}
+        onViewChange={handleViewChange}
         knowledgeBaseArticleCount={knowledgeBaseArticleCount}
         hasReports={knowledgeBase.length > 0}
+        isSettingsDirty={isSettingsDirty}
       />
       
       <main className="container mx-auto p-4 sm:p-6 lg:p-8">
@@ -284,6 +341,21 @@ const AppContent: React.FC = () => {
           onClose={() => setNotification(null)}
           position={settings.notifications.position}
           duration={settings.notifications.duration}
+        />
+      )}
+
+      {pendingNavigation && (
+        <ConfirmationModal
+          title="Unsaved Changes"
+          message="You have unsaved changes. Are you sure you want to discard them and leave this page?"
+          confirmText="Discard Changes"
+          onConfirm={() => {
+            setCurrentView(pendingNavigation);
+            setIsSettingsDirty(false);
+            setSettingsResetToken(Date.now());
+            setPendingNavigation(null);
+          }}
+          onCancel={() => setPendingNavigation(null)}
         />
       )}
     </div>

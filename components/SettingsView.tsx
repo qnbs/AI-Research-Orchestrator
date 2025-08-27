@@ -1,8 +1,5 @@
 
 
-
-
-
 import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { useSettings } from '../contexts/SettingsContext';
 import { KnowledgeBaseEntry, Settings } from '../types';
@@ -30,6 +27,8 @@ interface SettingsViewProps {
     showNotification: (message: string, type?: 'success' | 'error') => void;
     knowledgeBaseArticleCount: number;
     onMergeDuplicates: () => void;
+    setIsSettingsDirty: (isDirty: boolean) => void;
+    resetToken: number;
 }
 
 const personaDescriptions: Record<Settings['ai']['aiPersona'], string> = {
@@ -100,15 +99,33 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({ onConfirm, onCanc
     </div>
 );
 
-// FIX: Completed the component by adding a return statement with the full JSX structure.
-// The original file was truncated and the component did not return anything, causing a type error.
-export const SettingsView: React.FC<SettingsViewProps> = ({ knowledgeBase, setKnowledgeBase, onClearKnowledgeBase, showNotification, knowledgeBaseArticleCount, onMergeDuplicates }) => {
+export const SettingsView: React.FC<SettingsViewProps> = ({ knowledgeBase, setKnowledgeBase, onClearKnowledgeBase, showNotification, knowledgeBaseArticleCount, onMergeDuplicates, setIsSettingsDirty, resetToken }) => {
     const { settings, updateSettings, resetSettings } = useSettings();
     const [tempSettings, setTempSettings] = useState(settings);
     const [activeTab, setActiveTab] = useState<SettingsTab>('general');
-    const [modalState, setModalState] = useState<{ type: 'clear' | 'reset' | 'import' | 'prune' | 'changelog' | 'merge', data?: KnowledgeBaseEntry[] } | null>(null);
+    const [modalState, setModalState] = useState<{ type: 'clear' | 'reset' | 'import' | 'prune' | 'changelog' | 'merge' | 'confirmModelChange', data?: any } | null>(null);
     const [pruneScore, setPruneScore] = useState(20);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const settingsFileInputRef = useRef<HTMLInputElement>(null);
+
+    const isObject = (item: any): item is object => {
+        return (item && typeof item === 'object' && !Array.isArray(item));
+    };
+
+    const deepMerge = <T extends object>(target: T, source: Partial<T>): T => {
+        const output: T = { ...target };
+        Object.keys(source).forEach(key => {
+            const targetValue = (target as any)[key];
+            const sourceValue = (source as any)[key];
+
+            if (isObject(targetValue) && isObject(sourceValue)) {
+                (output as any)[key] = deepMerge(targetValue, sourceValue);
+            } else if (sourceValue !== undefined) {
+                (output as any)[key] = sourceValue;
+            }
+        });
+        return output;
+    };
     
     useEffect(() => {
       setTempSettings(settings);
@@ -116,13 +133,37 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ knowledgeBase, setKn
 
     const isDirty = useMemo(() => JSON.stringify(settings) !== JSON.stringify(tempSettings), [settings, tempSettings]);
 
+    useEffect(() => {
+        setIsSettingsDirty(isDirty);
+    }, [isDirty, setIsSettingsDirty]);
+
+    useEffect(() => {
+        if (resetToken > 0) {
+            setTempSettings(settings);
+        }
+    }, [resetToken, settings]);
+
+    useEffect(() => {
+        const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+            if (isDirty) {
+                event.preventDefault();
+                event.returnValue = '';
+            }
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+        };
+    }, [isDirty]);
+
+
     const handleSave = () => {
         updateSettings(tempSettings);
         showNotification("Settings saved successfully!");
     };
     
-    const handleReset = () => {
-        setModalState({ type: 'reset' });
+    const handleCancel = () => {
+        setTempSettings(settings);
     };
 
     const handleExport = () => {
@@ -159,6 +200,52 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ knowledgeBase, setKn
             }
         };
         reader.readAsText(file);
+    };
+
+    const handleExportSettings = () => {
+        const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(settings))}`;
+        const link = document.createElement("a");
+        link.href = jsonString;
+        const date = new Date().toISOString().split('T')[0];
+        link.download = `ai_research_orchestrator_settings_${date}.json`;
+        link.click();
+        showNotification("Settings exported successfully.");
+    };
+
+    const handleImportSettings = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            try {
+                const importedSettings: Partial<Settings> = JSON.parse(event.target?.result as string);
+                if (!isObject(importedSettings) || (!('theme' in importedSettings) && !('ai' in importedSettings))) {
+                    throw new Error("Invalid settings file format.");
+                }
+
+                const currentModel = settings.ai.model;
+                const importedModel = importedSettings.ai?.model;
+
+                if (importedModel && importedModel !== currentModel) {
+                    setModalState({ type: 'confirmModelChange', data: importedSettings });
+                } else {
+                    handleConfirmImportSettings(importedSettings);
+                }
+            } catch (error) {
+                showNotification(`Import failed: ${error instanceof Error ? error.message : "Could not read file."}`, 'error');
+            } finally {
+                if (settingsFileInputRef.current) settingsFileInputRef.current.value = "";
+            }
+        };
+        reader.readAsText(file);
+    };
+    
+    const handleConfirmImportSettings = (importedSettings: Partial<Settings>) => {
+        const newSettings = deepMerge(settings, importedSettings);
+        updateSettings(newSettings);
+        showNotification("Settings imported successfully!");
+        setModalState(null);
     };
 
     const handleConfirmClear = () => {
@@ -366,10 +453,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ knowledgeBase, setKn
                         <SettingCard title="Knowledge Base Management" description="Export, import, or clear all data stored in your Knowledge Base. These actions are irreversible.">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <button onClick={handleExport} className="inline-flex items-center justify-center w-full px-4 py-2 border border-border text-sm font-medium rounded-md shadow-sm text-text-primary bg-background hover:bg-surface-hover">
-                                    <DownloadIcon className="h-5 w-5 mr-2" /> Export Data
+                                    <DownloadIcon className="h-5 w-5 mr-2" /> Export Knowledge Base
                                 </button>
                                 <button onClick={() => fileInputRef.current?.click()} className="inline-flex items-center justify-center w-full px-4 py-2 border border-border text-sm font-medium rounded-md shadow-sm text-text-primary bg-background hover:bg-surface-hover">
-                                    <UploadIcon className="h-5 w-5 mr-2" /> Import Data
+                                    <UploadIcon className="h-5 w-5 mr-2" /> Import Knowledge Base
                                 </button>
                                 <input type="file" ref={fileInputRef} onChange={handleImport} accept=".json" className="hidden" />
                             </div>
@@ -377,6 +464,17 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ knowledgeBase, setKn
                                 <button onClick={() => setModalState({type: 'clear'})} disabled={knowledgeBase.length === 0} className="w-full flex items-center justify-center text-sm px-4 py-2 rounded-md text-red-400 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                                     <TrashIcon className="h-4 w-4 mr-2" />Clear All Knowledge Base Data...
                                 </button>
+                            </div>
+                        </SettingCard>
+                         <SettingCard title="Settings Management" description="Export your current settings configuration or import a saved configuration file.">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <button onClick={handleExportSettings} className="inline-flex items-center justify-center w-full px-4 py-2 border border-border text-sm font-medium rounded-md shadow-sm text-text-primary bg-background hover:bg-surface-hover">
+                                    <DownloadIcon className="h-5 w-5 mr-2" /> Export Settings
+                                </button>
+                                <button onClick={() => settingsFileInputRef.current?.click()} className="inline-flex items-center justify-center w-full px-4 py-2 border border-border text-sm font-medium rounded-md shadow-sm text-text-primary bg-background hover:bg-surface-hover">
+                                    <UploadIcon className="h-5 w-5 mr-2" /> Import Settings
+                                </button>
+                                <input type="file" ref={settingsFileInputRef} onChange={handleImportSettings} accept=".json" className="hidden" />
                             </div>
                         </SettingCard>
                         <SettingCard title="Data Cleaning Tools" description="Optimize your knowledge base by merging duplicates or removing low-relevance articles.">
@@ -439,18 +537,20 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ knowledgeBase, setKn
                 </aside>
 
                 <main className="md:col-span-3">
-                    <div className="relative">
+                    <div className="relative pb-24">
                         {renderContent()}
                         
                         {isDirty && (
-                             <div className="sticky bottom-0 mt-8 py-4 bg-surface/80 backdrop-blur-sm border-t border-border -mx-6 px-6">
-                                <div className="flex justify-end space-x-3">
-                                    <button onClick={() => setTempSettings(settings)} className="px-4 py-2 border border-border text-sm font-medium rounded-md shadow-sm text-text-primary bg-background hover:bg-surface-hover">
-                                        Cancel
-                                    </button>
-                                    <button onClick={handleSave} className="px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-brand-text-on-accent bg-brand-accent hover:bg-opacity-90">
-                                        Save Changes
-                                    </button>
+                             <div className="fixed bottom-0 right-0 w-full lg:w-[calc(75%-2rem)]">
+                                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                                     <div className="bg-surface/80 backdrop-blur-sm border-t border-border p-4 flex justify-end space-x-3">
+                                        <button onClick={handleCancel} className="px-4 py-2 border border-border text-sm font-medium rounded-md shadow-sm text-text-primary bg-background hover:bg-surface-hover">
+                                            Cancel
+                                        </button>
+                                        <button onClick={handleSave} className="px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-brand-text-on-accent bg-brand-accent hover:bg-opacity-90">
+                                            Save Changes
+                                        </button>
+                                    </div>
                                 </div>
                              </div>
                         )}
@@ -513,6 +613,27 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ knowledgeBase, setKn
             />
         )}
         
+        {modalState?.type === 'confirmModelChange' && modalState.data && (
+            <ConfirmationModal
+                onConfirm={() => handleConfirmImportSettings(modalState.data)}
+                onCancel={() => setModalState(null)}
+                title="Confirm AI Model Change"
+                message={
+                    <div>
+                        <p>The settings file you are importing specifies a different AI model than your current one:</p>
+                        <ul className="list-disc list-inside my-2 text-sm text-left">
+                            <li>Current: <code className="bg-background px-1 py-0.5 rounded">{settings.ai.model}</code></li>
+                            <li>Imported: <code className="bg-background px-1 py-0.5 rounded">{modalState.data.ai?.model}</code></li>
+                        </ul>
+                        <p>Continuing will change the model used for generating reports. Are you sure?</p>
+                    </div>
+                }
+                confirmText="Yes, Change Model and Import"
+                confirmButtonClass="bg-yellow-600 hover:bg-yellow-700"
+                titleClass="text-yellow-400"
+            />
+        )}
+
         {modalState?.type === 'changelog' && (
             <Modal onClose={() => setModalState(null)} title="Changelog">
                 <div className="prose prose-sm prose-invert max-w-none text-text-secondary/90 leading-relaxed">
