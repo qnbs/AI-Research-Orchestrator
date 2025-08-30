@@ -87,7 +87,12 @@ const GeneralSettingsTab: React.FC<{
                 </button>
             </div>
             <div className="pt-4 mt-4 border-t border-border">
-                <label className="block text-sm font-medium text-text-primary mb-2">UI Density</label>
+                <div className="flex items-center gap-2 mb-2">
+                    <label className="block text-sm font-medium text-text-primary">UI Density</label>
+                    <Tooltip content="Adjust the spacing and size of UI elements. 'Compact' is useful for smaller screens or fitting more information.">
+                        <InfoIcon className="h-4 w-4 text-text-secondary cursor-help" />
+                    </Tooltip>
+                </div>
                 <div className="flex w-full max-w-xs bg-background p-1 rounded-lg border border-border">
                     <button
                         onClick={() => setTempSettings(s => ({...s, appearance: {...s.appearance, density: 'comfortable'}}))}
@@ -358,7 +363,7 @@ const KnowledgeBaseSettingsTab: React.FC<{
                 </div>
             </div>
         </SettingCard>
-            <SettingCard title="Data Cleaning Tools" description="Tools to help maintain the quality and integrity of your knowledge base.">
+            <SettingCard title="Data Cleaning Tools" description="Perform powerful maintenance actions. Merge duplicate articles to keep your library clean, or prune low-relevance articles to focus on the highest quality data.">
             <div className="space-y-4">
                     <button onClick={() => setModalState({ type: 'merge' })} className="w-full text-left p-3 rounded-md bg-background hover:bg-surface-hover border border-border transition-colors">
                     <h4 className="font-semibold text-text-primary">Merge Duplicates</h4>

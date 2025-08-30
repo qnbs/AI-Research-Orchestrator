@@ -31,13 +31,17 @@ This application significantly reduces the manual effort of literature reviews b
 
 -   **📊 Data Visualization Dashboard:** Provides charts and graphs (treemaps, bar charts) to visualize trends in the knowledge base, such as top keywords, publication years, and top journals.
 
+-   **🛠️ Intelligent Knowledge Base Maintenance:**
+    -   **Merge Duplicates:** Automatically find and merge duplicate articles, keeping only the entry with the highest relevance score.
+    -   **Prune by Relevance:** Clean your library by removing articles below a specified relevance score threshold.
+
 -   **💾 Robust Data Management & Export:**
     -   **PDF:** Generate comprehensive, professionally formatted PDFs for reports and knowledge base selections, with a customizable cover page and content sections.
     -   **CSV:** Export raw article data with configurable columns and delimiters for spreadsheets.
-    -   **Citations:** Get enhanced citation files (**BibTeX**, **RIS**) with abstracts and keywords for reference managers like Zotero or Mendeley.
-    -   **JSON:** Back up and restore your entire research history or settings with a single click.
+    -   **Citations:** Get enhanced citation files (**BibTeX**, **RIS**) with configurable content (abstracts, keywords, tags) for reference managers like Zotero or Mendeley.
+    -   **JSON:** Back up and restore your entire research history, knowledge base, or settings with a single click.
 
--   **⚙️ Deep Customization:** A detailed settings panel allows users to manage themes, AI behavior (persona, language, creativity), form defaults, and perform data management tasks like backups and cleaning.
+-   **⚙️ Deep Customization:** A detailed settings panel allows users to manage themes, AI behavior (persona, language, creativity), form defaults, and export configurations.
 
 -   **✨ Modern, Cybernetic UI/UX:** A completely redesigned user interface with a technological design, subtle animations, and improved readability for a first-class user experience.
 
@@ -176,13 +180,17 @@ When deploying to a hosting provider (e.g., Vercel, Netlify), you must use their
 
 -   **📊 Datenvisualisierungs-Dashboard:** Bietet Diagramme und Grafiken (Treemaps, Balkendiagramme) zur Visualisierung von Trends in der Wissensdatenbank, wie z. B. Top-Schlüsselwörter, Publikationsjahre und Top-Journale.
 
+-   **🛠️ Intelligente Wissensdatenbank-Pflege:**
+    -   **Duplikate zusammenführen:** Finden und entfernen Sie automatisch doppelte Artikel und behalten Sie nur den Eintrag mit der höchsten Relevanzbewertung.
+    -   **Nach Relevanz bereinigen:** Bereinigen Sie Ihre Bibliothek, indem Sie Artikel unterhalb einer festgelegten Relevanzschwelle entfernen.
+
 -   **💾 Robuste Datenverwaltung & Export:**
     -   **PDF:** Erstellen Sie umfassende, professionell formatierte PDFs für Berichte und Auswahlen aus der Wissensdatenbank, mit anpassbarer Titelseite und Inhaltsbereichen.
     -   **CSV:** Exportieren Sie Rohdaten von Artikeln mit konfigurierbaren Spalten und Trennzeichen für Tabellenkalkulationen.
-    -   **Zitate:** Erhalten Sie erweiterte Zitatdateien (**BibTeX**, **RIS**) mit Abstracts und Schlüsselwörtern für Literaturverwaltungsprogramme wie Zotero oder Mendeley.
-    -   **JSON:** Sichern und stellen Sie Ihren gesamten Forschungsverlauf oder Ihre Einstellungen mit einem Klick wieder her.
+    -   **Zitate:** Erhalten Sie erweiterte Zitatdateien (**BibTeX**, **RIS**) mit konfigurierbarem Inhalt (Abstracts, Schlüsselwörter, Tags) für Literaturverwaltungsprogramme wie Zotero oder Mendeley.
+    -   **JSON:** Sichern und stellen Sie Ihren gesamten Forschungsverlauf, Ihre Wissensdatenbank oder Ihre Einstellungen mit einem Klick wieder her.
 
--   **⚙️ Umfassende Anpassungsmöglichkeiten:** Ein detailliertes Einstellungsfeld ermöglicht es Benutzern, Themes, das KI-Verhalten (Persona, Sprache, Kreativität), Formular-Standardwerte zu verwalten und Datenverwaltungsaufgaben wie Backups und Bereinigungen durchzuführen.
+-   **⚙️ Umfassende Anpassungsmöglichkeiten:** Ein detailliertes Einstellungsfeld ermöglicht es Benutzern, Themes, das KI-Verhalten (Persona, Sprache, Kreativität), Formular-Standardwerte und Exportkonfigurationen zu verwalten.
 
 -   **✨ Modernes, kybernetisches UI/UX:** Eine komplett überarbeitete Benutzeroberfläche mit einem technologischen Design, subtilen Animationen und verbesserter Lesbarkeit für ein erstklassiges Benutzererlebnis.
 
