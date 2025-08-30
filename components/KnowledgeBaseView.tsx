@@ -333,9 +333,9 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({ onViewChan
         });
     }, [uniqueArticles, filter, sortOrder]);
     
-    const handleSelectPmid = (pmid: string) => {
+    const handleSelectPmid = useCallback((pmid: string) => {
         setSelectedPmids(prev => prev.includes(pmid) ? prev.filter(p => p !== pmid) : [...prev, pmid]);
-    };
+    }, []);
     
     const findRelatedInsights = useCallback((pmid: string) => {
         return knowledgeBase.flatMap(entry => entry.report.aiGeneratedInsights || [])

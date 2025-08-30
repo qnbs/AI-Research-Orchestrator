@@ -521,6 +521,27 @@ const DataSettingsTab: React.FC<{
     </div>
 );
 
+const isObject = (item: any): item is object => {
+    return (item && typeof item === 'object' && !Array.isArray(item));
+};
+
+const deepMerge = (target: any, source: any) => {
+    let output = { ...target };
+    if (isObject(target) && isObject(source)) {
+        Object.keys(source).forEach(key => {
+            if (isObject(source[key])) {
+                if (!(key in target)) {
+                    output = { ...output, [key]: source[key] };
+                } else {
+                    output[key] = deepMerge(target[key], source[key]);
+                }
+            } else {
+                output = { ...output, [key]: source[key] };
+            }
+        });
+    }
+    return output;
+};
 
 const SettingsView: React.FC<SettingsViewProps> = ({ onClearKnowledgeBase, resetToken, onNavigateToHelpTab }) => {
     const { settings, updateSettings, resetSettings } = useSettings();
@@ -560,28 +581,6 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onClearKnowledgeBase, reset
         if (!uniqueArticles) return 0;
         return uniqueArticles.filter(a => a.relevanceScore < pruneScore).length;
     }, [pruneScore, uniqueArticles]);
-
-    const isObject = (item: any): item is object => {
-        return (item && typeof item === 'object' && !Array.isArray(item));
-    };
-
-    const deepMerge = (target: any, source: any) => {
-        let output = { ...target };
-        if (isObject(target) && isObject(source)) {
-            Object.keys(source).forEach(key => {
-                if (isObject(source[key])) {
-                    if (!(key in target)) {
-                        output = { ...output, [key]: source[key] };
-                    } else {
-                        output[key] = deepMerge(target[key], source[key]);
-                    }
-                } else {
-                    output = { ...output, [key]: source[key] };
-                }
-            });
-        }
-        return output;
-    };
     
     useEffect(() => {
       setTempSettings(settings);
