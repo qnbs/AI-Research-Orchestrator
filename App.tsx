@@ -1,4 +1,5 @@
 
+
 import React, { useState, useCallback, useEffect } from 'react';
 import { OnboardingView } from './components/OnboardingView';
 import { Header } from './components/Header';
@@ -32,7 +33,6 @@ const AppLayout: React.FC = () => {
   // App-wide State from contexts
   const { settings, updateSettings } = useSettings();
   const { currentView, notification, setNotification, isSettingsDirty, setIsSettingsDirty, pendingNavigation, setPendingNavigation, setCurrentView, showOnboarding, setShowOnboarding } = useUI();
-  // FIX: Corrected destructured properties to match the context type.
   const { knowledgeBase, saveReport, clearKnowledgeBase, updateReportTitle, updateTags, deleteArticles, onMergeDuplicates, addKnowledgeBaseEntries, onPruneByRelevance, uniqueArticles } = useKnowledgeBase();
 
 

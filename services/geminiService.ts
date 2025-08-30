@@ -1,5 +1,6 @@
 
 
+
 import { GoogleGenAI, Type } from "@google/genai";
 import type { ResearchInput, ResearchReport, Settings, RankedArticle, SimilarArticle, OnlineFindings, WebContent, ResearchAnalysis, GeneratedQuery } from '../types';
 
@@ -309,7 +310,6 @@ const synthesisSchema = {
 
 // --- Core Service Function ---
 
-// FIX: Define interfaces for AI response data to ensure proper typing.
 interface RankingData {
     rankedArticles: {
         pmid: string;
@@ -394,7 +394,7 @@ export const generateResearchReport = async (input: ResearchInput, config: Setti
             thinkingConfig: { thinkingBudget: 0 }, // Optimization: Disable thinking for structured, low-latency tasks.
         }
     });
-    // FIX: Typed the parsed JSON to ensure type safety for ranking data.
+
     const rankingData: RankingData = JSON.parse(rankingResponse.text);
     const rankingMap = new Map(rankingData.rankedArticles.map(r => [r.pmid, { score: r.relevanceScore, explanation: r.relevanceExplanation }]));
 
@@ -405,7 +405,6 @@ export const generateResearchReport = async (input: ResearchInput, config: Setti
         authors: article.authors!,
         journal: article.journal!,
         pubYear: article.pubYear!,
-        // FIX: Accessing properties is now type-safe due to the typed `rankingMap`.
         relevanceScore: rankingMap.get(article.pmid!)?.score || 0,
         relevanceExplanation: rankingMap.get(article.pmid!)?.explanation || 'N/A',
         summary: '', keywords: [], isOpenAccess: article.isOpenAccess || false
@@ -686,5 +685,41 @@ export const generateTldrSummary = async (abstract: string, aiConfig: Settings['
         console.error("Error generating TL;DR summary:", error);
         const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
         throw new Error(`Failed to generate TL;DR summary. The AI responded with: ${errorMessage}`);
+    }
+};
+
+export const generateSuggestedTopic = async (topic: string, aiConfig: Settings['ai']): Promise<string> => {
+    try {
+        const prompt = `
+            You are an expert in biomedical research information retrieval.
+            Your task is to refine a user's research topic to make it more specific, structured, and effective for a PubMed database search.
+            - If the topic is too broad, narrow it down.
+            - If it's a question, rephrase it as a declarative topic.
+            - Add specificity where possible (e.g., patient populations, interventions, outcomes).
+            - Use neutral, scientific language.
+            - Your entire response MUST be only the refined topic text. Do not add any introductory phrases like "Here is the refined topic:", explanations, or markdown formatting.
+
+            **Original Topic:**
+            ---
+            ${topic}
+            ---
+
+            **Refined Topic:**
+        `;
+
+        const response = await ai.models.generateContent({
+            model: aiConfig.model,
+            contents: prompt,
+            config: {
+                temperature: 0.2,
+                thinkingConfig: { thinkingBudget: 0 },
+            }
+        });
+
+        return response.text.trim();
+    } catch (error) {
+        console.error("Error generating suggested topic:", error);
+        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+        throw new Error(`Failed to refine topic. The AI responded with: ${errorMessage}`);
     }
 };

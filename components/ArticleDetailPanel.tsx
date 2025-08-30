@@ -11,6 +11,7 @@ import { WebIcon } from './icons/WebIcon';
 import { RelevanceScoreDisplay } from './RelevanceScoreDisplay';
 import { AcademicCapIcon } from './icons/AcademicCapIcon';
 import { useKnowledgeBase } from '../contexts/KnowledgeBaseContext';
+import { SemanticScholarIcon } from './icons/SemanticScholarIcon';
 
 
 interface ArticleDetailPanelProps {
@@ -170,8 +171,8 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({ article,
                                         <a href={googleScholarUrl} target="_blank" rel="noopener noreferrer" className="hover:text-brand-accent" title="Search on Google Scholar">
                                             <AcademicCapIcon className="h-6 w-6" />
                                         </a>
-                                        <a href={semanticScholarUrl} target="_blank" rel="noopener noreferrer" className="hover:text-brand-accent font-bold text-xl" title="Search on Semantic Scholar">
-                                            S
+                                        <a href={semanticScholarUrl} target="_blank" rel="noopener noreferrer" className="hover:text-brand-accent" title="Search on Semantic Scholar">
+                                            <SemanticScholarIcon className="h-6 w-6" />
                                         </a>
                                     </div>
                                 </div>

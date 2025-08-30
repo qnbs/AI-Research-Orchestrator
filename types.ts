@@ -1,4 +1,4 @@
-// FIX: Removed circular dependency. WebContent is defined in this file.
+
 
 export const ARTICLE_TYPES = [
   'Randomized Controlled Trial', 

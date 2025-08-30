@@ -20,6 +20,7 @@ import { useSettings } from '../contexts/SettingsContext';
 import { RelevanceScoreDisplay } from './RelevanceScoreDisplay';
 import { AcademicCapIcon } from './icons/AcademicCapIcon';
 import { WebIcon } from './icons/WebIcon';
+import { SemanticScholarIcon } from './icons/SemanticScholarIcon';
 
 
 interface ReportDisplayProps {
@@ -230,8 +231,8 @@ const ArticleCard: React.FC<{
                          <a href={googleScholarUrl} target="_blank" rel="noopener noreferrer" className="hover:text-brand-accent" title="Search on Google Scholar" aria-label="Search on Google Scholar">
                             <AcademicCapIcon className="h-5 w-5" />
                         </a>
-                        <a href={semanticScholarUrl} target="_blank" rel="noopener noreferrer" className="hover:text-brand-accent font-bold text-lg" title="Search on Semantic Scholar" aria-label="Search on Semantic Scholar">
-                            S
+                        <a href={semanticScholarUrl} target="_blank" rel="noopener noreferrer" className="hover:text-brand-accent" title="Search on Semantic Scholar" aria-label="Search on Semantic Scholar">
+                            <SemanticScholarIcon className="h-5 w-5" />
                         </a>
                          <button onClick={handleCopyPmid} className="flex items-center hover:text-brand-accent transition-colors" title="Copy PMID" aria-label="Copy PMID">
                             {isPmidCopied ? <CheckCircleIcon className="h-4 w-4 text-green-400"/> : <ClipboardIcon className="h-4 w-4" />}

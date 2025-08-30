@@ -25,6 +25,8 @@ This application significantly reduces the manual effort of literature reviews b
 
 -   **💡 Quick Analysis with the Research Assistant:** Paste any text—a question, abstract, or topic—to get an instant summary, a list of key findings, and suggestions for related articles and online discussions.
 
+-   **✨ AI-Powered Topic Refinement:** Instantly transform a broad research idea into a specific, well-structured topic using the "Refine with AI" feature, optimizing it for PubMed searches.
+
 -   **🧠 Centralized & Intelligent Knowledge Base:** All articles from saved reports are aggregated into a single, searchable library. Duplicates are automatically removed, keeping the version with the highest relevance score.
 
 -   **🔍 Powerful Data Exploration:** The Knowledge Base features robust search, multi-faceted filtering (by keyword, report, custom tags, open-access status, journal), and multiple sorting options.
@@ -173,6 +175,8 @@ When deploying to a hosting provider (e.g., Vercel, Netlify), you must use their
 -   **🤖 KI-Forschungsorchestrierung:** Erstellt umfassende Berichte aus einem einfachen Forschungsthema. Die KI formuliert erweiterte PubMed-Anfragen, scannt Artikel und ordnet sie nach Relevanz mit detaillierten Erklärungen.
 
 -   **💡 Schnellanalyse mit dem Forschungsassistenten:** Fügen Sie einen beliebigen Text ein – eine Frage, einen Abstract oder ein Thema – um eine sofortige Zusammenfassung, eine Liste der wichtigsten Erkenntnisse und Vorschläge für verwandte Artikel und Online-Diskussionen zu erhalten.
+
+-   **✨ KI-gestützte Themenverfeinerung:** Verwandeln Sie eine grobe Forschungsidee mit der Funktion "Mit KI verfeinern" sofort in ein spezifisches, gut strukturiertes Thema, das für PubMed-Suchen optimiert ist.
 
 -   **🧠 Zentrale & Intelligente Wissensdatenbank:** Alle Artikel aus gespeicherten Berichten werden in einer einzigen, durchsuchbaren Bibliothek zusammengefasst. Duplikate werden automatisch entfernt, wobei die Version mit der höchsten Relevanzbewertung beibehalten wird.
 

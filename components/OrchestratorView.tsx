@@ -48,7 +48,7 @@ export const OrchestratorView: React.FC<OrchestratorViewProps> = ({
             <InputForm
                 onSubmit={handleFormSubmit}
                 isLoading={isLoading}
-                defaultSettings={settings.defaults}
+                settings={settings}
                 prefilledTopic={prefilledTopic}
                 onPrefillConsumed={onPrefillConsumed}
             />

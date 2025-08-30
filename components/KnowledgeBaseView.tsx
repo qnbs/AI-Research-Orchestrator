@@ -286,7 +286,6 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({ onViewChan
     const [selectedPmids, setSelectedPmids] = useState<string[]>([]);
     const [isExportingPdf, setIsExportingPdf] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
-    // FIX: Decouple dropdown state from modal state for citation export.
     const [isCitationDropdownOpen, setIsCitationDropdownOpen] = useState(false);
     const [citationExportModalType, setCitationExportModalType] = useState<'bib' | 'ris' | null>(null);
     const [viewMode, setViewMode] = useState<'grid' | 'list'>(settings.knowledgeBase.defaultView);

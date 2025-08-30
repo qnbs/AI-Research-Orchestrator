@@ -7,11 +7,13 @@ import { SparklesIcon } from './icons/SparklesIcon';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 import { CheckIcon } from './icons/CheckIcon';
 import { BookmarkSquareIcon } from './icons/BookmarkSquareIcon';
+import { useUI } from '../contexts/UIContext';
+import { generateSuggestedTopic } from '../services/geminiService';
 
 interface InputFormProps {
   onSubmit: (data: ResearchInput) => void;
   isLoading: boolean;
-  defaultSettings: Settings['defaults'];
+  settings: Settings;
   prefilledTopic: string | null;
   onPrefillConsumed: () => void;
 }
@@ -68,7 +70,11 @@ const CustomCheckbox: React.FC<{ id: string; value: string; checked: boolean; on
 );
 
 
-export const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading, defaultSettings, prefilledTopic, onPrefillConsumed }) => {
+export const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading, settings, prefilledTopic, onPrefillConsumed }) => {
+  const { setNotification } = useUI();
+  const [isSuggesting, setIsSuggesting] = useState(false);
+  const defaultSettings = settings.defaults;
+  
   const [formData, setFormData] = useState<ResearchInput>(() => {
     try {
         const savedState = sessionStorage.getItem(FORM_STATE_KEY);
@@ -156,6 +162,21 @@ export const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading, defau
     }
   };
   
+  const handleSuggestTopic = async () => {
+      if (!formData.researchTopic.trim()) return;
+      setIsSuggesting(true);
+      try {
+          const suggestedTopic = await generateSuggestedTopic(formData.researchTopic, settings.ai);
+          setFormData(prev => ({...prev, researchTopic: suggestedTopic}));
+          setNotification({id: Date.now(), message: "Topic refined by AI.", type: 'success'});
+      } catch (error) {
+          const message = error instanceof Error ? error.message : "An unknown error occurred.";
+          setNotification({id: Date.now(), message: `Failed to get suggestion: ${message}`, type: 'error'});
+      } finally {
+          setIsSuggesting(false);
+      }
+  };
+  
   const handleSavePreset = () => {
     if (newPresetName.trim()) {
       addPreset(newPresetName.trim(), formData);
@@ -207,7 +228,28 @@ export const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading, defau
       </div>
       <form onSubmit={handleSubmit} onKeyDown={handleKeyDown} className="space-y-8">
         <fieldset>
-          <label htmlFor="researchTopic" className="block text-sm font-semibold text-text-primary mb-2">Primary Research Topic or Question</label>
+          <div className="flex justify-between items-center mb-2">
+            <label htmlFor="researchTopic" className="block text-sm font-semibold text-text-primary">Primary Research Topic or Question</label>
+            <button
+              type="button"
+              onClick={handleSuggestTopic}
+              disabled={isSuggesting || isLoading || !formData.researchTopic.trim()}
+              className="inline-flex items-center text-xs font-semibold text-brand-accent hover:underline disabled:opacity-50 disabled:cursor-not-allowed disabled:no-underline"
+              aria-label="Refine research topic with AI"
+            >
+              {isSuggesting ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-1.5 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    Refining...
+                  </>
+              ) : (
+                  <>
+                    <SparklesIcon className="h-4 w-4 mr-1.5" />
+                    Refine with AI
+                  </>
+              )}
+            </button>
+          </div>
           <textarea
             id="researchTopic"
             name="researchTopic"
@@ -311,7 +353,7 @@ export const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading, defau
         >
           {isLoading ? (
             <>
-              <svg className="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <svg className="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>

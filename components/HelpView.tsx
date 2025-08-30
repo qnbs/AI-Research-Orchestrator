@@ -105,13 +105,16 @@ const GuideSection: React.FC<{ searchTerm: string }> = ({ searchTerm }) => {
                         <li><strong>Article Types:</strong> Select the types of evidence you trust most. <strong>Systematic Reviews</strong> and <strong>Meta-Analyses</strong> provide high-quality summaries of existing research and are considered strong forms of evidence.</li>
                         <li><strong>Synthesis Focus:</strong> This tells the AI what angle to take when summarizing the findings. Are you interested in a general overview, or are you specifically looking for gaps in the research?</li>
                     </ul>
+                    <Note type="tip" title="Use 'Refine with AI'">
+                        <p>If your topic is broad or you're not sure how to phrase it for a scientific database, type your idea and click the "Refine with AI" button. The AI will suggest a more structured, specific topic that is better suited for a PubMed search, improving the quality of your results.</p>
+                    </Note>
                     <Note type="tip" title="Pro-Tip: Advanced Topics">
                         <p>Use boolean operators (`AND`, `OR`, `NOT`) in your topic for more precise control, e.g., <code>(intermittent fasting OR time-restricted eating) AND cognitive function NOT Alzheimer</code>.</p>
                     </Note>
                      <p>After you click 'Start Research', a detailed report will appear with a synthesis, AI insights, and a list of ranked articles. If you like the results, click 'Save to Knowledge Base' to permanently store the articles.</p>
                 </>
             ),
-            keywords: "research parameters topic date type synthesis focus start new report save"
+            keywords: "research parameters topic date type synthesis focus start new report save refine ai"
         },
         {
             title: "Using the Research Assistant",
@@ -291,6 +294,7 @@ const AboutSection: React.FC<{ searchTerm?: string }> = () => {
                 <li><strong>Feature:</strong> Report history view with search to browse and revisit previously saved reports.</li>
                 <li><strong>Feature:</strong> AI-powered 'Research Assistant' for summarizing text and finding related articles.</li>
                 <li><strong>Feature:</strong> AI-powered 'Discovery Tools' in the article detail panel for finding similar articles and related online news/discussions.</li>
+                <li><strong>Feature:</strong> AI-powered topic refinement on the Orchestrator form to improve search specificity.</li>
                 <li><strong>Feature:</strong> AI-powered 'TL;DR' summaries for article abstracts.</li>
                 <li><strong>Feature:</strong> Data cleaning tools for the Knowledge Base (merge duplicates, prune by relevance).</li>
                 <li><strong>UX:</strong> Comprehensive settings panel for managing themes, AI behavior, form defaults, and data backups.</li>

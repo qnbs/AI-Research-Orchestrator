@@ -1,4 +1,5 @@
 
+
 import React, { useMemo, useRef } from 'react';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement, Colors, FontSpec } from 'chart.js';
 import { Bar, Doughnut, Chart, getElementAtEvent } from 'react-chartjs-2';
@@ -6,7 +7,6 @@ import { TreemapController, TreemapElement } from 'chartjs-chart-treemap';
 import type { KnowledgeBaseEntry, KnowledgeBaseFilter } from '../types';
 import { DatabaseIcon } from './icons/DatabaseIcon';
 import { useSettings } from '../contexts/SettingsContext';
-// FIX: The View type should be imported from UIContext, not Header.
 import type { View } from '../contexts/UIContext';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement, TreemapController, TreemapElement, Colors);
@@ -240,7 +240,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ entries, onFilterC
                                     // @ts-ignore - The types for chartjs-chart-treemap are incomplete for some scriptable options.
                                     labels: {
                                         color: (ctx: any) => '#FFFFFF',
-                                        // FIX: Type definitions for chartjs-chart-treemap are incorrect and do not include 'center'.
                                         // @ts-ignore
                                         position: 'center',
                                         // @ts-ignore
@@ -264,7 +263,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ entries, onFilterC
                                             size = Math.min(size, h - 4, w / (label.length * 0.55));
                                             if (size < 10) return; // Hide label if it's too small to be legible
                                             
-                                            // FIX: The 'weight' property expects a number or specific string literal. '600' is not a valid string, but 600 is a valid number.
                                             const weight = size > 14 ? 'bold' : 600;
 
                                             return {

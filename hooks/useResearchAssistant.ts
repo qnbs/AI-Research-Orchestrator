@@ -1,8 +1,6 @@
-
 import { useState, useCallback } from 'react';
 import { generateResearchAnalysis, findSimilarArticles, findRelatedOnline } from '../services/geminiService';
-import { ResearchAnalysis, SimilarArticle, OnlineFindings, Settings } from '../types';
-// FIX: The View type should be imported from UIContext, not components/Header.
+import type { ResearchAnalysis, SimilarArticle, OnlineFindings, Settings } from '../types';
 import type { View } from '../contexts/UIContext';
 
 interface ResearchState {
