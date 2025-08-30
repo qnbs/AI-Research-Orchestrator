@@ -1,11 +1,30 @@
-
-
-
 import { GoogleGenAI, Type } from "@google/genai";
-import type { ResearchInput, ResearchReport, Settings, RankedArticle, SimilarArticle, OnlineFindings, WebContent, ResearchAnalysis, GeneratedQuery } from '../types';
+import type { ResearchInput, ResearchReport, Settings, RankedArticle, SimilarArticle, OnlineFindings, WebContent, ResearchAnalysis, GeneratedQuery, GroundingChunk } from '../types';
 
 if (!process.env.API_KEY) {
   throw new Error("API_KEY environment variable not set");
+}
+
+// Custom error classes for granular error handling
+export class PubMedAPIError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'PubMedAPIError';
+  }
+}
+
+export class GeminiAPIError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'GeminiAPIError';
+  }
+}
+
+export class OrchestrationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'OrchestrationError';
+  }
 }
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -30,20 +49,35 @@ function extractAndParseJson<T>(text: string): T {
                 return JSON.parse(jsonString) as T;
             } catch (error) {
                 console.error("Failed to parse extracted JSON:", jsonString, error);
-                throw new Error(`AI response contained malformed JSON. Content: ${jsonString.substring(0, 200)}...`);
+                // Don't throw yet, let the fallback mechanism try.
             }
         }
     }
     
-    // As a fallback for cases where the model returns JSON without fences,
-    // try parsing the whole string.
-    try {
-        return JSON.parse(text) as T;
-    } catch(e) {
-        // If everything fails, throw a clear error.
-        console.error("Could not find any valid JSON in the AI response:", text);
-        throw new Error("AI response did not contain valid JSON.");
+    // Enhanced fallback for cases where the model returns JSON with leading text.
+    const firstBrace = text.indexOf('{');
+    const firstBracket = text.indexOf('[');
+    
+    let startIndex = -1;
+
+    if (firstBrace > -1 && firstBracket > -1) {
+        startIndex = Math.min(firstBrace, firstBracket);
+    } else {
+        startIndex = Math.max(firstBrace, firstBracket);
     }
+
+    if (startIndex > -1) {
+        const potentialJson = text.substring(startIndex);
+        try {
+            return JSON.parse(potentialJson) as T;
+        } catch (error) {
+            // Fall through to the final error.
+        }
+    }
+    
+    // If everything fails, throw a clear error.
+    console.error("Could not find any valid JSON in the AI response:", text);
+    throw new Error("AI response did not contain valid JSON.");
 }
 
 
@@ -73,16 +107,16 @@ interface ESummaryResult {
 async function searchPubMedForIds(query: string, retmax: number): Promise<string[]> {
     const url = `${PUBMED_API_BASE}esearch.fcgi?db=pubmed&term=${encodeURIComponent(query)}&retmax=${retmax}&sort=relevance&retmode=json`;
     try {
-        // NCBI recommends including contact info in requests
         const response = await fetch(url, { headers: { 'User-Agent': 'ai-research-orchestrator/1.0' } });
         if (!response.ok) {
-            throw new Error(`PubMed API error: ${response.statusText}`);
+            throw new PubMedAPIError(`Request failed with status ${response.status}: ${response.statusText}`);
         }
         const data: ESearchResult = await response.json();
-        return data.esearchresult.idlist;
+        return data.esearchresult.idlist || [];
     } catch (error) {
         console.error(`Error searching PubMed for query "${query}":`, error);
-        return []; // Return empty array on error to not fail the whole process
+        if (error instanceof PubMedAPIError) throw error; // Re-throw
+        throw new PubMedAPIError('Failed to connect to PubMed. Please check your network connection.');
     }
 }
 
@@ -93,7 +127,6 @@ async function searchPubMedForIds(query: string, retmax: number): Promise<string
  */
 async function fetchArticleDetails(pmids: string[]): Promise<Partial<RankedArticle>[]> {
     if (pmids.length === 0) return [];
-    // POST request is better for large number of IDs
     const url = `${PUBMED_API_BASE}esummary.fcgi?db=pubmed&retmode=json`;
     try {
         const formData = new FormData();
@@ -105,7 +138,7 @@ async function fetchArticleDetails(pmids: string[]): Promise<Partial<RankedArtic
         });
         
         if (!response.ok) {
-            throw new Error(`PubMed API error: ${response.statusText}`);
+            throw new PubMedAPIError(`Request failed with status ${response.status}: ${response.statusText}`);
         }
         const data: ESummaryResult = await response.json();
         const articles: Partial<RankedArticle>[] = [];
@@ -131,7 +164,8 @@ async function fetchArticleDetails(pmids: string[]): Promise<Partial<RankedArtic
         return articles;
     } catch (error) {
         console.error(`Error fetching details for PMIDs:`, error);
-        return [];
+        if (error instanceof PubMedAPIError) throw error;
+        throw new PubMedAPIError('Failed to connect to PubMed to fetch details. Please check your network connection.');
     }
 }
 
@@ -327,9 +361,24 @@ interface DetailingData {
     }[];
 }
 
-export const generateResearchReport = async (input: ResearchInput, config: Settings['ai']): Promise<ResearchReport> => {
+const researchPhases = [
+  "Phase 1: Formulating Advanced PubMed Queries...",
+  "Phase 2: Searching PubMed & Fetching Article Details...",
+  "Phase 3: AI-Powered Ranking of Articles...",
+  "Phase 4: AI-Powered Detailed Analysis...",
+  "Phase 5: AI-Powered Synthesis...",
+  "Generating TL;DR Summary...",
+  "Finalizing Report..."
+];
+
+export const generateResearchReport = async (
+    input: ResearchInput, 
+    config: Settings['ai'],
+    onProgress: (phase: string) => void
+): Promise<ResearchReport> => {
   try {
     // === ORCHESTRATION STEP 1: GENERATE SEARCH QUERIES ===
+    onProgress(researchPhases[0]);
     const queryGenPrompt = buildQueryGenerationPrompt(input);
     const queryGenResponse = await ai.models.generateContent({
         model: config.model,
@@ -352,15 +401,18 @@ export const generateResearchReport = async (input: ResearchInput, config: Setti
             temperature: 0.1,
             thinkingConfig: { thinkingBudget: 0 }, // Optimization: Disable thinking for structured, low-latency tasks.
         }
+    }).catch(e => {
+        throw new GeminiAPIError(`Failed during the query generation phase. Details: ${e instanceof Error ? e.message : 'Unknown'}`);
     });
 
-    const queryData = JSON.parse(queryGenResponse.text);
+    const queryData = extractAndParseJson<{ queries: GeneratedQuery[] }>(queryGenResponse.text);
     const generatedQueries: GeneratedQuery[] = queryData.queries;
     if (!generatedQueries || generatedQueries.length === 0) {
-        throw new Error("AI failed to generate search queries. Please try a different topic.");
+        throw new OrchestrationError("AI failed to generate search queries. Please try a different topic.");
     }
     
     // === ORCHESTRATION STEP 2: SEARCH PUBMED & FETCH DETAILS ===
+    onProgress(researchPhases[1]);
     const allPmids = new Set<string>();
     const articlesPerQuery = Math.ceil(input.maxArticlesToScan / generatedQueries.length);
     for (const gq of generatedQueries) {
@@ -379,10 +431,11 @@ export const generateResearchReport = async (input: ResearchInput, config: Setti
     }
     const fetchedArticles = await fetchArticleDetails(uniquePmids);
     if (fetchedArticles.length === 0) {
-        throw new Error("Found article IDs but could not fetch their details from PubMed. The service may be temporarily unavailable.");
+        throw new OrchestrationError("Found article IDs but could not fetch their details from PubMed. The service may be temporarily unavailable.");
     }
     
     // === ORCHESTRATION STEP 3: AI-POWERED RANKING ===
+    onProgress(researchPhases[2]);
     const rankingPrompt = buildRankingPrompt(fetchedArticles, input.researchTopic);
     const rankingResponse = await ai.models.generateContent({
         model: config.model,
@@ -393,9 +446,11 @@ export const generateResearchReport = async (input: ResearchInput, config: Setti
             temperature: 0.1,
             thinkingConfig: { thinkingBudget: 0 }, // Optimization: Disable thinking for structured, low-latency tasks.
         }
+    }).catch(e => {
+        throw new GeminiAPIError(`Failed during the article ranking phase. Details: ${e instanceof Error ? e.message : 'Unknown'}`);
     });
 
-    const rankingData: RankingData = JSON.parse(rankingResponse.text);
+    const rankingData = extractAndParseJson<RankingData>(rankingResponse.text);
     const rankingMap = new Map(rankingData.rankedArticles.map(r => [r.pmid, { score: r.relevanceScore, explanation: r.relevanceExplanation }]));
 
     let allArticles: RankedArticle[] = fetchedArticles.map(article => ({
@@ -412,6 +467,7 @@ export const generateResearchReport = async (input: ResearchInput, config: Setti
 
 
     // === ORCHESTRATION STEP 4: AI-POWERED DETAILED ANALYSIS (IN BATCHES) ===
+    onProgress(researchPhases[3]);
     const articlesForDetailing = allArticles.slice(0, Math.min(allArticles.length, 50));
     
     const BATCH_SIZE = 10;
@@ -434,7 +490,8 @@ export const generateResearchReport = async (input: ResearchInput, config: Setti
     const batchResults = await Promise.allSettled(detailingPromises);
 
     let allDetailedArticles: DetailingData['detailedArticles'] = [];
-    let allGroundingChunks: any[] = [];
+    let allGroundingChunks: GroundingChunk[] = [];
+    let failedBatches = 0;
 
     batchResults.forEach((result, index) => {
         if (result.status === 'fulfilled') {
@@ -451,8 +508,13 @@ export const generateResearchReport = async (input: ResearchInput, config: Setti
             }
         } else {
             console.error(`Detailing batch ${index} failed:`, result.reason);
+            failedBatches++;
         }
     });
+
+    if (failedBatches > 0 && allDetailedArticles.length === 0) {
+        throw new GeminiAPIError("All AI analysis batches failed during the detailing phase. The report could not be completed.");
+    }
 
     const detailsMap = new Map(allDetailedArticles.map(d => [d.pmid, { summary: d.summary, keywords: d.keywords, articleType: d.articleType }]));
 
@@ -466,6 +528,7 @@ export const generateResearchReport = async (input: ResearchInput, config: Setti
 
 
     // === ORCHESTRATION STEP 5: AI-POWERED SYNTHESIS (ON TOP N) ===
+    onProgress(researchPhases[4]);
     const topNArticles = allArticles.slice(0, Math.min(allArticles.length, input.topNToSynthesize));
     let synthesis = "Synthesis could not be generated as there were not enough relevant articles found.";
     let aiGeneratedInsights: ResearchReport['aiGeneratedInsights'] = [];
@@ -482,20 +545,31 @@ export const generateResearchReport = async (input: ResearchInput, config: Setti
                 responseMimeType: 'application/json',
                 responseSchema: synthesisSchema,
             }
+        }).catch(e => {
+            throw new GeminiAPIError(`Failed during the final synthesis phase. Details: ${e instanceof Error ? e.message : 'Unknown'}`);
         });
-        const synthesisData = JSON.parse(synthesisResponse.text);
+        const synthesisData = extractAndParseJson<Pick<ResearchReport, 'synthesis' | 'aiGeneratedInsights' | 'overallKeywords'>>(synthesisResponse.text);
         synthesis = synthesisData.synthesis;
         aiGeneratedInsights = synthesisData.aiGeneratedInsights;
         overallKeywords = synthesisData.overallKeywords;
     }
 
+    // === ORCHESTRATION STEP 6: GENERATE TL;DR SUMMARY ===
+    let tldr = "";
+    if (synthesis && topNArticles.length > 0) {
+        onProgress(researchPhases[5]);
+        tldr = await generateTldrSummary(synthesis, config);
+    }
+
     // === FINAL ASSEMBLY ===
-    const sources: WebContent[] = allGroundingChunks
-        .map((chunk: any) => chunk.web)
-        .filter((web: WebContent | undefined): web is WebContent => !!web && !!web.uri && !!web.title);
+    onProgress(researchPhases[6]);
+    const sources = allGroundingChunks
+        .map((chunk: GroundingChunk) => chunk.web)
+        .filter((web): web is WebContent & { uri: string; title: string } => !!web && !!web.uri && !!web.title);
     const uniqueSources = Array.from(new Map(sources.map(s => [s.uri, s])).values());
     
     const finalReport: ResearchReport = {
+        tldr,
         generatedQueries,
         rankedArticles: allArticles,
         synthesis,
@@ -507,8 +581,13 @@ export const generateResearchReport = async (input: ResearchInput, config: Setti
 
   } catch (error) {
     console.error("Error generating research report:", error);
+    // Re-throw our custom errors directly for the UI
+    if (error instanceof PubMedAPIError || error instanceof GeminiAPIError || error instanceof OrchestrationError) {
+        throw error;
+    }
+    // For any other unexpected errors, wrap them in a generic Error for the UI's catch-all.
     const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
-    throw new Error(`Failed to generate report. A step in the AI orchestration process failed: ${errorMessage}`);
+    throw new Error(`An unexpected error occurred in the orchestration process: ${errorMessage}`);
   }
 };
 
@@ -577,9 +656,9 @@ export const findRelatedOnline = async (
         const summary = response.text;
         const chunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
         
-        const sources: WebContent[] = chunks
-            .map((chunk: any) => chunk.web)
-            .filter((web: WebContent | undefined): web is WebContent => !!web && !!web.uri && !!web.title);
+        const sources = chunks
+            .map((chunk) => chunk.web)
+            .filter((web): web is WebContent & { uri: string; title: string } => !!web && !!web.uri && !!web.title);
 
         // De-duplicate sources based on URI
         const uniqueSources = Array.from(new Map(sources.map(s => [s.uri, s])).values());
@@ -656,16 +735,16 @@ export const generateResearchAnalysis = async (
     }
 };
 
-export const generateTldrSummary = async (abstract: string, aiConfig: Settings['ai']): Promise<string> => {
+export const generateTldrSummary = async (textToSummarize: string, aiConfig: Settings['ai']): Promise<string> => {
     try {
         const prompt = `
-            You are a scientific communication expert. Your task is to provide an ultra-concise "TL;DR" (Too Long; Didn't Read) summary of the following academic abstract. 
+            You are a scientific communication expert. Your task is to provide an ultra-concise "TL;DR" (Too Long; Didn't Read) summary of the following academic text. 
             The summary should be one to two sentences long at most and capture the absolute core finding or conclusion of the research.
             Output only the summary text, nothing else.
 
-            **Abstract:**
+            **Text:**
             ---
-            ${abstract}
+            ${textToSummarize}
             ---
 
             **TL;DR Summary:**

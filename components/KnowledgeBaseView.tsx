@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
-import { exportKnowledgeBaseToPdf, exportToCsv } from '../services/exportService';
+import { exportKnowledgeBaseToPdf, exportToCsv, exportCitations } from '../services/exportService';
 import type { AggregatedArticle, KnowledgeBaseEntry, KnowledgeBaseFilter } from '../types';
 import { SearchIcon } from './icons/SearchIcon';
 import { DatabaseIcon } from './icons/DatabaseIcon';
@@ -28,12 +28,12 @@ interface KnowledgeBaseViewProps {
   onFilterChange: (newFilter: Partial<KnowledgeBaseFilter>) => void;
 }
 
-const PdfExportingOverlay: React.FC = () => (
+const ExportingOverlay: React.FC = () => (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center backdrop-blur-sm animate-fadeIn">
         <div className="flex flex-col items-center text-center p-8 bg-surface rounded-lg border border-border shadow-2xl">
             <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-brand-accent mb-6"></div>
-            <h2 className="text-xl font-semibold text-brand-accent mb-2">Generating PDF...</h2>
-            <p className="text-text-secondary">This may take a moment.</p>
+            <h2 className="text-xl font-semibold text-brand-accent mb-2">Preparing Export...</h2>
+            <p className="text-text-secondary">Your download will begin shortly.</p>
         </div>
     </div>
 );
@@ -284,7 +284,7 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({ onViewChan
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedArticle, setSelectedArticle] = useState<AggregatedArticle | null>(null);
     const [selectedPmids, setSelectedPmids] = useState<string[]>([]);
-    const [isExportingPdf, setIsExportingPdf] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [isCitationDropdownOpen, setIsCitationDropdownOpen] = useState(false);
     const [citationExportModalType, setCitationExportModalType] = useState<'bib' | 'ris' | null>(null);
@@ -343,79 +343,59 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({ onViewChan
     }, [knowledgeBase]);
 
 
-    const handleExportPdf = () => {
+    const handleExportPdf = async () => {
         const articlesToExport = selectedPmids.length > 0 ? uniqueArticles.filter(a => selectedPmids.includes(a.pmid)) : filteredArticles;
         if (articlesToExport.length === 0) {
             setNotification({ id: Date.now(), message: 'No articles selected to export.', type: 'error' });
             return;
         }
-        setIsExportingPdf(true);
-        setTimeout(() => {
-            try {
-                exportKnowledgeBaseToPdf(articlesToExport, 'Knowledge Base Selection', findRelatedInsights, settings.export.pdf);
-            } catch (error) {
-                console.error("PDF Export failed:", error);
-            } finally {
-                setIsExportingPdf(false);
-            }
-        }, 50);
+        setIsExporting(true);
+        try {
+            await exportKnowledgeBaseToPdf(articlesToExport, 'Knowledge Base Selection', findRelatedInsights, settings.export.pdf);
+        } catch (error) {
+            console.error("PDF Export failed:", error);
+            const message = error instanceof Error ? error.message : "An unknown error occurred.";
+            setNotification({id: Date.now(), message: `PDF Export failed: ${message}`, type: 'error'});
+        } finally {
+            setIsExporting(false);
+        }
     };
 
-    const handleExportCsv = () => {
+    const handleExportCsv = async () => {
         const articlesToExport = selectedPmids.length > 0 ? uniqueArticles.filter(a => selectedPmids.includes(a.pmid)) : filteredArticles;
         if (articlesToExport.length === 0) {
             setNotification({ id: Date.now(), message: 'No articles selected to export.', type: 'error' });
             return;
         }
-        exportToCsv(articlesToExport, 'knowledge_base', settings.export.csv);
+        setIsExporting(true);
+        try {
+            await exportToCsv(articlesToExport, 'knowledge_base', settings.export.csv);
+        } catch (e) {
+             console.error("CSV Export failed:", e);
+             const message = e instanceof Error ? e.message : 'An unknown error occurred.';
+             setNotification({id: Date.now(), message: `CSV export failed: ${message}`, type: 'error'});
+        } finally {
+            setIsExporting(false);
+        }
     };
 
-    const exportCitation = (type: 'bib' | 'ris') => {
-        const articles = uniqueArticles.filter(a => selectedPmids.includes(a.pmid));
-        if (articles.length === 0) {
+    const handleExportCitations = async (type: 'bib' | 'ris') => {
+        const articlesToExport = uniqueArticles.filter(a => selectedPmids.includes(a.pmid));
+        if (articlesToExport.length === 0) {
             setNotification({ id: Date.now(), message: 'No articles selected to export.', type: 'error' });
             return;
         }
-        let content = '';
-        const { citation: citationSettings } = settings.export;
-
-        const cleanForBibtex = (text: string) => text.replace(/([{}%])/g, '\\$1');
-
-        if (type === 'bib') {
-            content = articles.map(a => {
-                let entry = `@article{PMID:${a.pmid},\n  author  = {${a.authors.split(', ').join(' and ')}},\n  title   = {${cleanForBibtex(a.title)}},\n  journal = {${cleanForBibtex(a.journal)}},\n  year    = {${a.pubYear}},\n  pmid    = {${a.pmid}},\n`;
-                if (citationSettings.includeAbstract) entry += `  abstract = {${cleanForBibtex(a.summary)}},\n`;
-                if (citationSettings.includeKeywords && a.keywords?.length > 0) entry += `  keywords = {${a.keywords.join(', ')}},\n`;
-                
-                const notes = [];
-                if (citationSettings.includeTags && a.customTags?.length > 0) notes.push(`Custom Tags: ${a.customTags.join(', ')}`);
-                if (citationSettings.includePmcid && a.pmcId) notes.push(`PMCID: ${a.pmcId}`);
-                if (notes.length > 0) entry += `  note = {${cleanForBibtex(notes.join('; '))}}\n`;
-                
-                entry += `}`;
-                return entry;
-            }).join('\n\n');
-        } else { // RIS
-            content = articles.map(a => {
-                let entry = `TY  - JOUR\n`;
-                entry += a.authors.split(', ').map(author => `AU  - ${author}`).join('\n') + '\n';
-                entry += `TI  - ${a.title}\nJO  - ${a.journal}\nYR  - ${a.pubYear}\n`;
-                if (citationSettings.includeAbstract) entry += `AB  - ${a.summary}\n`;
-                if (citationSettings.includeKeywords && a.keywords?.length > 0) entry += `${a.keywords.map(kw => `KW  - ${kw}`).join('\n')}\n`;
-                if (citationSettings.includeTags && a.customTags?.length > 0) entry += `${a.customTags.map(tag => `KW  - ${tag}`).join('\n')}\n`; // Using KW for custom tags too
-                entry += `ID  - ${a.pmid}\n`;
-                if (citationSettings.includePmcid && a.pmcId) entry += `N1  - PMCID: ${a.pmcId}\n`; // N1 is often used for notes
-                entry += 'ER  - \n';
-                return entry;
-            }).join('\n');
+        setIsExporting(true);
+        try {
+            await exportCitations(articlesToExport, type, settings.export.citation);
+        } catch (e) {
+            console.error("Citation Export failed:", e);
+            const message = e instanceof Error ? e.message : 'An unknown error occurred.';
+            setNotification({ id: Date.now(), message: `Citation export failed: ${message}`, type: 'error' });
+        } finally {
+            setIsExporting(false);
+            setCitationExportModalType(null);
         }
-        const blob = new Blob([content], { type: 'application/octet-stream' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `citations.${type}`;
-        link.click();
-        URL.revokeObjectURL(link.href);
-        setCitationExportModalType(null);
     };
 
     useEffect(() => { setCurrentPage(1); setSelectedPmids([]); }, [filter, sortOrder]);
@@ -464,7 +444,7 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({ onViewChan
     
     return (
         <div className="animate-fadeIn">
-             {isExportingPdf && <PdfExportingOverlay />}
+             {isExporting && <ExportingOverlay />}
              {selectedArticle && <ArticleDetailPanel article={selectedArticle} onClose={() => setSelectedArticle(null)} findRelatedInsights={findRelatedInsights} />}
              {showDeleteModal && (
                 <ConfirmationModal
@@ -477,11 +457,12 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({ onViewChan
              )}
              {citationExportModalType && (
                 <ConfirmationModal
-                    onConfirm={() => exportCitation(citationExportModalType)}
+                    onConfirm={() => handleExportCitations(citationExportModalType)}
                     onCancel={() => setCitationExportModalType(null)}
                     title="Export Citations"
                     message={`Export ${selectedPmids.length} selected citations in ${citationExportModalType.toUpperCase()} format?`}
-                    confirmText="Export"
+                    confirmText={isExporting ? "Exporting..." : "Export"}
+                    isConfirmDisabled={isExporting}
                     confirmButtonClass="bg-brand-accent hover:bg-opacity-90"
                     titleClass="text-brand-accent"
                 />
@@ -493,39 +474,43 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({ onViewChan
             
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
                 <aside className="lg:col-span-1">
-                    <div className="sticky top-24 space-y-6 bg-surface p-4 rounded-lg border border-border">
-                        <h3 className="text-lg font-semibold text-text-primary border-b border-border pb-3">Filters</h3>
-                        <MultiSelectFilter title="Report Topic" options={filterOptions.topics} selected={filter.selectedTopics} onChange={s => onFilterChange({ selectedTopics: s })} />
-                        <MultiSelectFilter title="Custom Tags" options={filterOptions.tags} selected={filter.selectedTags} onChange={s => onFilterChange({ selectedTags: s })} />
-                        <MultiSelectFilter title="Article Type" options={filterOptions.articleTypes} selected={filter.selectedArticleTypes} onChange={s => onFilterChange({ selectedArticleTypes: s })} />
-                        <MultiSelectFilter title="Journal" options={filterOptions.journals} selected={filter.selectedJournals} onChange={s => onFilterChange({ selectedJournals: s })} />
-                        <label className="flex items-center space-x-3 cursor-pointer text-sm font-medium text-text-primary">
-                            <input type="checkbox" checked={filter.showOpenAccessOnly} onChange={e => onFilterChange({ showOpenAccessOnly: e.target.checked })} className="h-4 w-4 rounded border-border bg-background text-brand-accent focus:ring-brand-accent" />
-                            <span>Show Open Access Only</span>
-                        </label>
-                        <button onClick={clearFilters} className="w-full flex items-center justify-center text-sm px-3 py-2 rounded-md text-text-primary bg-background hover:bg-surface-hover border border-border transition-colors">
-                            <XCircleIcon className="h-4 w-4 mr-2" />
-                            Clear All Filters
-                        </button>
+                    <div className="sticky top-24">
+                        <div className="space-y-6 bg-surface p-4 rounded-lg border border-border">
+                            <h3 className="text-lg font-semibold text-text-primary border-b border-border pb-3">Filters</h3>
+                            <MultiSelectFilter title="Report Topic" options={filterOptions.topics} selected={filter.selectedTopics} onChange={s => onFilterChange({ selectedTopics: s })} />
+                            <MultiSelectFilter title="Custom Tags" options={filterOptions.tags} selected={filter.selectedTags} onChange={s => onFilterChange({ selectedTags: s })} />
+                            <MultiSelectFilter title="Article Type" options={filterOptions.articleTypes} selected={filter.selectedArticleTypes} onChange={s => onFilterChange({ selectedArticleTypes: s })} />
+                            <MultiSelectFilter title="Journal" options={filterOptions.journals} selected={filter.selectedJournals} onChange={s => onFilterChange({ selectedJournals: s })} />
+                            <label className="flex items-center space-x-3 cursor-pointer text-sm font-medium text-text-primary">
+                                <input type="checkbox" checked={filter.showOpenAccessOnly} onChange={e => onFilterChange({ showOpenAccessOnly: e.target.checked })} className="h-4 w-4 rounded border-border bg-background text-brand-accent focus:ring-brand-accent" />
+                                <span>Show Open Access Only</span>
+                            </label>
+                            <button onClick={clearFilters} className="w-full flex items-center justify-center text-sm px-3 py-2 rounded-md text-text-primary bg-background hover:bg-surface-hover border border-border transition-colors">
+                                <XCircleIcon className="h-4 w-4 mr-2" />
+                                Clear All Filters
+                            </button>
+                        </div>
                     </div>
                 </aside>
 
                 <main className="lg:col-span-3">
-                    <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
-                        <div className="relative w-full md:w-auto md:flex-grow">
-                             <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-text-secondary" />
-                             <label htmlFor="kb-search" className="sr-only">Search articles</label>
-                             <input type="text" id="kb-search" placeholder={`Search ${uniqueArticles.length} articles...`} value={filter.searchTerm} onChange={e => onFilterChange({ searchTerm: e.target.value })} className="w-full bg-surface border border-border rounded-md py-2 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-brand-accent"/>
-                        </div>
-                        <div className="flex items-center gap-4 w-full md:w-auto justify-between">
-                            <label htmlFor="kb-sort" className="sr-only">Sort order</label>
-                            <select id="kb-sort" value={sortOrder} onChange={e => setSortOrder(e.target.value as any)} className="bg-surface border border-border rounded-md py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-accent">
-                                <option value="relevance">Sort by Relevance</option>
-                                <option value="newest">Sort by Newest</option>
-                            </select>
-                             <div className="flex items-center bg-background p-1 rounded-lg border border-border">
-                                <button onClick={() => setViewMode('grid')} aria-label="Grid View" className={`p-1.5 rounded-md ${viewMode === 'grid' ? 'bg-brand-accent text-brand-text-on-accent' : 'text-text-secondary hover:bg-surface'}`}><GridViewIcon className="h-5 w-5"/></button>
-                                <button onClick={() => setViewMode('list')} aria-label="List View" className={`p-1.5 rounded-md ${viewMode === 'list' ? 'bg-brand-accent text-brand-text-on-accent' : 'text-text-secondary hover:bg-surface'}`}><ListViewIcon className="h-5 w-5"/></button>
+                    <div className="sticky top-24 z-10 bg-background/80 backdrop-blur-md py-4 -my-4 mb-4">
+                        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                            <div className="relative w-full md:w-auto md:flex-grow">
+                                 <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-text-secondary" />
+                                 <label htmlFor="kb-search" className="sr-only">Search articles</label>
+                                 <input type="text" id="kb-search" placeholder={`Search ${uniqueArticles.length} articles...`} value={filter.searchTerm} onChange={e => onFilterChange({ searchTerm: e.target.value })} className="w-full bg-surface border border-border rounded-md py-2 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-brand-accent"/>
+                            </div>
+                            <div className="flex items-center gap-4 w-full md:w-auto justify-between">
+                                <label htmlFor="kb-sort" className="sr-only">Sort order</label>
+                                <select id="kb-sort" value={sortOrder} onChange={e => setSortOrder(e.target.value as any)} className="bg-surface border border-border rounded-md py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-accent">
+                                    <option value="relevance">Sort by Relevance</option>
+                                    <option value="newest">Sort by Newest</option>
+                                </select>
+                                 <div className="flex items-center bg-background p-1 rounded-lg border border-border">
+                                    <button onClick={() => setViewMode('grid')} aria-label="Grid View" className={`p-1.5 rounded-md ${viewMode === 'grid' ? 'bg-brand-accent text-brand-text-on-accent' : 'text-text-secondary hover:bg-surface'}`}><GridViewIcon className="h-5 w-5"/></button>
+                                    <button onClick={() => setViewMode('list')} aria-label="List View" className={`p-1.5 rounded-md ${viewMode === 'list' ? 'bg-brand-accent text-brand-text-on-accent' : 'text-text-secondary hover:bg-surface'}`}><ListViewIcon className="h-5 w-5"/></button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -538,10 +523,10 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({ onViewChan
                              <div className="flex items-center gap-2 flex-wrap">
                                 <button onClick={() => setShowDeleteModal(true)} className="flex items-center text-sm px-3 py-1.5 rounded-md text-red-400 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20"><TrashIcon className="h-4 w-4 mr-2" />Delete</button>
                                 <div className="h-5 w-px bg-border"></div>
-                                <button onClick={handleExportPdf} className="flex items-center text-sm px-3 py-1.5 rounded-md text-text-primary bg-background hover:bg-surface-hover border border-border"><PdfIcon className="h-4 w-4 mr-2" />Export PDF</button>
-                                <button onClick={handleExportCsv} className="flex items-center text-sm px-3 py-1.5 rounded-md text-text-primary bg-background hover:bg-surface-hover border border-border"><CsvIcon className="h-4 w-4 mr-2" />Export CSV</button>
+                                <button onClick={handleExportPdf} disabled={isExporting} className="flex items-center text-sm px-3 py-1.5 rounded-md text-text-primary bg-background hover:bg-surface-hover border border-border disabled:opacity-50"><PdfIcon className="h-4 w-4 mr-2" />Export PDF</button>
+                                <button onClick={handleExportCsv} disabled={isExporting} className="flex items-center text-sm px-3 py-1.5 rounded-md text-text-primary bg-background hover:bg-surface-hover border border-border disabled:opacity-50"><CsvIcon className="h-4 w-4 mr-2" />Export CSV</button>
                                 <div className="relative">
-                                    <button onClick={() => setIsCitationDropdownOpen(prev => !prev)} className="flex items-center text-sm px-3 py-1.5 rounded-md text-text-primary bg-background hover:bg-surface-hover border border-border"><CitationIcon className="h-4 w-4 mr-2" />Export Citations <ChevronDownIcon className="h-4 w-4 ml-1"/></button>
+                                    <button onClick={() => setIsCitationDropdownOpen(prev => !prev)} disabled={isExporting} className="flex items-center text-sm px-3 py-1.5 rounded-md text-text-primary bg-background hover:bg-surface-hover border border-border disabled:opacity-50"><CitationIcon className="h-4 w-4 mr-2" />Export Citations <ChevronDownIcon className="h-4 w-4 ml-1"/></button>
                                      {isCitationDropdownOpen && (
                                         <div className="absolute right-0 mt-2 w-40 bg-surface border border-border rounded-md shadow-lg z-10">
                                             <button onClick={() => { setIsCitationDropdownOpen(false); setCitationExportModalType('bib'); }} className="w-full text-left px-3 py-2 text-sm hover:bg-surface-hover">BibTeX (.bib)</button>

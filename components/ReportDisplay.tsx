@@ -21,6 +21,8 @@ import { RelevanceScoreDisplay } from './RelevanceScoreDisplay';
 import { AcademicCapIcon } from './icons/AcademicCapIcon';
 import { WebIcon } from './icons/WebIcon';
 import { SemanticScholarIcon } from './icons/SemanticScholarIcon';
+import { useUI } from '../contexts/UIContext';
+import { ClipboardDocumentListIcon } from './icons/ClipboardDocumentListIcon';
 
 
 interface ReportDisplayProps {
@@ -238,7 +240,7 @@ const ArticleCard: React.FC<{
                             {isPmidCopied ? <CheckCircleIcon className="h-4 w-4 text-green-400"/> : <ClipboardIcon className="h-4 w-4" />}
                         </button>
                         <button onClick={handleCopyCitation} className="flex items-center hover:text-brand-accent transition-colors" title="Copy Citation" aria-label="Copy Citation">
-                            {isCitationCopied ? <CheckCircleIcon className="h-4 w-4 text-green-400"/> : <ClipboardIcon className="h-4 w-4" />}
+                            {isCitationCopied ? <CheckCircleIcon className="h-4 w-4 text-green-400"/> : <ClipboardDocumentListIcon className="h-4 w-4" />}
                         </button>
                     </div>
                 </div>
@@ -252,49 +254,54 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(({ report,
   const [modalState, setModalState] = useState<{ type: 'pdf' | 'csv' | 'insights' | 'save' } | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const { settings } = useSettings();
+  const { setNotification } = useUI();
 
 
-  const handlePdfExport = () => {
+  const handlePdfExport = async () => {
       setIsExporting(true);
-      setTimeout(() => {
-          try {
-              exportToPdf(report, input, settings.export.pdf);
-          } catch (e) {
-              console.error("PDF Export failed", e);
-          } finally {
-              setIsExporting(false);
-              setModalState(null);
-          }
-      }, 50);
+      setNotification({id: Date.now(), message: "Generating PDF... This may take a moment.", type: 'success' });
+      try {
+          await exportToPdf(report, input, settings.export.pdf);
+          setNotification({id: Date.now(), message: "PDF export complete.", type: 'success'});
+      } catch (e) {
+          console.error("PDF Export failed", e);
+          const message = e instanceof Error ? e.message : "An unknown error occurred.";
+          setNotification({id: Date.now(), message: `PDF Export failed: ${message}`, type: 'error'});
+      } finally {
+          setIsExporting(false);
+          setModalState(null);
+      }
   };
 
-  const handleCsvExport = () => {
+  const handleCsvExport = async () => {
       setIsExporting(true);
-      setTimeout(() => {
-          try {
-              const aggregatedArticles: AggregatedArticle[] = report.rankedArticles.map(a => ({...a, sourceReportTopic: input.researchTopic}));
-              exportToCsv(aggregatedArticles, input.researchTopic, settings.export.csv);
-          } catch (e) {
-              console.error("CSV Export failed", e);
-          } finally {
-              setIsExporting(false);
-              setModalState(null);
-          }
-      }, 50);
+      try {
+          const aggregatedArticles: AggregatedArticle[] = report.rankedArticles.map(a => ({...a, sourceReportTopic: input.researchTopic}));
+          await exportToCsv(aggregatedArticles, input.researchTopic, settings.export.csv);
+          setNotification({id: Date.now(), message: "CSV export complete.", type: 'success'});
+      } catch (e) {
+          console.error("CSV Export failed", e);
+          const message = e instanceof Error ? e.message : "An unknown error occurred.";
+          setNotification({id: Date.now(), message: `CSV Export failed: ${message}`, type: 'error'});
+      } finally {
+          setIsExporting(false);
+          setModalState(null);
+      }
   };
 
-  const handleInsightsExport = () => {
+  const handleInsightsExport = async () => {
       setIsExporting(true);
-      setTimeout(() => {
-          try {
-              exportInsightsToCsv(report.aiGeneratedInsights, input.researchTopic);
-          } catch (e) {
-              console.error("Insights CSV Export failed", e);
-          } finally {
-              setIsExporting(false);
-              setModalState(null);
-          }
-      }, 50);
+      try {
+          await exportInsightsToCsv(report.aiGeneratedInsights, input.researchTopic);
+          setNotification({id: Date.now(), message: "Insights CSV export complete.", type: 'success'});
+      } catch (e) {
+          console.error("Insights CSV Export failed", e);
+          const message = e instanceof Error ? e.message : "An unknown error occurred.";
+          setNotification({id: Date.now(), message: `Insights CSV export failed: ${message}`, type: 'error'});
+      } finally {
+          setIsExporting(false);
+          setModalState(null);
+      }
   };
   
   return (
@@ -326,7 +333,10 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(({ report,
                             Saved in Knowledge Base
                         </div>
                     ) : (
-                        <button onClick={() => setModalState({ type: 'save' })} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-brand-text-on-accent bg-brand-accent hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface focus:ring-brand-accent">
+                        <button 
+                            onClick={() => setModalState({ type: 'save' })} 
+                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-brand-text-on-accent bg-brand-accent hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface focus:ring-brand-accent animate-pulseGlow"
+                        >
                             <BookmarkSquareIcon className="h-5 w-5 mr-2" />
                             Save to Knowledge Base
                         </button>
@@ -334,6 +344,37 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(({ report,
                 </div>
             </div>
         </div>
+
+         <div className="flex-shrink-0 border-b border-border p-4 sm:p-6 bg-background/30">
+            <h3 className="text-lg font-bold text-text-primary mb-4">Report Overview</h3>
+            {report.tldr && (
+                <div className="mb-6">
+                    <h4 className="text-sm font-semibold text-brand-accent uppercase tracking-wider mb-2">TL;DR Summary</h4>
+                    <blockquote className="text-sm text-text-primary bg-surface/50 p-3 rounded-md border-l-4 border-brand-accent italic">
+                        {report.tldr}
+                    </blockquote>
+                </div>
+            )}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+                <div className="bg-surface/50 p-3 rounded-md border border-border">
+                    <p className="text-2xl font-bold brand-gradient-text">{report.rankedArticles.length}</p>
+                    <p className="text-xs text-text-secondary uppercase tracking-wider">Articles Analyzed</p>
+                </div>
+                <div className="bg-surface/50 p-3 rounded-md border border-border">
+                    <p className="text-2xl font-bold brand-gradient-text truncate" title={report.overallKeywords.length > 0 ? report.overallKeywords[0].keyword : 'N/A'}>{report.overallKeywords.length > 0 ? report.overallKeywords[0].keyword : 'N/A'}</p>
+                    <p className="text-xs text-text-secondary uppercase tracking-wider">Top Theme</p>
+                </div>
+                <div className="bg-surface/50 p-3 rounded-md border border-border">
+                    <p className="text-2xl font-bold brand-gradient-text">{report.aiGeneratedInsights.length}</p>
+                    <p className="text-xs text-text-secondary uppercase tracking-wider">AI Insights</p>
+                </div>
+                <div className="bg-surface/50 p-3 rounded-md border border-border">
+                    <p className="text-2xl font-bold brand-gradient-text">{input.dateRange === 'any' ? 'Any' : `Last ${input.dateRange}y`}</p>
+                    <p className="text-xs text-text-secondary uppercase tracking-wider">Date Range</p>
+                </div>
+            </div>
+        </div>
+
 
         <div className="flex-grow">
             <AccordionSection title="Executive Synthesis" defaultOpen>
@@ -361,22 +402,19 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(({ report,
             </AccordionSection>
             
             <AccordionSection title="Overall Keywords & Themes" count={report.overallKeywords.length}>
-                <div className="space-y-3 p-2">
+                 <div className="flex flex-wrap gap-3 p-2">
                     {report.overallKeywords && report.overallKeywords.length > 0 ? (
                         report.overallKeywords
                             .sort((a, b) => b.frequency - a.frequency)
                             .map((kw, index) => (
-                                <div key={kw.keyword} className="grid grid-cols-4 items-center gap-4 text-sm animate-fadeIn" style={{ animationDelay: `${index * 50}ms` }}>
-                                    <span className="col-span-1 text-text-primary truncate font-medium" title={kw.keyword}>{kw.keyword}</span>
-                                    <div className="col-span-3 flex items-center">
-                                        <div className="w-full bg-border rounded-full h-2.5 relative overflow-hidden">
-                                            <div 
-                                                className="bg-gradient-to-r from-brand-secondary to-brand-accent h-2.5 rounded-full transition-all duration-500 ease-out"
-                                                style={{ width: `${(kw.frequency / Math.max(1, report.rankedArticles.length)) * 100}%` }}
-                                            ></div>
-                                        </div>
-                                        <span className="ml-3 font-mono text-xs text-text-secondary w-10 text-right">{kw.frequency} / {report.rankedArticles.length}</span>
-                                    </div>
+                                <div 
+                                    key={kw.keyword} 
+                                    className="flex items-center gap-2 bg-brand-accent/10 text-brand-accent text-sm font-medium px-3 py-1.5 rounded-full border border-brand-accent/20 transition-all duration-300 hover:bg-brand-accent/20 animate-fadeIn"
+                                    style={{ animationDelay: `${index * 50}ms` }}
+                                    title={`${kw.frequency} of ${report.rankedArticles.length} articles mention this theme`}
+                                >
+                                    <span>{kw.keyword}</span>
+                                    <span className="text-xs font-mono bg-brand-accent/20 text-brand-accent/80 rounded-full px-2 py-0.5">{kw.frequency}</span>
                                 </div>
                             ))
                     ) : (
@@ -448,6 +486,7 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(({ report,
             title="Confirm Export"
             message={modalState.type === 'insights' ? `You are about to export the ${report.aiGeneratedInsights.length} AI-generated insights as a CSV file. Continue?` : `You are about to export this report (${report.rankedArticles.length} articles) as a ${modalState.type.toUpperCase()} file. Continue?`}
             confirmText={isExporting ? 'Exporting...' : 'Yes, Export'}
+            isConfirmDisabled={isExporting}
             confirmButtonClass="bg-brand-accent hover:bg-opacity-90"
             titleClass="text-brand-accent"
         />

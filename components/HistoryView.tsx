@@ -172,9 +172,9 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ onViewReport }) => {
                             </p>
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0 self-start sm:self-center">
-                            <button onClick={() => handleEdit(entry)} className="p-2 rounded-md text-text-secondary hover:bg-background hover:text-text-primary" aria-label="Edit title"><PencilIcon className="h-4 w-4"/></button>
-                            <button onClick={() => setQuickViewEntry(entry)} className="p-2 rounded-md text-text-secondary hover:bg-background hover:text-text-primary" aria-label="Quick view"><EyeIcon className="h-5 w-5"/></button>
-                            <button onClick={() => onViewReport(entry)} className="px-3 py-1.5 border border-border text-xs font-medium rounded-md shadow-sm text-text-primary bg-surface hover:bg-surface-hover">View Full Report</button>
+                            <button onClick={() => handleEdit(entry)} className="p-2 rounded-md text-text-secondary hover:bg-background hover:text-text-primary transition-colors" aria-label="Edit title"><PencilIcon className="h-4 w-4"/></button>
+                            <button onClick={() => setQuickViewEntry(entry)} className="p-2 rounded-md text-text-secondary hover:bg-background hover:text-text-primary transition-colors" aria-label="Quick view"><EyeIcon className="h-5 w-5"/></button>
+                            <button onClick={() => onViewReport(entry)} className="px-3 py-1.5 border border-border text-xs font-medium rounded-md shadow-sm text-text-primary bg-surface hover:bg-surface-hover hover:shadow-md hover:shadow-brand-accent/20 transition-all duration-200">View Full Report</button>
                         </div>
                     </div>
                 ))}

@@ -1,5 +1,3 @@
-
-
 import React, { useState, useCallback, useEffect } from 'react';
 import { OnboardingView } from './components/OnboardingView';
 import { Header } from './components/Header';
@@ -15,11 +13,12 @@ import { ConfirmationModal } from './components/ConfirmationModal';
 import { HistoryView } from './components/HistoryView';
 import { ResearchView } from './components/ResearchView';
 import { useResearchAssistant } from './hooks/useResearchAssistant';
-import { generateResearchReport } from './services/geminiService';
+import { generateResearchReport, PubMedAPIError, GeminiAPIError, OrchestrationError } from './services/geminiService';
 import { OrchestratorView } from './components/OrchestratorView';
 import { KnowledgeBaseProvider, useKnowledgeBase } from './contexts/KnowledgeBaseContext';
 import { UIProvider, useUI } from './contexts/UIContext';
 import type { View } from './contexts/UIContext';
+import { BackToTopButton } from './components/BackToTopButton';
 
 
 const AppLayout: React.FC = () => {
@@ -33,7 +32,7 @@ const AppLayout: React.FC = () => {
   // App-wide State from contexts
   const { settings, updateSettings } = useSettings();
   const { currentView, notification, setNotification, isSettingsDirty, setIsSettingsDirty, pendingNavigation, setPendingNavigation, setCurrentView, showOnboarding, setShowOnboarding } = useUI();
-  const { knowledgeBase, saveReport, clearKnowledgeBase, updateReportTitle, updateTags, deleteArticles, onMergeDuplicates, addKnowledgeBaseEntries, onPruneByRelevance, uniqueArticles } = useKnowledgeBase();
+  const kb = useKnowledgeBase();
 
 
   const [isCurrentReportSaved, setIsCurrentReportSaved] = useState<boolean>(false);
@@ -68,6 +67,8 @@ const AppLayout: React.FC = () => {
     showOpenAccessOnly: false,
   });
 
+  const [showBackToTop, setShowBackToTop] = useState(false);
+
 
   useEffect(() => {
       document.documentElement.className = settings.theme;
@@ -93,14 +94,14 @@ const AppLayout: React.FC = () => {
       }
   }, [settings.theme, settings.performance.enableAnimations, settings.appearance.fontFamily, settings.appearance.customColors]);
 
-  const loadingPhases = [
-    "Phase 1: Formulating Advanced PubMed Queries...",
-    "Phase 2: Retrieving and Scanning Article Abstracts...",
-    "Phase 3: Filtering Articles Based on Criteria...",
-    "Phase 4: Ranking Articles for Relevance...",
-    "Phase 5: Synthesizing Top Findings & Extracting Keywords...",
-    "Finalizing Report..."
-  ];
+  useEffect(() => {
+    const handleScroll = () => {
+        setShowBackToTop(window.scrollY > 400);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const handleFormSubmit = useCallback(async (data: ResearchInput) => {
     setIsLoading(true);
@@ -110,39 +111,37 @@ const AppLayout: React.FC = () => {
     setCurrentView('orchestrator');
     setIsCurrentReportSaved(false); // A new report is never saved by default
 
-    let phaseIndex = 0;
-    setCurrentPhase(loadingPhases[0]);
-    const phaseInterval = setInterval(() => {
-      phaseIndex = (phaseIndex + 1);
-      if(phaseIndex < loadingPhases.length) {
-          setCurrentPhase(loadingPhases[phaseIndex]);
-      } else {
-          clearInterval(phaseInterval);
-      }
-    }, 4000);
-
     try {
-      const generatedReport = await generateResearchReport(data, settings.ai);
+      const generatedReport = await generateResearchReport(data, settings.ai, setCurrentPhase);
       setReport(generatedReport);
        if (settings.defaults.autoSaveReports) {
-            const saved = saveReport(data, generatedReport);
+            const saved = kb.saveReport(data, generatedReport);
             setIsCurrentReportSaved(saved);
         }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An unknown error occurred");
+        let errorMessage = "An unknown error occurred during the report generation. Please try again.";
+        if (err instanceof PubMedAPIError) {
+            errorMessage = `PubMed API Error: ${err.message} The service may be temporarily unavailable.`;
+        } else if (err instanceof GeminiAPIError) {
+            errorMessage = `AI Model Error: ${err.message} This might be a temporary issue with the AI service or your configuration.`;
+        } else if (err instanceof OrchestrationError) {
+            errorMessage = `Process Error: ${err.message} Please try adjusting your research topic or parameters.`;
+        } else if (err instanceof Error) {
+            errorMessage = `An unexpected error occurred: ${err.message}. Please check your internet connection.`;
+        }
+        setError(errorMessage);
     } finally {
-      clearInterval(phaseInterval);
       setIsLoading(false);
       setCurrentPhase('');
     }
-  }, [settings.ai, settings.defaults.autoSaveReports, saveReport, setCurrentView]);
+  }, [settings.ai, settings.defaults.autoSaveReports, kb, setCurrentView]);
 
   const handleSaveReport = useCallback(() => {
     if (report && researchInput) {
-      const saved = saveReport(researchInput, report);
+      const saved = kb.saveReport(researchInput, report);
       setIsCurrentReportSaved(saved);
     }
-  }, [report, researchInput, saveReport]);
+  }, [report, researchInput, kb]);
   
   const handleNewSearch = useCallback(() => {
     setReport(null);
@@ -151,7 +150,7 @@ const AppLayout: React.FC = () => {
   }, []);
 
   const handleClearKnowledgeBase = () => {
-      clearKnowledgeBase();
+      kb.clearKnowledgeBase();
       // Also clear current report if it's from the KB
       if (isCurrentReportSaved) {
           setReport(null);
@@ -161,7 +160,7 @@ const AppLayout: React.FC = () => {
   };
 
   const handleTagsUpdate = useCallback((pmid: string, newTags: string[]) => {
-      updateTags(pmid, newTags);
+      kb.updateTags(pmid, newTags);
        // Also update the current report if it's being displayed
       if (report && report.rankedArticles.some(a => a.pmid === pmid)) {
           setReport(prevReport => {
@@ -174,7 +173,7 @@ const AppLayout: React.FC = () => {
               };
           });
       }
-  }, [report, updateTags]);
+  }, [report, kb]);
 
   const handleConfirmNavigation = () => {
         if (pendingNavigation) {
@@ -244,7 +243,7 @@ const AppLayout: React.FC = () => {
       case 'help':
         return <HelpView initialTab={initialHelpTab} onTabConsumed={() => setInitialHelpTab(null)} />;
       case 'dashboard':
-        return <DashboardView entries={knowledgeBase} onFilterChange={handleKbFilterChange} onViewChange={handleViewChange}/>;
+        return <DashboardView entries={kb.knowledgeBase} onFilterChange={handleKbFilterChange} onViewChange={handleViewChange}/>;
       case 'history':
         return <HistoryView onViewReport={handleViewReportFromHistory} />;
       case 'research':
@@ -290,8 +289,8 @@ const AppLayout: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Header 
-        knowledgeBaseArticleCount={uniqueArticles.length}
-        hasReports={knowledgeBase.length > 0}
+        knowledgeBaseArticleCount={kb.uniqueArticles.length}
+        hasReports={kb.knowledgeBase.length > 0}
         isResearching={isResearching}
       />
       <main className="flex-grow container mx-auto p-4 sm:p-6 lg:p-8">
@@ -320,6 +319,7 @@ const AppLayout: React.FC = () => {
                 titleClass="text-red-400"
             />
         )}
+        <BackToTopButton isVisible={showBackToTop} />
     </div>
   );
 }

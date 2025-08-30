@@ -37,17 +37,17 @@ This application significantly reduces the manual effort of literature reviews b
     -   **Merge Duplicates:** Automatically find and merge duplicate articles, keeping only the entry with the highest relevance score.
     -   **Prune by Relevance:** Clean your library by removing articles below a specified relevance score threshold.
 
--   **💾 Robust Data Management & Export:**
-    -   **PDF:** Generate comprehensive, professionally formatted PDFs for reports and knowledge base selections, with a customizable cover page and content sections.
-    -   **CSV:** Export raw article data with configurable columns and delimiters for spreadsheets.
-    -   **Citations:** Get enhanced citation files (**BibTeX**, **RIS**) with configurable content (abstracts, keywords, tags) for reference managers like Zotero or Mendeley.
-    -   **JSON:** Back up and restore your entire research history, knowledge base, or settings with a single click.
+-   **💾 Sophisticated Data Management & Export:**
+    -   **Professional PDFs:** Generate comprehensive, professionally formatted PDFs for reports and knowledge base selections, featuring an elegant layout, clickable links, a cover page, and an auto-generated table of contents.
+    -   **Enhanced CSVs:** Export rich article data with extra fields (e.g., direct search links for Google Scholar) and configurable columns for spreadsheets.
+    -   **Rich Citations:** Get enhanced citation files (**BibTeX**, **RIS**) with configurable content (abstracts, keywords, tags) for reference managers like Zotero or Mendeley.
+    -   **Complete JSON Backups:** Back up and restore your entire research history, knowledge base, settings, and presets with a single click.
 
 -   **⚙️ Deep Customization:** A detailed settings panel allows users to manage themes, AI behavior (persona, language, creativity), form defaults, and export configurations.
 
--   **✨ Modern, Cybernetic UI/UX:** A completely redesigned user interface with a technological design, subtle animations, and improved readability for a first-class user experience.
+-   **🚀 High-Performance Architecture:** Exports are processed in a background web worker, ensuring the user interface remains fast and responsive even when generating large reports.
 
--   **🔒 Privacy-First Architecture:** All data, including research history and settings, is stored **exclusively in your local browser storage**. No data is ever uploaded to a server, ensuring complete privacy.
+-   **🔒 Privacy-First by Design:** All data, including research history and settings, is stored **exclusively in your local browser storage**. No data is ever uploaded to a server, ensuring complete privacy.
 
 ## Core Workflows
 
@@ -65,6 +65,7 @@ This is for fast, focused analysis. You can paste an abstract to get a summary, 
 
 -   **Frontend:** React, TypeScript
 -   **AI Model:** Google Gemini API (`@google/genai`)
+-   **Performance:** Web Workers for background processing
 -   **Styling:** Tailwind CSS
 -   **Charts:** Chart.js, react-chartjs-2, chartjs-chart-treemap
 -   **PDF Generation:** jsPDF
@@ -188,17 +189,17 @@ When deploying to a hosting provider (e.g., Vercel, Netlify), you must use their
     -   **Duplikate zusammenführen:** Finden und entfernen Sie automatisch doppelte Artikel und behalten Sie nur den Eintrag mit der höchsten Relevanzbewertung.
     -   **Nach Relevanz bereinigen:** Bereinigen Sie Ihre Bibliothek, indem Sie Artikel unterhalb einer festgelegten Relevanzschwelle entfernen.
 
--   **💾 Robuste Datenverwaltung & Export:**
-    -   **PDF:** Erstellen Sie umfassende, professionell formatierte PDFs für Berichte und Auswahlen aus der Wissensdatenbank, mit anpassbarer Titelseite und Inhaltsbereichen.
-    -   **CSV:** Exportieren Sie Rohdaten von Artikeln mit konfigurierbaren Spalten und Trennzeichen für Tabellenkalkulationen.
-    -   **Zitate:** Erhalten Sie erweiterte Zitatdateien (**BibTeX**, **RIS**) mit konfigurierbarem Inhalt (Abstracts, Schlüsselwörter, Tags) für Literaturverwaltungsprogramme wie Zotero oder Mendeley.
-    -   **JSON:** Sichern und stellen Sie Ihren gesamten Forschungsverlauf, Ihre Wissensdatenbank oder Ihre Einstellungen mit einem Klick wieder her.
+-   **💾 Hochentwickelte Datenverwaltung & Export:**
+    -   **Professionelle PDFs:** Erstellen Sie umfassende, professionell formatierte PDFs für Berichte und Auswahlen aus der Wissensdatenbank, mit elegantem Layout, klickbaren Links, einer Titelseite und einem automatisch generierten Inhaltsverzeichnis.
+    -   **Erweiterte CSVs:** Exportieren Sie reichhaltige Artikeldaten mit zusätzlichen Feldern (z. B. direkte Suchlinks für Google Scholar) und konfigurierbaren Spalten für Tabellenkalkulationen.
+    -   **Reichhaltige Zitate:** Erhalten Sie erweiterte Zitatdateien (**BibTeX**, **RIS**) mit konfigurierbarem Inhalt (Abstracts, Schlüsselwörter, Tags) für Literaturverwaltungsprogramme wie Zotero oder Mendeley.
+    -   **Vollständige JSON-Backups:** Sichern und stellen Sie Ihren gesamten Forschungsverlauf, Ihre Wissensdatenbank, Ihre Einstellungen und Voreinstellungen mit einem Klick wieder her.
 
 -   **⚙️ Umfassende Anpassungsmöglichkeiten:** Ein detailliertes Einstellungsfeld ermöglicht es Benutzern, Themes, das KI-Verhalten (Persona, Sprache, Kreativität), Formular-Standardwerte und Exportkonfigurationen zu verwalten.
 
--   **✨ Modernes, kybernetisches UI/UX:** Eine komplett überarbeitete Benutzeroberfläche mit einem technologischen Design, subtilen Animationen und verbesserter Lesbarkeit für ein erstklassiges Benutzererlebnis.
+-   **🚀 Hochleistungsarchitektur:** Exporte werden in einem Hintergrund-Web-Worker verarbeitet, sodass die Benutzeroberfläche auch beim Erstellen großer Berichte schnell und reaktionsschnell bleibt.
 
--   **🔒 Datenschutz-orientierte Architektur:** Alle Daten, einschließlich des Forschungsverlaufs und der Einstellungen, werden **ausschließlich im lokalen Speicher Ihres Browsers** abgelegt. Es werden niemals Daten auf einen Server hochgeladen, was vollständige Privatsphäre gewährleistet.
+-   **🔒 Datenschutz-orientiertes Design:** Alle Daten, einschließlich des Forschungsverlaufs und der Einstellungen, werden **ausschließlich im lokalen Speicher Ihres Browsers** abgelegt. Es werden niemals Daten auf einen Server hochgeladen, was vollständige Privatsphäre gewährleistet.
 
 ## Zentrale Arbeitsabläufe
 
@@ -216,6 +217,7 @@ Dies ist für schnelle, fokussierte Analysen. Sie können einen Abstract einfüg
 
 -   **Frontend:** React, TypeScript
 -   **KI-Modell:** Google Gemini API (`@google/genai`)
+-   **Performance:** Web Workers für Hintergrundverarbeitung
 -   **Styling:** Tailwind CSS
 -   **Diagramme:** Chart.js, react-chartjs-2, chartjs-chart-treemap
 -   **PDF-Erzeugung:** jsPDF

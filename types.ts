@@ -1,5 +1,9 @@
 
 
+
+
+
+
 export const ARTICLE_TYPES = [
   'Randomized Controlled Trial', 
   'Meta-Analysis', 
@@ -43,6 +47,7 @@ export interface OverallKeyword {
 }
 
 export interface ResearchReport {
+  tldr?: string;
   generatedQueries: GeneratedQuery[];
   rankedArticles: RankedArticle[];
   synthesis: string;
@@ -53,6 +58,7 @@ export interface ResearchReport {
 
 export interface KnowledgeBaseEntry {
   id: string;
+  version?: '1.0'; // For future data migrations
   input: ResearchInput;
   report: ResearchReport;
 }
@@ -61,10 +67,11 @@ export type AggregatedArticle = RankedArticle & {
     sourceReportTopic: string;
 };
 
-export const CSV_EXPORT_COLUMNS: (keyof AggregatedArticle | 'URL' | 'PMCID_URL')[] = [
+export const CSV_EXPORT_COLUMNS: (keyof AggregatedArticle | 'URL' | 'PMCID_URL' | 'GOOGLE_SCHOLAR_URL' | 'SEMANTIC_SCHOLAR_URL')[] = [
     'pmid', 'pmcId', 'title', 'authors', 'journal', 'pubYear', 'summary', 
     'relevanceScore', 'relevanceExplanation', 'keywords', 'customTags', 
-    'sourceReportTopic', 'isOpenAccess', 'articleType', 'URL', 'PMCID_URL'
+    'sourceReportTopic', 'isOpenAccess', 'articleType', 'URL', 'PMCID_URL',
+    'GOOGLE_SCHOLAR_URL', 'SEMANTIC_SCHOLAR_URL'
 ];
 
 export interface Preset {
@@ -149,12 +156,12 @@ export interface SimilarArticle {
 
 // Types for Google Search grounding results
 export interface WebContent {
-  uri: string;
-  title: string;
+  uri?: string;
+  title?: string;
 }
 
 export interface GroundingChunk {
-  web: WebContent;
+  web?: WebContent;
 }
 
 export interface OnlineFindings {

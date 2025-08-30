@@ -9,9 +9,10 @@ interface ConfirmationModalProps {
     confirmText: string;
     confirmButtonClass?: string;
     titleClass?: string;
+    isConfirmDisabled?: boolean;
 }
 
-export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({ onConfirm, onCancel, title, message, confirmText, confirmButtonClass = 'bg-red-600 hover:bg-red-700', titleClass = 'text-red-400' }) => {
+export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({ onConfirm, onCancel, title, message, confirmText, confirmButtonClass = 'bg-red-600 hover:bg-red-700', titleClass = 'text-red-400', isConfirmDisabled = false }) => {
     const modalRef = useFocusTrap<HTMLDivElement>(true);
 
     return (
@@ -23,7 +24,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({ onConfirm,
                     <button onClick={onCancel} className="px-4 py-2 border border-border text-sm font-medium rounded-md shadow-sm text-text-primary bg-background hover:bg-surface-hover">
                         Cancel
                     </button>
-                    <button onClick={onConfirm} className={`px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white ${confirmButtonClass}`}>
+                    <button onClick={onConfirm} disabled={isConfirmDisabled} className={`px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white disabled:opacity-50 disabled:cursor-not-allowed ${confirmButtonClass}`}>
                         {confirmText}
                     </button>
                 </div>

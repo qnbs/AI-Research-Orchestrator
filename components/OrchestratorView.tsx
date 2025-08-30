@@ -2,7 +2,7 @@ import React from 'react';
 import { InputForm } from './InputForm';
 import { ReportDisplay } from './ReportDisplay';
 import { LoadingIndicator } from './LoadingIndicator';
-import { OrchestratorDashboard } from './OrchestratorDashboard';
+import { Welcome } from './Welcome';
 import { ResearchInput, ResearchReport, KnowledgeBaseEntry, Settings } from '../types';
 import { useKnowledgeBase } from '../contexts/KnowledgeBaseContext';
 
@@ -71,7 +71,7 @@ export const OrchestratorView: React.FC<OrchestratorViewProps> = ({
             )}
 
             {!isLoading && !error && !report && (
-                <OrchestratorDashboard 
+                <Welcome 
                     entries={knowledgeBase} 
                     onViewReport={handleViewReportFromHistory} 
                     onStartNewReview={handleStartNewReview}

@@ -6,12 +6,13 @@ interface LoadingIndicatorProps {
 
 const loadingPhases = [
   "Phase 1: Formulating Advanced PubMed Queries...",
-  "Phase 2: Retrieving and Scanning Article Abstracts...",
-  "Phase 3: Filtering Articles Based on Criteria...",
-  "Phase 4: Ranking Articles for Relevance...",
-  "Phase 5: Synthesizing Top Findings & Extracting Keywords...",
+  "Phase 2: Searching PubMed & Fetching Article Details...",
+  "Phase 3: AI-Powered Ranking of Articles...",
+  "Phase 4: AI-Powered Detailed Analysis...",
+  "Phase 5: AI-Powered Synthesis...",
   "Finalizing Report..."
 ];
+
 
 const phaseDetails: Record<string, string[]> = {
   "Phase 1: Formulating Advanced PubMed Queries...": [
@@ -19,26 +20,25 @@ const phaseDetails: Record<string, string[]> = {
     "AI is constructing advanced boolean search strings...",
     "Finalizing query logic for optimal retrieval...",
   ],
-  "Phase 2: Retrieving and Scanning Article Abstracts...": [
+  "Phase 2: Searching PubMed & Fetching Article Details...": [
     "Executing queries against live PubMed database...",
     "Fetching article metadata (titles, authors, journals)...",
     "Gathering article identifiers for analysis...",
   ],
-  "Phase 3: Filtering Articles Based on Criteria...": [
-    "AI is finding abstracts for fetched articles...",
-    "Applying date range and article type filters...",
-    "Performing initial screening of content...",
-  ],
-  "Phase 4: Ranking Articles for Relevance...": [
+  "Phase 3: AI-Powered Ranking of Articles...": [
+    "Preparing articles for evaluation...",
     "AI is scoring each article for relevance (1-100)...",
     "Writing relevance explanations...",
-    "Sorting articles from highest to lowest score...",
   ],
-  "Phase 5: Synthesizing Top Findings & Extracting Keywords...": [
+  "Phase 4: AI-Powered Detailed Analysis...": [
+    "Batching articles for detailed enrichment...",
+    "AI is finding abstracts and classifying article types...",
+    "Extracting 3-5 keywords from each top article...",
+  ],
+  "Phase 5: AI-Powered Synthesis...": [
     "Selecting top N articles for synthesis...",
     "Analyzing top articles for common themes...",
-    "Extracting 3-5 keywords from each top article...",
-    "Generating AI-powered insights...",
+    "Generating AI-powered insights from the literature...",
   ],
   "Finalizing Report...": [
     "Generating executive narrative synthesis...",
