@@ -1,6 +1,5 @@
 
 
-
 import { GoogleGenAI, Type } from "@google/genai";
 import type { ResearchInput, ResearchReport, Settings, RankedArticle, SimilarArticle, OnlineFindings, WebContent, ResearchAnalysis, GeneratedQuery } from '../types';
 
@@ -9,6 +8,42 @@ if (!process.env.API_KEY) {
 }
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
+/**
+ * Extracts a JSON object or array from a string that may contain other text,
+ * such as markdown code fences.
+ * @param text The string to extract JSON from.
+ * @returns The parsed JSON object.
+ * @throws An error if no valid JSON is found or if parsing fails.
+ */
+function extractAndParseJson<T>(text: string): T {
+    // Regex to find JSON in ```json ... ```, or a raw JSON object/array.
+    const jsonRegex = /```json\s*([\s\S]*?)\s*```|({[\s\S]*})|(\[[\s\S]*\])/m;
+    const match = text.match(jsonRegex);
+
+    if (match) {
+        // Find the first non-null capture group.
+        const jsonString = match[1] || match[2] || match[3];
+        if (jsonString) {
+            try {
+                return JSON.parse(jsonString) as T;
+            } catch (error) {
+                console.error("Failed to parse extracted JSON:", jsonString, error);
+                throw new Error(`AI response contained malformed JSON. Content: ${jsonString.substring(0, 200)}...`);
+            }
+        }
+    }
+    
+    // As a fallback for cases where the model returns JSON without fences,
+    // try parsing the whole string.
+    try {
+        return JSON.parse(text) as T;
+    } catch(e) {
+        // If everything fails, throw a clear error.
+        console.error("Could not find any valid JSON in the AI response:", text);
+        throw new Error("AI response did not contain valid JSON.");
+    }
+}
 
 
 // --- PubMed API Client ---
@@ -99,12 +134,27 @@ async function fetchArticleDetails(pmids: string[]): Promise<Partial<RankedArtic
     }
 }
 
-// --- AI Prompt Generation & Schemas ---
+// --- AI Orchestration: Prompts & Schemas ---
 
-const buildQueryGenerationPrompt = (input: ResearchInput, aiConfig: Settings['ai']): string => {
-  const dateFilter = input.dateRange !== 'any' ? `within the last ${input.dateRange} years` : 'at any time';
-  const articleTypesText = input.articleTypes.length > 0 ? `Must be one of the following article types: ${input.articleTypes.join(', ')}.` : 'Any article type is acceptable.';
+// STEP 1: Query Generation
+const buildQueryGenerationPrompt = (input: ResearchInput): string => {
+  const articleTypesText = input.articleTypes.length > 0 
+    ? `Must be one of the following article types: ${input.articleTypes.join(', ')}.` 
+    : 'Any article type is acceptable.';
   
+  let dateFilterText = 'at any time';
+  let dateQueryFragment = '';
+
+  if (input.dateRange !== 'any') {
+      const years = parseInt(input.dateRange, 10);
+      const today = new Date();
+      const startDate = new Date(today.getFullYear() - years, today.getMonth(), today.getDate());
+      const formattedStartDate = `${startDate.getFullYear()}/${(startDate.getMonth() + 1).toString().padStart(2, '0')}/${startDate.getDate().toString().padStart(2, '0')}`;
+      const formattedToday = `${today.getFullYear()}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getDate().toString().padStart(2, '0')}`;
+      dateFilterText = `published between ${formattedStartDate} and ${formattedToday}`;
+      dateQueryFragment = `All queries MUST include the following date filter: ("${formattedStartDate}"[Date - Publication] : "${formattedToday}"[Date - Publication])`;
+  }
+
   return `
     You are an expert in biomedical research and information retrieval. Your task is to formulate advanced search queries for the PubMed database based on a user's research topic.
 
@@ -113,46 +163,120 @@ const buildQueryGenerationPrompt = (input: ResearchInput, aiConfig: Settings['ai
     2.  **Construct Search Queries:** Formulate 2-3 diverse, advanced search queries for PubMed.
         - Use Boolean operators (AND, OR, NOT).
         - Use field tags like [Title/Abstract], [MeSH Terms].
-        - Incorporate filters for date range and article types as specified. For date filters, use PubMed's format like "YYYY/MM/DD"[Date - Publication] : "YYYY/MM/DD"[Date - Publication].
+        - ${dateQueryFragment}
     3.  **Explain Your Logic:** For each query, provide a brief, one-sentence explanation of its strategy.
     4.  **Output JSON:** Return ONLY a JSON object that adheres to the provided schema.
 
     **Input Parameters:**
     -   Research Topic: "${input.researchTopic}"
-    -   Date Range: Articles published ${dateFilter}.
+    -   Date Range: Articles published ${dateFilterText}.
     -   Article Types: ${articleTypesText}
   `;
 };
 
-const researchReportSchema = {
+// STEP 2: Ranking
+const buildRankingPrompt = (articles: Partial<RankedArticle>[], researchTopic: string): string => {
+    return `
+    You are an AI research analyst. Your task is to evaluate a list of scientific articles based on a research topic and rank them by relevance.
+    
+    **Research Topic:** "${researchTopic}"
+
+    **Instructions:**
+    1.  For each article in the provided list, assign a relevance score from 1 to 100 based on how directly its title addresses the research topic.
+    2.  Provide a brief, one-sentence justification for the score.
+    3.  Return ONLY a JSON object adhering to the provided schema, containing all the articles with their scores.
+
+    **Articles to Rank (JSON):**
+    ${JSON.stringify(articles.map(a => ({ pmid: a.pmid, title: a.title })))}
+    `;
+};
+
+const rankingSchema = {
     type: Type.OBJECT,
     properties: {
         rankedArticles: {
             type: Type.ARRAY,
-            description: "List of all provided articles, ranked by relevance and enriched with summaries, keywords, etc.",
             items: {
                 type: Type.OBJECT,
                 properties: {
                     pmid: { type: Type.STRING },
-                    pmcId: { type: Type.STRING },
-                    title: { type: Type.STRING },
-                    authors: { type: Type.STRING },
-                    journal: { type: Type.STRING },
-                    pubYear: { type: Type.STRING },
-                    summary: { type: Type.STRING, description: "A concise, one-paragraph summary of the article's key findings." },
-                    relevanceScore: { type: Type.INTEGER, description: "A score from 1-100 indicating relevance to the user's topic." },
-                    relevanceExplanation: { type: Type.STRING, description: "A brief justification for the relevance score." },
-                    keywords: { type: Type.ARRAY, items: { type: Type.STRING }, description: "3-5 relevant keywords extracted from the title and summary." },
-                    isOpenAccess: { type: Type.BOOLEAN },
-                    articleType: { type: Type.STRING, description: "The classified type of the article (e.g., 'Systematic Review')." }
+                    relevanceScore: { type: Type.INTEGER },
+                    relevanceExplanation: { type: Type.STRING }
                 },
-                required: ["pmid", "title", "authors", "journal", "pubYear", "summary", "relevanceScore", "relevanceExplanation", "keywords", "isOpenAccess", "articleType"]
+                required: ["pmid", "relevanceScore", "relevanceExplanation"]
             }
-        },
-        synthesis: {
-            type: Type.STRING,
-            description: "A comprehensive narrative synthesis of the top N articles, formatted in Markdown."
-        },
+        }
+    },
+    required: ["rankedArticles"]
+};
+
+// STEP 3: Detailed Analysis
+const buildDetailingPrompt = (articles: Partial<RankedArticle>[]): string => {
+    return `
+    You are an AI research analyst. Your task is to enrich a list of scientific articles with key details.
+    
+    **Instructions:**
+    1.  For each article provided, use your search tool to find its abstract.
+    2.  Based on the abstract and title, perform the following actions:
+        - Write a concise, one-paragraph summary of the article's key findings. If an abstract cannot be found, summarize based on the title.
+        - Extract 3-5 of the most relevant keywords.
+        - Classify the article's type (e.g., 'Randomized Controlled Trial', 'Systematic Review', 'Meta-Analysis', 'Observational Study'). If unsure, classify as 'Other'.
+    3.  Your entire response MUST be a single, valid JSON object string. Do not add any explanatory text or markdown formatting. The JSON should contain a single key "detailedArticles".
+
+    **Articles to Analyze (JSON):**
+    ${JSON.stringify(articles.map(a => ({ pmid: a.pmid, title: a.title })))}
+    `;
+};
+
+// STEP 4: Synthesis
+const buildSynthesisPrompt = (
+    articles: RankedArticle[], 
+    input: ResearchInput, 
+    aiConfig: Settings['ai']
+): { prompt: string; systemInstruction: string } => {
+    const synthesisFocusText: { [key: string]: string } = {
+      'overview': 'a broad overview of the topic.',
+      'clinical': 'the clinical implications and applications of the findings.',
+      'future': 'future research directions and unanswered questions.',
+      'gaps': 'contradictions, debates, and gaps in the current literature.'
+    };
+    const preamble = aiConfig.customPreamble ? `**User-Defined Preamble:**\n${aiConfig.customPreamble}\n\n---\n\n` : '';
+    const personaInstructions: {[key: string]: string} = {
+      'Neutral Scientist': 'Adopt a neutral, objective, and strictly scientific tone.',
+      'Concise Expert': 'Be brief and to the point. Focus on delivering the most critical information without verbosity.',
+      'Detailed Analyst': 'Provide in-depth analysis. Explore nuances, methodologies, and potential implications thoroughly.',
+      'Creative Synthesizer': 'Identify and highlight novel connections, cross-disciplinary links, and innovative perspectives found in the literature.'
+    };
+    
+    const systemInstruction = `You are an AI Research assistant, an expert system designed to synthesize findings from a curated list of scientific articles.
+Your core directives are:
+1.  **Language:** All output MUST be in **${aiConfig.aiLanguage}**.
+2.  **Persona:** ${personaInstructions[aiConfig.aiPersona]}
+3.  **Output Format:** Adhere strictly to the provided JSON output schema. Your entire response must be a single, valid JSON object string.`;
+
+    const prompt = `
+      ${preamble}
+      **User's Research Objective:**
+      -   Research Topic: ${input.researchTopic}
+      -   Synthesis Focus: The final synthesis should focus on ${synthesisFocusText[input.synthesisFocus]}.
+
+      **Workflow:**
+      1.  **Synthesize Findings:** Create a comprehensive narrative from the provided articles, tailored to the specified 'Synthesis Focus'. Use markdown for formatting.
+      2.  **Generate Insights:** Based on the user's 'Research Topic' and the articles, formulate 2-3 critical questions that the research answers. Provide direct, evidence-based answers, populating the 'aiGeneratedInsights' field and citing the supporting PMIDs.
+      3.  **Identify Overall Keywords:** Analyze the keywords from all articles. Identify the 5-7 most important and frequent themes. Calculate how many articles mention each theme and populate the 'overallKeywords' field.
+      4.  **Format Output:** Compile all information into the specified JSON structure.
+
+      **CURATED ARTICLES TO SYNTHESIZE (JSON):**
+      ${JSON.stringify(articles.map(a => ({ pmid: a.pmid, title: a.title, summary: a.summary, keywords: a.keywords, articleType: a.articleType })))}
+    `;
+
+    return { prompt, systemInstruction };
+};
+
+const synthesisSchema = {
+    type: Type.OBJECT,
+    properties: {
+        synthesis: { type: Type.STRING, description: "A comprehensive narrative synthesis of the top N articles, formatted in Markdown." },
         aiGeneratedInsights: {
             type: Type.ARRAY,
             description: "2-3 critical questions answered by the research, with supporting evidence.",
@@ -179,75 +303,34 @@ const researchReportSchema = {
             }
         }
     },
-    required: ["rankedArticles", "synthesis", "aiGeneratedInsights", "overallKeywords"]
+    required: ["synthesis", "aiGeneratedInsights", "overallKeywords"]
 };
 
 
-const buildAnalysisPrompt = (
-    input: ResearchInput, 
-    aiConfig: Settings['ai'],
-    articles: Partial<RankedArticle>[]
-): string => {
-    const synthesisFocusText: { [key: string]: string } = {
-      'overview': 'a broad overview of the topic.',
-      'clinical': 'the clinical implications and applications of the findings.',
-      'future': 'future research directions and unanswered questions.',
-      'gaps': 'contradictions, debates, and gaps in the current literature.'
-    };
-    const preamble = aiConfig.customPreamble ? `**User-Defined Preamble:**\n${aiConfig.customPreamble}\n\n---\n\n` : '';
-    const personaInstructions: {[key: string]: string} = {
-      'Neutral Scientist': 'Adopt a neutral, objective, and strictly scientific tone.',
-      'Concise Expert': 'Be brief and to the point. Focus on delivering the most critical information without verbosity.',
-      'Detailed Analyst': 'Provide in-depth analysis. Explore nuances, methodologies, and potential implications thoroughly.',
-      'Creative Synthesizer': 'Identify and highlight novel connections, cross-disciplinary links, and innovative perspectives found in the literature.'
-    };
-    const articlesJsonString = JSON.stringify(articles, null, 2);
+// --- Core Service Function ---
 
-    return `
-      ${preamble}
-      You are an AI Research assistant, an expert system designed to analyze and synthesize a provided list of scientific articles. Your primary objective is to curate and synthesize this research based on user-defined criteria, delivering a structured and actionable report in JSON format.
+// FIX: Define interfaces for AI response data to ensure proper typing.
+interface RankingData {
+    rankedArticles: {
+        pmid: string;
+        relevanceScore: number;
+        relevanceExplanation: string;
+    }[];
+}
 
-      **Core Directives:**
-      1.  **Language:** All output MUST be in **${aiConfig.aiLanguage}**.
-      2.  **Persona:** ${personaInstructions[aiConfig.aiPersona]}
-      3.  **Output Format:** Adhere strictly to the provided JSON output schema.
-
-      **User's Research Objective:**
-      -   Research Topic: ${input.researchTopic}
-      -   Synthesis Focus: The final synthesis should focus on ${synthesisFocusText[input.synthesisFocus]}.
-      -   Top N to Synthesize: ${input.topNToSynthesize}
-
-      ---
-
-      ### **Workflow**
-
-      **Phase 1: Article Analysis & Ranking**
-      1.  **Find Abstracts and Summarize:** For each article in the provided list, use your search tool to find its abstract. Write a concise, one-paragraph summary of its key findings. Populate the 'summary' field. If an abstract cannot be found, write a summary based on the title.
-      2.  **Classify Article Type:** For each article, determine its type based on its title and abstract (e.g., 'Randomized Controlled Trial', 'Systematic Review', 'Meta-Analysis', 'Observational Study'). Populate the 'articleType' field. If unsure, classify as 'Other'.
-      3.  **Score Relevance:** For each article, assign a relevance score (1-100) based on how directly it addresses the user's 'Research Topic'. Provide a brief 'relevanceExplanation' for your score.
-      4.  **Rank and Populate:** Populate the 'rankedArticles' list in the JSON output with all provided articles, now including your generated summaries, types, scores, and explanations, sorted from highest to lowest relevance.
-
-      **Phase 2: Data Extraction & Synthesis**
-      1.  **Select Top Articles:** Take the top ${input.topNToSynthesize} articles from the ranked list.
-      2.  **Extract Keywords per Article:** For each of the top articles, analyze its title and your summary to extract 3-5 of the most relevant keywords. Populate the 'keywords' field for each article in the final output.
-      3.  **Synthesize Findings:** Create a comprehensive narrative from the top articles, tailored to the specified 'Synthesis Focus': "${synthesisFocusText[input.synthesisFocus]}". Use markdown for formatting.
-      4.  **Generate Insights:** Based on the user's 'Research Topic' and the top articles, formulate 2-3 critical questions that the research answers. Provide direct, evidence-based answers, populating the 'aiGeneratedInsights' field and citing the supporting PMIDs.
-      5.  **Identify Overall Keywords:** Analyze the keywords from all top articles. Identify the 5-7 most important and frequent themes. Calculate how many of the top articles mention each theme and populate the 'overallKeywords' field.
-      6.  **Format Output:** Compile all information into the specified JSON structure.
-
-      ---
-
-      **ARTICLES TO ANALYZE (JSON format):**
-      ${articlesJsonString}
-    `;
-};
-
-// --- Core Service Functions ---
+interface DetailingData {
+    detailedArticles: {
+        pmid: string;
+        summary: string;
+        keywords: string[];
+        articleType: string;
+    }[];
+}
 
 export const generateResearchReport = async (input: ResearchInput, config: Settings['ai']): Promise<ResearchReport> => {
   try {
-    // STEP 1: Generate Search Queries with AI
-    const queryGenPrompt = buildQueryGenerationPrompt(input, config);
+    // === ORCHESTRATION STEP 1: GENERATE SEARCH QUERIES ===
+    const queryGenPrompt = buildQueryGenerationPrompt(input);
     const queryGenResponse = await ai.models.generateContent({
         model: config.model,
         contents: queryGenPrompt,
@@ -258,20 +341,16 @@ export const generateResearchReport = async (input: ResearchInput, config: Setti
                 properties: {
                     queries: {
                         type: Type.ARRAY,
-                        description: "A list of 2-3 advanced PubMed search queries.",
                         items: {
                             type: Type.OBJECT,
-                            properties: {
-                                query: { type: Type.STRING, description: "The PubMed query string." },
-                                explanation: { type: Type.STRING, description: "A brief explanation of the query's logic." }
-                            },
+                            properties: { query: { type: Type.STRING }, explanation: { type: Type.STRING } },
                             required: ["query", "explanation"]
                         }
                     }
-                },
-                required: ["queries"]
-            },
+                }, required: ["queries"]
+            }, 
             temperature: 0.1,
+            thinkingConfig: { thinkingBudget: 0 }, // Optimization: Disable thinking for structured, low-latency tasks.
         }
     });
 
@@ -281,7 +360,7 @@ export const generateResearchReport = async (input: ResearchInput, config: Setti
         throw new Error("AI failed to generate search queries. Please try a different topic.");
     }
     
-    // STEP 2: Search PubMed using generated queries
+    // === ORCHESTRATION STEP 2: SEARCH PUBMED & FETCH DETAILS ===
     const allPmids = new Set<string>();
     const articlesPerQuery = Math.ceil(input.maxArticlesToScan / generatedQueries.length);
     for (const gq of generatedQueries) {
@@ -295,75 +374,145 @@ export const generateResearchReport = async (input: ResearchInput, config: Setti
             generatedQueries,
             rankedArticles: [],
             synthesis: "No articles were found on PubMed matching the AI-generated queries. You can try a broader topic or adjust your search criteria.",
-            aiGeneratedInsights: [],
-            overallKeywords: [],
-            sources: []
+            aiGeneratedInsights: [], overallKeywords: [], sources: []
         };
     }
-
-    // STEP 3: Fetch Article Details from PubMed
     const fetchedArticles = await fetchArticleDetails(uniquePmids);
     if (fetchedArticles.length === 0) {
         throw new Error("Found article IDs but could not fetch their details from PubMed. The service may be temporarily unavailable.");
     }
-
-    // STEP 4: Rank, Summarize, and Synthesize with AI
-    const analysisPrompt = buildAnalysisPrompt(input, config, fetchedArticles);
-    const analysisResponse = await ai.models.generateContent({
-        model: config.model,
-        contents: analysisPrompt,
-        config: {
-            tools: [{ googleSearch: {} }], // Allow AI to search for abstracts
-            temperature: config.temperature,
-        },
-    });
     
-    const jsonText = analysisResponse.text.trim();
-    let report: Omit<ResearchReport, 'generatedQueries' | 'sources'>;
+    // === ORCHESTRATION STEP 3: AI-POWERED RANKING ===
+    const rankingPrompt = buildRankingPrompt(fetchedArticles, input.researchTopic);
+    const rankingResponse = await ai.models.generateContent({
+        model: config.model,
+        contents: rankingPrompt,
+        config: { 
+            responseMimeType: 'application/json', 
+            responseSchema: rankingSchema, 
+            temperature: 0.1,
+            thinkingConfig: { thinkingBudget: 0 }, // Optimization: Disable thinking for structured, low-latency tasks.
+        }
+    });
+    // FIX: Typed the parsed JSON to ensure type safety for ranking data.
+    const rankingData: RankingData = JSON.parse(rankingResponse.text);
+    const rankingMap = new Map(rankingData.rankedArticles.map(r => [r.pmid, { score: r.relevanceScore, explanation: r.relevanceExplanation }]));
 
-    try {
-        report = JSON.parse(jsonText);
-    } catch (parseError) {
-        console.error("Failed to parse AI analysis response as JSON:", jsonText);
-        throw new Error("The AI returned an invalid analysis response. This can happen with complex queries. Please try simplifying your topic or adjusting the parameters.");
+    let allArticles: RankedArticle[] = fetchedArticles.map(article => ({
+        ...article,
+        pmid: article.pmid!,
+        title: article.title!,
+        authors: article.authors!,
+        journal: article.journal!,
+        pubYear: article.pubYear!,
+        // FIX: Accessing properties is now type-safe due to the typed `rankingMap`.
+        relevanceScore: rankingMap.get(article.pmid!)?.score || 0,
+        relevanceExplanation: rankingMap.get(article.pmid!)?.explanation || 'N/A',
+        summary: '', keywords: [], isOpenAccess: article.isOpenAccess || false
+    })).sort((a, b) => b.relevanceScore - a.relevanceScore);
+
+
+    // === ORCHESTRATION STEP 4: AI-POWERED DETAILED ANALYSIS (IN BATCHES) ===
+    const articlesForDetailing = allArticles.slice(0, Math.min(allArticles.length, 50));
+    
+    const BATCH_SIZE = 10;
+    const detailingBatches: Partial<RankedArticle>[][] = [];
+    for (let i = 0; i < articlesForDetailing.length; i += BATCH_SIZE) {
+        detailingBatches.push(articlesForDetailing.slice(i, i + BATCH_SIZE));
     }
 
-    // STEP 5: Combine and Finalize Report
-    const groundingChunks = analysisResponse.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
-    const sources: WebContent[] = groundingChunks
+    const detailingPromises = detailingBatches.map(batch =>
+        ai.models.generateContent({
+            model: config.model,
+            contents: buildDetailingPrompt(batch),
+            config: {
+                tools: [{ googleSearch: {} }],
+                temperature: config.temperature,
+            }
+        })
+    );
+    
+    const batchResults = await Promise.allSettled(detailingPromises);
+
+    let allDetailedArticles: DetailingData['detailedArticles'] = [];
+    let allGroundingChunks: any[] = [];
+
+    batchResults.forEach((result, index) => {
+        if (result.status === 'fulfilled') {
+            try {
+                const response = result.value;
+                const detailingData: DetailingData = extractAndParseJson(response.text);
+                if (detailingData.detailedArticles) {
+                    allDetailedArticles.push(...detailingData.detailedArticles);
+                }
+                const chunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
+                allGroundingChunks.push(...chunks);
+            } catch (e) {
+                console.error(`Failed to parse response for detailing batch ${index}:`, e);
+            }
+        } else {
+            console.error(`Detailing batch ${index} failed:`, result.reason);
+        }
+    });
+
+    const detailsMap = new Map(allDetailedArticles.map(d => [d.pmid, { summary: d.summary, keywords: d.keywords, articleType: d.articleType }]));
+
+    allArticles = allArticles.map(article => {
+        const details = detailsMap.get(article.pmid);
+        return details ? { ...article, ...details } : article;
+    });
+
+    // Filter out articles for which we couldn't get details
+    allArticles = allArticles.filter(a => a.summary && a.summary.length > 0);
+
+
+    // === ORCHESTRATION STEP 5: AI-POWERED SYNTHESIS (ON TOP N) ===
+    const topNArticles = allArticles.slice(0, Math.min(allArticles.length, input.topNToSynthesize));
+    let synthesis = "Synthesis could not be generated as there were not enough relevant articles found.";
+    let aiGeneratedInsights: ResearchReport['aiGeneratedInsights'] = [];
+    let overallKeywords: ResearchReport['overallKeywords'] = [];
+    
+    if (topNArticles.length > 0) {
+        const { prompt: synthesisPrompt, systemInstruction } = buildSynthesisPrompt(topNArticles, input, config);
+        const synthesisResponse = await ai.models.generateContent({
+            model: config.model,
+            contents: synthesisPrompt,
+            config: {
+                systemInstruction,
+                temperature: config.temperature,
+                responseMimeType: 'application/json',
+                responseSchema: synthesisSchema,
+            }
+        });
+        const synthesisData = JSON.parse(synthesisResponse.text);
+        synthesis = synthesisData.synthesis;
+        aiGeneratedInsights = synthesisData.aiGeneratedInsights;
+        overallKeywords = synthesisData.overallKeywords;
+    }
+
+    // === FINAL ASSEMBLY ===
+    const sources: WebContent[] = allGroundingChunks
         .map((chunk: any) => chunk.web)
         .filter((web: WebContent | undefined): web is WebContent => !!web && !!web.uri && !!web.title);
     const uniqueSources = Array.from(new Map(sources.map(s => [s.uri, s])).values());
-
-    const finalReport: ResearchReport = { ...report, generatedQueries, sources: uniqueSources };
+    
+    const finalReport: ResearchReport = {
+        generatedQueries,
+        rankedArticles: allArticles,
+        synthesis,
+        aiGeneratedInsights,
+        overallKeywords,
+        sources: uniqueSources
+    };
     return finalReport;
 
   } catch (error) {
     console.error("Error generating research report:", error);
     const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
-    throw new Error(`Failed to generate report. The service responded with: ${errorMessage}`);
+    throw new Error(`Failed to generate report. A step in the AI orchestration process failed: ${errorMessage}`);
   }
 };
 
-const similarArticlesSchema = {
-    type: Type.OBJECT,
-    properties: {
-        similarArticles: {
-            type: Type.ARRAY,
-            description: "A list of 3-5 similar or related articles found on PubMed.",
-            items: {
-                type: Type.OBJECT,
-                properties: {
-                    pmid: { type: Type.STRING, description: "The PubMed ID of the similar article." },
-                    title: { type: Type.STRING, description: "The full title of the similar article." },
-                    reason: { type: Type.STRING, description: "A brief justification for why this article is relevant." }
-                },
-                required: ["pmid", "title", "reason"]
-            }
-        }
-    },
-    required: ["similarArticles"]
-};
 
 export const findSimilarArticles = async (
     article: Pick<RankedArticle, 'title' | 'summary'>,
@@ -381,7 +530,7 @@ export const findSimilarArticles = async (
             **Original Article Summary:**
             "${article.summary}"
 
-            Return ONLY a JSON object that adheres to the provided schema.
+            Your entire response MUST be a single, valid JSON object string. Do not add any explanatory text, markdown formatting, or anything else outside of the JSON object. The JSON should have a single key "similarArticles" which is an array of objects, where each object has "pmid", "title", and "reason" keys.
         `;
 
         const response = await ai.models.generateContent({
@@ -393,8 +542,7 @@ export const findSimilarArticles = async (
             },
         });
 
-        const jsonText = response.text.trim();
-        const parsed = JSON.parse(jsonText);
+        const parsed = extractAndParseJson<{ similarArticles?: SimilarArticle[] }>(response.text);
         return (parsed.similarArticles || []) as SimilarArticle[];
     } catch (error) {
         console.error("Error finding similar articles:", error);
@@ -495,6 +643,7 @@ export const generateResearchAnalysis = async (
                 responseMimeType: 'application/json',
                 responseSchema: researchAnalysisSchema,
                 temperature: 0.3,
+                thinkingConfig: { thinkingBudget: 0 }, // Optimization: Disable thinking for structured, low-latency tasks.
             },
         });
 
@@ -528,6 +677,7 @@ export const generateTldrSummary = async (abstract: string, aiConfig: Settings['
             contents: prompt,
             config: {
                 temperature: 0.1, // Low temperature for high factuality
+                thinkingConfig: { thinkingBudget: 0 }, // Optimization: Disable thinking for structured, low-latency tasks.
             }
         });
 

@@ -286,7 +286,9 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({ onViewChan
     const [selectedPmids, setSelectedPmids] = useState<string[]>([]);
     const [isExportingPdf, setIsExportingPdf] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
-    const [citationExportType, setCitationExportType] = useState<'bib' | 'ris' | null>(null);
+    // FIX: Decouple dropdown state from modal state for citation export.
+    const [isCitationDropdownOpen, setIsCitationDropdownOpen] = useState(false);
+    const [citationExportModalType, setCitationExportModalType] = useState<'bib' | 'ris' | null>(null);
     const [viewMode, setViewMode] = useState<'grid' | 'list'>(settings.knowledgeBase.defaultView);
     const selectPageCheckboxRef = useRef<HTMLInputElement>(null);
     
@@ -414,7 +416,7 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({ onViewChan
         link.download = `citations.${type}`;
         link.click();
         URL.revokeObjectURL(link.href);
-        setCitationExportType(null);
+        setCitationExportModalType(null);
     };
 
     useEffect(() => { setCurrentPage(1); setSelectedPmids([]); }, [filter, sortOrder]);
@@ -474,12 +476,12 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({ onViewChan
                     confirmText="Yes, Delete"
                 />
              )}
-             {citationExportType && (
+             {citationExportModalType && (
                 <ConfirmationModal
-                    onConfirm={() => exportCitation(citationExportType)}
-                    onCancel={() => setCitationExportType(null)}
+                    onConfirm={() => exportCitation(citationExportModalType)}
+                    onCancel={() => setCitationExportModalType(null)}
                     title="Export Citations"
-                    message={`Export ${selectedPmids.length} selected citations in ${citationExportType.toUpperCase()} format?`}
+                    message={`Export ${selectedPmids.length} selected citations in ${citationExportModalType.toUpperCase()} format?`}
                     confirmText="Export"
                     confirmButtonClass="bg-brand-accent hover:bg-opacity-90"
                     titleClass="text-brand-accent"
@@ -540,11 +542,11 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({ onViewChan
                                 <button onClick={handleExportPdf} className="flex items-center text-sm px-3 py-1.5 rounded-md text-text-primary bg-background hover:bg-surface-hover border border-border"><PdfIcon className="h-4 w-4 mr-2" />Export PDF</button>
                                 <button onClick={handleExportCsv} className="flex items-center text-sm px-3 py-1.5 rounded-md text-text-primary bg-background hover:bg-surface-hover border border-border"><CsvIcon className="h-4 w-4 mr-2" />Export CSV</button>
                                 <div className="relative">
-                                    <button onClick={() => setCitationExportType(prev => prev ? null : 'bib')} className="flex items-center text-sm px-3 py-1.5 rounded-md text-text-primary bg-background hover:bg-surface-hover border border-border"><CitationIcon className="h-4 w-4 mr-2" />Export Citations <ChevronDownIcon className="h-4 w-4 ml-1"/></button>
-                                     {citationExportType && (
+                                    <button onClick={() => setIsCitationDropdownOpen(prev => !prev)} className="flex items-center text-sm px-3 py-1.5 rounded-md text-text-primary bg-background hover:bg-surface-hover border border-border"><CitationIcon className="h-4 w-4 mr-2" />Export Citations <ChevronDownIcon className="h-4 w-4 ml-1"/></button>
+                                     {isCitationDropdownOpen && (
                                         <div className="absolute right-0 mt-2 w-40 bg-surface border border-border rounded-md shadow-lg z-10">
-                                            <button onClick={() => exportCitation('bib')} className="w-full text-left px-3 py-2 text-sm hover:bg-surface-hover">BibTeX (.bib)</button>
-                                            <button onClick={() => exportCitation('ris')} className="w-full text-left px-3 py-2 text-sm hover:bg-surface-hover">RIS (.ris)</button>
+                                            <button onClick={() => { setIsCitationDropdownOpen(false); setCitationExportModalType('bib'); }} className="w-full text-left px-3 py-2 text-sm hover:bg-surface-hover">BibTeX (.bib)</button>
+                                            <button onClick={() => { setIsCitationDropdownOpen(false); setCitationExportModalType('ris'); }} className="w-full text-left px-3 py-2 text-sm hover:bg-surface-hover">RIS (.ris)</button>
                                         </div>
                                      )}
                                 </div>
