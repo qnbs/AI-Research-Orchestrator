@@ -1,11 +1,22 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import type { Settings } from '../types';
+import { CSV_EXPORT_COLUMNS } from '../types';
+
 
 const SETTINGS_STORAGE_KEY = 'aiResearchSettings';
 
 const defaultSettings: Settings = {
   theme: 'dark',
+  appearance: {
+    density: 'comfortable',
+    fontFamily: 'Inter',
+    customColors: {
+        enabled: false,
+        primary: '#2f81f7',
+        secondary: '#388bfd',
+        accent: '#1f6feb',
+    }
+  },
   performance: {
     enableAnimations: true,
   },
@@ -19,13 +30,71 @@ const defaultSettings: Settings = {
     temperature: 0.2,
     aiLanguage: 'English',
     aiPersona: 'Neutral Scientist',
+    researchAssistant: {
+      autoFetchSimilar: true,
+      autoFetchOnline: true,
+    },
+    enableTldr: true,
   },
   defaults: {
     maxArticlesToScan: 50,
     topNToSynthesize: 5,
     autoSaveReports: true,
+    defaultDateRange: '5',
+    defaultSynthesisFocus: 'overview',
+    defaultArticleTypes: ['Randomized Controlled Trial', 'Systematic Review'],
   },
+  export: {
+    pdf: {
+        includeCoverPage: true,
+        preparedFor: '',
+        includeSynthesis: true,
+        includeInsights: true,
+        includeQueries: false,
+        includeToc: true,
+        includeHeader: true,
+        includeFooter: true,
+    },
+    csv: {
+        columns: [...CSV_EXPORT_COLUMNS],
+        delimiter: ',',
+    },
+    citation: {
+        includeAbstract: true,
+        includeKeywords: true,
+        includeTags: true,
+        includePmcid: true,
+    }
+  },
+  knowledgeBase: {
+      defaultView: 'grid',
+      articlesPerPage: 20,
+      defaultSort: 'relevance',
+  }
 };
+
+const isObject = (item: any): item is object => {
+    return (item && typeof item === 'object' && !Array.isArray(item));
+};
+
+const deepMerge = (target: any, source: any): any => {
+    let output = { ...target };
+    if (isObject(target) && isObject(source)) {
+        Object.keys(source).forEach(key => {
+            if (isObject(source[key])) {
+                if (!(key in target)) {
+                    output = { ...output, [key]: source[key] };
+                } else {
+                    output[key] = deepMerge(target[key], source[key]);
+                }
+            } else {
+                output = { ...output, [key]: source[key] };
+            }
+        });
+    }
+    return output;
+};
+
 
 interface SettingsContextType {
   settings: Settings;
@@ -40,16 +109,15 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     try {
       const storedSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
       if (storedSettings) {
-        // Merge stored settings with defaults to ensure all keys are present
         const parsed = JSON.parse(storedSettings);
-        return { 
-          ...defaultSettings, 
-          ...parsed, 
-          performance: {...defaultSettings.performance, ...parsed.performance},
-          notifications: {...defaultSettings.notifications, ...parsed.notifications},
-          ai: {...defaultSettings.ai, ...parsed.ai}, 
-          defaults: {...defaultSettings.defaults, ...parsed.defaults}
-        };
+        // Deep merge stored settings with defaults to ensure all keys are present
+        const mergedSettings = deepMerge(defaultSettings, parsed);
+        
+        // Enforce compliance with the current recommended model
+        if (mergedSettings.ai?.model && mergedSettings.ai.model !== 'gemini-2.5-flash') {
+          mergedSettings.ai.model = 'gemini-2.5-flash';
+        }
+        return mergedSettings;
       }
     } catch (error)
     {

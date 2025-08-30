@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { XIcon } from './icons/XIcon';
 import { CheckCircleIcon } from './icons/CheckCircleIcon';
@@ -47,10 +46,14 @@ export const Notification: React.FC<NotificationProps> = ({ message, type, onClo
     const Icon = type === 'success' ? CheckCircleIcon : InfoIcon;
 
     return (
-        <div className={`${baseClasses} ${typeClasses} ${animationClasses}`}>
+        <div 
+          role="status" 
+          aria-live="polite" 
+          className={`${baseClasses} ${typeClasses} ${animationClasses}`}
+        >
             <Icon className="h-6 w-6 mr-3 flex-shrink-0" />
             <p className="flex-grow text-sm font-medium">{message}</p>
-            <button onClick={handleClose} className="ml-4 p-1 rounded-full hover:bg-surface-hover">
+            <button onClick={handleClose} className="ml-4 p-1 rounded-full hover:bg-surface-hover" aria-label="Close notification">
                 <XIcon className="h-5 w-5" />
             </button>
         </div>

@@ -1,7 +1,6 @@
-
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
-import jsPDF from 'jspdf';
-import type { AggregatedArticle, KnowledgeBaseEntry } from '../types';
+import { exportKnowledgeBaseToPdf, exportToCsv } from '../services/exportService';
+import type { AggregatedArticle, KnowledgeBaseEntry, KnowledgeBaseFilter } from '../types';
 import { SearchIcon } from './icons/SearchIcon';
 import { DatabaseIcon } from './icons/DatabaseIcon';
 import { UnlockIcon } from './icons/UnlockIcon';
@@ -9,18 +8,24 @@ import { PdfIcon } from './icons/PdfIcon';
 import { TrashIcon } from './icons/TrashIcon';
 import { CsvIcon } from './icons/CsvIcon';
 import { ArticleDetailPanel } from './ArticleDetailPanel';
-import { View } from './Header';
 import { CitationIcon } from './icons/CitationIcon';
 import { TagIcon } from './icons/TagIcon';
 import { ChevronDownIcon } from './icons/ChevronDownIcon';
-
+import { ConfirmationModal } from './ConfirmationModal';
+import { GridViewIcon } from './icons/GridViewIcon';
+import { ListViewIcon } from './icons/ListViewIcon';
+import { XCircleIcon } from './icons/XCircleIcon';
+import { useSettings } from '../contexts/SettingsContext';
+import { RelevanceScoreDisplay } from './RelevanceScoreDisplay';
+import { XIcon } from './icons/XIcon';
+import { useKnowledgeBase } from '../contexts/KnowledgeBaseContext';
+import { useUI } from '../contexts/UIContext';
+import type { View } from '../contexts/UIContext';
 
 interface KnowledgeBaseViewProps {
-  entries: KnowledgeBaseEntry[];
-  onClear: () => void;
   onViewChange: (view: View) => void;
-  onDeleteSelected: (pmids: string[]) => void;
-  onTagsUpdate: (pmid: string, tags: string[]) => void;
+  filter: KnowledgeBaseFilter;
+  onFilterChange: (newFilter: Partial<KnowledgeBaseFilter>) => void;
 }
 
 const PdfExportingOverlay: React.FC = () => (
@@ -35,7 +40,7 @@ const PdfExportingOverlay: React.FC = () => (
 
 const MultiSelectFilter: React.FC<{ title: string, options: string[], selected: string[], onChange: (selected: string[]) => void }> = ({ title, options, selected, onChange }) => {
     const [isOpen, setIsOpen] = useState(false);
-    const [filter, setFilter] = useState('');
+    const [filterText, setFilterText] = useState('');
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -58,8 +63,8 @@ const MultiSelectFilter: React.FC<{ title: string, options: string[], selected: 
     };
 
     const filteredOptions = useMemo(() => 
-        options.filter(option => option.toLowerCase().includes(filter.toLowerCase())),
-        [options, filter]
+        options.filter(option => option.toLowerCase().includes(filterText.toLowerCase())),
+        [options, filterText]
     );
 
     return (
@@ -67,551 +72,526 @@ const MultiSelectFilter: React.FC<{ title: string, options: string[], selected: 
             <button 
                 type="button"
                 onClick={() => setIsOpen(!isOpen)} 
+                aria-haspopup="listbox"
+                aria-expanded={isOpen}
                 className="w-full flex justify-between items-center p-2 bg-background border border-border rounded-md text-sm font-medium text-text-primary hover:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-accent"
             >
                 <span className="truncate pr-2">{title} {selected.length > 0 && <span className="ml-1 bg-brand-accent text-brand-text-on-accent text-xs font-bold rounded-full px-2 py-0.5">{selected.length}</span>}</span>
                 <ChevronDownIcon className={`w-5 h-5 transition-transform duration-200 shrink-0 ${isOpen ? 'rotate-180' : ''} text-text-secondary`} />
             </button>
             {isOpen && (
-                <div className="absolute z-10 mt-1 w-full bg-surface border border-border rounded-md shadow-lg max-h-60 overflow-hidden flex flex-col animate-fadeIn" style={{ animationDuration: '150ms' }}>
-                    <div className="p-2 border-b border-border">
-                        <input 
-                            type="text"
-                            placeholder="Filter options..."
-                            value={filter}
-                            onChange={(e) => setFilter(e.target.value)}
-                            className="w-full bg-background border border-border rounded-md py-1 px-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand-accent"
-                        />
+                <div className="absolute z-10 mt-1 w-full bg-surface border border-border rounded-md shadow-lg max-h-60 overflow-y-auto">
+                    <div className="p-2">
+                        <label htmlFor="filter-search" className="sr-only">Search {title}</label>
+                        <input id="filter-search" type="text" placeholder="Search..." value={filterText} onChange={e => setFilterText(e.target.value)} className="w-full px-2 py-1 bg-background border border-border rounded-md text-sm mb-1"/>
                     </div>
-                    <div className="overflow-y-auto p-1">
-                        {filteredOptions.length > 0 ? filteredOptions.map(option => (
-                            <label key={option} className="flex items-center space-x-2 p-1.5 rounded hover:bg-background cursor-pointer text-sm text-text-secondary truncate">
-                                <input
-                                    type="checkbox"
-                                    checked={selected.includes(option)}
-                                    onChange={() => handleOptionClick(option)}
-                                    className="h-4 w-4 rounded border-border bg-background text-brand-accent focus:ring-brand-accent focus:ring-offset-surface flex-shrink-0"
-                                />
-                                <span title={option} className="truncate">{option}</span>
-                            </label>
-                        )) : <p className="p-2 text-sm text-text-secondary italic">No matching options.</p>}
-                    </div>
+                    <ul role="listbox" className="py-1">
+                        {filteredOptions.map(option => (
+                            <li key={option} role="option" aria-selected={selected.includes(option)}>
+                                <label className="flex items-center px-3 py-2 text-sm text-text-primary hover:bg-surface-hover cursor-pointer">
+                                    <input type="checkbox" checked={selected.includes(option)} onChange={() => handleOptionClick(option)} className="h-4 w-4 rounded border-border bg-background text-brand-accent focus:ring-brand-accent" />
+                                    <span className="ml-3 truncate" title={option}>{option}</span>
+                                </label>
+                            </li>
+                        ))}
+                    </ul>
                 </div>
             )}
         </div>
     );
 };
 
-interface ArticleListItemProps {
+
+const KBArticleCard: React.FC<{
     article: AggregatedArticle;
     isSelected: boolean;
     onSelect: (pmid: string) => void;
-    onViewDetails: (article: AggregatedArticle) => void;
-}
-
-const ArticleListItem: React.FC<ArticleListItemProps> = React.memo(({ article, isSelected, onSelect, onViewDetails }) => {
-    const scoreColor = article.relevanceScore > 75 ? 'text-green-400' : article.relevanceScore > 50 ? 'text-yellow-400' : 'text-red-400';
+    onView: (article: AggregatedArticle) => void;
+}> = React.memo(({ article, isSelected, onSelect, onView }) => {
+    const { settings } = useSettings();
+    const densityClasses = settings.appearance.density === 'compact' 
+        ? { container: 'p-3', title: 'text-sm', text: 'text-xs', keywords: 'mb-2', gap: 'gap-1' } 
+        : { container: 'p-4', title: 'text-base', text: 'text-xs', keywords: 'mb-4', gap: 'gap-2' };
 
     return (
-        <div className={`flex items-start gap-4 p-4 rounded-lg border transition-all duration-200 ${isSelected ? 'bg-brand-accent/10 border-brand-accent/30 shadow-md' : 'bg-background border-border hover:border-border'}`}>
-            <input 
-                type="checkbox" 
-                className="h-4 w-4 rounded border-border bg-surface text-brand-accent focus:ring-brand-accent mt-1 flex-shrink-0" 
-                checked={isSelected} 
-                onChange={() => onSelect(article.pmid)}
-                aria-label={`Select article: ${article.title}`}
-            />
-            <div className="flex-grow">
-                <button onClick={() => onViewDetails(article)} className="text-left w-full">
-                    <h4 className="font-semibold text-text-primary hover:text-brand-accent transition-colors">{article.title}</h4>
-                </button>
-                <p className="text-xs text-text-secondary mt-1">{article.authors} &mdash; <span className="italic">{article.journal} ({article.pubYear})</span></p>
-                <div className="flex justify-between items-center mt-3">
-                    <div className="flex items-center gap-2">
-                        {article.isOpenAccess && (
-                            <div className="flex items-center text-xs text-green-400" title="Open Access">
-                                <UnlockIcon className="h-4 w-4 mr-1" />
-                                Open Access
-                            </div>
-                        )}
-                        {(article.customTags || []).map(tag => (
-                            <span key={tag} className="bg-purple-500/10 text-purple-300 text-xs font-medium px-2 py-0.5 rounded-full border border-purple-500/20">{tag}</span>
-                        ))}
+        <button
+            type="button"
+            className={`bg-surface border rounded-lg flex flex-col justify-between transition-all duration-200 hover:shadow-xl hover:-translate-y-1 cursor-pointer text-left ${isSelected ? 'border-brand-accent shadow-lg ring-2 ring-brand-accent/50' : 'border-border'} ${densityClasses.container}`}
+            onClick={() => onView(article)}
+            aria-label={`View details for ${article.title}`}
+        >
+            <div>
+                <div className="flex justify-between items-start gap-3">
+                    <h3 className={`font-bold text-text-primary mb-1 flex-1 pr-2 group-hover:text-brand-accent ${densityClasses.title}`}>
+                        {article.title}
+                    </h3>
+                    <div onClick={(e) => { e.stopPropagation(); onSelect(article.pmid); }} className="flex-shrink-0">
+                        <input
+                            type="checkbox" readOnly checked={isSelected}
+                            className="h-5 w-5 rounded border-border bg-background text-brand-accent focus:ring-brand-accent cursor-pointer"
+                            aria-label={`Select article ${article.title}`}
+                            tabIndex={-1}
+                        />
                     </div>
-                    <p className="text-xs text-text-secondary">From: <span className="font-medium italic">{article.sourceReportTopic}</span></p>
+                </div>
+                <p className={`text-text-secondary mb-3 ${densityClasses.text}`}>{article.authors} - <span className="italic">{article.journal} ({article.pubYear})</span></p>
+                <div className={`flex flex-wrap ${densityClasses.gap} ${densityClasses.keywords}`}>
+                    {article.keywords.slice(0, 3).map(kw => (
+                        <span key={kw} className="bg-sky-500/10 text-sky-300 text-xs font-medium px-2 py-0.5 rounded-full border border-sky-500/20">{kw}</span>
+                    ))}
                 </div>
             </div>
-            <div className="text-right flex-shrink-0 pl-4">
-                <div className={`text-2xl font-bold ${scoreColor}`}>{article.relevanceScore}</div>
-                <div className="text-xs text-text-secondary">Relevance</div>
+            <div className="border-t border-border/50 pt-3 flex justify-between items-center">
+                 <RelevanceScoreDisplay score={article.relevanceScore} />
+                <div className="flex items-center gap-3">
+                    {article.isOpenAccess && <div title="Open Access"><UnlockIcon className="h-5 w-5 text-green-400" /></div>}
+                    {(article.customTags && article.customTags.length > 0) && <div title={`${article.customTags.length} custom tag(s)`}><TagIcon className="h-5 w-5 text-purple-400" /></div>}
+                </div>
             </div>
-        </div>
+        </button>
     );
 });
 
 
-export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({ entries, onClear, onViewChange, onDeleteSelected, onTagsUpdate }) => {
-    const [searchTerm, setSearchTerm] = useState('');
-    const [selectedKeywords, setSelectedKeywords] = useState<string[]>([]);
-    const [selectedReportTopics, setSelectedReportTopics] = useState<string[]>([]);
-    const [selectedTags, setSelectedTags] = useState<string[]>([]);
-    const [detailedArticle, setDetailedArticle] = useState<AggregatedArticle | null>(null);
-    const [showOnlyOpenAccess, setShowOnlyOpenAccess] = useState(false);
-    const [selectedArticles, setSelectedArticles] = useState<Set<string>>(new Set());
-    const [isExporting, setIsExporting] = useState<string | null>(null);
-    const [sortConfig, setSortConfig] = useState<{ key: 'relevanceScore' | 'pubYear'; direction: 'asc' | 'desc' }>({ key: 'relevanceScore', direction: 'desc' });
-
-    const { uniqueArticles, allKeywords, uniqueReportTopics, allTags, insightsByPmid } = useMemo(() => {
-        const articleMap = new Map<string, AggregatedArticle>();
-        const keywordMap = new Map<string, number>();
-        const reportTopics = new Set<string>();
-        const tags = new Set<string>();
-        const insightsMap = new Map<string, { question: string, answer: string, supportingArticles: string[] }[]>();
-
-        entries.forEach(entry => {
-            const topic = entry.input.researchTopic;
-            reportTopics.add(topic);
-
-            // Populate insights map for faster lookups
-            entry.report.aiGeneratedInsights.forEach(insight => {
-                insight.supportingArticles.forEach(pmid => {
-                    if (!insightsMap.has(pmid)) {
-                        insightsMap.set(pmid, []);
-                    }
-                    insightsMap.get(pmid)!.push(insight);
-                });
-            });
-
-            entry.report.rankedArticles.forEach(article => {
-                if (!articleMap.has(article.pmid) || article.relevanceScore > (articleMap.get(article.pmid)?.relevanceScore || 0)) {
-                    articleMap.set(article.pmid, {
-                        ...article,
-                        sourceReportTopic: topic
-                    });
-                }
-                article.customTags?.forEach(tag => tags.add(tag));
-            });
-             entry.report.overallKeywords.forEach(kw => {
-                keywordMap.set(kw.keyword, (keywordMap.get(kw.keyword) || 0) + 1); // Simplified frequency
-            });
-        });
-        
-        const sortedKeywords = Array.from(keywordMap.keys()).sort();
-
-        return {
-            uniqueArticles: Array.from(articleMap.values()),
-            allKeywords: sortedKeywords,
-            uniqueReportTopics: Array.from(reportTopics),
-            allTags: Array.from(tags).sort(),
-            insightsByPmid: insightsMap
-        };
-    }, [entries]);
+const ArticleListItem: React.FC<{
+    article: AggregatedArticle;
+    isSelected: boolean;
+    onSelect: (pmid: string) => void;
+    onView: (article: AggregatedArticle) => void;
+}> = ({ article, isSelected, onSelect, onView }) => {
+    const { settings } = useSettings();
+    const densityClasses = settings.appearance.density === 'compact' 
+        ? { container: 'p-2 gap-2', title: 'text-sm', text: 'text-xs', icons: 'h-3 w-3' } 
+        : { container: 'p-3 gap-4', title: 'text-base', text: 'text-xs', icons: 'h-3.5 w-3.5' };
     
-    const filteredArticles = useMemo(() => {
-        return uniqueArticles.filter(article => {
-            if (showOnlyOpenAccess && !article.isOpenAccess) return false;
-            if (selectedReportTopics.length > 0 && !selectedReportTopics.includes(article.sourceReportTopic)) return false;
-
-            const matchesSearch = searchTerm.toLowerCase() === '' ||
-                article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                article.summary.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                article.authors.toLowerCase().includes(searchTerm.toLowerCase());
-            
-            const matchesKeyword = selectedKeywords.length === 0 || selectedKeywords.some(kw => article.keywords.includes(kw));
-            const matchesTag = selectedTags.length === 0 || selectedTags.some(tag => article.customTags?.includes(tag));
-
-            return matchesSearch && matchesKeyword && matchesTag;
-        }).sort((a, b) => {
-            const valA = a[sortConfig.key];
-            const valB = b[sortConfig.key];
-            if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
-            if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
-            return 0;
-        });
-    }, [uniqueArticles, searchTerm, selectedKeywords, showOnlyOpenAccess, selectedReportTopics, selectedTags, sortConfig]);
-
-    const findRelatedInsights = useCallback((pmid: string) => {
-        const rawInsights = insightsByPmid.get(pmid) || [];
-        if (rawInsights.length === 0) {
-            return [];
-        }
-
-        // De-duplicate insights while merging supporting articles to provide complete context
-        const insightMap = new Map<string, { question: string; answer: string; supportingArticles: Set<string> }>();
-        for (const insight of rawInsights) {
-            const key = `${insight.question.trim()}-${insight.answer.trim()}`;
-            const existing = insightMap.get(key);
-            if (existing) {
-                insight.supportingArticles.forEach(suppPmid => existing.supportingArticles.add(suppPmid));
-            } else {
-                insightMap.set(key, {
-                    question: insight.question,
-                    answer: insight.answer,
-                    supportingArticles: new Set(insight.supportingArticles),
-                });
-            }
-        }
-        
-        return Array.from(insightMap.values()).map(insight => ({
-            ...insight,
-            supportingArticles: Array.from(insight.supportingArticles).sort(),
-        }));
-    }, [insightsByPmid]);
-
-    const handleResetFilters = () => {
-        setSearchTerm('');
-        setSelectedKeywords([]);
-        setSelectedReportTopics([]);
-        setSelectedTags([]);
-        setShowOnlyOpenAccess(false);
-        setSortConfig({ key: 'relevanceScore', direction: 'desc' });
-    };
-    
-    const handlePdfExport = () => {
-        const articlesToExport = selectedArticles.size > 0
-            ? uniqueArticles.filter(a => selectedArticles.has(a.pmid))
-            : filteredArticles;
-
-        if (articlesToExport.length === 0) {
-            alert("No articles to export.");
-            return;
-        }
-
-        setIsExporting('pdf');
-        setTimeout(() => {
-            const doc = new jsPDF();
-            const pageWidth = doc.internal.pageSize.getWidth();
-            const pageHeight = doc.internal.pageSize.getHeight();
-            const margin = 15;
-            const contentWidth = pageWidth - margin * 2;
-            let y = 20;
-
-            const checkPageBreak = (spaceNeeded: number) => {
-                if (y + spaceNeeded > pageHeight - 20) { // leave margin at bottom
-                    doc.addPage();
-                    y = 20;
-                }
-            };
-
-            // ---- PDF Header ----
-            const title = selectedArticles.size > 0
-                ? `${selectedArticles.size} Selected Articles`
-                : `Report of ${filteredArticles.length} Filtered Articles`;
-
-            doc.setFontSize(18).setFont('helvetica', 'bold').text('AI Research Orchestrator Export', pageWidth / 2, y, { align: 'center' });
-            y += 8;
-            doc.setFontSize(14).setFont('helvetica', 'normal').text(title, pageWidth / 2, y, { align: 'center' });
-            y += 8;
-            doc.setFontSize(10).setFont('helvetica', 'italic').setTextColor(128, 128, 128).text(`Generated: ${new Date().toLocaleString()}`, pageWidth / 2, y, { align: 'center' });
-            y += 15;
-
-            // ---- Articles Loop ----
-            articlesToExport.forEach((article, index) => {
-                checkPageBreak(50); // Min space for an article header
-                
-                const articleLink = article.pmcId ? `https://www.ncbi.nlm.nih.gov/pmc/articles/${article.pmcId}/` : `https://pubmed.ncbi.nlm.nih.gov/${article.pmid}/`;
-
-                // Article Title
-                doc.setFontSize(14).setFont('helvetica', 'bold').setTextColor(0, 0, 0);
-                const titleLines = doc.splitTextToSize(`${index + 1}. ${article.title}`, contentWidth);
-                doc.text(titleLines, margin, y);
-                y += titleLines.length * 6 + 2;
-
-                // Publication Info
-                checkPageBreak(15);
-                doc.setFontSize(10).setFont('helvetica', 'italic').setTextColor(80, 80, 80);
-                const authorLines = doc.splitTextToSize(`Authors: ${article.authors}`, contentWidth);
-                doc.text(authorLines, margin, y);
-                y += authorLines.length * 4 + 1;
-                const journalLines = doc.splitTextToSize(`Publication: ${article.journal} (${article.pubYear})`, contentWidth);
-                doc.text(journalLines, margin, y);
-                y += journalLines.length * 4 + 4;
-                
-                // Link
-                checkPageBreak(10);
-                doc.setFontSize(10).setFont('helvetica', 'normal').setTextColor(41, 128, 185).textWithLink('View on PubMed', margin, y, { url: articleLink });
-                y += 8;
-
-                // Summary
-                checkPageBreak(15);
-                doc.setFontSize(11).setFont('helvetica', 'bold').setTextColor(0, 0, 0).text('Summary', margin, y);
-                y += 6;
-                doc.setFontSize(10).setFont('helvetica', 'normal');
-                const summaryLines = doc.splitTextToSize(article.summary, contentWidth);
-                doc.text(summaryLines, margin, y);
-                y += summaryLines.length * 5 + 5;
-                
-                // AI Insights
-                const insights = findRelatedInsights(article.pmid);
-                if (insights.length > 0) {
-                    checkPageBreak(20);
-                    doc.setFontSize(12).setFont('helvetica', 'bold').setTextColor(0, 0, 0).text('Related AI Insights', margin, y);
-                    y += 7;
-                    insights.forEach(insight => {
-                        checkPageBreak(20);
-                        doc.setFontSize(10).setFont('helvetica', 'bold');
-                        const qLines = doc.splitTextToSize(insight.question, contentWidth - 5);
-                        doc.text(qLines, margin + 5, y);
-                        y += qLines.length * 5 + 1;
-
-                        doc.setFont('helvetica', 'normal');
-                        const aLines = doc.splitTextToSize(insight.answer, contentWidth - 5);
-                        doc.text(aLines, margin + 5, y);
-                        y += aLines.length * 5 + 3;
-                    });
-                }
-                y += 5;
-
-                // Separator
-                if(index < articlesToExport.length - 1) {
-                    checkPageBreak(10);
-                    doc.setDrawColor(200).line(margin, y, pageWidth - margin, y);
-                    y += 10;
-                }
-            });
-
-            // ---- Page Numbers ----
-            const pageCount = doc.getNumberOfPages();
-            for (let i = 1; i <= pageCount; i++) {
-                doc.setPage(i);
-                doc.setFontSize(9).setTextColor(128, 128, 128);
-                doc.text(`Page ${i} of ${pageCount}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
-            }
-
-
-            doc.save('article_export.pdf');
-            setIsExporting(null);
-        }, 50);
-    };
-
-    const handleCsvExport = () => {
-        setIsExporting('csv');
-        setTimeout(() => {
-            const escapeCsvField = (field: any): string => {
-                if (field === null || field === undefined) return '';
-                let str = String(field);
-                if (str.includes(',') || str.includes('"') || str.includes('\n')) str = `"${str.replace(/"/g, '""')}"`;
-                return str;
-            };
-
-            const articlesToExport = filteredArticles.length > 0 ? filteredArticles : uniqueArticles;
-            const headers = ['PMID', 'Title', 'Authors', 'Journal', 'PubYear', 'Summary', 'RelevanceScore', 'Keywords', 'CustomTags', 'SourceReportTopic'];
-            const rows = articlesToExport.map(article => [
-                article.pmid, article.title, article.authors, article.journal, article.pubYear, article.summary,
-                article.relevanceScore, article.keywords.join('; '), article.customTags?.join('; ') || '', article.sourceReportTopic
-            ].map(escapeCsvField).join(','));
-
-            const csvContent = [headers.join(','), ...rows].join('\n');
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = 'research_export.csv';
-            link.click();
-            URL.revokeObjectURL(link.href);
-            setIsExporting(null);
-        }, 50);
-    };
-    
-    const handleCitationExport = (format: 'bibtex' | 'ris') => {
-        const selected = uniqueArticles.filter(a => selectedArticles.has(a.pmid));
-        if (selected.length === 0) return;
-
-        let content = '';
-        let fileExt = '';
-
-        if (format === 'bibtex') {
-            fileExt = 'bib';
-            content = selected.map(a => 
-`@article{${a.pmid},
-  author  = {${a.authors.split(',').join(' and ')}},
-  title   = {${a.title}},
-  journal = {${a.journal}},
-  year    = {${a.pubYear}},
-  pmid    = {${a.pmid}}
-}`).join('\n\n');
-        } else if (format === 'ris') {
-            fileExt = 'ris';
-            content = selected.map(a =>
-`TY  - JOUR
-${a.authors.split(',').map(author => `AU  - ${author.trim()}`).join('\n')}
-TI  - ${a.title}
-JO  - ${a.journal}
-PY  - ${a.pubYear}
-AB  - ${a.summary.replace(/\n/g, ' ')}
-ID  - ${a.pmid}
-ER  - `).join('\n\n');
-        }
-        
-        const blob = new Blob([content], { type: 'text/plain;charset=utf-8;' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `citations.${fileExt}`;
-        link.click();
-        URL.revokeObjectURL(link.href);
-    };
-
-    const handleSelectArticle = (pmid: string) => {
-        setSelectedArticles(prev => { const newSet = new Set(prev); newSet.has(pmid) ? newSet.delete(pmid) : newSet.add(pmid); return newSet; });
-    };
-    
-    const handleSelectAll = () => {
-        const filteredPmids = new Set(filteredArticles.map(a => a.pmid));
-        const allVisibleSelected = filteredArticles.length > 0 && Array.from(filteredPmids).every(pmid => selectedArticles.has(pmid));
-        if (allVisibleSelected) setSelectedArticles(prev => { const newSet = new Set(prev); filteredPmids.forEach(pmid => newSet.delete(pmid)); return newSet; });
-        else setSelectedArticles(prev => new Set([...prev, ...filteredPmids]));
-    };
-
-    const handleDeleteSelected = () => {
-        if (window.confirm(`Are you sure you want to delete ${selectedArticles.size} selected article(s)? This action cannot be undone.`)) {
-            onDeleteSelected(Array.from(selectedArticles));
-            setSelectedArticles(new Set());
-        }
-    };
-    
-    const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const [key, direction] = e.target.value.split('-') as [('relevanceScore' | 'pubYear'), ('asc' | 'desc')];
-        setSortConfig({ key, direction });
-    };
-
-    const areAllFilteredSelected = filteredArticles.length > 0 && filteredArticles.every(a => selectedArticles.has(a.pmid));
-    const activeFiltersCount = [searchTerm, showOnlyOpenAccess].filter(Boolean).length + selectedKeywords.length + selectedReportTopics.length + selectedTags.length;
-    const canExportPdf = (selectedArticles.size > 0 || filteredArticles.length > 0);
-    
-    if (entries.length === 0) {
-        return (
-            <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)] text-center animate-fadeIn">
-                <DatabaseIcon className="h-24 w-24 text-border mb-6"/>
-                <h2 className="text-3xl font-bold text-text-primary mb-3">Your Knowledge Base is Empty</h2>
-                <p className="max-w-md mx-auto text-lg text-text-secondary">
-                    Start by running a query in the Orchestrator tab. Once you save a report, its articles will appear here.
-                </p>
-                <button 
-                    onClick={() => onViewChange('orchestrator')} 
-                    className="mt-8 inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-brand-text-on-accent bg-brand-accent hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface focus:ring-brand-accent"
-                >
-                    <SearchIcon className="h-5 w-5 mr-3" />
-                    Go to Orchestrator
-                </button>
+    return (
+        <button
+            type="button"
+            className={`w-full grid grid-cols-[auto,1fr,auto] items-center border-b border-border transition-colors hover:bg-surface-hover text-left ${isSelected ? 'bg-brand-accent/10' : ''} ${densityClasses.container}`}
+            onClick={() => onView(article)}
+            aria-label={`View details for ${article.title}`}
+        >
+            <div onClick={(e) => { e.stopPropagation(); onSelect(article.pmid); }}>
+                <input
+                    type="checkbox" readOnly checked={isSelected}
+                    className="h-5 w-5 rounded border-border bg-background text-brand-accent focus:ring-brand-accent cursor-pointer"
+                    aria-label={`Select article ${article.title}`}
+                    tabIndex={-1}
+                />
             </div>
-        );
+            <div className="min-w-0">
+                <h3 className={`font-semibold text-text-primary truncate group-hover:text-brand-accent ${densityClasses.title}`} title={article.title}>{article.title}</h3>
+                <p className={`text-text-secondary truncate ${densityClasses.text}`}>{article.authors}</p>
+                <div className={`mt-2 flex items-center gap-4 text-xs text-text-secondary ${densityClasses.text}`}>
+                    <span className="italic truncate" title={article.journal}>{article.journal} ({article.pubYear})</span>
+                    {(article.customTags && article.customTags.length > 0) && (
+                        <div className="flex items-center gap-1.5" title={article.customTags.join(', ')}>
+                            <TagIcon className={`${densityClasses.icons} text-purple-400`} /> 
+                            <span>{article.customTags.length}</span>
+                        </div>
+                    )}
+                    {article.isOpenAccess && <div className="flex items-center gap-1.5" title="Open Access"><UnlockIcon className={`${densityClasses.icons} text-green-400`} /></div>}
+                </div>
+            </div>
+            <div className="flex items-center">
+                <RelevanceScoreDisplay score={article.relevanceScore} />
+            </div>
+        </button>
+    );
+};
+
+const ActiveFilters: React.FC<{ filter: KnowledgeBaseFilter; onFilterChange: (newFilter: Partial<KnowledgeBaseFilter>) => void; onClear: () => void; }> = ({ filter, onFilterChange, onClear }) => {
+    const activeFilters: { key: string; label: string; onRemove: () => void }[] = [];
+
+    if (filter.searchTerm) {
+        activeFilters.push({
+            key: `search_${filter.searchTerm}`,
+            label: `Search: "${filter.searchTerm}"`,
+            onRemove: () => onFilterChange({ searchTerm: '' }),
+        });
+    }
+    filter.selectedTopics.forEach(topic => {
+        activeFilters.push({
+            key: `topic_${topic}`,
+            label: `Topic: ${topic}`,
+            onRemove: () => onFilterChange({ selectedTopics: filter.selectedTopics.filter(t => t !== topic) }),
+        });
+    });
+    filter.selectedTags.forEach(tag => {
+        activeFilters.push({
+            key: `tag_${tag}`,
+            label: `Tag: ${tag}`,
+            onRemove: () => onFilterChange({ selectedTags: filter.selectedTags.filter(t => t !== tag) }),
+        });
+    });
+    filter.selectedArticleTypes.forEach(type => {
+        activeFilters.push({
+            key: `type_${type}`,
+            label: `Type: ${type}`,
+            onRemove: () => onFilterChange({ selectedArticleTypes: filter.selectedArticleTypes.filter(t => t !== type) }),
+        });
+    });
+     filter.selectedJournals.forEach(journal => {
+        activeFilters.push({
+            key: `journal_${journal}`,
+            label: `Journal: ${journal.length > 20 ? journal.substring(0, 18) + '...' : journal}`,
+            onRemove: () => onFilterChange({ selectedJournals: filter.selectedJournals.filter(j => j !== journal) }),
+        });
+    });
+    if (filter.showOpenAccessOnly) {
+        activeFilters.push({
+            key: 'openAccess',
+            label: 'Open Access Only',
+            onRemove: () => onFilterChange({ showOpenAccessOnly: false }),
+        });
+    }
+
+    if (activeFilters.length === 0) {
+        return null;
     }
 
     return (
-        <>
-            {isExporting === 'pdf' && <PdfExportingOverlay />}
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 animate-fadeIn">
-                <div className="lg:col-span-1 bg-surface border border-border rounded-lg p-4 flex flex-col self-start sticky top-24">
-                    <div className="flex-grow">
-                        <h3 className="text-lg font-semibold text-brand-accent mb-4">Explorer</h3>
-                        <div className="relative mb-4">
-                            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-text-secondary" />
-                            <input type="text" placeholder="Search articles..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full bg-background border border-border rounded-md py-2 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-brand-accent" />
-                        </div>
-                        <div className="space-y-3">
-                           <div className={`p-3 rounded-lg border transition-all duration-300 ${showOnlyOpenAccess ? 'bg-brand-accent/10 border-brand-accent/30' : 'bg-background border-border'}`}>
-                                <label className="flex items-center justify-between cursor-pointer">
-                                    <span className="flex items-center font-medium text-text-primary">
-                                        <UnlockIcon className={`h-5 w-5 mr-2 transition-colors ${showOnlyOpenAccess ? 'text-green-400' : 'text-text-secondary'}`}/>
-                                        Open Access Only
-                                    </span>
-                                    <div className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors duration-200 ease-in-out ${showOnlyOpenAccess ? 'bg-brand-accent' : 'bg-gray-400 dark:bg-gray-600'}`}>
-                                        <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform duration-200 ease-in-out ${showOnlyOpenAccess ? 'translate-x-6' : 'translate-x-1'}`}/>
-                                        <input 
-                                            type="checkbox" 
-                                            checked={showOnlyOpenAccess} 
-                                            onChange={() => setShowOnlyOpenAccess(!showOnlyOpenAccess)} 
-                                            className="opacity-0 w-full h-full absolute cursor-pointer"
-                                        />
-                                    </div>
-                                </label>
-                                <p className="text-xs text-text-secondary mt-2">
-                                    Show only articles marked as freely available to read.
-                                </p>
-                            </div>
-                             <MultiSelectFilter title="Reports" options={uniqueReportTopics} selected={selectedReportTopics} onChange={setSelectedReportTopics} />
-                             <MultiSelectFilter title="Keywords" options={allKeywords} selected={selectedKeywords} onChange={setSelectedKeywords} />
-                             {allTags.length > 0 && <MultiSelectFilter title="Custom Tags" options={allTags} selected={selectedTags} onChange={setSelectedTags} />}
-                        </div>
-                        {activeFiltersCount > 0 && (<button onClick={handleResetFilters} className="text-sm text-brand-accent hover:underline w-full text-left mt-4">Reset {activeFiltersCount} Filters</button>)}
-                    </div>
-                     <div className="mt-4 pt-4 border-t border-border">
-                        <button onClick={onClear} disabled={entries.length === 0} className="w-full flex items-center justify-center text-sm px-3 py-2 rounded-md text-red-400 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 transition-colors disabled:opacity-50">
-                            <TrashIcon className="h-4 w-4 mr-2" />Clear Knowledge Base
+        <div className="bg-surface border border-border rounded-lg p-3 mb-4 flex flex-col sm:flex-row items-start sm:items-center gap-3 animate-fadeIn">
+            <span className="text-sm font-semibold text-text-primary flex-shrink-0">Active Filters:</span>
+            <div className="flex flex-wrap gap-2 flex-grow">
+                {activeFilters.map(f => (
+                    <span key={f.key} className="flex items-center bg-brand-accent/10 text-brand-accent text-xs font-medium pl-2 pr-1 py-1 rounded-full border border-brand-accent/20">
+                        {f.label}
+                        <button onClick={f.onRemove} className="ml-1.5 text-brand-accent hover:bg-brand-accent/20 rounded-full p-0.5" aria-label={`Remove filter ${f.label}`}>
+                            <XIcon className="h-3 w-3" />
+                        </button>
+                    </span>
+                ))}
+            </div>
+            {activeFilters.length > 1 && (
+                 <button onClick={onClear} className="flex items-center text-xs px-2 py-1 rounded-md text-text-secondary bg-background hover:bg-surface-hover border border-border transition-colors flex-shrink-0">
+                    <XCircleIcon className="h-3.5 w-3.5 mr-1.5" />
+                    Clear All
+                </button>
+            )}
+        </div>
+    );
+};
+
+
+export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({ onViewChange, filter, onFilterChange }) => {
+    const { settings } = useSettings();
+    const { knowledgeBase, uniqueArticles, deleteArticles, updateTags } = useKnowledgeBase();
+    const { setNotification } = useUI();
+    const ARTICLES_PER_PAGE = settings.knowledgeBase.articlesPerPage;
+
+    const [sortOrder, setSortOrder] = useState<'relevance' | 'newest'>(settings.knowledgeBase.defaultSort);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [selectedArticle, setSelectedArticle] = useState<AggregatedArticle | null>(null);
+    const [selectedPmids, setSelectedPmids] = useState<string[]>([]);
+    const [isExportingPdf, setIsExportingPdf] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [citationExportType, setCitationExportType] = useState<'bib' | 'ris' | null>(null);
+    const [viewMode, setViewMode] = useState<'grid' | 'list'>(settings.knowledgeBase.defaultView);
+    const selectPageCheckboxRef = useRef<HTMLInputElement>(null);
+    
+    const filterOptions = useMemo(() => {
+        const topics = new Set<string>();
+        const tags = new Set<string>();
+        const types = new Set<string>();
+        const journals = new Set<string>();
+        uniqueArticles.forEach(article => {
+            topics.add(article.sourceReportTopic);
+            article.customTags?.forEach(tag => tags.add(tag));
+            if(article.articleType) types.add(article.articleType);
+            journals.add(article.journal);
+        });
+        return {
+            topics: Array.from(topics).sort(),
+            tags: Array.from(tags).sort(),
+            articleTypes: Array.from(types).sort(),
+            journals: Array.from(journals).sort((a,b) => a.localeCompare(b))
+        };
+    }, [uniqueArticles]);
+
+    const filteredArticles = useMemo(() => {
+        let articles = uniqueArticles;
+        if (filter.searchTerm) {
+            const lowercasedTerm = filter.searchTerm.toLowerCase();
+            articles = articles.filter(a =>
+                a.title.toLowerCase().includes(lowercasedTerm) ||
+                a.authors.toLowerCase().includes(lowercasedTerm) ||
+                a.summary.toLowerCase().includes(lowercasedTerm) ||
+                a.keywords.some(kw => kw.toLowerCase().includes(lowercasedTerm))
+            );
+        }
+        if (filter.selectedTopics.length > 0) articles = articles.filter(a => filter.selectedTopics.includes(a.sourceReportTopic));
+        if (filter.selectedTags.length > 0) articles = articles.filter(a => a.customTags && filter.selectedTags.some(t => a.customTags?.includes(t)));
+        if (filter.selectedArticleTypes.length > 0) articles = articles.filter(a => a.articleType && filter.selectedArticleTypes.includes(a.articleType));
+        if (filter.selectedJournals.length > 0) articles = articles.filter(a => filter.selectedJournals.includes(a.journal));
+        if (filter.showOpenAccessOnly) articles = articles.filter(a => a.isOpenAccess);
+
+        return articles.sort((a, b) => {
+            if (sortOrder === 'newest') return parseInt(b.pubYear) - parseInt(a.pubYear);
+            return b.relevanceScore - a.relevanceScore;
+        });
+    }, [uniqueArticles, filter, sortOrder]);
+    
+    const handleSelectPmid = (pmid: string) => {
+        setSelectedPmids(prev => prev.includes(pmid) ? prev.filter(p => p !== pmid) : [...prev, pmid]);
+    };
+    
+    const findRelatedInsights = useCallback((pmid: string) => {
+        return knowledgeBase.flatMap(entry => entry.report.aiGeneratedInsights || [])
+            .filter(insight => (insight.supportingArticles || []).includes(pmid));
+    }, [knowledgeBase]);
+
+
+    const handleExportPdf = () => {
+        const articlesToExport = selectedPmids.length > 0 ? uniqueArticles.filter(a => selectedPmids.includes(a.pmid)) : filteredArticles;
+        if (articlesToExport.length === 0) {
+            setNotification({ id: Date.now(), message: 'No articles selected to export.', type: 'error' });
+            return;
+        }
+        setIsExportingPdf(true);
+        setTimeout(() => {
+            try {
+                exportKnowledgeBaseToPdf(articlesToExport, 'Knowledge Base Selection', findRelatedInsights, settings.export.pdf);
+            } catch (error) {
+                console.error("PDF Export failed:", error);
+            } finally {
+                setIsExportingPdf(false);
+            }
+        }, 50);
+    };
+
+    const handleExportCsv = () => {
+        const articlesToExport = selectedPmids.length > 0 ? uniqueArticles.filter(a => selectedPmids.includes(a.pmid)) : filteredArticles;
+        if (articlesToExport.length === 0) {
+            setNotification({ id: Date.now(), message: 'No articles selected to export.', type: 'error' });
+            return;
+        }
+        exportToCsv(articlesToExport, 'knowledge_base', settings.export.csv);
+    };
+
+    const exportCitation = (type: 'bib' | 'ris') => {
+        const articles = uniqueArticles.filter(a => selectedPmids.includes(a.pmid));
+        if (articles.length === 0) {
+            setNotification({ id: Date.now(), message: 'No articles selected to export.', type: 'error' });
+            return;
+        }
+        let content = '';
+        const { citation: citationSettings } = settings.export;
+
+        const cleanForBibtex = (text: string) => text.replace(/([{}%])/g, '\\$1');
+
+        if (type === 'bib') {
+            content = articles.map(a => {
+                let entry = `@article{PMID:${a.pmid},\n  author  = {${a.authors.split(', ').join(' and ')}},\n  title   = {${cleanForBibtex(a.title)}},\n  journal = {${cleanForBibtex(a.journal)}},\n  year    = {${a.pubYear}},\n  pmid    = {${a.pmid}},\n`;
+                if (citationSettings.includeAbstract) entry += `  abstract = {${cleanForBibtex(a.summary)}},\n`;
+                if (citationSettings.includeKeywords && a.keywords?.length > 0) entry += `  keywords = {${a.keywords.join(', ')}},\n`;
+                
+                const notes = [];
+                if (citationSettings.includeTags && a.customTags?.length > 0) notes.push(`Custom Tags: ${a.customTags.join(', ')}`);
+                if (citationSettings.includePmcid && a.pmcId) notes.push(`PMCID: ${a.pmcId}`);
+                if (notes.length > 0) entry += `  note = {${cleanForBibtex(notes.join('; '))}}\n`;
+                
+                entry += `}`;
+                return entry;
+            }).join('\n\n');
+        } else { // RIS
+            content = articles.map(a => {
+                let entry = `TY  - JOUR\n`;
+                entry += a.authors.split(', ').map(author => `AU  - ${author}`).join('\n') + '\n';
+                entry += `TI  - ${a.title}\nJO  - ${a.journal}\nYR  - ${a.pubYear}\n`;
+                if (citationSettings.includeAbstract) entry += `AB  - ${a.summary}\n`;
+                if (citationSettings.includeKeywords && a.keywords?.length > 0) entry += `${a.keywords.map(kw => `KW  - ${kw}`).join('\n')}\n`;
+                if (citationSettings.includeTags && a.customTags?.length > 0) entry += `${a.customTags.map(tag => `KW  - ${tag}`).join('\n')}\n`; // Using KW for custom tags too
+                entry += `ID  - ${a.pmid}\n`;
+                if (citationSettings.includePmcid && a.pmcId) entry += `N1  - PMCID: ${a.pmcId}\n`; // N1 is often used for notes
+                entry += 'ER  - \n';
+                return entry;
+            }).join('\n');
+        }
+        const blob = new Blob([content], { type: 'application/octet-stream' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `citations.${type}`;
+        link.click();
+        URL.revokeObjectURL(link.href);
+        setCitationExportType(null);
+    };
+
+    useEffect(() => { setCurrentPage(1); setSelectedPmids([]); }, [filter, sortOrder]);
+    const totalPages = Math.ceil(filteredArticles.length / ARTICLES_PER_PAGE);
+    const paginatedArticles = filteredArticles.slice((currentPage - 1) * ARTICLES_PER_PAGE, currentPage * ARTICLES_PER_PAGE);
+
+    const clearFilters = useCallback(() => {
+        onFilterChange({
+            searchTerm: '',
+            selectedTopics: [],
+            selectedTags: [],
+            selectedArticleTypes: [],
+            selectedJournals: [],
+            showOpenAccessOnly: false,
+        });
+    }, [onFilterChange]);
+
+    const allOnPageSelected = paginatedArticles.length > 0 && paginatedArticles.every(a => selectedPmids.includes(a.pmid));
+    const someOnPageSelected = paginatedArticles.some(a => selectedPmids.includes(a.pmid)) && !allOnPageSelected;
+
+    useEffect(() => {
+        if (selectPageCheckboxRef.current) {
+            selectPageCheckboxRef.current.indeterminate = someOnPageSelected;
+        }
+    }, [someOnPageSelected]);
+
+
+    const handleSelectPage = () => {
+        const pagePmids = paginatedArticles.map(a => a.pmid);
+        if (allOnPageSelected) {
+            setSelectedPmids(prev => prev.filter(p => !pagePmids.includes(p)));
+        } else {
+            setSelectedPmids(prev => [...new Set([...prev, ...pagePmids])]);
+        }
+    };
+    
+    if (uniqueArticles.length === 0) {
+        return (
+            <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)] text-center animate-fadeIn">
+                <DatabaseIcon className="h-24 w-24 text-border mb-6" />
+                <h2 className="text-3xl font-bold text-text-primary mb-3">Knowledge Base is Empty</h2>
+                <p className="max-w-md mx-auto text-lg text-text-secondary">Save reports from the Orchestrator tab to start building your research library.</p>
+            </div>
+        );
+    }
+    
+    return (
+        <div className="animate-fadeIn">
+             {isExportingPdf && <PdfExportingOverlay />}
+             {selectedArticle && <ArticleDetailPanel article={selectedArticle} onClose={() => setSelectedArticle(null)} findRelatedInsights={findRelatedInsights} />}
+             {showDeleteModal && (
+                <ConfirmationModal
+                    onConfirm={() => { deleteArticles(selectedPmids); setSelectedPmids([]); setShowDeleteModal(false); }}
+                    onCancel={() => setShowDeleteModal(false)}
+                    title={`Delete ${selectedPmids.length} Article(s)?`}
+                    message="Are you sure you want to permanently delete the selected articles from your knowledge base? This action cannot be undone."
+                    confirmText="Yes, Delete"
+                />
+             )}
+             {citationExportType && (
+                <ConfirmationModal
+                    onConfirm={() => exportCitation(citationExportType)}
+                    onCancel={() => setCitationExportType(null)}
+                    title="Export Citations"
+                    message={`Export ${selectedPmids.length} selected citations in ${citationExportType.toUpperCase()} format?`}
+                    confirmText="Export"
+                    confirmButtonClass="bg-brand-accent hover:bg-opacity-90"
+                    titleClass="text-brand-accent"
+                />
+             )}
+            <div className="text-center mb-12">
+                <h1 className="text-4xl font-bold text-brand-accent">Knowledge Base</h1>
+                <p className="mt-2 text-lg text-text-secondary">Search, filter, and manage all articles from your saved reports.</p>
+            </div>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                <aside className="lg:col-span-1">
+                    <div className="sticky top-24 space-y-6 bg-surface p-4 rounded-lg border border-border">
+                        <h3 className="text-lg font-semibold text-text-primary border-b border-border pb-3">Filters</h3>
+                        <MultiSelectFilter title="Report Topic" options={filterOptions.topics} selected={filter.selectedTopics} onChange={s => onFilterChange({ selectedTopics: s })} />
+                        <MultiSelectFilter title="Custom Tags" options={filterOptions.tags} selected={filter.selectedTags} onChange={s => onFilterChange({ selectedTags: s })} />
+                        <MultiSelectFilter title="Article Type" options={filterOptions.articleTypes} selected={filter.selectedArticleTypes} onChange={s => onFilterChange({ selectedArticleTypes: s })} />
+                        <MultiSelectFilter title="Journal" options={filterOptions.journals} selected={filter.selectedJournals} onChange={s => onFilterChange({ selectedJournals: s })} />
+                        <label className="flex items-center space-x-3 cursor-pointer text-sm font-medium text-text-primary">
+                            <input type="checkbox" checked={filter.showOpenAccessOnly} onChange={e => onFilterChange({ showOpenAccessOnly: e.target.checked })} className="h-4 w-4 rounded border-border bg-background text-brand-accent focus:ring-brand-accent" />
+                            <span>Show Open Access Only</span>
+                        </label>
+                        <button onClick={clearFilters} className="w-full flex items-center justify-center text-sm px-3 py-2 rounded-md text-text-primary bg-background hover:bg-surface-hover border border-border transition-colors">
+                            <XCircleIcon className="h-4 w-4 mr-2" />
+                            Clear All Filters
                         </button>
                     </div>
-                </div>
+                </aside>
 
-                <div className="lg:col-span-3">
-                    <div className="p-4 border-b border-border sticky top-24 bg-surface/80 backdrop-blur-sm z-10 rounded-t-lg">
-                        <div className="flex justify-between items-center mb-3 flex-wrap gap-2">
-                             <h3 className="text-lg font-semibold text-brand-accent">{filteredArticles.length} Unique Articles</h3>
-                             <div className="flex items-center gap-2">
-                                <label htmlFor="sort-select" className="text-sm text-text-secondary">Sort by:</label>
-                                <select id="sort-select" value={`${sortConfig.key}-${sortConfig.direction}`} onChange={handleSortChange} className="bg-background border border-border rounded-md text-sm py-1.5 px-2 focus:outline-none focus:ring-2 focus:ring-brand-accent">
-                                    <option value="relevanceScore-desc">Relevance: High to Low</option>
-                                    <option value="relevanceScore-asc">Relevance: Low to High</option>
-                                    <option value="pubYear-desc">Year: Newest First</option>
-                                    <option value="pubYear-asc">Year: Oldest First</option>
-                                </select>
+                <main className="lg:col-span-3">
+                    <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
+                        <div className="relative w-full md:w-auto md:flex-grow">
+                             <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-text-secondary" />
+                             <label htmlFor="kb-search" className="sr-only">Search articles</label>
+                             <input type="text" id="kb-search" placeholder={`Search ${uniqueArticles.length} articles...`} value={filter.searchTerm} onChange={e => onFilterChange({ searchTerm: e.target.value })} className="w-full bg-surface border border-border rounded-md py-2 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-brand-accent"/>
+                        </div>
+                        <div className="flex items-center gap-4 w-full md:w-auto justify-between">
+                            <label htmlFor="kb-sort" className="sr-only">Sort order</label>
+                            <select id="kb-sort" value={sortOrder} onChange={e => setSortOrder(e.target.value as any)} className="bg-surface border border-border rounded-md py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-accent">
+                                <option value="relevance">Sort by Relevance</option>
+                                <option value="newest">Sort by Newest</option>
+                            </select>
+                             <div className="flex items-center bg-background p-1 rounded-lg border border-border">
+                                <button onClick={() => setViewMode('grid')} aria-label="Grid View" className={`p-1.5 rounded-md ${viewMode === 'grid' ? 'bg-brand-accent text-brand-text-on-accent' : 'text-text-secondary hover:bg-surface'}`}><GridViewIcon className="h-5 w-5"/></button>
+                                <button onClick={() => setViewMode('list')} aria-label="List View" className={`p-1.5 rounded-md ${viewMode === 'list' ? 'bg-brand-accent text-brand-text-on-accent' : 'text-text-secondary hover:bg-surface'}`}><ListViewIcon className="h-5 w-5"/></button>
                             </div>
                         </div>
-                        <div className="flex items-center justify-between p-3 bg-background/50 border border-border rounded-md flex-wrap gap-3">
-                           <div className="flex items-center">
-                               <input id="select-all" type="checkbox" className="h-4 w-4 rounded border-border bg-surface text-brand-accent focus:ring-brand-accent" checked={areAllFilteredSelected} onChange={handleSelectAll} disabled={filteredArticles.length === 0} />
-                               <label htmlFor="select-all" className="ml-3 text-sm text-text-secondary">Select all {filteredArticles.length > 0 ? filteredArticles.length : ''} visible</label>
-                           </div>
-                           <div className="flex items-center gap-2 flex-wrap">
-                               {selectedArticles.size > 0 && (
-                                   <>
-                                        <button onClick={() => handleCitationExport('bibtex')} className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-brand-text-on-accent bg-brand-accent hover:bg-opacity-90">
-                                            <CitationIcon className="h-4 w-4 mr-2" />BibTeX
-                                        </button>
-                                        <button onClick={() => handleCitationExport('ris')} className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-brand-text-on-accent bg-brand-accent hover:bg-opacity-90">
-                                            <CitationIcon className="h-4 w-4 mr-2" />RIS
-                                        </button>
-                                        <div className="h-5 w-px bg-border mx-1"></div>
-                                        <button onClick={handleDeleteSelected} className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700">
-                                            <TrashIcon className="h-4 w-4 mr-2" />Delete ({selectedArticles.size})
-                                        </button>
-                                   </>
-                               )}
-                                <button onClick={handlePdfExport} disabled={!canExportPdf} className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-brand-text-on-accent bg-brand-primary hover:bg-brand-secondary disabled:bg-border disabled:text-text-secondary">
-                                    <PdfIcon className="h-4 w-4 mr-2" />Export as PDF
-                                </button>
-                                <button onClick={handleCsvExport} className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-brand-text-on-accent bg-brand-primary hover:bg-brand-secondary">
-                                    <CsvIcon className="h-4 w-4 mr-2" />Export as CSV
-                                </button>
-                           </div>
-                        </div>
                     </div>
-                    <div className="space-y-4 p-4">
-                        {filteredArticles.length > 0 ? (
-                            filteredArticles.map(article => (
-                               <ArticleListItem
-                                    key={article.pmid}
-                                    article={article}
-                                    isSelected={selectedArticles.has(article.pmid)}
-                                    onSelect={handleSelectArticle}
-                                    onViewDetails={setDetailedArticle}
+                    
+                    <ActiveFilters filter={filter} onFilterChange={onFilterChange} onClear={clearFilters} />
+
+                    {selectedPmids.length > 0 && (
+                        <div className="bg-surface border border-border rounded-lg p-3 mb-4 flex flex-col md:flex-row justify-between items-center gap-4 animate-fadeIn">
+                             <p className="text-sm font-semibold text-text-primary">{selectedPmids.length} selected</p>
+                             <div className="flex items-center gap-2 flex-wrap">
+                                <button onClick={() => setShowDeleteModal(true)} className="flex items-center text-sm px-3 py-1.5 rounded-md text-red-400 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20"><TrashIcon className="h-4 w-4 mr-2" />Delete</button>
+                                <div className="h-5 w-px bg-border"></div>
+                                <button onClick={handleExportPdf} className="flex items-center text-sm px-3 py-1.5 rounded-md text-text-primary bg-background hover:bg-surface-hover border border-border"><PdfIcon className="h-4 w-4 mr-2" />Export PDF</button>
+                                <button onClick={handleExportCsv} className="flex items-center text-sm px-3 py-1.5 rounded-md text-text-primary bg-background hover:bg-surface-hover border border-border"><CsvIcon className="h-4 w-4 mr-2" />Export CSV</button>
+                                <div className="relative">
+                                    <button onClick={() => setCitationExportType(prev => prev ? null : 'bib')} className="flex items-center text-sm px-3 py-1.5 rounded-md text-text-primary bg-background hover:bg-surface-hover border border-border"><CitationIcon className="h-4 w-4 mr-2" />Export Citations <ChevronDownIcon className="h-4 w-4 ml-1"/></button>
+                                     {citationExportType && (
+                                        <div className="absolute right-0 mt-2 w-40 bg-surface border border-border rounded-md shadow-lg z-10">
+                                            <button onClick={() => exportCitation('bib')} className="w-full text-left px-3 py-2 text-sm hover:bg-surface-hover">BibTeX (.bib)</button>
+                                            <button onClick={() => exportCitation('ris')} className="w-full text-left px-3 py-2 text-sm hover:bg-surface-hover">RIS (.ris)</button>
+                                        </div>
+                                     )}
+                                </div>
+                             </div>
+                        </div>
+                    )}
+
+                    {paginatedArticles.length > 0 ? (
+                        <>
+                             <div className="border-b border-border pb-2 mb-2 flex items-center gap-3">
+                                <input
+                                    ref={selectPageCheckboxRef}
+                                    type="checkbox"
+                                    id="select-all-on-page"
+                                    checked={allOnPageSelected}
+                                    onChange={handleSelectPage}
+                                    className="h-4 w-4 rounded border-border bg-background text-brand-accent focus:ring-brand-accent"
                                 />
-                            ))
-                        ) : (
-                            <div className="text-center py-12">
-                                <p className="text-lg font-semibold text-text-primary">No Articles Match Your Criteria</p>
-                                <p className="text-text-secondary mt-1">Try adjusting your search or filter settings.</p>
+                                <label htmlFor="select-all-on-page" className="text-sm text-text-secondary cursor-pointer">Select all on this page ({paginatedArticles.length})</label>
                             </div>
-                        )}
-                    </div>
-                </div>
-                {detailedArticle && (
-                    <ArticleDetailPanel 
-                        article={detailedArticle} 
-                        onClose={() => setDetailedArticle(null)}
-                        findRelatedInsights={findRelatedInsights}
-                        onTagsUpdate={onTagsUpdate}
-                    />
-                )}
+                            {viewMode === 'grid' ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-4">
+                                    {paginatedArticles.map(article => <KBArticleCard key={article.pmid} article={article} isSelected={selectedPmids.includes(article.pmid)} onSelect={handleSelectPmid} onView={setSelectedArticle} />)}
+                                </div>
+                            ) : (
+                                <div className="bg-surface border border-border rounded-lg overflow-hidden">
+                                    {paginatedArticles.map(article => <ArticleListItem key={article.pmid} article={article} isSelected={selectedPmids.includes(article.pmid)} onSelect={handleSelectPmid} onView={setSelectedArticle} />)}
+                                </div>
+                            )}
+                        </>
+                    ) : (
+                         <div className="text-center py-16">
+                            <SearchIcon className="h-16 w-16 text-border mx-auto mb-4" />
+                            <p className="text-lg font-semibold text-text-primary">No articles match your filters.</p>
+                            <p className="text-text-secondary mt-1">Try adjusting your search or clearing some filters.</p>
+                        </div>
+                    )}
+
+                    {totalPages > 1 && (
+                        <nav className="mt-8 flex justify-between items-center" aria-label="Pagination">
+                            <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="px-4 py-2 text-sm rounded-md bg-surface border border-border disabled:opacity-50">Previous</button>
+                            <span className="text-sm text-text-secondary" aria-live="polite" aria-atomic="true">Page {currentPage} of {totalPages}</span>
+                            <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="px-4 py-2 text-sm rounded-md bg-surface border border-border disabled:opacity-50">Next</button>
+                        </nav>
+                    )}
+                </main>
             </div>
-        </>
+        </div>
     );
 };

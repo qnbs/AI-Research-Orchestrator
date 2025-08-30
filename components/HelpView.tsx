@@ -1,5 +1,3 @@
-
-
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { ChevronDownIcon } from './icons/ChevronDownIcon';
 import { BookOpenIcon } from './icons/BookOpenIcon';
@@ -8,13 +6,17 @@ import { BookmarkIcon } from './icons/BookmarkIcon';
 import { SearchIcon } from './icons/SearchIcon';
 import { InfoIcon } from './icons/InfoIcon';
 
-type HelpSection = 'guide' | 'faq' | 'glossary';
+type HelpSection = 'guide' | 'faq' | 'glossary' | 'about';
 
 interface AccordionItemProps {
     title: string;
     children: React.ReactNode;
     defaultOpen?: boolean;
-    keywords?: string; // For search
+}
+
+interface HelpViewProps {
+    initialTab: string | null;
+    onTabConsumed: () => void;
 }
 
 const Note: React.FC<{ children: React.ReactNode; type?: 'info' | 'tip' | 'warning'; title?: string }> = ({ children, type = 'info', title }) => {
@@ -26,7 +28,7 @@ const Note: React.FC<{ children: React.ReactNode; type?: 'info' | 'tip' | 'warni
     const selectedStyle = styles[type];
 
     return (
-        <div className={`p-4 mt-4 rounded-lg border not-prose ${selectedStyle.base}`}>
+        <div className={`p-4 my-4 rounded-lg border not-prose ${selectedStyle.base}`}>
             <div className="flex">
                 <div className="flex-shrink-0">
                     <InfoIcon className={`h-5 w-5 ${selectedStyle.icon}`} aria-hidden="true" />
@@ -39,7 +41,6 @@ const Note: React.FC<{ children: React.ReactNode; type?: 'info' | 'tip' | 'warni
         </div>
     );
 };
-
 
 const AccordionItem: React.FC<AccordionItemProps> = ({ title, children, defaultOpen = false }) => {
     const [isOpen, setIsOpen] = useState(defaultOpen);
@@ -81,303 +82,299 @@ const AccordionItem: React.FC<AccordionItemProps> = ({ title, children, defaultO
 const GuideSection: React.FC<{ searchTerm: string }> = ({ searchTerm }) => {
     const guideTopics = useMemo(() => [
         {
-            title: "Step 1: Define Your Research",
+            title: "The Two Core Workflows",
             content: (
                 <>
-                    <p>Everything starts in the <strong>Research Parameters</strong> panel. Here’s how to fill it out effectively:</p>
+                    <p>This app offers two distinct but interconnected paths for conducting research:</p>
+                    <ol>
+                        <li><strong>The Orchestrator:</strong> For comprehensive literature reviews on a broad topic, involving multiple articles. This is your starting point for building out a new area of your knowledge base.</li>
+                        <li><strong>The Research Assistant:</strong> For quick, focused analysis of a specific question, abstract, or piece of text. It's perfect for exploring a single idea before committing to a full review.</li>
+                    </ol>
+                </>
+            ),
+            keywords: "workflow orchestrator research assistant core concept"
+        },
+        {
+            title: "Using the Orchestrator",
+            content: (
+                <>
+                    <p>Everything begins on the <strong>Orchestrator</strong> tab. Here’s how to fill it out effectively:</p>
                     <ul>
                         <li><strong>Primary Research Topic:</strong> Be as specific as possible. Instead of <code>coffee</code>, try <code>the effects of caffeine on sleep quality in young adults</code>. This helps the AI agents focus their search.</li>
-                        <li><strong>Publication Date:</strong> Choose a time frame relevant to your topic. For fast-moving fields, "Last 5 Years" is often a good choice.</li>
-                        <li><strong>Article Types:</strong> Select the types of evidence you trust most. <strong>Systematic Reviews</strong> and <strong>Meta-Analyses</strong> provide high-level summaries of existing research and are considered strong forms of evidence.</li>
-                        <li><strong>Synthesis Focus:</strong> This tells the AI what angle to take when summarizing the findings. Are you interested in a general overview, or looking specifically for gaps in the research?</li>
+                        <li><strong>Publication Date:</strong> Choose a timeframe relevant to your topic. For fast-moving fields, 'Last 5 Years' is often a good choice.</li>
+                        <li><strong>Article Types:</strong> Select the types of evidence you trust most. <strong>Systematic Reviews</strong> and <strong>Meta-Analyses</strong> provide high-quality summaries of existing research and are considered strong forms of evidence.</li>
+                        <li><strong>Synthesis Focus:</strong> This tells the AI what angle to take when summarizing the findings. Are you interested in a general overview, or are you specifically looking for gaps in the research?</li>
                     </ul>
                     <Note type="tip" title="Pro-Tip: Advanced Topics">
-                        <p>Use boolean-like operators (<code>AND</code>, <code>OR</code>, <code>NOT</code>) in your topic for more precise control, e.g., <code>(intermittent fasting OR time-restricted eating) AND cognitive function NOT alzheimer's</code>.</p>
+                        <p>Use boolean operators (`AND`, `OR`, `NOT`) in your topic for more precise control, e.g., <code>(intermittent fasting OR time-restricted eating) AND cognitive function NOT Alzheimer</code>.</p>
                     </Note>
+                     <p>After you click 'Start Research', a detailed report will appear with a synthesis, AI insights, and a list of ranked articles. If you like the results, click 'Save to Knowledge Base' to permanently store the articles.</p>
                 </>
             ),
-            keywords: "research parameters topic date type synthesis focus start starting new"
+            keywords: "research parameters topic date type synthesis focus start new report save"
         },
         {
-            title: "Step 2: Analyze & Save Your Report",
+            title: "Using the Research Assistant",
             content: (
                 <>
-                    <p>When the process is complete, a detailed report appears. It contains several key sections that you can expand or collapse:</p>
+                    <p>Navigate to the <strong>Research</strong> tab for quick analysis. This tool is ideal for:</p>
                     <ul>
-                        <li><strong>Executive Synthesis:</strong> A comprehensive, narrative summary of the findings from the top articles. This is your high-level overview.</li>
-                        <li><strong>AI-Generated Insights:</strong> The AI formulates key questions based on your topic and then answers them using evidence from the literature, citing the specific articles (by PMID) that support the answer.</li>
-                        <li><strong>Ranked Articles:</strong> A list of the most relevant articles found. Each card shows the title, authors, relevance score (and why), a summary, and keywords. Click the title to open the article on PubMed.</li>
-                         <li><strong>Generated PubMed Queries:</strong> See the exact, advanced queries the AI used to search the database. This is great for learning how to improve your own manual searches.</li>
+                        <li>Getting a quick summary of a paper's abstract before you read it.</li>
+                        <li>Asking a specific scientific question.</li>
+                        <li>Exploring a new topic to see if it's worth a full literature review.</li>
                     </ul>
-                    <p>If you have "Auto-save" disabled in settings, you'll see a <strong>"Save to Knowledge Base"</strong> button. This allows you to review the report's quality before adding its articles to your permanent collection.</p>
+                    <p>Simply paste your text into the box and click 'Analyze'. The AI will provide a summary, extract key findings, and automatically search for related PubMed articles and online news/discussions on the topic.</p>
+                    <p>If the results are promising, use the 'Start Full Review on This Topic' button to seamlessly send the AI-synthesized topic to the Orchestrator for a deeper dive.</p>
                 </>
             ),
-            keywords: "report results synthesis insights articles save saving pmid query"
+            keywords: "assistant analyze summary key findings similar online"
         },
         {
-            title: "Step 3: Explore Your Knowledge Base",
+            title: "Exploring Your Knowledge Base",
             content: (
                 <>
-                    <p>Saved reports contribute their articles to your personal <strong>Knowledge Base</strong>. This view aggregates all unique articles from all your reports into a single, powerful interface.</p>
+                    <p>Saved reports contribute their articles to your personal <strong>Knowledge Base</strong>. This view consolidates all unique articles from all your reports into a single, powerful interface.</p>
                     <ul>
-                        <li><strong>Search & Filter:</strong> Use the extensive options on the left to narrow down hundreds of articles to just the ones you need. You can filter by keywords, report topics, your own custom tags, or show only Open Access articles.</li>
-                        <li><strong>Manage Articles:</strong> Select one or more articles using the checkboxes to perform bulk actions like deleting them or exporting citation data for your reference manager.</li>
-                         <li><strong>Sort:</strong> Change the sorting order to find the newest publications or the most relevant articles based on their original scores.</li>
+                        <li><strong>Search & Filter:</strong> Use the extensive options on the left to narrow down hundreds of articles to the exact ones you need. You can filter by keywords, report topics, your own custom tags, or show only open-access articles.</li>
+                        <li><strong>Manage Articles:</strong> Select one or more articles via the checkboxes to perform bulk actions, such as deleting them or exporting citation data for your reference manager.</li>
+                         <li><strong>Article Details:</strong> Click on any article to open a side panel. Here, you can add custom tags, read the full summary, and use the 'Discovery Tools' to find even more related articles or online discussions.</li>
                     </ul>
                     <Note type="info" title="What does 'Unique Articles' mean?">
-                        The Knowledge Base automatically de-duplicates articles. If two different reports find the same article (based on its PMID), it will only appear once in your Knowledge Base, ensuring your library stays clean. The version with the highest relevance score is kept.
+                        The Knowledge Base automatically de-duplicates articles. If two different reports find the same article (based on its PMID), it will only appear once in your Knowledge Base to keep your library clean. The version with the highest relevance score is retained.
                     </Note>
                 </>
             ),
-            keywords: "knowledge base library search filter manage delete export unique"
+            keywords: "knowledge base library search filter manage delete export unique tags details"
         },
         {
-            title: "Step 4: Dive Deep with the Article Detail Panel",
+            title: "Exporting Your Data",
             content: (
                 <>
-                     <p>Click on any article in the Knowledge Base list to open the <strong>Article Detail Panel</strong>. This side panel gives you an in-depth look, including:</p>
+                     <p>You can export data from several places in the app, with settings configurable in the `Settings > Export` tab.</p>
                     <ul>
-                        <li>Full summary, publication details, and all associated keywords.</li>
-                        <li><strong>Custom Tags:</strong> Add your own tags (e.g., <code>must-read</code>, <code>methodology-focus</code>) to organize your research. These tags are then available as a filter in the main view.</li>
-                        <li><strong>Related AI Insights:</strong> See exactly which AI-generated questions this specific article helped support across all of your reports. This is a powerful way to see cross-report connections.</li>
-                    </ul>
-                </>
-            ),
-            keywords: "details panel tags tagging insights summary"
-        },
-        {
-            title: "Step 5: Export Your Data",
-            content: (
-                <>
-                     <p>In the Knowledge Base, you have several export options for your filtered articles:</p>
-                    <ul>
-                        <li><strong>PDF:</strong> Creates a clean, summarized report of selected articles (or all currently filtered articles if none are selected), including AI insights related to them. Ideal for sharing or quick reading.</li>
-                        <li><strong>CSV:</strong> Exports the raw data (title, authors, summary, etc.) to a comma-separated values file, perfect for spreadsheets or other analysis tools.</li>
-                        <li><strong>Export Citations:</strong> Select articles and export their citation information in <strong>BibTeX (<code>.bib</code>)</strong> or <strong>RIS (<code>.ris</code>)</strong> format for use in reference managers like Zotero, Mendeley, or EndNote.</li>
+                        <li><strong>From a Report:</strong> Export a single report as a PDF, CSV, or just the AI Insights as a CSV.</li>
+                        <li><strong>From the Knowledge Base:</strong> Select articles and export them as a PDF, CSV, or citation file.
+                            <ul>
+                                <li><strong>PDF:</strong> Creates a clean, summary report of the selected articles. Ideal for sharing.</li>
+                                <li><strong>CSV:</strong> Exports the raw data for spreadsheets or other analysis tools.</li>
+                                <li><strong>Citations:</strong> Get files in <strong>BibTeX (.bib)</strong> or <strong>RIS (.ris)</strong> format for reference managers like Zotero, Mendeley, or EndNote.</li>
+                            </ul>
+                        </li>
                     </ul>
                 </>
             ),
             keywords: "export pdf csv citations bibtex ris zotero mendeley data"
         },
-        {
-            title: "Step 6: Master the Settings",
-            content: (
-                <>
-                    <p>The Settings page (gear icon) gives you granular control over the application:</p>
-                    <ul>
-                        <li><strong>General:</strong> Switch between light and dark themes, control animations, and set your notification preferences.</li>
-                        <li><strong>AI & Defaults:</strong> This is a crucial section. Change the AI's language or persona (e.g., from a "Neutral Scientist" to a "Concise Expert"), adjust its creativity (temperature), and set default values for the main research form to speed up your workflow.</li>
-                        <li><strong>Data Management:</strong> Import and export your entire knowledge base, and use tools like "Merge Duplicates" and "Prune by Relevance" to keep your data clean and high-quality.</li>
-                    </ul>
-                </>
-            ),
-            keywords: "settings configuration theme dark light mode ai persona temperature defaults data management"
-        }
-    ], []);
+    ], [searchTerm]);
 
     const filteredTopics = useMemo(() => {
         if (!searchTerm) return guideTopics;
-        const lowerSearchTerm = searchTerm.toLowerCase();
-        return guideTopics.filter(topic =>
-            topic.title.toLowerCase().includes(lowerSearchTerm) ||
-            topic.keywords.includes(lowerSearchTerm)
+        const lowercasedTerm = searchTerm.toLowerCase();
+        return guideTopics.filter(topic => 
+            topic.title.toLowerCase().includes(lowercasedTerm) || 
+            topic.keywords.includes(lowercasedTerm)
         );
-    }, [searchTerm, guideTopics]);
+    }, [guideTopics, searchTerm]);
 
     return (
         <div>
-            <h2 className="text-3xl font-bold text-brand-accent mb-4 flex items-center"><BookOpenIcon className="h-8 w-8 mr-3" />User Guide: Step-by-Step</h2>
-            <p className="text-text-secondary mb-6">Welcome to the AI Research Orchestrator. This guide will walk you through the entire workflow, from starting your research to managing your findings.</p>
-            {filteredTopics.length > 0 ? filteredTopics.map(topic => (
-                <AccordionItem key={topic.title} title={topic.title} defaultOpen={!!searchTerm}>{topic.content}</AccordionItem>
-            )) : <p className="text-center italic text-text-secondary py-4">No guide topics match your search.</p>}
+            {filteredTopics.map((topic, index) => (
+                <AccordionItem key={index} title={topic.title} defaultOpen={!!searchTerm}>
+                    {topic.content}
+                </AccordionItem>
+            ))}
+            {filteredTopics.length === 0 && (
+                <div className="text-center py-8">
+                    <p className="text-lg text-text-primary">No help topics match your search.</p>
+                </div>
+            )}
         </div>
     );
 };
 
-const FaqSection: React.FC<{ searchTerm: string }> = ({ searchTerm }) => {
-    const faqItems = useMemo(() => [
-        {
-            title: "Is the AI-generated information always 100% accurate?",
-            content: <>
-                <Note type="warning" title="Important Disclaimer">
-                     <p>While powerful, this tool uses generative AI, which can make mistakes, misinterpret information, or "hallucinate" facts. The generated synthesis and insights are intended as a <strong>starting point for your research, not a replacement for critical evaluation.</strong></p>
-                     <p className="mt-2"><strong>You must always verify key findings by reading the original source articles provided.</strong></p>
-                </Note>
-            </>,
-            keywords: "accurate accuracy reliable valid mistakes errors hallucination"
-        },
-         {
-            title: "What is the difference between a 'Report' and the 'Knowledge Base'?",
-            content: <>
-                <p>This is a key concept to understand:</p>
-                <ul>
-                    <li>A <strong>Report</strong> is the direct output of a single research query. It's a self-contained document with a synthesis and a list of articles relevant to that specific query.</li>
-                    <li>The <strong>Knowledge Base</strong> is the master library of <em>all unique articles</em> from <em>all the reports you have saved</em>. It automatically de-duplicates articles and lets you search, filter, and manage everything in one place.</li>
-                </ul>
-                <p>Think of reports as the "shopping trips" and the Knowledge Base as your "pantry" that you fill over time.</p>
-            </>,
-            keywords: "report knowledge base difference distinction"
-        },
-        {
-            title: "Where does the AI get its information?",
-            content: <p>The AI Research Orchestrator is designed to query the <strong>PubMed</strong> database, a free resource from the NIH/NLM containing over 36 million citations for biomedical literature. The AI synthesizes information from the abstracts and metadata of the articles it finds there.</p>,
-            keywords: "source data pubmed information"
-        },
-        {
-            title: "Where is my data stored? Is it private?",
-            content: <>
-                <p>All your research reports and the resulting Knowledge Base are stored directly in your web browser's <strong>localStorage</strong>. No data is saved on any external server. This means your research is private to you and your current browser.</p>
-                <p>To back up your data or move it to another computer/browser, use the <strong>Export</strong> and <strong>Import</strong> features on the Settings page.</p>
-            </>,
-            keywords: "data storage privacy security local localStorage server backup"
-        },
-        {
-            title: "How does the 'Merge Duplicates' feature work?",
-            content: <p>This tool scans your entire Knowledge Base for articles that have the same PubMed ID (PMID) but may have appeared in different reports (potentially with different relevance scores). It intelligently removes the duplicates, ensuring only the version of the article with the <strong>highest relevance score</strong> is kept. It's a great way to clean up your data without losing the best version of an article.</p>,
-            keywords: "merge duplicates clean cleaning data management"
-        },
-        {
-            title: "What are some best practices for a good research topic?",
-            content: <>
-                <p>A well-defined topic yields better results. Follow these tips:</p>
-                 <ul>
-                    <li><strong>Be Specific:</strong> Instead of "diet and health," try "impact of Mediterranean diet on cardiovascular health in elderly patients."</li>
-                    <li><strong>Use Keywords:</strong> Include the primary keywords you'd expect to find in relevant papers.</li>
-                    <li><strong>Define Scope:</strong> Mention specific populations (e.g., "in children," "in athletes") or outcomes (e.g., "cognitive function," "mortality rates") to narrow the focus.</li>
-                </ul>
-            </>,
-            keywords: "best practices topic query prompt"
-        },
-        {
-            title: "Why did my search find no articles?",
-            content: <p>This can happen if your criteria are too narrow. Try broadening your search by: extending the date range, removing article type restrictions, or rephrasing your research topic to be less specific. The generated PubMed queries in the report can also give you a hint as to what the AI was looking for.</p>,
-            keywords: "no results empty blank articles search fail"
-        },
-    ], []);
+const FAQSection: React.FC<{ searchTerm?: string }> = () => (
+    <div>
+        <AccordionItem title="Is my data private?">
+            <p><strong>Yes.</strong> All data, including your research history, saved articles, and settings, is stored exclusively in your browser's `localStorage`. No information is ever uploaded to a server or shared. Your research is completely private to the browser you are using.</p>
+            <Note type="warning" title="Back Up Your Data">
+                Because the data is stored locally, it can be lost if you clear your browser's data. Use the export features in `Settings > Data & Privacy` regularly to create JSON backups.
+            </Note>
+        </AccordionItem>
+        <AccordionItem title="Can I fully trust the AI's output?">
+            <p><strong>No.</strong> The AI is a powerful assistant, but it is not infallible. It can make mistakes, misinterpret data, or "hallucinate" information that sounds plausible but is incorrect. The content generated by the AI is for informational and discovery purposes only.</p>
+            <p><strong>Always verify critical information by reading the original source articles.</strong> This application is a tool to accelerate research, not a substitute for scholarly review and critical evaluation.</p>
+        </AccordionItem>
+        <AccordionItem title="Why isn't an article I know exists showing up?">
+            <p>There could be several reasons:</p>
+            <ul>
+                <li>The AI's search queries may not have been broad or specific enough to capture it.</li>
+                <li>The article might fall outside the specified date range or article type filters.</li>
+                <li>The article's abstract may not have contained enough relevant keywords for the AI to rank it highly, causing it to fall below your chosen 'Top N' articles for synthesis.</li>
+            </ul>
+             <p>Try broadening your research topic or adjusting the filters. You can also review the 'Generated PubMed Queries' in a report to see how the AI searched.</p>
+        </AccordionItem>
+        <AccordionItem title="How does the 'Relevance Score' work?">
+            <p>The Relevance Score is generated by the AI. After you provide a research topic, the AI first infers 2-3 specific questions a researcher would aim to answer. It then scores each article's abstract against those questions. The score (1-100) reflects how directly and comprehensively the article addresses those inferred key questions. It is a subjective measure created by the AI to help guide your focus.</p>
+        </AccordionItem>
+        <AccordionItem title="Keyboard Shortcuts">
+            <p>Speed up your workflow with these keyboard shortcuts:</p>
+            <div className="mt-4 space-y-3 not-prose">
+                <div className="grid grid-cols-[auto,1fr] items-center gap-x-4 gap-y-1 p-3 bg-background/70 border border-border rounded-lg">
+                    <span className="font-semibold text-text-primary col-span-2 pb-2 border-b border-border mb-1">Global Actions</span>
+                    <div className="text-right">
+                        <kbd className="px-2 py-1 text-xs font-semibold text-text-secondary bg-surface border border-border rounded-md">Esc</kbd>
+                    </div>
+                    <div className="text-sm">Closes any modal window, pop-up, or side panel.</div>
+                </div>
 
-    const filteredItems = useMemo(() => {
-        if (!searchTerm) return faqItems;
-        const lowerSearchTerm = searchTerm.toLowerCase();
-        return faqItems.filter(item =>
-            item.title.toLowerCase().includes(lowerSearchTerm) ||
-            item.keywords.includes(lowerSearchTerm)
-        );
-    }, [searchTerm, faqItems]);
+                <div className="grid grid-cols-[auto,1fr] items-center gap-x-4 gap-y-1 p-3 bg-background/70 border border-border rounded-lg">
+                    <span className="font-semibold text-text-primary col-span-2 pb-2 border-b border-border mb-1">Forms</span>
+                    <div className="text-right">
+                        <kbd className="px-2 py-1 text-xs font-semibold text-text-secondary bg-surface border border-border rounded-md">Ctrl</kbd> + <kbd className="px-2 py-1 text-xs font-semibold text-text-secondary bg-surface border border-border rounded-md">Enter</kbd>
+                    </div>
+                    <div className="text-sm">Submits the main form on the Orchestrator tab.</div>
+                    <div className="text-right">
+                        <kbd className="px-2 py-1 text-xs font-semibold text-text-secondary bg-surface border border-border rounded-md">Cmd</kbd> + <kbd className="px-2 py-1 text-xs font-semibold text-text-secondary bg-surface border border-border rounded-md">Enter</kbd>
+                    </div>
+                    <div className="text-sm">(On macOS) Submits the main form on the Orchestrator tab.</div>
+                </div>
+            </div>
+        </AccordionItem>
+    </div>
+);
 
+const GlossarySection: React.FC<{ searchTerm?: string }> = () => (
+    <div>
+        <AccordionItem title="Executive Synthesis">
+            <p>A comprehensive narrative summary of the key findings, themes, agreements, and contradictions from the top-ranked articles. It is the AI's version of the introduction or discussion section of a literature review.</p>
+        </AccordionItem>
+         <AccordionItem title="Knowledge Base">
+            <p>The central library where all unique articles from your saved reports are stored. It acts as your personal, aggregated research database.</p>
+        </AccordionItem>
+        <AccordionItem title="Open Access">
+            <p>Refers to research that is freely available to the public online without a subscription. The app flags these articles to help you prioritize content you can read immediately.</p>
+        </AccordionItem>
+        <AccordionItem title="PMID / PMCID">
+            <p>A <strong>PMID</strong> (PubMed ID) is a unique identifier for a citation in the PubMed database. A <strong>PMCID</strong> (PubMed Central ID) is an identifier for full-text articles in the free PubMed Central archive. If an article has a PMCID, it is usually open access.</p>
+        </AccordionItem>
+         <AccordionItem title="Relevance Score">
+            <p>An AI-assigned metric from 1-100 indicating how directly an article addresses the key questions inferred from your research topic. It helps you quickly identify the most important papers.</p>
+        </AccordionItem>
+         <AccordionItem title="Temperature (AI Setting)">
+            <p>A setting that controls the randomness and 'creativity' of the AI's output. A low temperature (e.g., 0.2) results in more focused and deterministic responses, while a high temperature (e.g., 0.9) can lead to more diverse or creative results. The default is set low for scientific accuracy.</p>
+        </AccordionItem>
+    </div>
+);
+
+const AboutSection: React.FC<{ searchTerm?: string }> = () => {
     return (
-        <div>
-            <h2 className="text-3xl font-bold text-brand-accent mb-4 flex items-center"><QuestionMarkCircleIcon className="h-8 w-8 mr-3"/>Frequently Asked Questions</h2>
-            {filteredItems.length > 0 ? filteredItems.map(item => (
-                <AccordionItem key={item.title} title={item.title}>{item.content}</AccordionItem>
-            )) : <p className="text-center italic text-text-secondary py-4">No questions match your search.</p>}
+        <div className="prose prose-sm prose-invert max-w-none text-text-secondary/90 leading-relaxed">
+            <h3 className="text-xl font-bold text-text-primary">About AI Research</h3>
+            <p>
+                AI Research is an expert system designed to manage a swarm of specialized AI agents to conduct comprehensive literature reviews using the PubMed database. The application's primary goal is to streamline and automate the process of collecting, curating, and synthesizing scientific research based on user-defined criteria.
+            </p>
+            <p>
+                All data, including your knowledge base and settings, is stored locally in your browser. No data is sent to a server, except for requests to the Google Gemini API.
+            </p>
+            
+            <h4 className="text-lg font-semibold text-text-primary mt-6">Feature Checklist & Changelog</h4>
+            <p>
+                This application includes the following core functionalities:
+            </p>
+            <ul>
+                <li><strong>Core:</strong> AI research orchestration via the Gemini API to produce detailed literature reviews.</li>
+                <li><strong>Core:</strong> Interactive Knowledge Base with automatic de-duplication and robust searching, filtering, and sorting.</li>
+                <li><strong>Core:</strong> Data export to PDF, CSV, and citation (BibTeX, RIS) formats.</li>
+                <li><strong>Core:</strong> Detailed article view with custom tagging and display of related AI insights.</li>
+                <li><strong>Feature:</strong> Data visualization dashboard with charts for keywords, publication years, and journals.</li>
+                <li><strong>Feature:</strong> Report history view with search to browse and revisit previously saved reports.</li>
+                <li><strong>Feature:</strong> AI-powered 'Research Assistant' for summarizing text and finding related articles.</li>
+                <li><strong>Feature:</strong> AI-powered 'Discovery Tools' in the article detail panel for finding similar articles and related online news/discussions.</li>
+                <li><strong>UX:</strong> Comprehensive settings panel for managing themes, AI behavior, form defaults, and data backups.</li>
+                <li><strong>UX:</strong> Confirmation modals for destructive actions and unsaved changes.</li>
+                <li><strong>UX:</strong> Keyboard shortcuts (Ctrl+Enter, Escape) for primary actions.</li>
+                <li><strong>Enhancement:</strong> Overhauled 'Research' view for a more robust and focused user experience.</li>
+                <li><strong>Enhancement:</strong> Overhauled settings UX (new AI persona selector, pruning preview).</li>
+                <li><strong>Enhancement:</strong> Implemented accessible focus-trapping for all modals and panels.</li>
+            </ul>
+             <Note type="info" title="Continuous Development">
+                The features listed reflect the current state of the application. Functionality is subject to change and improvement.
+            </Note>
         </div>
     );
 };
 
 
-const GlossarySection: React.FC<{ searchTerm: string }> = ({ searchTerm }) => {
-    const glossaryItems = useMemo(() => [
-        { title: "Abstract", content: <p>A brief summary of a research article, thesis, or other scholarly work, which helps the reader quickly ascertain the paper's purpose and major findings.</p>, keywords: "abstract summary" },
-        { title: "AI Persona", content: <p>A setting that defines the personality and style of the AI's analysis and writing. For example, 'Concise Expert' will be brief, while 'Detailed Analyst' will be more thorough.</p>, keywords: "ai persona personality" },
-        { title: "BibTeX / RIS", content: <p>Standardized text-based file formats used to store citation and bibliographic data. These files can be imported into most reference management software like Zotero or Mendeley.</p>, keywords: "bibtex ris citation" },
-        { title: "Boolean Operators", content: <p>Words like <code>AND</code>, <code>OR</code>, and <code>NOT</code> used to combine or exclude keywords in a search, resulting in more focused and productive results.</p>, keywords: "boolean operators search" },
-        { title: "Custom Tags", content: <p>Personal labels or keywords you can add to articles in the Knowledge Base to organize them according to your own system (e.g., 'To-Read', 'Key Paper').</p>, keywords: "custom tags" },
-        { title: "Generative AI", content: <p>A type of artificial intelligence that can create new content, such as text, imagery, or code, based on the data it was trained on.</p>, keywords: "generative ai" },
-        { title: "Hallucination", content: <p>An AI phenomenon where the model generates incorrect or nonsensical information but presents it as factual. This is why verifying sources is critical.</p>, keywords: "hallucination error" },
-        { title: "Knowledge Base", content: <p>The central repository where all unique articles from all your saved reports are stored, aggregated, and made searchable.</p>, keywords: "knowledge base" },
-        { title: "Meta-Analysis", content: <p>A statistical procedure for combining data from multiple studies to increase power and draw a stronger conclusion than any single study.</p>, keywords: "meta-analysis" },
-        { title: "Model Temperature", content: <p>An AI setting that controls the randomness of its output. A low temperature (e.g., 0.2) produces more predictable, focused results. A high temperature (e.g., 0.8) produces more creative or diverse results.</p>, keywords: "temperature" },
-        { title: "Open Access", content: <p>Scholarly research that is made available online, free of charge to the reader. These articles are marked with an unlock icon in the application.</p>, keywords: "open access free" },
-        { title: "PMID (PubMed ID)", content: <p>A unique identification number assigned to every article in the PubMed database.</p>, keywords: "pmid" },
-        { title: "Pruning", content: <p>A data management feature that allows you to permanently remove articles from your Knowledge Base that fall below a specified relevance score, helping to maintain data quality.</p>, keywords: "pruning data management" },
-        { title: "Randomized Controlled Trial (RCT)", content: <p>A study design that randomly assigns participants into an experimental group or a control group. It is considered a gold standard for clinical evidence.</p>, keywords: "randomized controlled trial rct" },
-        { title: "Relevance Score", content: <p>A score from 1-100 generated by the AI to rank how relevant an article is to the user's research topic.</p>, keywords: "relevance score" },
-        { title: "Synthesis", content: <p>A comprehensive narrative written by the AI that summarizes and connects the findings from the top-ranked articles.</p>, keywords: "synthesis summary" },
-        { title: "Systematic Review", content: <p>A type of literature review that collects and critically analyzes multiple research studies or papers, using systematic methods to identify, select, and appraise research.</p>, keywords: "systematic review" },
-    ].sort((a, b) => a.title.localeCompare(b.title)), []);
-    
-    const filteredItems = useMemo(() => {
-        if (!searchTerm) return glossaryItems;
-        const lowerSearchTerm = searchTerm.toLowerCase();
-        return glossaryItems.filter(item =>
-            item.title.toLowerCase().includes(lowerSearchTerm) ||
-            item.keywords.includes(lowerSearchTerm)
-        );
-    }, [searchTerm, glossaryItems]);
+const helpSections: { id: HelpSection; name: string; icon: React.FC<any>; component: React.FC<any> }[] = [
+    { id: 'guide', name: "User Guide", icon: BookOpenIcon, component: GuideSection },
+    { id: 'faq', name: "FAQ & Shortcuts", icon: QuestionMarkCircleIcon, component: FAQSection },
+    { id: 'glossary', name: "Glossary", icon: BookmarkIcon, component: GlossarySection },
+    { id: 'about', name: "About & Features", icon: InfoIcon, component: AboutSection },
+];
 
-    return (
-        <div>
-            <h2 className="text-3xl font-bold text-brand-accent mb-4 flex items-center"><BookmarkIcon className="h-8 w-8 mr-3"/>Glossary of Terms</h2>
-            <p className="text-text-secondary mb-6">Understanding these key terms will help you get the most out of the application.</p>
-            {filteredItems.length > 0 ? filteredItems.map(item => (
-                <AccordionItem key={item.title} title={item.title}>{item.content}</AccordionItem>
-            )) : <p className="text-center italic text-text-secondary py-4">No terms match your search.</p>}
-        </div>
-    );
-};
 
-const sections = [
-    { id: 'guide', label: 'User Guide' },
-    { id: 'faq', label: 'FAQ' },
-    { id: 'glossary', label: 'Glossary' },
-] as const;
-
-export const HelpView: React.FC = () => {
-    const [activeSection, setActiveSection] = useState<HelpSection>('guide');
+export const HelpView: React.FC<HelpViewProps> = ({ initialTab, onTabConsumed }) => {
+    const [activeTab, setActiveTab] = useState<HelpSection>('guide');
     const [searchTerm, setSearchTerm] = useState('');
     const contentRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        contentRef.current?.scrollTo(0, 0);
-    }, [activeSection]);
+        if (initialTab && helpSections.some(s => s.id === initialTab)) {
+            setActiveTab(initialTab as HelpSection);
+            onTabConsumed();
+        }
+    }, [initialTab, onTabConsumed]);
 
-    const renderSection = () => {
-        switch (activeSection) {
-            case 'guide': return <GuideSection searchTerm={searchTerm} />;
-            case 'faq': return <FaqSection searchTerm={searchTerm} />;
-            case 'glossary': return <GlossarySection searchTerm={searchTerm} />;
-            default: return null;
+    const handleTabChange = (tab: HelpSection) => {
+        setActiveTab(tab);
+        if (contentRef.current) {
+            contentRef.current.scrollTop = 0;
         }
     };
-
+    
+    const ActiveComponent = helpSections.find(s => s.id === activeTab)?.component || GuideSection;
+    
     return (
         <div className="animate-fadeIn">
             <div className="text-center mb-12">
-                <h1 className="text-4xl font-bold text-brand-accent">Help Center</h1>
-                <p className="mt-2 text-lg text-text-secondary">Your resource for mastering the AI Research Orchestrator.</p>
+                <h1 className="text-4xl font-bold text-brand-accent">Help & Documentation</h1>
+                <p className="mt-2 text-lg text-text-secondary">Find answers, learn how to use the app, and review its features.</p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-                <aside className="md:col-span-1">
-                    <div className="sticky top-24 space-y-4">
-                        <nav>
-                            <ul className="space-y-2">
-                                {sections.map(section => (
-                                    <li key={section.id}>
-                                        <button
-                                            onClick={() => setActiveSection(section.id)}
-                                            className={`w-full text-left px-4 py-2.5 rounded-md text-sm font-medium transition-colors ${activeSection === section.id ? 'bg-brand-accent text-brand-text-on-accent' : 'text-text-primary bg-surface hover:bg-border'}`}
-                                        >
-                                            {section.label}
-                                        </button>
-                                    </li>
-                                ))}
-                            </ul>
-                        </nav>
-                        <div className="relative">
-                            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-text-secondary" />
-                            <input
-                                type="text"
-                                placeholder="Search help topics..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full bg-surface border border-border rounded-md py-2 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-brand-accent"
-                            />
+            
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                <aside className="lg:col-span-1">
+                    <div className="sticky top-24">
+                        <div className="relative mb-4">
+                             <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-text-secondary" />
+                            <input 
+                                type="text" 
+                                placeholder="Search help topics..." 
+                                value={searchTerm} 
+                                onChange={(e) => setSearchTerm(e.target.value)} 
+                                className="w-full bg-surface border border-border rounded-md py-2 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-brand-accent"
+                             />
                         </div>
+                        <nav className="flex flex-col space-y-1" role="tablist" aria-label="Help categories">
+                            {helpSections.map(section => (
+                                <button 
+                                    key={section.id} 
+                                    id={`tab-${section.id}`}
+                                    role="tab"
+                                    aria-selected={activeTab === section.id}
+                                    aria-controls={`tabpanel-${section.id}`}
+                                    onClick={() => handleTabChange(section.id)}
+                                    className={`flex items-center w-full text-left px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${activeTab === section.id ? 'bg-brand-accent text-brand-text-on-accent' : 'text-text-primary bg-surface hover:bg-border'}`}
+                                >
+                                    <section.icon className="h-5 w-5 mr-3 flex-shrink-0" />
+                                    <span>{section.name}</span>
+                                </button>
+                            ))}
+                        </nav>
                     </div>
                 </aside>
-                <main ref={contentRef} className="md:col-span-3 bg-surface rounded-lg border border-border p-6 md:p-8 min-h-[70vh] max-h-[70vh] overflow-y-auto">
-                    {renderSection()}
+
+                <main className="lg:col-span-3 bg-surface border border-border rounded-lg p-6 min-h-[60vh]" ref={contentRef} role="tabpanel" id={`tabpanel-${activeTab}`} aria-labelledby={`tab-${activeTab}`}>
+                   <ActiveComponent searchTerm={searchTerm} />
                 </main>
             </div>
         </div>

@@ -1,98 +1,191 @@
-
-import React, { useState, useId } from 'react';
-import type { ResearchReport, RankedArticle, ResearchInput } from '../types';
+import React, { useState, useId, useEffect, useRef, useCallback } from 'react';
+import type { ResearchReport, RankedArticle, ResearchInput, AggregatedArticle } from '../types';
+import { marked } from 'marked';
+import DOMPurify from 'dompurify';
 import { ChevronDownIcon } from './icons/ChevronDownIcon';
 import { UnlockIcon } from './icons/UnlockIcon';
 import { SearchIcon } from './icons/SearchIcon';
 import { BookmarkSquareIcon } from './icons/BookmarkSquareIcon';
 import { CheckCircleIcon } from './icons/CheckCircleIcon';
 import { ClipboardIcon } from './icons/ClipboardIcon';
+import { TagIcon } from './icons/TagIcon';
+import { XIcon } from './icons/XIcon';
+import { PdfIcon } from './icons/PdfIcon';
+import { CsvIcon } from './icons/CsvIcon';
+import { ConfirmationModal } from './ConfirmationModal';
+import { exportToPdf, exportToCsv, exportInsightsToCsv } from '../services/exportService';
+import { XCircleIcon } from './icons/XCircleIcon';
+import { SparklesIcon } from './icons/SparklesIcon';
+import { useSettings } from '../contexts/SettingsContext';
+import { RelevanceScoreDisplay } from './RelevanceScoreDisplay';
+import { AcademicCapIcon } from './icons/AcademicCapIcon';
+import { WebIcon } from './icons/WebIcon';
+
 
 interface ReportDisplayProps {
   report: ResearchReport;
   input: ResearchInput;
   isSaved: boolean;
   onSave: () => void;
+  onTagsUpdate: (pmid: string, newTags: string[]) => void;
+  onNewSearch: () => void;
 }
 
-const AccordionSection: React.FC<{ title: string; children: React.ReactNode; defaultOpen?: boolean }> = ({ title, children, defaultOpen = false }) => {
+const useCopyToClipboard = (): [boolean, (text: string) => void] => {
+  const [isCopied, setIsCopied] = useState(false);
+  const timeoutRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  const copy = useCallback((text: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setIsCopied(true);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      timeoutRef.current = window.setTimeout(() => {
+        setIsCopied(false);
+      }, 2000);
+    });
+  }, []);
+
+  return [isCopied, copy];
+};
+
+
+const secureMarkdownToHtml = (text: string): string => {
+    if (!text) return '';
+    const rawMarkup = marked.parse(text.trim(), { breaks: true, gfm: true }) as string;
+    return DOMPurify.sanitize(rawMarkup);
+};
+
+
+const AccordionSection: React.FC<{ title: React.ReactNode; children: React.ReactNode; defaultOpen?: boolean; count?: number }> = ({ title, children, defaultOpen = false, count }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const id = useId();
   const panelId = `accordion-panel-${id}`;
   const buttonId = `accordion-button-${id}`;
 
   return (
-    <div className="border-b border-border">
+    <div className="border-b border-border last:border-b-0">
       <button
         id={buttonId}
         onClick={() => setIsOpen(!isOpen)}
         aria-expanded={isOpen}
         aria-controls={panelId}
-        className="w-full flex justify-between items-center p-4 text-left text-lg font-semibold text-brand-accent hover:bg-surface-hover focus:outline-none transition-colors"
+        className="w-full flex justify-between items-center p-4 text-left text-lg font-semibold text-text-primary hover:bg-surface-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent transition-colors"
       >
-        <span>{title}</span>
+        <div className="flex items-center gap-3">
+          {title}
+          {count !== undefined && <span className="text-sm font-medium bg-border text-text-secondary px-2 py-0.5 rounded-full">{count}</span>}
+        </div>
         <ChevronDownIcon className={`h-6 w-6 transform transition-transform duration-300 text-text-secondary ${isOpen ? 'rotate-180' : ''}`} />
       </button>
       <div
         id={panelId}
         role="region"
         aria-labelledby={buttonId}
-        className={`overflow-hidden transition-[max-height,opacity] duration-500 ease-in-out ${isOpen ? 'max-h-[5000px] opacity-100' : 'max-h-0 opacity-0'}`}
+        className={`grid transition-all duration-500 ease-in-out ${isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}
       >
-        <div className="p-4 bg-background/50">
-            {children}
+        <div className="overflow-hidden">
+          <div className="p-4 bg-background/50">
+              {children}
+          </div>
         </div>
       </div>
     </div>
   );
 };
 
-const ArticleCard: React.FC<{ article: RankedArticle, rank: number }> = React.memo(({ article, rank }) => {
-    const [isExpanded, setIsExpanded] = useState(false);
-    const [isCopied, setIsCopied] = useState(false);
+const getSummaryLimit = () => {
+    if (typeof window === 'undefined') return 250;
+    if (window.innerWidth < 768) return 150;
+    if (window.innerWidth < 1280) return 200;
+    return 250;
+};
 
-    const scoreColor = article.relevanceScore > 75 ? 'text-green-400' : article.relevanceScore > 50 ? 'text-yellow-400' : 'text-red-400';
+
+const ArticleCard: React.FC<{ 
+    article: RankedArticle; 
+    rank: number;
+    onTagsUpdate: (pmid: string, newTags: string[]) => void;
+}> = React.memo(({ article, rank, onTagsUpdate }) => {
+    const [isExpanded, setIsExpanded] = useState(false);
+    const [isCitationCopied, copyCitation] = useCopyToClipboard();
+    const [isPmidCopied, copyPmid] = useCopyToClipboard();
+    const [summaryCharLimit, setSummaryCharLimit] = useState(getSummaryLimit());
+    const [tagInput, setTagInput] = useState('');
+
+    useEffect(() => {
+        const handleResize = () => setSummaryCharLimit(getSummaryLimit());
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const handleTagInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const newTag = tagInput.trim();
+            if (newTag && !(article.customTags || []).includes(newTag)) {
+                onTagsUpdate(article.pmid, [...(article.customTags || []), newTag]);
+                setTagInput('');
+            }
+        }
+    };
+    
+    const handleRemoveTag = (tagToRemove: string) => {
+        onTagsUpdate(article.pmid, (article.customTags || []).filter(tag => tag !== tagToRemove));
+    };
+
     const articleLink = article.pmcId 
       ? `https://www.ncbi.nlm.nih.gov/pmc/articles/${article.pmcId}/`
       : `https://pubmed.ncbi.nlm.nih.gov/${article.pmid}/`;
 
-    const SUMMARY_CHAR_LIMIT = 250;
-    const isLongSummary = article.summary.length > SUMMARY_CHAR_LIMIT;
+    const isLongSummary = article.summary.length > summaryCharLimit;
 
     const displayedSummary = isLongSummary && !isExpanded
-        ? `${article.summary.substring(0, SUMMARY_CHAR_LIMIT)}...`
+        ? `${article.summary.substring(0, summaryCharLimit)}...`
         : article.summary;
-
-    const copyToClipboard = () => {
+    
+    const handleCopyCitation = () => {
         const citation = `${article.authors}. (${article.pubYear}). ${article.title}. ${article.journal}. PMID: ${article.pmid}.`;
-        navigator.clipboard.writeText(citation).then(() => {
-            setIsCopied(true);
-            setTimeout(() => setIsCopied(false), 2000);
-        });
+        copyCitation(citation);
     };
 
+    const handleCopyPmid = () => {
+        copyPmid(article.pmid);
+    };
+
+    const googleScholarUrl = `https://scholar.google.com/scholar?q=${encodeURIComponent(article.title)}`;
+    const semanticScholarUrl = `https://www.semanticscholar.org/search?q=${encodeURIComponent(article.title)}`;
+
+
     return (
-        <div className="bg-background rounded-lg border border-border p-4 transition-shadow hover:shadow-lg">
-            <div className="flex justify-between items-start">
+        <div className="bg-background rounded-lg border border-border p-4 transition-all duration-200 hover:shadow-lg hover:border-brand-accent/30">
+            <div className="flex justify-between items-start gap-4">
                 <div className="flex-1 pr-4">
-                    <a href={articleLink} target="_blank" rel="noopener noreferrer" className="text-base font-semibold text-text-primary hover:text-brand-accent transition-colors">
+                    <a href={articleLink} target="_blank" rel="noopener noreferrer" className="text-lg font-semibold text-text-primary hover:text-brand-accent transition-colors">
                         <span className="text-text-secondary">{rank}. </span>{article.title}
                     </a>
                     <div className="mt-1 text-xs text-text-secondary">
                         <span>{article.authors}</span> &mdash; <span className="italic">{article.journal} ({article.pubYear})</span>
                     </div>
+                     {article.isOpenAccess && (
+                        <div className="mt-2 flex items-center text-xs text-green-400 font-medium">
+                            <UnlockIcon className="h-4 w-4 mr-1.5" />
+                            <span>Open Access</span>
+                        </div>
+                    )}
                 </div>
-                <div className="text-right flex-shrink-0">
-                    <div className={`text-2xl font-bold ${scoreColor}`}>{article.relevanceScore}</div>
-                    <div className="text-xs text-text-secondary">Relevance</div>
-                </div>
+                <RelevanceScoreDisplay score={article.relevanceScore} />
             </div>
-            {article.isOpenAccess && (
-                <div className="mt-2 flex items-center text-sm text-green-400">
-                    <UnlockIcon className="h-4 w-4 mr-1.5" />
-                    <span>Open Access</span>
-                </div>
-            )}
+           
             <p className="mt-3 text-sm text-text-secondary/90 leading-relaxed">
                 <strong className="text-text-secondary">Summary: </strong>{displayedSummary}
                 {isLongSummary && (
@@ -101,60 +194,151 @@ const ArticleCard: React.FC<{ article: RankedArticle, rank: number }> = React.me
                     </button>
                 )}
             </p>
-            <p className="mt-2 text-sm text-text-secondary"><strong className="text-text-secondary">Scoring rationale: </strong>{article.relevanceExplanation}</p>
-            <div className="mt-3 flex items-center justify-between">
+            <p className="mt-2 text-xs text-text-secondary italic bg-surface-hover/50 p-2 rounded-md"><strong className="not-italic">Scoring rationale: </strong>{article.relevanceExplanation}</p>
+            
+            <div className="mt-3 space-y-3">
                 <div className="flex flex-wrap gap-2">
                     {article.keywords.map(kw => (
                         <span key={kw} className="bg-sky-500/10 text-sky-300 text-xs font-medium px-2.5 py-0.5 rounded-full border border-sky-500/20">{kw}</span>
                     ))}
                 </div>
-                <button
-                    onClick={copyToClipboard}
-                    className="flex items-center text-xs text-text-secondary hover:text-brand-accent transition-colors"
-                    title="Copy Citation"
-                >
-                    {isCopied ? (
-                        <>
-                            <CheckCircleIcon className="h-4 w-4 mr-1.5 text-green-400"/> Copied!
-                        </>
-                    ) : (
-                        <>
-                            <ClipboardIcon className="h-4 w-4 mr-1.5" /> Copy
-                        </>
-                    )}
-                </button>
+                
+                 <div className="flex items-center justify-between pt-3 border-t border-border/50">
+                    <div className="flex flex-wrap gap-2 items-center">
+                        <TagIcon className="h-4 w-4 text-text-secondary flex-shrink-0" />
+                        {(article.customTags || []).map(tag => (
+                             <span key={tag} className="flex items-center bg-purple-500/10 text-purple-300 text-xs font-medium pl-2 pr-1 py-0.5 rounded-full border border-purple-500/20">
+                                {tag}
+                                <button onClick={() => handleRemoveTag(tag)} className="ml-1.5 text-purple-300 hover:text-white focus:outline-none" aria-label={`Remove tag ${tag}`}>
+                                    <XIcon className="h-3 w-3"/>
+                                </button>
+                            </span>
+                        ))}
+                         <div className="flex-grow min-w-[120px]">
+                            <input
+                                type="text"
+                                value={tagInput}
+                                onChange={(e) => setTagInput(e.target.value)}
+                                onKeyDown={handleTagInputKeyDown}
+                                placeholder="Add tag..."
+                                className="bg-background border-border border rounded-md py-0.5 px-2 text-xs w-full focus:outline-none focus:ring-1 focus:ring-brand-accent"
+                             />
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-4 text-text-secondary">
+                         <a href={googleScholarUrl} target="_blank" rel="noopener noreferrer" className="hover:text-brand-accent" title="Search on Google Scholar" aria-label="Search on Google Scholar">
+                            <AcademicCapIcon className="h-5 w-5" />
+                        </a>
+                        <a href={semanticScholarUrl} target="_blank" rel="noopener noreferrer" className="hover:text-brand-accent font-bold text-lg" title="Search on Semantic Scholar" aria-label="Search on Semantic Scholar">
+                            S
+                        </a>
+                         <button onClick={handleCopyPmid} className="flex items-center hover:text-brand-accent transition-colors" title="Copy PMID" aria-label="Copy PMID">
+                            {isPmidCopied ? <CheckCircleIcon className="h-4 w-4 text-green-400"/> : <ClipboardIcon className="h-4 w-4" />}
+                        </button>
+                        <button onClick={handleCopyCitation} className="flex items-center hover:text-brand-accent transition-colors" title="Copy Citation" aria-label="Copy Citation">
+                            {isCitationCopied ? <CheckCircleIcon className="h-4 w-4 text-green-400"/> : <ClipboardIcon className="h-4 w-4" />}
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     );
 });
 
 
-export const ReportDisplay: React.FC<ReportDisplayProps> = ({ report, input, isSaved, onSave }) => {
+export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(({ report, input, isSaved, onSave, onTagsUpdate, onNewSearch }) => {
+  const [modalState, setModalState] = useState<{ type: 'pdf' | 'csv' | 'insights' | 'save' } | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
+  const { settings } = useSettings();
+
+
+  const handlePdfExport = () => {
+      setIsExporting(true);
+      setTimeout(() => {
+          try {
+              exportToPdf(report, input, settings.export.pdf);
+          } catch (e) {
+              console.error("PDF Export failed", e);
+          } finally {
+              setIsExporting(false);
+              setModalState(null);
+          }
+      }, 50);
+  };
+
+  const handleCsvExport = () => {
+      setIsExporting(true);
+      setTimeout(() => {
+          try {
+              const aggregatedArticles: AggregatedArticle[] = report.rankedArticles.map(a => ({...a, sourceReportTopic: input.researchTopic}));
+              exportToCsv(aggregatedArticles, input.researchTopic, settings.export.csv);
+          } catch (e) {
+              console.error("CSV Export failed", e);
+          } finally {
+              setIsExporting(false);
+              setModalState(null);
+          }
+      }, 50);
+  };
+
+  const handleInsightsExport = () => {
+      setIsExporting(true);
+      setTimeout(() => {
+          try {
+              exportInsightsToCsv(report.aiGeneratedInsights, input.researchTopic);
+          } catch (e) {
+              console.error("Insights CSV Export failed", e);
+          } finally {
+              setIsExporting(false);
+              setModalState(null);
+          }
+      }, 50);
+  };
+  
   return (
-    <div className="animate-fadeIn h-full flex flex-col">
-        <div className="flex-shrink-0 border-b border-border pb-4 mb-4">
-            <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-text-primary">Research Report</h2>
-                {isSaved ? (
-                    <div className="flex items-center px-4 py-2 text-sm font-medium rounded-md text-green-300 bg-green-500/10 border border-green-500/20">
-                        <CheckCircleIcon className="h-5 w-5 mr-2" />
-                        Saved in Knowledge Base
-                    </div>
-                ) : (
-                    <button onClick={onSave} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-brand-text-on-accent bg-brand-accent hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface focus:ring-brand-accent">
-                        <BookmarkSquareIcon className="h-5 w-5 mr-2" />
-                        Save to Knowledge Base
+    <>
+    <div className="animate-fadeIn bg-surface rounded-lg border border-border flex flex-col shadow-lg">
+        <div className="flex-shrink-0 border-b border-border p-4 sm:p-6">
+            <div className="flex justify-between items-start flex-wrap gap-4">
+                <div>
+                    <h2 className="text-2xl font-bold text-text-primary">Research Report</h2>
+                    <p className="mt-1 text-text-secondary max-w-xl">Topic: <span className="font-semibold text-text-primary">{input.researchTopic}</span></p>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                     <button onClick={onNewSearch} title="Start New Search" className="inline-flex items-center px-3 py-1.5 border border-border text-xs font-medium rounded-md shadow-sm text-text-primary bg-surface hover:bg-surface-hover">
+                        <XCircleIcon className="h-4 w-4 mr-2" />New Search
                     </button>
-                )}
+                    <button onClick={() => setModalState({ type: 'pdf' })} title="Export as PDF" className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-brand-text-on-accent bg-brand-primary hover:bg-brand-secondary">
+                        <PdfIcon className="h-4 w-4 mr-2" />PDF
+                    </button>
+                     <button onClick={() => setModalState({ type: 'csv' })} title="Export as CSV" className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-brand-text-on-accent bg-brand-primary hover:bg-brand-secondary">
+                        <CsvIcon className="h-4 w-4 mr-2" />CSV
+                    </button>
+                    <button onClick={() => setModalState({ type: 'insights' })} title="Export AI Insights as CSV" className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-brand-text-on-accent bg-brand-primary hover:bg-brand-secondary">
+                        <SparklesIcon className="h-4 w-4 mr-2" />Insights CSV
+                    </button>
+                    <div className="h-5 w-px bg-border mx-1"></div>
+                    {isSaved ? (
+                        <div className="flex items-center px-4 py-2 text-sm font-medium rounded-md text-green-300 bg-green-500/10 border border-green-500/20">
+                            <CheckCircleIcon className="h-5 w-5 mr-2" />
+                            Saved in Knowledge Base
+                        </div>
+                    ) : (
+                        <button onClick={() => setModalState({ type: 'save' })} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-brand-text-on-accent bg-brand-accent hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface focus:ring-brand-accent">
+                            <BookmarkSquareIcon className="h-5 w-5 mr-2" />
+                            Save to Knowledge Base
+                        </button>
+                    )}
+                </div>
             </div>
-            <p className="mt-1 text-text-secondary">Topic: <span className="font-semibold text-text-primary">{input.researchTopic}</span></p>
         </div>
 
-        <div className="flex-grow overflow-y-auto pr-2 -mr-2">
+        <div className="flex-grow">
             <AccordionSection title="Executive Synthesis" defaultOpen>
-              <div className="prose prose-sm prose-invert max-w-none text-text-secondary/90 leading-relaxed" dangerouslySetInnerHTML={{ __html: report.synthesis.replace(/\n/g, '<br />') }} />
+              <div className="prose prose-sm prose-invert max-w-none text-text-secondary/90 leading-relaxed" dangerouslySetInnerHTML={{ __html: secureMarkdownToHtml(report.synthesis) }} />
             </AccordionSection>
-            <AccordionSection title="AI-Generated Insights">
+            <AccordionSection title="AI-Generated Insights" count={report.aiGeneratedInsights.length}>
                 <div className="space-y-4">
                     {report.aiGeneratedInsights.map((insight, index) => (
                         <div key={index} className="bg-background p-3 rounded-md border border-border">
@@ -174,7 +358,8 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = ({ report, input, isS
                     ))}
                 </div>
             </AccordionSection>
-            <AccordionSection title="Overall Keywords & Themes">
+            
+            <AccordionSection title="Overall Keywords & Themes" count={report.overallKeywords.length}>
                 <div className="space-y-3 p-2">
                     {report.overallKeywords && report.overallKeywords.length > 0 ? (
                         report.overallKeywords
@@ -183,13 +368,13 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = ({ report, input, isS
                                 <div key={kw.keyword} className="grid grid-cols-4 items-center gap-4 text-sm animate-fadeIn" style={{ animationDelay: `${index * 50}ms` }}>
                                     <span className="col-span-1 text-text-primary truncate font-medium" title={kw.keyword}>{kw.keyword}</span>
                                     <div className="col-span-3 flex items-center">
-                                        <div className="w-full bg-border rounded-full h-4 relative overflow-hidden">
+                                        <div className="w-full bg-border rounded-full h-2.5 relative overflow-hidden">
                                             <div 
-                                                className="bg-brand-accent h-4 rounded-full transition-all duration-500 ease-out" 
-                                                style={{ width: `${(kw.frequency / Math.max(1, ...report.overallKeywords.map(k => k.frequency))) * 100}%` }}
+                                                className="bg-gradient-to-r from-brand-secondary to-brand-accent h-2.5 rounded-full transition-all duration-500 ease-out"
+                                                style={{ width: `${(kw.frequency / Math.max(1, report.rankedArticles.length)) * 100}%` }}
                                             ></div>
                                         </div>
-                                        <span className="ml-3 font-mono text-xs text-text-secondary w-6 text-right">{kw.frequency}</span>
+                                        <span className="ml-3 font-mono text-xs text-text-secondary w-10 text-right">{kw.frequency} / {report.rankedArticles.length}</span>
                                     </div>
                                 </div>
                             ))
@@ -198,14 +383,14 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = ({ report, input, isS
                     )}
                 </div>
             </AccordionSection>
-            <AccordionSection title={`Ranked Articles (Top ${report.rankedArticles.length})`}>
+            <AccordionSection title={`Ranked Articles`} count={report.rankedArticles.length}>
                 <div className="space-y-4">
                     {report.rankedArticles.map((article, index) => (
-                       <ArticleCard key={article.pmid} article={article} rank={index + 1} />
+                       <ArticleCard key={article.pmid} article={article} rank={index + 1} onTagsUpdate={onTagsUpdate} />
                     ))}
                 </div>
             </AccordionSection>
-            <AccordionSection title="Generated PubMed Queries">
+            <AccordionSection title="Generated PubMed Queries" count={report.generatedQueries.length}>
                 <div className="space-y-4">
                     {report.generatedQueries.map((q, index) => (
                         <div key={index} className="bg-background p-3 rounded-md border border-border">
@@ -220,7 +405,52 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = ({ report, input, isS
                     ))}
                 </div>
             </AccordionSection>
+            {report.sources && report.sources.length > 0 && (
+                <AccordionSection title={<><WebIcon className="h-5 w-5 mr-3 text-brand-accent" />Sources Consulted by AI</>} count={report.sources.length}>
+                    <div className="space-y-2">
+                        <p className="text-xs text-text-secondary mb-3">The following web pages were consulted by the AI to generate this report. This provides traceability for the AI's findings.</p>
+                        {report.sources.map((source, index) => (
+                            <div key={index} className="bg-background p-2 rounded-md border border-border text-sm flex items-center gap-3">
+                                <WebIcon className="h-4 w-4 text-text-secondary flex-shrink-0" />
+                                <a href={source.uri} target="_blank" rel="noopener noreferrer" className="text-brand-accent hover:underline break-all" title={source.title}>
+                                    {source.title || source.uri}
+                                </a>
+                            </div>
+                        ))}
+                    </div>
+                </AccordionSection>
+            )}
         </div>
     </div>
+    {modalState?.type === 'save' && (
+        <ConfirmationModal
+            onConfirm={() => {
+                onSave();
+                setModalState(null);
+            }}
+            onCancel={() => setModalState(null)}
+            title="Save Report"
+            message="Are you sure you want to save this report to your Knowledge Base?"
+            confirmText="Save"
+            confirmButtonClass="bg-brand-accent hover:bg-opacity-90"
+            titleClass="text-brand-accent"
+        />
+    )}
+    {(modalState?.type === 'pdf' || modalState?.type === 'csv' || modalState?.type === 'insights') && (
+        <ConfirmationModal
+            onConfirm={() => {
+                if (modalState.type === 'pdf') handlePdfExport();
+                if (modalState.type === 'csv') handleCsvExport();
+                if (modalState.type === 'insights') handleInsightsExport();
+            }}
+            onCancel={() => setModalState(null)}
+            title="Confirm Export"
+            message={modalState.type === 'insights' ? `You are about to export the ${report.aiGeneratedInsights.length} AI-generated insights as a CSV file. Continue?` : `You are about to export this report (${report.rankedArticles.length} articles) as a ${modalState.type.toUpperCase()} file. Continue?`}
+            confirmText={isExporting ? 'Exporting...' : 'Yes, Export'}
+            confirmButtonClass="bg-brand-accent hover:bg-opacity-90"
+            titleClass="text-brand-accent"
+        />
+    )}
+    </>
   );
-};
+});

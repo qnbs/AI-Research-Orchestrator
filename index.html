@@ -1,38 +1,147 @@
+<script type="importmap">
+{
+  "imports": {
+    "dompurify": "https://aistudiocdn.com/dompurify@^3.2.6",
+    "react-chartjs-2": "https://aistudiocdn.com/react-chartjs-2@^5.3.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.16.0",
+    "react/": "https://aistudiocdn.com/react@^19.1.1/",
+    "react": "https://aistudiocdn.com/react@^19.1.1",
+    "jspdf": "https://aistudiocdn.com/jspdf@^3.0.2",
+    "chart.js": "https://aistudiocdn.com/chart.js@^4.5.0",
+    "marked": "https://aistudiocdn.com/marked@^16.2.1",
+    "chartjs-chart-treemap": "https://aistudiocdn.com/chartjs-chart-treemap@^3.1.0"
+  }
+}
+</script>
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#F6F8FA" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#0D1117" media="(prefers-color-scheme: dark)">
     <title>AI Research Orchestrator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
       :root.dark {
-        --color-background: #111827;
-        --color-surface: #1F2937;
-        --color-surface-hover: #374151;
-        --color-border: #374151;
-        --color-text-primary: #F3F4F6;
-        --color-text-secondary: #9CA3AF;
-        --color-brand-accent: #38BDF8;
-        --color-brand-primary: #0284C7;
-        --color-brand-secondary: #0369A1;
-        --color-brand-text-on-accent: #111827;
+        --color-background: #010409;
+        --color-surface: #0d1117;
+        --color-surface-hover: #161b22;
+        --color-border: #21262d;
+        --color-text-primary: #e6edf3;
+        --color-text-secondary: #7d8590;
+        --color-brand-accent: #1f6feb;
+        --color-brand-primary: #2f81f7;
+        --color-brand-secondary: #388bfd;
+        --color-brand-text-on-accent: #ffffff;
+        --color-glow: rgba(31, 111, 235, 0.3);
+        --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.15);
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.12);
+        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.15);
+        --transition-speed: 200ms;
+        --color-accent-cyan: #39c5f7;
+        --color-accent-magenta: #e853a5;
+        --color-accent-amber: #f7b739;
+        --aurora-1: rgba(31, 111, 235, 0.1);
+        --aurora-2: rgba(57, 197, 247, 0.1);
       }
       :root.light {
-        --color-background: #F9FAFB;
-        --color-surface: #FFFFFF;
-        --color-surface-hover: #F3F4F6;
-        --color-border: #E5E7EB;
-        --color-text-primary: #111827;
-        --color-text-secondary: #6B7280;
-        --color-brand-accent: #0284C7;
-        --color-brand-primary: #0369A1;
-        --color-brand-secondary: #0284C7;
-        --color-brand-text-on-accent: #FFFFFF;
+        --color-background: #fcfdff;
+        --color-surface: #ffffff;
+        --color-surface-hover: #f5f9ff;
+        --color-border: #eaf0f9;
+        --color-text-primary: #1a202c;
+        --color-text-secondary: #4a5568;
+        --color-brand-accent: #3b82f6;
+        --color-brand-primary: #2563eb;
+        --color-brand-secondary: #1d4ed8;
+        --color-brand-text-on-accent: #ffffff;
+        --color-glow: rgba(59, 130, 246, 0.25);
+        --shadow-sm: 0 1px 3px 0 rgba(60, 100, 170, 0.08), 0 1px 2px -1px rgba(60, 100, 170, 0.05);
+        --shadow-md: 0 4px 6px -1px rgba(60, 100, 170, 0.1), 0 2px 4px -2px rgba(60, 100, 170, 0.06);
+        --shadow-lg: 0 10px 15px -3px rgba(60, 100, 170, 0.12), 0 4px 6px -4px rgba(60, 100, 170, 0.07);
+        --transition-speed: 200ms;
+        --color-accent-cyan: #06b6d4;
+        --color-accent-magenta: #ec4899;
+        --color-accent-amber: #f59e0b;
+        --aurora-1: rgba(59, 130, 246, 0.08);
+        --aurora-2: rgba(6, 182, 212, 0.08);
       }
+       body {
+         font-family: var(--font-family, 'Inter', sans-serif);
+         background-color: var(--color-background);
+         color: var(--color-text-primary);
+       }
+       body::after {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image: 
+            radial-gradient(ellipse 80% 80% at 10% -20%, var(--aurora-1), transparent),
+            radial-gradient(ellipse 80% 80% at 90% -20%, var(--aurora-2), transparent),
+            linear-gradient(var(--color-background), var(--color-background)),
+            repeating-linear-gradient(0deg, var(--color-surface) 0, var(--color-surface) 1px, transparent 1px, transparent 2rem),
+            repeating-linear-gradient(90deg, var(--color-surface) 0, var(--color-surface) 1px, transparent 1px, transparent 2rem);
+         background-blend-mode: normal, normal, normal, normal, normal;
+         background-size: 100% 100%, 100% 100%, 100% 100%, 2rem 2rem, 2rem 2rem;
+         background-position: 0 0, 0 0, 0 0, 0 0, 0 0;
+         animation: pan-background 60s linear infinite;
+         opacity: 0.15;
+         z-index: -1;
+       }
+       ::selection {
+         background-color: var(--color-brand-accent);
+         color: var(--color-brand-text-on-accent);
+       }
+       .prose-sm h1, .prose-sm h2, .prose-sm h3, .prose-sm h4, .prose-sm h5, .prose-sm h6 { color: var(--color-text-primary); }
+       .prose-sm strong { color: var(--color-text-primary); }
+       .prose-sm a { color: var(--color-brand-accent); }
+       .prose-sm blockquote { border-left-color: var(--color-border); }
+       .prose-sm code { color: var(--color-text-primary); background-color: var(--color-surface-hover); padding: 0.2em 0.4em; margin: 0; font-size: 85%; border-radius: 6px; }
+      
+       /* Accessibility: Add a clear focus indicator for keyboard users */
+      :focus-visible {
+        outline: 2px solid var(--color-brand-accent);
+        outline-offset: 2px;
+        border-radius: 4px;
+      }
+      
        .no-animations * {
         animation: none !important;
         transition: none !important;
+      }
+
+      .animate-pulseGlow {
+        animation: pulseGlow 2s infinite;
+      }
+      
+      .brand-gradient-text {
+        background: linear-gradient(45deg, var(--color-brand-accent), var(--color-accent-cyan));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        text-fill-color: transparent;
+      }
+      
+      @keyframes pan-background {
+        0% { background-position: 0% 0%; }
+        100% { background-position: 2rem 2rem; }
+      }
+
+      @keyframes pulseGlow {
+        0%, 100% {
+          box-shadow: 0 0 0 0 var(--color-glow);
+        }
+        50% {
+          box-shadow: 0 0 12px 4px var(--color-glow);
+        }
       }
     </style>
     <script>
@@ -40,6 +149,12 @@
         darkMode: 'class', 
         theme: {
           extend: {
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+              roboto: ['Roboto', 'sans-serif'],
+              lato: ['Lato', 'sans-serif'],
+              'open-sans': ['Open Sans', 'sans-serif'],
+            },
             colors: {
               background: 'var(--color-background)',
               surface: 'var(--color-surface)',
@@ -51,36 +166,31 @@
               'brand-primary': 'var(--color-brand-primary)',
               'brand-secondary': 'var(--color-brand-secondary)',
               'brand-text-on-accent': 'var(--color-brand-text-on-accent)',
+              'accent-cyan': 'var(--color-accent-cyan)',
+              'accent-magenta': 'var(--color-accent-magenta)',
+              'accent-amber': 'var(--color-accent-amber)',
+            },
+            animation: {
+              fadeIn: 'fadeIn 0.3s ease-in-out',
+              slideInUp: 'slideInUp 0.5s ease-out',
             },
             keyframes: {
               fadeIn: {
-                '0%': { opacity: '0', transform: 'translateY(10px)' },
-                '100%': { opacity: '1', transform: 'translateY(0)' },
+                '0%': { opacity: 0 },
+                '100%': { opacity: 1 },
               },
-            },
-            animation: {
-              fadeIn: 'fadeIn 0.5s ease-out forwards',
-            },
+              slideInUp: {
+                '0%': { opacity: 0, transform: 'translateY(20px)' },
+                '100%': { opacity: 1, transform: 'translateY(0)' },
+              }
+            }
           }
         }
       }
     </script>
-  <script type="importmap">
-{
-  "imports": {
-    "@google/genai": "https://esm.sh/@google/genai@^1.14.0",
-    "react/": "https://esm.sh/react@^19.1.1/",
-    "react": "https://esm.sh/react@^19.1.1",
-    "react-dom/": "https://esm.sh/react-dom@^19.1.1/",
-    "jspdf": "https://esm.sh/jspdf@2.5.1",
-    "chart.js": "https://esm.sh/chart.js@^4.4.3",
-    "react-chartjs-2": "https://esm.sh/react-chartjs-2@^5.2.0",
-    "chartjs-chart-treemap": "https://esm.sh/chartjs-chart-treemap@^2.3.0"
-  }
-}
-</script>
-</head>
-  <body class="bg-background text-text-primary antialiased">
+  </head>
+  <body>
     <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
   </body>
 </html>

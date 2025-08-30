@@ -1,93 +1,97 @@
 
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import { InputForm } from './components/InputForm';
-import { ReportDisplay } from './components/ReportDisplay';
-import { LoadingIndicator } from './components/LoadingIndicator';
-import { Welcome } from './components/Welcome';
-import { Header, View } from './components/Header';
-import { generateResearchReport } from './services/geminiService';
-import { ResearchInput, ResearchReport, KnowledgeBaseEntry, AggregatedArticle } from './types';
+import React, { useState, useCallback, useEffect } from 'react';
+import { OnboardingView } from './components/OnboardingView';
+import { Header } from './components/Header';
+import { ResearchInput, ResearchReport, KnowledgeBaseFilter } from './types';
 import { KnowledgeBaseView } from './components/KnowledgeBaseView';
-import { SettingsView } from './components/SettingsView';
+import SettingsView from './components/SettingsView';
 import { SettingsProvider, useSettings } from './contexts/SettingsContext';
+import { PresetProvider } from './contexts/PresetContext';
 import { HelpView } from './components/HelpView';
 import { Notification } from './components/Notification';
 import { DashboardView } from './components/DashboardView';
+import { ConfirmationModal } from './components/ConfirmationModal';
+import { HistoryView } from './components/HistoryView';
+import { ResearchView } from './components/ResearchView';
+import { useResearchAssistant } from './hooks/useResearchAssistant';
+import { generateResearchReport } from './services/geminiService';
+import { OrchestratorView } from './components/OrchestratorView';
+import { KnowledgeBaseProvider, useKnowledgeBase } from './contexts/KnowledgeBaseContext';
+import { UIProvider, useUI } from './contexts/UIContext';
+import type { View } from './contexts/UIContext';
 
 
-const KNOWLEDGE_BASE_STORAGE_KEY = 'aiResearchKnowledgeBase';
-
-interface ConfirmationModalProps {
-    onConfirm: () => void;
-    onCancel: () => void;
-    title: string;
-    message: React.ReactNode;
-    confirmText: string;
-    confirmButtonClass?: string;
-    titleClass?: string;
-}
-
-const ConfirmationModal: React.FC<ConfirmationModalProps> = ({ onConfirm, onCancel, title, message, confirmText, confirmButtonClass = 'bg-red-600 hover:bg-red-700', titleClass = 'text-red-400' }) => (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center backdrop-blur-sm animate-fadeIn" style={{ animationDuration: '150ms' }}>
-        <div className="bg-surface rounded-lg border border-border shadow-2xl p-6 w-full max-w-md m-4">
-            <h3 className={`text-lg font-bold ${titleClass}`}>{title}</h3>
-            <div className="mt-2 text-text-secondary">{message}</div>
-            <div className="mt-6 flex justify-end space-x-3">
-                <button onClick={onCancel} className="px-4 py-2 border border-border text-sm font-medium rounded-md shadow-sm text-text-primary bg-background hover:bg-surface-hover">
-                    Cancel
-                </button>
-                <button onClick={onConfirm} className={`px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white ${confirmButtonClass}`}>
-                    {confirmText}
-                </button>
-            </div>
-        </div>
-    </div>
-);
-
-
-const AppContent: React.FC = () => {
+const AppLayout: React.FC = () => {
+  // Orchestrator State
   const [researchInput, setResearchInput] = useState<ResearchInput | null>(null);
   const [report, setReport] = useState<ResearchReport | null>(null);
-  const [knowledgeBase, setKnowledgeBase] = useState<KnowledgeBaseEntry[]>(() => {
-    try {
-        const storedKB = localStorage.getItem(KNOWLEDGE_BASE_STORAGE_KEY);
-        return storedKB ? JSON.parse(storedKB) : [];
-    } catch (error) {
-        console.error("Failed to parse knowledge base from localStorage", error);
-        return [];
-    }
-  });
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [currentPhase, setCurrentPhase] = useState<string>('');
-  const [currentView, setCurrentView] = useState<View>('orchestrator');
-  const { settings } = useSettings();
-  const [notification, setNotification] = useState<{ id: number; message: string; type: 'success' | 'error' } | null>(null);
+  
+  // App-wide State from contexts
+  const { settings, updateSettings } = useSettings();
+  const { currentView, notification, setNotification, isSettingsDirty, setIsSettingsDirty, pendingNavigation, setPendingNavigation, setCurrentView, showOnboarding, setShowOnboarding } = useUI();
+  // FIX: Corrected destructured properties to match the context type.
+  const { knowledgeBase, saveReport, clearKnowledgeBase, updateReportTitle, updateTags, deleteArticles, onMergeDuplicates, addKnowledgeBaseEntries, onPruneByRelevance, uniqueArticles } = useKnowledgeBase();
+
+
   const [isCurrentReportSaved, setIsCurrentReportSaved] = useState<boolean>(false);
 
-  // State for unsaved changes in Settings
-  const [isSettingsDirty, setIsSettingsDirty] = useState(false);
-  const [pendingNavigation, setPendingNavigation] = useState<View | null>(null);
+  // Research Assistant Hook
+  const {
+      isLoading: isResearching,
+      phase: researchPhase,
+      error: researchError,
+      analysis: researchAnalysis,
+      similar,
+      online,
+      startResearch,
+      clearResearch,
+  } = useResearchAssistant(settings.ai, setCurrentView);
+  
   const [settingsResetToken, setSettingsResetToken] = useState(0);
 
+  // State for navigating to a specific help tab
+  const [initialHelpTab, setInitialHelpTab] = useState<string | null>(null);
 
-  const showNotification = useCallback((message: string, type: 'success' | 'error' = 'success') => {
-    setNotification({ id: Date.now(), message, type });
-  }, []);
+  // State for pre-filling the research topic from another view
+  const [prefilledTopic, setPrefilledTopic] = useState<string | null>(null);
 
+  // State for Knowledge Base filters (lifted state)
+  const [kbFilter, setKbFilter] = useState<KnowledgeBaseFilter>({
+    searchTerm: '',
+    selectedTopics: [],
+    selectedTags: [],
+    selectedArticleTypes: [],
+    selectedJournals: [],
+    showOpenAccessOnly: false,
+  });
 
-  useEffect(() => {
-    try {
-        localStorage.setItem(KNOWLEDGE_BASE_STORAGE_KEY, JSON.stringify(knowledgeBase));
-    } catch (error) {
-        console.error("Failed to save knowledge base to localStorage", error);
-    }
-  }, [knowledgeBase]);
 
   useEffect(() => {
       document.documentElement.className = settings.theme;
       document.documentElement.classList.toggle('no-animations', !settings.performance.enableAnimations);
-  }, [settings.theme, settings.performance.enableAnimations]);
+      
+      const fontMap: Record<string, string> = {
+          'Inter': 'Inter, sans-serif',
+          'Lato': 'Lato, sans-serif',
+          'Roboto': 'Roboto, sans-serif',
+          'Open Sans': '"Open Sans", sans-serif'
+      };
+      
+      document.body.style.fontFamily = fontMap[settings.appearance.fontFamily] || fontMap['Inter'];
+
+      if (settings.appearance.customColors.enabled) {
+          document.documentElement.style.setProperty('--color-brand-primary', settings.appearance.customColors.primary);
+          document.documentElement.style.setProperty('--color-brand-secondary', settings.appearance.customColors.secondary);
+          document.documentElement.style.setProperty('--color-brand-accent', settings.appearance.customColors.accent);
+      } else {
+          document.documentElement.style.removeProperty('--color-brand-primary');
+          document.documentElement.style.removeProperty('--color-brand-secondary');
+          document.documentElement.style.removeProperty('--color-brand-accent');
+      }
+  }, [settings.theme, settings.performance.enableAnimations, settings.appearance.fontFamily, settings.appearance.customColors]);
 
   const loadingPhases = [
     "Phase 1: Formulating Advanced PubMed Queries...",
@@ -104,235 +108,197 @@ const AppContent: React.FC = () => {
     setReport(null);
     setResearchInput(data);
     setCurrentView('orchestrator');
-    setIsCurrentReportSaved(false); // A new report is never considered saved initially
+    setIsCurrentReportSaved(false); // A new report is never saved by default
 
     let phaseIndex = 0;
-    setCurrentPhase(loadingPhases[phaseIndex]);
+    setCurrentPhase(loadingPhases[0]);
     const phaseInterval = setInterval(() => {
-      phaseIndex++;
-      if (phaseIndex < loadingPhases.length) {
-        setCurrentPhase(loadingPhases[phaseIndex]);
+      phaseIndex = (phaseIndex + 1);
+      if(phaseIndex < loadingPhases.length) {
+          setCurrentPhase(loadingPhases[phaseIndex]);
       } else {
-        clearInterval(phaseInterval);
+          clearInterval(phaseInterval);
       }
-    }, 3000);
+    }, 4000);
 
     try {
-      const result = await generateResearchReport(data, settings.ai);
-      setReport(result);
-
-      if (settings.defaults.autoSaveReports) {
-          const isDuplicate = knowledgeBase.some(entry => JSON.stringify(entry.input) === JSON.stringify(data));
-          if (!isDuplicate) {
-              setKnowledgeBase(prev => [...prev, { input: data, report: result }]);
-              setIsCurrentReportSaved(true);
-              showNotification("Report automatically saved to Knowledge Base.", 'success');
-          } else {
-              setIsCurrentReportSaved(true); // It's a duplicate, so it's already "saved"
-          }
-      }
+      const generatedReport = await generateResearchReport(data, settings.ai);
+      setReport(generatedReport);
+       if (settings.defaults.autoSaveReports) {
+            const saved = saveReport(data, generatedReport);
+            setIsCurrentReportSaved(saved);
+        }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An unknown error occurred.');
-      console.error(err);
+      setError(err instanceof Error ? err.message : "An unknown error occurred");
     } finally {
       clearInterval(phaseInterval);
       setIsLoading(false);
+      setCurrentPhase('');
     }
-  }, [knowledgeBase, settings.ai, settings.defaults.autoSaveReports, showNotification]);
+  }, [settings.ai, settings.defaults.autoSaveReports, saveReport, setCurrentView]);
 
-  const handleSaveCurrentReport = useCallback(() => {
-    if (report && researchInput && !isCurrentReportSaved) {
-        const isDuplicate = knowledgeBase.some(entry => JSON.stringify(entry.input) === JSON.stringify(researchInput));
-        if (!isDuplicate) {
-            setKnowledgeBase(prev => [...prev, { input: researchInput, report }]);
-            setIsCurrentReportSaved(true);
-            showNotification("Report saved to Knowledge Base.", 'success');
-        } else {
-            setIsCurrentReportSaved(true);
-            showNotification("This exact report is already in the Knowledge Base.", 'error');
-        }
+  const handleSaveReport = useCallback(() => {
+    if (report && researchInput) {
+      const saved = saveReport(researchInput, report);
+      setIsCurrentReportSaved(saved);
     }
-  }, [report, researchInput, knowledgeBase, isCurrentReportSaved, showNotification]);
+  }, [report, researchInput, saveReport]);
   
-  const handleClearKnowledgeBase = useCallback(() => {
-    setKnowledgeBase([]);
-    showNotification("Knowledge Base successfully cleared.", 'success');
-    if (currentView === 'knowledgeBase') {
-        setCurrentView('orchestrator');
-    }
-  }, [showNotification, currentView]);
-  
-  const handleMergeDuplicates = useCallback(() => {
-    const articleMap = new Map<string, AggregatedArticle>();
-    let articlesScanned = 0;
-
-    // Step 1: Find the single best version of each unique article across all reports.
-    knowledgeBase.forEach(entry => {
-        entry.report.rankedArticles.forEach(article => {
-            articlesScanned++;
-            const existing = articleMap.get(article.pmid);
-            // Keep the article with the highest relevance score.
-            if (!existing || article.relevanceScore > existing.relevanceScore) {
-                articleMap.set(article.pmid, { ...article, sourceReportTopic: entry.input.researchTopic });
-            }
-        });
-    });
-
-    const uniqueArticleCount = articleMap.size;
-    const duplicateCount = articlesScanned - uniqueArticleCount;
-
-    if (duplicateCount === 0) {
-        showNotification("No duplicate articles found to merge.", "success");
-        return;
-    }
-    
-    // Step 2: Rebuild the entire knowledge base, ensuring that each report
-    // only contains articles that are the definitive "best versions".
-    const seenPmids = new Set<string>();
-    const finalKb = knowledgeBase.map(entry => {
-        const uniqueArticlesForEntry = entry.report.rankedArticles.filter(article => {
-            // If we've already added this article to our new KB, skip.
-            if (seenPmids.has(article.pmid)) {
-                return false;
-            }
-            
-            const bestVersion = articleMap.get(article.pmid);
-            
-            // Keep this specific article instance only if its score matches the best score.
-            // This correctly handles the case where an article appears in multiple reports
-            // but ensures only the highest-scored version(s) are considered.
-            if (bestVersion && article.relevanceScore === bestVersion.relevanceScore) {
-                 seenPmids.add(article.pmid); // Mark as 'processed' to ensure it's only added once.
-                 return true;
-            }
-            
-            return false;
-        });
-
-        return {
-            ...entry,
-            report: {
-                ...entry.report,
-                rankedArticles: uniqueArticlesForEntry,
-            },
-        };
-    }).filter(entry => entry.report.rankedArticles.length > 0); // Clean up any reports that are now empty.
-
-    setKnowledgeBase(finalKb);
-    showNotification(`Removed ${duplicateCount} duplicate article entries, keeping the highest-scored version of each.`, "success");
-
-}, [knowledgeBase, showNotification]);
-
-
-  const handleDeleteArticles = useCallback((pmidsToDelete: string[]) => {
-      const pmidsSet = new Set(pmidsToDelete);
-      setKnowledgeBase(currentKb => 
-          currentKb.map(entry => ({
-              ...entry,
-              report: {
-                  ...entry.report,
-                  rankedArticles: entry.report.rankedArticles.filter(article => !pmidsSet.has(article.pmid))
-              }
-          })).filter(entry => entry.report.rankedArticles.length > 0) // Optionally remove reports that become empty
-      );
-      showNotification(`${pmidsToDelete.length} article(s) deleted.`, 'success');
-  }, [showNotification]);
-  
-  const handleTagsUpdate = useCallback((pmid: string, newTags: string[]) => {
-    setKnowledgeBase(currentKb =>
-      currentKb.map(entry => ({
-        ...entry,
-        report: {
-          ...entry.report,
-          rankedArticles: entry.report.rankedArticles.map(article =>
-            article.pmid === pmid
-              ? { ...article, customTags: newTags }
-              : article
-          ),
-        },
-      }))
-    );
+  const handleNewSearch = useCallback(() => {
+    setReport(null);
+    setResearchInput(null);
+    window.scrollTo(0, 0);
   }, []);
 
-  const knowledgeBaseArticleCount = useMemo(() => {
-      const uniquePmids = new Set<string>();
-      knowledgeBase.forEach(entry => {
-          entry.report.rankedArticles.forEach(a => uniquePmids.add(a.pmid));
-      });
-      return uniquePmids.size;
-  }, [knowledgeBase]);
-
-  const handleViewChange = useCallback((view: View) => {
-    if (currentView === 'settings' && isSettingsDirty && view !== 'settings') {
-      setPendingNavigation(view);
-    } else {
-      setCurrentView(view);
-      if (view === 'settings') {
-        setIsSettingsDirty(false);
+  const handleClearKnowledgeBase = () => {
+      clearKnowledgeBase();
+      // Also clear current report if it's from the KB
+      if (isCurrentReportSaved) {
+          setReport(null);
+          setResearchInput(null);
       }
+      setCurrentView('orchestrator'); // Go back to a safe view
+  };
+
+  const handleTagsUpdate = useCallback((pmid: string, newTags: string[]) => {
+      updateTags(pmid, newTags);
+       // Also update the current report if it's being displayed
+      if (report && report.rankedArticles.some(a => a.pmid === pmid)) {
+          setReport(prevReport => {
+              if (!prevReport) return null;
+              return {
+                  ...prevReport,
+                  rankedArticles: prevReport.rankedArticles.map(article =>
+                      article.pmid === pmid ? { ...article, customTags: newTags } : article
+                  )
+              };
+          });
+      }
+  }, [report, updateTags]);
+
+  const handleConfirmNavigation = () => {
+        if (pendingNavigation) {
+            setCurrentView(pendingNavigation);
+            setIsSettingsDirty(false); // Discard changes
+            setSettingsResetToken(Date.now()); // Tell settings to reset
+        }
+        setPendingNavigation(null);
+    };
+
+    const handleCancelNavigation = () => {
+        setPendingNavigation(null);
+    };
+
+    const handleViewChange = (view: View) => {
+        if (isSettingsDirty && currentView === 'settings') {
+            setPendingNavigation(view);
+        } else {
+            setCurrentView(view);
+        }
+    };
+    
+  const handleViewReportFromHistory = (entry: any) => {
+      setResearchInput(entry.input);
+      setReport(entry.report);
+      setIsCurrentReportSaved(true);
+      setCurrentView('orchestrator');
+  };
+
+  const handleStartNewReview = useCallback((topic: string) => {
+      setPrefilledTopic(topic);
+      setCurrentView('orchestrator');
+      // Scroll to top to make the form visible
+      window.scrollTo(0, 0);
+  }, [setCurrentView]);
+
+  const handleOnboardingComplete = () => {
+    try {
+        localStorage.setItem('hasCompletedOnboarding', 'true');
+    } catch (error) {
+        console.error("Could not save onboarding state to localStorage", error);
     }
-  }, [currentView, isSettingsDirty]);
+    setShowOnboarding(false);
+  };
+  
+  const handleKbFilterChange = (newFilter: Partial<KnowledgeBaseFilter>) => {
+    setKbFilter(prev => ({ ...prev, ...newFilter }));
+  };
 
-
-  const renderMainContent = () => {
-    switch (currentView) {
-      case 'orchestrator':
-        return (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-1">
-              <InputForm
-                onSubmit={handleFormSubmit}
-                isLoading={isLoading}
-                defaultMaxArticlesToScan={settings.defaults.maxArticlesToScan}
-                defaultTopNToSynthesize={settings.defaults.topNToSynthesize}
-              />
-            </div>
-            <div className="lg:col-span-2">
-              <div className="bg-surface rounded-lg border border-border shadow-2xl shadow-black/20 p-6 min-h-[calc(100vh-200px)] flex flex-col">
-                {isLoading && <LoadingIndicator phase={currentPhase} />}
-                {error && <div className="text-center text-red-400 font-semibold p-8 m-auto">Error: {error}</div>}
-                {!isLoading && !error && !report && <Welcome />}
-                {report && researchInput && <ReportDisplay report={report} input={researchInput} isSaved={isCurrentReportSaved} onSave={handleSaveCurrentReport} />}
-              </div>
-            </div>
-          </div>
-        );
+  const renderView = () => {
+    switch(currentView) {
       case 'knowledgeBase':
-        return <KnowledgeBaseView entries={knowledgeBase} onClear={handleClearKnowledgeBase} onViewChange={setCurrentView} onDeleteSelected={handleDeleteArticles} onTagsUpdate={handleTagsUpdate} />;
-      case 'dashboard':
-        return <DashboardView entries={knowledgeBase} />;
+        return <KnowledgeBaseView 
+                    onViewChange={handleViewChange} 
+                    filter={kbFilter}
+                    onFilterChange={handleKbFilterChange}
+                />;
       case 'settings':
         return <SettingsView 
-            knowledgeBase={knowledgeBase} 
-            setKnowledgeBase={setKnowledgeBase} 
-            onClearKnowledgeBase={handleClearKnowledgeBase} 
-            showNotification={showNotification} 
-            knowledgeBaseArticleCount={knowledgeBaseArticleCount} 
-            onMergeDuplicates={handleMergeDuplicates}
-            setIsSettingsDirty={setIsSettingsDirty}
-            resetToken={settingsResetToken}
-        />;
+                    onClearKnowledgeBase={handleClearKnowledgeBase}
+                    resetToken={settingsResetToken}
+                    onNavigateToHelpTab={(tab) => {
+                        setInitialHelpTab(tab);
+                        setCurrentView('help');
+                    }}
+                />;
       case 'help':
-        return <HelpView />;
+        return <HelpView initialTab={initialHelpTab} onTabConsumed={() => setInitialHelpTab(null)} />;
+      case 'dashboard':
+        return <DashboardView entries={knowledgeBase} onFilterChange={handleKbFilterChange} onViewChange={handleViewChange}/>;
+      case 'history':
+        return <HistoryView onViewReport={handleViewReportFromHistory} />;
+      case 'research':
+        return <ResearchView 
+                    onStartNewReview={handleStartNewReview}
+                    onStartResearch={startResearch}
+                    onClearResearch={clearResearch}
+                    isLoading={isResearching}
+                    phase={researchPhase}
+                    error={researchError}
+                    analysis={researchAnalysis}
+                    similarArticlesState={similar}
+                    onlineFindingsState={online}
+                />;
+      case 'orchestrator':
       default:
-        return null;
+        return (
+            <OrchestratorView
+                isLoading={isLoading}
+                currentPhase={currentPhase}
+                error={error}
+                report={report}
+                researchInput={researchInput}
+                isCurrentReportSaved={isCurrentReportSaved}
+                settings={settings}
+                prefilledTopic={prefilledTopic}
+                handleFormSubmit={handleFormSubmit}
+                handleSaveReport={handleSaveReport}
+                handleTagsUpdate={handleTagsUpdate}
+                handleNewSearch={handleNewSearch}
+                onPrefillConsumed={() => setPrefilledTopic(null)}
+                handleViewReportFromHistory={handleViewReportFromHistory}
+                handleStartNewReview={handleStartNewReview}
+            />
+        );
     }
   };
 
+  if (showOnboarding) {
+    return <OnboardingView onComplete={handleOnboardingComplete} />;
+  }
+
   return (
-    <div className="min-h-screen font-sans">
+    <div className="min-h-screen flex flex-col">
       <Header 
-        currentView={currentView}
-        onViewChange={handleViewChange}
-        knowledgeBaseArticleCount={knowledgeBaseArticleCount}
+        knowledgeBaseArticleCount={uniqueArticles.length}
         hasReports={knowledgeBase.length > 0}
-        isSettingsDirty={isSettingsDirty}
+        isResearching={isResearching}
       />
-      
-      <main className="container mx-auto p-4 sm:p-6 lg:p-8">
-        {renderMainContent()}
+      <main className="flex-grow container mx-auto p-4 sm:p-6 lg:p-8">
+        <div key={currentView} className="animate-slideInUp" style={{animationDelay: '100ms', animationDuration: '500ms'}}>
+            {renderView()}
+        </div>
       </main>
-      
       {notification && (
         <Notification
           key={notification.id}
@@ -343,31 +309,31 @@ const AppContent: React.FC = () => {
           duration={settings.notifications.duration}
         />
       )}
-
-      {pendingNavigation && (
-        <ConfirmationModal
-          title="Unsaved Changes"
-          message="You have unsaved changes. Are you sure you want to discard them and leave this page?"
-          confirmText="Discard Changes"
-          onConfirm={() => {
-            setCurrentView(pendingNavigation);
-            setIsSettingsDirty(false);
-            setSettingsResetToken(Date.now());
-            setPendingNavigation(null);
-          }}
-          onCancel={() => setPendingNavigation(null)}
-        />
-      )}
+       {pendingNavigation && (
+            <ConfirmationModal
+                onConfirm={handleConfirmNavigation}
+                onCancel={handleCancelNavigation}
+                title="Unsaved Changes"
+                message="You have unsaved changes in Settings. Are you sure you want to leave and discard them?"
+                confirmText="Discard Changes"
+                confirmButtonClass="bg-red-600 hover:bg-red-700"
+                titleClass="text-red-400"
+            />
+        )}
     </div>
   );
-};
-
+}
 
 const App: React.FC = () => (
     <SettingsProvider>
-        <AppContent />
+        <UIProvider>
+            <KnowledgeBaseProvider>
+                <PresetProvider>
+                    <AppLayout />
+                </PresetProvider>
+            </KnowledgeBaseProvider>
+        </UIProvider>
     </SettingsProvider>
 );
-
 
 export default App;
