@@ -1,44 +1,87 @@
+
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
-import { KnowledgeBaseEntry, ResearchInput, ResearchReport, RankedArticle, AggregatedArticle, AuthorProfile, AuthorProfileInput, ResearchKnowledgeBaseEntry } from '../types';
+// Fix: Import new types and remove old ones which are now locally defined for migration.
+import { KnowledgeBaseEntry, ResearchInput, ResearchReport, RankedArticle, AggregatedArticle, AuthorProfile, AuthorProfileInput, ResearchEntry, AuthorProfileEntry } from '../types';
 import { useUI } from './UIContext';
 
 const KNOWLEDGE_BASE_STORAGE_KEY = 'aiResearchKnowledgeBase';
+
+// Fix: Define old entry types locally for migration logic.
+interface OldResearchEntry {
+  id: string;
+  type: 'research';
+  input: ResearchInput;
+  report: ResearchReport;
+}
+
+interface OldAuthorEntry {
+    id: string;
+    type: 'author';
+    input: AuthorProfileInput;
+    profile: AuthorProfile;
+}
 
 const loadFromLocalStorage = (): KnowledgeBaseEntry[] => {
     try {
         const storedKB = localStorage.getItem(KNOWLEDGE_BASE_STORAGE_KEY);
         if (!storedKB) return [];
         const parsedKB = JSON.parse(storedKB);
-        return parsedKB.map((entry: any, index: number) => ({
-            ...entry,
-            id: entry.id || `${Date.now()}-${index}`
-        }));
+
+        // Migration logic: Check if an entry is in the old format and convert it.
+        return parsedKB.map((entry: any, index: number) => {
+            if (entry.sourceType === 'research' || entry.sourceType === 'author') {
+                return entry; // Already in new format
+            }
+
+            // Entry is in old format, migrate it
+            const timestamp = entry.id ? parseInt(entry.id.split('-')[0], 10) : Date.now() + index;
+            if (isNaN(timestamp)) {
+                 console.warn("Could not parse timestamp from old entry ID:", entry.id);
+                 return null;
+            }
+
+            if (entry.type === 'research') {
+                const oldEntry = entry as OldResearchEntry;
+                return {
+                    id: oldEntry.id,
+                    timestamp,
+                    sourceType: 'research',
+                    title: oldEntry.input.researchTopic,
+                    articles: oldEntry.report?.rankedArticles || [],
+                    input: oldEntry.input,
+                    report: oldEntry.report
+                } as ResearchEntry;
+            }
+            
+            if (entry.type === 'author') {
+                const oldEntry = entry as OldAuthorEntry;
+                return {
+                    id: oldEntry.id,
+                    timestamp,
+                    sourceType: 'author',
+                    title: oldEntry.input.authorName,
+                    articles: oldEntry.profile?.publications || [],
+                    input: oldEntry.input,
+                    profile: oldEntry.profile
+                } as AuthorProfileEntry;
+            }
+            
+            console.warn("Unknown entry type found during migration:", entry);
+            return null;
+
+        }).filter((entry: KnowledgeBaseEntry | null): entry is KnowledgeBaseEntry => entry !== null);
+
     } catch (error) {
-        console.error("Failed to parse knowledge base from localStorage", error);
+        console.error("Failed to parse/migrate knowledge base from localStorage", error);
         return [];
     }
-};
-
-/**
- * Safely retrieves the list of articles from any knowledge base entry.
- * @param entry A KnowledgeBaseEntry object.
- * @returns An array of RankedArticle, or an empty array if none exist.
- */
-const getArticlesFromEntry = (entry: KnowledgeBaseEntry): RankedArticle[] => {
-    if (entry.type === 'research') {
-        return entry.report?.rankedArticles || [];
-    }
-    if (entry.type === 'author') {
-        return entry.profile?.publications || [];
-    }
-    return [];
 };
 
 interface KnowledgeBaseContextType {
     knowledgeBase: KnowledgeBaseEntry[];
     uniqueArticles: AggregatedArticle[];
     getArticles: (sourceType?: 'all' | 'research' | 'author') => AggregatedArticle[];
-    getRecentResearchEntries: (count: number) => ResearchKnowledgeBaseEntry[];
+    getRecentResearchEntries: (count: number) => ResearchEntry[];
     saveReport: (researchInput: ResearchInput, report: ResearchReport) => boolean;
     saveAuthorProfile: (input: AuthorProfileInput, profile: AuthorProfile) => boolean;
     clearKnowledgeBase: () => void;
@@ -71,9 +114,13 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
     }, [setNotification]);
 
     const saveReport = useCallback((researchInput: ResearchInput, report: ResearchReport): boolean => {
-        const newEntry: KnowledgeBaseEntry = { 
-            id: `${Date.now()}-${Math.random()}`,
-            type: 'research',
+        const timestamp = Date.now();
+        const newEntry: ResearchEntry = { 
+            id: `${timestamp}-${Math.random()}`,
+            timestamp,
+            sourceType: 'research',
+            title: researchInput.researchTopic,
+            articles: report.rankedArticles || [],
             input: researchInput, 
             report 
         };
@@ -83,9 +130,13 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
     }, [showNotification]);
     
     const saveAuthorProfile = useCallback((input: AuthorProfileInput, profile: AuthorProfile): boolean => {
-        const newEntry: KnowledgeBaseEntry = {
-            id: `${Date.now()}-${Math.random()}`,
-            type: 'author',
+        const timestamp = Date.now();
+        const newEntry: AuthorProfileEntry = {
+            id: `${timestamp}-${Math.random()}`,
+            timestamp,
+            sourceType: 'author',
+            title: profile.name,
+            articles: profile.publications || [],
             input,
             profile,
         };
@@ -102,38 +153,37 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
     const updateEntryTitle = useCallback((id: string, newTitle: string) => {
         setKnowledgeBase(prevKB => prevKB.map(entry => {
             if (entry.id !== id) return entry;
-            if (entry.type === 'research') {
-                return { ...entry, input: { ...entry.input, researchTopic: newTitle } };
-            } else { // 'author'
-                return { ...entry, input: { ...entry.input, authorName: newTitle } };
+
+            const updatedEntry = { ...entry, title: newTitle };
+            if (updatedEntry.sourceType === 'research') {
+                updatedEntry.input = { ...updatedEntry.input, researchTopic: newTitle };
+            } else {
+                updatedEntry.input = { ...updatedEntry.input, authorName: newTitle };
             }
+            return updatedEntry;
         }));
         showNotification("Entry title updated successfully.");
     }, [showNotification]);
 
     const updateTags = useCallback((pmid: string, newTags: string[]) => {
         setKnowledgeBase(prevKB => prevKB.map(entry => {
-            if (entry.type === 'research') {
-                return {
-                    ...entry,
-                    report: {
-                        ...entry.report,
-                        rankedArticles: (entry.report.rankedArticles || []).map(article =>
-                            article.pmid === pmid ? { ...article, customTags: newTags } : article
-                        )
-                    }
+            const updateArticle = (article: RankedArticle) => article.pmid === pmid ? { ...article, customTags: newTags } : article;
+            
+            const newArticles = (entry.articles || []).map(updateArticle);
+            const updatedEntry = { ...entry, articles: newArticles };
+            
+            if (updatedEntry.sourceType === 'research') {
+                updatedEntry.report = {
+                    ...updatedEntry.report,
+                    rankedArticles: (updatedEntry.report.rankedArticles || []).map(updateArticle)
                 };
             } else { // 'author'
-                return {
-                    ...entry,
-                    profile: {
-                        ...entry.profile,
-                        publications: (entry.profile.publications || []).map(article =>
-                            article.pmid === pmid ? { ...article, customTags: newTags } : article
-                        )
-                    }
+                updatedEntry.profile = {
+                    ...updatedEntry.profile,
+                    publications: (updatedEntry.profile.publications || []).map(updateArticle)
                 };
             }
+            return updatedEntry;
         }));
     }, []);
 
@@ -141,140 +191,132 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
         const pmidSet = new Set(pmids);
         setKnowledgeBase(prevKB => {
             const newKB = prevKB.map(entry => {
-                if (entry.type === 'research') {
-                    return {
-                        ...entry,
-                        report: {
-                            ...entry.report,
-                            rankedArticles: (entry.report.rankedArticles || []).filter(article => !pmidSet.has(article.pmid))
-                        }
-                    };
-                } else { // author
-                    return {
-                        ...entry,
-                        profile: {
-                            ...entry.profile,
-                            publications: (entry.profile.publications || []).filter(article => !pmidSet.has(article.pmid))
-                        }
-                    };
+                const filterArticles = (articles: RankedArticle[]) => (articles || []).filter(article => !pmidSet.has(article.pmid));
+                const newArticles = filterArticles(entry.articles);
+                const updatedEntry = {...entry, articles: newArticles};
+
+                if (updatedEntry.sourceType === 'research') {
+                    updatedEntry.report.rankedArticles = filterArticles(updatedEntry.report.rankedArticles);
+                } else {
+                    updatedEntry.profile.publications = filterArticles(updatedEntry.profile.publications);
                 }
-            }).filter(entry => {
-                if (entry.type === 'research') return (entry.report.rankedArticles || []).length > 0;
-                return (entry.profile.publications || []).length > 0;
-            });
+                return updatedEntry;
+
+            }).filter(entry => (entry.articles || []).length > 0);
+            
             showNotification(`${pmids.length} article(s) deleted from Knowledge Base.`);
             return newKB;
         });
     }, [showNotification]);
+    
+    const getArticles = useCallback((filterType: 'all' | 'research' | 'author' = 'all'): AggregatedArticle[] => {
+        if (!Array.isArray(knowledgeBase)) return [];
+
+        const articleMap = new Map<string, AggregatedArticle>();
+
+        knowledgeBase.forEach(entry => {
+            if (filterType !== 'all' && entry.sourceType !== filterType) {
+                return;
+            }
+    
+            if (Array.isArray(entry.articles)) {
+                entry.articles.forEach(article => {
+                    const existing = articleMap.get(article.pmid);
+                    if (!existing || (article.relevanceScore || 0) > (existing.relevanceScore || 0)) {
+                        articleMap.set(article.pmid, {
+                            ...article,
+                            sourceId: entry.id,
+                            sourceTitle: entry.title
+                        });
+                    }
+                });
+            }
+        });
+        return Array.from(articleMap.values());
+    }, [knowledgeBase]);
+
+    const uniqueArticles = useMemo(() => getArticles('all'), [getArticles]);
 
     const onMergeDuplicates = useCallback(() => {
-        const articleMap = new Map<string, RankedArticle & { sourceId: string }>();
+        const articleMap = new Map<string, { article: RankedArticle, entryId: string }>();
         let duplicatesFound = 0;
-        
+
         knowledgeBase.forEach(entry => {
-            const articles = getArticlesFromEntry(entry);
-            articles.forEach(article => {
-                const enrichedArticle = { ...article, sourceId: entry.id };
-                if (articleMap.has(article.pmid)) {
-                    duplicatesFound++;
-                    if (article.relevanceScore > (articleMap.get(article.pmid)?.relevanceScore || 0)) {
-                        articleMap.set(article.pmid, enrichedArticle);
+            if (Array.isArray(entry.articles)) {
+                entry.articles.forEach(article => {
+                    const existing = articleMap.get(article.pmid);
+                    if (existing) {
+                        duplicatesFound++;
+                        if ((article.relevanceScore || 0) > (existing.article.relevanceScore || 0)) {
+                            articleMap.set(article.pmid, { article, entryId: entry.id });
+                        }
+                    } else {
+                        articleMap.set(article.pmid, { article, entryId: entry.id });
                     }
-                } else {
-                    articleMap.set(article.pmid, enrichedArticle);
-                }
-            });
+                });
+            }
         });
 
         if (duplicatesFound === 0) {
             showNotification("No duplicate articles found to merge.");
             return;
         }
-        
+
         const newKnowledgeBase = knowledgeBase.map(entry => {
-            const articles = getArticlesFromEntry(entry);
-            const newArticles = articles.filter(article => articleMap.get(article.pmid)?.sourceId === entry.id);
-            
-            if (entry.type === 'research') {
-                return { ...entry, report: { ...entry.report, rankedArticles: newArticles } };
-            } else {
-                return { ...entry, profile: { ...entry.profile, publications: newArticles } };
+            const keptArticles = (entry.articles || []).filter(article => articleMap.get(article.pmid)?.entryId === entry.id);
+
+            const updatedEntry = { ...entry, articles: keptArticles };
+            if (updatedEntry.sourceType === 'research') {
+                updatedEntry.report.rankedArticles = keptArticles;
+            } else { // author
+                updatedEntry.profile.publications = keptArticles;
             }
-        }).filter(entry => getArticlesFromEntry(entry).length > 0);
+            return updatedEntry;
+        }).filter(entry => (entry.articles || []).length > 0);
 
         setKnowledgeBase(newKnowledgeBase);
         showNotification(`Merged ${duplicatesFound} duplicate article entries. Kept the version with the highest relevance score for each.`);
     }, [knowledgeBase, showNotification]);
-    
+
 
     const addKnowledgeBaseEntries = useCallback((entries: KnowledgeBaseEntry[]) => {
-        const validEntries = entries.filter(entry => ('type' in entry) && (entry.type === 'research' || entry.type === 'author'));
+        const validEntries = entries.filter(entry => ('sourceType' in entry) && (entry.sourceType === 'research' || entry.sourceType === 'author'));
         setKnowledgeBase(kb => [...kb, ...validEntries]);
         showNotification("Knowledge base imported successfully.");
     }, [showNotification]);
-    
+
     const addSingleArticleReport = useCallback((article: RankedArticle) => {
-        const newEntry: KnowledgeBaseEntry = {
-            id: `${Date.now()}-${Math.random()}`,
-            type: 'research',
-            input: {
-                researchTopic: `Single Article: ${article.title}`,
-                dateRange: 'any',
-                articleTypes: [],
-                synthesisFocus: 'overview',
-                maxArticlesToScan: 1,
-                topNToSynthesize: 1,
-            },
-            report: {
-                generatedQueries: [],
-                rankedArticles: [article],
-                synthesis: `This is a single-article report for "${article.title}".`,
-                aiGeneratedInsights: [],
-                overallKeywords: article.keywords.map(kw => ({ keyword: kw, frequency: 1 })),
-            }
+        const report: ResearchReport = {
+            generatedQueries: [],
+            rankedArticles: [article],
+            synthesis: `This is a single-article report for "${article.title}".`,
+            aiGeneratedInsights: [],
+            overallKeywords: article.keywords.map(kw => ({ keyword: kw, frequency: 1 })),
         };
-        setKnowledgeBase(prevKB => [...prevKB, newEntry]);
-        showNotification(`Article "${article.title.substring(0, 30)}..." added to Knowledge Base.`);
-    }, [showNotification]);
-
-    const getArticles = useCallback((sourceType: 'all' | 'research' | 'author' = 'all'): AggregatedArticle[] => {
-        if (!knowledgeBase || !Array.isArray(knowledgeBase)) return [];
-        
-        const articleMap = new Map<string, AggregatedArticle>();
-        
-        knowledgeBase
-            .filter(entry => sourceType === 'all' || entry.type === sourceType)
-            .forEach(entry => {
-                const articles = getArticlesFromEntry(entry);
-                const sourceTitle = entry.type === 'research' ? entry.input.researchTopic : `Profile: ${entry.input.authorName}`;
-                
-                articles.forEach(article => {
-                    const existing = articleMap.get(article.pmid);
-                    if (!existing || article.relevanceScore > (existing.relevanceScore || 0)) {
-                        articleMap.set(article.pmid, { ...article, sourceTitle, sourceId: entry.id });
-                    }
-                });
-            });
-        return Array.from(articleMap.values());
-    }, [knowledgeBase]);
-
-    const uniqueArticles = useMemo(() => getArticles('all'), [getArticles]);
+        const input: ResearchInput = {
+            researchTopic: `Single Article: ${article.title}`,
+            dateRange: 'any', articleTypes: [], synthesisFocus: 'overview',
+            maxArticlesToScan: 1, topNToSynthesize: 1,
+        };
+        saveReport(input, report);
+    }, [saveReport]);
 
     const onPruneByRelevance = useCallback((pruneScore: number) => {
         const articlesBefore = uniqueArticles.length;
-        
+
         const newKnowledgeBase = knowledgeBase.map(entry => {
-            const articles = getArticlesFromEntry(entry);
-            const keptArticles = articles.filter(article => article.relevanceScore >= pruneScore);
-
-            if(entry.type === 'research') {
-                return { ...entry, report: { ...entry.report, rankedArticles: keptArticles } };
-            } else {
-                return { ...entry, profile: { ...entry.profile, publications: keptArticles } };
+            const keptArticles = (entry.articles || []).filter(article => article.relevanceScore >= pruneScore);
+            
+            const updatedEntry = { ...entry, articles: keptArticles };
+            if (updatedEntry.sourceType === 'research') {
+                updatedEntry.report.rankedArticles = keptArticles;
+            } else { // author
+                updatedEntry.profile.publications = keptArticles;
             }
-        }).filter(entry => getArticlesFromEntry(entry).length > 0);
-
-        const articlesAfter = newKnowledgeBase.flatMap(e => e.type === 'research' ? e.report.rankedArticles : e.profile.publications).reduce((acc, article) => acc.add(article.pmid), new Set()).size;
+            return updatedEntry;
+        }).filter(entry => (entry.articles || []).length > 0);
+        
+        const articlesAfter = getArticles.call({knowledgeBase: newKnowledgeBase}, 'all').length;
         const articlesPruned = articlesBefore - articlesAfter;
 
         if (articlesPruned > 0) {
@@ -283,24 +325,26 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
         } else {
             showNotification(`No articles found with a score below ${pruneScore}.`, "error");
         }
-    }, [knowledgeBase, showNotification, uniqueArticles]);
+    }, [knowledgeBase, showNotification, uniqueArticles, getArticles]);
 
-    const getRecentResearchEntries = useCallback((count: number): ResearchKnowledgeBaseEntry[] => {
-        if (!knowledgeBase || !Array.isArray(knowledgeBase)) {
-            return [];
-        }
-        // Create a stable sort by sorting by timestamp (from ID) descending
+    const getRecentResearchEntries = useCallback((count: number): ResearchEntry[] => {
         return knowledgeBase
-            .filter((e): e is ResearchKnowledgeBaseEntry => e.type === 'research')
-            .sort((a, b) => parseInt(b.id.split('-')[0]) - parseInt(a.id.split('-')[0]))
+            .filter((e): e is ResearchEntry => e.sourceType === 'research')
+            .sort((a, b) => b.timestamp - a.timestamp)
             .slice(0, count);
     }, [knowledgeBase]);
 
+    const providerValue = useMemo(() => ({
+        knowledgeBase, uniqueArticles, getArticles, getRecentResearchEntries, saveReport, saveAuthorProfile, clearKnowledgeBase, updateEntryTitle,
+        updateTags, deleteArticles, onMergeDuplicates, addKnowledgeBaseEntries, onPruneByRelevance, addSingleArticleReport
+    }), [
+        knowledgeBase, uniqueArticles, getArticles, getRecentResearchEntries, saveReport, saveAuthorProfile, clearKnowledgeBase, updateEntryTitle,
+        updateTags, deleteArticles, onMergeDuplicates, addKnowledgeBaseEntries, onPruneByRelevance, addSingleArticleReport
+    ]);
+
+
     return (
-        <KnowledgeBaseContext.Provider value={{
-            knowledgeBase, uniqueArticles, getArticles, getRecentResearchEntries, saveReport, saveAuthorProfile, clearKnowledgeBase, updateEntryTitle,
-            updateTags, deleteArticles, onMergeDuplicates, addKnowledgeBaseEntries, onPruneByRelevance, addSingleArticleReport
-        }}>
+        <KnowledgeBaseContext.Provider value={providerValue}>
             {children}
         </KnowledgeBaseContext.Provider>
     );

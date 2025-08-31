@@ -56,7 +56,7 @@ const QuickViewModal: React.FC<{ entry: KnowledgeBaseEntry; onClose: () => void;
                         <h3 id="quick-view-title" className="text-lg font-bold text-brand-accent">{isAuthor ? 'Author Profile' : 'Research Report'}</h3>
                         <p className="text-sm text-text-secondary mt-1 max-w-md">{title}</p>
                     </div>
-                    <button onClick={onClose} className="p-1 rounded-full hover:bg-background">
+                    <button onClick={onClose} className="p-1 rounded-full hover:bg-surface-hover">
                         <span className="sr-only">Close</span>
                         <XIcon className="h-5 w-5 text-text-secondary"/>
                     </button>
@@ -86,7 +86,7 @@ const QuickViewModal: React.FC<{ entry: KnowledgeBaseEntry; onClose: () => void;
                 </div>
 
                 <div className="mt-6 flex justify-end space-x-3">
-                    <button onClick={onClose} className="px-4 py-2 border border-border text-sm font-medium rounded-md shadow-sm text-text-primary bg-background hover:bg-surface-hover">
+                    <button onClick={onClose} className="px-4 py-2 border border-border text-sm font-medium rounded-md shadow-sm text-text-primary bg-surface hover:bg-surface-hover">
                         Close
                     </button>
                     <button onClick={() => {
@@ -133,7 +133,7 @@ const HistoryListItem = memo<HistoryListItemProps>(({ entry, onViewEntry, onQuic
                                     value={editingTitle}
                                     onChange={(e) => onTitleChange(e.target.value)}
                                     onKeyDown={onEditKeyDown}
-                                    className="w-full bg-background border border-brand-accent rounded-md py-1 px-2 text-base font-semibold focus:outline-none focus:ring-2 focus:ring-brand-accent"
+                                    className="w-full bg-input-bg border border-brand-accent rounded-md py-1 px-2 text-base font-semibold focus:outline-none focus:ring-2 focus:ring-brand-accent"
                                     autoFocus
                                 />
                                 <button onClick={onSaveTitle} className="p-1.5 rounded-full text-green-400 hover:bg-green-500/10"><CheckCircleIcon className="h-5 w-5"/></button>
@@ -153,10 +153,10 @@ const HistoryListItem = memo<HistoryListItemProps>(({ entry, onViewEntry, onQuic
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0 self-start sm:self-center">
                     {/* Fix: Access title from base entry type */}
-                    <button onClick={() => onStartEdit({ id: entry.id, title: entry.title })} className="p-2 rounded-md text-text-secondary hover:bg-background hover:text-brand-accent transition-colors" aria-label="Edit title">
+                    <button onClick={() => onStartEdit({ id: entry.id, title: entry.title })} className="p-2 rounded-md text-text-secondary hover:bg-surface-hover hover:text-brand-accent transition-colors" aria-label="Edit title">
                         <PencilIcon className="h-4 w-4" />
                     </button>
-                    <button onClick={() => onQuickView(entry)} className="p-2 rounded-md text-text-secondary hover:bg-background hover:text-brand-accent transition-colors" aria-label="Quick view">
+                    <button onClick={() => onQuickView(entry)} className="p-2 rounded-md text-text-secondary hover:bg-surface-hover hover:text-brand-accent transition-colors" aria-label="Quick view">
                         <EyeIcon className="h-5 w-5" />
                     </button>
                     <button onClick={() => onViewEntry(entry)} className="inline-flex items-center px-3 py-1.5 border border-border text-xs font-medium rounded-md shadow-sm text-text-primary bg-surface hover:bg-surface-hover hover:border-brand-accent transition-colors">

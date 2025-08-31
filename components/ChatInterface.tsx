@@ -92,7 +92,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ history, isChattin
                         onChange={(e) => setInputMessage(e.target.value)}
                         placeholder="Ask a follow-up question..."
                         disabled={isChatting}
-                        className="flex-1 block w-full bg-background border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent sm:text-sm disabled:opacity-50"
+                        className="flex-1 block w-full bg-input-bg border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent sm:text-sm disabled:opacity-50"
                     />
                     <button type="submit" disabled={isChatting || !inputMessage.trim()} className="p-2.5 rounded-md text-brand-text-on-accent bg-brand-accent hover:bg-opacity-90 disabled:bg-border disabled:text-text-secondary transition-colors">
                         <PaperAirplaneIcon className="h-5 w-5" />

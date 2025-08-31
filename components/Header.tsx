@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
+
+import React, { useState, useRef, useEffect, memo } from 'react';
 import { DocumentIcon } from './icons/DocumentIcon';
 import { DatabaseIcon } from './icons/DatabaseIcon';
 import { GearIcon } from './icons/GearIcon';
@@ -51,7 +52,7 @@ const NavButton: React.FC<{
 );
 
 
-export const Header: React.FC<HeaderProps> = ({ onViewChange, knowledgeBaseArticleCount, hasReports, isResearching, onQuickAdd }) => {
+const HeaderComponent: React.FC<HeaderProps> = ({ onViewChange, knowledgeBaseArticleCount, hasReports, isResearching, onQuickAdd }) => {
     const { settings, updateSettings } = useSettings();
     const { currentView, isSettingsDirty, setIsCommandPaletteOpen } = useUI();
     
@@ -152,3 +153,5 @@ export const Header: React.FC<HeaderProps> = ({ onViewChange, knowledgeBaseArtic
       </header>
     );
 };
+
+export const Header = memo(HeaderComponent);

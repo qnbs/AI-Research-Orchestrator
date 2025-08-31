@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
 import type { Settings } from '../types';
 import { CSV_EXPORT_COLUMNS } from '../types';
 
@@ -135,21 +136,23 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
   }, [settings]);
 
-  const updateSettings = (newSettings: Partial<Settings> | ((prevState: Settings) => Settings)) => {
+  const updateSettings = useCallback((newSettings: Partial<Settings> | ((prevState: Settings) => Settings)) => {
       setSettings(prevSettings => {
           if (typeof newSettings === 'function') {
               return newSettings(prevSettings);
           }
           return { ...prevSettings, ...newSettings };
       });
-  };
+  }, []);
 
-  const resetSettings = () => {
+  const resetSettings = useCallback(() => {
     setSettings(defaultSettings);
-  };
+  }, []);
+
+  const value = useMemo(() => ({ settings, updateSettings, resetSettings }), [settings, updateSettings, resetSettings]);
 
   return (
-    <SettingsContext.Provider value={{ settings, updateSettings, resetSettings }}>
+    <SettingsContext.Provider value={value}>
       {children}
     </SettingsContext.Provider>
   );

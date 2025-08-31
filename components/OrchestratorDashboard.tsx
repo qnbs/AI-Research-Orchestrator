@@ -1,5 +1,6 @@
 import React from 'react';
-import type { KnowledgeBaseEntry, ResearchKnowledgeBaseEntry } from '../types';
+// Fix: Changed ResearchKnowledgeBaseEntry to ResearchEntry to match types
+import type { KnowledgeBaseEntry, ResearchEntry } from '../types';
 import { HistoryIcon } from './icons/HistoryIcon';
 import { DocumentPlusIcon } from './icons/DocumentPlusIcon';
 import { useKnowledgeBase } from '../contexts/KnowledgeBaseContext';
@@ -44,16 +45,16 @@ const DashboardComponent: React.FC<OrchestratorDashboardProps> = ({ onViewReport
                 <h2 className="text-2xl font-bold text-text-primary">Recent Activity</h2>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {recentEntries.map(entry => (
+                {recentEntries.map((entry: ResearchEntry) => (
                     <div key={entry.id} className="bg-surface border border-border rounded-lg p-5 flex flex-col justify-between transition-all duration-300 hover:shadow-xl hover:border-brand-accent/50 hover:-translate-y-1 group focus-within:ring-2 focus-within:ring-brand-accent focus-within:border-brand-accent/50">
                         <div>
-                            <p className="text-xs text-text-secondary mb-2">Report from {new Date(parseInt(entry.id.split('-')[0])).toLocaleDateString()}</p>
+                            <p className="text-xs text-text-secondary mb-2">Report from {new Date(entry.timestamp).toLocaleDateString()}</p>
                             <button
                                 onClick={() => onStartNewReview(entry.input.researchTopic)}
                                 className="font-semibold text-text-primary mb-3 h-20 overflow-hidden text-left group-hover:text-brand-accent focus:outline-none focus:text-brand-accent transition-colors w-full rounded"
                                 title={`Start new search for: ${entry.input.researchTopic}`}
                             >
-                                {entry.input.researchTopic}
+                                {entry.title}
                             </button>
                             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-text-secondary border-t border-border pt-3">
                                 <span><strong>{entry.report.rankedArticles.length}</strong> articles</span>

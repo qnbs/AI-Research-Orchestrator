@@ -70,18 +70,18 @@ const MultiSelectFilter: React.FC<{ title: string, options: string[], selected: 
 
     return (
         <div className="relative" ref={dropdownRef}>
-            <button type="button" onClick={() => setIsOpen(!isOpen)} aria-haspopup="listbox" aria-expanded={isOpen} className="w-full flex justify-between items-center p-2 bg-background border border-border rounded-md text-sm font-medium text-text-primary hover:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-accent">
+            <button type="button" onClick={() => setIsOpen(!isOpen)} aria-haspopup="listbox" aria-expanded={isOpen} className="w-full flex justify-between items-center p-2 bg-input-bg border border-border rounded-md text-sm font-medium text-text-primary hover:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-accent">
                 <span className="truncate pr-2">{title} {selected.length > 0 && <span className="ml-1 bg-brand-accent text-brand-text-on-accent text-xs font-bold rounded-full px-2 py-0.5">{selected.length}</span>}</span>
                 <ChevronDownIcon className={`w-5 h-5 transition-transform duration-200 shrink-0 ${isOpen ? 'rotate-180' : ''} text-text-secondary`} />
             </button>
             {isOpen && (
                 <div className="absolute z-10 mt-1 w-full bg-surface border border-border rounded-md shadow-lg max-h-60 overflow-y-auto">
-                    <div className="p-2"><input ref={searchInputRef} id="filter-search" type="text" placeholder="Search..." value={filterText} onChange={e => setFilterText(e.target.value)} className="w-full px-2 py-1 bg-background border border-border rounded-md text-sm mb-1"/></div>
+                    <div className="p-2"><input ref={searchInputRef} id="filter-search" type="text" placeholder="Search..." value={filterText} onChange={e => setFilterText(e.target.value)} className="w-full px-2 py-1 bg-input-bg border border-border rounded-md text-sm mb-1"/></div>
                     <ul role="listbox" className="py-1">
                         {filteredOptions.map(option => (
                             <li key={option} role="option" aria-selected={selected.includes(option)}>
                                 <label className="flex items-center px-3 py-2 text-sm text-text-primary hover:bg-surface-hover cursor-pointer">
-                                    <input type="checkbox" checked={selected.includes(option)} onChange={() => handleOptionClick(option)} className="h-4 w-4 rounded border-border bg-background text-brand-accent focus:ring-brand-accent" />
+                                    <input type="checkbox" checked={selected.includes(option)} onChange={() => handleOptionClick(option)} className="h-4 w-4 rounded border-border bg-input-bg text-brand-accent focus:ring-brand-accent" />
                                     <span className="ml-3 truncate" title={option}>{option}</span>
                                 </label>
                             </li>
@@ -103,7 +103,7 @@ const KBArticleCard: React.FC<{ article: AggregatedArticle; isSelected: boolean;
             <div>
                 <div className="flex justify-between items-start gap-3">
                     <div className="flex-1 pr-2"><button type="button" onClick={() => onView(article)} className={`font-bold text-text-primary text-left group-hover:text-brand-accent focus:outline-none focus:text-brand-accent ${densityClasses.title}`}>{article.title}</button></div>
-                    <div className="flex-shrink-0"><input id={`select-${article.pmid}`} type="checkbox" checked={isSelected} onChange={() => onSelect(article.pmid)} className="h-5 w-5 rounded border-border bg-background text-brand-accent focus:ring-brand-accent cursor-pointer" aria-label={`Select article: ${article.title}`} /></div>
+                    <div className="flex-shrink-0"><input id={`select-${article.pmid}`} type="checkbox" checked={isSelected} onChange={() => onSelect(article.pmid)} className="h-5 w-5 rounded border-border bg-surface text-brand-accent focus:ring-brand-accent cursor-pointer" aria-label={`Select article: ${article.title}`} /></div>
                 </div>
                 <p className={`text-text-secondary mb-3 ${densityClasses.text}`}>{article.authors} - <span className="italic">{article.journal} ({article.pubYear})</span></p>
                 <div className={`flex flex-wrap ${densityClasses.gap} ${densityClasses.keywords}`}>
@@ -128,7 +128,7 @@ const ArticleListItem: React.FC<{ article: AggregatedArticle; isSelected: boolea
     
     return (
         <div className={`w-full grid grid-cols-[auto,1fr,auto] items-center border-b border-border transition-colors hover:bg-surface-hover text-left group ${isSelected ? 'bg-brand-accent/10' : ''} ${densityClasses.container}`}>
-            <div><input id={`select-list-${article.pmid}`} type="checkbox" checked={isSelected} onChange={() => onSelect(article.pmid)} className="h-5 w-5 rounded border-border bg-background text-brand-accent focus:ring-brand-accent cursor-pointer" aria-label={`Select article: ${article.title}`} /></div>
+            <div><input id={`select-list-${article.pmid}`} type="checkbox" checked={isSelected} onChange={() => onSelect(article.pmid)} className="h-5 w-5 rounded border-border bg-surface text-brand-accent focus:ring-brand-accent cursor-pointer" aria-label={`Select article: ${article.title}`} /></div>
             <div className="min-w-0">
                  <button type="button" onClick={() => onView(article)} className={`font-semibold text-text-primary truncate text-left group-hover:text-brand-accent focus:outline-none focus:text-brand-accent ${densityClasses.title}`} title={article.title}>{article.title}</button>
                 <p className={`text-text-secondary truncate ${densityClasses.text}`}>{article.authors}</p>
@@ -165,7 +165,7 @@ const ActiveFiltersComponent: React.FC<{ filter: KnowledgeBaseFilter; onFilterCh
                     </span>
                 ))}
             </div>
-            {activeFilters.length > 1 && <button onClick={onClear} className="flex items-center text-xs px-2 py-1 rounded-md text-text-secondary bg-background hover:bg-surface-hover border border-border transition-colors flex-shrink-0"><XCircleIcon className="h-3.5 w-3.5 mr-1.5" />Clear All</button>}
+            {activeFilters.length > 1 && <button onClick={onClear} className="flex items-center text-xs px-2 py-1 rounded-md text-text-secondary bg-surface hover:bg-surface-hover border border-border transition-colors flex-shrink-0"><XCircleIcon className="h-3.5 w-3.5 mr-1.5" />Clear All</button>}
         </div>
     );
 };
@@ -352,12 +352,12 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({ onViewChan
                     <h2 className="text-xl font-bold text-text-primary">Knowledge Base</h2>
                     <div className="relative">
                         <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-text-secondary" />
-                        <input id="kb-search" type="text" placeholder="Search articles..." value={filter.searchTerm} onChange={e => onFilterChange({ searchTerm: e.target.value })} className="w-full pl-10 pr-4 py-2 bg-background border border-border rounded-md text-sm" />
+                        <input id="kb-search" type="text" placeholder="Search articles..." value={filter.searchTerm} onChange={e => onFilterChange({ searchTerm: e.target.value })} className="w-full pl-10 pr-4 py-2 bg-input-bg border border-border rounded-md text-sm" />
                     </div>
-                     <div className="flex w-full bg-background p-1 rounded-lg border border-border">
-                        <button onClick={() => setActiveSource('all')} className={`w-1/3 p-1.5 rounded-md text-sm font-medium transition-colors ${activeSource === 'all' ? 'bg-brand-accent text-brand-text-on-accent' : 'text-text-secondary hover:bg-surface'}`}>All</button>
-                        <button onClick={() => setActiveSource('research')} className={`w-1/3 p-1.5 rounded-md text-sm font-medium transition-colors ${activeSource === 'research' ? 'bg-brand-accent text-brand-text-on-accent' : 'text-text-secondary hover:bg-surface'}`}>Research</button>
-                        <button onClick={() => setActiveSource('author')} className={`w-1/3 p-1.5 rounded-md text-sm font-medium transition-colors ${activeSource === 'author' ? 'bg-brand-accent text-brand-text-on-accent' : 'text-text-secondary hover:bg-surface'}`}>Authors</button>
+                     <div className="flex w-full bg-surface p-1 rounded-lg border border-border">
+                        <button onClick={() => setActiveSource('all')} className={`w-1/3 p-1.5 rounded-md text-sm font-medium transition-colors ${activeSource === 'all' ? 'bg-brand-accent text-brand-text-on-accent' : 'text-text-secondary hover:bg-surface-hover'}`}>All</button>
+                        <button onClick={() => setActiveSource('research')} className={`w-1/3 p-1.5 rounded-md text-sm font-medium transition-colors ${activeSource === 'research' ? 'bg-brand-accent text-brand-text-on-accent' : 'text-text-secondary hover:bg-surface-hover'}`}>Research</button>
+                        <button onClick={() => setActiveSource('author')} className={`w-1/3 p-1.5 rounded-md text-sm font-medium transition-colors ${activeSource === 'author' ? 'bg-brand-accent text-brand-text-on-accent' : 'text-text-secondary hover:bg-surface-hover'}`}>Authors</button>
                     </div>
                     <MultiSelectFilter title="Source" options={filterOptions.topics} selected={filter.selectedTopics} onChange={selected => onFilterChange({ selectedTopics: selected })} />
                     <MultiSelectFilter title="Tags" options={filterOptions.tags} selected={filter.selectedTags} onChange={selected => onFilterChange({ selectedTags: selected })} />
@@ -378,7 +378,7 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({ onViewChan
                 <div className="bg-surface border border-border rounded-lg shadow-lg">
                     <div className="p-3 flex flex-col sm:flex-row justify-between items-center gap-4 border-b border-border">
                         <div className="flex items-center gap-4">
-                            <input ref={selectPageCheckboxRef} id="select-page" type="checkbox" onChange={handleSelectPage} className="h-5 w-5 rounded border-border bg-background text-brand-accent focus:ring-brand-accent" aria-label="Select all articles on this page"/>
+                            <input ref={selectPageCheckboxRef} id="select-page" type="checkbox" onChange={handleSelectPage} className="h-5 w-5 rounded border-border bg-surface text-brand-accent focus:ring-brand-accent" aria-label="Select all articles on this page"/>
                             <label htmlFor="select-page" className="text-sm font-medium text-text-primary">{selectedPmids.length > 0 ? `${selectedPmids.length} selected` : 'Select Page'}</label>
                             {selectedPmids.length > 0 && <button onClick={() => setSelectedPmids([])} className="text-xs text-brand-accent hover:underline">Clear Selection</button>}
                         </div>
@@ -386,7 +386,7 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({ onViewChan
                              <button onClick={() => setViewMode('grid')} className={`p-2 rounded-md ${viewMode === 'grid' ? 'bg-brand-accent/20 text-brand-accent' : 'text-text-secondary hover:bg-surface-hover'}`}><GridViewIcon className="h-5 w-5"/></button>
                             <button onClick={() => setViewMode('list')} className={`p-2 rounded-md ${viewMode === 'list' ? 'bg-brand-accent/20 text-brand-accent' : 'text-text-secondary hover:bg-surface-hover'}`}><ListViewIcon className="h-5 w-5"/></button>
                             <div className="w-px h-6 bg-border mx-1"></div>
-                            <select id="sort-order" value={sortOrder} onChange={e => setSortOrder(e.target.value as any)} className="bg-background border-border rounded-md text-sm p-2 focus:outline-none focus:ring-2 focus:ring-brand-accent">
+                            <select id="sort-order" value={sortOrder} onChange={e => setSortOrder(e.target.value as any)} className="bg-input-bg border-border rounded-md text-sm p-2 focus:outline-none focus:ring-2 focus:ring-brand-accent">
                                 <option value="relevance">Sort by Relevance</option>
                                 <option value="newest">Sort by Newest</option>
                             </select>

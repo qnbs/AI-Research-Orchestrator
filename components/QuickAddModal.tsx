@@ -59,7 +59,7 @@ export const QuickAddModal: React.FC<QuickAddModalProps> = ({ onClose }) => {
                         type="text"
                         value={identifier}
                         onChange={(e) => setIdentifier(e.target.value)}
-                        className="block w-full bg-background border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent sm:text-sm"
+                        className="block w-full bg-input-bg border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent sm:text-sm"
                         placeholder="e.g., 31354136 or https://pubmed.ncbi.nlm.nih.gov/..."
                         autoFocus
                     />
@@ -67,7 +67,7 @@ export const QuickAddModal: React.FC<QuickAddModalProps> = ({ onClose }) => {
                         <p className="text-xs text-red-400 mt-2">{error}</p>
                     )}
                     <div className="mt-6 flex justify-end space-x-3">
-                        <button type="button" onClick={onClose} className="px-4 py-2 border border-border text-sm font-medium rounded-md shadow-sm text-text-primary bg-background hover:bg-surface-hover">
+                        <button type="button" onClick={onClose} className="px-4 py-2 border border-border text-sm font-medium rounded-md shadow-sm text-text-primary bg-surface hover:bg-surface-hover">
                             Cancel
                         </button>
                         <button type="submit" disabled={isLoading || !identifier.trim()} className="px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-brand-accent hover:bg-opacity-90 disabled:opacity-50 flex items-center">

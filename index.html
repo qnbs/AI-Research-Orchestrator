@@ -48,14 +48,17 @@
         --color-accent-amber: #f7b739;
         --aurora-1: rgba(31, 111, 235, 0.1);
         --aurora-2: rgba(57, 197, 247, 0.1);
+        --aurora-3: rgba(232, 83, 165, 0.1);
+        --color-input-bg: #161b22;
       }
       :root.light {
-        --color-background: #fcfdff;
-        --color-surface: #ffffff;
-        --color-surface-hover: #f5f9ff;
-        --color-border: #eaf0f9;
-        --color-text-primary: #1a202c;
-        --color-text-secondary: #4a5568;
+        --color-background: #f7faff;
+        --color-surface: rgba(255, 255, 255, 0.75);
+        --color-surface-hover: rgba(250, 252, 255, 0.9);
+        --color-input-bg: #f8faff;
+        --color-border: rgba(200, 210, 230, 0.5);
+        --color-text-primary: #111827;
+        --color-text-secondary: #374151;
         --color-brand-accent: #1d4ed8;
         --color-brand-primary: #1e40af;
         --color-brand-secondary: #1c3d99;
@@ -63,13 +66,14 @@
         --color-glow: rgba(29, 78, 216, 0.25);
         --shadow-sm: 0 1px 3px 0 rgba(60, 100, 170, 0.08), 0 1px 2px -1px rgba(60, 100, 170, 0.05);
         --shadow-md: 0 4px 6px -1px rgba(60, 100, 170, 0.1), 0 2px 4px -2px rgba(60, 100, 170, 0.06);
-        --shadow-lg: 0 10px 15px -3px rgba(60, 100, 170, 0.12), 0 4px 6px -4px rgba(60, 100, 170, 0.07);
+        --shadow-lg: 0 10px 15px -3px rgba(60, 100, 170, 0.1), 0 4px 6px -4px rgba(60, 100, 170, 0.1);
         --transition-speed: 200ms;
         --color-accent-cyan: #06b6d4;
         --color-accent-magenta: #ec4899;
         --color-accent-amber: #f59e0b;
-        --aurora-1: rgba(59, 130, 246, 0.08);
-        --aurora-2: rgba(6, 182, 212, 0.08);
+        --aurora-1: rgba(59, 130, 246, 0.12);
+        --aurora-2: rgba(6, 182, 212, 0.12);
+        --aurora-3: rgba(236, 72, 153, 0.08);
       }
        body {
          font-family: var(--font-family, 'Inter', sans-serif);
@@ -86,14 +90,8 @@
         background-image: 
             radial-gradient(ellipse 80% 80% at 10% -20%, var(--aurora-1), transparent),
             radial-gradient(ellipse 80% 80% at 90% -20%, var(--aurora-2), transparent),
-            linear-gradient(var(--color-background), var(--color-background)),
-            repeating-linear-gradient(0deg, var(--color-surface) 0, var(--color-surface) 1px, transparent 1px, transparent 2rem),
-            repeating-linear-gradient(90deg, var(--color-surface) 0, var(--color-surface) 1px, transparent 1px, transparent 2rem);
-         background-blend-mode: normal, normal, normal, normal, normal;
-         background-size: 100% 100%, 100% 100%, 100% 100%, 2rem 2rem, 2rem 2rem;
-         background-position: 0 0, 0 0, 0 0, 0 0, 0 0;
-         animation: pan-background 60s linear infinite;
-         opacity: 0.15;
+            radial-gradient(ellipse 60% 60% at 50% 110%, var(--aurora-3), transparent);
+         opacity: 1;
          z-index: -1;
        }
        ::selection {
@@ -106,6 +104,11 @@
        .prose-sm blockquote { border-left-color: var(--color-border); }
        .prose-sm code { color: var(--color-text-primary); background-color: var(--color-surface-hover); padding: 0.2em 0.4em; margin: 0; font-size: 85%; border-radius: 6px; }
       
+      .light .bg-surface, .light .bg-surface-hover, .light [class*="bg-surface/"] {
+        -webkit-backdrop-filter: blur(20px);
+        backdrop-filter: blur(20px);
+      }
+
        /* Accessibility: Add a clear focus indicator for keyboard users */
       :focus-visible {
         outline: 2px solid var(--color-brand-accent);
@@ -172,6 +175,7 @@
               background: 'var(--color-background)',
               surface: 'var(--color-surface)',
               'surface-hover': 'var(--color-surface-hover)',
+              'input-bg': 'var(--color-input-bg)',
               border: 'var(--color-border)',
               'text-primary': 'var(--color-text-primary)',
               'text-secondary': 'var(--color-text-secondary)',

@@ -1,4 +1,4 @@
-import { RankedArticle } from "./types";
+
 
 export const ARTICLE_TYPES = [
   'Randomized Controlled Trial', 

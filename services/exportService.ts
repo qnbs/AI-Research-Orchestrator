@@ -291,12 +291,20 @@ export const exportToCsv = (articlesToExport: AggregatedArticle[], topic: string
         // Fix: Ensure all optional properties have a default value to match the Record type.
         // Fix: Changed 'sourceReportTopic' to 'sourceTitle' to match the AggregatedArticle type.
         const rowData: Record<(typeof CSV_EXPORT_COLUMNS)[number], any> = {
-            ...article,
-            aiSummary: article.aiSummary ?? '',
+            pmid: article.pmid,
             pmcId: article.pmcId ?? '',
+            title: article.title,
+            authors: article.authors,
+            journal: article.journal,
+            pubYear: article.pubYear,
+            summary: article.summary,
+            aiSummary: article.aiSummary ?? '',
+            relevanceScore: article.relevanceScore,
+            relevanceExplanation: article.relevanceExplanation,
             keywords: (article.keywords || []).join('; '),
             customTags: article.customTags?.join('; ') || '',
             sourceTitle: article.sourceTitle || topic,
+            isOpenAccess: article.isOpenAccess,
             articleType: article.articleType || 'N/A',
             URL: articleUrl,
             PMCID_URL: pmcidUrl

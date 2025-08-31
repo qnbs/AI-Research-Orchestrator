@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, memo } from 'react';
 import type { ResearchInput, Settings, Preset } from '../types';
 import { ARTICLE_TYPES } from '../types';
 import { usePresets } from '../contexts/PresetContext';
@@ -43,7 +44,7 @@ const SliderInput: React.FC<{
                 aria-labelledby={id}
                 aria-valuetext={String(value)}
             />
-            <span className="font-mono text-sm text-text-primary bg-background border border-border rounded-md px-2 py-1 w-16 text-center">{value}</span>
+            <span className="font-mono text-sm text-text-primary bg-input-bg border border-border rounded-md px-2 py-1 w-16 text-center">{value}</span>
         </div>
     </div>
 );
@@ -69,7 +70,7 @@ const CustomCheckbox: React.FC<{ id: string; value: string; checked: boolean; on
 );
 
 
-export const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading, defaultSettings, prefilledTopic, onPrefillConsumed }) => {
+const InputFormComponent: React.FC<InputFormProps> = ({ onSubmit, isLoading, defaultSettings, prefilledTopic, onPrefillConsumed }) => {
   const [formData, setFormData] = useState<ResearchInput>(() => {
     try {
         const savedState = sessionStorage.getItem(FORM_STATE_KEY);
@@ -196,7 +197,7 @@ export const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading, defau
             </div>
           </div>
            <div className="flex items-center gap-2">
-                <select onChange={handleLoadPreset} defaultValue="" className="block w-full max-w-xs bg-background border border-border rounded-md shadow-sm py-1.5 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-accent transition-colors">
+                <select onChange={handleLoadPreset} defaultValue="" className="block w-full max-w-xs bg-input-bg border border-border rounded-md shadow-sm py-1.5 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-accent transition-colors">
                     <option value="" disabled>Load preset...</option>
                     {presets.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
@@ -215,7 +216,7 @@ export const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading, defau
             rows={3}
             value={formData.researchTopic}
             onChange={handleChange}
-            className="block w-full bg-background border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-brand-accent sm:text-sm placeholder-text-secondary transition-colors"
+            className="block w-full bg-input-bg border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-brand-accent sm:text-sm placeholder-text-secondary transition-colors"
             required
             placeholder="e.g., The impact of exercise on neuroplasticity in elderly populations"
           />
@@ -229,7 +230,7 @@ export const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading, defau
                     name="dateRange"
                     value={formData.dateRange}
                     onChange={handleChange}
-                    className="block w-full bg-background border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-brand-accent sm:text-sm transition-colors"
+                    className="block w-full bg-input-bg border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-brand-accent sm:text-sm transition-colors"
                 >
                     <option value="any">Any Time</option>
                     <option value="1">Last Year</option>
@@ -244,7 +245,7 @@ export const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading, defau
                     name="synthesisFocus"
                     value={formData.synthesisFocus}
                     onChange={handleChange}
-                    className="block w-full bg-background border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-brand-accent sm:text-sm transition-colors"
+                    className="block w-full bg-input-bg border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-brand-accent sm:text-sm transition-colors"
                 >
                     <option value="overview">Broad Overview</option>
                     <option value="clinical">Clinical Implications</option>
@@ -338,13 +339,13 @@ export const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading, defau
                         id="presetName"
                         value={newPresetName}
                         onChange={(e) => setNewPresetName(e.target.value)}
-                        className="block w-full bg-background border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent sm:text-sm"
+                        className="block w-full bg-input-bg border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent sm:text-sm"
                         placeholder="e.g., Clinical Trials (Last 5 Years)"
                         autoFocus
                     />
                 </div>
                 <div className="mt-6 flex justify-end space-x-3">
-                    <button onClick={() => setIsPresetModalOpen(false)} className="px-4 py-2 border border-border text-sm font-medium rounded-md shadow-sm text-text-primary bg-background hover:bg-surface-hover">
+                    <button onClick={() => setIsPresetModalOpen(false)} className="px-4 py-2 border border-border text-sm font-medium rounded-md shadow-sm text-text-primary bg-surface hover:bg-surface-hover">
                         Cancel
                     </button>
                     <button onClick={handleSavePreset} disabled={!newPresetName.trim()} className="px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-brand-accent hover:bg-opacity-90 disabled:opacity-50">
@@ -357,3 +358,5 @@ export const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading, defau
     </>
   );
 };
+
+export const InputForm = memo(InputFormComponent);

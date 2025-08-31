@@ -1,4 +1,5 @@
-import React from 'react';
+
+import React, { memo } from 'react';
 import { InputForm } from './InputForm';
 import { ReportDisplay } from './ReportDisplay';
 import { LoadingIndicator } from './LoadingIndicator';
@@ -29,7 +30,7 @@ interface OrchestratorViewProps {
     onSendMessage: (message: string) => void;
 }
 
-export const OrchestratorView: React.FC<OrchestratorViewProps> = ({
+const OrchestratorViewComponent: React.FC<OrchestratorViewProps> = ({
     reportStatus,
     currentPhase,
     error,
@@ -99,3 +100,5 @@ export const OrchestratorView: React.FC<OrchestratorViewProps> = ({
         </div>
     );
 };
+
+export const OrchestratorView = memo(OrchestratorViewComponent);

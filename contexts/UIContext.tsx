@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+
+import React, { createContext, useContext, useState, ReactNode, useMemo } from 'react';
 
 export type View = 'home' | 'orchestrator' | 'research' | 'authors' | 'knowledgeBase' | 'settings' | 'help' | 'dashboard' | 'history';
 
@@ -39,15 +40,25 @@ export const UIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         }
     });
 
+    const value = useMemo(() => ({ 
+        currentView, setCurrentView,
+        notification, setNotification,
+        isSettingsDirty, setIsSettingsDirty,
+        pendingNavigation, setPendingNavigation,
+        showOnboarding, setShowOnboarding,
+        isCommandPaletteOpen, setIsCommandPaletteOpen
+    }), [
+        currentView, 
+        notification, 
+        isSettingsDirty, 
+        pendingNavigation, 
+        showOnboarding, 
+        isCommandPaletteOpen
+    ]);
+
+
     return (
-        <UIContext.Provider value={{ 
-            currentView, setCurrentView,
-            notification, setNotification,
-            isSettingsDirty, setIsSettingsDirty,
-            pendingNavigation, setPendingNavigation,
-            showOnboarding, setShowOnboarding,
-            isCommandPaletteOpen, setIsCommandPaletteOpen
-        }}>
+        <UIContext.Provider value={value}>
             {children}
         </UIContext.Provider>
     );

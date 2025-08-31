@@ -141,7 +141,7 @@ const ArticleCard: React.FC<{ article: RankedArticle; rank: number; onTagsUpdate
     const semanticScholarUrl = `https://www.semanticscholar.org/search?q=${encodeURIComponent(article.title)}`;
 
     return (
-        <div className="bg-background rounded-lg border border-border p-4 transition-all duration-200 hover:shadow-lg hover:border-brand-accent/30">
+        <div className="bg-surface rounded-lg border border-border p-4 transition-all duration-200 hover:shadow-lg hover:border-brand-accent/30">
             <div className="flex justify-between items-start gap-4">
                 <div className="flex-1 pr-4">
                     <a href={articleLink} target="_blank" rel="noopener noreferrer" className="text-lg font-semibold text-text-primary hover:text-brand-accent transition-colors">
@@ -189,7 +189,7 @@ const ArticleCard: React.FC<{ article: RankedArticle; rank: number; onTagsUpdate
                             </span>
                         ))}
                          <div className="flex-grow min-w-[120px]">
-                            <input type="text" value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={handleTagInputKeyDown} placeholder="Add tag..." className="bg-background border-border border rounded-md py-0.5 px-2 text-xs w-full focus:outline-none focus:ring-1 focus:ring-brand-accent" />
+                            <input type="text" value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={handleTagInputKeyDown} placeholder="Add tag..." className="bg-input-bg border-border border rounded-md py-0.5 px-2 text-xs w-full focus:outline-none focus:ring-1 focus:ring-brand-accent" />
                         </div>
                     </div>
 
@@ -294,7 +294,7 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(({ report,
                                 type="text"
                                 value={input.researchTopic}
                                 onChange={(e) => onUpdateInput({ ...input, researchTopic: e.target.value })}
-                                className="w-full bg-background border border-border rounded-md py-1 px-2 text-base font-semibold text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-accent"
+                                className="w-full bg-input-bg border border-border rounded-md py-1 px-2 text-base font-semibold text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-accent"
                                 aria-label="Editable report title"
                             />
                         )}
