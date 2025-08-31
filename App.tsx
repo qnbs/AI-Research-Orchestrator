@@ -1,4 +1,5 @@
 
+
 import React, { useState, useCallback, useEffect } from 'react';
 import { OnboardingView } from './components/OnboardingView';
 import { Header } from './components/Header';
@@ -25,6 +26,7 @@ import { exportKnowledgeBaseToPdf, exportToCsv, exportCitations } from './servic
 import { QuickAddModal } from './components/QuickAddModal';
 import { useChat } from './hooks/useChat';
 import { BottomNavBar } from './components/BottomNavBar';
+import { HomeView } from './components/HomeView';
 
 
 const AppLayout: React.FC = () => {
@@ -95,6 +97,7 @@ const AppLayout: React.FC = () => {
     useEffect(() => {
         // Accessibility Best Practice: Update document title on view change
         const viewTitles: Record<View, string> = {
+            home: 'Home',
             orchestrator: 'Orchestrator',
             research: 'Research Assistant',
             authors: 'Author Hub',
@@ -181,8 +184,9 @@ const AppLayout: React.FC = () => {
     setResearchInput(null);
     setLocalResearchInput(null);
     setReportStatus('idle');
+    setCurrentView('orchestrator');
     window.scrollTo(0, 0);
-  }, []);
+  }, [setCurrentView]);
 
   const handleClearKnowledgeBase = () => {
       clearKnowledgeBase();
@@ -268,6 +272,8 @@ const AppLayout: React.FC = () => {
 
   const renderView = () => {
     switch(currentView) {
+      case 'home':
+        return <HomeView onNavigate={handleViewChange} />;
       case 'knowledgeBase':
         return <KnowledgeBaseView 
                     onViewChange={handleViewChange} 
@@ -309,6 +315,7 @@ const AppLayout: React.FC = () => {
           onExportSelection={handleExportSelection}
       />
       <Header 
+        onViewChange={handleViewChange}
         knowledgeBaseArticleCount={uniqueArticles.length}
         hasReports={knowledgeBase.length > 0}
         isResearching={isResearching}

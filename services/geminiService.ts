@@ -191,7 +191,9 @@ export async function* generateResearchReportStream(input: ResearchInput, aiSett
                 },
                 required: ["generatedQueries"]
             }},
-            contents: `Based on the user's research topic, generate 1-3 advanced PubMed search queries. Provide a brief explanation for each.
+            contents: `Based on the user's research topic, generate 1-3 advanced PubMed search queries.
+            Use PubMed-specific syntax like MeSH terms ([MeSH]), field tags ([Title/Abstract]), and boolean operators (AND, OR, NOT) to create precise and effective queries.
+            For example, for "gene therapy for cystic fibrosis", a good query could be "((cystic fibrosis[MeSH Terms]) AND (gene therapy[MeSH Terms])) OR ("cystic fibrosis" AND "gene therapy"[Title/Abstract])".
             - Research Topic: "${input.researchTopic}"
             - Date Range: Last ${input.dateRange} years
             - Article Types: ${input.articleTypes.join(', ')}`
@@ -223,14 +225,21 @@ export async function* generateResearchReportStream(input: ResearchInput, aiSett
             config: { systemInstruction, temperature: aiSettings.temperature, responseMimeType: "application/json", responseSchema: {
                 type: Type.OBJECT,
                 properties: {
-                    rankedArticles: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { pmid: { type: Type.STRING }, relevanceScore: { type: Type.INTEGER }, relevanceExplanation: { type: Type.STRING }, keywords: { type: Type.ARRAY, items: { type: Type.STRING } }, articleType: {type: Type.STRING} }, required: ["pmid", "relevanceScore", "relevanceExplanation", "keywords", "articleType"] } },
+                    rankedArticles: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { 
+                        pmid: { type: Type.STRING }, 
+                        relevanceScore: { type: Type.INTEGER }, 
+                        relevanceExplanation: { type: Type.STRING }, 
+                        keywords: { type: Type.ARRAY, items: { type: Type.STRING } }, 
+                        articleType: {type: Type.STRING},
+                        aiSummary: { type: Type.STRING, description: "A concise summary of the article's methodology, key findings, and limitations." }
+                    }, required: ["pmid", "relevanceScore", "relevanceExplanation", "keywords", "articleType", "aiSummary"] } },
                     aiGeneratedInsights: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { question: { type: Type.STRING }, answer: { type: Type.STRING }, supportingArticles: { type: Type.ARRAY, items: { type: Type.STRING } } }, required: ["question", "answer", "supportingArticles"] } },
                     overallKeywords: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { keyword: { type: Type.STRING }, frequency: { type: Type.INTEGER } }, required: ["keyword", "frequency"] } },
                 },
                 required: ["rankedArticles", "aiGeneratedInsights", "overallKeywords"]
             }},
             contents: `From the provided list of articles, please perform the following analysis based on the original research topic: "${input.researchTopic}".
-            1.  Rank the top ${input.topNToSynthesize} articles based on their relevance to the topic. For each, provide its PMID, a relevance score (1-100), a brief explanation for the score, 3-5 keywords from its summary, and classify its article type. Ensure you ONLY use PMIDs from the provided list.
+            1.  Rank the top ${input.topNToSynthesize} articles based on their relevance to the topic. For each, provide its PMID, a relevance score (1-100), a brief explanation for the score, 3-5 keywords from its summary, classify its article type, and write a new, concise summary (as 'aiSummary') that extracts the core methodology, key findings, and limitations of the study. Ensure you ONLY use PMIDs from the provided list.
             2.  Generate 3-5 AI-powered insights based on the provided articles. Each insight should be a question/answer pair. List the PMIDs from the provided list that support each insight.
             3.  Analyze the keywords from all ranked articles to identify overall themes. List the top 5-10 keywords and their frequency.
 
@@ -263,7 +272,7 @@ export async function* generateResearchReportStream(input: ResearchInput, aiSett
         ---
         PMID: ${a.pmid}
         Title: ${a.title}
-        Summary: ${a.summary}
+        Summary: ${a.aiSummary || a.summary}
         Relevance Score: ${a.relevanceScore}/100
         Keywords: ${a.keywords.join(', ')}
         ---

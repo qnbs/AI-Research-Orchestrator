@@ -140,12 +140,12 @@ const ArticleListItem: React.FC<{ article: AggregatedArticle; isSelected: boolea
 };
 
 const ActiveFiltersComponent: React.FC<{ filter: KnowledgeBaseFilter; onFilterChange: (newFilter: Partial<KnowledgeBaseFilter>) => void; onClear: () => void; }> = ({ filter, onFilterChange, onClear }) => {
-    const activeFilters: { key: string; label: string; onRemove: () => void }[] = [];
+    const activeFilters: { key: string; label: string; onRemove: () => void; title?: string; }[] = [];
     if (filter.searchTerm) activeFilters.push({ key: `search_${filter.searchTerm}`, label: `Search: "${filter.searchTerm}"`, onRemove: () => onFilterChange({ searchTerm: '' }) });
     filter.selectedTopics.forEach(topic => activeFilters.push({ key: `topic_${topic}`, label: `Topic: ${topic}`, onRemove: () => onFilterChange({ selectedTopics: filter.selectedTopics.filter(t => t !== topic) }) }));
     filter.selectedTags.forEach(tag => activeFilters.push({ key: `tag_${tag}`, label: `Tag: ${tag}`, onRemove: () => onFilterChange({ selectedTags: filter.selectedTags.filter(t => t !== tag) }) }));
     filter.selectedArticleTypes.forEach(type => activeFilters.push({ key: `type_${type}`, label: `Type: ${type}`, onRemove: () => onFilterChange({ selectedArticleTypes: filter.selectedArticleTypes.filter(t => t !== type) }) }));
-    filter.selectedJournals.forEach(journal => activeFilters.push({ key: `journal_${journal}`, label: `Journal: ${journal.length > 20 ? journal.substring(0, 18) + '...' : journal}`, onRemove: () => onFilterChange({ selectedJournals: filter.selectedJournals.filter(j => j !== journal) }) }));
+    filter.selectedJournals.forEach(journal => activeFilters.push({ key: `journal_${journal}`, title: journal, label: `Journal: ${journal.length > 20 ? journal.substring(0, 18) + '...' : journal}`, onRemove: () => onFilterChange({ selectedJournals: filter.selectedJournals.filter(j => j !== journal) }) }));
     if (filter.showOpenAccessOnly) activeFilters.push({ key: 'openAccess', label: 'Open Access Only', onRemove: () => onFilterChange({ showOpenAccessOnly: false }) });
 
     if (activeFilters.length === 0) return null;
@@ -155,7 +155,7 @@ const ActiveFiltersComponent: React.FC<{ filter: KnowledgeBaseFilter; onFilterCh
             <span className="text-sm font-semibold text-text-primary flex-shrink-0">Active Filters:</span>
             <div className="flex flex-wrap gap-2 flex-grow">
                 {activeFilters.map(f => (
-                    <span key={f.key} className="flex items-center bg-brand-accent/10 text-brand-accent text-xs font-medium pl-2 pr-1 py-1 rounded-full border border-brand-accent/20">
+                    <span key={f.key} title={f.title} className="flex items-center bg-brand-accent/10 text-brand-accent text-xs font-medium pl-2 pr-1 py-1 rounded-full border border-brand-accent/20">
                         {f.label}
                         <button onClick={f.onRemove} className="ml-1.5 text-brand-accent hover:bg-brand-accent/20 rounded-full p-0.5" aria-label={`Remove filter ${f.label}`}><XIcon className="h-3 w-3" /></button>
                     </span>

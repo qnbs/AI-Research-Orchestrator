@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
-export type View = 'orchestrator' | 'research' | 'authors' | 'knowledgeBase' | 'settings' | 'help' | 'dashboard' | 'history';
+export type View = 'home' | 'orchestrator' | 'research' | 'authors' | 'knowledgeBase' | 'settings' | 'help' | 'dashboard' | 'history';
 
 interface NotificationState {
   id: number;
@@ -26,7 +26,7 @@ interface UIContextType {
 const UIContext = createContext<UIContextType | undefined>(undefined);
 
 export const UIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [currentView, setCurrentView] = useState<View>('orchestrator');
+    const [currentView, setCurrentView] = useState<View>('home');
     const [notification, setNotification] = useState<NotificationState | null>(null);
     const [isSettingsDirty, setIsSettingsDirty] = useState(false);
     const [pendingNavigation, setPendingNavigation] = useState<View | null>(null);

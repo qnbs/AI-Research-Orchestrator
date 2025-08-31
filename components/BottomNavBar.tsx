@@ -1,10 +1,10 @@
 import React from 'react';
 import type { View } from '../contexts/UIContext';
+import { HomeIcon } from './icons/HomeIcon';
 import { DocumentIcon } from './icons/DocumentIcon';
 import { DatabaseIcon } from './icons/DatabaseIcon';
 import { BeakerIcon } from './icons/BeakerIcon';
 import { AuthorIcon } from './icons/AuthorIcon';
-import { ChartBarIcon } from './icons/ChartBarIcon';
 
 interface BottomNavBarProps {
     currentView: View;
@@ -46,6 +46,13 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({ currentView, onViewC
     return (
         <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-surface/80 backdrop-blur-md border-t border-border z-30 shadow-[0_-2px_10px_rgba(0,0,0,0.1)] dark:shadow-[0_-2px_10px_rgba(0,0,0,0.3)]">
             <div className="flex justify-around items-center h-16 max-w-md mx-auto">
+                 <NavItem
+                    view="home"
+                    label="Home"
+                    icon={<HomeIcon className="h-6 w-6" />}
+                    isActive={currentView === 'home'}
+                    onClick={onViewChange}
+                />
                 <NavItem
                     view="orchestrator"
                     label="Orchestrate"
@@ -76,14 +83,6 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({ currentView, onViewC
                     onClick={onViewChange}
                     isDisabled={!hasReports}
                     badge={knowledgeBaseArticleCount}
-                />
-                 <NavItem
-                    view="dashboard"
-                    label="Dashboard"
-                    icon={<ChartBarIcon className="h-6 w-6" />}
-                    isActive={currentView === 'dashboard'}
-                    onClick={onViewChange}
-                    isDisabled={!hasReports}
                 />
             </div>
         </nav>

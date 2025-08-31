@@ -17,6 +17,7 @@ import { SearchIcon } from './icons/SearchIcon';
 import { EllipsisHorizontalIcon } from './icons/EllipsisHorizontalIcon';
 
 interface HeaderProps {
+    onViewChange: (view: View) => void;
     knowledgeBaseArticleCount: number;
     hasReports: boolean;
     isResearching: boolean;
@@ -43,29 +44,20 @@ const NavButton: React.FC<{
         disabled={disabled}
         aria-label={ariaLabel}
         aria-current={isActive ? 'page' : undefined}
-        className={`relative flex items-center px-3 py-1.5 text-sm font-medium rounded-md transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background ${isActive ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary'} ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}
+        className={`relative flex items-center px-3 py-1.5 text-sm font-medium rounded-md transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background ${isActive ? 'text-text-primary bg-surface-hover' : 'text-text-secondary hover:text-text-primary hover:bg-surface-hover/50'} ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}
     >
         {children}
-        {isActive && <span className="absolute inset-x-2 -bottom-1 h-0.5 bg-brand-accent rounded-full" aria-hidden="true"></span>}
     </button>
 );
 
 
-export const Header: React.FC<HeaderProps> = ({ knowledgeBaseArticleCount, hasReports, isResearching, onQuickAdd }) => {
+export const Header: React.FC<HeaderProps> = ({ onViewChange, knowledgeBaseArticleCount, hasReports, isResearching, onQuickAdd }) => {
     const { settings, updateSettings } = useSettings();
-    const { currentView, setCurrentView, isSettingsDirty, setPendingNavigation, setIsCommandPaletteOpen } = useUI();
+    const { currentView, isSettingsDirty, setIsCommandPaletteOpen } = useUI();
     
     // State for mobile "More" menu
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const mobileMenuRef = useRef<HTMLDivElement>(null);
-
-    const onViewChange = (view: View) => {
-        if (isSettingsDirty && currentView === 'settings') {
-            setPendingNavigation(view);
-        } else {
-            setCurrentView(view);
-        }
-    };
 
     // Close dropdowns on outside click
     useEffect(() => {
@@ -93,8 +85,9 @@ export const Header: React.FC<HeaderProps> = ({ knowledgeBaseArticleCount, hasRe
           <div className="hidden md:flex flex-col py-2 gap-2">
             {/* Top Row: Logo & Navigation */}
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
+              <button onClick={() => onViewChange('home')} className="flex items-center gap-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent rounded-md p-1 -m-1" aria-label="Go to Home">
                 <AppLogoIcon />
+              </button>
                 <nav className="flex items-center space-x-1 bg-background/50 p-1 rounded-lg border border-border" aria-label="Main navigation">
                   <NavButton onClick={() => onViewChange('orchestrator')} isActive={currentView === 'orchestrator'}><DocumentIcon className="h-5 w-5 mr-2" />Orchestrator</NavButton>
                   <NavButton onClick={() => onViewChange('research')} isActive={currentView === 'research'} className="relative">
@@ -106,7 +99,6 @@ export const Header: React.FC<HeaderProps> = ({ knowledgeBaseArticleCount, hasRe
                   <NavButton onClick={() => onViewChange('dashboard')} isActive={currentView === 'dashboard'} disabled={!hasReports}><ChartBarIcon className="h-5 w-5 mr-2" />Dashboard</NavButton>
                   <NavButton onClick={() => onViewChange('history')} isActive={currentView === 'history'} disabled={!hasReports}><HistoryIcon className="h-5 w-5 mr-2" />History</NavButton>
                 </nav>
-              </div>
             </div>
 
             {/* Bottom Row: Actions */}
@@ -127,9 +119,9 @@ export const Header: React.FC<HeaderProps> = ({ knowledgeBaseArticleCount, hasRe
           
           {/* --- MOBILE HEADER (SINGLE LINE) --- */}
           <div className="md:hidden flex items-center justify-between h-16">
-              <div className="flex items-center gap-4">
+              <button onClick={() => onViewChange('home')} className="flex items-center gap-4 p-1 -m-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent rounded-md" aria-label="Go to Home">
                 <AppLogoIcon />
-              </div>
+              </button>
               <div className="flex items-center space-x-1">
                   <button onClick={onQuickAdd} className="p-2 rounded-md transition-colors text-text-secondary hover:bg-surface-hover hover:text-text-primary" aria-label="Quick Add Article"><DocumentPlusIcon className="h-6 w-6" /></button>
                   <button onClick={() => setIsCommandPaletteOpen(true)} className="p-2 rounded-md transition-colors text-text-secondary hover:bg-surface-hover hover:text-text-primary" aria-label="Open Command Palette"><SearchIcon className="h-6 w-6" /></button>

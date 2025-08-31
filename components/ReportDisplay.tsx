@@ -123,11 +123,13 @@ const ArticleCard: React.FC<{ article: RankedArticle; rank: number; onTagsUpdate
       ? `https://www.ncbi.nlm.nih.gov/pmc/articles/${article.pmcId}/`
       : `https://pubmed.ncbi.nlm.nih.gov/${article.pmid}/`;
 
-    const isLongSummary = article.summary.length > summaryCharLimit;
+    const summaryToDisplay = article.aiSummary || article.summary;
+    const summaryLabel = article.aiSummary ? "AI Summary" : "Summary";
+    const isLongSummary = summaryToDisplay.length > summaryCharLimit;
 
     const displayedSummary = isLongSummary && !isExpanded
-        ? `${article.summary.substring(0, summaryCharLimit)}...`
-        : article.summary;
+        ? `${summaryToDisplay.substring(0, summaryCharLimit)}...`
+        : summaryToDisplay;
     
     const handleCopy = (text: string, type: string) => {
         navigator.clipboard.writeText(text).then(() => {
@@ -159,7 +161,7 @@ const ArticleCard: React.FC<{ article: RankedArticle; rank: number; onTagsUpdate
             </div>
            
             <p className="mt-3 text-sm text-text-secondary/90 leading-relaxed">
-                <strong className="text-text-secondary">Summary: </strong>{displayedSummary}
+                <strong className="text-text-secondary">{summaryLabel}: </strong>{displayedSummary}
                 {isLongSummary && (
                     <button onClick={() => setIsExpanded(!isExpanded)} className="ml-2 text-brand-accent text-xs font-semibold hover:underline">
                         {isExpanded ? 'Show Less' : 'Show More'}

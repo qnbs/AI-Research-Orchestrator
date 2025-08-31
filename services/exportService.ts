@@ -288,8 +288,10 @@ export const exportToCsv = (articlesToExport: AggregatedArticle[], topic: string
         const articleUrl = `https://pubmed.ncbi.nlm.nih.gov/${article.pmid}/`;
         const pmcidUrl = article.pmcId ? `https://www.ncbi.nlm.nih.gov/pmc/articles/${article.pmcId}/` : '';
         
+        // Fix: Ensure all optional properties have a default value to match the Record type.
         const rowData: Record<(typeof CSV_EXPORT_COLUMNS)[number], any> = {
             ...article,
+            aiSummary: article.aiSummary ?? '',
             pmcId: article.pmcId ?? '',
             keywords: (article.keywords || []).join('; '),
             customTags: article.customTags?.join('; ') || '',

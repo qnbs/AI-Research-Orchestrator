@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef, useId } from 'react';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip as ChartTooltip, Legend } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
 import { marked } from 'marked';
@@ -8,9 +8,7 @@ import { disambiguateAuthor, generateAuthorProfileAnalysis, searchPubMedForIds, 
 import { SearchIcon } from './icons/SearchIcon';
 import { useSettings } from '../contexts/SettingsContext';
 import { SparklesIcon } from './icons/SparklesIcon';
-import { UnlockIcon } from './icons/UnlockIcon';
 import { ChevronDownIcon } from './icons/ChevronDownIcon';
-import { XIcon } from './icons/XIcon';
 import { ChevronLeftIcon } from './icons/ChevronLeftIcon';
 import { ChevronRightIcon } from './icons/ChevronRightIcon';
 import { BeakerIcon } from './icons/BeakerIcon';
@@ -25,9 +23,35 @@ import { AtomIcon } from './icons/AtomIcon';
 import { TelescopeIcon } from './icons/TelescopeIcon';
 import { GlobeEuropeAfricaIcon } from './icons/GlobeEuropeAfricaIcon';
 import { Tooltip } from './Tooltip';
+import { DocumentIcon } from './icons/DocumentIcon';
 
 
 // --- Helper Functions & Components ---
+
+/**
+ * Generates a robust PubMed author search query from a full name.
+ * Handles different common name formats.
+ * @param fullName The full name of the author.
+ * @returns A PubMed-compatible query string.
+ */
+const generateAuthorQuery = (fullName: string): string => {
+    const parts = fullName.trim().split(/\s+/);
+    if (parts.length < 1) return `"${fullName}"[Author]`; // Fallback
+    if (parts.length === 1) return `"${parts[0]}"[Author]`;
+
+    const lastName = parts[parts.length - 1];
+    const firstName = parts[0];
+    const initial = firstName.charAt(0);
+    
+    // Create multiple query variations for robustness
+    const queryVariations = new Set([
+        `"${lastName} ${initial}"[Author]`, // Doudna J
+        `"${lastName} ${firstName}"[Author]`, // Doudna Jennifer
+        `"${firstName} ${lastName}"[Author]`, // Jennifer Doudna
+    ]);
+    
+    return `(${Array.from(queryVariations).join(' OR ')})`;
+};
 
 const categoryIcons: { [key: string]: React.FC<React.SVGProps<SVGSVGElement>> } = {
     'Pioneers of AI & Deep Learning': SparklesIcon,
@@ -152,7 +176,7 @@ const AuthorLoadingView: React.FC<{ phase: string }> = ({ phase }) => {
 const AuthorCard: React.FC<{ name: string; description: string; onClick: () => void; }> = ({ name, description, onClick }) => (
     <button
         onClick={onClick}
-        className="group w-full h-full p-5 bg-surface border border-border rounded-lg text-left transition-all duration-300 hover:shadow-xl hover:border-brand-accent/50 hover:-translate-y-1.5 focus:outline-none focus:ring-2 focus:ring-brand-accent ring-offset-2 ring-offset-background"
+        className="group relative w-full h-full p-5 bg-surface border border-border rounded-lg text-left transition-all duration-300 hover:shadow-xl hover:border-brand-accent/50 hover:-translate-y-1.5 focus:outline-none focus:ring-2 focus:ring-brand-accent ring-offset-2 ring-offset-background"
     >
         <h4 className="text-lg font-bold text-text-primary transition-colors duration-300 group-hover:brand-gradient-text mb-2">
             {name}
@@ -160,8 +184,42 @@ const AuthorCard: React.FC<{ name: string; description: string; onClick: () => v
         <p className="text-sm text-text-secondary leading-relaxed">
             {description}
         </p>
+         <div className="absolute bottom-4 right-4 flex items-center text-xs font-semibold text-text-secondary opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-300">
+            Analyze <ChevronRightIcon className="h-4 w-4 ml-1" />
+        </div>
     </button>
 );
+
+/**
+ * Performs a fuzzy match of an author's name against a target name. Handles formats like "Doudna J" vs "Jennifer Doudna".
+ * @param authorName The name from the publication.
+ * @param targetName The name being searched for.
+ * @returns True if it's a likely match, false otherwise.
+ */
+const isFuzzyMatch = (authorName: string, targetName: string): boolean => {
+    const normalize = (s: string) => s.toLowerCase().replace(/[^a-z\s]/g, '').trim().split(/\s+/).filter(Boolean);
+
+    const partsA = normalize(authorName);
+    const partsB = normalize(targetName);
+
+    if (partsA.length === 0 || partsB.length === 0) return false;
+    
+    // Heuristic: The last word must match exactly. This is almost always the last name.
+    if (partsA[partsA.length - 1] !== partsB[partsB.length - 1]) return false;
+
+    // Check if the remaining parts from the shorter name are initials that match the start of the remaining parts of the longer name.
+    const remainingA = partsA.slice(0, -1);
+    const remainingB = partsB.slice(0, -1);
+
+    const [shorterInitials, longerNames] = remainingA.length < remainingB.length 
+        ? [remainingA.map(p => p[0]), remainingB]
+        : [remainingB.map(p => p[0]), remainingA];
+    
+    // If one has no first/middle name (e.g., "Doudna"), it's a match if last names matched.
+    if (shorterInitials.length === 0) return true;
+
+    return shorterInitials.every(initial => longerNames.some(name => name.startsWith(initial)));
+};
 
 
 // --- Sub-views ---
@@ -445,6 +503,41 @@ const DisambiguationView: React.FC<{ clusters: AuthorCluster[]; onSelect: (clust
     </div>
 );
 
+const ProfileAccordion: React.FC<{ title: React.ReactNode; children: React.ReactNode; defaultOpen?: boolean; }> = ({ title, children, defaultOpen = false }) => {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+  const id = useId();
+  const panelId = `accordion-panel-${id}`;
+  const buttonId = `accordion-button-${id}`;
+
+  return (
+    <div className="border border-border rounded-lg">
+      <button
+        id={buttonId}
+        onClick={() => setIsOpen(!isOpen)}
+        aria-expanded={isOpen}
+        aria-controls={panelId}
+        className="w-full flex justify-between items-center p-4 text-left text-lg font-semibold text-text-primary hover:bg-surface-hover focus:outline-none transition-colors"
+      >
+        <div className="flex items-center">{title}</div>
+        <ChevronDownIcon className={`h-6 w-6 transform transition-transform duration-300 text-text-secondary ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+      <div
+        id={panelId}
+        role="region"
+        aria-labelledby={buttonId}
+        className={`grid transition-all duration-500 ease-in-out ${isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}
+      >
+        <div className="overflow-hidden">
+            <div className="p-4 border-t border-border bg-background/50">
+                {children}
+            </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
 const AuthorProfileView: React.FC<{ profile: AuthorProfile; onReset: () => void }> = ({ profile, onReset }) => {
     const { settings } = useSettings();
     const isDarkMode = settings.theme === 'dark';
@@ -521,13 +614,15 @@ const AuthorProfileView: React.FC<{ profile: AuthorProfile; onReset: () => void 
                              <h3 className="text-lg font-semibold text-text-primary mb-3">Core Research Concepts</h3>
                              <div className="space-y-2">
                                 {profile.coreConcepts.map(({ concept, frequency }) => (
-                                    <div key={concept} className="flex items-center text-sm">
-                                        <span className="flex-1 text-text-secondary truncate pr-2">{concept}</span>
-                                        <div className="w-20 h-4 bg-border rounded-full">
-                                            <div className="h-4 bg-brand-accent rounded-full" style={{ width: `${(frequency / profile.metrics.publicationCount) * 100}%` }}></div>
+                                    <Tooltip key={concept} content={`${frequency} publications`}>
+                                        <div className="flex items-center text-sm">
+                                            <span className="flex-1 text-text-secondary truncate pr-2">{concept}</span>
+                                            <div className="w-20 h-4 bg-border rounded-full">
+                                                <div className="h-4 bg-brand-accent rounded-full" style={{ width: `${(frequency / profile.metrics.publicationCount) * 100}%` }}></div>
+                                            </div>
+                                            <span className="w-8 text-right font-mono text-xs text-text-secondary/80">{frequency}</span>
                                         </div>
-                                        <span className="w-8 text-right font-mono text-xs text-text-secondary/80">{frequency}</span>
-                                    </div>
+                                    </Tooltip>
                                 ))}
                              </div>
                         </div>
@@ -544,6 +639,18 @@ const AuthorProfileView: React.FC<{ profile: AuthorProfile; onReset: () => void 
                             </div>
                         </div>
                     </div>
+                </div>
+                <div className="mt-8">
+                    <ProfileAccordion title={<div className="flex items-center"><DocumentIcon className="h-5 w-5 mr-3"/><span>Publications ({profile.publications.length})</span></div>}>
+                         <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+                            {profile.publications.sort((a,b) => parseInt(b.pubYear) - parseInt(a.pubYear)).map(pub => (
+                                <a key={pub.pmid} href={`https://pubmed.ncbi.nlm.nih.gov/${pub.pmid}/`} target="_blank" rel="noopener noreferrer" className="block p-3 bg-surface border border-border rounded-md hover:bg-surface-hover hover:border-brand-accent/50 transition-colors">
+                                    <p className="font-semibold text-sm text-text-primary">{pub.title}</p>
+                                    <p className="text-xs text-text-secondary mt-1">{pub.authors} ({pub.pubYear}) - <em>{pub.journal}</em></p>
+                                </a>
+                            ))}
+                        </div>
+                    </ProfileAccordion>
                 </div>
             </div>
         </div>
@@ -602,9 +709,10 @@ export const AuthorsView: React.FC = () => {
 
         try {
             setLoadingPhase(authorLoadingPhases[0]);
-            const pmids = await searchPubMedForIds(`"${name}"[Author]`, settings.ai.researchAssistant.authorSearchLimit);
+            const authorQueryString = generateAuthorQuery(name);
+            const pmids = await searchPubMedForIds(authorQueryString, settings.ai.researchAssistant.authorSearchLimit);
             if (pmids.length === 0) {
-                throw new Error("No publications found for this author on PubMed.");
+                throw new Error("No publications found for this author on PubMed. Try a different name variation or check spelling.");
             }
 
             setLoadingPhase(authorLoadingPhases[1]);
@@ -658,10 +766,10 @@ export const AuthorsView: React.FC = () => {
             allArticleDetails.forEach(article => {
                 const authors = article.authors?.split(', ') || [];
                 if (authors.length > 0) {
-                    if (authors[0].toLowerCase().includes(cluster.nameVariant.split(' ')[0].toLowerCase())) {
+                    if (isFuzzyMatch(authors[0], cluster.nameVariant)) {
                         firstAuthorCount++;
                     }
-                    if (authors.length > 1 && authors[authors.length - 1].toLowerCase().includes(cluster.nameVariant.split(' ')[0].toLowerCase())) {
+                    if (authors.length > 1 && isFuzzyMatch(authors[authors.length - 1], cluster.nameVariant)) {
                         lastAuthorCount++;
                     }
                 }

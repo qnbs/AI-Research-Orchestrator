@@ -32,6 +32,7 @@ export interface RankedArticle {
   keywords: string[];
   isOpenAccess: boolean;
   articleType?: string; // Type of article, e.g., 'Systematic Review'
+  aiSummary?: string; // AI-generated summary focusing on methodology, findings, etc.
   customTags?: string[]; // for user-added tags
 }
 
@@ -60,7 +61,7 @@ export type AggregatedArticle = RankedArticle & {
 };
 
 export const CSV_EXPORT_COLUMNS: (keyof AggregatedArticle | 'URL' | 'PMCID_URL')[] = [
-    'pmid', 'pmcId', 'title', 'authors', 'journal', 'pubYear', 'summary', 
+    'pmid', 'pmcId', 'title', 'authors', 'journal', 'pubYear', 'summary', 'aiSummary',
     'relevanceScore', 'relevanceExplanation', 'keywords', 'customTags', 
     'sourceReportTopic', 'isOpenAccess', 'articleType', 'URL', 'PMCID_URL'
 ];
