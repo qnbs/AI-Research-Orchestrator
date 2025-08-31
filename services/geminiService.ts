@@ -104,13 +104,21 @@ export async function searchPubMedForIds(query: string, retmax: number): Promise
         // NCBI recommends including contact info in requests
         const response = await fetch(url, { headers: { 'User-Agent': 'ai-research-orchestration-author/1.0' } });
         if (!response.ok) {
-            throw new Error(`PubMed API error: ${response.statusText}`);
+            throw new Error(`PubMed API error: ${response.statusText}. Could not connect to PubMed.`);
         }
         const data: ESearchResult = await response.json();
-        return data.esearchresult.idlist;
+        
+        // Handle cases where PubMed returns a valid response but no results.
+        if (data.esearchresult?.idlist) {
+            return data.esearchresult.idlist;
+        }
+        return [];
     } catch (error) {
         console.error(`Error searching PubMed for query "${query}":`, error);
-        return []; // Return empty array on error to not fail the whole process
+        if (error instanceof Error) {
+            throw new Error(`Failed to fetch from PubMed: ${error.message}`);
+        }
+        throw new Error('An unknown network error occurred while searching PubMed.');
     }
 }
 
@@ -180,6 +188,28 @@ export async function* generateResearchReportStream(input: ResearchInput, aiSett
    try {
         const systemInstruction = `${getPreamble(aiSettings)} You are an expert AI research assistant. Your goal is to conduct a literature review on PubMed based on the user's criteria, rank the articles, and synthesize the findings.`;
 
+        const buildQueryGenPrompt = (input: ResearchInput): string => {
+            let filterInstructions = '';
+            if (input.dateRange !== 'any') {
+                const startYear = new Date().getFullYear() - parseInt(input.dateRange, 10);
+                filterInstructions += `\n- The articles must be published between ${startYear} and the present day (use ("YYYY/MM/DD"[Date - Publication] : "3000/12/31"[Date - Publication]) syntax).`;
+            }
+
+            if (input.articleTypes.length > 0) {
+                const typesList = input.articleTypes.map(t => `"${t}"[Publication Type]`).join(' OR ');
+                filterInstructions += `\n- The articles must match the filter: (${typesList}).`;
+            }
+
+            return `Based on the user's research topic, generate a single, complete, and advanced PubMed search query.
+- Use PubMed-specific syntax like MeSH terms ([MeSH]), field tags ([Title/Abstract]), and boolean operators (AND, OR, NOT) to create a precise query for the topic.
+- The query MUST incorporate the following filters by using the AND operator: ${filterInstructions ? filterInstructions : 'No additional filters required.'}
+- Ensure the main topic part of the query is enclosed in parentheses if it contains OR operators, before you AND the filters.
+- For example, for the topic "effects of aspirin on heart attack" with a filter for "Randomized Controlled Trial", a good query would be: (("aspirin"[MeSH Terms] OR "aspirin"[Title/Abstract]) AND ("myocardial infarction"[MeSH Terms] OR "heart attack"[Title/Abstract])) AND ("Randomized Controlled Trial"[Publication Type])
+
+Research Topic: "${input.researchTopic}"
+`;
+        };
+        
         // STEP 1: Generate Search Queries
         yield { phase: "Phase 1: AI Generating PubMed Queries..." };
         const queryGenResponse = await ai.models.generateContent({
@@ -191,16 +221,11 @@ export async function* generateResearchReportStream(input: ResearchInput, aiSett
                 },
                 required: ["generatedQueries"]
             }},
-            contents: `Based on the user's research topic, generate 1-3 advanced PubMed search queries.
-            Use PubMed-specific syntax like MeSH terms ([MeSH]), field tags ([Title/Abstract]), and boolean operators (AND, OR, NOT) to create precise and effective queries.
-            For example, for "gene therapy for cystic fibrosis", a good query could be "((cystic fibrosis[MeSH Terms]) AND (gene therapy[MeSH Terms])) OR ("cystic fibrosis" AND "gene therapy"[Title/Abstract])".
-            - Research Topic: "${input.researchTopic}"
-            - Date Range: Last ${input.dateRange} years
-            - Article Types: ${input.articleTypes.join(', ')}`
+            contents: buildQueryGenPrompt(input)
         });
         
         const { generatedQueries } = extractAndParseJson<{ generatedQueries: GeneratedQuery[] }>(queryGenResponse.text);
-        if (!generatedQueries || generatedQueries.length === 0) {
+        if (!generatedQueries || generatedQueries.length === 0 || !generatedQueries[0].query) {
             throw new Error("The AI failed to generate any search queries.");
         }
 
@@ -208,7 +233,7 @@ export async function* generateResearchReportStream(input: ResearchInput, aiSett
         yield { phase: "Phase 2: Executing Real-time PubMed Search..." };
         const pmids = await searchPubMedForIds(generatedQueries[0].query, input.maxArticlesToScan);
          if (pmids.length === 0) {
-            throw new Error("Your search returned no results from PubMed. Try broadening your topic or adjusting filters.");
+            throw new Error("Your search returned no results from PubMed. This can be due to a very specific topic or strict filters. Try broadening your topic, adjusting the date range, or changing article types.");
         }
         
         // STEP 3: Fetch Real Article Details

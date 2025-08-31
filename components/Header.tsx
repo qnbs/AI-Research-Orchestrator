@@ -89,11 +89,11 @@ export const Header: React.FC<HeaderProps> = ({ onViewChange, knowledgeBaseArtic
                 <AppLogoIcon />
               </button>
                 <nav className="flex items-center space-x-1 bg-background/50 p-1 rounded-lg border border-border" aria-label="Main navigation">
-                  <NavButton onClick={() => onViewChange('orchestrator')} isActive={currentView === 'orchestrator'}><DocumentIcon className="h-5 w-5 mr-2" />Orchestrator</NavButton>
                   <NavButton onClick={() => onViewChange('research')} isActive={currentView === 'research'} className="relative">
                     {isResearching && <span className="absolute top-1 right-1 flex h-2.5 w-2.5"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-cyan opacity-75"></span><span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-accent-cyan"></span></span>}
                     <BeakerIcon className="h-5 w-5 mr-2" />Research
                   </NavButton>
+                  <NavButton onClick={() => onViewChange('orchestrator')} isActive={currentView === 'orchestrator'}><DocumentIcon className="h-5 w-5 mr-2" />Orchestrator</NavButton>
                   <NavButton onClick={() => onViewChange('authors')} isActive={currentView === 'authors'}><AuthorIcon className="h-5 w-5 mr-2" />Authors</NavButton>
                   <NavButton onClick={() => onViewChange('knowledgeBase')} isActive={currentView === 'knowledgeBase'} disabled={!hasReports}><DatabaseIcon className="h-5 w-5 mr-2" />Knowledge <span className="ml-2 bg-surface text-text-secondary text-xs font-bold px-2 py-0.5 rounded-full">{knowledgeBaseArticleCount}</span></NavButton>
                   <NavButton onClick={() => onViewChange('dashboard')} isActive={currentView === 'dashboard'} disabled={!hasReports}><ChartBarIcon className="h-5 w-5 mr-2" />Dashboard</NavButton>

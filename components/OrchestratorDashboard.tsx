@@ -1,5 +1,5 @@
 import React from 'react';
-import { KnowledgeBaseEntry } from '../types';
+import { KnowledgeBaseEntry, ResearchKnowledgeBaseEntry } from '../types';
 import { HistoryIcon } from './icons/HistoryIcon';
 import { DocumentPlusIcon } from './icons/DocumentPlusIcon';
 
@@ -17,7 +17,11 @@ const synthesisFocusText: { [key: string]: string } = {
 };
 
 const DashboardComponent: React.FC<OrchestratorDashboardProps> = ({ entries, onViewReport, onStartNewReview }) => {
-    const recentEntries = entries.slice(-3).reverse();
+    // Fix: Filter entries to only include research reports to prevent type errors.
+    const recentEntries = entries
+        .filter((e): e is ResearchKnowledgeBaseEntry => e.type === 'research')
+        .slice(-3)
+        .reverse();
 
     if (recentEntries.length === 0) {
         return (

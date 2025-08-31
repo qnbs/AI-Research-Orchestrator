@@ -263,7 +263,7 @@ const AISettingsTab: React.FC<{
                     </div>
                 </div>
             </SettingCard>
-            <SettingCard title="Research Assistant & Author Hub" description="Configure the behavior of the specialized research tools.">
+            <SettingCard title="Research & Author Hub" description="Configure the behavior of the specialized research tools.">
                 <div className="space-y-4">
                     <Toggle checked={tempSettings.ai.researchAssistant.autoFetchSimilar} onChange={c => setTempSettings(s => ({...s, ai: {...s.ai, researchAssistant: {...s.ai.researchAssistant, autoFetchSimilar: c}}}))}>
                         Automatically Find Similar Articles

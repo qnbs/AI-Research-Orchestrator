@@ -181,9 +181,9 @@ export const HelpView: React.FC<HelpViewProps> = ({ initialTab, onTabConsumed })
     // --- Content Data ---
     const guideTopics = useMemo(() => [
         {
-            title: "Understanding the Core Workflows",
-            content: (<><p>This app offers three distinct but interconnected paths for conducting research:</p><ol><li><strong>The Orchestrator:</strong> For comprehensive literature reviews on a broad topic. This is your starting point for building out a new area of your knowledge base by analyzing many articles at once.</li><li><strong>The Research Assistant:</strong> For quick, focused analysis of a specific question, abstract, or piece of text. It's perfect for exploring a single idea before committing to a full review.</li><li><strong>The Author Hub:</strong> For deep dives into the work of a specific researcher. It helps you understand their impact, collaborations, and the evolution of their research focus over time.</li></ol></>),
-            keywords: "workflow orchestrator research assistant author hub core concept"
+            title: "Understanding the Core Workflows", 
+            content: (<><p>This app offers three distinct but interconnected paths for conducting research:</p><ol><li><strong>Research Tab:</strong> For quick, focused analysis of a specific question, abstract, or piece of text. It's perfect for exploring a single idea before committing to a full review.</li><li><strong>The Orchestrator:</strong> For comprehensive literature reviews on a broad topic. This is your starting point for building out a new area of your knowledge base by analyzing many articles at once.</li><li><strong>The Author Hub:</strong> For deep dives into the work of a specific researcher. It helps you understand their impact, collaborations, and the evolution of their research focus over time.</li></ol></>),
+            keywords: "workflow orchestrator research author hub core concept"
         },
         {
             title: "Using the Orchestrator",
@@ -191,7 +191,7 @@ export const HelpView: React.FC<HelpViewProps> = ({ initialTab, onTabConsumed })
             keywords: "research parameters topic date type synthesis focus start new report save"
         },
         {
-            title: "Using the Research Assistant",
+            title: "Using the Research Tab",
             content: (<><p>The <strong>Research</strong> tab is for quick analysis. This tool is ideal for:</p><ul><li>Getting a quick summary of a paper's abstract before you read it.</li><li>Asking a specific scientific question.</li><li>Exploring a new topic to see if it's worth a full literature review.</li></ul><p>Simply paste your text or question into the box and click 'Analyze'. The AI provides a summary, extracts key findings, and, based on your settings, can automatically search for related PubMed articles and online news/discussions.</p><p>If the results are promising, use the 'Start Full Review on This Topic' button to seamlessly transfer the AI-synthesized topic to the Orchestrator for a deeper dive.</p></>),
             keywords: "assistant analyze summary key findings similar online"
         },

@@ -25,7 +25,7 @@ This application significantly reduces the manual effort of literature reviews b
 
 -   **🤖 AI Research Orchestration:** Generates comprehensive reports from a simple research topic. The AI formulates advanced PubMed queries, scans articles, and ranks them by relevance with detailed explanations.
 
--   **💡 Quick Analysis with the Research Assistant:** Paste any text—a question, abstract, or topic—to get an instant summary, a list of key findings, and suggestions for related articles and online discussions.
+-   **💡 Quick Analysis (Research Tab):** Paste any text—a question, abstract, or topic—to get an instant summary, a list of key findings, and suggestions for related articles and online discussions.
 
 -   **👤 Author Hub:** Analyze an author's intellectual development, collaborative ecosystem, and impact on their field by searching for their publications and generating an AI-powered career summary and profile.
 
@@ -57,11 +57,11 @@ This application significantly reduces the manual effort of literature reviews b
 
 The application is built around three primary, interconnected workflows:
 
-### 1. The Comprehensive Literature Review (Orchestrator)
-This is for deep dives into a new topic. You provide a broad research question, and the AI orchestrates a multi-agent process to build a full report. This is the primary way to populate your Knowledge Base with high-quality, relevant articles.
-
-### 2. The Quick Inquiry (Research Assistant)
+### 1. The Quick Inquiry (Research Tab)
 This is for fast, focused analysis. You can paste an abstract to get a summary, ask a specific question, or explore a tangent without committing to a full review. If the results are promising, you can seamlessly transition the topic to the Orchestrator for a deep dive.
+
+### 2. The Comprehensive Literature Review (Orchestrator)
+This is for deep dives into a new topic. You provide a broad research question, and the AI orchestrates a multi-agent process to build a full report. This is the primary way to populate your Knowledge Base with high-quality, relevant articles.
 
 ### 3. The Author Analysis (Author Hub)
 This is for understanding the work of a specific researcher. Provide an author's name, and the AI will find their publications, disambiguate them from others with the same name, and generate a career profile, including their core topics and publication timeline.

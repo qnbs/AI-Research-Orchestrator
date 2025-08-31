@@ -23,6 +23,8 @@ import { useUI } from '../contexts/UIContext';
 import type { View } from '../contexts/UIContext';
 import { EmptyState } from './EmptyState';
 import { DocumentPlusIcon } from './icons/DocumentPlusIcon';
+import { DocumentIcon } from './icons/DocumentIcon';
+import { AuthorIcon } from './icons/AuthorIcon';
 
 interface KnowledgeBaseViewProps {
   onViewChange: (view: View) => void;
@@ -142,7 +144,7 @@ const ArticleListItem: React.FC<{ article: AggregatedArticle; isSelected: boolea
 const ActiveFiltersComponent: React.FC<{ filter: KnowledgeBaseFilter; onFilterChange: (newFilter: Partial<KnowledgeBaseFilter>) => void; onClear: () => void; }> = ({ filter, onFilterChange, onClear }) => {
     const activeFilters: { key: string; label: string; onRemove: () => void; title?: string; }[] = [];
     if (filter.searchTerm) activeFilters.push({ key: `search_${filter.searchTerm}`, label: `Search: "${filter.searchTerm}"`, onRemove: () => onFilterChange({ searchTerm: '' }) });
-    filter.selectedTopics.forEach(topic => activeFilters.push({ key: `topic_${topic}`, label: `Topic: ${topic}`, onRemove: () => onFilterChange({ selectedTopics: filter.selectedTopics.filter(t => t !== topic) }) }));
+    filter.selectedTopics.forEach(topic => activeFilters.push({ key: `topic_${topic}`, label: `Source: ${topic}`, onRemove: () => onFilterChange({ selectedTopics: filter.selectedTopics.filter(t => t !== topic) }) }));
     filter.selectedTags.forEach(tag => activeFilters.push({ key: `tag_${tag}`, label: `Tag: ${tag}`, onRemove: () => onFilterChange({ selectedTags: filter.selectedTags.filter(t => t !== tag) }) }));
     filter.selectedArticleTypes.forEach(type => activeFilters.push({ key: `type_${type}`, label: `Type: ${type}`, onRemove: () => onFilterChange({ selectedArticleTypes: filter.selectedArticleTypes.filter(t => t !== type) }) }));
     filter.selectedJournals.forEach(journal => activeFilters.push({ key: `journal_${journal}`, title: journal, label: `Journal: ${journal.length > 20 ? journal.substring(0, 18) + '...' : journal}`, onRemove: () => onFilterChange({ selectedJournals: filter.selectedJournals.filter(j => j !== journal) }) }));
@@ -182,11 +184,12 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({ onViewChan
     const [citationExportModalType, setCitationExportModalType] = useState<'bib' | 'ris' | null>(null);
     const [viewMode, setViewMode] = useState<'grid' | 'list'>(settings.knowledgeBase.defaultView);
     const selectPageCheckboxRef = useRef<HTMLInputElement>(null);
+    const [activeSource, setActiveSource] = useState<'all' | 'research' | 'author'>('all');
     
     const filterOptions = useMemo(() => {
         const topics = new Set<string>(), tags = new Set<string>(), types = new Set<string>(), journals = new Set<string>();
         uniqueArticles.forEach(article => {
-            topics.add(article.sourceReportTopic);
+            topics.add(article.sourceTitle);
             article.customTags?.forEach(tag => tags.add(tag));
             if(article.articleType) types.add(article.articleType);
             journals.add(article.journal);
@@ -194,22 +197,30 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({ onViewChan
         return { topics: Array.from(topics).sort(), tags: Array.from(tags).sort(), articleTypes: Array.from(types).sort(), journals: Array.from(journals).sort((a,b) => a.localeCompare(b)) };
     }, [uniqueArticles]);
 
+    const articlesForView = useMemo(() => {
+        return uniqueArticles.filter(article => {
+            if (activeSource === 'all') return true;
+            const sourceEntry = knowledgeBase.find(e => e.id === article.sourceId);
+            return sourceEntry?.type === activeSource;
+        });
+    }, [uniqueArticles, knowledgeBase, activeSource]);
+
     const filteredArticles = useMemo(() => {
-        let articles = uniqueArticles;
+        let articles = articlesForView;
         if (filter.searchTerm) {
             const lowercasedTerm = filter.searchTerm.toLowerCase();
             articles = articles.filter(a => a.title.toLowerCase().includes(lowercasedTerm) || a.authors.toLowerCase().includes(lowercasedTerm) || a.summary.toLowerCase().includes(lowercasedTerm) || a.keywords.some(kw => kw.toLowerCase().includes(lowercasedTerm)));
         }
-        if (filter.selectedTopics.length > 0) articles = articles.filter(a => filter.selectedTopics.includes(a.sourceReportTopic));
+        if (filter.selectedTopics.length > 0) articles = articles.filter(a => filter.selectedTopics.includes(a.sourceTitle));
         if (filter.selectedTags.length > 0) articles = articles.filter(a => a.customTags && filter.selectedTags.some(t => a.customTags?.includes(t)));
         if (filter.selectedArticleTypes.length > 0) articles = articles.filter(a => a.articleType && filter.selectedArticleTypes.includes(a.articleType));
         if (filter.selectedJournals.length > 0) articles = articles.filter(a => filter.selectedJournals.includes(a.journal));
         if (filter.showOpenAccessOnly) articles = articles.filter(a => a.isOpenAccess);
         return articles.sort((a, b) => sortOrder === 'newest' ? parseInt(b.pubYear) - parseInt(a.pubYear) : b.relevanceScore - a.relevanceScore);
-    }, [uniqueArticles, filter, sortOrder]);
+    }, [articlesForView, filter, sortOrder]);
     
     const handleSelectPmid = (pmid: string) => setSelectedPmids(prev => prev.includes(pmid) ? prev.filter(p => p !== pmid) : [...prev, pmid]);
-    const findRelatedInsights = useCallback((pmid: string) => knowledgeBase.flatMap(entry => entry.report.aiGeneratedInsights || []).filter(insight => (insight.supportingArticles || []).includes(pmid)), [knowledgeBase]);
+    const findRelatedInsights = useCallback((pmid: string) => knowledgeBase.flatMap(entry => entry.type === 'research' ? (entry.report.aiGeneratedInsights || []) : []).filter(insight => (insight.supportingArticles || []).includes(pmid)), [knowledgeBase]);
 
     const handleExportPdf = () => {
         const articlesToExport = selectedPmids.length > 0 ? uniqueArticles.filter(a => selectedPmids.includes(a.pmid)) : filteredArticles;
@@ -231,7 +242,7 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({ onViewChan
         setCitationExportModalType(null);
     };
 
-    useEffect(() => { setCurrentPage(1); setSelectedPmids([]); }, [filter, sortOrder, setSelectedPmids]);
+    useEffect(() => { setCurrentPage(1); setSelectedPmids([]); }, [filter, sortOrder, activeSource, setSelectedPmids]);
     const totalPages = Math.ceil(filteredArticles.length / ARTICLES_PER_PAGE);
     const paginatedArticles = filteredArticles.slice((currentPage - 1) * ARTICLES_PER_PAGE, currentPage * ARTICLES_PER_PAGE);
 
@@ -280,7 +291,7 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({ onViewChan
                 <aside className="lg:col-span-1">
                     <div className="sticky top-24 space-y-6 bg-surface p-4 rounded-lg border border-border">
                         <h3 className="text-lg font-semibold text-text-primary border-b border-border pb-3">Filters</h3>
-                        <MultiSelectFilter title="Report Topic" options={filterOptions.topics} selected={filter.selectedTopics} onChange={s => onFilterChange({ selectedTopics: s })} />
+                        <MultiSelectFilter title="Source Title" options={filterOptions.topics} selected={filter.selectedTopics} onChange={s => onFilterChange({ selectedTopics: s })} />
                         <MultiSelectFilter title="Custom Tags" options={filterOptions.tags} selected={filter.selectedTags} onChange={s => onFilterChange({ selectedTags: s })} />
                         <MultiSelectFilter title="Article Type" options={filterOptions.articleTypes} selected={filter.selectedArticleTypes} onChange={s => onFilterChange({ selectedArticleTypes: s })} />
                         <MultiSelectFilter title="Journal" options={filterOptions.journals} selected={filter.selectedJournals} onChange={s => onFilterChange({ selectedJournals: s })} />
@@ -299,6 +310,28 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({ onViewChan
                                 <button onClick={() => setViewMode('list')} aria-label="List View" className={`p-1.5 rounded-md ${viewMode === 'list' ? 'bg-brand-accent text-brand-text-on-accent' : 'text-text-secondary hover:bg-surface'}`}><ListViewIcon className="h-5 w-5"/></button>
                             </div>
                         </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-1 bg-surface p-1 rounded-lg border border-border mb-4">
+                        {(['all', 'research', 'author'] as const).map(source => {
+                            const count = uniqueArticles.filter(a => {
+                                if (source === 'all') return true;
+                                const sourceEntry = knowledgeBase.find(e => e.id === a.sourceId);
+                                return sourceEntry?.type === source;
+                            }).length;
+                            return (
+                                <button 
+                                    key={source}
+                                    onClick={() => setActiveSource(source)}
+                                    className={`w-full p-2 text-sm font-semibold rounded-md transition-colors flex items-center justify-center gap-2 ${activeSource === source ? 'bg-brand-accent text-brand-text-on-accent' : 'text-text-secondary hover:bg-surface-hover'}`}
+                                >
+                                    {source === 'research' && <DocumentIcon className="h-4 w-4" />}
+                                    {source === 'author' && <AuthorIcon className="h-4 w-4" />}
+                                    <span className="capitalize">{source === 'research' ? 'Reports' : source}</span>
+                                    <span className={`text-xs px-2 py-0.5 rounded-full ${activeSource === source ? 'bg-white/20' : 'bg-border'}`}>{count}</span>
+                                </button>
+                            );
+                        })}
                     </div>
                     
                     <ActiveFilters filter={filter} onFilterChange={onFilterChange} onClear={clearFilters} />

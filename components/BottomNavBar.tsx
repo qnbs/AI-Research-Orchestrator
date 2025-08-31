@@ -54,19 +54,19 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({ currentView, onViewC
                     onClick={onViewChange}
                 />
                 <NavItem
-                    view="orchestrator"
-                    label="Orchestrate"
-                    icon={<DocumentIcon className="h-6 w-6" />}
-                    isActive={currentView === 'orchestrator'}
-                    onClick={onViewChange}
-                />
-                <NavItem
                     view="research"
                     label="Research"
                     icon={<BeakerIcon className="h-6 w-6" />}
                     isActive={currentView === 'research'}
                     onClick={onViewChange}
                     isSpecial={isResearching}
+                />
+                <NavItem
+                    view="orchestrator"
+                    label="Orchestrate"
+                    icon={<DocumentIcon className="h-6 w-6" />}
+                    isActive={currentView === 'orchestrator'}
+                    onClick={onViewChange}
                 />
                 <NavItem
                     view="authors"

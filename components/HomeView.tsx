@@ -62,16 +62,16 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
 
             <div className="grid grid-cols-1 md:grid-cols-1 gap-6 text-left max-w-2xl mx-auto">
                 <ActionButton
+                    icon={<BeakerIcon className="h-6 w-6" />}
+                    title="Research"
+                    description="Perform a quick, focused analysis on a specific question or abstract."
+                    onClick={() => onNavigate('research')}
+                />
+                <ActionButton
                     icon={<DocumentIcon className="h-6 w-6" />}
                     title="Orchestrator"
                     description="Conduct a comprehensive literature review on a broad topic."
                     onClick={() => onNavigate('orchestrator')}
-                />
-                <ActionButton
-                    icon={<BeakerIcon className="h-6 w-6" />}
-                    title="Research Assistant"
-                    description="Perform a quick, focused analysis on a specific question or abstract."
-                    onClick={() => onNavigate('research')}
                 />
                 <ActionButton
                     icon={<AuthorIcon className="h-6 w-6" />}

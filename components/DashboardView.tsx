@@ -1,7 +1,7 @@
 import React, { useMemo, useRef, useId, memo } from 'react';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement, Colors } from 'chart.js';
 import { Bar, Doughnut, Chart, getElementAtEvent } from 'react-chartjs-2';
-import type { KnowledgeBaseEntry, KnowledgeBaseFilter } from '../types';
+import type { KnowledgeBaseEntry, KnowledgeBaseFilter, RankedArticle } from '../types';
 import { DatabaseIcon } from './icons/DatabaseIcon';
 import { useSettings } from '../contexts/SettingsContext';
 import type { View } from '../contexts/UIContext';
@@ -55,21 +55,28 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({ entries, onFilte
         openAccess: useRef<ChartJS<'doughnut', number[], string>>(null),
     };
 
-    const chartData = useMemo(() => {
-        if (entries.length === 0) {
-            return null;
-        }
-
-        const articleMap = new Map();
+    const uniqueArticles = useMemo(() => {
+        const articleMap = new Map<string, RankedArticle>();
         entries.forEach(entry => {
-            (entry.report.rankedArticles || []).forEach(article => {
-                if (!articleMap.has(article.pmid) || article.relevanceScore > (articleMap.get(article.pmid)?.relevanceScore || 0)) {
+            const articles = entry.type === 'research' 
+                ? entry.report.rankedArticles 
+                : entry.profile.publications;
+            
+            (articles || []).forEach(article => {
+                const existing = articleMap.get(article.pmid);
+                if (!existing || article.relevanceScore > (existing.relevanceScore || 0)) {
                     articleMap.set(article.pmid, article);
                 }
             });
         });
-        const uniqueArticles = Array.from(articleMap.values());
+        return Array.from(articleMap.values());
+    }, [entries]);
 
+    const chartData = useMemo(() => {
+        if (uniqueArticles.length === 0) {
+            return null;
+        }
+        
         const yearCounts: { [key: string]: number } = {};
         uniqueArticles.forEach(article => {
             if (article.pubYear) yearCounts[article.pubYear] = (yearCounts[article.pubYear] || 0) + 1;
@@ -96,7 +103,7 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({ entries, onFilte
             articleTypes: { labels: sortedArticleTypes.map(([type]) => type), datasets: [{ data: sortedArticleTypes.map(([, count]) => count) }] },
             openAccess: { labels: ['Open Access', 'Closed Access'], datasets: [{ data: [openAccessCount, uniqueArticles.length - openAccessCount] }] }
         };
-    }, [entries]);
+    }, [uniqueArticles]);
 
     const handleChartClick = (event: React.MouseEvent<HTMLCanvasElement>, chartRef: React.RefObject<ChartJS<any, any, any>>, filterKey: keyof KnowledgeBaseFilter) => {
         if (!chartRef.current) return;

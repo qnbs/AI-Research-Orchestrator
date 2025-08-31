@@ -50,20 +50,35 @@ export interface ResearchReport {
   sources?: WebContent[];
 }
 
-export interface KnowledgeBaseEntry {
+export interface AuthorProfileInput {
+    authorName: string;
+}
+
+export interface ResearchKnowledgeBaseEntry {
   id: string;
+  type: 'research';
   input: ResearchInput;
   report: ResearchReport;
 }
 
+export interface AuthorKnowledgeBaseEntry {
+    id: string;
+    type: 'author';
+    input: AuthorProfileInput;
+    profile: AuthorProfile;
+}
+
+export type KnowledgeBaseEntry = ResearchKnowledgeBaseEntry | AuthorKnowledgeBaseEntry;
+
 export type AggregatedArticle = RankedArticle & {
-    sourceReportTopic: string;
+    sourceTitle: string;
+    sourceId: string;
 };
 
-export const CSV_EXPORT_COLUMNS: (keyof AggregatedArticle | 'URL' | 'PMCID_URL')[] = [
+export const CSV_EXPORT_COLUMNS: (keyof Omit<AggregatedArticle, 'sourceReportTopic'> | 'URL' | 'PMCID_URL')[] = [
     'pmid', 'pmcId', 'title', 'authors', 'journal', 'pubYear', 'summary', 'aiSummary',
     'relevanceScore', 'relevanceExplanation', 'keywords', 'customTags', 
-    'sourceReportTopic', 'isOpenAccess', 'articleType', 'URL', 'PMCID_URL'
+    'sourceTitle', 'isOpenAccess', 'articleType', 'URL', 'PMCID_URL'
 ];
 
 export interface Preset {

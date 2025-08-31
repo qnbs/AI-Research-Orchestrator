@@ -242,7 +242,12 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(({ report,
       setIsExporting(true);
       setTimeout(() => {
           try {
-              const aggregatedArticles: AggregatedArticle[] = report.rankedArticles.map(a => ({...a, sourceReportTopic: input.researchTopic}));
+              // Fix: Construct AggregatedArticle with sourceTitle and a transient sourceId to match the expected type.
+              const aggregatedArticles: AggregatedArticle[] = report.rankedArticles.map(a => ({
+                ...a, 
+                sourceTitle: input.researchTopic,
+                sourceId: `current-report-${a.pmid}` // Provide a placeholder ID
+              }));
               exportToCsv(aggregatedArticles, input.researchTopic, settings.export.csv);
           } catch (e) {
               console.error("CSV Export failed", e);

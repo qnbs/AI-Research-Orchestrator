@@ -24,32 +24,49 @@ import { TelescopeIcon } from './icons/TelescopeIcon';
 import { GlobeEuropeAfricaIcon } from './icons/GlobeEuropeAfricaIcon';
 import { Tooltip } from './Tooltip';
 import { DocumentIcon } from './icons/DocumentIcon';
+import { useKnowledgeBase } from '../contexts/KnowledgeBaseContext';
 
 
 // --- Helper Functions & Components ---
 
 /**
  * Generates a robust PubMed author search query from a full name.
- * Handles different common name formats.
+ * Handles different common name formats like "Lander, Eric S." and "Eric S. Lander".
  * @param fullName The full name of the author.
  * @returns A PubMed-compatible query string.
  */
 const generateAuthorQuery = (fullName: string): string => {
-    const parts = fullName.trim().split(/\s+/);
-    if (parts.length < 1) return `"${fullName}"[Author]`; // Fallback
+    // Handle formats like "Lander, Eric S." first by rearranging them
+    if (fullName.includes(',')) {
+        const parts = fullName.split(',');
+        const lastName = parts[0].trim();
+        const firstAndMiddle = parts.slice(1).join(' ').trim();
+        fullName = `${firstAndMiddle} ${lastName}`;
+    }
+
+    // Remove periods to handle "S." vs "S" and split into parts
+    const cleanedName = fullName.replace(/\./g, '');
+    const parts = cleanedName.trim().split(/\s+/).filter(Boolean);
+
+    if (parts.length === 0) return `""[Author]`; // Should not happen with validation
     if (parts.length === 1) return `"${parts[0]}"[Author]`;
 
     const lastName = parts[parts.length - 1];
-    const firstName = parts[0];
-    const initial = firstName.charAt(0);
+    const firstParts = parts.slice(0, -1);
+    const firstName = firstParts[0];
+    const initials = firstParts.map(p => p.charAt(0)).join('');
+
+    const queryVariations = new Set<string>();
     
-    // Create multiple query variations for robustness
-    const queryVariations = new Set([
-        `"${lastName} ${initial}"[Author]`, // Doudna J
-        `"${lastName} ${firstName}"[Author]`, // Doudna Jennifer
-        `"${firstName} ${lastName}"[Author]`, // Jennifer Doudna
-    ]);
+    // 1. Full name format: "First M Last"[Author] e.g. "Eric S Lander"[Author]
+    queryVariations.add(`"${firstParts.join(' ')} ${lastName}"[Author]`);
     
+    // 2. PubMed standard format: "Last FM"[Author] e.g., "Lander ES"[Author]
+    queryVariations.add(`"${lastName} ${initials}"[Author]`);
+    
+    // 3. Another common format: "Last First"[Author] e.g., "Lander Eric"[Author]
+    queryVariations.add(`"${lastName} ${firstName}"[Author]`);
+
     return `(${Array.from(queryVariations).join(' OR ')})`;
 };
 
@@ -657,9 +674,15 @@ const AuthorProfileView: React.FC<{ profile: AuthorProfile; onReset: () => void 
     );
 };
 
+interface AuthorsViewProps {
+    initialProfile: AuthorProfile | null;
+    onViewedInitialProfile: () => void;
+}
 
-export const AuthorsView: React.FC = () => {
+
+export const AuthorsView: React.FC<AuthorsViewProps> = ({ initialProfile, onViewedInitialProfile }) => {
     const { settings } = useSettings();
+    const { saveAuthorProfile } = useKnowledgeBase();
     const [view, setView] = useState<'landing' | 'disambiguation' | 'profile'>('landing');
     const [authorQuery, setAuthorQuery] = useState('');
 
@@ -677,6 +700,14 @@ export const AuthorsView: React.FC = () => {
     const [featuredCategories, setFeaturedCategories] = useState<FeaturedAuthorCategory[]>([]);
     const [isFeaturedLoading, setIsFeaturedLoading] = useState(true);
     const [featuredError, setFeaturedError] = useState<string|null>(null);
+
+    useEffect(() => {
+        if (initialProfile) {
+            setAuthorProfile(initialProfile);
+            setView('profile');
+            onViewedInitialProfile();
+        }
+    }, [initialProfile, onViewedInitialProfile]);
 
     useEffect(() => {
         const fetchFeatured = async () => {
@@ -791,6 +822,7 @@ export const AuthorsView: React.FC = () => {
                 publications: allArticleDetails as RankedArticle[],
             };
 
+            saveAuthorProfile({ authorName: profile.name }, profile);
             setAuthorProfile(profile);
             setView('profile');
 
@@ -800,7 +832,7 @@ export const AuthorsView: React.FC = () => {
         } finally {
             setIsLoading(false);
         }
-    }, [settings.ai]);
+    }, [settings.ai, saveAuthorProfile]);
     
     const handleSuggestAuthors = useCallback(async (field: string) => {
         setIsSuggesting(true);

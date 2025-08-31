@@ -3,7 +3,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { OnboardingView } from './components/OnboardingView';
 import { Header } from './components/Header';
-import { ResearchInput, ResearchReport, KnowledgeBaseFilter, KnowledgeBaseEntry, AggregatedArticle, ChatMessage } from './types';
+import { ResearchInput, ResearchReport, KnowledgeBaseFilter, KnowledgeBaseEntry, AggregatedArticle, ChatMessage, AuthorProfile } from './types';
 import { KnowledgeBaseView } from './components/KnowledgeBaseView';
 import SettingsView from './components/SettingsView';
 import { SettingsProvider, useSettings } from './contexts/SettingsContext';
@@ -37,7 +37,8 @@ const AppLayout: React.FC = () => {
   const [reportStatus, setReportStatus] = useState<'idle' | 'generating' | 'streaming' | 'done' | 'error'>('idle');
   const [error, setError] = useState<string | null>(null);
   const [currentPhase, setCurrentPhase] = useState<string>('');
-  
+  const [selectedAuthorProfile, setSelectedAuthorProfile] = useState<AuthorProfile | null>(null);
+
   // App-wide State from contexts
   const { settings } = useSettings();
   const { currentView, notification, setNotification, isSettingsDirty, setIsSettingsDirty, pendingNavigation, setPendingNavigation, setCurrentView, showOnboarding, setShowOnboarding, isCommandPaletteOpen, setIsCommandPaletteOpen } = useUI();
@@ -99,7 +100,7 @@ const AppLayout: React.FC = () => {
         const viewTitles: Record<View, string> = {
             home: 'Home',
             orchestrator: 'Orchestrator',
-            research: 'Research Assistant',
+            research: 'Research',
             authors: 'Author Hub',
             knowledgeBase: 'Knowledge Base',
             dashboard: 'Dashboard',
@@ -215,14 +216,19 @@ const AppLayout: React.FC = () => {
         else setCurrentView(view);
     };
     
-  const handleViewReportFromHistory = (entry: KnowledgeBaseEntry) => {
-      setResearchInput(entry.input);
-      setLocalResearchInput(entry.input); // Also set local state for consistency
-      setReport(entry.report);
-      setIsCurrentReportSaved(true);
-      setReportStatus('done');
-      setCurrentView('orchestrator');
-  };
+    const handleViewEntryFromHistory = (entry: KnowledgeBaseEntry) => {
+      if (entry.type === 'research') {
+        setResearchInput(entry.input);
+        setLocalResearchInput(entry.input); // Also set local state for consistency
+        setReport(entry.report);
+        setIsCurrentReportSaved(true);
+        setReportStatus('done');
+        setCurrentView('orchestrator');
+      } else if (entry.type === 'author') {
+        setSelectedAuthorProfile(entry.profile);
+        setCurrentView('authors');
+      }
+    };
 
   const handleStartNewReview = useCallback((topic: string) => {
       setPrefilledTopic(topic);
@@ -247,7 +253,7 @@ const AppLayout: React.FC = () => {
       if (!showExportModal) return;
       const articlesToExport = uniqueArticles.filter(a => selectedKbPmids.includes(a.pmid));
       if(articlesToExport.length === 0) return;
-      const findRelatedInsights = (pmid: string) => knowledgeBase.flatMap(e => e.report.aiGeneratedInsights || []).filter(i => (i.supportingArticles || []).includes(pmid));
+      const findRelatedInsights = (pmid: string) => knowledgeBase.flatMap(e => e.type === 'research' ? (e.report.aiGeneratedInsights || []) : []).filter(i => (i.supportingArticles || []).includes(pmid));
 
       if (showExportModal === 'pdf') exportKnowledgeBaseToPdf(articlesToExport, 'Knowledge Base Selection', findRelatedInsights, settings.export.pdf);
       if (showExportModal === 'csv') exportToCsv(articlesToExport, 'knowledge_base', settings.export.csv);
@@ -282,7 +288,7 @@ const AppLayout: React.FC = () => {
                     selectedPmids={selectedKbPmids}
                     setSelectedPmids={setSelectedKbPmids}
                 />;
-      case 'authors': return <AuthorsView />;
+      case 'authors': return <AuthorsView initialProfile={selectedAuthorProfile} onViewedInitialProfile={() => setSelectedAuthorProfile(null)} />;
       case 'settings':
         return <SettingsView 
                     onClearKnowledgeBase={handleClearKnowledgeBase}
@@ -291,12 +297,13 @@ const AppLayout: React.FC = () => {
                 />;
       case 'help': return <HelpView initialTab={initialHelpTab} onTabConsumed={() => setInitialHelpTab(null)} />;
       case 'dashboard': return <DashboardView entries={knowledgeBase} onFilterChange={handleKbFilterChange} onViewChange={handleViewChange}/>;
-      case 'history': return <HistoryView onViewReport={handleViewReportFromHistory} />;
+      case 'history': return <HistoryView onViewEntry={handleViewEntryFromHistory} />;
       case 'research':
         return <ResearchView onStartNewReview={handleStartNewReview} onStartResearch={startResearch} onClearResearch={clearResearch} isLoading={isResearching} phase={researchPhase} error={researchError} analysis={researchAnalysis} similarArticlesState={similar} onlineFindingsState={online} />;
       case 'orchestrator':
       default:
-        return <OrchestratorView reportStatus={reportStatus} currentPhase={currentPhase} error={error} report={report} researchInput={localResearchInput ?? researchInput} isCurrentReportSaved={isCurrentReportSaved} settings={settings} prefilledTopic={prefilledTopic} handleFormSubmit={handleFormSubmit} handleSaveReport={handleSaveReport} handleNewSearch={handleNewSearch} onPrefillConsumed={() => setPrefilledTopic(null)} handleViewReportFromHistory={handleViewReportFromHistory} handleStartNewReview={handleStartNewReview} onUpdateResearchInput={setLocalResearchInput} handleTagsUpdate={handleTagsUpdate} chatHistory={chatHistory} isChatting={isChatting} onSendMessage={sendMessage} />;
+        // Fix: Renamed prop 'handleViewEntryFromHistory' to 'handleViewReportFromHistory' to match the component's props.
+        return <OrchestratorView reportStatus={reportStatus} currentPhase={currentPhase} error={error} report={report} researchInput={localResearchInput ?? researchInput} isCurrentReportSaved={isCurrentReportSaved} settings={settings} prefilledTopic={prefilledTopic} handleFormSubmit={handleFormSubmit} handleSaveReport={handleSaveReport} handleNewSearch={handleNewSearch} onPrefillConsumed={() => setPrefilledTopic(null)} handleViewReportFromHistory={handleViewEntryFromHistory} handleStartNewReview={handleStartNewReview} onUpdateResearchInput={setLocalResearchInput} handleTagsUpdate={handleTagsUpdate} chatHistory={chatHistory} isChatting={isChatting} onSendMessage={sendMessage} />;
     }
   };
 
