@@ -257,7 +257,7 @@ const InputFormComponent: React.FC<InputFormProps> = ({ onSubmit, isLoading, def
 
         <fieldset className="bg-background/50 border border-border rounded-lg p-4">
             <div className="flex justify-between items-center">
-                <label className="block text-sm font-semibold text-text-primary">Article Types</label>
+                <legend className="block text-sm font-semibold text-text-primary">Article Types</legend>
                 <button
                     type="button"
                     onClick={handleToggleAllArticleTypes}
@@ -283,7 +283,7 @@ const InputFormComponent: React.FC<InputFormProps> = ({ onSubmit, isLoading, def
       
         <fieldset className="bg-background/50 border border-border rounded-lg p-4 space-y-6">
             <div>
-                <h3 className="text-sm font-semibold text-text-primary mb-1">AI Agent Configuration</h3>
+                <legend className="text-sm font-semibold text-text-primary mb-1">AI Agent Configuration</legend>
                 <p className="text-xs text-text-secondary">Control the scope of the AI's search and synthesis process.</p>
             </div>
             <SliderInput 
