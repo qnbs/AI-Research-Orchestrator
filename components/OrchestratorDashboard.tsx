@@ -1,10 +1,10 @@
 import React from 'react';
-import { KnowledgeBaseEntry, ResearchKnowledgeBaseEntry } from '../types';
+import type { KnowledgeBaseEntry, ResearchKnowledgeBaseEntry } from '../types';
 import { HistoryIcon } from './icons/HistoryIcon';
 import { DocumentPlusIcon } from './icons/DocumentPlusIcon';
+import { useKnowledgeBase } from '../contexts/KnowledgeBaseContext';
 
 interface OrchestratorDashboardProps {
-    entries: KnowledgeBaseEntry[];
     onViewReport: (entry: KnowledgeBaseEntry) => void;
     onStartNewReview: (topic: string) => void;
 }
@@ -16,12 +16,9 @@ const synthesisFocusText: { [key: string]: string } = {
   'gaps': 'Contradictions & Gaps'
 };
 
-const DashboardComponent: React.FC<OrchestratorDashboardProps> = ({ entries, onViewReport, onStartNewReview }) => {
-    // Fix: Filter entries to only include research reports to prevent type errors.
-    const recentEntries = entries
-        .filter((e): e is ResearchKnowledgeBaseEntry => e.type === 'research')
-        .slice(-3)
-        .reverse();
+const DashboardComponent: React.FC<OrchestratorDashboardProps> = ({ onViewReport, onStartNewReview }) => {
+    const { getRecentResearchEntries } = useKnowledgeBase();
+    const recentEntries = getRecentResearchEntries(3);
 
     if (recentEntries.length === 0) {
         return (

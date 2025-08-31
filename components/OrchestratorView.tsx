@@ -89,7 +89,6 @@ export const OrchestratorView: React.FC<OrchestratorViewProps> = ({
             {!isProcessing && !error && !report && (
                  knowledgeBase.length > 0 ? (
                     <OrchestratorDashboard 
-                        entries={knowledgeBase} 
                         onViewReport={handleViewReportFromHistory} 
                         onStartNewReview={handleStartNewReview}
                     />

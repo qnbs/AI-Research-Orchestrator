@@ -1,3 +1,5 @@
+
+
 import React, { useState, useMemo, useRef, useEffect, useCallback, memo } from 'react';
 import { exportKnowledgeBaseToPdf, exportToCsv, exportCitations } from '../services/exportService';
 import type { AggregatedArticle, KnowledgeBaseEntry, KnowledgeBaseFilter } from '../types';
@@ -105,7 +107,7 @@ const KBArticleCard: React.FC<{ article: AggregatedArticle; isSelected: boolean;
                 </div>
                 <p className={`text-text-secondary mb-3 ${densityClasses.text}`}>{article.authors} - <span className="italic">{article.journal} ({article.pubYear})</span></p>
                 <div className={`flex flex-wrap ${densityClasses.gap} ${densityClasses.keywords}`}>
-                    {article.keywords.slice(0, 3).map(kw => ( <span key={kw} className="bg-sky-500/10 text-sky-300 text-xs font-medium px-2 py-0.5 rounded-full border border-sky-500/20">{kw}</span> ))}
+                    {(article.keywords || []).slice(0, 3).map(kw => ( <span key={kw} className="bg-sky-500/10 text-sky-300 text-xs font-medium px-2 py-0.5 rounded-full border border-sky-500/20">{kw}</span> ))}
                 </div>
             </div>
             <div className="border-t border-border/50 pt-3 flex justify-between items-center">
@@ -171,7 +173,7 @@ const ActiveFilters = memo(ActiveFiltersComponent);
 
 export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({ onViewChange, filter, onFilterChange, selectedPmids, setSelectedPmids }) => {
     const { settings } = useSettings();
-    const { knowledgeBase, uniqueArticles, deleteArticles } = useKnowledgeBase();
+    const { getArticles, knowledgeBase, deleteArticles } = useKnowledgeBase();
     const { setNotification, setCurrentView } = useUI();
     const ARTICLES_PER_PAGE = settings.knowledgeBase.articlesPerPage;
 
@@ -187,87 +189,145 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({ onViewChan
     const [activeSource, setActiveSource] = useState<'all' | 'research' | 'author'>('all');
     
     const filterOptions = useMemo(() => {
-        const topics = new Set<string>(), tags = new Set<string>(), types = new Set<string>(), journals = new Set<string>();
-        uniqueArticles.forEach(article => {
-            topics.add(article.sourceTitle);
-            article.customTags?.forEach(tag => tags.add(tag));
-            if(article.articleType) types.add(article.articleType);
-            journals.add(article.journal);
-        });
-        return { topics: Array.from(topics).sort(), tags: Array.from(tags).sort(), articleTypes: Array.from(types).sort(), journals: Array.from(journals).sort((a,b) => a.localeCompare(b)) };
-    }, [uniqueArticles]);
+        const allArticles = getArticles('all');
+        if (!Array.isArray(allArticles)) {
+            return { topics: [], tags: [], articleTypes: [], journals: [] };
+        }
 
-    const articlesForView = useMemo(() => {
-        return uniqueArticles.filter(article => {
-            if (activeSource === 'all') return true;
-            const sourceEntry = knowledgeBase.find(e => e.id === article.sourceId);
-            return sourceEntry?.type === activeSource;
+        const topics = new Set<string>();
+        const tags = new Set<string>();
+        const types = new Set<string>();
+        const journals = new Set<string>();
+
+        allArticles.forEach(article => {
+            if (article.sourceTitle) topics.add(article.sourceTitle);
+            article.customTags?.forEach(tag => tags.add(tag));
+            if (article.articleType) types.add(article.articleType);
+            if (article.journal) journals.add(article.journal);
         });
-    }, [uniqueArticles, knowledgeBase, activeSource]);
+
+        return {
+            topics: Array.from(topics).sort(),
+            tags: Array.from(tags).sort(),
+            articleTypes: Array.from(types).sort(),
+            journals: Array.from(journals).sort((a, b) => a.localeCompare(b))
+        };
+    }, [getArticles]);
 
     const filteredArticles = useMemo(() => {
-        let articles = articlesForView;
+        const articles = getArticles(activeSource);
+
+        let filtered = articles;
         if (filter.searchTerm) {
             const lowercasedTerm = filter.searchTerm.toLowerCase();
-            articles = articles.filter(a => a.title.toLowerCase().includes(lowercasedTerm) || a.authors.toLowerCase().includes(lowercasedTerm) || a.summary.toLowerCase().includes(lowercasedTerm) || a.keywords.some(kw => kw.toLowerCase().includes(lowercasedTerm)));
+            filtered = filtered.filter(a =>
+                a.title.toLowerCase().includes(lowercasedTerm) ||
+                a.authors.toLowerCase().includes(lowercasedTerm) ||
+                a.summary.toLowerCase().includes(lowercasedTerm) ||
+                (a.keywords || []).some(kw => kw.toLowerCase().includes(lowercasedTerm))
+            );
         }
-        if (filter.selectedTopics.length > 0) articles = articles.filter(a => filter.selectedTopics.includes(a.sourceTitle));
-        if (filter.selectedTags.length > 0) articles = articles.filter(a => a.customTags && filter.selectedTags.some(t => a.customTags?.includes(t)));
-        if (filter.selectedArticleTypes.length > 0) articles = articles.filter(a => a.articleType && filter.selectedArticleTypes.includes(a.articleType));
-        if (filter.selectedJournals.length > 0) articles = articles.filter(a => filter.selectedJournals.includes(a.journal));
-        if (filter.showOpenAccessOnly) articles = articles.filter(a => a.isOpenAccess);
-        return articles.sort((a, b) => sortOrder === 'newest' ? parseInt(b.pubYear) - parseInt(a.pubYear) : b.relevanceScore - a.relevanceScore);
-    }, [articlesForView, filter, sortOrder]);
-    
-    const handleSelectPmid = (pmid: string) => setSelectedPmids(prev => prev.includes(pmid) ? prev.filter(p => p !== pmid) : [...prev, pmid]);
-    const findRelatedInsights = useCallback((pmid: string) => knowledgeBase.flatMap(entry => entry.type === 'research' ? (entry.report.aiGeneratedInsights || []) : []).filter(insight => (insight.supportingArticles || []).includes(pmid)), [knowledgeBase]);
+        if (filter.selectedTopics.length > 0) {
+            filtered = filtered.filter(a => filter.selectedTopics.includes(a.sourceTitle));
+        }
+        if (filter.selectedTags.length > 0) {
+            filtered = filtered.filter(a => a.customTags?.some(t => filter.selectedTags.includes(t)));
+        }
+        if (filter.selectedArticleTypes.length > 0) {
+            filtered = filtered.filter(a => a.articleType && filter.selectedArticleTypes.includes(a.articleType));
+        }
+        if (filter.selectedJournals.length > 0) {
+            filtered = filtered.filter(a => a.journal && filter.selectedJournals.includes(a.journal));
+        }
+        if (filter.showOpenAccessOnly) {
+            filtered = filtered.filter(a => a.isOpenAccess);
+        }
+        return filtered;
+    }, [getArticles, activeSource, filter]);
 
-    const handleExportPdf = () => {
-        const articlesToExport = selectedPmids.length > 0 ? uniqueArticles.filter(a => selectedPmids.includes(a.pmid)) : filteredArticles;
-        if (articlesToExport.length === 0) { setNotification({ id: Date.now(), message: 'No articles selected to export.', type: 'error' }); return; }
-        setIsExportingPdf(true);
-        setTimeout(() => { try { exportKnowledgeBaseToPdf(articlesToExport, 'Knowledge Base Selection', findRelatedInsights, settings.export.pdf); } catch (error) { console.error("PDF Export failed:", error); } finally { setIsExportingPdf(false); } }, 50);
-    };
+    const sortedArticles = useMemo(() => {
+        return [...filteredArticles].sort((a, b) => {
+            if (sortOrder === 'newest') {
+                return parseInt(b.pubYear) - parseInt(a.pubYear);
+            }
+            return b.relevanceScore - a.relevanceScore; // Default to relevance
+        });
+    }, [filteredArticles, sortOrder]);
 
-    const handleExportCsv = () => {
-        const articlesToExport = selectedPmids.length > 0 ? uniqueArticles.filter(a => selectedPmids.includes(a.pmid)) : filteredArticles;
-        if (articlesToExport.length === 0) { setNotification({ id: Date.now(), message: 'No articles selected to export.', type: 'error' }); return; }
-        exportToCsv(articlesToExport, 'knowledge_base', settings.export.csv);
-    };
+    const totalPages = Math.ceil(sortedArticles.length / ARTICLES_PER_PAGE);
+    const paginatedArticles = useMemo(() => sortedArticles.slice((currentPage - 1) * ARTICLES_PER_PAGE, currentPage * ARTICLES_PER_PAGE), [sortedArticles, currentPage, ARTICLES_PER_PAGE]);
 
-    const handleExportCitations = (type: 'bib' | 'ris') => {
-        const articlesToExport = uniqueArticles.filter(a => selectedPmids.includes(a.pmid));
-        if (articlesToExport.length === 0) { setNotification({ id: Date.now(), message: 'No articles selected to export.', type: 'error' }); return; }
-        exportCitations(articlesToExport, settings.export.citation, type);
-        setCitationExportModalType(null);
-    };
+    useEffect(() => {
+        if (currentPage > totalPages && totalPages > 0) {
+            setCurrentPage(totalPages);
+        } else if (currentPage === 0 && totalPages > 0) {
+            setCurrentPage(1);
+        }
+    }, [currentPage, totalPages]);
 
-    useEffect(() => { setCurrentPage(1); setSelectedPmids([]); }, [filter, sortOrder, activeSource, setSelectedPmids]);
-    const totalPages = Math.ceil(filteredArticles.length / ARTICLES_PER_PAGE);
-    const paginatedArticles = filteredArticles.slice((currentPage - 1) * ARTICLES_PER_PAGE, currentPage * ARTICLES_PER_PAGE);
+    useEffect(() => {
+        // Uncheck the "select page" checkbox when page or filters change
+        if (selectPageCheckboxRef.current) {
+            selectPageCheckboxRef.current.checked = false;
+        }
+    }, [currentPage, sortedArticles]);
 
     const clearFilters = useCallback(() => onFilterChange({ searchTerm: '', selectedTopics: [], selectedTags: [], selectedArticleTypes: [], selectedJournals: [], showOpenAccessOnly: false }), [onFilterChange]);
 
-    const allOnPageSelected = paginatedArticles.length > 0 && paginatedArticles.every(a => selectedPmids.includes(a.pmid));
-    const someOnPageSelected = paginatedArticles.some(a => selectedPmids.includes(a.pmid)) && !allOnPageSelected;
+    const handleSelect = useCallback((pmid: string) => {
+        setSelectedPmids(prev => prev.includes(pmid) ? prev.filter(p => p !== pmid) : [...prev, pmid]);
+    }, [setSelectedPmids]);
 
-    useEffect(() => { if (selectPageCheckboxRef.current) selectPageCheckboxRef.current.indeterminate = someOnPageSelected; }, [someOnPageSelected]);
-
-    const handleSelectPage = () => {
+    const handleSelectPage = (e: React.ChangeEvent<HTMLInputElement>) => {
         const pagePmids = paginatedArticles.map(a => a.pmid);
-        if (allOnPageSelected) setSelectedPmids(prev => prev.filter(p => !pagePmids.includes(p)));
-        else setSelectedPmids(prev => [...new Set([...prev, ...pagePmids])]);
+        if (e.target.checked) {
+            setSelectedPmids(prev => [...new Set([...prev, ...pagePmids])]);
+        } else {
+            setSelectedPmids(prev => prev.filter(p => !pagePmids.includes(p)));
+        }
     };
     
-    if (uniqueArticles.length === 0) {
+    const handleExportPdf = useCallback(async () => {
+        if (selectedPmids.length === 0) return;
+        setIsExportingPdf(true);
+        const articlesToExport = sortedArticles.filter(a => selectedPmids.includes(a.pmid));
+        const findRelatedInsights = (pmid: string) => knowledgeBase.flatMap(e => e.sourceType === 'research' ? (e.report.aiGeneratedInsights || []) : []).filter(i => (i.supportingArticles || []).includes(pmid));
+        
+        // Timeout allows the UI to update before the potentially blocking PDF generation starts
+        setTimeout(() => {
+            try {
+                exportKnowledgeBaseToPdf(articlesToExport, 'Knowledge Base Selection', findRelatedInsights, settings.export.pdf);
+            } catch (error) {
+                console.error("PDF export failed:", error);
+                setNotification({id: Date.now(), message: 'PDF export failed.', type: 'error'});
+            } finally {
+                setIsExportingPdf(false);
+            }
+        }, 50);
+    }, [selectedPmids, sortedArticles, knowledgeBase, settings.export.pdf, setNotification]);
+
+    const handleExportCsv = useCallback(() => {
+        if (selectedPmids.length === 0) return;
+        const articlesToExport = sortedArticles.filter(a => selectedPmids.includes(a.pmid));
+        exportToCsv(articlesToExport, 'knowledge_base_selection', settings.export.csv);
+    }, [selectedPmids, sortedArticles, settings.export.csv]);
+    
+    const handleCitationExport = useCallback(() => {
+        if (selectedPmids.length === 0 || !citationExportModalType) return;
+        const articlesToExport = sortedArticles.filter(a => selectedPmids.includes(a.pmid));
+        exportCitations(articlesToExport, settings.export.citation, citationExportModalType);
+        setCitationExportModalType(null);
+    }, [selectedPmids, sortedArticles, settings.export.citation, citationExportModalType]);
+
+    if (getArticles('all').length === 0) {
         return (
             <div className="h-[calc(100vh-200px)]">
-                <EmptyState
+                 <EmptyState
                     icon={<DatabaseIcon className="h-24 w-24" />}
                     title="Knowledge Base is Empty"
-                    message="Save reports from the Orchestrator tab to start building your research library and unlocking powerful data management features."
+                    message="Save reports from the Orchestrator tab to start building your personal knowledge base."
                     action={{
-                        text: "Start First Report",
+                        text: "Start Research",
                         onClick: () => setCurrentView('orchestrator'),
                         icon: <DocumentPlusIcon className="h-5 w-5" />
                     }}
@@ -275,101 +335,101 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({ onViewChan
             </div>
         );
     }
-    
+
     return (
-        <div className="animate-fadeIn">
-             {isExportingPdf && <PdfExportingOverlay />}
-             {selectedArticle && <ArticleDetailPanel article={selectedArticle} onClose={() => setSelectedArticle(null)} findRelatedInsights={findRelatedInsights} />}
-             {showDeleteModal && <ConfirmationModal onConfirm={() => { deleteArticles(selectedPmids); setSelectedPmids([]); setShowDeleteModal(false); }} onCancel={() => setShowDeleteModal(false)} title={`Delete ${selectedPmids.length} Article(s)?`} message="Are you sure you want to permanently delete the selected articles from your knowledge base? This action cannot be undone." confirmText="Yes, Delete" />}
-             {citationExportModalType && <ConfirmationModal onConfirm={() => handleExportCitations(citationExportModalType)} onCancel={() => setCitationExportModalType(null)} title="Export Citations" message={`Export ${selectedPmids.length} selected citations in ${citationExportModalType.toUpperCase()} format?`} confirmText="Export" confirmButtonClass="bg-brand-accent hover:bg-opacity-90" titleClass="text-brand-accent" />}
-            <div className="text-center mb-12">
-                <h1 className="text-4xl font-bold text-brand-accent">Knowledge Base</h1>
-                <p className="mt-2 text-lg text-text-secondary">Search, filter, and manage all articles from your saved reports.</p>
-            </div>
-            
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-                <aside className="lg:col-span-1">
-                    <div className="sticky top-24 space-y-6 bg-surface p-4 rounded-lg border border-border">
-                        <h3 className="text-lg font-semibold text-text-primary border-b border-border pb-3">Filters</h3>
-                        <MultiSelectFilter title="Source Title" options={filterOptions.topics} selected={filter.selectedTopics} onChange={s => onFilterChange({ selectedTopics: s })} />
-                        <MultiSelectFilter title="Custom Tags" options={filterOptions.tags} selected={filter.selectedTags} onChange={s => onFilterChange({ selectedTags: s })} />
-                        <MultiSelectFilter title="Article Type" options={filterOptions.articleTypes} selected={filter.selectedArticleTypes} onChange={s => onFilterChange({ selectedArticleTypes: s })} />
-                        <MultiSelectFilter title="Journal" options={filterOptions.journals} selected={filter.selectedJournals} onChange={s => onFilterChange({ selectedJournals: s })} />
-                        <label className="flex items-center space-x-3 cursor-pointer text-sm font-medium text-text-primary"><input type="checkbox" checked={filter.showOpenAccessOnly} onChange={e => onFilterChange({ showOpenAccessOnly: e.target.checked })} className="h-4 w-4 rounded border-border bg-background text-brand-accent focus:ring-brand-accent" /><span>Show Open Access Only</span></label>
-                        <button onClick={clearFilters} className="w-full flex items-center justify-center text-sm px-3 py-2 rounded-md text-text-primary bg-background hover:bg-surface-hover border border-border transition-colors"><XCircleIcon className="h-4 w-4 mr-2" />Clear All Filters</button>
-                    </div>
-                </aside>
+        <div className="flex flex-col md:flex-row gap-8">
+            {isExportingPdf && <PdfExportingOverlay />}
+            {selectedArticle && <ArticleDetailPanel article={selectedArticle} onClose={() => setSelectedArticle(null)} findRelatedInsights={(pmid: string) => knowledgeBase.flatMap(e => e.sourceType === 'research' ? (e.report.aiGeneratedInsights || []) : []).filter(i => (i.supportingArticles || []).includes(pmid))} />}
+            {showDeleteModal && (
+                <ConfirmationModal onConfirm={() => { deleteArticles(selectedPmids); setShowDeleteModal(false); setSelectedPmids([]) }} onCancel={() => setShowDeleteModal(false)} title={`Delete ${selectedPmids.length} Articles?`} message={<>Are you sure you want to permanently delete the selected articles? This action cannot be undone.</>} confirmText="Yes, Delete" />
+            )}
+            {citationExportModalType && (
+                 <ConfirmationModal onConfirm={handleCitationExport} onCancel={() => setCitationExportModalType(null)} title={`Export ${selectedPmids.length} Citations`} message={`Are you sure you want to export citations for the ${selectedPmids.length} selected articles as a ${citationExportModalType.toUpperCase()} file?`} confirmText="Yes, Export" confirmButtonClass="bg-brand-accent hover:bg-opacity-90" titleClass="text-brand-accent"/>
+            )}
 
-                <main className="lg:col-span-3">
-                    <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
-                        <div role="search" className="relative w-full md:w-auto md:flex-grow"><SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-text-secondary" /><input type="text" id="kb-search" placeholder={`Search ${uniqueArticles.length} articles...`} value={filter.searchTerm} onChange={e => onFilterChange({ searchTerm: e.target.value })} className="w-full bg-surface border border-border rounded-md py-2 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-brand-accent" aria-label="Search knowledge base"/></div>
-                        <div className="flex items-center gap-4 w-full md:w-auto justify-between">
-                            <select id="kb-sort" aria-label="Sort articles" value={sortOrder} onChange={e => setSortOrder(e.target.value as any)} className="bg-surface border border-border rounded-md py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-accent"><option value="relevance">Sort by Relevance</option><option value="newest">Sort by Newest</option></select>
-                             <div className="flex items-center bg-background p-1 rounded-lg border border-border">
-                                <button onClick={() => setViewMode('grid')} aria-label="Grid View" className={`p-1.5 rounded-md ${viewMode === 'grid' ? 'bg-brand-accent text-brand-text-on-accent' : 'text-text-secondary hover:bg-surface'}`}><GridViewIcon className="h-5 w-5"/></button>
-                                <button onClick={() => setViewMode('list')} aria-label="List View" className={`p-1.5 rounded-md ${viewMode === 'list' ? 'bg-brand-accent text-brand-text-on-accent' : 'text-text-secondary hover:bg-surface'}`}><ListViewIcon className="h-5 w-5"/></button>
+            <aside className="w-full md:w-64 lg:w-72 flex-shrink-0">
+                <div className="sticky top-24 space-y-4">
+                    <h2 className="text-xl font-bold text-text-primary">Knowledge Base</h2>
+                    <div className="relative">
+                        <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-text-secondary" />
+                        <input id="kb-search" type="text" placeholder="Search articles..." value={filter.searchTerm} onChange={e => onFilterChange({ searchTerm: e.target.value })} className="w-full pl-10 pr-4 py-2 bg-background border border-border rounded-md text-sm" />
+                    </div>
+                     <div className="flex w-full bg-background p-1 rounded-lg border border-border">
+                        <button onClick={() => setActiveSource('all')} className={`w-1/3 p-1.5 rounded-md text-sm font-medium transition-colors ${activeSource === 'all' ? 'bg-brand-accent text-brand-text-on-accent' : 'text-text-secondary hover:bg-surface'}`}>All</button>
+                        <button onClick={() => setActiveSource('research')} className={`w-1/3 p-1.5 rounded-md text-sm font-medium transition-colors ${activeSource === 'research' ? 'bg-brand-accent text-brand-text-on-accent' : 'text-text-secondary hover:bg-surface'}`}>Research</button>
+                        <button onClick={() => setActiveSource('author')} className={`w-1/3 p-1.5 rounded-md text-sm font-medium transition-colors ${activeSource === 'author' ? 'bg-brand-accent text-brand-text-on-accent' : 'text-text-secondary hover:bg-surface'}`}>Authors</button>
+                    </div>
+                    <MultiSelectFilter title="Source" options={filterOptions.topics} selected={filter.selectedTopics} onChange={selected => onFilterChange({ selectedTopics: selected })} />
+                    <MultiSelectFilter title="Tags" options={filterOptions.tags} selected={filter.selectedTags} onChange={selected => onFilterChange({ selectedTags: selected })} />
+                    <MultiSelectFilter title="Article Type" options={filterOptions.articleTypes} selected={filter.selectedArticleTypes} onChange={selected => onFilterChange({ selectedArticleTypes: selected })} />
+                    <MultiSelectFilter title="Journal" options={filterOptions.journals} selected={filter.selectedJournals} onChange={selected => onFilterChange({ selectedJournals: selected })} />
+                    <label className="flex items-center space-x-3 p-2 cursor-pointer">
+                        <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${filter.showOpenAccessOnly ? 'bg-brand-accent border-brand-accent' : 'bg-surface border-border'}`}>
+                             {filter.showOpenAccessOnly && <UnlockIcon className="w-3 h-3 text-white"/>}
+                        </div>
+                        <span className="text-sm font-medium text-text-primary">Open Access Only</span>
+                        <input id="open-access-filter" type="checkbox" checked={filter.showOpenAccessOnly} onChange={e => onFilterChange({ showOpenAccessOnly: e.target.checked })} className="sr-only" />
+                    </label>
+                </div>
+            </aside>
+
+            <main className="flex-1 min-w-0">
+                <ActiveFilters filter={filter} onFilterChange={onFilterChange} onClear={clearFilters} />
+                <div className="bg-surface border border-border rounded-lg shadow-lg">
+                    <div className="p-3 flex flex-col sm:flex-row justify-between items-center gap-4 border-b border-border">
+                        <div className="flex items-center gap-4">
+                            <input ref={selectPageCheckboxRef} id="select-page" type="checkbox" onChange={handleSelectPage} className="h-5 w-5 rounded border-border bg-background text-brand-accent focus:ring-brand-accent" aria-label="Select all articles on this page"/>
+                            <label htmlFor="select-page" className="text-sm font-medium text-text-primary">{selectedPmids.length > 0 ? `${selectedPmids.length} selected` : 'Select Page'}</label>
+                            {selectedPmids.length > 0 && <button onClick={() => setSelectedPmids([])} className="text-xs text-brand-accent hover:underline">Clear Selection</button>}
+                        </div>
+                         <div className="flex items-center gap-2">
+                             <button onClick={() => setViewMode('grid')} className={`p-2 rounded-md ${viewMode === 'grid' ? 'bg-brand-accent/20 text-brand-accent' : 'text-text-secondary hover:bg-surface-hover'}`}><GridViewIcon className="h-5 w-5"/></button>
+                            <button onClick={() => setViewMode('list')} className={`p-2 rounded-md ${viewMode === 'list' ? 'bg-brand-accent/20 text-brand-accent' : 'text-text-secondary hover:bg-surface-hover'}`}><ListViewIcon className="h-5 w-5"/></button>
+                            <div className="w-px h-6 bg-border mx-1"></div>
+                            <select id="sort-order" value={sortOrder} onChange={e => setSortOrder(e.target.value as any)} className="bg-background border-border rounded-md text-sm p-2 focus:outline-none focus:ring-2 focus:ring-brand-accent">
+                                <option value="relevance">Sort by Relevance</option>
+                                <option value="newest">Sort by Newest</option>
+                            </select>
+                         </div>
+                    </div>
+                     {selectedPmids.length > 0 && (
+                        <div className="p-3 bg-background/50 border-b border-border flex flex-wrap items-center justify-center gap-3 animate-fadeIn">
+                             <button onClick={handleExportPdf} className="flex items-center gap-2 text-xs px-3 py-1.5 rounded-md text-text-primary bg-surface hover:bg-surface-hover border border-border transition-colors"><PdfIcon className="h-4 w-4" />Export PDF</button>
+                             <button onClick={handleExportCsv} className="flex items-center gap-2 text-xs px-3 py-1.5 rounded-md text-text-primary bg-surface hover:bg-surface-hover border border-border transition-colors"><CsvIcon className="h-4 w-4"/>Export CSV</button>
+                             <div className="relative">
+                                <button onClick={() => setIsCitationDropdownOpen(!isCitationDropdownOpen)} className="flex items-center gap-2 text-xs px-3 py-1.5 rounded-md text-text-primary bg-surface hover:bg-surface-hover border border-border transition-colors"><CitationIcon className="h-4 w-4" />Export Citation <ChevronDownIcon className="h-3 w-3"/></button>
+                                {isCitationDropdownOpen && (
+                                    <div className="absolute z-10 mt-1 w-full bg-surface border border-border rounded-md shadow-lg">
+                                        <button onClick={() => { setCitationExportModalType('bib'); setIsCitationDropdownOpen(false); }} className="block w-full text-left px-3 py-2 text-xs hover:bg-surface-hover">BibTeX (.bib)</button>
+                                        <button onClick={() => { setCitationExportModalType('ris'); setIsCitationDropdownOpen(false); }} className="block w-full text-left px-3 py-2 text-xs hover:bg-surface-hover">RIS (.ris)</button>
+                                    </div>
+                                )}
                             </div>
+                            <button onClick={() => setShowDeleteModal(true)} className="flex items-center gap-2 text-xs px-3 py-1.5 rounded-md text-red-400 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 transition-colors"><TrashIcon className="h-4 w-4" />Delete</button>
                         </div>
-                    </div>
+                     )}
                     
-                    <div className="flex items-center gap-1 bg-surface p-1 rounded-lg border border-border mb-4">
-                        {(['all', 'research', 'author'] as const).map(source => {
-                            const count = uniqueArticles.filter(a => {
-                                if (source === 'all') return true;
-                                const sourceEntry = knowledgeBase.find(e => e.id === a.sourceId);
-                                return sourceEntry?.type === source;
-                            }).length;
-                            return (
-                                <button 
-                                    key={source}
-                                    onClick={() => setActiveSource(source)}
-                                    className={`w-full p-2 text-sm font-semibold rounded-md transition-colors flex items-center justify-center gap-2 ${activeSource === source ? 'bg-brand-accent text-brand-text-on-accent' : 'text-text-secondary hover:bg-surface-hover'}`}
-                                >
-                                    {source === 'research' && <DocumentIcon className="h-4 w-4" />}
-                                    {source === 'author' && <AuthorIcon className="h-4 w-4" />}
-                                    <span className="capitalize">{source === 'research' ? 'Reports' : source}</span>
-                                    <span className={`text-xs px-2 py-0.5 rounded-full ${activeSource === source ? 'bg-white/20' : 'bg-border'}`}>{count}</span>
-                                </button>
-                            );
-                        })}
-                    </div>
-                    
-                    <ActiveFilters filter={filter} onFilterChange={onFilterChange} onClear={clearFilters} />
-                    <div aria-live="polite" role="status" className="sr-only">
-                        {`Showing ${filteredArticles.length} articles matching your filters.`}
-                    </div>
-                    {selectedPmids.length > 0 && (
-                        <div className="bg-surface border border-border rounded-lg p-3 mb-4 flex flex-col md:flex-row justify-between items-center gap-4 animate-fadeIn">
-                             <p className="text-sm font-semibold text-text-primary">{selectedPmids.length} selected</p>
-                             <div className="flex items-center gap-2 flex-wrap">
-                                <button onClick={() => setShowDeleteModal(true)} className="flex items-center text-sm px-3 py-1.5 rounded-md text-red-400 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20"><TrashIcon className="h-4 w-4 mr-2" />Delete</button>
-                                <div className="h-5 w-px bg-border"></div>
-                                <button onClick={handleExportPdf} className="flex items-center text-sm px-3 py-1.5 rounded-md text-text-primary bg-background hover:bg-surface-hover border border-border"><PdfIcon className="h-4 w-4 mr-2" />Export PDF</button>
-                                <button onClick={handleExportCsv} className="flex items-center text-sm px-3 py-1.5 rounded-md text-text-primary bg-background hover:bg-surface-hover border border-border"><CsvIcon className="h-4 w-4 mr-2" />Export CSV</button>
-                                <div className="relative">
-                                    <button onClick={() => setIsCitationDropdownOpen(prev => !prev)} className="flex items-center text-sm px-3 py-1.5 rounded-md text-text-primary bg-background hover:bg-surface-hover border border-border"><CitationIcon className="h-4 w-4 mr-2" />Export Citations <ChevronDownIcon className="h-4 w-4 ml-1"/></button>
-                                     {isCitationDropdownOpen && (
-                                        <div className="absolute right-0 mt-2 w-40 bg-surface border border-border rounded-md shadow-lg z-10">
-                                            <button onClick={() => { setIsCitationDropdownOpen(false); setCitationExportModalType('bib'); }} className="w-full text-left px-3 py-2 text-sm hover:bg-surface-hover">BibTeX (.bib)</button>
-                                            <button onClick={() => { setIsCitationDropdownOpen(false); setCitationExportModalType('ris'); }} className="w-full text-left px-3 py-2 text-sm hover:bg-surface-hover">RIS (.ris)</button>
-                                        </div>
-                                     )}
-                                </div>
-                             </div>
-                        </div>
+                    {paginatedArticles.length > 0 ? (
+                         viewMode === 'grid' ? (
+                            <div className="p-4 grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+                                {paginatedArticles.map(article => ( <KBArticleCard key={article.pmid} article={article} isSelected={selectedPmids.includes(article.pmid)} onSelect={handleSelect} onView={setSelectedArticle} />))}
+                            </div>
+                        ) : (
+                            <div>{paginatedArticles.map(article => ( <ArticleListItem key={article.pmid} article={article} isSelected={selectedPmids.includes(article.pmid)} onSelect={handleSelect} onView={setSelectedArticle} /> ))}</div>
+                        )
+                    ) : (
+                        <div className="text-center py-12 px-4"><p className="text-text-secondary">No articles match your current filters.</p></div>
                     )}
 
-                    {paginatedArticles.length > 0 ? (
-                        <>
-                             <div className="border-b border-border pb-2 mb-2 flex items-center gap-3"><input ref={selectPageCheckboxRef} type="checkbox" id="select-all-on-page" checked={allOnPageSelected} onChange={handleSelectPage} className="h-4 w-4 rounded border-border bg-background text-brand-accent focus:ring-brand-accent" /><label htmlFor="select-all-on-page" className="text-sm text-text-secondary cursor-pointer">Select all on this page ({paginatedArticles.length})</label></div>
-                            {viewMode === 'grid' ? (<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-4">{paginatedArticles.map(article => <KBArticleCard key={article.pmid} article={article} isSelected={selectedPmids.includes(article.pmid)} onSelect={handleSelectPmid} onView={setSelectedArticle} />)}</div>) : (<div className="bg-surface border border-border rounded-lg overflow-hidden">{paginatedArticles.map(article => <ArticleListItem key={article.pmid} article={article} isSelected={selectedPmids.includes(article.pmid)} onSelect={handleSelectPmid} onView={setSelectedArticle} />)}</div>)}
-                        </>
-                    ) : (
-                         <div className="text-center py-16"><SearchIcon className="h-16 w-16 text-border mx-auto mb-4" /><p className="text-lg font-semibold text-text-primary">No articles match your filters.</p><p className="text-text-secondary mt-1">Try adjusting your search or clearing some filters.</p></div>
+                    {totalPages > 1 && (
+                        <div className="p-3 border-t border-border flex justify-center items-center gap-4 text-sm">
+                            <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="p-1.5 rounded-md hover:bg-surface-hover disabled:opacity-50">&laquo; Prev</button>
+                            <span className="font-semibold text-text-primary">Page {currentPage} of {totalPages}</span>
+                            <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="p-1.5 rounded-md hover:bg-surface-hover disabled:opacity-50">Next &raquo;</button>
+                        </div>
                     )}
-                    {totalPages > 1 && (<nav className="mt-8 flex justify-between items-center" aria-label="Pagination"><button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="px-4 py-2 text-sm rounded-md bg-surface border border-border disabled:opacity-50">Previous</button><span className="text-sm text-text-secondary" aria-live="polite" aria-atomic="true">Page {currentPage} of {totalPages}</span><button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="px-4 py-2 text-sm rounded-md bg-surface border border-border disabled:opacity-50">Next</button></nav>)}
-                </main>
-            </div>
+                </div>
+            </main>
         </div>
     );
 };

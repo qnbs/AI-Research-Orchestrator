@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
-import { KnowledgeBaseEntry, ResearchInput, ResearchReport, RankedArticle, AggregatedArticle, AuthorProfile, AuthorProfileInput } from '../types';
+import { KnowledgeBaseEntry, ResearchInput, ResearchReport, RankedArticle, AggregatedArticle, AuthorProfile, AuthorProfileInput, ResearchKnowledgeBaseEntry } from '../types';
 import { useUI } from './UIContext';
 
 const KNOWLEDGE_BASE_STORAGE_KEY = 'aiResearchKnowledgeBase';
@@ -37,6 +37,8 @@ const getArticlesFromEntry = (entry: KnowledgeBaseEntry): RankedArticle[] => {
 interface KnowledgeBaseContextType {
     knowledgeBase: KnowledgeBaseEntry[];
     uniqueArticles: AggregatedArticle[];
+    getArticles: (sourceType?: 'all' | 'research' | 'author') => AggregatedArticle[];
+    getRecentResearchEntries: (count: number) => ResearchKnowledgeBaseEntry[];
     saveReport: (researchInput: ResearchInput, report: ResearchReport) => boolean;
     saveAuthorProfile: (input: AuthorProfileInput, profile: AuthorProfile) => boolean;
     clearKnowledgeBase: () => void;
@@ -235,22 +237,28 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
         showNotification(`Article "${article.title.substring(0, 30)}..." added to Knowledge Base.`);
     }, [showNotification]);
 
-
-    const uniqueArticles = useMemo(() => {
+    const getArticles = useCallback((sourceType: 'all' | 'research' | 'author' = 'all'): AggregatedArticle[] => {
+        if (!knowledgeBase || !Array.isArray(knowledgeBase)) return [];
+        
         const articleMap = new Map<string, AggregatedArticle>();
-        knowledgeBase.forEach(entry => {
-            const articles = getArticlesFromEntry(entry);
-            const sourceTitle = entry.type === 'research' ? entry.input.researchTopic : `Profile: ${entry.input.authorName}`;
-            
-            articles.forEach(article => {
-                const existing = articleMap.get(article.pmid);
-                if (!existing || article.relevanceScore > (existing.relevanceScore || 0)) {
-                    articleMap.set(article.pmid, { ...article, sourceTitle, sourceId: entry.id });
-                }
+        
+        knowledgeBase
+            .filter(entry => sourceType === 'all' || entry.type === sourceType)
+            .forEach(entry => {
+                const articles = getArticlesFromEntry(entry);
+                const sourceTitle = entry.type === 'research' ? entry.input.researchTopic : `Profile: ${entry.input.authorName}`;
+                
+                articles.forEach(article => {
+                    const existing = articleMap.get(article.pmid);
+                    if (!existing || article.relevanceScore > (existing.relevanceScore || 0)) {
+                        articleMap.set(article.pmid, { ...article, sourceTitle, sourceId: entry.id });
+                    }
+                });
             });
-        });
         return Array.from(articleMap.values());
     }, [knowledgeBase]);
+
+    const uniqueArticles = useMemo(() => getArticles('all'), [getArticles]);
 
     const onPruneByRelevance = useCallback((pruneScore: number) => {
         const articlesBefore = uniqueArticles.length;
@@ -277,9 +285,20 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
         }
     }, [knowledgeBase, showNotification, uniqueArticles]);
 
+    const getRecentResearchEntries = useCallback((count: number): ResearchKnowledgeBaseEntry[] => {
+        if (!knowledgeBase || !Array.isArray(knowledgeBase)) {
+            return [];
+        }
+        // Create a stable sort by sorting by timestamp (from ID) descending
+        return knowledgeBase
+            .filter((e): e is ResearchKnowledgeBaseEntry => e.type === 'research')
+            .sort((a, b) => parseInt(b.id.split('-')[0]) - parseInt(a.id.split('-')[0]))
+            .slice(0, count);
+    }, [knowledgeBase]);
+
     return (
         <KnowledgeBaseContext.Provider value={{
-            knowledgeBase, uniqueArticles, saveReport, saveAuthorProfile, clearKnowledgeBase, updateEntryTitle,
+            knowledgeBase, uniqueArticles, getArticles, getRecentResearchEntries, saveReport, saveAuthorProfile, clearKnowledgeBase, updateEntryTitle,
             updateTags, deleteArticles, onMergeDuplicates, addKnowledgeBaseEntries, onPruneByRelevance, addSingleArticleReport
         }}>
             {children}

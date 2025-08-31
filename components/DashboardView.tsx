@@ -1,18 +1,18 @@
 import React, { useMemo, useRef, useId, memo } from 'react';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement, Colors } from 'chart.js';
 import { Bar, Doughnut, Chart, getElementAtEvent } from 'react-chartjs-2';
-import type { KnowledgeBaseEntry, KnowledgeBaseFilter, RankedArticle } from '../types';
+import type { KnowledgeBaseFilter } from '../types';
 import { DatabaseIcon } from './icons/DatabaseIcon';
 import { useSettings } from '../contexts/SettingsContext';
 import type { View } from '../contexts/UIContext';
 import { EmptyState } from './EmptyState';
 import { DocumentPlusIcon } from './icons/DocumentPlusIcon';
+import { useKnowledgeBase } from '../contexts/KnowledgeBaseContext';
 
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement, Colors);
 
 interface DashboardViewProps {
-    entries: KnowledgeBaseEntry[];
     onFilterChange: (newFilter: Partial<KnowledgeBaseFilter>) => void;
     onViewChange: (view: View) => void;
 }
@@ -46,8 +46,10 @@ const AccessibleDataTable: React.FC<{ titleId: string; headers: string[]; data: 
 );
 
 
-const DashboardViewComponent: React.FC<DashboardViewProps> = ({ entries, onFilterChange, onViewChange }) => {
+const DashboardViewComponent: React.FC<DashboardViewProps> = ({ onFilterChange, onViewChange }) => {
     const { settings } = useSettings();
+    const { getArticles } = useKnowledgeBase();
+
     const chartRefs = {
         journals: useRef<ChartJS<'bar', number[], string>>(null),
         articleTypes: useRef<ChartJS<'doughnut', number[], string>>(null),
@@ -55,22 +57,7 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({ entries, onFilte
         openAccess: useRef<ChartJS<'doughnut', number[], string>>(null),
     };
 
-    const uniqueArticles = useMemo(() => {
-        const articleMap = new Map<string, RankedArticle>();
-        entries.forEach(entry => {
-            const articles = entry.type === 'research' 
-                ? entry.report.rankedArticles 
-                : entry.profile.publications;
-            
-            (articles || []).forEach(article => {
-                const existing = articleMap.get(article.pmid);
-                if (!existing || article.relevanceScore > (existing.relevanceScore || 0)) {
-                    articleMap.set(article.pmid, article);
-                }
-            });
-        });
-        return Array.from(articleMap.values());
-    }, [entries]);
+    const uniqueArticles = useMemo(() => getArticles('all'), [getArticles]);
 
     const chartData = useMemo(() => {
         if (uniqueArticles.length === 0) {

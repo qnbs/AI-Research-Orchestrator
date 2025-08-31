@@ -1,5 +1,5 @@
 import React, { useState, useEffect, memo } from 'react';
-import type { KnowledgeBaseEntry } from '../types';
+import type { KnowledgeBaseEntry, ResearchEntry } from '../types';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 import { HistoryIcon } from './icons/HistoryIcon';
 import { EyeIcon } from './icons/EyeIcon';
@@ -28,8 +28,10 @@ const synthesisFocusText: { [key: string]: string } = {
 
 const QuickViewModal: React.FC<{ entry: KnowledgeBaseEntry; onClose: () => void; onViewEntry: (entry: KnowledgeBaseEntry) => void }> = ({ entry, onClose, onViewEntry }) => {
     const modalRef = useFocusTrap<HTMLDivElement>(true);
-    const isAuthor = entry.type === 'author';
-    const title = isAuthor ? entry.input.authorName : entry.input.researchTopic;
+    // Fix: Use sourceType for discrimination
+    const isAuthor = entry.sourceType === 'author';
+    // Fix: Access title from the base entry type
+    const title = entry.title;
 
     useEffect(() => {
         const handleEsc = (event: KeyboardEvent) => {
@@ -63,14 +65,18 @@ const QuickViewModal: React.FC<{ entry: KnowledgeBaseEntry; onClose: () => void;
                 <div className="space-y-4 my-6">
                     <div>
                         <h4 className="text-xs font-semibold text-text-secondary uppercase tracking-wider">{isAuthor ? 'Publications Found' : 'Articles Found'}</h4>
-                        <p className="text-text-primary font-medium">{isAuthor ? (entry.profile.publications || []).length : (entry.report.rankedArticles || []).length}</p>
+                        {/* Fix: Access articles from the base entry type */}
+                        <p className="text-text-primary font-medium">{entry.articles.length}</p>
                     </div>
                     <div>
                         <h4 className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Top 3 Keywords/Concepts</h4>
-                        {(isAuthor ? entry.profile.coreConcepts : entry.report.overallKeywords).length > 0 ? (
+                        {/* Fix: Use discriminated union to access report/profile correctly */}
+                        {(entry.sourceType === 'author' ? entry.profile.coreConcepts : entry.report.overallKeywords).length > 0 ? (
                             <div className="flex flex-wrap gap-2 mt-2">
-                                {(isAuthor ? entry.profile.coreConcepts : entry.report.overallKeywords).slice(0, 3).map(kw => (
-                                    <span key={isAuthor ? kw.concept : kw.keyword} className="bg-sky-500/10 text-sky-300 text-xs font-medium px-2 py-0.5 rounded-full border border-sky-500/20">{isAuthor ? kw.concept : kw.keyword}</span>
+                                {/* Fix: Use discriminated union to access report/profile correctly */}
+                                {(entry.sourceType === 'author' ? entry.profile.coreConcepts : entry.report.overallKeywords).slice(0, 3).map(kw => (
+                                    // Fix: Use discriminated union to access correct property
+                                    <span key={entry.sourceType === 'author' ? kw.concept : kw.keyword} className="bg-sky-500/10 text-sky-300 text-xs font-medium px-2 py-0.5 rounded-full border border-sky-500/20">{entry.sourceType === 'author' ? kw.concept : kw.keyword}</span>
                                 ))}
                             </div>
                         ) : (
@@ -110,8 +116,8 @@ interface HistoryListItemProps {
 }
 
 const HistoryListItem = memo<HistoryListItemProps>(({ entry, onViewEntry, onQuickView, onStartEdit, isEditing, editingTitle, onTitleChange, onSaveTitle, onCancelEdit, onEditKeyDown }) => {
-    const isAuthor = entry.type === 'author';
-    const title = isAuthor ? entry.input.authorName : entry.input.researchTopic;
+    // Fix: Use sourceType for discrimination
+    const isAuthor = entry.sourceType === 'author';
     const Icon = isAuthor ? AuthorIcon : DocumentIcon;
 
     return (
@@ -134,17 +140,20 @@ const HistoryListItem = memo<HistoryListItemProps>(({ entry, onViewEntry, onQuic
                                 <button onClick={onCancelEdit} className="p-1.5 rounded-full text-red-400 hover:bg-red-500/10"><XCircleIcon className="h-5 w-5"/></button>
                             </div>
                         ) : (
-                            <h3 className="text-lg font-semibold text-text-primary truncate" title={title}>
-                                {title}
+                            // Fix: Access title from base entry type
+                            <h3 className="text-lg font-semibold text-text-primary truncate" title={entry.title}>
+                                {entry.title}
                             </h3>
                         )}
                         <p className="text-xs text-text-secondary mt-1">
-                            Created on {new Date(parseInt(entry.id.split('-')[0])).toLocaleString()}
+                            {/* Fix: Access timestamp from base entry type */}
+                            Created on {new Date(entry.timestamp).toLocaleString()}
                         </p>
                     </div>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0 self-start sm:self-center">
-                    <button onClick={() => onStartEdit({ id: entry.id, title })} className="p-2 rounded-md text-text-secondary hover:bg-background hover:text-brand-accent transition-colors" aria-label="Edit title">
+                    {/* Fix: Access title from base entry type */}
+                    <button onClick={() => onStartEdit({ id: entry.id, title: entry.title })} className="p-2 rounded-md text-text-secondary hover:bg-background hover:text-brand-accent transition-colors" aria-label="Edit title">
                         <PencilIcon className="h-4 w-4" />
                     </button>
                     <button onClick={() => onQuickView(entry)} className="p-2 rounded-md text-text-secondary hover:bg-background hover:text-brand-accent transition-colors" aria-label="Quick view">
@@ -156,14 +165,19 @@ const HistoryListItem = memo<HistoryListItemProps>(({ entry, onViewEntry, onQuic
                 </div>
             </div>
             <div className="mt-4 pt-4 border-t border-border/50 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-text-secondary">
-                {isAuthor ? (
-                     <div><strong>{(entry.profile.publications || []).length}</strong> publications</div>
-                ) : (
+                {/* Fix: Use discriminated union to access correct properties */}
+                {entry.sourceType === 'research' ? (
                     <>
-                        <div><strong>{(entry.report.rankedArticles || []).length}</strong> articles</div>
+                        {/* Fix: Access articles from base entry type */}
+                        <div><strong>{entry.articles.length}</strong> articles</div>
+                        {/* Fix: Access synthesisFocus after type guarding */}
                         <div><strong>Focus:</strong> {synthesisFocusText[entry.input.synthesisFocus]}</div>
+                        {/* Fix: Access dateRange after type guarding */}
                         <div><strong>Date Range:</strong> {entry.input.dateRange === 'any' ? 'Any time' : `Last ${entry.input.dateRange} years`}</div>
                     </>
+                ) : (
+                     // Fix: Access articles from base entry type
+                     <div><strong>{entry.articles.length}</strong> publications</div>
                 )}
             </div>
         </li>
@@ -178,11 +192,10 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ onViewEntry }) => {
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredEntries = knowledgeBase
-    .filter(entry => {
-        const title = entry.type === 'author' ? entry.input.authorName : entry.input.researchTopic;
-        return title.toLowerCase().includes(searchTerm.toLowerCase());
-    })
-    .sort((a, b) => parseInt(b.id.split('-')[0]) - parseInt(a.id.split('-')[0]));
+    // Fix: Access title from base entry type
+    .filter(entry => entry.title.toLowerCase().includes(searchTerm.toLowerCase()))
+    // Fix: Access timestamp from base entry type
+    .sort((a, b) => b.timestamp - a.timestamp);
     
   const handleEditKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {

@@ -27,6 +27,7 @@ import { QuickAddModal } from './components/QuickAddModal';
 import { useChat } from './hooks/useChat';
 import { BottomNavBar } from './components/BottomNavBar';
 import { HomeView } from './components/HomeView';
+import ErrorBoundary from './components/ErrorBoundary';
 
 
 const AppLayout: React.FC = () => {
@@ -217,14 +218,14 @@ const AppLayout: React.FC = () => {
     };
     
     const handleViewEntryFromHistory = (entry: KnowledgeBaseEntry) => {
-      if (entry.type === 'research') {
+      if (entry.sourceType === 'research') {
         setResearchInput(entry.input);
         setLocalResearchInput(entry.input); // Also set local state for consistency
         setReport(entry.report);
         setIsCurrentReportSaved(true);
         setReportStatus('done');
         setCurrentView('orchestrator');
-      } else if (entry.type === 'author') {
+      } else if (entry.sourceType === 'author') {
         setSelectedAuthorProfile(entry.profile);
         setCurrentView('authors');
       }
@@ -253,7 +254,7 @@ const AppLayout: React.FC = () => {
       if (!showExportModal) return;
       const articlesToExport = uniqueArticles.filter(a => selectedKbPmids.includes(a.pmid));
       if(articlesToExport.length === 0) return;
-      const findRelatedInsights = (pmid: string) => knowledgeBase.flatMap(e => e.type === 'research' ? (e.report.aiGeneratedInsights || []) : []).filter(i => (i.supportingArticles || []).includes(pmid));
+      const findRelatedInsights = (pmid: string) => knowledgeBase.flatMap(e => e.sourceType === 'research' ? (e.report.aiGeneratedInsights || []) : []).filter(i => (i.supportingArticles || []).includes(pmid));
 
       if (showExportModal === 'pdf') exportKnowledgeBaseToPdf(articlesToExport, 'Knowledge Base Selection', findRelatedInsights, settings.export.pdf);
       if (showExportModal === 'csv') exportToCsv(articlesToExport, 'knowledge_base', settings.export.csv);
@@ -296,7 +297,7 @@ const AppLayout: React.FC = () => {
                     onNavigateToHelpTab={(tab) => { setInitialHelpTab(tab); setCurrentView('help'); }}
                 />;
       case 'help': return <HelpView initialTab={initialHelpTab} onTabConsumed={() => setInitialHelpTab(null)} />;
-      case 'dashboard': return <DashboardView entries={knowledgeBase} onFilterChange={handleKbFilterChange} onViewChange={handleViewChange}/>;
+      case 'dashboard': return <DashboardView onFilterChange={handleKbFilterChange} onViewChange={handleViewChange}/>;
       case 'history': return <HistoryView onViewEntry={handleViewEntryFromHistory} />;
       case 'research':
         return <ResearchView onStartNewReview={handleStartNewReview} onStartResearch={startResearch} onClearResearch={clearResearch} isLoading={isResearching} phase={researchPhase} error={researchError} analysis={researchAnalysis} similarArticlesState={similar} onlineFindingsState={online} />;
@@ -348,15 +349,17 @@ const AppLayout: React.FC = () => {
 }
 
 const App: React.FC = () => (
-    <SettingsProvider>
-        <UIProvider>
-            <KnowledgeBaseProvider>
-                <PresetProvider>
-                    <AppLayout />
-                </PresetProvider>
-            </KnowledgeBaseProvider>
-        </UIProvider>
-    </SettingsProvider>
+    <ErrorBoundary>
+        <SettingsProvider>
+            <UIProvider>
+                <KnowledgeBaseProvider>
+                    <PresetProvider>
+                        <AppLayout />
+                    </PresetProvider>
+                </KnowledgeBaseProvider>
+            </UIProvider>
+        </SettingsProvider>
+    </ErrorBoundary>
 );
 
 export default App;
