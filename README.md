@@ -8,8 +8,6 @@ An expert system for authoring comprehensive literature reviews by managing a sw
 
 This application significantly reduces the manual effort of literature reviews by allowing users to quickly identify relevant articles, extract key insights, and build a structured, searchable knowledge base.
 
-![Application Screenshot Placeholder](https://via.placeholder.com/800x450.png?text=AI+Research+Orchestration+Author+UI)
-
 ***
 
 ## Table of Contents

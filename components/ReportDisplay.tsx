@@ -55,7 +55,7 @@ const AccordionSection: React.FC<{ title: React.ReactNode; children: React.React
         onClick={() => setIsOpen(!isOpen)}
         aria-expanded={isOpen}
         aria-controls={panelId}
-        className="w-full flex justify-between items-center p-4 text-left text-lg font-semibold text-text-primary hover:bg-surface-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent transition-colors"
+        className="w-full flex justify-between items-center p-4 text-left text-lg font-semibold text-text-primary hover:bg-surface-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent transition-colors group"
       >
         <div className="flex items-center gap-3">
           {title}
@@ -203,6 +203,7 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(({ report,
   const [modalState, setModalState] = useState<{ type: 'pdf' | 'csv' | 'insights' | 'save' } | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const { settings } = useSettings();
+  const { setNotification } = useUI();
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
   const exportMenuRef = useRef<HTMLDivElement>(null);
 
@@ -259,6 +260,12 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(({ report,
       }, 50);
   };
   
+    const handleCopySynthesis = useCallback(() => {
+        navigator.clipboard.writeText(report.synthesis).then(() => {
+            setNotification({ id: Date.now(), message: 'Synthesis copied to clipboard!', type: 'success' });
+        });
+    }, [report.synthesis, setNotification]);
+
   return (
     <>
     <div className="animate-fadeIn bg-surface rounded-lg border border-border flex flex-col shadow-lg">
@@ -310,7 +317,24 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(({ report,
         </div>
 
         <div className="flex-grow">
-            <AccordionSection title="Executive Synthesis" defaultOpen>
+            <AccordionSection 
+              title={
+                <div className="flex items-center gap-3">
+                  <span>Executive Synthesis</span>
+                   <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            handleCopySynthesis();
+                        }}
+                        className="p-1.5 rounded-md text-text-secondary hover:bg-background hover:text-brand-accent opacity-0 group-hover:opacity-100 transition-opacity"
+                        aria-label="Copy synthesis to clipboard"
+                    >
+                        <ClipboardIcon className="h-4 w-4" />
+                    </button>
+                </div>
+              } 
+              defaultOpen
+            >
               <div className="prose prose-sm prose-invert max-w-none text-text-secondary/90 leading-relaxed" dangerouslySetInnerHTML={{ __html: secureMarkdownToHtml(report.synthesis) }} />
             </AccordionSection>
             <AccordionSection title="AI-Generated Insights" count={report.aiGeneratedInsights.length}>

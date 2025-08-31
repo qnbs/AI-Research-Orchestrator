@@ -124,7 +124,6 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({ article,
         }
     };
 
-    // FIX: Reconstructed the handleFindRelatedOnline function which was incomplete.
     const handleFindRelatedOnline = async () => {
         setIsFindingOnline(true);
         setFindOnlineError(null);
@@ -139,7 +138,6 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({ article,
         }
     };
 
-    // FIX: Reconstructed the handleGenerateTldr function which was incomplete.
     const handleGenerateTldr = async () => {
         setIsGeneratingTldr(true);
         setTldrError(null);
@@ -162,7 +160,6 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({ article,
     const googleScholarUrl = `https://scholar.google.com/scholar?q=${encodeURIComponent(article.title)}`;
     const semanticScholarUrl = `https://www.semanticscholar.org/search?q=${encodeURIComponent(article.title)}`;
       
-    // FIX: Added the missing return statement and moved the JSX inside the component function.
     return (
          <div className="fixed inset-0 z-30" aria-labelledby="slide-over-title" role="dialog" aria-modal="true">
             <div className={`absolute inset-0 bg-black/60 transition-opacity duration-300 ${isClosing ? 'opacity-0' : 'opacity-100'}`} onClick={handleClose} aria-hidden="true"></div>
