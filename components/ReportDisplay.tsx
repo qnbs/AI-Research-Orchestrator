@@ -8,6 +8,7 @@ import { SearchIcon } from './icons/SearchIcon';
 import { BookmarkSquareIcon } from './icons/BookmarkSquareIcon';
 import { CheckCircleIcon } from './icons/CheckCircleIcon';
 import { ClipboardIcon } from './icons/ClipboardIcon';
+import { ClipboardDocumentListIcon } from './icons/ClipboardDocumentListIcon';
 import { TagIcon } from './icons/TagIcon';
 import { XIcon } from './icons/XIcon';
 import { PdfIcon } from './icons/PdfIcon';
@@ -20,47 +21,19 @@ import { useSettings } from '../contexts/SettingsContext';
 import { RelevanceScoreDisplay } from './RelevanceScoreDisplay';
 import { AcademicCapIcon } from './icons/AcademicCapIcon';
 import { WebIcon } from './icons/WebIcon';
-import { SemanticScholarIcon } from './icons/SemanticScholarIcon';
 import { useUI } from '../contexts/UIContext';
-import { ClipboardDocumentListIcon } from './icons/ClipboardDocumentListIcon';
-
+import { useKnowledgeBase } from '../contexts/KnowledgeBaseContext';
+import { ExportIcon } from './icons/ExportIcon';
 
 interface ReportDisplayProps {
   report: ResearchReport;
   input: ResearchInput;
   isSaved: boolean;
   onSave: () => void;
-  onTagsUpdate: (pmid: string, newTags: string[]) => void;
   onNewSearch: () => void;
+  onUpdateInput: (newInput: ResearchInput) => void;
+  onTagsUpdate: (pmid: string, newTags: string[]) => void;
 }
-
-const useCopyToClipboard = (): [boolean, (text: string) => void] => {
-  const [isCopied, setIsCopied] = useState(false);
-  const timeoutRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, []);
-
-  const copy = useCallback((text: string) => {
-    navigator.clipboard.writeText(text).then(() => {
-      setIsCopied(true);
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-      timeoutRef.current = window.setTimeout(() => {
-        setIsCopied(false);
-      }, 2000);
-    });
-  }, []);
-
-  return [isCopied, copy];
-};
-
 
 const secureMarkdownToHtml = (text: string): string => {
     if (!text) return '';
@@ -114,14 +87,9 @@ const getSummaryLimit = () => {
 };
 
 
-const ArticleCard: React.FC<{ 
-    article: RankedArticle; 
-    rank: number;
-    onTagsUpdate: (pmid: string, newTags: string[]) => void;
-}> = React.memo(({ article, rank, onTagsUpdate }) => {
+const ArticleCard: React.FC<{ article: RankedArticle; rank: number; onTagsUpdate: (pmid: string, newTags: string[]) => void; }> = React.memo(({ article, rank, onTagsUpdate }) => {
+    const { setNotification } = useUI();
     const [isExpanded, setIsExpanded] = useState(false);
-    const [isCitationCopied, copyCitation] = useCopyToClipboard();
-    const [isPmidCopied, copyPmid] = useCopyToClipboard();
     const [summaryCharLimit, setSummaryCharLimit] = useState(getSummaryLimit());
     const [tagInput, setTagInput] = useState('');
 
@@ -156,18 +124,14 @@ const ArticleCard: React.FC<{
         ? `${article.summary.substring(0, summaryCharLimit)}...`
         : article.summary;
     
-    const handleCopyCitation = () => {
-        const citation = `${article.authors}. (${article.pubYear}). ${article.title}. ${article.journal}. PMID: ${article.pmid}.`;
-        copyCitation(citation);
-    };
-
-    const handleCopyPmid = () => {
-        copyPmid(article.pmid);
+    const handleCopy = (text: string, type: string) => {
+        navigator.clipboard.writeText(text).then(() => {
+            setNotification({ id: Date.now(), message: `${type} copied to clipboard!`, type: 'success' });
+        });
     };
 
     const googleScholarUrl = `https://scholar.google.com/scholar?q=${encodeURIComponent(article.title)}`;
     const semanticScholarUrl = `https://www.semanticscholar.org/search?q=${encodeURIComponent(article.title)}`;
-
 
     return (
         <div className="bg-background rounded-lg border border-border p-4 transition-all duration-200 hover:shadow-lg hover:border-brand-accent/30">
@@ -218,30 +182,15 @@ const ArticleCard: React.FC<{
                             </span>
                         ))}
                          <div className="flex-grow min-w-[120px]">
-                            <input
-                                type="text"
-                                value={tagInput}
-                                onChange={(e) => setTagInput(e.target.value)}
-                                onKeyDown={handleTagInputKeyDown}
-                                placeholder="Add tag..."
-                                className="bg-background border-border border rounded-md py-0.5 px-2 text-xs w-full focus:outline-none focus:ring-1 focus:ring-brand-accent"
-                             />
+                            <input type="text" value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={handleTagInputKeyDown} placeholder="Add tag..." className="bg-background border-border border rounded-md py-0.5 px-2 text-xs w-full focus:outline-none focus:ring-1 focus:ring-brand-accent" />
                         </div>
                     </div>
 
                     <div className="flex items-center gap-4 text-text-secondary">
-                         <a href={googleScholarUrl} target="_blank" rel="noopener noreferrer" className="hover:text-brand-accent" title="Search on Google Scholar" aria-label="Search on Google Scholar">
-                            <AcademicCapIcon className="h-5 w-5" />
-                        </a>
-                        <a href={semanticScholarUrl} target="_blank" rel="noopener noreferrer" className="hover:text-brand-accent" title="Search on Semantic Scholar" aria-label="Search on Semantic Scholar">
-                            <SemanticScholarIcon className="h-5 w-5" />
-                        </a>
-                         <button onClick={handleCopyPmid} className="flex items-center hover:text-brand-accent transition-colors" title="Copy PMID" aria-label="Copy PMID">
-                            {isPmidCopied ? <CheckCircleIcon className="h-4 w-4 text-green-400"/> : <ClipboardIcon className="h-4 w-4" />}
-                        </button>
-                        <button onClick={handleCopyCitation} className="flex items-center hover:text-brand-accent transition-colors" title="Copy Citation" aria-label="Copy Citation">
-                            {isCitationCopied ? <CheckCircleIcon className="h-4 w-4 text-green-400"/> : <ClipboardDocumentListIcon className="h-4 w-4" />}
-                        </button>
+                         <a href={googleScholarUrl} target="_blank" rel="noopener noreferrer" className="hover:text-brand-accent" aria-label="Search on Google Scholar"><AcademicCapIcon className="h-5 w-5" /></a>
+                        <a href={semanticScholarUrl} target="_blank" rel="noopener noreferrer" className="hover:text-brand-accent font-bold text-lg" aria-label="Search on Semantic Scholar">S</a>
+                        <button onClick={() => handleCopy(article.pmid, 'PMID')} className="flex items-center hover:text-brand-accent transition-colors" aria-label="Copy PMID"><ClipboardIcon className="h-4 w-4" /></button>
+                        <button onClick={() => handleCopy(`${article.authors}. (${article.pubYear}). ${article.title}. ${article.journal}. PMID: ${article.pmid}.`, 'Citation')} className="flex items-center hover:text-brand-accent transition-colors" aria-label="Copy Citation"><ClipboardDocumentListIcon className="h-4 w-4" /></button>
                     </div>
                 </div>
             </div>
@@ -250,58 +199,64 @@ const ArticleCard: React.FC<{
 });
 
 
-export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(({ report, input, isSaved, onSave, onTagsUpdate, onNewSearch }) => {
+export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(({ report, input, isSaved, onSave, onNewSearch, onUpdateInput, onTagsUpdate }) => {
   const [modalState, setModalState] = useState<{ type: 'pdf' | 'csv' | 'insights' | 'save' } | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const { settings } = useSettings();
-  const { setNotification } = useUI();
+  const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
+  const exportMenuRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+      const handleClickOutside = (event: MouseEvent) => {
+          if (exportMenuRef.current && !exportMenuRef.current.contains(event.target as Node)) {
+              setIsExportMenuOpen(false);
+          }
+      };
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
-  const handlePdfExport = async () => {
+  const handlePdfExport = () => {
       setIsExporting(true);
-      setNotification({id: Date.now(), message: "Generating PDF... This may take a moment.", type: 'success' });
-      try {
-          await exportToPdf(report, input, settings.export.pdf);
-          setNotification({id: Date.now(), message: "PDF export complete.", type: 'success'});
-      } catch (e) {
-          console.error("PDF Export failed", e);
-          const message = e instanceof Error ? e.message : "An unknown error occurred.";
-          setNotification({id: Date.now(), message: `PDF Export failed: ${message}`, type: 'error'});
-      } finally {
-          setIsExporting(false);
-          setModalState(null);
-      }
+      setTimeout(() => {
+          try {
+              exportToPdf(report, input, settings.export.pdf);
+          } catch (e) {
+              console.error("PDF Export failed", e);
+          } finally {
+              setIsExporting(false);
+              setModalState(null);
+          }
+      }, 50);
   };
 
-  const handleCsvExport = async () => {
+  const handleCsvExport = () => {
       setIsExporting(true);
-      try {
-          const aggregatedArticles: AggregatedArticle[] = report.rankedArticles.map(a => ({...a, sourceReportTopic: input.researchTopic}));
-          await exportToCsv(aggregatedArticles, input.researchTopic, settings.export.csv);
-          setNotification({id: Date.now(), message: "CSV export complete.", type: 'success'});
-      } catch (e) {
-          console.error("CSV Export failed", e);
-          const message = e instanceof Error ? e.message : "An unknown error occurred.";
-          setNotification({id: Date.now(), message: `CSV Export failed: ${message}`, type: 'error'});
-      } finally {
-          setIsExporting(false);
-          setModalState(null);
-      }
+      setTimeout(() => {
+          try {
+              const aggregatedArticles: AggregatedArticle[] = report.rankedArticles.map(a => ({...a, sourceReportTopic: input.researchTopic}));
+              exportToCsv(aggregatedArticles, input.researchTopic, settings.export.csv);
+          } catch (e) {
+              console.error("CSV Export failed", e);
+          } finally {
+              setIsExporting(false);
+              setModalState(null);
+          }
+      }, 50);
   };
 
-  const handleInsightsExport = async () => {
+  const handleInsightsExport = () => {
       setIsExporting(true);
-      try {
-          await exportInsightsToCsv(report.aiGeneratedInsights, input.researchTopic);
-          setNotification({id: Date.now(), message: "Insights CSV export complete.", type: 'success'});
-      } catch (e) {
-          console.error("Insights CSV Export failed", e);
-          const message = e instanceof Error ? e.message : "An unknown error occurred.";
-          setNotification({id: Date.now(), message: `Insights CSV export failed: ${message}`, type: 'error'});
-      } finally {
-          setIsExporting(false);
-          setModalState(null);
-      }
+      setTimeout(() => {
+          try {
+              exportInsightsToCsv(report.aiGeneratedInsights, input.researchTopic);
+          } catch (e) {
+              console.error("Insights CSV Export failed", e);
+          } finally {
+              setIsExporting(false);
+              setModalState(null);
+          }
+      }, 50);
   };
   
   return (
@@ -311,70 +266,48 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(({ report,
             <div className="flex justify-between items-start flex-wrap gap-4">
                 <div>
                     <h2 className="text-2xl font-bold text-text-primary">Research Report</h2>
-                    <p className="mt-1 text-text-secondary max-w-xl">Topic: <span className="font-semibold text-text-primary">{input.researchTopic}</span></p>
+                    <div className="mt-1 text-text-secondary max-w-xl flex items-center gap-2">
+                        <span>Topic:</span>
+                        {isSaved ? (
+                            <span className="font-semibold text-text-primary">{input.researchTopic}</span>
+                        ) : (
+                            <input
+                                type="text"
+                                value={input.researchTopic}
+                                onChange={(e) => onUpdateInput({ ...input, researchTopic: e.target.value })}
+                                className="w-full bg-background border border-border rounded-md py-1 px-2 text-base font-semibold text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-accent"
+                                aria-label="Editable report title"
+                            />
+                        )}
+                    </div>
                 </div>
-                <div className="flex items-center gap-2 flex-wrap">
-                     <button onClick={onNewSearch} title="Start New Search" className="inline-flex items-center px-3 py-1.5 border border-border text-xs font-medium rounded-md shadow-sm text-text-primary bg-surface hover:bg-surface-hover">
-                        <XCircleIcon className="h-4 w-4 mr-2" />New Search
+                 <div className="flex items-center gap-2 flex-wrap">
+                    <button onClick={onNewSearch} title="Start New Search" className="inline-flex items-center px-4 py-2 border border-border text-sm font-medium rounded-md shadow-sm text-text-primary bg-surface hover:bg-surface-hover">
+                        <XCircleIcon className="h-5 w-5 mr-2" />
+                        New Search
                     </button>
-                    <button onClick={() => setModalState({ type: 'pdf' })} title="Export as PDF" className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-brand-text-on-accent bg-brand-primary hover:bg-brand-secondary">
-                        <PdfIcon className="h-4 w-4 mr-2" />PDF
-                    </button>
-                     <button onClick={() => setModalState({ type: 'csv' })} title="Export as CSV" className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-brand-text-on-accent bg-brand-primary hover:bg-brand-secondary">
-                        <CsvIcon className="h-4 w-4 mr-2" />CSV
-                    </button>
-                    <button onClick={() => setModalState({ type: 'insights' })} title="Export AI Insights as CSV" className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-brand-text-on-accent bg-brand-primary hover:bg-brand-secondary">
-                        <SparklesIcon className="h-4 w-4 mr-2" />Insights CSV
-                    </button>
-                    <div className="h-5 w-px bg-border mx-1"></div>
-                    {isSaved ? (
-                        <div className="flex items-center px-4 py-2 text-sm font-medium rounded-md text-green-300 bg-green-500/10 border border-green-500/20">
-                            <CheckCircleIcon className="h-5 w-5 mr-2" />
-                            Saved in Knowledge Base
-                        </div>
-                    ) : (
-                        <button 
-                            onClick={() => setModalState({ type: 'save' })} 
-                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-brand-text-on-accent bg-brand-accent hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface focus:ring-brand-accent animate-pulseGlow"
-                        >
-                            <BookmarkSquareIcon className="h-5 w-5 mr-2" />
-                            Save to Knowledge Base
+                     <div className="relative" ref={exportMenuRef}>
+                        <button onClick={() => setIsExportMenuOpen(prev => !prev)} title="Export options" className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-brand-text-on-accent bg-brand-primary hover:bg-brand-secondary">
+                            <ExportIcon className="h-5 w-5 mr-2" />
+                            Export
+                            <ChevronDownIcon className={`h-4 w-4 ml-1.5 transform transition-transform duration-200 ${isExportMenuOpen ? 'rotate-180' : ''}`} />
                         </button>
+                        {isExportMenuOpen && (
+                            <div className="absolute right-0 mt-2 w-48 bg-surface border border-border rounded-md shadow-lg z-10 animate-fadeIn" style={{ animationDuration: '150ms' }}>
+                                <button onClick={() => { setModalState({ type: 'pdf' }); setIsExportMenuOpen(false); }} className="w-full text-left flex items-center gap-3 px-3 py-2 text-sm hover:bg-surface-hover"><PdfIcon className="h-4 w-4" /> PDF</button>
+                                <button onClick={() => { setModalState({ type: 'csv' }); setIsExportMenuOpen(false); }} className="w-full text-left flex items-center gap-3 px-3 py-2 text-sm hover:bg-surface-hover"><CsvIcon className="h-4 w-4" /> CSV</button>
+                                <button onClick={() => { setModalState({ type: 'insights' }); setIsExportMenuOpen(false); }} className="w-full text-left flex items-center gap-3 px-3 py-2 text-sm hover:bg-surface-hover"><SparklesIcon className="h-4 w-4" /> Insights CSV</button>
+                            </div>
+                        )}
+                     </div>
+                    {isSaved ? (
+                        <div className="flex items-center px-4 py-2 text-sm font-medium rounded-md text-green-300 bg-green-500/10 border border-green-500/20"><CheckCircleIcon className="h-5 w-5 mr-2" />Saved</div>
+                    ) : (
+                        <button onClick={() => setModalState({ type: 'save' })} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-brand-text-on-accent bg-brand-accent hover:bg-opacity-90"><BookmarkSquareIcon className="h-5 w-5 mr-2" />Save</button>
                     )}
                 </div>
             </div>
         </div>
-
-         <div className="flex-shrink-0 border-b border-border p-4 sm:p-6 bg-background/30">
-            <h3 className="text-lg font-bold text-text-primary mb-4">Report Overview</h3>
-            {report.tldr && (
-                <div className="mb-6">
-                    <h4 className="text-sm font-semibold text-brand-accent uppercase tracking-wider mb-2">TL;DR Summary</h4>
-                    <blockquote className="text-sm text-text-primary bg-surface/50 p-3 rounded-md border-l-4 border-brand-accent italic">
-                        {report.tldr}
-                    </blockquote>
-                </div>
-            )}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-                <div className="bg-surface/50 p-3 rounded-md border border-border">
-                    <p className="text-2xl font-bold brand-gradient-text">{report.rankedArticles.length}</p>
-                    <p className="text-xs text-text-secondary uppercase tracking-wider">Articles Analyzed</p>
-                </div>
-                <div className="bg-surface/50 p-3 rounded-md border border-border">
-                    <p className="text-2xl font-bold brand-gradient-text truncate" title={report.overallKeywords.length > 0 ? report.overallKeywords[0].keyword : 'N/A'}>{report.overallKeywords.length > 0 ? report.overallKeywords[0].keyword : 'N/A'}</p>
-                    <p className="text-xs text-text-secondary uppercase tracking-wider">Top Theme</p>
-                </div>
-                <div className="bg-surface/50 p-3 rounded-md border border-border">
-                    <p className="text-2xl font-bold brand-gradient-text">{report.aiGeneratedInsights.length}</p>
-                    <p className="text-xs text-text-secondary uppercase tracking-wider">AI Insights</p>
-                </div>
-                <div className="bg-surface/50 p-3 rounded-md border border-border">
-                    <p className="text-2xl font-bold brand-gradient-text">{input.dateRange === 'any' ? 'Any' : `Last ${input.dateRange}y`}</p>
-                    <p className="text-xs text-text-secondary uppercase tracking-wider">Date Range</p>
-                </div>
-            </div>
-        </div>
-
 
         <div className="flex-grow">
             <AccordionSection title="Executive Synthesis" defaultOpen>
@@ -389,11 +322,7 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(({ report,
                             <div className="mt-3 pt-2 border-t border-border/50">
                                 <p className="text-xs text-text-secondary font-semibold mb-1">Supporting Evidence (PMIDs):</p>
                                 <div className="flex flex-wrap gap-x-3 gap-y-1 items-center">
-                                    {insight.supportingArticles.map(pmid => (
-                                        <a href={`https://pubmed.ncbi.nlm.nih.gov/${pmid}/`} target="_blank" rel="noopener noreferrer" key={pmid} className="text-xs text-text-secondary hover:text-brand-accent hover:underline">
-                                            {pmid}
-                                        </a>
-                                    ))}
+                                    {insight.supportingArticles.map(pmid => ( <a href={`https://pubmed.ncbi.nlm.nih.gov/${pmid}/`} target="_blank" rel="noopener noreferrer" key={pmid} className="text-xs text-text-secondary hover:text-brand-accent hover:underline">{pmid}</a>))}
                                 </div>
                             </div>
                         </div>
@@ -402,31 +331,25 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(({ report,
             </AccordionSection>
             
             <AccordionSection title="Overall Keywords & Themes" count={report.overallKeywords.length}>
-                 <div className="flex flex-wrap gap-3 p-2">
+                <div className="space-y-3 p-2">
                     {report.overallKeywords && report.overallKeywords.length > 0 ? (
-                        report.overallKeywords
-                            .sort((a, b) => b.frequency - a.frequency)
-                            .map((kw, index) => (
-                                <div 
-                                    key={kw.keyword} 
-                                    className="flex items-center gap-2 bg-brand-accent/10 text-brand-accent text-sm font-medium px-3 py-1.5 rounded-full border border-brand-accent/20 transition-all duration-300 hover:bg-brand-accent/20 animate-fadeIn"
-                                    style={{ animationDelay: `${index * 50}ms` }}
-                                    title={`${kw.frequency} of ${report.rankedArticles.length} articles mention this theme`}
-                                >
-                                    <span>{kw.keyword}</span>
-                                    <span className="text-xs font-mono bg-brand-accent/20 text-brand-accent/80 rounded-full px-2 py-0.5">{kw.frequency}</span>
+                        report.overallKeywords.sort((a, b) => b.frequency - a.frequency).map((kw, index) => (
+                            <div key={kw.keyword} className="grid grid-cols-4 items-center gap-4 text-sm animate-fadeIn" style={{ animationDelay: `${index * 50}ms` }}>
+                                <span className="col-span-1 text-text-primary truncate font-medium" title={kw.keyword}>{kw.keyword}</span>
+                                <div className="col-span-3 flex items-center">
+                                    <div className="w-full bg-border rounded-full h-2.5 relative overflow-hidden">
+                                        <div className="bg-gradient-to-r from-brand-secondary to-brand-accent h-2.5 rounded-full transition-all duration-500 ease-out" style={{ width: `${(kw.frequency / Math.max(1, report.rankedArticles.length)) * 100}%` }}></div>
+                                    </div>
+                                    <span className="ml-3 font-mono text-xs text-text-secondary w-10 text-right">{kw.frequency} / {report.rankedArticles.length}</span>
                                 </div>
-                            ))
-                    ) : (
-                        <p className="text-text-secondary italic">No overall keywords were identified.</p>
-                    )}
+                            </div>
+                        ))
+                    ) : ( <p className="text-text-secondary italic">No overall keywords were identified.</p> )}
                 </div>
             </AccordionSection>
             <AccordionSection title={`Ranked Articles`} count={report.rankedArticles.length}>
                 <div className="space-y-4">
-                    {report.rankedArticles.map((article, index) => (
-                       <ArticleCard key={article.pmid} article={article} rank={index + 1} onTagsUpdate={onTagsUpdate} />
-                    ))}
+                    {report.rankedArticles.map((article, index) => ( <ArticleCard key={article.pmid} article={article} rank={index + 1} onTagsUpdate={onTagsUpdate} /> ))}
                 </div>
             </AccordionSection>
             <AccordionSection title="Generated PubMed Queries" count={report.generatedQueries.length}>
@@ -451,9 +374,7 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(({ report,
                         {report.sources.map((source, index) => (
                             <div key={index} className="bg-background p-2 rounded-md border border-border text-sm flex items-center gap-3">
                                 <WebIcon className="h-4 w-4 text-text-secondary flex-shrink-0" />
-                                <a href={source.uri} target="_blank" rel="noopener noreferrer" className="text-brand-accent hover:underline break-all" title={source.title}>
-                                    {source.title || source.uri}
-                                </a>
+                                <a href={source.uri} target="_blank" rel="noopener noreferrer" className="text-brand-accent hover:underline break-all" title={source.title}>{source.title || source.uri}</a>
                             </div>
                         ))}
                     </div>
@@ -461,20 +382,7 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(({ report,
             )}
         </div>
     </div>
-    {modalState?.type === 'save' && (
-        <ConfirmationModal
-            onConfirm={() => {
-                onSave();
-                setModalState(null);
-            }}
-            onCancel={() => setModalState(null)}
-            title="Save Report"
-            message="Are you sure you want to save this report to your Knowledge Base?"
-            confirmText="Save"
-            confirmButtonClass="bg-brand-accent hover:bg-opacity-90"
-            titleClass="text-brand-accent"
-        />
-    )}
+    {modalState?.type === 'save' && <ConfirmationModal onConfirm={() => { onSave(); setModalState(null); }} onCancel={() => setModalState(null)} title="Save Report" message="Are you sure you want to save this report to your Knowledge Base?" confirmText="Save" confirmButtonClass="bg-brand-accent hover:bg-opacity-90" titleClass="text-brand-accent" />}
     {(modalState?.type === 'pdf' || modalState?.type === 'csv' || modalState?.type === 'insights') && (
         <ConfirmationModal
             onConfirm={() => {
@@ -486,7 +394,7 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(({ report,
             title="Confirm Export"
             message={modalState.type === 'insights' ? `You are about to export the ${report.aiGeneratedInsights.length} AI-generated insights as a CSV file. Continue?` : `You are about to export this report (${report.rankedArticles.length} articles) as a ${modalState.type.toUpperCase()} file. Continue?`}
             confirmText={isExporting ? 'Exporting...' : 'Yes, Export'}
-            isConfirmDisabled={isExporting}
+            isConfirming={isExporting}
             confirmButtonClass="bg-brand-accent hover:bg-opacity-90"
             titleClass="text-brand-accent"
         />

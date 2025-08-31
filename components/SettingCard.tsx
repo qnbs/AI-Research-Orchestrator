@@ -1,6 +1,6 @@
 import React from 'react';
 
-export const SettingCard: React.FC<{ icon?: React.ReactNode; title: React.ReactNode; description: string; children: React.ReactNode; }> = ({ icon, title, description, children }) => (
+const CardComponent: React.FC<{ icon?: React.ReactNode; title: React.ReactNode; description: string; children: React.ReactNode; }> = ({ icon, title, description, children }) => (
     <div className="bg-surface border border-border rounded-lg">
         <div className="p-4 sm:p-6 border-b border-border">
             <div className="flex items-center gap-3">
@@ -16,3 +16,5 @@ export const SettingCard: React.FC<{ icon?: React.ReactNode; title: React.ReactN
         </div>
     </div>
 );
+
+export const SettingCard = React.memo(CardComponent);

@@ -4,7 +4,7 @@ import { XIcon } from './icons/XIcon';
 
 interface TooltipProps {
   content: React.ReactNode;
-  children: React.ReactNode;
+  children: React.ReactElement<any>;
   detailedContent?: React.ReactNode;
 }
 
@@ -37,6 +37,11 @@ export const Tooltip: React.FC<TooltipProps> = ({ content, children, detailedCon
   };
   
   const isVisible = isHoverVisible || isDetailVisible;
+  
+  // Clone the child element to add aria-describedby directly to it for better accessibility
+  const triggerWithAria = React.cloneElement(children, {
+    'aria-describedby': isVisible ? id : undefined,
+  });
 
   return (
     <div
@@ -46,7 +51,7 @@ export const Tooltip: React.FC<TooltipProps> = ({ content, children, detailedCon
       onFocus={show}
       onBlur={hide}
     >
-      {children}
+      {triggerWithAria}
       {isVisible && (
         <div 
           id={id}

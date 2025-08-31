@@ -2,6 +2,7 @@ import React from 'react';
 import { InputForm } from './InputForm';
 import { ReportDisplay } from './ReportDisplay';
 import { LoadingIndicator } from './LoadingIndicator';
+import { OrchestratorDashboard } from './OrchestratorDashboard';
 import { Welcome } from './Welcome';
 import { ResearchInput, ResearchReport, KnowledgeBaseEntry, Settings } from '../types';
 import { useKnowledgeBase } from '../contexts/KnowledgeBaseContext';
@@ -17,11 +18,12 @@ interface OrchestratorViewProps {
     prefilledTopic: string | null;
     handleFormSubmit: (data: ResearchInput) => void;
     handleSaveReport: () => void;
-    handleTagsUpdate: (pmid: string, newTags: string[]) => void;
     handleNewSearch: () => void;
     onPrefillConsumed: () => void;
     handleViewReportFromHistory: (entry: KnowledgeBaseEntry) => void;
     handleStartNewReview: (topic: string) => void;
+    onUpdateResearchInput: (newInput: ResearchInput) => void;
+    handleTagsUpdate: (pmid: string, newTags: string[]) => void;
 }
 
 export const OrchestratorView: React.FC<OrchestratorViewProps> = ({
@@ -35,11 +37,12 @@ export const OrchestratorView: React.FC<OrchestratorViewProps> = ({
     prefilledTopic,
     handleFormSubmit,
     handleSaveReport,
-    handleTagsUpdate,
     handleNewSearch,
     onPrefillConsumed,
     handleViewReportFromHistory,
     handleStartNewReview,
+    onUpdateResearchInput,
+    handleTagsUpdate,
 }) => {
     const { knowledgeBase } = useKnowledgeBase();
     
@@ -48,7 +51,7 @@ export const OrchestratorView: React.FC<OrchestratorViewProps> = ({
             <InputForm
                 onSubmit={handleFormSubmit}
                 isLoading={isLoading}
-                settings={settings}
+                defaultSettings={settings.defaults}
                 prefilledTopic={prefilledTopic}
                 onPrefillConsumed={onPrefillConsumed}
             />
@@ -65,17 +68,22 @@ export const OrchestratorView: React.FC<OrchestratorViewProps> = ({
                     input={researchInput} 
                     isSaved={isCurrentReportSaved} 
                     onSave={handleSaveReport} 
-                    onTagsUpdate={handleTagsUpdate}
                     onNewSearch={handleNewSearch}
+                    onUpdateInput={onUpdateResearchInput}
+                    onTagsUpdate={handleTagsUpdate}
                 />
             )}
 
             {!isLoading && !error && !report && (
-                <Welcome 
-                    entries={knowledgeBase} 
-                    onViewReport={handleViewReportFromHistory} 
-                    onStartNewReview={handleStartNewReview}
-                />
+                 knowledgeBase.length > 0 ? (
+                    <OrchestratorDashboard 
+                        entries={knowledgeBase} 
+                        onViewReport={handleViewReportFromHistory} 
+                        onStartNewReview={handleStartNewReview}
+                    />
+                ) : (
+                    <Welcome />
+                )
             )}
         </div>
     );

@@ -9,8 +9,7 @@
     "react": "https://aistudiocdn.com/react@^19.1.1",
     "jspdf": "https://aistudiocdn.com/jspdf@^3.0.2",
     "chart.js": "https://aistudiocdn.com/chart.js@^4.5.0",
-    "marked": "https://aistudiocdn.com/marked@^16.2.1",
-    "chartjs-chart-treemap": "https://aistudiocdn.com/chartjs-chart-treemap@^3.1.0"
+    "marked": "https://aistudiocdn.com/marked@^16.2.1"
   }
 }
 </script>
@@ -21,9 +20,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#F6F8FA" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#0D1117" media="(prefers-color-scheme: dark)">
-    <title>AI Research Orchestrator</title>
+    <title>AI Research Orchestration Author</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://aistudiocdn.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -56,11 +56,11 @@
         --color-border: #eaf0f9;
         --color-text-primary: #1a202c;
         --color-text-secondary: #4a5568;
-        --color-brand-accent: #3b82f6;
-        --color-brand-primary: #2563eb;
-        --color-brand-secondary: #1d4ed8;
+        --color-brand-accent: #1d4ed8;
+        --color-brand-primary: #1e40af;
+        --color-brand-secondary: #1c3d99;
         --color-brand-text-on-accent: #ffffff;
-        --color-glow: rgba(59, 130, 246, 0.25);
+        --color-glow: rgba(29, 78, 216, 0.25);
         --shadow-sm: 0 1px 3px 0 rgba(60, 100, 170, 0.08), 0 1px 2px -1px rgba(60, 100, 170, 0.05);
         --shadow-md: 0 4px 6px -1px rgba(60, 100, 170, 0.1), 0 2px 4px -2px rgba(60, 100, 170, 0.06);
         --shadow-lg: 0 10px 15px -3px rgba(60, 100, 170, 0.12), 0 4px 6px -4px rgba(60, 100, 170, 0.07);
@@ -76,27 +76,24 @@
          background-color: var(--color-background);
          color: var(--color-text-primary);
        }
-       body::before {
-        content: '';
-        position: fixed;
-        top: 0; left: 0; right: 0; bottom: 0;
-        background-image: 
-            radial-gradient(ellipse 80% 80% at 10% -20%, var(--aurora-1), transparent),
-            radial-gradient(ellipse 80% 80% at 90% -20%, var(--aurora-2), transparent);
-        background-size: 250% 250%;
-        animation: aurora-glow 40s ease-in-out infinite;
-        opacity: 0.5;
-        z-index: -2;
-       }
        body::after {
         content: '';
         position: fixed;
-        top: 0; left: 0; right: 0; bottom: 0;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
         background-image: 
+            radial-gradient(ellipse 80% 80% at 10% -20%, var(--aurora-1), transparent),
+            radial-gradient(ellipse 80% 80% at 90% -20%, var(--aurora-2), transparent),
+            linear-gradient(var(--color-background), var(--color-background)),
             repeating-linear-gradient(0deg, var(--color-surface) 0, var(--color-surface) 1px, transparent 1px, transparent 2rem),
             repeating-linear-gradient(90deg, var(--color-surface) 0, var(--color-surface) 1px, transparent 1px, transparent 2rem);
+         background-blend-mode: normal, normal, normal, normal, normal;
+         background-size: 100% 100%, 100% 100%, 100% 100%, 2rem 2rem, 2rem 2rem;
+         background-position: 0 0, 0 0, 0 0, 0 0, 0 0;
          animation: pan-background 60s linear infinite;
-         opacity: 0.1;
+         opacity: 0.15;
          z-index: -1;
        }
        ::selection {
@@ -132,11 +129,18 @@
         background-clip: text;
         text-fill-color: transparent;
       }
-
-      @keyframes aurora-glow {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
+       
+      /* Accessibility: Utility class to hide elements visually but keep them available for screen readers */
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border-width: 0;
       }
       
       @keyframes pan-background {

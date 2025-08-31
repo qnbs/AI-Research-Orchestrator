@@ -16,7 +16,7 @@ const synthesisFocusText: { [key: string]: string } = {
   'gaps': 'Contradictions & Gaps'
 };
 
-export const OrchestratorDashboard: React.FC<OrchestratorDashboardProps> = ({ entries, onViewReport, onStartNewReview }) => {
+const DashboardComponent: React.FC<OrchestratorDashboardProps> = ({ entries, onViewReport, onStartNewReview }) => {
     const recentEntries = entries.slice(-3).reverse();
 
     if (recentEntries.length === 0) {
@@ -25,7 +25,7 @@ export const OrchestratorDashboard: React.FC<OrchestratorDashboardProps> = ({ en
                 <div className="relative mb-6">
                     <DocumentPlusIcon className="h-24 w-24 text-border"/>
                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                        <div className="w-16 h-16 rounded-full bg-brand-accent/10 animate-ping"></div>
+                        <div className="w-16 h-16 rounded-full bg-brand-accent/10 animate-pulseGlow" style={{ animationDuration: '3s' }}></div>
                     </div>
                 </div>
                 <h2 className="text-2xl font-bold text-text-primary mb-3">Start a New Literature Review</h2>
@@ -44,12 +44,12 @@ export const OrchestratorDashboard: React.FC<OrchestratorDashboardProps> = ({ en
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {recentEntries.map(entry => (
-                    <div key={entry.id} className="bg-surface border border-border rounded-lg p-5 flex flex-col justify-between transition-all duration-300 hover:shadow-xl hover:border-brand-accent/50 hover:-translate-y-1 group">
+                    <div key={entry.id} className="bg-surface border border-border rounded-lg p-5 flex flex-col justify-between transition-all duration-300 hover:shadow-xl hover:border-brand-accent/50 hover:-translate-y-1 group focus-within:ring-2 focus-within:ring-brand-accent focus-within:border-brand-accent/50">
                         <div>
                             <p className="text-xs text-text-secondary mb-2">Report from {new Date(parseInt(entry.id.split('-')[0])).toLocaleDateString()}</p>
                             <button
                                 onClick={() => onStartNewReview(entry.input.researchTopic)}
-                                className="font-semibold text-text-primary mb-3 h-20 overflow-hidden text-left group-hover:text-brand-accent focus:outline-none focus:text-brand-accent transition-colors w-full"
+                                className="font-semibold text-text-primary mb-3 h-20 overflow-hidden text-left group-hover:text-brand-accent focus:outline-none focus:text-brand-accent transition-colors w-full rounded"
                                 title={`Start new search for: ${entry.input.researchTopic}`}
                             >
                                 {entry.input.researchTopic}
@@ -71,3 +71,5 @@ export const OrchestratorDashboard: React.FC<OrchestratorDashboardProps> = ({ en
         </div>
     );
 };
+
+export const OrchestratorDashboard = React.memo(DashboardComponent);

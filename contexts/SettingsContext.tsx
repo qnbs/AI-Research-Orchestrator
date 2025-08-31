@@ -33,6 +33,7 @@ const defaultSettings: Settings = {
     researchAssistant: {
       autoFetchSimilar: true,
       autoFetchOnline: true,
+      authorSearchLimit: 100,
     },
     enableTldr: true,
   },

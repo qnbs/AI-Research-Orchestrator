@@ -1,9 +1,3 @@
-
-
-
-
-
-
 export const ARTICLE_TYPES = [
   'Randomized Controlled Trial', 
   'Meta-Analysis', 
@@ -47,7 +41,6 @@ export interface OverallKeyword {
 }
 
 export interface ResearchReport {
-  tldr?: string;
   generatedQueries: GeneratedQuery[];
   rankedArticles: RankedArticle[];
   synthesis: string;
@@ -58,7 +51,6 @@ export interface ResearchReport {
 
 export interface KnowledgeBaseEntry {
   id: string;
-  version?: '1.0'; // For future data migrations
   input: ResearchInput;
   report: ResearchReport;
 }
@@ -67,11 +59,10 @@ export type AggregatedArticle = RankedArticle & {
     sourceReportTopic: string;
 };
 
-export const CSV_EXPORT_COLUMNS: (keyof AggregatedArticle | 'URL' | 'PMCID_URL' | 'GOOGLE_SCHOLAR_URL' | 'SEMANTIC_SCHOLAR_URL')[] = [
+export const CSV_EXPORT_COLUMNS: (keyof AggregatedArticle | 'URL' | 'PMCID_URL')[] = [
     'pmid', 'pmcId', 'title', 'authors', 'journal', 'pubYear', 'summary', 
     'relevanceScore', 'relevanceExplanation', 'keywords', 'customTags', 
-    'sourceReportTopic', 'isOpenAccess', 'articleType', 'URL', 'PMCID_URL',
-    'GOOGLE_SCHOLAR_URL', 'SEMANTIC_SCHOLAR_URL'
+    'sourceReportTopic', 'isOpenAccess', 'articleType', 'URL', 'PMCID_URL'
 ];
 
 export interface Preset {
@@ -108,6 +99,7 @@ export interface Settings {
     researchAssistant: {
       autoFetchSimilar: boolean;
       autoFetchOnline: boolean;
+      authorSearchLimit: number;
     };
     enableTldr: boolean;
   };
@@ -156,12 +148,12 @@ export interface SimilarArticle {
 
 // Types for Google Search grounding results
 export interface WebContent {
-  uri?: string;
-  title?: string;
+  uri: string;
+  title: string;
 }
 
 export interface GroundingChunk {
-  web?: WebContent;
+  web: WebContent;
 }
 
 export interface OnlineFindings {
@@ -182,4 +174,33 @@ export interface KnowledgeBaseFilter {
     selectedArticleTypes: string[];
     selectedJournals: string[];
     showOpenAccessOnly: boolean;
+}
+
+// --- Author Analysis Types ---
+export interface AuthorCluster {
+  nameVariant: string;
+  primaryAffiliation: string;
+  topCoAuthors: string[];
+  coreTopics: string[];
+  publicationCount: number;
+  pmids: string[];
+}
+
+export interface AuthorMetrics {
+  hIndex: number | null;
+  totalCitations: number | null;
+  publicationCount: number;
+  citationsPerYear: { [year: string]: number };
+  publicationsAsFirstAuthor: number;
+  publicationsAsLastAuthor: number;
+}
+
+export interface AuthorProfile {
+  name: string;
+  affiliations: string[];
+  orcid?: string;
+  metrics: AuthorMetrics;
+  careerSummary: string;
+  coreConcepts: { concept: string; frequency: number }[];
+  publications: RankedArticle[];
 }

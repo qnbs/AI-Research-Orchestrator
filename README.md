@@ -1,75 +1,85 @@
-# AI Research Orchestrator
+> **Built with AI Studio** — [Start building](https://aistudio.google.com/apps?source=user) | [View App](https://ai.studio/apps/drive/19FB9X7ftbg4kXoKVBgPpsGwKDWU4Gvmp)
+>
+> The fastest path from prompt to production with Gemini.
 
-An expert system that manages a swarm of specialized AI agents to conduct comprehensive literature reviews using the PubMed database. It collects, curates, and synthesizes scientific research based on user-defined criteria, acting as an intelligent partner for researchers to accelerate discovery.
+# AI Research Orchestration Author
+
+An expert system for authoring comprehensive literature reviews by managing a swarm of specialized AI agents. It uses the PubMed database to collect, curate, and synthesize scientific research based on user-defined criteria, acting as an intelligent partner for researchers to accelerate discovery.
 
 This application significantly reduces the manual effort of literature reviews by allowing users to quickly identify relevant articles, extract key insights, and build a structured, searchable knowledge base.
 
-***
+![Application Screenshot Placeholder](https://via.placeholder.com/800x450.png?text=AI+Research+Orchestration+Author+UI)
 
-<!-- ENGLISH DOCUMENTATION -->
+***
 
 ## Table of Contents
 
-1.  [Key Features](#key-features)
-2.  [Core Workflows](#core-workflows)
+1.  [Core Features](#core-features)
+2.  [Primary Workflows](#primary-workflows)
 3.  [Technology Stack](#technology-stack)
 4.  [Getting Started](#getting-started)
-5.  [Usage Guide](#usage-guide)
+5.  [Privacy-First Architecture](#privacy-first-architecture)
 6.  [Important Disclaimers](#important-disclaimers)
 
 ---
 
-## Key Features
+## Core Features
 
 -   **🤖 AI Research Orchestration:** Generates comprehensive reports from a simple research topic. The AI formulates advanced PubMed queries, scans articles, and ranks them by relevance with detailed explanations.
 
 -   **💡 Quick Analysis with the Research Assistant:** Paste any text—a question, abstract, or topic—to get an instant summary, a list of key findings, and suggestions for related articles and online discussions.
 
--   **✨ AI-Powered Topic Refinement:** Instantly transform a broad research idea into a specific, well-structured topic using the "Refine with AI" feature, optimizing it for PubMed searches.
+-   **👤 Author Hub:** Analyze an author's intellectual development, collaborative ecosystem, and impact on their field by searching for their publications and generating an AI-powered career summary and profile.
 
 -   **🧠 Centralized & Intelligent Knowledge Base:** All articles from saved reports are aggregated into a single, searchable library. Duplicates are automatically removed, keeping the version with the highest relevance score.
 
 -   **🔍 Powerful Data Exploration:** The Knowledge Base features robust search, multi-faceted filtering (by keyword, report, custom tags, open-access status, journal), and multiple sorting options.
 
--   **📊 Data Visualization Dashboard:** Provides charts and graphs (treemaps, bar charts) to visualize trends in the knowledge base, such as top keywords, publication years, and top journals.
+-   **📊 Data Visualization Dashboard:** Provides charts and graphs to visualize trends in the knowledge base, such as publication years and top journals.
 
 -   **🛠️ Intelligent Knowledge Base Maintenance:**
     -   **Merge Duplicates:** Automatically find and merge duplicate articles, keeping only the entry with the highest relevance score.
     -   **Prune by Relevance:** Clean your library by removing articles below a specified relevance score threshold.
 
--   **💾 Sophisticated Data Management & Export:**
-    -   **Professional PDFs:** Generate comprehensive, professionally formatted PDFs for reports and knowledge base selections, featuring an elegant layout, clickable links, a cover page, and an auto-generated table of contents.
-    -   **Enhanced CSVs:** Export rich article data with extra fields (e.g., direct search links for Google Scholar) and configurable columns for spreadsheets.
-    -   **Rich Citations:** Get enhanced citation files (**BibTeX**, **RIS**) with configurable content (abstracts, keywords, tags) for reference managers like Zotero or Mendeley.
-    -   **Complete JSON Backups:** Back up and restore your entire research history, knowledge base, settings, and presets with a single click.
+-   **💾 Robust Data Management & Export:**
+    -   **PDF:** Generate comprehensive, professionally formatted PDFs for reports and knowledge base selections, with a customizable cover page and content sections.
+    -   **CSV:** Export raw article data with configurable columns and delimiters for spreadsheets.
+    -   **Citations:** Get enhanced citation files (**BibTeX**, **RIS**) with configurable content (abstracts, keywords, tags) for reference managers like Zotero or Mendeley.
+    -   **JSON:** Back up and restore your entire research history, knowledge base, or settings with a single click.
 
--   **⚙️ Deep Customization:** A detailed settings panel allows users to manage themes, AI behavior (persona, language, creativity), form defaults, and export configurations.
+-   **⚙️ Deep Customization:** A detailed settings panel allows users to manage themes, UI density, AI behavior (persona, language, creativity), form defaults, and export configurations.
 
--   **🚀 High-Performance Architecture:** Exports are processed in a background web worker, ensuring the user interface remains fast and responsive even when generating large reports.
+-   **✨ Modern, Cybernetic UI/UX:** A redesigned user interface with a technological design, subtle animations, and improved readability for a first-class user experience.
 
--   **🔒 Privacy-First by Design:** All data, including research history and settings, is stored **exclusively in your local browser storage**. No data is ever uploaded to a server, ensuring complete privacy.
+-   **⌨️ Command Palette:** Access any part of the application or perform key actions instantly with a powerful command palette (`⌘+K`).
 
-## Core Workflows
+---
 
-The application is built around two primary, interconnected workflows:
+## Primary Workflows
 
-### Workflow 1: The Comprehensive Literature Review (Orchestrator)
+The application is built around three primary, interconnected workflows:
 
+### 1. The Comprehensive Literature Review (Orchestrator)
 This is for deep dives into a new topic. You provide a broad research question, and the AI orchestrates a multi-agent process to build a full report. This is the primary way to populate your Knowledge Base with high-quality, relevant articles.
 
-### Workflow 2: The Quick Inquiry (Research Assistant)
-
+### 2. The Quick Inquiry (Research Assistant)
 This is for fast, focused analysis. You can paste an abstract to get a summary, ask a specific question, or explore a tangent without committing to a full review. If the results are promising, you can seamlessly transition the topic to the Orchestrator for a deep dive.
+
+### 3. The Author Analysis (Author Hub)
+This is for understanding the work of a specific researcher. Provide an author's name, and the AI will find their publications, disambiguate them from others with the same name, and generate a career profile, including their core topics and publication timeline.
+
+---
 
 ## Technology Stack
 
 -   **Frontend:** React, TypeScript
 -   **AI Model:** Google Gemini API (`@google/genai`)
--   **Performance:** Web Workers for background processing
 -   **Styling:** Tailwind CSS
--   **Charts:** Chart.js, react-chartjs-2, chartjs-chart-treemap
+-   **Charts:** Chart.js, react-chartjs-2
 -   **PDF Generation:** jsPDF
 -   **Module Loading:** No build step required; uses modern browser `importmap`.
+
+---
 
 ## Getting Started
 
@@ -82,64 +92,22 @@ This is a client-side web app that requires no build step and can be run by serv
 
 ### API Key Setup
 
-The Gemini API key is accessed via `process.env.API_KEY`. You must make this variable available to the browser before the application scripts load.
+The Gemini API key is accessed via `process.env.API_KEY`. You must make this variable available in the execution environment where the application is run.
 
-**For Local Development:**
+When deploying, you must use your hosting provider's system for managing environment variables. Configure an environment variable named `API_KEY` in your provider's settings.
 
-1.  **Serve the project folder:** Use a tool like the [Live Server](https://marketplace.visualstudio.com/items?itemName=ritwickdey.LiveServer) extension in VS Code, or run `npx serve` in your terminal from the project's root directory.
+---
 
-2.  **Provide the API Key:** Open `index.html` and add the following `<script>` tag inside the `<head>` section, **before** the `importmap` script:
+## Privacy-First Architecture
 
-    ```html
-    <!-- Add this script tag for local development -->
-    <script>
-      window.process = {
-        env: {
-          // IMPORTANT: Replace with your actual API key for local testing
-          API_KEY: 'YOUR_GEMINI_API_KEY_HERE'
-        }
-      };
-    </script>
-    ```
+This application is designed with privacy as a core principle.
 
-    > **⚠️ Warning:** Do not commit your API key to version control. This method is for local development only.
+-   **All data is stored exclusively in your local browser storage** (`localStorage`).
+-   This includes your research history, saved articles, custom tags, and all settings.
+-   **No information is ever uploaded to a server or shared.** Your research is completely private to the browser you are using.
+-   To back up your data or move it to another machine, you **must** use the export features in `Settings > Data Management & Privacy`. Clearing your browser data will permanently delete your work unless you have a backup.
 
-**For Deployment:**
-
-When deploying to a hosting provider (e.g., Vercel, Netlify), you must use their system for managing environment variables. Configure an environment variable named `API_KEY` and use your provider's features to inject it into your `index.html` at build/deploy time.
-
-> **🔒 Security Notice:** The API key is used directly by the client-side code. This is a potential security risk. It is **critical** that you implement security measures for your key as per Google's guidelines, such as restricting the key's usage to your specific domain.
-
-## Usage Guide
-
-1.  **The Orchestrator (Define & Launch):**
-    -   Navigate to the `Orchestrator` tab.
-    -   Define your topic with as much detail as possible. Use boolean-like operators (`AND`, `OR`, `NOT`) for precision.
-    -   Set filters for date range, article types, and the synthesis focus.
-    -   Click `Start Research` and monitor the AI's progress.
-    -   Once complete, review the report. If valuable, click `Save to Knowledge Base` to add its articles to your permanent library.
-
-2.  **The Research Assistant (Ask & Analyze):**
-    -   Go to the `Research` tab for quick queries.
-    -   Enter any text: a question, an abstract, or a topic you're exploring.
-    -   Click `Analyze` to receive a summary, key findings, and related content.
-    -   If the results are promising, use the "Start Full Review" button to transfer the topic to the Orchestrator.
-
-3.  **The Knowledge Base (Explore & Manage):**
-    -   Go to the `Knowledge Base` tab after saving reports.
-    -   Use the left-hand panel to filter your entire library of articles.
-    -   Click any article to open a side panel with its full details. Add custom tags here to organize your work.
-    -   Use the checkboxes to select articles for bulk actions like deletion or export.
-
-4.  **Dashboard & History (Visualize & Revisit):**
-    -   Navigate to the `Dashboard` (under the "More" menu) to see your knowledge base visualized.
-    -   Go to the `History` tab to browse, search, and revisit all your previously saved reports.
-
-5.  **Settings & Data (Customize & Export):**
-    -   Visit the `Settings` tab (gear icon).
-    -   Customize the theme, AI persona, and default form values.
-    -   Configure the content of your PDF, CSV, and citation exports.
-    -   In "Data & Privacy," export your entire history or settings to a JSON file for backup.
+---
 
 ## Important Disclaimers
 
@@ -149,160 +117,7 @@ When deploying to a hosting provider (e.g., Vercel, Netlify), you must use their
 -   This application is a tool to **accelerate research, not a substitute for scholarly review and critical evaluation.**
 -   **ALWAYS VERIFY CRITICAL INFORMATION BY READING THE ORIGINAL SOURCE ARTICLES PROVIDED.** Links to PubMed are included for every article.
 
-### 🔵 Data Privacy
+### 🔵 API Usage & Costs
 
--   All your data, including the knowledge base and settings, is stored **locally in your browser's storage** (`localStorage`).
--   **No data is ever uploaded to any external server.** Your research is completely private to you and the browser you are using.
--   To back up your data or move it to another machine, you **must** use the export features in `Settings > Data & Privacy`. Clearing your browser data will permanently delete your work unless you have a backup.
-
-***
-***
-
-<!-- GERMAN DOCUMENTATION -->
-
-## Inhaltsverzeichnis (Deutsch)
-
-1.  [Hauptfunktionen](#hauptfunktionen)
-2.  [Zentrale Arbeitsabläufe](#zentrale-arbeitsabläufe)
-3.  [Technologie-Stack](#technologie-stack-de)
-4.  [Erste Schritte](#erste-schritte)
-5.  [Bedienungsanleitung](#bedienungsanleitung)
-6.  [Wichtige Hinweise](#wichtige-hinweise)
-
----
-
-## Hauptfunktionen
-
--   **🤖 KI-Forschungsorchestrierung:** Erstellt umfassende Berichte aus einem einfachen Forschungsthema. Die KI formuliert erweiterte PubMed-Anfragen, scannt Artikel und ordnet sie nach Relevanz mit detaillierten Erklärungen.
-
--   **💡 Schnellanalyse mit dem Forschungsassistenten:** Fügen Sie einen beliebigen Text ein – eine Frage, einen Abstract oder ein Thema – um eine sofortige Zusammenfassung, eine Liste der wichtigsten Erkenntnisse und Vorschläge für verwandte Artikel und Online-Diskussionen zu erhalten.
-
--   **✨ KI-gestützte Themenverfeinerung:** Verwandeln Sie eine grobe Forschungsidee mit der Funktion "Mit KI verfeinern" sofort in ein spezifisches, gut strukturiertes Thema, das für PubMed-Suchen optimiert ist.
-
--   **🧠 Zentrale & Intelligente Wissensdatenbank:** Alle Artikel aus gespeicherten Berichten werden in einer einzigen, durchsuchbaren Bibliothek zusammengefasst. Duplikate werden automatisch entfernt, wobei die Version mit der höchsten Relevanzbewertung beibehalten wird.
-
--   **🔍 Leistungsstarke Datenexploration:** Die Wissensdatenbank bietet eine robuste Suche, vielseitige Filter (nach Schlüsselwort, Bericht, benutzerdefinierten Tags, Open-Access-Status, Journal) und mehrere Sortieroptionen.
-
--   **📊 Datenvisualisierungs-Dashboard:** Bietet Diagramme und Grafiken (Treemaps, Balkendiagramme) zur Visualisierung von Trends in der Wissensdatenbank, wie z. B. Top-Schlüsselwörter, Publikationsjahre und Top-Journale.
-
--   **🛠️ Intelligente Wissensdatenbank-Pflege:**
-    -   **Duplikate zusammenführen:** Finden und entfernen Sie automatisch doppelte Artikel und behalten Sie nur den Eintrag mit der höchsten Relevanzbewertung.
-    -   **Nach Relevanz bereinigen:** Bereinigen Sie Ihre Bibliothek, indem Sie Artikel unterhalb einer festgelegten Relevanzschwelle entfernen.
-
--   **💾 Hochentwickelte Datenverwaltung & Export:**
-    -   **Professionelle PDFs:** Erstellen Sie umfassende, professionell formatierte PDFs für Berichte und Auswahlen aus der Wissensdatenbank, mit elegantem Layout, klickbaren Links, einer Titelseite und einem automatisch generierten Inhaltsverzeichnis.
-    -   **Erweiterte CSVs:** Exportieren Sie reichhaltige Artikeldaten mit zusätzlichen Feldern (z. B. direkte Suchlinks für Google Scholar) und konfigurierbaren Spalten für Tabellenkalkulationen.
-    -   **Reichhaltige Zitate:** Erhalten Sie erweiterte Zitatdateien (**BibTeX**, **RIS**) mit konfigurierbarem Inhalt (Abstracts, Schlüsselwörter, Tags) für Literaturverwaltungsprogramme wie Zotero oder Mendeley.
-    -   **Vollständige JSON-Backups:** Sichern und stellen Sie Ihren gesamten Forschungsverlauf, Ihre Wissensdatenbank, Ihre Einstellungen und Voreinstellungen mit einem Klick wieder her.
-
--   **⚙️ Umfassende Anpassungsmöglichkeiten:** Ein detailliertes Einstellungsfeld ermöglicht es Benutzern, Themes, das KI-Verhalten (Persona, Sprache, Kreativität), Formular-Standardwerte und Exportkonfigurationen zu verwalten.
-
--   **🚀 Hochleistungsarchitektur:** Exporte werden in einem Hintergrund-Web-Worker verarbeitet, sodass die Benutzeroberfläche auch beim Erstellen großer Berichte schnell und reaktionsschnell bleibt.
-
--   **🔒 Datenschutz-orientiertes Design:** Alle Daten, einschließlich des Forschungsverlaufs und der Einstellungen, werden **ausschließlich im lokalen Speicher Ihres Browsers** abgelegt. Es werden niemals Daten auf einen Server hochgeladen, was vollständige Privatsphäre gewährleistet.
-
-## Zentrale Arbeitsabläufe
-
-Die Anwendung ist um zwei primäre, miteinander verbundene Arbeitsabläufe herum aufgebaut:
-
-### Arbeitsablauf 1: Die umfassende Literaturrecherche (Orchestrator)
-
-Dies ist für tiefgehende Recherchen zu einem neuen Thema. Sie geben eine breite Forschungsfrage an, und die KI orchestriert einen Multi-Agenten-Prozess, um einen vollständigen Bericht zu erstellen. Dies ist der primäre Weg, um Ihre Wissensdatenbank mit hochwertigen, relevanten Artikeln zu füllen.
-
-### Arbeitsablauf 2: Die schnelle Anfrage (Forschungsassistent)
-
-Dies ist für schnelle, fokussierte Analysen. Sie können einen Abstract einfügen, um eine Zusammenfassung zu erhalten, eine spezifische Frage stellen oder einen Nebengedanken erkunden, ohne sich auf eine vollständige Recherche festzulegen. Wenn die Ergebnisse vielversprechend sind, können Sie das Thema nahtlos an den Orchestrator für eine tiefgehende Analyse übergeben.
-
-## Technologie-Stack (DE)
-
--   **Frontend:** React, TypeScript
--   **KI-Modell:** Google Gemini API (`@google/genai`)
--   **Performance:** Web Workers für Hintergrundverarbeitung
--   **Styling:** Tailwind CSS
--   **Diagramme:** Chart.js, react-chartjs-2, chartjs-chart-treemap
--   **PDF-Erzeugung:** jsPDF
--   **Modul-Laden:** Kein Build-Schritt erforderlich; verwendet moderne Browser-`importmap`.
-
-## Erste Schritte
-
-Dies ist eine clientseitige Web-App, die keinen Build-Schritt erfordert und durch Bereitstellung der Dateien von jedem statischen Webserver aus ausgeführt werden kann.
-
-### Voraussetzungen
-
--   Ein moderner Webbrowser, der ES-Module und Import-Maps unterstützt (z. B. Chrome, Firefox, Safari, Edge).
--   Ein gültiger **API-Schlüssel** für die Google Gemini API.
-
-### API-Schlüssel-Einrichtung
-
-Der Gemini-API-Schlüssel wird über `process.env.API_KEY` aufgerufen. Sie müssen diese Variable dem Browser zur Verfügung stellen, bevor die Anwendungsskripte geladen werden.
-
-**Für die lokale Entwicklung:**
-
-1.  **Projektordner bereitstellen:** Verwenden Sie ein Tool wie die [Live Server](https://marketplace.visualstudio.com/items?itemName=ritwickdey.LiveServer)-Erweiterung in VS Code oder führen Sie `npx serve` in Ihrem Terminal im Stammverzeichnis des Projekts aus.
-
-2.  **API-Schlüssel bereitstellen:** Öffnen Sie `index.html` und fügen Sie den folgenden `<script>`-Tag im `<head>`-Abschnitt **vor** dem `importmap`-Skript hinzu:
-
-    ```html
-    <!-- Fügen Sie diesen Script-Tag für die lokale Entwicklung hinzu -->
-    <script>
-      window.process = {
-        env: {
-          // WICHTIG: Ersetzen Sie dies durch Ihren tatsächlichen API-Schlüssel für lokale Tests
-          API_KEY: 'IHR_GEMINI_API_SCHLÜSSEL_HIER'
-        }
-      };
-    </script>
-    ```
-
-    > **⚠️ Warnung:** Committen Sie Ihren API-Schlüssel nicht in die Versionskontrolle. Diese Methode ist nur für die lokale Entwicklung vorgesehen.
-
-**Für das Deployment:**
-
-Wenn Sie die Anwendung bei einem Hosting-Anbieter (z. B. Vercel, Netlify) bereitstellen, müssen Sie deren System zur Verwaltung von Umgebungsvariablen verwenden. Konfigurieren Sie eine Umgebungsvariable namens `API_KEY` und nutzen Sie die Funktionen Ihres Anbieters, um sie zur Build-/Deployment-Zeit in Ihre `index.html` einzufügen.
-
-> **🔒 Sicherheitshinweis:** Der API-Schlüssel wird direkt vom clientseitigen Code verwendet. Dies ist ein potenzielles Sicherheitsrisiko. Es ist **entscheidend**, dass Sie Sicherheitsmaßnahmen für Ihren Schlüssel gemäß den Richtlinien von Google implementieren, wie z. B. die Beschränkung der Schlüsselnutzung auf Ihre spezifische Domain.
-
-## Bedienungsanleitung
-
-1.  **Der Orchestrator (Definieren & Starten):**
-    -   Gehen Sie zum `Orchestrator`-Tab.
-    -   Definieren Sie Ihr Thema so detailliert wie möglich. Verwenden Sie boolesche Operatoren (`AND`, `OR`, `NOT`) für Präzision.
-    -   Legen Sie Filter für den Datumsbereich, Artikeltypen und den Fokus der Zusammenfassung fest.
-    -   Klicken Sie auf `Forschung starten` und verfolgen Sie den Fortschritt der KI.
-    -   Überprüfen Sie nach Abschluss den Bericht. Wenn er wertvoll ist, klicken Sie auf `In Wissensdatenbank speichern`, um die Artikel dauerhaft zu Ihrer Bibliothek hinzuzufügen.
-
-2.  **Der Forschungsassistent (Fragen & Analysieren):**
-    -   Gehen Sie für schnelle Anfragen zum `Forschung`-Tab.
-    -   Geben Sie einen beliebigen Text ein: eine Frage, einen Abstract oder ein Thema.
-    -   Klicken Sie auf `Analysieren`, um eine Zusammenfassung, wichtige Erkenntnisse und verwandte Inhalte zu erhalten.
-    -   Wenn die Ergebnisse vielversprechend sind, verwenden Sie die Schaltfläche "Vollständige Recherche starten", um das Thema an den Orchestrator zu übergeben.
-
-3.  **Die Wissensdatenbank (Erkunden & Verwalten):**
-    -   Gehen Sie zum `Knowledge Base`-Tab, nachdem Sie Berichte gespeichert haben.
-    -   Verwenden Sie das linke Panel, um Ihre gesamte Artikelbibliothek zu filtern.
-    -   Klicken Sie auf einen Artikel, um eine Seitenleiste mit allen Details zu öffnen. Fügen Sie hier benutzerdefinierte Tags hinzu, um Ihre Arbeit zu organisieren.
-    -   Verwenden Sie die Kontrollkästchen, um Artikel für Massenaktionen wie Löschen oder Exportieren auszuwählen.
-
-4.  **Dashboard & Verlauf (Visualisieren & Wiederfinden):**
-    -   Navigieren Sie zum `Dashboard` (unter dem Menü "Mehr"), um Ihre Wissensdatenbank visualisiert zu sehen.
-    -   Gehen Sie zum `Verlauf`-Tab, um alle zuvor gespeicherten Berichte zu durchsuchen und erneut aufzurufen.
-
-5.  **Einstellungen & Daten (Anpassen & Exportieren):**
-    -   Besuchen Sie den `Einstellungen`-Tab (Zahnrad-Symbol).
-    -   Passen Sie das Theme, die KI-Persona und die Standard-Formularwerte an.
-    -   Konfigurieren Sie den Inhalt Ihrer PDF-, CSV- und Zitat-Exporte.
-    -   Exportieren Sie unter "Daten & Datenschutz" Ihren gesamten Verlauf oder Ihre Einstellungen zur Sicherung in eine JSON-Datei.
-
-## Wichtige Hinweise
-
-### 🔴 KI-Genauigkeit
-
--   Die von der KI generierten Inhalte dienen nur zu Informations- und Entdeckungszwecken. Sie ist ein leistungsstarker Assistent, aber **nicht unfehlbar** und kann Ungenauigkeiten, Auslassungen oder "Halluzinationen" (Informationen, die plausibel klingen, aber falsch sind) enthalten.
--   Diese Anwendung ist ein Werkzeug zur **Beschleunigung der Forschung, kein Ersatz für wissenschaftliche Überprüfung und kritische Bewertung.**
--   **ÜBERPRÜFEN SIE KRITISCHE INFORMATIONEN IMMER, INDEM SIE DIE ORIGINALEN QUELLARTIKEL LESEN.** Links zu PubMed sind für jeden Artikel enthalten.
-
-### 🔵 Datenschutz
-
--   Alle Ihre Daten, einschließlich der Wissensdatenbank und der Einstellungen, werden **lokal im Speicher Ihres Browsers** (`localStorage`) gespeichert.
--   **Es werden niemals Daten auf einen externen Server hochgeladen.** Ihre Forschung ist für Sie und den von Ihnen verwendeten Browser völlig privat.
--   Um Ihre Daten zu sichern oder auf einen anderen Rechner zu übertragen, **müssen** Sie die Exportfunktionen unter `Einstellungen > Daten & Datenschutz` verwenden. Das Löschen Ihrer Browserdaten wird Ihre Arbeit dauerhaft löschen, es sei denn, Sie haben ein Backup.
+-   This application makes calls to the Google Gemini API, which may be subject to usage quotas and could incur costs depending on your plan.
+-   Be mindful of the settings that trigger API calls, such as generating reports, using the Research Assistant, and analyzing authors. Manage your API key and monitor your usage in the Google AI Studio dashboard.

@@ -17,7 +17,7 @@ import { ConfirmationModal } from './ConfirmationModal';
 import { GearIcon } from './icons/GearIcon';
 import { ExportIcon } from './icons/ExportIcon';
 import { ShieldCheckIcon } from './icons/ShieldCheckIcon';
-import { exportHistoryToJson, exportKnowledgeBaseToJson, exportCompleteBackup } from '../services/exportService';
+import { exportHistoryToJson, exportKnowledgeBaseToJson } from '../services/exportService';
 import { SettingCard } from './SettingCard';
 import { Toggle } from './Toggle';
 import { useKnowledgeBase } from '../contexts/KnowledgeBaseContext';
@@ -263,7 +263,7 @@ const AISettingsTab: React.FC<{
                     </div>
                 </div>
             </SettingCard>
-            <SettingCard title="Research Assistant" description="Configure the behavior of the quick analysis tool on the 'Research' tab.">
+            <SettingCard title="Research Assistant & Author Hub" description="Configure the behavior of the specialized research tools.">
                 <div className="space-y-4">
                     <Toggle checked={tempSettings.ai.researchAssistant.autoFetchSimilar} onChange={c => setTempSettings(s => ({...s, ai: {...s.ai, researchAssistant: {...s.ai.researchAssistant, autoFetchSimilar: c}}}))}>
                         Automatically Find Similar Articles
@@ -271,6 +271,16 @@ const AISettingsTab: React.FC<{
                     <Toggle checked={tempSettings.ai.researchAssistant.autoFetchOnline} onChange={c => setTempSettings(s => ({...s, ai: {...s.ai, researchAssistant: {...s.ai.researchAssistant, autoFetchOnline: c}}}))}>
                         Automatically Find Online Discussions
                     </Toggle>
+                     <div className="pt-4 border-t border-border">
+                        <div className="flex items-center gap-2">
+                            <label htmlFor="author-search-limit" className="font-medium text-text-primary">Author Search Limit</label>
+                            <Tooltip content="Controls the maximum number of publications to fetch for an author search. Higher values are more thorough but slower and use more API credits."><InfoIcon className="h-4 w-4 text-text-secondary cursor-help" /></Tooltip>
+                        </div>
+                        <div className="flex items-center mt-2">
+                            <input id="author-search-limit" type="range" min="50" max="500" step="50" value={tempSettings.ai.researchAssistant.authorSearchLimit} onChange={(e) => setTempSettings(s => ({ ...s, ai: { ...s.ai, researchAssistant: {...s.ai.researchAssistant, authorSearchLimit: parseInt(e.target.value)} } }))} className="w-full h-2 bg-border rounded-lg appearance-none cursor-pointer" />
+                            <span className="ml-4 font-mono text-sm text-text-primary bg-background border border-border rounded-md px-2 py-1 w-16 text-center">{tempSettings.ai.researchAssistant.authorSearchLimit}</span>
+                        </div>
+                    </div>
                 </div>
             </SettingCard>
             <SettingCard title="Form Defaults" description="Set default values for the Research Parameters form to speed up your workflow.">
@@ -473,13 +483,15 @@ const ExportSettingsTab: React.FC<{
 
 const DataSettingsTab: React.FC<{
     storageUsage: { totalMB: string; percentage: string; };
-    handleExport: (type: 'history' | 'kb' | 'complete' | 'settings') => void;
+    handleExportHistory: () => void;
+    handleExportKnowledgeBase: () => void;
     fileInputRef: React.RefObject<HTMLInputElement>;
+    handleExportSettings: () => void;
     settingsFileInputRef: React.RefObject<HTMLInputElement>;
     setModalState: (state: any) => void;
     knowledgeBaseLength: number;
     uniqueArticlesLength: number;
-}> = ({ storageUsage, handleExport, fileInputRef, settingsFileInputRef, setModalState, knowledgeBaseLength, uniqueArticlesLength }) => (
+}> = ({ storageUsage, handleExportHistory, handleExportKnowledgeBase, fileInputRef, handleExportSettings, settingsFileInputRef, setModalState, knowledgeBaseLength, uniqueArticlesLength }) => (
     <div className="space-y-8">
         <SettingCard icon={<ShieldCheckIcon className="w-6 h-6 text-green-500"/>} title="Local Storage Usage" description="This application stores all data in your browser. Monitor your usage here.">
             <div>
@@ -494,17 +506,14 @@ const DataSettingsTab: React.FC<{
         </SettingCard>
         <SettingCard title="Data Backup & Restore" description={`You have ${knowledgeBaseLength} reports containing ${uniqueArticlesLength} unique articles.`}>
             <div className="space-y-3">
-                 <button onClick={() => handleExport('complete')} className="w-full flex items-center justify-center text-sm px-3 py-2 rounded-md text-text-primary bg-brand-accent/20 hover:bg-brand-accent/30 border border-brand-accent/30 transition-colors"><DownloadIcon className="h-4 w-4 mr-2" />Export Complete Backup (Recommended)</button>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <button onClick={() => handleExport('history')} className="w-full flex items-center justify-center text-sm px-3 py-2 rounded-md text-text-primary bg-background hover:bg-surface-hover border border-border transition-colors"><DownloadIcon className="h-4 w-4 mr-2" />Export History</button>
-                    <button onClick={() => handleExport('kb')} className="w-full flex items-center justify-center text-sm px-3 py-2 rounded-md text-text-primary bg-background hover:bg-surface-hover border border-border transition-colors"><DownloadIcon className="h-4 w-4 mr-2" />Export Articles</button>
-                </div>
-                <button onClick={() => fileInputRef.current?.click()} className="w-full flex items-center justify-center text-sm px-3 py-2 rounded-md text-text-primary bg-background hover:bg-surface-hover border border-border transition-colors"><UploadIcon className="h-4 w-4 mr-2" />Import from Backup</button>
+                <button onClick={handleExportHistory} className="w-full flex items-center justify-center text-sm px-3 py-2 rounded-md text-text-primary bg-background hover:bg-surface-hover border border-border transition-colors"><DownloadIcon className="h-4 w-4 mr-2" />Export History (All Reports)</button>
+                    <button onClick={handleExportKnowledgeBase} className="w-full flex items-center justify-center text-sm px-3 py-2 rounded-md text-text-primary bg-background hover:bg-surface-hover border border-border transition-colors"><DownloadIcon className="h-4 w-4 mr-2" />Export Knowledge Base (All Articles)</button>
+                <button onClick={() => fileInputRef.current?.click()} className="w-full flex items-center justify-center text-sm px-3 py-2 rounded-md text-text-primary bg-background hover:bg-surface-hover border border-border transition-colors"><UploadIcon className="h-4 w-4 mr-2" />Import History / KB</button>
             </div>
         </SettingCard>
             <SettingCard title="Settings Backup & Restore" description="Backup your settings or transfer them to another browser.">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <button onClick={() => handleExport('settings')} className="w-full flex items-center justify-center text-sm px-3 py-2 rounded-md text-text-primary bg-background hover:bg-surface-hover border border-border transition-colors"><DownloadIcon className="h-4 w-4 mr-2" />Export Settings</button>
+                <button onClick={handleExportSettings} className="w-full flex items-center justify-center text-sm px-3 py-2 rounded-md text-text-primary bg-background hover:bg-surface-hover border border-border transition-colors"><DownloadIcon className="h-4 w-4 mr-2" />Export Settings</button>
                 <button onClick={() => settingsFileInputRef.current?.click()} className="w-full flex items-center justify-center text-sm px-3 py-2 rounded-md text-text-primary bg-background hover:bg-surface-hover border border-border transition-colors"><UploadIcon className="h-4 w-4 mr-2" />Import Settings</button>
             </div>
             </SettingCard>
@@ -522,31 +531,10 @@ const DataSettingsTab: React.FC<{
     </div>
 );
 
-const isObject = (item: any): item is object => {
-    return (item && typeof item === 'object' && !Array.isArray(item));
-};
-
-const deepMerge = (target: any, source: any) => {
-    let output = { ...target };
-    if (isObject(target) && isObject(source)) {
-        Object.keys(source).forEach(key => {
-            if (isObject(source[key])) {
-                if (!(key in target)) {
-                    output = { ...output, [key]: source[key] };
-                } else {
-                    output[key] = deepMerge(target[key], source[key]);
-                }
-            } else {
-                output = { ...output, [key]: source[key] };
-            }
-        });
-    }
-    return output;
-};
 
 const SettingsView: React.FC<SettingsViewProps> = ({ onClearKnowledgeBase, resetToken, onNavigateToHelpTab }) => {
     const { settings, updateSettings, resetSettings } = useSettings();
-    const kb = useKnowledgeBase();
+    const { knowledgeBase, uniqueArticles, onMergeDuplicates, addKnowledgeBaseEntries, onPruneByRelevance } = useKnowledgeBase();
     const { setNotification, setIsSettingsDirty } = useUI();
     const { presets, removePreset } = usePresets();
 
@@ -558,6 +546,9 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onClearKnowledgeBase, reset
     const settingsFileInputRef = useRef<HTMLInputElement>(null);
     const [errors, setErrors] = useState<{ formDefaults?: string }>({});
     const [storageUsage, setStorageUsage] = useState({ totalMB: '0.00', percentage: '0' });
+    const [indicatorStyle, setIndicatorStyle] = useState({});
+    const tabsRef = useRef<(HTMLButtonElement | null)[]>([]);
+    const [contentKey, setContentKey] = useState(activeTab);
 
     useEffect(() => {
         try {
@@ -575,13 +566,35 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onClearKnowledgeBase, reset
         } catch (e) {
             console.error("Could not calculate storage usage:", e);
         }
-    }, [kb.knowledgeBase, presets]);
+    }, [knowledgeBase, presets]);
 
 
     const articlesToPruneCount = useMemo(() => {
-        if (!kb.uniqueArticles) return 0;
-        return kb.uniqueArticles.filter(a => a.relevanceScore < pruneScore).length;
-    }, [pruneScore, kb.uniqueArticles]);
+        if (!uniqueArticles) return 0;
+        return uniqueArticles.filter(a => a.relevanceScore < pruneScore).length;
+    }, [pruneScore, uniqueArticles]);
+
+    const isObject = (item: any): item is object => {
+        return (item && typeof item === 'object' && !Array.isArray(item));
+    };
+
+    const deepMerge = (target: any, source: any) => {
+        let output = { ...target };
+        if (isObject(target) && isObject(source)) {
+            Object.keys(source).forEach(key => {
+                if (isObject(source[key])) {
+                    if (!(key in target)) {
+                        output = { ...output, [key]: source[key] };
+                    } else {
+                        output[key] = deepMerge(target[key], source[key]);
+                    }
+                } else {
+                    output = { ...output, [key]: source[key] };
+                }
+            });
+        }
+        return output;
+    };
     
     useEffect(() => {
       setTempSettings(settings);
@@ -643,37 +656,22 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onClearKnowledgeBase, reset
         setTempSettings(settings);
     };
     
-    const handleExport = async (type: 'history' | 'kb' | 'complete' | 'settings') => {
-        try {
-            switch (type) {
-                case 'history':
-                     if (kb.knowledgeBase.length === 0) throw new Error("History is empty.");
-                     await exportHistoryToJson(kb.knowledgeBase);
-                     setNotification({ id: Date.now(), message: "History exported successfully.", type: 'success' });
-                    break;
-                case 'kb':
-                    if (kb.uniqueArticles.length === 0) throw new Error("Knowledge Base is empty.");
-                    await exportKnowledgeBaseToJson(kb.uniqueArticles);
-                    setNotification({ id: Date.now(), message: "Knowledge Base articles exported.", type: 'success' });
-                    break;
-                case 'complete':
-                     if (kb.knowledgeBase.length === 0 && presets.length === 0) throw new Error("No data to back up.");
-                     await exportCompleteBackup(settings, presets, kb.knowledgeBase);
-                     setNotification({ id: Date.now(), message: "Complete backup exported.", type: 'success' });
-                    break;
-                case 'settings':
-                     const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(settings))}`;
-                     const link = document.createElement("a");
-                     link.href = jsonString;
-                     link.download = `ai_research_settings_${new Date().toISOString().split('T')[0]}.json`;
-                     link.click();
-                     setNotification({ id: Date.now(), message: "Settings exported.", type: 'success' });
-                    break;
-            }
-        } catch (error) {
-            const message = error instanceof Error ? error.message : "An unknown error occurred.";
-            setNotification({ id: Date.now(), message: `Export failed: ${message}`, type: 'error' });
+    const handleExportHistory = () => {
+        if (knowledgeBase.length === 0) {
+            setNotification({id: Date.now(), message: "History is empty. Nothing to export.", type: 'error'});
+            return;
         }
+        exportHistoryToJson(knowledgeBase);
+        setNotification({id: Date.now(), message: "History exported successfully.", type: 'success'});
+    };
+
+    const handleExportKnowledgeBase = () => {
+        if (uniqueArticles.length === 0) {
+            setNotification({id: Date.now(), message: "Knowledge Base is empty. Nothing to export.", type: 'error'});
+            return;
+        }
+        exportKnowledgeBaseToJson(uniqueArticles);
+        setNotification({id: Date.now(), message: "Full Knowledge Base (all unique articles) exported successfully.", type: 'success'});
     };
 
 
@@ -685,19 +683,13 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onClearKnowledgeBase, reset
         reader.onload = (event) => {
             try {
                 const importedData = JSON.parse(event.target?.result as string);
-                if (!importedData.meta || !importedData.data) throw new Error("Invalid backup file format: missing meta or data keys.");
+                // Check for new and old formats
+                const dataToImport = importedData.data ? importedData.data : importedData;
 
-                const dataToImport = importedData.data;
-
-                if (importedData.meta.type === 'complete-backup') {
-                    if (dataToImport.knowledgeBase) kb.addKnowledgeBaseEntries(dataToImport.knowledgeBase);
-                    if (dataToImport.settings) handleConfirmImportSettings(dataToImport.settings);
-                    // Presets import could be added here if preset context supports it
-                    setNotification({id: Date.now(), message: `Complete backup restored successfully.`, type: 'success'});
-                } else if (Array.isArray(dataToImport) && dataToImport.every(item => ('input' in item && 'report' in item) || ('pmid' in item))) {
+                if (Array.isArray(dataToImport) && dataToImport.every(item => 'input' in item && 'report' in item)) {
                     setModalState({ type: 'import', data: dataToImport });
                 } else {
-                    throw new Error("Invalid file format. The file must be a valid backup file.");
+                    throw new Error("Invalid file format. The file must be an array of Knowledge Base entries.");
                 }
             } catch (error) {
                  setNotification({id: Date.now(), message: `Import failed: ${error instanceof Error ? error.message : "Could not read file."}`, type: 'error'});
@@ -708,6 +700,15 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onClearKnowledgeBase, reset
         reader.readAsText(file);
     };
 
+    const handleExportSettings = () => {
+        const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(settings))}`;
+        const link = document.createElement("a");
+        link.href = jsonString;
+        const date = new Date().toISOString().split('T')[0];
+        link.download = `ai_research_orchestrator_settings_${date}.json`;
+        link.click();
+        setNotification({id: Date.now(), message: "Settings exported successfully.", type: 'success'});
+    };
 
     const handleImportSettings = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -738,7 +739,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onClearKnowledgeBase, reset
     };
 
     const handlePrune = () => {
-        kb.onPruneByRelevance(pruneScore);
+        onPruneByRelevance(pruneScore);
         setModalState(null);
     };
     
@@ -759,8 +760,25 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onClearKnowledgeBase, reset
         { id: 'ai', name: 'AI', icon: SparklesIcon },
         { id: 'knowledgeBase', name: 'Knowledge Base', icon: DatabaseIcon },
         { id: 'export', name: 'Export', icon: ExportIcon },
-        { id: 'data', name: 'Data & Privacy', icon: ShieldCheckIcon },
+        { id: 'data', name: 'Data Management & Privacy', icon: ShieldCheckIcon },
     ];
+    
+    const handleTabChange = (tab: SettingsTab) => {
+        setActiveTab(tab);
+        setContentKey(tab); // Trigger animation by changing key
+    };
+
+    useEffect(() => {
+        const activeTabIndex = tabs.findIndex(t => t.id === activeTab);
+        const activeTabEl = tabsRef.current[activeTabIndex];
+        if (activeTabEl) {
+            setIndicatorStyle({
+                left: activeTabEl.offsetLeft,
+                width: activeTabEl.offsetWidth,
+                height: activeTabEl.offsetHeight,
+            });
+        }
+    }, [activeTab, tabs]);
 
     const renderActiveTab = () => {
         switch (activeTab) {
@@ -775,12 +793,14 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onClearKnowledgeBase, reset
             case 'data':
                 return <DataSettingsTab 
                     storageUsage={storageUsage}
-                    handleExport={handleExport}
+                    handleExportHistory={handleExportHistory}
+                    handleExportKnowledgeBase={handleExportKnowledgeBase}
                     fileInputRef={fileInputRef}
+                    handleExportSettings={handleExportSettings}
                     settingsFileInputRef={settingsFileInputRef}
                     setModalState={setModalState}
-                    knowledgeBaseLength={kb.knowledgeBase.length}
-                    uniqueArticlesLength={kb.uniqueArticles.length}
+                    knowledgeBaseLength={knowledgeBase.length}
+                    uniqueArticlesLength={uniqueArticles.length}
                 />;
             default:
                 return null;
@@ -803,20 +823,28 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onClearKnowledgeBase, reset
             <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                 <aside className="md:col-span-1">
                     <nav className="space-y-1 sticky top-24" role="tablist" aria-label="Settings categories">
-                        {tabs.map(tab => (
-                            <button 
-                                key={tab.id}
-                                id={`tab-${tab.id}`}
-                                role="tab"
-                                aria-selected={activeTab === tab.id}
-                                aria-controls={`tabpanel-${tab.id}`}
-                                onClick={() => setActiveTab(tab.id as SettingsTab)} 
-                                className={`flex items-center w-full text-left px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${activeTab === tab.id ? 'bg-brand-accent text-brand-text-on-accent' : 'text-text-primary bg-surface hover:bg-border'}`}
-                            >
-                                <tab.icon className="h-5 w-5 mr-3 flex-shrink-0" />
-                                <span>{tab.name}</span>
-                            </button>
-                        ))}
+                        <div className="relative">
+                            {tabs.map((tab, index) => (
+                                <button 
+                                    key={tab.id}
+                                    ref={el => { tabsRef.current[index] = el; }}
+                                    id={`tab-${tab.id}`}
+                                    role="tab"
+                                    aria-selected={activeTab === tab.id}
+                                    aria-controls={`tabpanel-${tab.id}`}
+                                    onClick={() => handleTabChange(tab.id as SettingsTab)} 
+                                    className={`relative flex items-center w-full text-left px-3 py-2.5 rounded-md text-sm font-medium transition-colors z-10 ${activeTab === tab.id ? 'text-brand-text-on-accent' : 'text-text-primary hover:bg-surface-hover'}`}
+                                >
+                                    <tab.icon className="h-5 w-5 mr-3 flex-shrink-0" />
+                                    <span>{tab.name}</span>
+                                </button>
+                            ))}
+                            <div
+                                className="absolute top-0 bg-brand-accent rounded-md transition-all duration-300 ease-in-out"
+                                style={indicatorStyle}
+                                aria-hidden="true"
+                            />
+                        </div>
                          <div className="pt-4 mt-4 border-t border-border">
                             <button
                                 onClick={() => onNavigateToHelpTab('about')}
@@ -837,7 +865,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onClearKnowledgeBase, reset
                 </aside>
 
                 <main className="md:col-span-3">
-                     <div role="tabpanel" id={`tabpanel-${activeTab}`} aria-labelledby={`tab-${activeTab}`}>
+                     <div key={contentKey} role="tabpanel" id={`tabpanel-${activeTab}`} aria-labelledby={`tab-${activeTab}`} className="animate-fadeIn">
                         {renderActiveTab()}
                     </div>
                     <input type="file" ref={fileInputRef} onChange={handleImport} accept=".json" className="hidden" />
@@ -851,7 +879,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onClearKnowledgeBase, reset
                         onConfirm={() => { onClearKnowledgeBase(); setModalState(null); }}
                         onCancel={() => setModalState(null)}
                         title="Clear Knowledge Base?"
-                        message={<>Are you sure you want to delete all <strong>{kb.uniqueArticles.length}</strong> articles from your knowledge base? This action cannot be undone.</>}
+                        message={<>Are you sure you want to delete all <strong>{uniqueArticles.length}</strong> articles from your knowledge base? This action cannot be undone.</>}
                         confirmText="Yes, Delete All"
                     />
                 )}
@@ -867,11 +895,11 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onClearKnowledgeBase, reset
                 {(modalState.type === 'import') && (
                     <ConfirmationModal
                         title="Import Knowledge Base"
-                        message={<>You are about to import <strong>{modalState.data.length}</strong> new reports/articles. This will be added to your existing knowledge base. Do you want to continue?</>}
+                        message={<>You are about to import <strong>{modalState.data.length}</strong> new reports. This will be added to your existing knowledge base. Do you want to continue?</>}
                         confirmText="Yes, Import"
                         confirmButtonClass="bg-brand-accent hover:bg-opacity-90"
                         titleClass="text-brand-accent"
-                        onConfirm={() => { kb.addKnowledgeBaseEntries(modalState.data); setModalState(null); }}
+                        onConfirm={() => { addKnowledgeBaseEntries(modalState.data); setModalState(null); }}
                         onCancel={() => setModalState(null)}
                     />
                 )}
@@ -898,7 +926,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onClearKnowledgeBase, reset
                         confirmText="Yes, Merge"
                         confirmButtonClass="bg-brand-accent hover:bg-opacity-90"
                         titleClass="text-brand-accent"
-                        onConfirm={() => { kb.onMergeDuplicates(); setModalState(null); }}
+                        onConfirm={() => { onMergeDuplicates(); setModalState(null); }}
                         onCancel={() => setModalState(null)}
                     />
                  )}

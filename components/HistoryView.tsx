@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 import type { KnowledgeBaseEntry } from '../types';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 import { HistoryIcon } from './icons/HistoryIcon';
@@ -8,8 +8,10 @@ import { PencilIcon } from './icons/PencilIcon';
 import { CheckCircleIcon } from './icons/CheckCircleIcon';
 import { XCircleIcon } from './icons/XCircleIcon';
 import { SearchIcon } from './icons/SearchIcon';
-import { useSettings } from '../contexts/SettingsContext';
 import { useKnowledgeBase } from '../contexts/KnowledgeBaseContext';
+import { EmptyState } from './EmptyState';
+import { DocumentPlusIcon } from './icons/DocumentPlusIcon';
+import { useUI } from '../contexts/UIContext';
 
 interface HistoryViewProps {
   onViewReport: (entry: KnowledgeBaseEntry) => void;
@@ -89,108 +91,155 @@ const QuickViewModal: React.FC<{ entry: KnowledgeBaseEntry; onClose: () => void;
     );
 };
 
+
+interface HistoryListItemProps {
+    entry: KnowledgeBaseEntry;
+    onViewReport: (entry: KnowledgeBaseEntry) => void;
+    onQuickView: (entry: KnowledgeBaseEntry) => void;
+    onStartEdit: (entry: {id: string, title: string}) => void;
+    isEditing: boolean;
+    editingTitle: string;
+    onTitleChange: (title: string) => void;
+    onSaveTitle: () => void;
+    onCancelEdit: () => void;
+    onEditKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+}
+
+const HistoryListItem = memo<HistoryListItemProps>(({ entry, onViewReport, onQuickView, onStartEdit, isEditing, editingTitle, onTitleChange, onSaveTitle, onCancelEdit, onEditKeyDown }) => {
+    return (
+        <li className="p-4 sm:p-6 hover:bg-surface-hover transition-colors duration-150 group focus-within:ring-2 focus-within:ring-brand-accent focus-within:ring-offset-2 focus-within:ring-offset-surface rounded-md">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex-grow min-w-0">
+                    {isEditing ? (
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="text"
+                                value={editingTitle}
+                                onChange={(e) => onTitleChange(e.target.value)}
+                                onKeyDown={onEditKeyDown}
+                                className="w-full bg-background border border-brand-accent rounded-md py-1 px-2 text-base font-semibold focus:outline-none focus:ring-2 focus:ring-brand-accent"
+                                autoFocus
+                            />
+                            <button onClick={onSaveTitle} className="p-1.5 rounded-full text-green-400 hover:bg-green-500/10"><CheckCircleIcon className="h-5 w-5"/></button>
+                            <button onClick={onCancelEdit} className="p-1.5 rounded-full text-red-400 hover:bg-red-500/10"><XCircleIcon className="h-5 w-5"/></button>
+                        </div>
+                    ) : (
+                        <h3 className="text-lg font-semibold text-text-primary truncate" title={entry.input.researchTopic}>
+                            {entry.input.researchTopic}
+                        </h3>
+                    )}
+                    <p className="text-xs text-text-secondary mt-1">
+                        Created on {new Date(parseInt(entry.id.split('-')[0])).toLocaleString()}
+                    </p>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                    <button onClick={() => onStartEdit({ id: entry.id, title: entry.input.researchTopic })} className="p-2 rounded-md text-text-secondary hover:bg-background hover:text-brand-accent transition-colors" aria-label="Edit title">
+                        <PencilIcon className="h-4 w-4" />
+                    </button>
+                    <button onClick={() => onQuickView(entry)} className="p-2 rounded-md text-text-secondary hover:bg-background hover:text-brand-accent transition-colors" aria-label="Quick view">
+                        <EyeIcon className="h-5 w-5" />
+                    </button>
+                    <button onClick={() => onViewReport(entry)} className="inline-flex items-center px-3 py-1.5 border border-border text-xs font-medium rounded-md shadow-sm text-text-primary bg-surface hover:bg-surface-hover hover:border-brand-accent transition-colors">
+                        View Full Report
+                    </button>
+                </div>
+            </div>
+            <div className="mt-4 pt-4 border-t border-border/50 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-text-secondary">
+                <div><strong>{entry.report.rankedArticles.length}</strong> articles</div>
+                <div><strong>Focus:</strong> {synthesisFocusText[entry.input.synthesisFocus]}</div>
+                <div><strong>Date Range:</strong> {entry.input.dateRange === 'any' ? 'Any time' : `Last ${entry.input.dateRange} years`}</div>
+            </div>
+        </li>
+    );
+});
+
 export const HistoryView: React.FC<HistoryViewProps> = ({ onViewReport }) => {
-  const { settings } = useSettings();
   const { knowledgeBase, updateReportTitle } = useKnowledgeBase();
+  const { setCurrentView } = useUI();
   const [quickViewEntry, setQuickViewEntry] = useState<KnowledgeBaseEntry | null>(null);
   const [editingEntry, setEditingEntry] = useState<{ id: string; title: string } | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const handleEdit = (entry: KnowledgeBaseEntry) => {
-    setEditingEntry({ id: entry.id, title: entry.input.researchTopic });
+  const filteredEntries = knowledgeBase
+    .filter(entry => entry.input.researchTopic.toLowerCase().includes(searchTerm.toLowerCase()))
+    .sort((a, b) => parseInt(b.id.split('-')[0]) - parseInt(a.id.split('-')[0]));
+    
+  const handleEditKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      if (editingEntry) {
+        updateReportTitle(editingEntry.id, editingEntry.title);
+        setEditingEntry(null);
+      }
+    } else if (e.key === 'Escape') {
+      setEditingEntry(null);
+    }
   };
-
-  const handleSaveEdit = () => {
-      if (editingEntry && editingEntry.title.trim()) {
-          updateReportTitle(editingEntry.id, editingEntry.title.trim());
-          setEditingEntry(null);
+  
+  const handleSaveTitle = () => {
+      if (editingEntry) {
+        updateReportTitle(editingEntry.id, editingEntry.title);
+        setEditingEntry(null);
       }
   };
 
-  const handleCancelEdit = () => {
-      setEditingEntry(null);
-  };
-  
-  const filteredEntries = knowledgeBase
-    .filter(entry =>
-        entry.input.researchTopic.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-    .sort((a, b) => parseInt(b.id.split('-')[0]) - parseInt(a.id.split('-')[0]));
-  
-  const densityClasses = settings.appearance.density === 'compact'
-    ? { container: 'p-2', title: 'text-sm', text: 'text-xs' }
-    : { container: 'p-4', title: 'text-base', text: 'text-xs' };
+  if (knowledgeBase.length === 0) {
+      return (
+            <div className="h-[calc(100vh-200px)]">
+                <EmptyState
+                    icon={<HistoryIcon className="h-24 w-24" />}
+                    title="No History Yet"
+                    message="Your saved reports will appear here. Start a new search on the Orchestrator tab to begin building your research history."
+                    action={{
+                        text: "Start Research",
+                        onClick: () => setCurrentView('orchestrator'),
+                        icon: <DocumentPlusIcon className="h-5 w-5" />
+                    }}
+                />
+            </div>
+        );
+  }
 
   return (
     <div className="animate-fadeIn">
       <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold text-brand-accent">Research History</h1>
-        <p className="mt-2 text-lg text-text-secondary">Browse and revisit all your previously generated and saved reports.</p>
+        <h1 className="text-4xl font-bold brand-gradient-text">Report History</h1>
+        <p className="mt-2 text-lg text-text-secondary">Review, manage, and revisit your past research reports.</p>
       </div>
 
-      {knowledgeBase.length === 0 ? (
-        <div className="text-center py-16">
-            <HistoryIcon className="h-24 w-24 text-border mx-auto mb-6" />
-            <p className="text-lg font-semibold text-text-primary">No reports in your history yet.</p>
-            <p className="text-text-secondary mt-1">Save a report from the Orchestrator tab to start building your history.</p>
-        </div>
-      ) : (
-        <>
-        <div className="relative mb-6 max-w-lg mx-auto">
-            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-text-secondary" />
-            <input
-                type="text"
-                placeholder={`Search ${knowledgeBase.length} reports...`}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-surface border border-border rounded-md py-2 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-brand-accent"
-            />
-        </div>
-        <div className="bg-surface border border-border rounded-lg shadow-lg overflow-hidden">
-            <div className="divide-y divide-border">
-                {filteredEntries.map(entry => (
-                    <div key={entry.id} className={`flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:bg-surface-hover transition-colors ${densityClasses.container}`}>
-                        <div className="flex-1 min-w-0">
-                            {editingEntry?.id === entry.id ? (
-                                <div className="flex items-center gap-2">
-                                    <input
-                                        type="text"
-                                        value={editingEntry.title}
-                                        onChange={(e) => setEditingEntry({ ...editingEntry, title: e.target.value })}
-                                        className="block w-full bg-background border border-border rounded-md shadow-sm py-1.5 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent sm:text-sm"
-                                        onKeyDown={(e) => e.key === 'Enter' && handleSaveEdit()}
-                                        autoFocus
-                                    />
-                                    <button onClick={handleSaveEdit} className="p-1.5 text-green-400 hover:bg-background rounded-full" aria-label="Save title"><CheckCircleIcon className="h-5 w-5"/></button>
-                                    <button onClick={handleCancelEdit} className="p-1.5 text-red-400 hover:bg-background rounded-full" aria-label="Cancel edit"><XCircleIcon className="h-5 w-5"/></button>
-                                </div>
-                            ) : (
-                                <h3 className={`font-semibold text-text-primary truncate ${densityClasses.title}`} title={entry.input.researchTopic}>{entry.input.researchTopic}</h3>
-                            )}
-                            <p className={`mt-1 ${densityClasses.text} text-text-secondary`}>
-                                Generated: {new Date(parseInt(entry.id.split('-')[0])).toLocaleString()} | {entry.report.rankedArticles.length} articles | Focus: {synthesisFocusText[entry.input.synthesisFocus] || 'N/A'}
-                            </p>
-                        </div>
-                        <div className="flex items-center gap-2 flex-shrink-0 self-start sm:self-center">
-                            <button onClick={() => handleEdit(entry)} className="p-2 rounded-md text-text-secondary hover:bg-background hover:text-text-primary transition-colors" aria-label="Edit title"><PencilIcon className="h-4 w-4"/></button>
-                            <button onClick={() => setQuickViewEntry(entry)} className="p-2 rounded-md text-text-secondary hover:bg-background hover:text-text-primary transition-colors" aria-label="Quick view"><EyeIcon className="h-5 w-5"/></button>
-                            <button onClick={() => onViewReport(entry)} className="px-3 py-1.5 border border-border text-xs font-medium rounded-md shadow-sm text-text-primary bg-surface hover:bg-surface-hover hover:shadow-md hover:shadow-brand-accent/20 transition-all duration-200">View Full Report</button>
-                        </div>
-                    </div>
-                ))}
-                 {filteredEntries.length === 0 && (
-                     <div className="text-center p-8 text-text-secondary">
-                        No reports match your search.
-                     </div>
-                 )}
-            </div>
-        </div>
-        </>
-      )}
+      <div className="max-w-3xl mx-auto mb-6">
+          <div className="relative">
+              <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-text-secondary" />
+              <input 
+                  type="text"
+                  placeholder={`Search ${knowledgeBase.length} reports...`}
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                  className="w-full bg-surface border border-border rounded-md py-2 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-brand-accent"
+              />
+          </div>
+      </div>
 
-      {quickViewEntry && (
-          <QuickViewModal entry={quickViewEntry} onClose={() => setQuickViewEntry(null)} onViewReport={onViewReport} />
-      )}
+      <div className="bg-surface border border-border rounded-lg shadow-lg max-w-4xl mx-auto">
+        <ul className="divide-y divide-border">
+          {filteredEntries.map(entry => (
+             <HistoryListItem
+                key={entry.id}
+                entry={entry}
+                onViewReport={onViewReport}
+                onQuickView={setQuickViewEntry}
+                onStartEdit={setEditingEntry}
+                isEditing={editingEntry?.id === entry.id}
+                editingTitle={editingEntry?.id === entry.id ? editingEntry.title : ''}
+                onTitleChange={(title) => editingEntry && setEditingEntry({ ...editingEntry, title })}
+                onSaveTitle={handleSaveTitle}
+                onCancelEdit={() => setEditingEntry(null)}
+                onEditKeyDown={handleEditKeyDown}
+            />
+          ))}
+        </ul>
+      </div>
+
+      {quickViewEntry && <QuickViewModal entry={quickViewEntry} onClose={() => setQuickViewEntry(null)} onViewReport={onViewReport} />}
     </div>
   );
 };

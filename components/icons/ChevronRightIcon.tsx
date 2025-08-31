@@ -1,7 +1,6 @@
-
 import React from 'react';
 
-export const ArrowUpIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+export const ChevronRightIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     fill="none"
@@ -10,6 +9,6 @@ export const ArrowUpIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     stroke="currentColor"
     {...props}
   >
-    <path strokeLinecap="round" strokeLinejoin="round" d="M12 19V5m-7 7l7-7 7 7" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
   </svg>
 );

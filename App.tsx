@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { OnboardingView } from './components/OnboardingView';
 import { Header } from './components/Header';
-import { ResearchInput, ResearchReport, KnowledgeBaseFilter } from './types';
+import { ResearchInput, ResearchReport, KnowledgeBaseFilter, KnowledgeBaseEntry, AggregatedArticle } from './types';
 import { KnowledgeBaseView } from './components/KnowledgeBaseView';
 import SettingsView from './components/SettingsView';
 import { SettingsProvider, useSettings } from './contexts/SettingsContext';
@@ -12,30 +12,36 @@ import { DashboardView } from './components/DashboardView';
 import { ConfirmationModal } from './components/ConfirmationModal';
 import { HistoryView } from './components/HistoryView';
 import { ResearchView } from './components/ResearchView';
+import { AuthorsView } from './components/AuthorsView';
 import { useResearchAssistant } from './hooks/useResearchAssistant';
-import { generateResearchReport, PubMedAPIError, GeminiAPIError, OrchestrationError } from './services/geminiService';
+import { generateResearchReport } from './services/geminiService';
 import { OrchestratorView } from './components/OrchestratorView';
 import { KnowledgeBaseProvider, useKnowledgeBase } from './contexts/KnowledgeBaseContext';
 import { UIProvider, useUI } from './contexts/UIContext';
 import type { View } from './contexts/UIContext';
-import { BackToTopButton } from './components/BackToTopButton';
+import { CommandPalette } from './components/CommandPalette';
+import { exportKnowledgeBaseToPdf, exportToCsv, exportCitations } from './services/exportService';
+import { QuickAddModal } from './components/QuickAddModal';
 
 
 const AppLayout: React.FC = () => {
   // Orchestrator State
   const [researchInput, setResearchInput] = useState<ResearchInput | null>(null);
+  const [localResearchInput, setLocalResearchInput] = useState<ResearchInput | null>(null); // For editable title
   const [report, setReport] = useState<ResearchReport | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [currentPhase, setCurrentPhase] = useState<string>('');
   
   // App-wide State from contexts
-  const { settings, updateSettings } = useSettings();
-  const { currentView, notification, setNotification, isSettingsDirty, setIsSettingsDirty, pendingNavigation, setPendingNavigation, setCurrentView, showOnboarding, setShowOnboarding } = useUI();
-  const kb = useKnowledgeBase();
-
+  const { settings } = useSettings();
+  const { currentView, notification, setNotification, isSettingsDirty, setIsSettingsDirty, pendingNavigation, setPendingNavigation, setCurrentView, showOnboarding, setShowOnboarding, isCommandPaletteOpen, setIsCommandPaletteOpen } = useUI();
+  const { knowledgeBase, saveReport, clearKnowledgeBase, uniqueArticles } = useKnowledgeBase();
 
   const [isCurrentReportSaved, setIsCurrentReportSaved] = useState<boolean>(false);
+  const [selectedKbPmids, setSelectedKbPmids] = useState<string[]>([]);
+  const [showExportModal, setShowExportModal] = useState<'pdf' | 'csv' | 'bib' | 'ris' | null>(null);
+  const [isQuickAddModalOpen, setIsQuickAddModalOpen] = useState(false);
 
   // Research Assistant Hook
   const {
@@ -50,14 +56,8 @@ const AppLayout: React.FC = () => {
   } = useResearchAssistant(settings.ai, setCurrentView);
   
   const [settingsResetToken, setSettingsResetToken] = useState(0);
-
-  // State for navigating to a specific help tab
   const [initialHelpTab, setInitialHelpTab] = useState<string | null>(null);
-
-  // State for pre-filling the research topic from another view
   const [prefilledTopic, setPrefilledTopic] = useState<string | null>(null);
-
-  // State for Knowledge Base filters (lifted state)
   const [kbFilter, setKbFilter] = useState<KnowledgeBaseFilter>({
     searchTerm: '',
     selectedTopics: [],
@@ -67,20 +67,12 @@ const AppLayout: React.FC = () => {
     showOpenAccessOnly: false,
   });
 
-  const [showBackToTop, setShowBackToTop] = useState(false);
-
 
   useEffect(() => {
       document.documentElement.className = settings.theme;
       document.documentElement.classList.toggle('no-animations', !settings.performance.enableAnimations);
       
-      const fontMap: Record<string, string> = {
-          'Inter': 'Inter, sans-serif',
-          'Lato': 'Lato, sans-serif',
-          'Roboto': 'Roboto, sans-serif',
-          'Open Sans': '"Open Sans", sans-serif'
-      };
-      
+      const fontMap: Record<string, string> = { 'Inter': 'Inter, sans-serif', 'Lato': 'Lato, sans-serif', 'Roboto': 'Roboto, sans-serif', 'Open Sans': '"Open Sans", sans-serif' };
       document.body.style.fontFamily = fontMap[settings.appearance.fontFamily] || fontMap['Inter'];
 
       if (settings.appearance.customColors.enabled) {
@@ -93,111 +85,122 @@ const AppLayout: React.FC = () => {
           document.documentElement.style.removeProperty('--color-brand-accent');
       }
   }, [settings.theme, settings.performance.enableAnimations, settings.appearance.fontFamily, settings.appearance.customColors]);
+  
+    useEffect(() => {
+        // Accessibility Best Practice: Update document title on view change
+        const viewTitles: Record<View, string> = {
+            orchestrator: 'Orchestrator',
+            research: 'Research Assistant',
+            authors: 'Author Hub',
+            knowledgeBase: 'Knowledge Base',
+            dashboard: 'Dashboard',
+            history: 'Report History',
+            settings: 'Settings',
+            help: 'Help & Documentation',
+        };
+        document.title = `${viewTitles[currentView] || 'Research'} | AI Research Orchestration Author`;
+    }, [currentView]);
 
-  useEffect(() => {
-    const handleScroll = () => {
-        setShowBackToTop(window.scrollY > 400);
-    };
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                setIsCommandPaletteOpen(prev => !prev);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [setIsCommandPaletteOpen]);
+
+    useEffect(() => {
+        // Clear selection when navigating away from the knowledge base
+        if (currentView !== 'knowledgeBase' && selectedKbPmids.length > 0) {
+            setSelectedKbPmids([]);
+        }
+    }, [currentView, selectedKbPmids.length]);
+
+  const loadingPhases = ["Phase 1: Formulating Advanced PubMed Queries...","Phase 2: Retrieving and Scanning Article Abstracts...","Phase 3: Filtering Articles Based on Criteria...","Phase 4: Ranking Articles for Relevance...","Phase 5: Synthesizing Top Findings & Extracting Keywords...","Finalizing Report..."];
 
   const handleFormSubmit = useCallback(async (data: ResearchInput) => {
     setIsLoading(true);
     setError(null);
     setReport(null);
     setResearchInput(data);
+    setLocalResearchInput(data); // Set local copy for editing
     setCurrentView('orchestrator');
-    setIsCurrentReportSaved(false); // A new report is never saved by default
+    setIsCurrentReportSaved(false);
+
+    let phaseIndex = 0;
+    setCurrentPhase(loadingPhases[0]);
+    const phaseInterval = setInterval(() => {
+      phaseIndex = (phaseIndex + 1);
+      if(phaseIndex < loadingPhases.length) setCurrentPhase(loadingPhases[phaseIndex]);
+      else clearInterval(phaseInterval);
+    }, 4000);
 
     try {
-      const generatedReport = await generateResearchReport(data, settings.ai, setCurrentPhase);
+      const generatedReport = await generateResearchReport(data, settings.ai);
       setReport(generatedReport);
        if (settings.defaults.autoSaveReports) {
-            const saved = kb.saveReport(data, generatedReport);
+            const saved = saveReport(data, generatedReport);
             setIsCurrentReportSaved(saved);
         }
     } catch (err) {
-        let errorMessage = "An unknown error occurred during the report generation. Please try again.";
-        if (err instanceof PubMedAPIError) {
-            errorMessage = `PubMed API Error: ${err.message} The service may be temporarily unavailable.`;
-        } else if (err instanceof GeminiAPIError) {
-            errorMessage = `AI Model Error: ${err.message} This might be a temporary issue with the AI service or your configuration.`;
-        } else if (err instanceof OrchestrationError) {
-            errorMessage = `Process Error: ${err.message} Please try adjusting your research topic or parameters.`;
-        } else if (err instanceof Error) {
-            errorMessage = `An unexpected error occurred: ${err.message}. Please check your internet connection.`;
-        }
-        setError(errorMessage);
+      setError(err instanceof Error ? err.message : "An unknown error occurred");
     } finally {
+      clearInterval(phaseInterval);
       setIsLoading(false);
       setCurrentPhase('');
     }
-  }, [settings.ai, settings.defaults.autoSaveReports, kb, setCurrentView]);
+  }, [settings.ai, settings.defaults.autoSaveReports, saveReport, setCurrentView]);
 
   const handleSaveReport = useCallback(() => {
-    if (report && researchInput) {
-      const saved = kb.saveReport(researchInput, report);
+    if (report && localResearchInput) {
+      const saved = saveReport(localResearchInput, report);
       setIsCurrentReportSaved(saved);
+      if (saved) {
+          setResearchInput(localResearchInput); // Solidify the title change upon successful save
+      }
     }
-  }, [report, researchInput, kb]);
+  }, [report, localResearchInput, saveReport]);
   
   const handleNewSearch = useCallback(() => {
     setReport(null);
     setResearchInput(null);
+    setLocalResearchInput(null);
     window.scrollTo(0, 0);
   }, []);
 
   const handleClearKnowledgeBase = () => {
-      kb.clearKnowledgeBase();
-      // Also clear current report if it's from the KB
+      clearKnowledgeBase();
       if (isCurrentReportSaved) {
           setReport(null);
           setResearchInput(null);
+          setLocalResearchInput(null);
       }
-      setCurrentView('orchestrator'); // Go back to a safe view
+      setCurrentView('orchestrator');
   };
-
-  const handleTagsUpdate = useCallback((pmid: string, newTags: string[]) => {
-      kb.updateTags(pmid, newTags);
-       // Also update the current report if it's being displayed
-      if (report && report.rankedArticles.some(a => a.pmid === pmid)) {
-          setReport(prevReport => {
-              if (!prevReport) return null;
-              return {
-                  ...prevReport,
-                  rankedArticles: prevReport.rankedArticles.map(article =>
-                      article.pmid === pmid ? { ...article, customTags: newTags } : article
-                  )
-              };
-          });
-      }
-  }, [report, kb]);
 
   const handleConfirmNavigation = () => {
         if (pendingNavigation) {
             setCurrentView(pendingNavigation);
-            setIsSettingsDirty(false); // Discard changes
-            setSettingsResetToken(Date.now()); // Tell settings to reset
+            setIsSettingsDirty(false);
+            setSettingsResetToken(Date.now());
         }
         setPendingNavigation(null);
     };
 
-    const handleCancelNavigation = () => {
-        setPendingNavigation(null);
-    };
+    const handleCancelNavigation = () => setPendingNavigation(null);
 
     const handleViewChange = (view: View) => {
-        if (isSettingsDirty && currentView === 'settings') {
-            setPendingNavigation(view);
-        } else {
-            setCurrentView(view);
-        }
+        if (isSettingsDirty && currentView === 'settings') setPendingNavigation(view);
+        else setCurrentView(view);
     };
     
-  const handleViewReportFromHistory = (entry: any) => {
+  const handleViewReportFromHistory = (entry: KnowledgeBaseEntry) => {
       setResearchInput(entry.input);
+      setLocalResearchInput(entry.input); // Also set local state for consistency
       setReport(entry.report);
       setIsCurrentReportSaved(true);
       setCurrentView('orchestrator');
@@ -206,7 +209,6 @@ const AppLayout: React.FC = () => {
   const handleStartNewReview = useCallback((topic: string) => {
       setPrefilledTopic(topic);
       setCurrentView('orchestrator');
-      // Scroll to top to make the form visible
       window.scrollTo(0, 0);
   }, [setCurrentView]);
 
@@ -219,9 +221,33 @@ const AppLayout: React.FC = () => {
     setShowOnboarding(false);
   };
   
-  const handleKbFilterChange = (newFilter: Partial<KnowledgeBaseFilter>) => {
-    setKbFilter(prev => ({ ...prev, ...newFilter }));
-  };
+  const handleKbFilterChange = (newFilter: Partial<KnowledgeBaseFilter>) => setKbFilter(prev => ({ ...prev, ...newFilter }));
+  
+  const handleExportSelection = (format: 'pdf' | 'csv' | 'bib' | 'ris') => setShowExportModal(format);
+  
+  const confirmExport = () => {
+      if (!showExportModal) return;
+      const articlesToExport = uniqueArticles.filter(a => selectedKbPmids.includes(a.pmid));
+      if(articlesToExport.length === 0) return;
+      const findRelatedInsights = (pmid: string) => knowledgeBase.flatMap(e => e.report.aiGeneratedInsights || []).filter(i => (i.supportingArticles || []).includes(pmid));
+
+      if (showExportModal === 'pdf') exportKnowledgeBaseToPdf(articlesToExport, 'Knowledge Base Selection', findRelatedInsights, settings.export.pdf);
+      if (showExportModal === 'csv') exportToCsv(articlesToExport, 'knowledge_base', settings.export.csv);
+      if (showExportModal === 'bib' || showExportModal === 'ris') exportCitations(articlesToExport, settings.export.citation, showExportModal);
+      setShowExportModal(null);
+  }
+  
+  const handleTagsUpdate = useCallback((pmid: string, newTags: string[]) => {
+      setReport(currentReport => {
+          if (!currentReport) return null;
+          return {
+              ...currentReport,
+              rankedArticles: currentReport.rankedArticles.map(article => 
+                  article.pmid === pmid ? { ...article, customTags: newTags } : article
+              )
+          };
+      });
+  }, []);
 
   const renderView = () => {
     switch(currentView) {
@@ -230,55 +256,24 @@ const AppLayout: React.FC = () => {
                     onViewChange={handleViewChange} 
                     filter={kbFilter}
                     onFilterChange={handleKbFilterChange}
+                    selectedPmids={selectedKbPmids}
+                    setSelectedPmids={setSelectedKbPmids}
                 />;
+      case 'authors': return <AuthorsView />;
       case 'settings':
         return <SettingsView 
                     onClearKnowledgeBase={handleClearKnowledgeBase}
                     resetToken={settingsResetToken}
-                    onNavigateToHelpTab={(tab) => {
-                        setInitialHelpTab(tab);
-                        setCurrentView('help');
-                    }}
+                    onNavigateToHelpTab={(tab) => { setInitialHelpTab(tab); setCurrentView('help'); }}
                 />;
-      case 'help':
-        return <HelpView initialTab={initialHelpTab} onTabConsumed={() => setInitialHelpTab(null)} />;
-      case 'dashboard':
-        return <DashboardView entries={kb.knowledgeBase} onFilterChange={handleKbFilterChange} onViewChange={handleViewChange}/>;
-      case 'history':
-        return <HistoryView onViewReport={handleViewReportFromHistory} />;
+      case 'help': return <HelpView initialTab={initialHelpTab} onTabConsumed={() => setInitialHelpTab(null)} />;
+      case 'dashboard': return <DashboardView entries={knowledgeBase} onFilterChange={handleKbFilterChange} onViewChange={handleViewChange}/>;
+      case 'history': return <HistoryView onViewReport={handleViewReportFromHistory} />;
       case 'research':
-        return <ResearchView 
-                    onStartNewReview={handleStartNewReview}
-                    onStartResearch={startResearch}
-                    onClearResearch={clearResearch}
-                    isLoading={isResearching}
-                    phase={researchPhase}
-                    error={researchError}
-                    analysis={researchAnalysis}
-                    similarArticlesState={similar}
-                    onlineFindingsState={online}
-                />;
+        return <ResearchView onStartNewReview={handleStartNewReview} onStartResearch={startResearch} onClearResearch={clearResearch} isLoading={isResearching} phase={researchPhase} error={researchError} analysis={researchAnalysis} similarArticlesState={similar} onlineFindingsState={online} />;
       case 'orchestrator':
       default:
-        return (
-            <OrchestratorView
-                isLoading={isLoading}
-                currentPhase={currentPhase}
-                error={error}
-                report={report}
-                researchInput={researchInput}
-                isCurrentReportSaved={isCurrentReportSaved}
-                settings={settings}
-                prefilledTopic={prefilledTopic}
-                handleFormSubmit={handleFormSubmit}
-                handleSaveReport={handleSaveReport}
-                handleTagsUpdate={handleTagsUpdate}
-                handleNewSearch={handleNewSearch}
-                onPrefillConsumed={() => setPrefilledTopic(null)}
-                handleViewReportFromHistory={handleViewReportFromHistory}
-                handleStartNewReview={handleStartNewReview}
-            />
-        );
+        return <OrchestratorView isLoading={isLoading} currentPhase={currentPhase} error={error} report={report} researchInput={localResearchInput ?? researchInput} isCurrentReportSaved={isCurrentReportSaved} settings={settings} prefilledTopic={prefilledTopic} handleFormSubmit={handleFormSubmit} handleSaveReport={handleSaveReport} handleNewSearch={handleNewSearch} onPrefillConsumed={() => setPrefilledTopic(null)} handleViewReportFromHistory={handleViewReportFromHistory} handleStartNewReview={handleStartNewReview} onUpdateResearchInput={setLocalResearchInput} handleTagsUpdate={handleTagsUpdate} />;
     }
   };
 
@@ -288,38 +283,30 @@ const AppLayout: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
+      {isQuickAddModalOpen && <QuickAddModal onClose={() => setIsQuickAddModalOpen(false)} />}
+      <CommandPalette 
+          isReportVisible={!!report}
+          isCurrentReportSaved={isCurrentReportSaved}
+          selectedArticleCount={selectedKbPmids.length}
+          onSaveReport={handleSaveReport}
+          onExportSelection={handleExportSelection}
+      />
       <Header 
-        knowledgeBaseArticleCount={kb.uniqueArticles.length}
-        hasReports={kb.knowledgeBase.length > 0}
+        knowledgeBaseArticleCount={uniqueArticles.length}
+        hasReports={knowledgeBase.length > 0}
         isResearching={isResearching}
+        selectedArticleCount={selectedKbPmids.length}
+        currentReportTitle={report && (localResearchInput ?? researchInput) ? (localResearchInput ?? researchInput).researchTopic : null}
+        onQuickAdd={() => setIsQuickAddModalOpen(true)}
       />
       <main className="flex-grow container mx-auto p-4 sm:p-6 lg:p-8">
         <div key={currentView} className="animate-slideInUp" style={{animationDelay: '100ms', animationDuration: '500ms'}}>
             {renderView()}
         </div>
       </main>
-      {notification && (
-        <Notification
-          key={notification.id}
-          message={notification.message}
-          type={notification.type}
-          onClose={() => setNotification(null)}
-          position={settings.notifications.position}
-          duration={settings.notifications.duration}
-        />
-      )}
-       {pendingNavigation && (
-            <ConfirmationModal
-                onConfirm={handleConfirmNavigation}
-                onCancel={handleCancelNavigation}
-                title="Unsaved Changes"
-                message="You have unsaved changes in Settings. Are you sure you want to leave and discard them?"
-                confirmText="Discard Changes"
-                confirmButtonClass="bg-red-600 hover:bg-red-700"
-                titleClass="text-red-400"
-            />
-        )}
-        <BackToTopButton isVisible={showBackToTop} />
+      {notification && <Notification key={notification.id} message={notification.message} type={notification.type} onClose={() => setNotification(null)} position={settings.notifications.position} duration={settings.notifications.duration} />}
+       {pendingNavigation && <ConfirmationModal onConfirm={handleConfirmNavigation} onCancel={handleCancelNavigation} title="Unsaved Changes" message="You have unsaved changes in Settings. Are you sure you want to leave and discard them?" confirmText="Discard Changes" />}
+       {showExportModal && <ConfirmationModal onConfirm={confirmExport} onCancel={() => setShowExportModal(null)} title={`Export ${selectedKbPmids.length} Articles`} message={`Are you sure you want to export the ${selectedKbPmids.length} selected articles as a ${showExportModal.toUpperCase()} file?`} confirmText="Yes, Export" confirmButtonClass="bg-brand-accent hover:bg-opacity-90" titleClass="text-brand-accent" />}
     </div>
   );
 }

@@ -6,13 +6,12 @@ interface LoadingIndicatorProps {
 
 const loadingPhases = [
   "Phase 1: Formulating Advanced PubMed Queries...",
-  "Phase 2: Searching PubMed & Fetching Article Details...",
-  "Phase 3: AI-Powered Ranking of Articles...",
-  "Phase 4: AI-Powered Detailed Analysis...",
-  "Phase 5: AI-Powered Synthesis...",
+  "Phase 2: Retrieving and Scanning Article Abstracts...",
+  "Phase 3: Filtering Articles Based on Criteria...",
+  "Phase 4: Ranking Articles for Relevance...",
+  "Phase 5: Synthesizing Top Findings & Extracting Keywords...",
   "Finalizing Report..."
 ];
-
 
 const phaseDetails: Record<string, string[]> = {
   "Phase 1: Formulating Advanced PubMed Queries...": [
@@ -20,25 +19,26 @@ const phaseDetails: Record<string, string[]> = {
     "AI is constructing advanced boolean search strings...",
     "Finalizing query logic for optimal retrieval...",
   ],
-  "Phase 2: Searching PubMed & Fetching Article Details...": [
+  "Phase 2: Retrieving and Scanning Article Abstracts...": [
     "Executing queries against live PubMed database...",
     "Fetching article metadata (titles, authors, journals)...",
     "Gathering article identifiers for analysis...",
   ],
-  "Phase 3: AI-Powered Ranking of Articles...": [
-    "Preparing articles for evaluation...",
+  "Phase 3: Filtering Articles Based on Criteria...": [
+    "AI is finding abstracts for fetched articles...",
+    "Applying date range and article type filters...",
+    "Performing initial screening of content...",
+  ],
+  "Phase 4: Ranking Articles for Relevance...": [
     "AI is scoring each article for relevance (1-100)...",
     "Writing relevance explanations...",
+    "Sorting articles from highest to lowest score...",
   ],
-  "Phase 4: AI-Powered Detailed Analysis...": [
-    "Batching articles for detailed enrichment...",
-    "AI is finding abstracts and classifying article types...",
-    "Extracting 3-5 keywords from each top article...",
-  ],
-  "Phase 5: AI-Powered Synthesis...": [
+  "Phase 5: Synthesizing Top Findings & Extracting Keywords...": [
     "Selecting top N articles for synthesis...",
     "Analyzing top articles for common themes...",
-    "Generating AI-powered insights from the literature...",
+    "Extracting 3-5 keywords from each top article...",
+    "Generating AI-powered insights...",
   ],
   "Finalizing Report...": [
     "Generating executive narrative synthesis...",
@@ -113,14 +113,15 @@ export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({ phase }) => 
             <CyberneticSpinner />
             <h2 className="text-xl font-semibold brand-gradient-text mt-6 mb-2">Orchestrating AI Agents...</h2>
             <div className="w-full max-w-2xl mx-auto mt-4 overflow-hidden text-center">
-                 <p className="text-text-primary text-base font-semibold mb-2">{phase}</p>
+                 <p className="text-text-primary text-base font-semibold mb-2" role="status" aria-live="polite">{phase}</p>
                 <div className="relative h-2 bg-border rounded-full">
                     <div
                         className="absolute top-0 left-0 h-2 bg-brand-accent rounded-full transition-all duration-500 ease-out"
                         style={{ width: `${((currentPhaseIndex + 1) / loadingPhases.length) * 100}%` }}
                     ></div>
                 </div>
-                <p className="text-text-secondary text-sm mt-3 min-h-[20px] transition-opacity duration-300">{currentSubPhase}</p>
+                <p className="text-text-secondary text-sm mt-3 min-h-[20px] transition-opacity duration-300" role="status" aria-live="polite">{currentSubPhase}</p>
+                <p className="text-xs text-text-secondary/70 mt-4">This may take up to a minute. The AI is performing multiple complex steps, including live database searches and synthesis.</p>
             </div>
         </div>
     );

@@ -7,13 +7,11 @@ import { SparklesIcon } from './icons/SparklesIcon';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 import { CheckIcon } from './icons/CheckIcon';
 import { BookmarkSquareIcon } from './icons/BookmarkSquareIcon';
-import { useUI } from '../contexts/UIContext';
-import { generateSuggestedTopic } from '../services/geminiService';
 
 interface InputFormProps {
   onSubmit: (data: ResearchInput) => void;
   isLoading: boolean;
-  settings: Settings;
+  defaultSettings: Settings['defaults'];
   prefilledTopic: string | null;
   onPrefillConsumed: () => void;
 }
@@ -43,6 +41,7 @@ const SliderInput: React.FC<{
                 step={step}
                 className="w-full h-2 bg-border rounded-lg appearance-none cursor-pointer accent-brand-accent"
                 aria-labelledby={id}
+                aria-valuetext={String(value)}
             />
             <span className="font-mono text-sm text-text-primary bg-background border border-border rounded-md px-2 py-1 w-16 text-center">{value}</span>
         </div>
@@ -61,7 +60,7 @@ const CustomCheckbox: React.FC<{ id: string; value: string; checked: boolean; on
                 onChange={onChange}
                 className="sr-only" // Hide original checkbox
             />
-            <div className={`w-5 h-5 rounded-md border-2 transition-all duration-200 group-hover:border-brand-accent ${checked ? 'bg-brand-accent border-brand-accent' : 'bg-surface border-border'}`}>
+            <div aria-hidden="true" className={`w-5 h-5 rounded-md border-2 transition-all duration-200 flex items-center justify-center group-hover:border-brand-accent ${checked ? 'bg-brand-accent border-brand-accent' : 'bg-surface border-border'}`}>
                 {checked && <CheckIcon className="w-4 h-4 text-white" />}
             </div>
         </div>
@@ -70,11 +69,7 @@ const CustomCheckbox: React.FC<{ id: string; value: string; checked: boolean; on
 );
 
 
-export const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading, settings, prefilledTopic, onPrefillConsumed }) => {
-  const { setNotification } = useUI();
-  const [isSuggesting, setIsSuggesting] = useState(false);
-  const defaultSettings = settings.defaults;
-  
+export const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading, defaultSettings, prefilledTopic, onPrefillConsumed }) => {
   const [formData, setFormData] = useState<ResearchInput>(() => {
     try {
         const savedState = sessionStorage.getItem(FORM_STATE_KEY);
@@ -86,7 +81,7 @@ export const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading, setti
     }
     // Default initial state from settings
     return {
-      researchTopic: 'The effect of intermittent fasting on cognitive function in adults',
+      researchTopic: '',
       dateRange: defaultSettings.defaultDateRange,
       articleTypes: [...defaultSettings.defaultArticleTypes],
       synthesisFocus: defaultSettings.defaultSynthesisFocus,
@@ -162,21 +157,6 @@ export const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading, setti
     }
   };
   
-  const handleSuggestTopic = async () => {
-      if (!formData.researchTopic.trim()) return;
-      setIsSuggesting(true);
-      try {
-          const suggestedTopic = await generateSuggestedTopic(formData.researchTopic, settings.ai);
-          setFormData(prev => ({...prev, researchTopic: suggestedTopic}));
-          setNotification({id: Date.now(), message: "Topic refined by AI.", type: 'success'});
-      } catch (error) {
-          const message = error instanceof Error ? error.message : "An unknown error occurred.";
-          setNotification({id: Date.now(), message: `Failed to get suggestion: ${message}`, type: 'error'});
-      } finally {
-          setIsSuggesting(false);
-      }
-  };
-  
   const handleSavePreset = () => {
     if (newPresetName.trim()) {
       addPreset(newPresetName.trim(), formData);
@@ -226,30 +206,9 @@ export const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading, setti
                 </button>
             </div>
       </div>
-      <form onSubmit={handleSubmit} onKeyDown={handleKeyDown} className="space-y-8">
+      <form onSubmit={handleSubmit} onKeyDown={handleKeyDown} className="space-y-8" role="search">
         <fieldset>
-          <div className="flex justify-between items-center mb-2">
-            <label htmlFor="researchTopic" className="block text-sm font-semibold text-text-primary">Primary Research Topic or Question</label>
-            <button
-              type="button"
-              onClick={handleSuggestTopic}
-              disabled={isSuggesting || isLoading || !formData.researchTopic.trim()}
-              className="inline-flex items-center text-xs font-semibold text-brand-accent hover:underline disabled:opacity-50 disabled:cursor-not-allowed disabled:no-underline"
-              aria-label="Refine research topic with AI"
-            >
-              {isSuggesting ? (
-                  <>
-                    <svg className="animate-spin -ml-1 mr-1.5 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                    Refining...
-                  </>
-              ) : (
-                  <>
-                    <SparklesIcon className="h-4 w-4 mr-1.5" />
-                    Refine with AI
-                  </>
-              )}
-            </button>
-          </div>
+          <label htmlFor="researchTopic" className="block text-sm font-semibold text-text-primary mb-2">Primary Research Topic or Question</label>
           <textarea
             id="researchTopic"
             name="researchTopic"

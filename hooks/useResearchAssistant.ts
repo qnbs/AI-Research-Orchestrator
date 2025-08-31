@@ -1,6 +1,7 @@
+
 import { useState, useCallback } from 'react';
 import { generateResearchAnalysis, findSimilarArticles, findRelatedOnline } from '../services/geminiService';
-import type { ResearchAnalysis, SimilarArticle, OnlineFindings, Settings } from '../types';
+import { ResearchAnalysis, SimilarArticle, OnlineFindings, Settings } from '../types';
 import type { View } from '../contexts/UIContext';
 
 interface ResearchState {

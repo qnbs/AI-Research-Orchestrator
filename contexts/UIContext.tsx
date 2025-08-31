@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
-export type View = 'orchestrator' | 'research' | 'knowledgeBase' | 'settings' | 'help' | 'dashboard' | 'history';
+export type View = 'orchestrator' | 'research' | 'authors' | 'knowledgeBase' | 'settings' | 'help' | 'dashboard' | 'history';
 
 interface NotificationState {
   id: number;
@@ -19,6 +19,8 @@ interface UIContextType {
     setPendingNavigation: (view: View | null) => void;
     showOnboarding: boolean;
     setShowOnboarding: (show: boolean) => void;
+    isCommandPaletteOpen: boolean;
+    setIsCommandPaletteOpen: (isOpen: boolean | ((isOpen: boolean) => boolean)) => void;
 }
 
 const UIContext = createContext<UIContextType | undefined>(undefined);
@@ -28,6 +30,7 @@ export const UIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [notification, setNotification] = useState<NotificationState | null>(null);
     const [isSettingsDirty, setIsSettingsDirty] = useState(false);
     const [pendingNavigation, setPendingNavigation] = useState<View | null>(null);
+    const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
     const [showOnboarding, setShowOnboarding] = useState(() => {
         try {
             return localStorage.getItem('hasCompletedOnboarding') !== 'true';
@@ -42,7 +45,8 @@ export const UIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
             notification, setNotification,
             isSettingsDirty, setIsSettingsDirty,
             pendingNavigation, setPendingNavigation,
-            showOnboarding, setShowOnboarding
+            showOnboarding, setShowOnboarding,
+            isCommandPaletteOpen, setIsCommandPaletteOpen
         }}>
             {children}
         </UIContext.Provider>

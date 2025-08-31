@@ -1,9 +1,12 @@
 import React from 'react';
 import { LockClosedIcon } from './icons/LockClosedIcon';
+import { PencilIcon } from './icons/PencilIcon';
+import { SparklesIcon } from './icons/SparklesIcon';
+import { DatabaseIcon } from './icons/DatabaseIcon';
 
 
 const AppLogoIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w.org/2000/svg" {...props}>
         <defs>
             <linearGradient id="logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" style={{stopColor: 'var(--color-brand-accent)', stopOpacity: 1}} />
@@ -27,15 +30,16 @@ interface OnboardingViewProps {
     onComplete: () => void;
 }
 
-const Step: React.FC<{ number: string; title: string; children: React.ReactNode }> = ({ number, title, children }) => (
-    <div className="text-left relative pl-12">
-        <div className="absolute left-0 top-0 flex items-center justify-center h-8 w-8 rounded-full bg-brand-accent/10 text-brand-accent font-bold text-lg border border-brand-accent/20">
-            {number}
+const StepCard: React.FC<{ icon: React.ReactNode; title: string; children: React.ReactNode }> = ({ icon, title, children }) => (
+    <div className="bg-surface/30 backdrop-blur-sm p-6 rounded-xl border border-white/10 text-left shadow-lg h-full">
+        <div className="flex items-center justify-center h-12 w-12 rounded-full bg-brand-accent/20 text-brand-accent border border-brand-accent/30 mb-4">
+            {icon}
         </div>
-        <h3 className="text-lg font-bold text-text-primary mb-1">{title}</h3>
+        <h3 className="text-lg font-bold text-text-primary mb-2">{title}</h3>
         <p className="text-sm text-text-secondary leading-relaxed">{children}</p>
     </div>
 );
+
 
 export const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete }) => {
   return (
@@ -43,27 +47,27 @@ export const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete }) =>
         <div className="absolute inset-0 z-0" style={{
             backgroundImage: 'radial-gradient(ellipse 80% 80% at 10% -20%, var(--aurora-1), transparent), radial-gradient(ellipse 80% 80% at 90% -20%, var(--aurora-2), transparent)'
         }}></div>
-        <div className="w-full max-w-3xl mx-auto text-center relative z-10">
-             <div className="relative mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-surface border border-border shadow-lg mx-auto">
+        <div className="w-full max-w-4xl mx-auto text-center relative z-10 bg-surface/50 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-8 sm:p-12">
+             <div className="mb-6 flex items-center justify-center">
                 <AppLogoIcon className="h-16 w-16" />
              </div>
             <h1 className="text-4xl sm:text-5xl font-bold text-text-primary mb-3">
-                Welcome to <span className="brand-gradient-text">AI Research Orchestrator</span>
+                Welcome to the <span className="brand-gradient-text">Future of Research</span>
             </h1>
             <p className="max-w-2xl mx-auto text-lg text-text-secondary mb-12">
                 Your intelligent assistant for scientific literature reviews.
             </p>
 
-            <div className="space-y-8 mb-12 max-w-xl mx-auto">
-                <Step number="1" title="Define Your Topic">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 my-12">
+                <StepCard icon={<PencilIcon className="h-6 w-6" />} title="Define Your Topic">
                     Enter any research query to have AI agents conduct a comprehensive review of the PubMed database.
-                </Step>
-                <Step number="2" title="Receive AI Analysis">
+                </StepCard>
+                <StepCard icon={<SparklesIcon className="h-6 w-6" />} title="Receive AI Analysis">
                     The AI researches, filters, and synthesizes the most relevant articles into an actionable report.
-                </Step>
-                <Step number="3" title="Leverage Your Knowledge">
+                </StepCard>
+                <StepCard icon={<DatabaseIcon className="h-6 w-6" />} title="Leverage Your Knowledge">
                     Build a personal, de-duplicated knowledge base and export your findings for any workflow.
-                </Step>
+                </StepCard>
             </div>
             
             <button

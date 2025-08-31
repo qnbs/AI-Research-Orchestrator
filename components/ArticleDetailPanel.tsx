@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import type { AggregatedArticle, SimilarArticle, OnlineFindings } from '../types';
 import { useSettings } from '../contexts/SettingsContext';
 import { findSimilarArticles, findRelatedOnline, generateTldrSummary } from '../services/geminiService';
@@ -11,7 +11,7 @@ import { WebIcon } from './icons/WebIcon';
 import { RelevanceScoreDisplay } from './RelevanceScoreDisplay';
 import { AcademicCapIcon } from './icons/AcademicCapIcon';
 import { useKnowledgeBase } from '../contexts/KnowledgeBaseContext';
-import { SemanticScholarIcon } from './icons/SemanticScholarIcon';
+import { ChevronUpIcon } from './icons/ChevronUpIcon';
 
 
 interface ArticleDetailPanelProps {
@@ -51,9 +51,11 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({ article,
     const [tldrError, setTldrError] = useState<string | null>(null);
 
     const [isClosing, setIsClosing] = useState(false);
+    const [showGoToTop, setShowGoToTop] = useState(false);
 
     const relatedInsights = findRelatedInsights(article.pmid);
     const panelRef = useFocusTrap<HTMLDivElement>(true);
+    const scrollableContainerRef = useRef<HTMLDivElement>(null);
     
     const handleClose = () => {
         setIsClosing(true);
@@ -74,6 +76,26 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({ article,
             document.body.style.overflow = '';
         };
     }, []);
+
+    useEffect(() => {
+        const container = scrollableContainerRef.current;
+        if (!container) return;
+
+        const handleScroll = () => {
+            if (container.scrollTop > 300) {
+                setShowGoToTop(true);
+            } else {
+                setShowGoToTop(false);
+            }
+        };
+
+        container.addEventListener('scroll', handleScroll, { passive: true });
+        return () => container.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    const scrollToTop = () => {
+        scrollableContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+    };
     
     const handleAddTag = (e: React.FormEvent) => {
         e.preventDefault();
@@ -102,6 +124,7 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({ article,
         }
     };
 
+    // FIX: Reconstructed the handleFindRelatedOnline function which was incomplete.
     const handleFindRelatedOnline = async () => {
         setIsFindingOnline(true);
         setFindOnlineError(null);
@@ -116,6 +139,7 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({ article,
         }
     };
 
+    // FIX: Reconstructed the handleGenerateTldr function which was incomplete.
     const handleGenerateTldr = async () => {
         setIsGeneratingTldr(true);
         setTldrError(null);
@@ -138,19 +162,19 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({ article,
     const googleScholarUrl = `https://scholar.google.com/scholar?q=${encodeURIComponent(article.title)}`;
     const semanticScholarUrl = `https://www.semanticscholar.org/search?q=${encodeURIComponent(article.title)}`;
       
+    // FIX: Added the missing return statement and moved the JSX inside the component function.
     return (
          <div className="fixed inset-0 z-30" aria-labelledby="slide-over-title" role="dialog" aria-modal="true">
             <div className={`absolute inset-0 bg-black/60 transition-opacity duration-300 ${isClosing ? 'opacity-0' : 'opacity-100'}`} onClick={handleClose} aria-hidden="true"></div>
             <div className="fixed inset-y-0 right-0 flex max-w-full pl-10">
                 <div ref={panelRef} className={`relative w-screen max-w-2xl transform transition ease-in-out duration-300 ${isClosing ? 'translate-x-full' : 'translate-x-0'}`}>
                     <div className="absolute top-0 left-0 -ml-8 flex pt-4 pr-2 sm:-ml-10 sm:pr-4">
-                        <button type="button" className="rounded-md text-gray-300 hover:text-white focus:outline-none focus:ring-2 focus:ring-white" onClick={handleClose}>
-                            <span className="sr-only">Close panel</span>
-                            <XIcon className="h-6 w-6" />
+                        <button type="button" aria-label="Close panel" className="rounded-md text-gray-300 hover:text-white focus:outline-none focus:ring-2 focus:ring-white" onClick={handleClose}>
+                            <XIcon className="h-6 w-6" aria-hidden="true" />
                         </button>
                     </div>
 
-                    <div className="flex h-full flex-col overflow-y-scroll bg-surface py-6 shadow-xl border-l border-border">
+                    <div ref={scrollableContainerRef} className="flex h-full flex-col overflow-y-scroll bg-surface py-6 shadow-xl border-l border-border">
                         <div className="px-4 sm:px-6">
                            <div className="flex items-start justify-between gap-4">
                                 <h2 className="text-xl font-bold text-brand-accent leading-6 pr-4" id="slide-over-title">
@@ -158,7 +182,7 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({ article,
                                 </h2>
                                 <RelevanceScoreDisplay score={article.relevanceScore} />
                             </div>
-                              {article.isOpenAccess && ( <div className="mt-1 flex items-center text-sm font-medium text-green-400"><UnlockIcon className="h-4 w-4 mr-1.5"/>Open Access Article</div>)}
+                              {article.isOpenAccess && ( <div className="mt-1 flex items-center text-sm font-medium text-green-400"><UnlockIcon className="h-4 w-4 mr-1.5" aria-hidden="true"/>Open Access Article</div>)}
                         </div>
                         <div className="relative mt-6 flex-1 px-4 sm:px-6">
                             <div className="space-y-6">
@@ -168,11 +192,11 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({ article,
                                         <p className="text-base text-text-primary truncate">{article.authors}</p>
                                     </div>
                                     <div className="flex items-center gap-4 flex-shrink-0 ml-4">
-                                        <a href={googleScholarUrl} target="_blank" rel="noopener noreferrer" className="hover:text-brand-accent" title="Search on Google Scholar">
-                                            <AcademicCapIcon className="h-6 w-6" />
+                                        <a href={googleScholarUrl} target="_blank" rel="noopener noreferrer" className="hover:text-brand-accent" aria-label="Search on Google Scholar">
+                                            <AcademicCapIcon className="h-6 w-6" aria-hidden="true"/>
                                         </a>
-                                        <a href={semanticScholarUrl} target="_blank" rel="noopener noreferrer" className="hover:text-brand-accent" title="Search on Semantic Scholar">
-                                            <SemanticScholarIcon className="h-6 w-6" />
+                                        <a href={semanticScholarUrl} target="_blank" rel="noopener noreferrer" className="hover:text-brand-accent font-bold text-xl" aria-label="Search on Semantic Scholar">
+                                            S
                                         </a>
                                     </div>
                                 </div>
@@ -187,7 +211,11 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({ article,
                                     {settings.ai.enableTldr && (
                                         <div className="mt-4">
                                             <button onClick={handleGenerateTldr} disabled={isGeneratingTldr} className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-brand-text-on-accent bg-brand-accent/80 hover:bg-opacity-90 disabled:opacity-50">
-                                                {isGeneratingTldr ? 'Generating...' : <><SparklesIcon className="h-4 w-4 mr-2" />Generate AI TL;DR</>}
+                                                {isGeneratingTldr ? (
+                                                    <><svg className="animate-spin -ml-1 mr-3 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Generating...</>
+                                                ) : (
+                                                    <><SparklesIcon className="h-4 w-4 mr-2" aria-hidden="true" />Generate AI TL;DR</>
+                                                )}
                                             </button>
                                             {isGeneratingTldr && <div className="mt-2 text-sm text-text-secondary animate-pulse">The AI is thinking...</div>}
                                             {tldrError && <p className="mt-2 text-xs text-red-400">{tldrError}</p>}
@@ -204,14 +232,13 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({ article,
                                 </div>
                                 
                                 <div className="pt-4 border-t border-border">
-                                    <h4 className="font-semibold text-text-primary mb-2 flex items-center"><TagIcon className="h-5 w-5 mr-2" /> Custom Tags</h4>
+                                    <h4 className="font-semibold text-text-primary mb-2 flex items-center"><TagIcon className="h-5 w-5 mr-2" aria-hidden="true"/> Custom Tags</h4>
                                      <div className="flex flex-wrap gap-2 mb-3">
                                         {(article.customTags || []).map(tag => (
                                             <span key={tag} className="flex items-center bg-purple-500/10 text-purple-300 text-sm font-medium pl-3 pr-1 py-1 rounded-full border border-purple-500/20">
                                                 {tag}
-                                                <button onClick={() => handleRemoveTag(tag)} className="ml-2 text-purple-300 hover:text-white">
-                                                    <span className="sr-only">Remove tag {tag}</span>
-                                                    <XIcon className="h-3 w-3"/>
+                                                <button onClick={() => handleRemoveTag(tag)} className="ml-2 text-purple-300 hover:text-white" aria-label={`Remove tag ${tag}`}>
+                                                    <XIcon className="h-3 w-3" aria-hidden="true"/>
                                                 </button>
                                             </span>
                                         ))}
@@ -261,7 +288,7 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({ article,
                                             {isFindingSimilar ? (
                                                 <><svg className="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Finding...</>
                                             ) : (
-                                                <><SparklesIcon className="h-5 w-5 mr-2" /> Find Similar Articles</>
+                                                <><SparklesIcon className="h-5 w-5 mr-2" aria-hidden="true"/> Find Similar Articles</>
                                             )}
                                         </button>
                                         <button
@@ -272,7 +299,7 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({ article,
                                             {isFindingOnline ? (
                                                 <><svg className="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Searching...</>
                                             ) : (
-                                                <><WebIcon className="h-5 w-5 mr-2" /> Find Online Discussions</>
+                                                <><WebIcon className="h-5 w-5 mr-2" aria-hidden="true"/> Find Online Discussions</>
                                             )}
                                         </button>
                                     </div>
@@ -319,6 +346,15 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({ article,
                             </div>
                         </div>
                     </div>
+                     {showGoToTop && (
+                        <button
+                            onClick={scrollToTop}
+                            aria-label="Scroll to top"
+                            className="absolute bottom-6 right-6 z-10 p-3 rounded-full bg-brand-accent text-brand-text-on-accent shadow-lg hover:bg-opacity-90 transition-all duration-300 animate-fadeIn"
+                        >
+                            <ChevronUpIcon className="h-6 w-6" aria-hidden="true"/>
+                        </button>
+                    )}
                 </div>
             </div>
         </div>
