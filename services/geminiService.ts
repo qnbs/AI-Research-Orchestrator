@@ -1,5 +1,5 @@
-import { GoogleGenAI, Type } from "@google/genai";
-import type { ResearchInput, ResearchReport, Settings, RankedArticle, SimilarArticle, OnlineFindings, WebContent, ResearchAnalysis, GeneratedQuery, AuthorCluster } from '../types';
+import { GoogleGenAI, Type, Chat } from "@google/genai";
+import type { ResearchInput, ResearchReport, Settings, RankedArticle, SimilarArticle, OnlineFindings, WebContent, ResearchAnalysis, GeneratedQuery, AuthorCluster, FeaturedAuthorCategory } from '../types';
 
 if (!process.env.API_KEY) {
   throw new Error("API_KEY environment variable not set");
@@ -176,52 +176,110 @@ const getPreamble = (aiSettings: Settings['ai']) => {
     return `${languagePreamble} ${personaPreamble} ${aiSettings.customPreamble || ''}`.trim();
 };
 
-export async function generateResearchReport(input: ResearchInput, aiSettings: Settings['ai']): Promise<ResearchReport> {
+export async function* generateResearchReportStream(input: ResearchInput, aiSettings: Settings['ai']): AsyncGenerator<{ report?: ResearchReport; synthesisChunk?: string; phase: string; }> {
    try {
         const systemInstruction = `${getPreamble(aiSettings)} You are an expert AI research assistant. Your goal is to conduct a literature review on PubMed based on the user's criteria, rank the articles, and synthesize the findings.`;
 
-        const response = await ai.models.generateContent({
+        // STEP 1: Generate Search Queries
+        yield { phase: "Phase 1: AI Generating PubMed Queries..." };
+        const queryGenResponse = await ai.models.generateContent({
             model: aiSettings.model,
-            config: { systemInstruction, temperature: aiSettings.temperature, responseMimeType: "application/json", responseSchema: {
-                 type: Type.OBJECT,
+            config: { systemInstruction, temperature: 0.1, responseMimeType: "application/json", responseSchema: {
+                type: Type.OBJECT,
                 properties: {
                     generatedQueries: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { query: { type: Type.STRING }, explanation: { type: Type.STRING } }, required: ["query", "explanation"] } },
+                },
+                required: ["generatedQueries"]
+            }},
+            contents: `Based on the user's research topic, generate 1-3 advanced PubMed search queries. Provide a brief explanation for each.
+            - Research Topic: "${input.researchTopic}"
+            - Date Range: Last ${input.dateRange} years
+            - Article Types: ${input.articleTypes.join(', ')}`
+        });
+        
+        const { generatedQueries } = extractAndParseJson<{ generatedQueries: GeneratedQuery[] }>(queryGenResponse.text);
+        if (!generatedQueries || generatedQueries.length === 0) {
+            throw new Error("The AI failed to generate any search queries.");
+        }
+
+        // STEP 2: Execute Real PubMed Search
+        yield { phase: "Phase 2: Executing Real-time PubMed Search..." };
+        const pmids = await searchPubMedForIds(generatedQueries[0].query, input.maxArticlesToScan);
+         if (pmids.length === 0) {
+            throw new Error("Your search returned no results from PubMed. Try broadening your topic or adjusting filters.");
+        }
+        
+        // STEP 3: Fetch Real Article Details
+        yield { phase: "Phase 3: Fetching Article Details from PubMed..." };
+        const articleDetails = await fetchArticleDetails(pmids);
+        if (articleDetails.length === 0) {
+            throw new Error("Could not fetch details for the articles found on PubMed.");
+        }
+        
+        // STEP 4: AI Analyzes and Ranks Real Data
+        yield { phase: "Phase 4: AI Ranking & Analysis of Real Articles..." };
+        const analysisResponse = await ai.models.generateContent({
+            model: aiSettings.model,
+            config: { systemInstruction, temperature: aiSettings.temperature, responseMimeType: "application/json", responseSchema: {
+                type: Type.OBJECT,
+                properties: {
                     rankedArticles: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { pmid: { type: Type.STRING }, relevanceScore: { type: Type.INTEGER }, relevanceExplanation: { type: Type.STRING }, keywords: { type: Type.ARRAY, items: { type: Type.STRING } }, articleType: {type: Type.STRING} }, required: ["pmid", "relevanceScore", "relevanceExplanation", "keywords", "articleType"] } },
-                    synthesis: { type: Type.STRING },
                     aiGeneratedInsights: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { question: { type: Type.STRING }, answer: { type: Type.STRING }, supportingArticles: { type: Type.ARRAY, items: { type: Type.STRING } } }, required: ["question", "answer", "supportingArticles"] } },
                     overallKeywords: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { keyword: { type: Type.STRING }, frequency: { type: Type.INTEGER } }, required: ["keyword", "frequency"] } },
                 },
-                required: ["generatedQueries", "rankedArticles", "synthesis", "aiGeneratedInsights", "overallKeywords"]
+                required: ["rankedArticles", "aiGeneratedInsights", "overallKeywords"]
             }},
-            contents: `Please perform a literature review based on these criteria:
-            - Research Topic: "${input.researchTopic}"
-            - Date Range: Last ${input.dateRange} years
-            - Article Types: ${input.articleTypes.join(', ')}
-            - Synthesis Focus: ${input.synthesisFocus}
-            - Max Articles to Scan: ${input.maxArticlesToScan}
-            - Top N to Synthesize: ${input.topNToSynthesize}
+            contents: `From the provided list of articles, please perform the following analysis based on the original research topic: "${input.researchTopic}".
+            1.  Rank the top ${input.topNToSynthesize} articles based on their relevance to the topic. For each, provide its PMID, a relevance score (1-100), a brief explanation for the score, 3-5 keywords from its summary, and classify its article type. Ensure you ONLY use PMIDs from the provided list.
+            2.  Generate 3-5 AI-powered insights based on the provided articles. Each insight should be a question/answer pair. List the PMIDs from the provided list that support each insight.
+            3.  Analyze the keywords from all ranked articles to identify overall themes. List the top 5-10 keywords and their frequency.
 
-            Follow these steps:
-            1.  Generate 1-3 advanced PubMed search queries. Provide a brief explanation for each.
-            2.  Execute these queries (conceptually) to find up to ${input.maxArticlesToScan} articles.
-            3.  From the results, rank the top ${input.topNToSynthesize} articles based on relevance to the research topic. For each, provide a PMID, a relevance score (1-100), a brief explanation for the score, 3-5 keywords from the abstract, and classify its article type.
-            4.  Write a comprehensive synthesis of the findings from these top articles, focusing on "${input.synthesisFocus}". This should be a well-structured narrative in markdown format.
-            5.  Generate 3-5 AI-powered insights. Each insight should be a question/answer pair, highlighting interesting connections, gaps, or implications from the research. List the PMIDs that support each insight.
-            6.  Analyze the keywords from all ranked articles to identify overall themes. List the top 5-10 keywords and their frequency.
+            Article List (JSON format):
+            ${JSON.stringify(articleDetails.map(a => ({pmid: a.pmid, title: a.title, summary: a.summary})))}
             `
         });
 
-        const reportData = extractAndParseJson<any>(response.text);
+        const analysisData = extractAndParseJson<any>(analysisResponse.text);
 
-        const pmids = reportData.rankedArticles.map((a: any) => a.pmid);
-        const articleDetails = await fetchArticleDetails(pmids);
-        
-        const detailedRankedArticles = reportData.rankedArticles.map((ranked: any) => {
+        const detailedRankedArticles = analysisData.rankedArticles.map((ranked: any) => {
             const details = articleDetails.find(d => d.pmid === ranked.pmid);
             return { ...details, ...ranked };
+        }).sort((a: RankedArticle, b: RankedArticle) => b.relevanceScore - a.relevanceScore);
+
+        const partialReport: ResearchReport = { 
+            generatedQueries, 
+            synthesis: '', 
+            rankedArticles: detailedRankedArticles,
+            aiGeneratedInsights: analysisData.aiGeneratedInsights,
+            overallKeywords: analysisData.overallKeywords
+        };
+        yield { report: partialReport, phase: "Phase 5: Synthesizing Top Findings..." };
+
+        // STEP 5: AI Generates Synthesis
+        const synthesisPrompt = `Based on the following articles, write a comprehensive synthesis focusing on "${input.synthesisFocus}". This should be a well-structured narrative in markdown format.
+        
+        Articles:
+        ${detailedRankedArticles.map((a: RankedArticle) => `
+        ---
+        PMID: ${a.pmid}
+        Title: ${a.title}
+        Summary: ${a.summary}
+        Relevance Score: ${a.relevanceScore}/100
+        Keywords: ${a.keywords.join(', ')}
+        ---
+        `).join('\n')}
+        `;
+
+        const stream = await ai.models.generateContentStream({
+            model: aiSettings.model,
+            config: { systemInstruction, temperature: aiSettings.temperature },
+            contents: synthesisPrompt
         });
 
-        return { ...reportData, rankedArticles: detailedRankedArticles };
+        for await (const chunk of stream) {
+            yield { synthesisChunk: chunk.text, phase: "Streaming Synthesis..." };
+        }
+        yield { phase: "Finalizing Report..." };
 
     } catch (error) {
         console.error("Error generating research report:", error);
@@ -485,3 +543,30 @@ export async function analyzeSingleArticle(identifier: string, aiSettings: Setti
         throw new Error(getGeminiError(error));
     }
 }
+
+// --- Chat Service ---
+export const startChatWithReport = (report: ResearchReport, aiSettings: Settings['ai']): Chat => {
+    const context = `
+        You are a helpful AI assistant that answers questions about a specific research report.
+        The user has just generated the following report. Your answers should be based on this context.
+
+        ## Research Synthesis ##
+        ${report.synthesis}
+
+        ## Ranked Articles ##
+        ${report.rankedArticles.map(a => `
+        - PMID: ${a.pmid}
+        - Title: ${a.title}
+        - Summary: ${a.summary}
+        `).join('\n')}
+    `;
+
+    const chat = ai.chats.create({
+        model: aiSettings.model,
+        config: {
+            systemInstruction: context,
+            temperature: aiSettings.temperature * 0.8, // Slightly lower temperature for more factual chat
+        },
+    });
+    return chat;
+};

@@ -1,3 +1,4 @@
+
 [
     {
         "category": "Pioneers of AI & Deep Learning",
@@ -6,9 +7,8 @@
             { "name": "Yann LeCun", "description": "Inventor of Convolutional Neural Networks (CNNs), which revolutionized computer vision." },
             { "name": "Yoshua Bengio", "description": "A leading researcher in unsupervised learning, generative models, and neural language models." },
             { "name": "Demis Hassabis", "description": "Co-founder of DeepMind, led projects like AlphaGo and AlphaFold, merging neuroscience and AI." },
-            { "name": "Andrew Ng", "description": "Co-founder of Google Brain and Coursera, making AI education accessible to millions." },
+            { "name": "Andrew Y. Ng", "description": "Co-founder of Google Brain and Coursera, making AI education accessible to millions." },
             { "name": "Fei-Fei Li", "description": "Creator of the ImageNet dataset, a catalyst for the deep learning revolution in computer vision." },
-            { "name": "Sam Altman", "description": "CEO of OpenAI, driving the development of large-scale models like GPT-4 and DALL-E." },
             { "name": "Jürgen Schmidhuber", "description": "His lab developed Long Short-Term Memory (LSTM) networks, crucial for sequence analysis." },
             { "name": "Ian Goodfellow", "description": "Inventor of Generative Adversarial Networks (GANs), which transformed generative AI." },
             { "name": "Alex Krizhevsky", "description": "Developed AlexNet, whose 2012 ImageNet victory ignited the deep learning revolution." },
@@ -18,41 +18,17 @@
             { "name": "Bernhard Schölkopf", "description": "A leading researcher known for his work on support vector machines (SVMs), kernel methods, and causality." },
             { "name": "Vladimir Vapnik", "description": "Co-inventor of the support vector machine (SVM) and a founder of statistical learning theory." },
             { "name": "Richard S. Sutton", "description": "A primary founder of modern reinforcement learning, co-author of its foundational textbook." },
-            { "name": "Andrew Barto", "description": "Co-author of the foundational textbook on reinforcement learning, pioneering the field." },
             { "name": "David Silver", "description": "Lead researcher on AlphaGo at DeepMind, combining deep neural networks with reinforcement learning." }
         ]
     },
     {
         "category": "Software, Systems & Theory",
         "authors": [
-            { "name": "Linus Torvalds", "description": "Creator of the Linux kernel and the Git version control system, transforming software development." },
-            { "name": "Dennis Ritchie", "description": "Co-creator of the UNIX operating system and the C programming language at Bell Labs." },
-            { "name": "Ken Thompson", "description": "Co-creator of the UNIX operating system and the C programming language at Bell Labs." },
-            { "name": "Richard Stallman", "description": "Founder of the Free Software Foundation and the GNU Project, a pioneer of the free software movement." },
-            { "name": "Donald Knuth", "description": "Author of \"The Art of Computer Programming\" and creator of the TeX typesetting system." },
-            { "name": "Guido van Rossum", "description": "Creator of the Python programming language, prized for its readability and versatility." },
-            { "name": "John von Neumann", "description": "Defined the Von Neumann architecture, the fundamental model for nearly all modern computers." },
-            { "name": "Alan Turing", "description": "A founder of theoretical computer science and AI, formalizing the concept of computation with the Turing machine." },
-            { "name": "John Cocke", "description": "The father of RISC (Reduced Instruction Set Computer) architecture, a foundational concept for modern CPUs." },
-            { "name": "Barbara Liskov", "description": "Turing Award winner for contributions to programming languages, including the Liskov substitution principle." }
-        ]
-    },
-    {
-        "category": "Cryptography & Internet",
-        "authors": [
-            { "name": "Vint Cerf", "description": "Often called a \"father of the Internet\" for co-developing the TCP/IP protocol suite." },
-            { "name": "Robert Kahn", "description": "Often called a \"father of the Internet\" for co-developing the TCP/IP protocol suite." },
-            { "name": "Tim Berners-Lee", "description": "Inventor of the World Wide Web, including HTTP, HTML, and URLs, at CERN." },
-            { "name": "Radia Perlman", "description": "Often called the \"mother of the Internet\" for inventing the Spanning Tree Protocol (STP)." },
-            { "name": "Leonard Kleinrock", "description": "A pioneer of the mathematical theory of computer networks, fundamental to packet switching." },
-            { "name": "Whitfield Diffie", "description": "Co-inventor of the Diffie-Hellman key exchange, which laid the groundwork for public-key cryptography." },
-            { "name": "Martin Hellman", "description": "Co-inventor of the Diffie-Hellman key exchange, a foundational concept in modern cryptography." },
-            { "name": "Ron Rivest", "description": "Co-inventor of the RSA algorithm, the first practical public-key cryptosystem." },
+            { "name": "John von Neumann", "description": "Defined the Von Neumann architecture and made major contributions to game theory with applications in biology." },
+            { "name": "Alan Turing", "description": "A founder of computer science who also published influential work on mathematical biology and morphogenesis." },
+            { "name": "Ronald L. Rivest", "description": "Co-inventor of the RSA algorithm with significant contributions in computational biology and bioinformatics." },
             { "name": "Adi Shamir", "description": "Co-inventor of the RSA algorithm, a cornerstone of modern internet security." },
-            { "name": "Leonard Adleman", "description": "Co-inventor of the RSA algorithm and a pioneer in the field of DNA computing." },
-            { "name": "Bruce Schneier", "description": "A renowned security expert and cryptographer who has made security concepts accessible to a broad audience." },
-            { "name": "Shafi Goldwasser", "description": "Turing Award winner who helped transform cryptography into a science with concepts like probabilistic encryption." },
-            { "name": "Silvio Micali", "description": "Turing Award winner who co-invented zero-knowledge proofs and other foundational cryptographic concepts." }
+            { "name": "Leonard M. Adleman", "description": "Co-inventor of the RSA algorithm and a pioneer in the field of DNA computing." }
         ]
     },
     {
@@ -70,14 +46,10 @@
             { "name": "Victor Ambros", "description": "Co-discoverer of microRNA (miRNA), revealing a new layer of gene regulation." },
             { "name": "Gary Ruvkun", "description": "Co-discoverer of microRNA (miRNA) and its role in regulating gene expression." },
             { "name": "Elizabeth Blackburn", "description": "Nobel laureate for the discovery of how telomeres and the enzyme telomerase protect chromosomes." },
-            { "name": "Carol W. Greider", "description": "Nobel laureate who co-discovered the enzyme telomerase." },
-            { "name": "Jack W. Szostak", "description": "Nobel laureate for his work on telomeres and the construction of the first artificial yeast chromosome." },
             { "name": "Kary Mullis", "description": "Inventor of the polymerase chain reaction (PCR), a fundamental technique in molecular biology." },
             { "name": "Barbara McClintock", "description": "Nobel laureate for her discovery of transposable elements or \"jumping genes\"." },
             { "name": "Andrew Z. Fire", "description": "Nobel laureate for the co-discovery of RNA interference (RNAi)." },
             { "name": "Craig C. Mello", "description": "Nobel laureate for the co-discovery of RNA interference (RNAi)." },
-            { "name": "Detlef Weigel", "description": "A pioneer in plant genomics, revolutionizing the understanding of plant evolution and adaptation." },
-            { "name": "Jorge Dubcovsky", "description": "Agricultural scientist who has identified key genes for improving wheat yield and nutritional quality." },
             { "name": "Joanne Chory", "description": "Pioneered the use of genetic analysis to study how plants respond to light and hormones." },
             { "name": "Kevin McKernan", "description": "A pioneer in genomics and DNA sequencing, known for his work on the Human Genome Project and cannabis genomics." }
         ]
@@ -85,23 +57,16 @@
     {
         "category": "Biochemistry & Pharmacology",
         "authors": [
-            { "name": "Christian Anfinsen", "description": "Nobel laureate who demonstrated that a protein's amino acid sequence determines its 3D structure." },
             { "name": "Ada E. Yonath", "description": "Nobel laureate for elucidating the atomic structure of the ribosome, the cell's protein factory." },
-            { "name": "Venkatraman Ramakrishnan", "description": "Nobel laureate for his work on the structure and function of the ribosome." },
-            { "name": "Thomas A. Steitz", "description": "Nobel laureate who determined the atomic structure of the large ribosomal subunit." },
             { "name": "Yoshinori Ohsumi", "description": "Nobel laureate for his discoveries of mechanisms for autophagy, the cell's recycling process." },
             { "name": "James W. Black", "description": "Nobel laureate who developed a rational, targeted approach to drug design, inventing beta-blockers." },
-            { "name": "Paul Janssen", "description": "A highly prolific pharmacologist who developed over 80 different medications, including Haloperidol and Fentanyl." },
             { "name": "Tu Youyou", "description": "Nobel laureate for discovering Artemisinin, a key drug for treating malaria, inspired by traditional Chinese medicine." },
-            { "name": "Howard Temin", "description": "Nobel laureate for co-discovering reverse transcriptase, a crucial enzyme in retroviruses." },
             { "name": "David Baltimore", "description": "Nobel laureate for co-discovering reverse transcriptase and his work on tumor viruses." },
             { "name": "Stanley Cohen", "description": "Nobel laureate for co-discovering Nerve Growth Factor (NGF) and Epidermal Growth Factor (EGF)." },
             { "name": "Rita Levi-Montalcini", "description": "Nobel laureate for the discovery of Nerve Growth Factor (NGF)." },
             { "name": "Katalin Karikó", "description": "Nobel laureate whose foundational research on mRNA modifications enabled COVID-19 vaccines." },
             { "name": "Drew Weissman", "description": "Nobel laureate who, with Katalin Karikó, developed the modified mRNA technology used in COVID-19 vaccines." },
             { "name": "Raphael Mechoulam", "description": "Often called the 'father of cannabis research' for isolating THC and elucidating the endocannabinoid system." },
-            { "name": "Arno Hazekamp", "description": "A Dutch researcher specializing in the medicinal chemistry of cannabis, focusing on quality control and product analysis." },
-            { "name": "Oliver Kayser", "description": "A German professor of technical biochemistry whose research includes the biotechnological production of cannabinoids." },
             { "name": "Lumir Hanus", "description": "A Czech chemist who, with William Devane, isolated the first known endocannabinoid, anandamide." },
             { "name": "Vincenzo Di Marzo", "description": "A leading researcher on the endocannabinoid system, its role in physiology, and its pharmacological modulation." }
         ]
@@ -113,14 +78,11 @@
             { "name": "Robert Langer", "description": "An extremely prolific bioengineer, a pioneer of drug delivery systems and tissue engineering." },
             { "name": "Salim Yusuf", "description": "Cardiologist who has led some of the largest and most influential global clinical trials in cardiovascular disease." },
             { "name": "Luc Montagnier", "description": "Nobel laureate for co-discovering the human immunodeficiency virus (HIV)." },
-            { "name": "Franjo Grotenhermen", "description": "A German physician and leading expert on the therapeutic use of cannabinoids and cannabis-based medicines." },
             { "name": "Françoise Barré-Sinoussi", "description": "Nobel laureate for her role in the discovery of HIV as the cause of AIDS." },
             { "name": "Robert Gallo", "description": "Contributed significantly to the identification of HIV and developed the first HIV test." },
-            { "name": "Georges Köhler", "description": "Nobel laureate for co-developing the technique to produce monoclonal antibodies." },
             { "name": "César Milstein", "description": "Nobel laureate who, with Georges Köhler, devised the hybridoma technique for monoclonal antibodies." },
             { "name": "Ian Wilmut", "description": "Led the team that cloned the first mammal from an adult cell, the sheep Dolly." },
-            { "name": "Godfrey Hounsfield", "description": "Nobel laureate for his part in developing the diagnostic technique of X-ray computed tomography (CT)." },
-            { "name": "Allan McLeod Cormack", "description": "Nobel laureate who developed the mathematical algorithms used in CT scanning." }
+            { "name": "Godfrey Hounsfield", "description": "Nobel laureate for his part in developing the diagnostic technique of X-ray computed tomography (CT)." }
         ]
     },
     {
@@ -137,7 +99,6 @@
         "category": "Neuroscience",
         "authors": [
             { "name": "Karl Deisseroth", "description": "A key developer of optogenetics, a technique to control neurons with light." },
-            { "name": "Matthias Mann", "description": "Revolutionized proteomics, enabling deep molecular analysis of neurodegenerative diseases." },
             { "name": "Karl Friston", "description": "Developed the influential \"Free Energy Principle\" theory of brain function and Statistical Parametric Mapping (SPM) for fMRI analysis." },
             { "name": "Edvard I. Moser", "description": "Nobel laureate for the co-discovery of grid cells, which form the brain's internal positioning system." },
             { "name": "May-Britt Moser", "description": "Nobel laureate for the co-discovery of grid cells in the brain, crucial for spatial navigation." }
@@ -146,51 +107,13 @@
     {
         "category": "Chemistry & Material Science",
         "authors": [
-            { "name": "Elias James Corey", "description": "Nobel laureate who developed the concept of retrosynthetic analysis for planning chemical syntheses." },
-            { "name": "K. Barry Sharpless", "description": "Two-time Nobel laureate, a founder of click chemistry and stereoselective reactions." },
-            { "name": "Morten Meldal", "description": "Nobel laureate for the development of click chemistry, a set of powerful and reliable reactions." },
             { "name": "Frances H. Arnold", "description": "Nobel laureate for pioneering the directed evolution of enzymes." },
             { "name": "Michael Grätzel", "description": "Inventor of dye-sensitized solar cells (Grätzel cells) and a leader in perovskite solar cell research." },
             { "name": "Chad A. Mirkin", "description": "A pioneer in nanotechnology, known for spherical nucleic acids (SNAs) and dip-pen nanolithography." },
             { "name": "Omar M. Yaghi", "description": "A leader in the development of metal-organic frameworks (MOFs) and covalent organic frameworks (COFs)." },
             { "name": "John B. Goodenough", "description": "Nobel laureate for his critical contributions to the development of the lithium-ion battery." },
-            { "name": "Yi Cui", "description": "A pioneer in nanotechnology for energy and environmental applications, including advanced batteries." },
-            { "name": "Henry Snaith", "description": "A leader in the rapid development of high-efficiency perovskite solar cells." },
-            { "name": "Yury Gogotsi", "description": "A leading expert in nanocarbon materials and the discoverer of a new class of 2D materials called MXenes." },
-            { "name": "Stefan Grimme", "description": "A leading theoretical chemist who develops computational methods to predict the behavior of large molecules." },
-            { "name": "George M. Whitesides", "description": "A highly versatile chemist known for work in microfluidics, self-assembly, and low-cost diagnostics." },
-            { "name": "Andre Geim", "description": "Nobel laureate for the isolation of graphene, a single layer of carbon atoms." },
-            { "name": "Konstantin Novoselov", "description": "Nobel laureate who, with Andre Geim, first isolated and characterized graphene." },
             { "name": "Charles M. Lieber", "description": "A pioneer in nanoscience known for his work on nanowire sensors and their biological applications." },
-            { "name": "Moungi Bawendi", "description": "Nobel laureate for the discovery and synthesis of quantum dots." },
-            { "name": "Louis E. Brus", "description": "Nobel laureate who co-discovered quantum dots, nanoparticles whose properties are size-dependent." },
-            { "name": "Alexei Ekimov", "description": "Nobel laureate who first discovered quantum dots in glass matrices." }
-        ]
-    },
-    {
-        "category": "Physics & Astronomy",
-        "authors": [
-            { "name": "Stephen Hawking", "description": "A theoretical physicist who made groundbreaking predictions about black holes, including Hawking radiation." },
-            { "name": "Kip Thorne", "description": "Nobel laureate for his foundational contributions to the LIGO detector and the observation of gravitational waves." },
-            { "name": "Rainer Weiss", "description": "Nobel laureate for conceiving and leading the LIGO experiment, which first detected gravitational waves." },
-            { "name": "Barry C. Barish", "description": "Nobel laureate who brought the LIGO project to fruition, enabling the detection of gravitational waves." },
-            { "name": "Andrea M. Ghez", "description": "Nobel laureate for the discovery of a supermassive compact object at the center of our galaxy." },
-            { "name": "Reinhard Genzel", "description": "Nobel laureate for his research on the supermassive black hole at the center of the Milky Way." },
-            { "name": "Roger Penrose", "description": "Nobel laureate for showing that black hole formation is a robust prediction of general relativity." },
-            { "name": "Vera Rubin", "description": "Provided some of the first and most compelling evidence for the existence of dark matter." },
-            { "name": "Edward Witten", "description": "A leading researcher in string theory, quantum gravity, and mathematical physics." },
-            { "name": "Alan Guth", "description": "Developed the theory of cosmic inflation, a key concept in modern cosmology." },
-            { "name": "Sheperd S. Doeleman", "description": "Led the Event Horizon Telescope collaboration to capture the first image of a black hole." },
-            { "name": "Michel Mayor", "description": "Nobel laureate for co-discovering the first exoplanet orbiting a sun-like star, 51 Pegasi b." },
-            { "name": "Didier Queloz", "description": "Nobel laureate for his role in discovering the first exoplanet around a solar-type star." },
-            { "name": "David Charbonneau", "description": "A pioneer in the discovery and characterization of exoplanets, particularly using the transit method." },
-            { "name": "Pablo Jarillo-Herrero", "description": "Discovered that twisted bilayer graphene can become a superconductor, creating the field of \"twistronics\"." },
-            { "name": "Gerd Binnig", "description": "Nobel laureate for co-inventing the scanning tunneling microscope, allowing for atomic-scale imaging." },
-            { "name": "Heinrich Rohrer", "description": "Nobel laureate who, with Gerd Binnig, invented the scanning tunneling microscope." },
-            { "name": "Shuji Nakamura", "description": "Nobel laureate for inventing the efficient blue LED, enabling bright, energy-saving white light sources." },
-            { "name": "Alain Aspect", "description": "Nobel laureate for his pioneering experiments on quantum entanglement." },
-            { "name": "John F. Clauser", "description": "Nobel laureate whose experiments confirmed that quantum mechanics violates Bell's inequality." },
-            { "name": "Anton Zeilinger", "description": "Nobel laureate for his foundational experiments in quantum entanglement and quantum teleportation." }
+            { "name": "Moungi Bawendi", "description": "Nobel laureate for the discovery and synthesis of quantum dots." }
         ]
     },
     {
@@ -199,16 +122,9 @@
             { "name": "Johan Rockström", "description": "Developed the \"Planetary Boundaries\" framework, defining safe operating spaces for humanity." },
             { "name": "Sandra Díaz", "description": "An ecologist whose work on plant functional biodiversity is central to understanding ecosystem services." },
             { "name": "Corinne Le Quéré", "description": "Leads the Global Carbon Project, providing authoritative annual analyses of the global carbon budget." },
-            { "name": "Syukuro Manabe", "description": "Nobel laureate who developed early climate models demonstrating the effect of carbon dioxide on global warming." },
             { "name": "Mario Molina", "description": "Nobel laureate for identifying the threat to the ozone layer from chlorofluorocarbon (CFC) gases." },
-            { "name": "Sherwood Rowland", "description": "Nobel laureate who, with Mario Molina, discovered the ozone-depleting effects of CFCs." },
-            { "name": "Paul Crutzen", "description": "Nobel laureate for his work on atmospheric chemistry, particularly concerning the formation and decomposition of ozone." },
-            { "name": "Meinrat O. Andreae", "description": "Made fundamental contributions to understanding atmospheric aerosols and their climate impact." },
-            { "name": "Guido van der Werf", "description": "A leading expert on global emissions from wildfires and biomass burning." },
-            { "name": "Sonia I. Seneviratne", "description": "A highly cited climatologist specializing in extreme weather events like droughts and heatwaves." },
             { "name": "Rattan Lal", "description": "A leading soil scientist who has shown how healthy soils can sequester carbon to mitigate climate change." },
-            { "name": "Jane Goodall", "description": "Her long-term research on chimpanzees transformed our understanding of animal behavior and conservation." },
-            { "name": "Donald Johanson", "description": "Paleoanthropologist who discovered the fossil \"Lucy,\" providing crucial insights into early human evolution." }
+            { "name": "Jane Goodall", "description": "Her long-term research on chimpanzees transformed our understanding of animal behavior and conservation." }
         ]
     },
     {
@@ -217,9 +133,7 @@
             { "name": "Pavel A. Pevzner", "description": "A founding father of computational genomics, developing key algorithms for sequence assembly." },
             { "name": "Peer Bork", "description": "A pioneer in the analysis of metagenomes, particularly the human microbiome." },
             { "name": "Fabian Theis", "description": "A leader in applying AI and machine learning to analyze single-cell biological data." },
-            { "name": "John Jumper", "description": "Co-led the development of AlphaFold at DeepMind, which revolutionized protein structure prediction." },
-            { "name": "Alan E. Gelfand", "description": "Co-published a seminal paper on the Gibbs sampler, revolutionizing the use of Bayesian methods." },
-            { "name": "Adrian Smith", "description": "His work on the Gibbs sampler was instrumental in the practical application of Bayesian statistics." }
+            { "name": "John Jumper", "description": "Co-led the development of AlphaFold at DeepMind, which revolutionized protein structure prediction." }
         ]
     }
 ]

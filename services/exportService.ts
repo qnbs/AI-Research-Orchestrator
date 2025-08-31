@@ -176,7 +176,7 @@ export const exportToPdf = (report: ResearchReport, input: ResearchInput, settin
         addKeyValue('PMID:', article.pmid + (article.pmcId ? ` / PMCID: ${article.pmcId}` : ''), input.researchTopic, settings);
         addKeyValue('Relevance:', `${article.relevanceScore}/100 - ${article.relevanceExplanation}`, input.researchTopic, settings);
         addKeyValue('Summary:', article.summary, input.researchTopic, settings);
-        addKeyValue('Keywords:', article.keywords.join(', '), input.researchTopic, settings);
+        addKeyValue('Keywords:', (article.keywords || []).join(', '), input.researchTopic, settings);
         if (article.customTags && article.customTags.length > 0) {
             addKeyValue('Custom Tags:', article.customTags.join(', '), input.researchTopic, settings);
         }
@@ -247,7 +247,7 @@ export const exportKnowledgeBaseToPdf = (
         addKeyValue('PMID:', article.pmid + (article.pmcId ? ` / PMCID: ${article.pmcId}` : ''), title, settings);
         addKeyValue('Relevance:', `${article.relevanceScore}/100 - ${article.relevanceExplanation}`, title, settings);
         addKeyValue('Summary:', article.summary, title, settings);
-        addKeyValue('Keywords:', article.keywords.join(', '), title, settings);
+        addKeyValue('Keywords:', (article.keywords || []).join(', '), title, settings);
          if (article.customTags && article.customTags.length > 0) {
             addKeyValue('Custom Tags:', article.customTags.join(', '), title, settings);
         }
@@ -291,7 +291,7 @@ export const exportToCsv = (articlesToExport: AggregatedArticle[], topic: string
         const rowData: Record<(typeof CSV_EXPORT_COLUMNS)[number], any> = {
             ...article,
             pmcId: article.pmcId ?? '',
-            keywords: article.keywords.join('; '),
+            keywords: (article.keywords || []).join('; '),
             customTags: article.customTags?.join('; ') || '',
             sourceReportTopic: article.sourceReportTopic || topic,
             articleType: article.articleType || 'N/A',
@@ -326,7 +326,7 @@ export const exportInsightsToCsv = (insights: ResearchReport['aiGeneratedInsight
         topic,
         insight.question,
         insight.answer,
-        insight.supportingArticles.join('; ')
+        (insight.supportingArticles || []).join('; ')
     ].map(escapeCsvField).join(','));
 
     const csvContent = [headers.join(','), ...rows].join('\n');
@@ -369,18 +369,34 @@ export const exportKnowledgeBaseToJson = (articles: AggregatedArticle[]): void =
 
 export const exportCitations = (articles: AggregatedArticle[], settings: Settings['export']['citation'], type: 'bib' | 'ris'): void => {
     let content = '';
-    const cleanForBibtex = (text: string) => text ? text.replace(/([{}%])/g, '\\$1') : '';
+
+    const cleanForBibtex = (text: string) => {
+        if (!text) return '{}';
+        // More comprehensive BibTeX escaping
+        let s = text.replace(/\\/g, '\\textbackslash{}');
+        s = s.replace(/([&%$#_{}])/g, '\\$1');
+        s = s.replace(/~/g, '\\textasciitilde{}');
+        s = s.replace(/\^/g, '\\textasciicircum{}');
+        return `{${s}}`;
+    };
+
+    const cleanForRis = (text: string) => {
+        if (!text) return '';
+        // RIS format is line-based. Newlines in content are a problem.
+        return cleanText(text).replace(/(\r\n|\n|\r)/gm, " ").replace(/\s\s+/g, ' ').trim();
+    }
+
 
     if (type === 'bib') {
         content = articles.map(a => {
-            let entry = `@article{PMID:${a.pmid},\n  author  = {${a.authors.split(', ').join(' and ')}},\n  title   = {${cleanForBibtex(a.title)}},\n  journal = {${cleanForBibtex(a.journal)}},\n  year    = {${a.pubYear}},\n  pmid    = {${a.pmid}},\n`;
-            if (settings.includeAbstract) entry += `  abstract = {${cleanForBibtex(a.summary)}},\n`;
+            let entry = `@article{PMID:${a.pmid},\n  author  = {${a.authors.split(', ').join(' and ')}},\n  title   = ${cleanForBibtex(a.title)},\n  journal = ${cleanForBibtex(a.journal)},\n  year    = {${a.pubYear}},\n  pmid    = {${a.pmid}},\n`;
+            if (settings.includeAbstract) entry += `  abstract = ${cleanForBibtex(a.summary)},\n`;
             if (settings.includeKeywords && a.keywords?.length > 0) entry += `  keywords = {${a.keywords.join(', ')}},\n`;
             
             const notes = [];
             if (settings.includeTags && a.customTags?.length > 0) notes.push(`Custom Tags: ${a.customTags.join(', ')}`);
             if (settings.includePmcid && a.pmcId) notes.push(`PMCID: ${a.pmcId}`);
-            if (notes.length > 0) entry += `  note = {${cleanForBibtex(notes.join('; '))}}\n`;
+            if (notes.length > 0) entry += `  note = ${cleanForBibtex(notes.join('; '))}\n`;
             
             entry += `}`;
             return entry;
@@ -389,17 +405,17 @@ export const exportCitations = (articles: AggregatedArticle[], settings: Setting
         content = articles.map(a => {
             let entry = `TY  - JOUR\n`;
             entry += a.authors.split(', ').map(author => `AU  - ${author}`).join('\n') + '\n';
-            entry += `TI  - ${a.title}\nJO  - ${a.journal}\nYR  - ${a.pubYear}\n`;
-            if (settings.includeAbstract) entry += `AB  - ${a.summary}\n`;
-            if (settings.includeKeywords && a.keywords?.length > 0) entry += `${a.keywords.map(kw => `KW  - ${kw}`).join('\n')}\n`;
-            if (settings.includeTags && a.customTags?.length > 0) entry += `${a.customTags.map(tag => `KW  - ${tag}`).join('\n')}\n`; // Using KW for custom tags too
+            entry += `TI  - ${cleanForRis(a.title)}\nJO  - ${cleanForRis(a.journal)}\nYR  - ${a.pubYear}\n`;
+            if (settings.includeAbstract) entry += `AB  - ${cleanForRis(a.summary)}\n`;
+            if (settings.includeKeywords && a.keywords?.length > 0) entry += `${a.keywords.map(kw => `KW  - ${cleanForRis(kw)}`).join('\n')}\n`;
+            if (settings.includeTags && a.customTags?.length > 0) entry += `${a.customTags.map(tag => `KW  - ${cleanForRis(tag)}`).join('\n')}\n`; // Using KW for custom tags too
             entry += `ID  - ${a.pmid}\n`;
             if (settings.includePmcid && a.pmcId) entry += `N1  - PMCID: ${a.pmcId}\n`; // N1 is often used for notes
             entry += 'ER  - \n';
             return entry;
         }).join('\n');
     }
-    const blob = new Blob([content], { type: 'application/octet-stream' });
+    const blob = new Blob([content], { type: 'application/octet-stream;charset=utf-8' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = `citations.${type}`;

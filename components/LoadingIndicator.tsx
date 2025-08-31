@@ -5,45 +5,48 @@ interface LoadingIndicatorProps {
 }
 
 const loadingPhases = [
-  "Phase 1: Formulating Advanced PubMed Queries...",
-  "Phase 2: Retrieving and Scanning Article Abstracts...",
-  "Phase 3: Filtering Articles Based on Criteria...",
-  "Phase 4: Ranking Articles for Relevance...",
-  "Phase 5: Synthesizing Top Findings & Extracting Keywords...",
+  "Phase 1: AI Generating PubMed Queries...",
+  "Phase 2: Executing Real-time PubMed Search...",
+  "Phase 3: Fetching Article Details from PubMed...",
+  "Phase 4: AI Ranking & Analysis of Real Articles...",
+  "Phase 5: Synthesizing Top Findings...",
+  "Streaming Synthesis...",
   "Finalizing Report..."
 ];
 
 const phaseDetails: Record<string, string[]> = {
-  "Phase 1: Formulating Advanced PubMed Queries...": [
+  "Phase 1: AI Generating PubMed Queries...": [
     "Analyzing research topic and user criteria...",
     "AI is constructing advanced boolean search strings...",
-    "Finalizing query logic for optimal retrieval...",
+    "Optimizing queries for relevance...",
   ],
-  "Phase 2: Retrieving and Scanning Article Abstracts...": [
-    "Executing queries against live PubMed database...",
-    "Fetching article metadata (titles, authors, journals)...",
-    "Gathering article identifiers for analysis...",
+  "Phase 2: Executing Real-time PubMed Search...": [
+    "Connecting to live NCBI PubMed database...",
+    "Submitting best query to retrieve article IDs...",
+    "Compiling list of relevant publications...",
   ],
-  "Phase 3: Filtering Articles Based on Criteria...": [
-    "AI is finding abstracts for fetched articles...",
-    "Applying date range and article type filters...",
-    "Performing initial screening of content...",
+  "Phase 3: Fetching Article Details from PubMed...": [
+    "Requesting abstracts and metadata for found articles...",
+    "Parsing publication data (titles, authors, journals)...",
+    "Preparing real-world data for AI analysis...",
   ],
-  "Phase 4: Ranking Articles for Relevance...": [
-    "AI is scoring each article for relevance (1-100)...",
-    "Writing relevance explanations...",
-    "Sorting articles from highest to lowest score...",
+  "Phase 4: AI Ranking & Analysis of Real Articles...": [
+    "AI is reading and scoring each article for relevance...",
+    "Writing relevance explanations based on content...",
+    "Identifying key themes and generating insights...",
   ],
-  "Phase 5: Synthesizing Top Findings & Extracting Keywords...": [
-    "Selecting top N articles for synthesis...",
-    "Analyzing top articles for common themes...",
-    "Extracting 3-5 keywords from each top article...",
-    "Generating AI-powered insights...",
+  "Phase 5: Synthesizing Top Findings...": [
+    "Selecting top articles for the executive summary...",
+    "Preparing final prompt for narrative synthesis...",
+    "Initializing streaming connection with AI...",
+  ],
+  "Streaming Synthesis...": [
+    "Receiving synthesized text in real-time...",
+    "Building the narrative summary chunk by chunk...",
   ],
   "Finalizing Report...": [
-    "Generating executive narrative synthesis...",
-    "Compiling overall keyword frequencies...",
-    "Assembling final JSON report structure...",
+    "Assembling final report structure...",
+    "Finishing up...",
   ]
 };
 

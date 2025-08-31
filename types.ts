@@ -204,3 +204,16 @@ export interface AuthorProfile {
   coreConcepts: { concept: string; frequency: number }[];
   publications: RankedArticle[];
 }
+
+// --- Chat Types ---
+export interface ChatMessage {
+  role: 'user' | 'model';
+  parts: { text: string }[];
+  timestamp: number;
+}
+
+// --- Featured Authors ---
+export interface FeaturedAuthorCategory {
+    category: string;
+    authors: { name: string; description: string; }[];
+}

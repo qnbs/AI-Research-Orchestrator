@@ -1,5 +1,5 @@
 import React, { useState, useId, useEffect, useRef, useCallback } from 'react';
-import type { ResearchReport, RankedArticle, ResearchInput, AggregatedArticle } from '../types';
+import type { ResearchReport, RankedArticle, ResearchInput, AggregatedArticle, ChatMessage } from '../types';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import { ChevronDownIcon } from './icons/ChevronDownIcon';
@@ -24,6 +24,8 @@ import { WebIcon } from './icons/WebIcon';
 import { useUI } from '../contexts/UIContext';
 import { useKnowledgeBase } from '../contexts/KnowledgeBaseContext';
 import { ExportIcon } from './icons/ExportIcon';
+import { ChatInterface } from './ChatInterface';
+import { ChatBubbleLeftRightIcon } from './icons/ChatBubbleLeftRightIcon';
 
 interface ReportDisplayProps {
   report: ResearchReport;
@@ -33,6 +35,9 @@ interface ReportDisplayProps {
   onNewSearch: () => void;
   onUpdateInput: (newInput: ResearchInput) => void;
   onTagsUpdate: (pmid: string, newTags: string[]) => void;
+  chatHistory: ChatMessage[];
+  isChatting: boolean;
+  onSendMessage: (message: string) => void;
 }
 
 const secureMarkdownToHtml = (text: string): string => {
@@ -165,7 +170,7 @@ const ArticleCard: React.FC<{ article: RankedArticle; rank: number; onTagsUpdate
             
             <div className="mt-3 space-y-3">
                 <div className="flex flex-wrap gap-2">
-                    {article.keywords.map(kw => (
+                    {(article.keywords || []).map(kw => (
                         <span key={kw} className="bg-sky-500/10 text-sky-300 text-xs font-medium px-2.5 py-0.5 rounded-full border border-sky-500/20">{kw}</span>
                     ))}
                 </div>
@@ -199,7 +204,7 @@ const ArticleCard: React.FC<{ article: RankedArticle; rank: number; onTagsUpdate
 });
 
 
-export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(({ report, input, isSaved, onSave, onNewSearch, onUpdateInput, onTagsUpdate }) => {
+export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(({ report, input, isSaved, onSave, onNewSearch, onUpdateInput, onTagsUpdate, chatHistory, isChatting, onSendMessage }) => {
   const [modalState, setModalState] = useState<{ type: 'pdf' | 'csv' | 'insights' | 'save' } | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const { settings } = useSettings();
@@ -346,7 +351,7 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(({ report,
                             <div className="mt-3 pt-2 border-t border-border/50">
                                 <p className="text-xs text-text-secondary font-semibold mb-1">Supporting Evidence (PMIDs):</p>
                                 <div className="flex flex-wrap gap-x-3 gap-y-1 items-center">
-                                    {insight.supportingArticles.map(pmid => ( <a href={`https://pubmed.ncbi.nlm.nih.gov/${pmid}/`} target="_blank" rel="noopener noreferrer" key={pmid} className="text-xs text-text-secondary hover:text-brand-accent hover:underline">{pmid}</a>))}
+                                    {(insight.supportingArticles || []).map(pmid => ( <a href={`https://pubmed.ncbi.nlm.nih.gov/${pmid}/`} target="_blank" rel="noopener noreferrer" key={pmid} className="text-xs text-text-secondary hover:text-brand-accent hover:underline">{pmid}</a>))}
                                 </div>
                             </div>
                         </div>
@@ -404,6 +409,20 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(({ report,
                     </div>
                 </AccordionSection>
             )}
+            <AccordionSection 
+                title={
+                    <div className="flex items-center gap-3">
+                        <ChatBubbleLeftRightIcon className="h-5 w-5 text-accent-cyan" />
+                        <span>Chat with this Report</span>
+                    </div>
+                }
+            >
+                <ChatInterface 
+                    history={chatHistory}
+                    isChatting={isChatting}
+                    onSendMessage={onSendMessage}
+                />
+            </AccordionSection>
         </div>
     </div>
     {modalState?.type === 'save' && <ConfirmationModal onConfirm={() => { onSave(); setModalState(null); }} onCancel={() => setModalState(null)} title="Save Report" message="Are you sure you want to save this report to your Knowledge Base?" confirmText="Save" confirmButtonClass="bg-brand-accent hover:bg-opacity-90" titleClass="text-brand-accent" />}

@@ -4,11 +4,11 @@ import { ReportDisplay } from './ReportDisplay';
 import { LoadingIndicator } from './LoadingIndicator';
 import { OrchestratorDashboard } from './OrchestratorDashboard';
 import { Welcome } from './Welcome';
-import { ResearchInput, ResearchReport, KnowledgeBaseEntry, Settings } from '../types';
+import { ResearchInput, ResearchReport, KnowledgeBaseEntry, Settings, ChatMessage } from '../types';
 import { useKnowledgeBase } from '../contexts/KnowledgeBaseContext';
 
 interface OrchestratorViewProps {
-    isLoading: boolean;
+    reportStatus: 'idle' | 'generating' | 'streaming' | 'done' | 'error';
     currentPhase: string;
     error: string | null;
     report: ResearchReport | null;
@@ -24,10 +24,13 @@ interface OrchestratorViewProps {
     handleStartNewReview: (topic: string) => void;
     onUpdateResearchInput: (newInput: ResearchInput) => void;
     handleTagsUpdate: (pmid: string, newTags: string[]) => void;
+    chatHistory: ChatMessage[];
+    isChatting: boolean;
+    onSendMessage: (message: string) => void;
 }
 
 export const OrchestratorView: React.FC<OrchestratorViewProps> = ({
-    isLoading,
+    reportStatus,
     currentPhase,
     error,
     report,
@@ -43,26 +46,32 @@ export const OrchestratorView: React.FC<OrchestratorViewProps> = ({
     handleStartNewReview,
     onUpdateResearchInput,
     handleTagsUpdate,
+    chatHistory,
+    isChatting,
+    onSendMessage,
 }) => {
     const { knowledgeBase } = useKnowledgeBase();
-    
+    const isProcessing = reportStatus === 'generating' || reportStatus === 'streaming';
+    const showLoadingIndicator = reportStatus === 'generating';
+    const showReport = (reportStatus === 'streaming' || reportStatus === 'done') && report;
+
     return (
         <div className="max-w-4xl mx-auto space-y-8">
             <InputForm
                 onSubmit={handleFormSubmit}
-                isLoading={isLoading}
+                isLoading={isProcessing}
                 defaultSettings={settings.defaults}
                 prefilledTopic={prefilledTopic}
                 onPrefillConsumed={onPrefillConsumed}
             />
 
-            {isLoading && <LoadingIndicator phase={currentPhase} />}
+            {showLoadingIndicator && <LoadingIndicator phase={currentPhase} />}
             
             {error && (
                 <div className="text-center text-red-400 font-semibold p-8 bg-surface rounded-lg border border-red-500/20">{error}</div>
             )}
 
-            {!isLoading && !error && report && researchInput && (
+            {showReport && researchInput && (
                 <ReportDisplay 
                     report={report} 
                     input={researchInput} 
@@ -71,10 +80,13 @@ export const OrchestratorView: React.FC<OrchestratorViewProps> = ({
                     onNewSearch={handleNewSearch}
                     onUpdateInput={onUpdateResearchInput}
                     onTagsUpdate={handleTagsUpdate}
+                    chatHistory={chatHistory}
+                    isChatting={isChatting}
+                    onSendMessage={onSendMessage}
                 />
             )}
 
-            {!isLoading && !error && !report && (
+            {!isProcessing && !error && !report && (
                  knowledgeBase.length > 0 ? (
                     <OrchestratorDashboard 
                         entries={knowledgeBase} 

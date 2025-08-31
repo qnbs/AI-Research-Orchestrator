@@ -1,7 +1,8 @@
+
 import React, { useState, useCallback, useEffect } from 'react';
 import { OnboardingView } from './components/OnboardingView';
 import { Header } from './components/Header';
-import { ResearchInput, ResearchReport, KnowledgeBaseFilter, KnowledgeBaseEntry, AggregatedArticle } from './types';
+import { ResearchInput, ResearchReport, KnowledgeBaseFilter, KnowledgeBaseEntry, AggregatedArticle, ChatMessage } from './types';
 import { KnowledgeBaseView } from './components/KnowledgeBaseView';
 import SettingsView from './components/SettingsView';
 import { SettingsProvider, useSettings } from './contexts/SettingsContext';
@@ -14,7 +15,7 @@ import { HistoryView } from './components/HistoryView';
 import { ResearchView } from './components/ResearchView';
 import { AuthorsView } from './components/AuthorsView';
 import { useResearchAssistant } from './hooks/useResearchAssistant';
-import { generateResearchReport } from './services/geminiService';
+import { generateResearchReportStream } from './services/geminiService';
 import { OrchestratorView } from './components/OrchestratorView';
 import { KnowledgeBaseProvider, useKnowledgeBase } from './contexts/KnowledgeBaseContext';
 import { UIProvider, useUI } from './contexts/UIContext';
@@ -22,6 +23,8 @@ import type { View } from './contexts/UIContext';
 import { CommandPalette } from './components/CommandPalette';
 import { exportKnowledgeBaseToPdf, exportToCsv, exportCitations } from './services/exportService';
 import { QuickAddModal } from './components/QuickAddModal';
+import { useChat } from './hooks/useChat';
+import { BottomNavBar } from './components/BottomNavBar';
 
 
 const AppLayout: React.FC = () => {
@@ -29,19 +32,22 @@ const AppLayout: React.FC = () => {
   const [researchInput, setResearchInput] = useState<ResearchInput | null>(null);
   const [localResearchInput, setLocalResearchInput] = useState<ResearchInput | null>(null); // For editable title
   const [report, setReport] = useState<ResearchReport | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [reportStatus, setReportStatus] = useState<'idle' | 'generating' | 'streaming' | 'done' | 'error'>('idle');
   const [error, setError] = useState<string | null>(null);
   const [currentPhase, setCurrentPhase] = useState<string>('');
   
   // App-wide State from contexts
   const { settings } = useSettings();
   const { currentView, notification, setNotification, isSettingsDirty, setIsSettingsDirty, pendingNavigation, setPendingNavigation, setCurrentView, showOnboarding, setShowOnboarding, isCommandPaletteOpen, setIsCommandPaletteOpen } = useUI();
-  const { knowledgeBase, saveReport, clearKnowledgeBase, uniqueArticles } = useKnowledgeBase();
+  const { knowledgeBase, saveReport, clearKnowledgeBase, uniqueArticles, updateTags } = useKnowledgeBase();
 
   const [isCurrentReportSaved, setIsCurrentReportSaved] = useState<boolean>(false);
   const [selectedKbPmids, setSelectedKbPmids] = useState<string[]>([]);
   const [showExportModal, setShowExportModal] = useState<'pdf' | 'csv' | 'bib' | 'ris' | null>(null);
   const [isQuickAddModalOpen, setIsQuickAddModalOpen] = useState(false);
+  
+  // Chat Hook
+  const { chatHistory, isChatting, sendMessage } = useChat(report, reportStatus, settings.ai);
 
   // Research Assistant Hook
   const {
@@ -120,10 +126,8 @@ const AppLayout: React.FC = () => {
         }
     }, [currentView, selectedKbPmids.length]);
 
-  const loadingPhases = ["Phase 1: Formulating Advanced PubMed Queries...","Phase 2: Retrieving and Scanning Article Abstracts...","Phase 3: Filtering Articles Based on Criteria...","Phase 4: Ranking Articles for Relevance...","Phase 5: Synthesizing Top Findings & Extracting Keywords...","Finalizing Report..."];
-
   const handleFormSubmit = useCallback(async (data: ResearchInput) => {
-    setIsLoading(true);
+    setReportStatus('generating');
     setError(null);
     setReport(null);
     setResearchInput(data);
@@ -131,26 +135,33 @@ const AppLayout: React.FC = () => {
     setCurrentView('orchestrator');
     setIsCurrentReportSaved(false);
 
-    let phaseIndex = 0;
-    setCurrentPhase(loadingPhases[0]);
-    const phaseInterval = setInterval(() => {
-      phaseIndex = (phaseIndex + 1);
-      if(phaseIndex < loadingPhases.length) setCurrentPhase(loadingPhases[phaseIndex]);
-      else clearInterval(phaseInterval);
-    }, 4000);
-
     try {
-      const generatedReport = await generateResearchReport(data, settings.ai);
-      setReport(generatedReport);
+      const stream = generateResearchReportStream(data, settings.ai);
+      for await (const chunk of stream) {
+        if(chunk.phase) setCurrentPhase(chunk.phase);
+        if (chunk.report) {
+          setReport(chunk.report);
+          setReportStatus('streaming');
+        }
+        if (chunk.synthesisChunk) {
+          setReport(prev => prev ? { ...prev, synthesis: (prev.synthesis || '') + chunk.synthesisChunk } : null);
+        }
+      }
+      setReportStatus('done');
        if (settings.defaults.autoSaveReports) {
-            const saved = saveReport(data, generatedReport);
-            setIsCurrentReportSaved(saved);
+            // Need to get the final report state
+            setReport(currentReport => {
+                if(currentReport) {
+                    const saved = saveReport(data, currentReport);
+                    setIsCurrentReportSaved(saved);
+                }
+                return currentReport;
+            });
         }
     } catch (err) {
       setError(err instanceof Error ? err.message : "An unknown error occurred");
+      setReportStatus('error');
     } finally {
-      clearInterval(phaseInterval);
-      setIsLoading(false);
       setCurrentPhase('');
     }
   }, [settings.ai, settings.defaults.autoSaveReports, saveReport, setCurrentView]);
@@ -169,6 +180,7 @@ const AppLayout: React.FC = () => {
     setReport(null);
     setResearchInput(null);
     setLocalResearchInput(null);
+    setReportStatus('idle');
     window.scrollTo(0, 0);
   }, []);
 
@@ -178,6 +190,7 @@ const AppLayout: React.FC = () => {
           setReport(null);
           setResearchInput(null);
           setLocalResearchInput(null);
+          setReportStatus('idle');
       }
       setCurrentView('orchestrator');
   };
@@ -203,6 +216,7 @@ const AppLayout: React.FC = () => {
       setLocalResearchInput(entry.input); // Also set local state for consistency
       setReport(entry.report);
       setIsCurrentReportSaved(true);
+      setReportStatus('done');
       setCurrentView('orchestrator');
   };
 
@@ -238,6 +252,7 @@ const AppLayout: React.FC = () => {
   }
   
   const handleTagsUpdate = useCallback((pmid: string, newTags: string[]) => {
+      // First, update the temporary report state for immediate UI feedback
       setReport(currentReport => {
           if (!currentReport) return null;
           return {
@@ -247,7 +262,9 @@ const AppLayout: React.FC = () => {
               )
           };
       });
-  }, []);
+      // Then, persist the change to the knowledge base
+      updateTags(pmid, newTags);
+  }, [updateTags]);
 
   const renderView = () => {
     switch(currentView) {
@@ -273,7 +290,7 @@ const AppLayout: React.FC = () => {
         return <ResearchView onStartNewReview={handleStartNewReview} onStartResearch={startResearch} onClearResearch={clearResearch} isLoading={isResearching} phase={researchPhase} error={researchError} analysis={researchAnalysis} similarArticlesState={similar} onlineFindingsState={online} />;
       case 'orchestrator':
       default:
-        return <OrchestratorView isLoading={isLoading} currentPhase={currentPhase} error={error} report={report} researchInput={localResearchInput ?? researchInput} isCurrentReportSaved={isCurrentReportSaved} settings={settings} prefilledTopic={prefilledTopic} handleFormSubmit={handleFormSubmit} handleSaveReport={handleSaveReport} handleNewSearch={handleNewSearch} onPrefillConsumed={() => setPrefilledTopic(null)} handleViewReportFromHistory={handleViewReportFromHistory} handleStartNewReview={handleStartNewReview} onUpdateResearchInput={setLocalResearchInput} handleTagsUpdate={handleTagsUpdate} />;
+        return <OrchestratorView reportStatus={reportStatus} currentPhase={currentPhase} error={error} report={report} researchInput={localResearchInput ?? researchInput} isCurrentReportSaved={isCurrentReportSaved} settings={settings} prefilledTopic={prefilledTopic} handleFormSubmit={handleFormSubmit} handleSaveReport={handleSaveReport} handleNewSearch={handleNewSearch} onPrefillConsumed={() => setPrefilledTopic(null)} handleViewReportFromHistory={handleViewReportFromHistory} handleStartNewReview={handleStartNewReview} onUpdateResearchInput={setLocalResearchInput} handleTagsUpdate={handleTagsUpdate} chatHistory={chatHistory} isChatting={isChatting} onSendMessage={sendMessage} />;
     }
   };
 
@@ -295,11 +312,9 @@ const AppLayout: React.FC = () => {
         knowledgeBaseArticleCount={uniqueArticles.length}
         hasReports={knowledgeBase.length > 0}
         isResearching={isResearching}
-        selectedArticleCount={selectedKbPmids.length}
-        currentReportTitle={report && (localResearchInput ?? researchInput) ? (localResearchInput ?? researchInput).researchTopic : null}
         onQuickAdd={() => setIsQuickAddModalOpen(true)}
       />
-      <main className="flex-grow container mx-auto p-4 sm:p-6 lg:p-8">
+      <main className="flex-grow container mx-auto p-4 sm:p-6 lg:p-8 pb-24 md:pb-8">
         <div key={currentView} className="animate-slideInUp" style={{animationDelay: '100ms', animationDuration: '500ms'}}>
             {renderView()}
         </div>
@@ -307,6 +322,13 @@ const AppLayout: React.FC = () => {
       {notification && <Notification key={notification.id} message={notification.message} type={notification.type} onClose={() => setNotification(null)} position={settings.notifications.position} duration={settings.notifications.duration} />}
        {pendingNavigation && <ConfirmationModal onConfirm={handleConfirmNavigation} onCancel={handleCancelNavigation} title="Unsaved Changes" message="You have unsaved changes in Settings. Are you sure you want to leave and discard them?" confirmText="Discard Changes" />}
        {showExportModal && <ConfirmationModal onConfirm={confirmExport} onCancel={() => setShowExportModal(null)} title={`Export ${selectedKbPmids.length} Articles`} message={`Are you sure you want to export the ${selectedKbPmids.length} selected articles as a ${showExportModal.toUpperCase()} file?`} confirmText="Yes, Export" confirmButtonClass="bg-brand-accent hover:bg-opacity-90" titleClass="text-brand-accent" />}
+        <BottomNavBar
+            currentView={currentView}
+            onViewChange={handleViewChange}
+            knowledgeBaseArticleCount={uniqueArticles.length}
+            hasReports={knowledgeBase.length > 0}
+            isResearching={isResearching}
+        />
     </div>
   );
 }
