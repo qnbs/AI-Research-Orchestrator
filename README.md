@@ -1,4 +1,4 @@
-> **Built with AI Studio** — [Start building](https://aistudio.google.com/apps?source=user) | [View App](https://ai.studio/apps/drive/19FB9X7ftbg4kXoKVBgPpsGwKDWU4Gvmp)
+> **Built with AI Studio** — [Start building](https://aistudio.google.com/apps?source=user)
 >
 > The fastest path from prompt to production with Gemini.
 
@@ -29,6 +29,8 @@ This application significantly reduces the manual effort of literature reviews b
 
 -   **👤 Author Hub:** Analyze an author's intellectual development, collaborative ecosystem, and impact on their field by searching for their publications and generating an AI-powered career summary and profile.
 
+-   **📖 Journal Hub:** Discover and analyze scientific journals. Get AI-generated profiles including a journal's focus areas and open-access policies, and find recent OA articles on a specific topic within that journal.
+
 -   **🧠 Centralized & Intelligent Knowledge Base:** All articles from saved reports are aggregated into a single, searchable library. Duplicates are automatically removed, keeping the version with the highest relevance score.
 
 -   **🔍 Powerful Data Exploration:** The Knowledge Base features robust search, multi-faceted filtering (by keyword, report, custom tags, open-access status, journal), and multiple sorting options.
@@ -55,7 +57,7 @@ This application significantly reduces the manual effort of literature reviews b
 
 ## Primary Workflows
 
-The application is built around three primary, interconnected workflows:
+The application is built around four primary, interconnected workflows:
 
 ### 1. The Quick Inquiry (Research Tab)
 This is for fast, focused analysis. You can paste an abstract to get a summary, ask a specific question, or explore a tangent without committing to a full review. If the results are promising, you can seamlessly transition the topic to the Orchestrator for a deep dive.
@@ -66,12 +68,16 @@ This is for deep dives into a new topic. You provide a broad research question, 
 ### 3. The Author Analysis (Author Hub)
 This is for understanding the work of a specific researcher. Provide an author's name, and the AI will find their publications, disambiguate them from others with the same name, and generate a career profile, including their core topics and publication timeline.
 
+### 4. The Journal Analysis (Journal Hub)
+This is for discovering new publication venues. You can analyze a specific journal to understand its scope and policies, or browse featured open-access journals. You can also search for OA articles on a topic within a chosen journal.
+
 ---
 
 ## Technology Stack
 
 -   **Frontend:** React, TypeScript
 -   **AI Model:** Google Gemini API (`@google/genai`)
+-   **Database:** Dexie.js (a wrapper for IndexedDB)
 -   **Styling:** Tailwind CSS
 -   **Charts:** Chart.js, react-chartjs-2
 -   **PDF Generation:** jsPDF
@@ -100,9 +106,9 @@ When deploying, you must use your hosting provider's system for managing environ
 
 This application is designed with privacy as a core principle.
 
--   **All data is stored exclusively in your local browser storage** (`localStorage`).
+-   **All data is stored exclusively in your local browser's IndexedDB database.**
 -   This includes your research history, saved articles, custom tags, and all settings.
--   **No information is ever uploaded to a server or shared.** Your research is completely private to the browser you are using.
+-   **No information is ever uploaded to a central server.** Your research is completely private to the browser you are using.
 -   To back up your data or move it to another machine, you **must** use the export features in `Settings > Data Management & Privacy`. Clearing your browser data will permanently delete your work unless you have a backup.
 
 ---

@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useMemo, useRef, useEffect, useCallback, memo } from 'react';
 import { exportKnowledgeBaseToPdf, exportToCsv, exportCitations } from '../services/exportService';
 import type { AggregatedArticle, KnowledgeBaseEntry, KnowledgeBaseFilter } from '../types';
@@ -28,6 +29,7 @@ import { DocumentPlusIcon } from './icons/DocumentPlusIcon';
 import { DocumentIcon } from './icons/DocumentIcon';
 import { AuthorIcon } from './icons/AuthorIcon';
 
+// FIX: Update component props to accept state lifted to App.tsx
 interface KnowledgeBaseViewProps {
   onViewChange: (view: View) => void;
   filter: KnowledgeBaseFilter;

@@ -1,0 +1,27 @@
+
+[
+    {
+        "name": "PLOS ONE",
+        "description": "A peer-reviewed open access scientific journal published by the Public Library of Science. It covers primary research from any discipline within science and medicine."
+    },
+    {
+        "name": "eLife",
+        "description": "A peer-reviewed open access scientific journal for the biomedical and life sciences, backed by leading research institutions."
+    },
+    {
+        "name": "Nature Communications",
+        "description": "An open access journal that publishes high-quality research in biology, health, physics, chemistry, and Earth sciences."
+    },
+    {
+        "name": "Cell Reports",
+        "description": "An open access journal from Cell Press, publishing high-quality research across the entire life sciences spectrum."
+    },
+    {
+        "name": "Scientific Reports",
+        "description": "An online open access scientific mega journal published by Nature Research, covering all areas of natural and clinical sciences."
+    },
+    {
+        "name": "BMJ Open",
+        "description": "An open access medical journal from the BMJ Group, publishing medical research from all disciplines and therapeutic areas."
+    }
+]

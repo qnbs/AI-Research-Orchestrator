@@ -1,21 +1,23 @@
 
-import React, { useState, useEffect, memo } from 'react';
-import type { KnowledgeBaseEntry, ResearchEntry } from '../types';
-import { useFocusTrap } from '../hooks/useFocusTrap';
-import { HistoryIcon } from './icons/HistoryIcon';
-import { EyeIcon } from './icons/EyeIcon';
-import { XIcon } from './icons/XIcon';
-import { PencilIcon } from './icons/PencilIcon';
-import { CheckCircleIcon } from './icons/CheckCircleIcon';
-import { XCircleIcon } from './icons/XCircleIcon';
-import { SearchIcon } from './icons/SearchIcon';
-import { useKnowledgeBase } from '../contexts/KnowledgeBaseContext';
-import { EmptyState } from './EmptyState';
-import { DocumentPlusIcon } from './icons/DocumentPlusIcon';
-import { useUI } from '../contexts/UIContext';
-import { DocumentIcon } from './icons/DocumentIcon';
-import { AuthorIcon } from './icons/AuthorIcon';
-import { BookOpenIcon } from './icons/BookOpenIcon';
+
+import React, { useState, useEffect, memo, useRef } from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
+import type { KnowledgeBaseEntry, ResearchEntry } from '@/types';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
+import { HistoryIcon } from '@/components/icons/HistoryIcon';
+import { EyeIcon } from '@/components/icons/EyeIcon';
+import { XIcon } from '@/components/icons/XIcon';
+import { PencilIcon } from '@/components/icons/PencilIcon';
+import { CheckCircleIcon } from '@/components/icons/CheckCircleIcon';
+import { XCircleIcon } from '@/components/icons/XCircleIcon';
+import { SearchIcon } from '@/components/icons/SearchIcon';
+import { useKnowledgeBase } from '@/contexts/KnowledgeBaseContext';
+import { EmptyState } from '@/components/EmptyState';
+import { DocumentPlusIcon } from '@/components/icons/DocumentPlusIcon';
+import { useUI } from '@/contexts/UIContext';
+import { DocumentIcon } from '@/components/icons/DocumentIcon';
+import { AuthorIcon } from '@/components/icons/AuthorIcon';
+import { BookOpenIcon } from '@/components/icons/BookOpenIcon';
 
 interface HistoryViewProps {
   onViewEntry: (entry: KnowledgeBaseEntry) => void;
@@ -32,9 +34,13 @@ const QuickViewModal: React.FC<{ entry: KnowledgeBaseEntry; onClose: () => void;
     const modalRef = useFocusTrap<HTMLDivElement>(true);
     const title = entry.title;
     
+    // FIX: Use an if/else if chain to correctly handle multiple source types.
     let typeLabel = 'Report';
-    if (entry.sourceType === 'author') typeLabel = 'Author Profile';
-    if (entry.sourceType === 'journal') typeLabel = 'Journal Profile';
+    if (entry.sourceType === 'author') {
+        typeLabel = 'Author Profile';
+    } else if (entry.sourceType === 'journal') {
+        typeLabel = 'Journal Profile';
+    }
 
     useEffect(() => {
         const handleEsc = (event: KeyboardEvent) => {
@@ -51,6 +57,7 @@ const QuickViewModal: React.FC<{ entry: KnowledgeBaseEntry; onClose: () => void;
         };
     }, [onClose]);
 
+    // FIX: Add exhaustive check for all sourceTypes to avoid 'never' type errors.
     const keywordsAndConcepts =
         entry.sourceType === 'research'
             ? (entry.report.overallKeywords || []).slice(0, 3).map(kw => kw.keyword)
@@ -171,22 +178,21 @@ const HistoryListItem = memo<HistoryListItemProps>(({ entry, onViewEntry, onQuic
                 </div>
             </div>
             <div className="mt-4 pt-4 border-t border-border/50 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-text-secondary">
-                {entry.sourceType === 'research' && (
+                {/* FIX: Add exhaustive check for all sourceTypes to avoid 'never' type errors. */}
+                {entry.sourceType === 'research' ? (
                     <>
                         <div><strong>{entry.articles.length}</strong> articles</div>
                         <div><strong>Focus:</strong> {synthesisFocusText[entry.input.synthesisFocus]}</div>
                         <div><strong>Date Range:</strong> {entry.input.dateRange === 'any' ? 'Any time' : `Last ${entry.input.dateRange} years`}</div>
                     </>
-                )}
-                {entry.sourceType === 'author' && (
+                ) : entry.sourceType === 'author' ? (
                      <div><strong>{entry.articles.length}</strong> publications</div>
-                )}
-                {entry.sourceType === 'journal' && (
+                ) : entry.sourceType === 'journal' ? (
                     <>
                          <div><strong>{entry.articles.length}</strong> articles found</div>
                          {entry.journalProfile && <div><strong>Policy:</strong> {entry.journalProfile.oaPolicy}</div>}
                     </>
-                )}
+                ) : null}
             </div>
         </li>
     );
@@ -199,9 +205,18 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ onViewEntry }) => {
   const [editingEntry, setEditingEntry] = useState<{ id: string; title: string } | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
+  const parentRef = useRef<HTMLDivElement>(null);
+
   const filteredEntries = knowledgeBase
     .filter(entry => entry.title.toLowerCase().includes(searchTerm.toLowerCase()))
     .sort((a, b) => b.timestamp - a.timestamp);
+
+  const rowVirtualizer = useVirtualizer({
+      count: filteredEntries.length,
+      getScrollElement: () => parentRef.current,
+      estimateSize: () => 170, // Estimated height for each list item
+      overscan: 5,
+  });
     
   const handleEditKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
@@ -258,24 +273,39 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ onViewEntry }) => {
           </div>
       </div>
 
-      <div className="bg-surface border border-border rounded-lg shadow-lg max-w-4xl mx-auto">
-        <ul className="divide-y divide-border">
-          {filteredEntries.map(entry => (
-             <HistoryListItem
-                key={entry.id}
-                entry={entry}
-                onViewEntry={onViewEntry}
-                onQuickView={setQuickViewEntry}
-                onStartEdit={setEditingEntry}
-                isEditing={editingEntry?.id === entry.id}
-                editingTitle={editingEntry?.id === entry.id ? editingEntry.title : ''}
-                onTitleChange={(title) => editingEntry && setEditingEntry({ ...editingEntry, title })}
-                onSaveTitle={handleSaveTitle}
-                onCancelEdit={() => setEditingEntry(null)}
-                onEditKeyDown={handleEditKeyDown}
-            />
-          ))}
-        </ul>
+      <div ref={parentRef} className="bg-surface border border-border rounded-lg shadow-lg max-w-4xl mx-auto h-[60vh] overflow-y-auto">
+        <div style={{ height: `${rowVirtualizer.getTotalSize()}px`, width: '100%', position: 'relative' }}>
+          {rowVirtualizer.getVirtualItems().map(virtualItem => {
+              const entry = filteredEntries[virtualItem.index];
+              return (
+                  <div 
+                    key={virtualItem.key}
+                    style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: `${virtualItem.size}px`,
+                        transform: `translateY(${virtualItem.start}px)`,
+                    }}
+                    className="border-b border-border"
+                  >
+                    <HistoryListItem
+                        entry={entry}
+                        onViewEntry={onViewEntry}
+                        onQuickView={setQuickViewEntry}
+                        onStartEdit={setEditingEntry}
+                        isEditing={editingEntry?.id === entry.id}
+                        editingTitle={editingEntry?.id === entry.id ? editingEntry.title : ''}
+                        onTitleChange={(title) => editingEntry && setEditingEntry({ ...editingEntry, title })}
+                        onSaveTitle={handleSaveTitle}
+                        onCancelEdit={() => setEditingEntry(null)}
+                        onEditKeyDown={handleEditKeyDown}
+                    />
+                  </div>
+              )
+          })}
+        </div>
       </div>
 
       {quickViewEntry && <QuickViewModal entry={quickViewEntry} onClose={() => setQuickViewEntry(null)} onViewEntry={onViewEntry} />}

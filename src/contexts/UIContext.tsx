@@ -1,8 +1,7 @@
 
-
 import React, { createContext, useContext, useState, ReactNode, useMemo } from 'react';
 
-export type View = 'home' | 'orchestrator' | 'research' | 'authors' | 'knowledgeBase' | 'settings' | 'help' | 'dashboard' | 'history';
+export type View = 'home' | 'orchestrator' | 'research' | 'authors' | 'journals' | 'knowledgeBase' | 'settings' | 'help' | 'dashboard' | 'history';
 
 interface NotificationState {
   id: number;

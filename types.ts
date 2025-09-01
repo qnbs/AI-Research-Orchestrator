@@ -167,6 +167,7 @@ export interface Settings {
     articlesPerPage: 10 | 20 | 50;
     defaultSort: 'relevance' | 'newest';
   };
+  hasCompletedOnboarding: boolean;
 }
 
 export interface SimilarArticle {

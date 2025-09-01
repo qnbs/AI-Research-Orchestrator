@@ -1,5 +1,6 @@
+
 import { GoogleGenAI, Type, Chat } from "@google/genai";
-import type { ResearchInput, ResearchReport, Settings, RankedArticle, SimilarArticle, OnlineFindings, WebContent, ResearchAnalysis, GeneratedQuery, AuthorCluster, FeaturedAuthorCategory } from '../types';
+import type { ResearchInput, ResearchReport, Settings, RankedArticle, SimilarArticle, OnlineFindings, WebContent, ResearchAnalysis, GeneratedQuery, AuthorCluster, JournalProfile } from '../types';
 
 if (!process.env.API_KEY) {
   throw new Error("API_KEY environment variable not set");
@@ -74,6 +75,33 @@ function getGeminiError(error: unknown): string {
     return "An unknown AI error occurred.";
 }
 
+export const generateAuthorQuery = (fullName: string): string => {
+    if (fullName.includes(',')) {
+        const parts = fullName.split(',');
+        const lastName = parts[0].trim();
+        const firstAndMiddle = parts.slice(1).join(' ').trim();
+        fullName = `${firstAndMiddle} ${lastName}`;
+    }
+
+    const cleanedName = fullName.replace(/\./g, '');
+    const parts = cleanedName.trim().split(/\s+/).filter(Boolean);
+
+    if (parts.length === 0) return `""[Author]`;
+    if (parts.length === 1) return `"${parts[0]}"[Author]`;
+
+    const lastName = parts[parts.length - 1];
+    const firstParts = parts.slice(0, -1);
+    const firstName = firstParts[0];
+    const initials = firstParts.map(p => p.charAt(0)).join('');
+
+    const queryVariations = new Set<string>();
+    queryVariations.add(`"${firstParts.join(' ')} ${lastName}"[Author]`);
+    queryVariations.add(`"${lastName} ${initials}"[Author]`);
+    queryVariations.add(`"${lastName} ${firstName}"[Author]`);
+
+    return `(${Array.from(queryVariations).join(' OR ')})`;
+};
+
 
 // --- PubMed API Client ---
 
@@ -101,14 +129,12 @@ interface ESummaryResult {
 export async function searchPubMedForIds(query: string, retmax: number): Promise<string[]> {
     const url = `${PUBMED_API_BASE}esearch.fcgi?db=pubmed&term=${encodeURIComponent(query)}&retmax=${retmax}&sort=relevance&retmode=json`;
     try {
-        // NCBI recommends including contact info in requests
         const response = await fetch(url, { headers: { 'User-Agent': 'ai-research-orchestration-author/1.0' } });
         if (!response.ok) {
             throw new Error(`PubMed API error: ${response.statusText}. Could not connect to PubMed.`);
         }
         const data: ESearchResult = await response.json();
         
-        // Handle cases where PubMed returns a valid response but no results.
         if (data.esearchresult?.idlist) {
             return data.esearchresult.idlist;
         }
@@ -129,7 +155,6 @@ export async function searchPubMedForIds(query: string, retmax: number): Promise
  */
 export async function fetchArticleDetails(pmids: string[]): Promise<Partial<RankedArticle>[]> {
     if (pmids.length === 0) return [];
-    // POST request is better for large number of IDs
     const url = `${PUBMED_API_BASE}esummary.fcgi?db=pubmed&retmode=json`;
     try {
         const formData = new FormData();
@@ -577,6 +602,36 @@ export async function analyzeSingleArticle(identifier: string, aiSettings: Setti
         throw new Error(getGeminiError(error));
     }
 }
+
+export async function generateJournalProfileAnalysis(journalName: string, aiSettings: Settings['ai']): Promise<JournalProfile> {
+    try {
+        const response = await ai.models.generateContent({
+            model: aiSettings.model,
+            contents: `Act as an expert academic librarian. Analyze the journal '${journalName}'. Provide a JSON object with the following structure: { "name": "...", "issn": "...", "description": "...", "oaPolicy": "...", "focusAreas": ["..."] }. Find the correct ISSN. For oaPolicy, use one of: "Full Open Access", "Hybrid", "Subscription".`,
+            config: {
+                systemInstruction: getPreamble(aiSettings),
+                temperature: 0.2,
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.OBJECT,
+                    properties: {
+                        name: { type: Type.STRING },
+                        issn: { type: Type.STRING },
+                        description: { type: Type.STRING },
+                        oaPolicy: { type: Type.STRING },
+                        focusAreas: { type: Type.ARRAY, items: { type: Type.STRING } }
+                    },
+                    required: ["name", "issn", "description", "oaPolicy", "focusAreas"]
+                }
+            }
+        });
+        return extractAndParseJson<JournalProfile>(response.text);
+    } catch (error) {
+        console.error("Error generating journal profile analysis:", error);
+        throw new Error(getGeminiError(error));
+    }
+}
+
 
 // --- Chat Service ---
 export const startChatWithReport = (report: ResearchReport, aiSettings: Settings['ai']): Chat => {

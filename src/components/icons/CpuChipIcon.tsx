@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 export const CpuChipIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (

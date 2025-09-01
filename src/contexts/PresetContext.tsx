@@ -1,8 +1,7 @@
 
-
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
-import type { Preset, ResearchInput } from '../types';
-import { db } from '../services/databaseService';
+import type { Preset, ResearchInput } from '@/types';
+import { db } from '@/services/databaseService';
 
 interface PresetContextType {
   presets: Preset[];

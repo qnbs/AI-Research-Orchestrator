@@ -1,222 +1,232 @@
 
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
-// FIX: Import new types and remove old ones which are now locally defined for migration.
-import { KnowledgeBaseEntry, ResearchInput, ResearchReport, RankedArticle, AggregatedArticle, AuthorProfile, AuthorProfileInput, ResearchEntry, AuthorProfileEntry } from '../types';
+// Fix: Import new types and remove old ones which are now locally defined for migration.
+import { KnowledgeBaseEntry, ResearchInput, ResearchReport, RankedArticle, AggregatedArticle, AuthorProfile, AuthorProfileInput, ResearchEntry, AuthorProfileEntry, JournalProfile, JournalEntry, Article } from '@/types';
 import { useUI } from './UIContext';
-
-const KNOWLEDGE_BASE_STORAGE_KEY = 'aiResearchKnowledgeBase';
-
-// Fix: Define old entry types locally for migration logic.
-interface OldResearchEntry {
-  id: string;
-  type: 'research';
-  input: ResearchInput;
-  report: ResearchReport;
-}
-
-interface OldAuthorEntry {
-    id: string;
-    type: 'author';
-    input: AuthorProfileInput;
-    profile: AuthorProfile;
-}
-
-const loadFromLocalStorage = (): KnowledgeBaseEntry[] => {
-    try {
-        const storedKB = localStorage.getItem(KNOWLEDGE_BASE_STORAGE_KEY);
-        if (!storedKB) return [];
-        const parsedKB = JSON.parse(storedKB);
-
-        // Migration logic: Check if an entry is in the old format and convert it.
-        return parsedKB.map((entry: any, index: number) => {
-            if (entry.sourceType === 'research' || entry.sourceType === 'author') {
-                return entry; // Already in new format
-            }
-
-            // Entry is in old format, migrate it
-            const timestamp = entry.id ? parseInt(entry.id.split('-')[0], 10) : Date.now() + index;
-            if (isNaN(timestamp)) {
-                 console.warn("Could not parse timestamp from old entry ID:", entry.id);
-                 return null;
-            }
-
-            if (entry.type === 'research') {
-                const oldEntry = entry as OldResearchEntry;
-                return {
-                    id: oldEntry.id,
-                    timestamp,
-                    sourceType: 'research',
-                    title: oldEntry.input.researchTopic,
-                    articles: oldEntry.report?.rankedArticles || [],
-                    input: oldEntry.input,
-                    report: oldEntry.report
-                } as ResearchEntry;
-            }
-            
-            if (entry.type === 'author') {
-                const oldEntry = entry as OldAuthorEntry;
-                return {
-                    id: oldEntry.id,
-                    timestamp,
-                    sourceType: 'author',
-                    title: oldEntry.input.authorName,
-                    articles: oldEntry.profile?.publications || [],
-                    input: oldEntry.input,
-                    profile: oldEntry.profile
-                } as AuthorProfileEntry;
-            }
-            
-            console.warn("Unknown entry type found during migration:", entry);
-            return null;
-
-        }).filter((entry: KnowledgeBaseEntry | null): entry is KnowledgeBaseEntry => entry !== null);
-
-    } catch (error) {
-        console.error("Failed to parse/migrate knowledge base from localStorage", error);
-        return [];
-    }
-};
+import { getAllEntries, addEntry, bulkAddEntries, deleteEntries as deleteEntriesFromDb, clearAllEntries as clearAllEntriesFromDb, updateEntry } from '@/services/databaseService';
 
 interface KnowledgeBaseContextType {
     knowledgeBase: KnowledgeBaseEntry[];
     uniqueArticles: AggregatedArticle[];
-    getArticles: (sourceType?: 'all' | 'research' | 'author') => AggregatedArticle[];
+    getArticles: (sourceType?: 'all' | 'research' | 'author' | 'journal') => AggregatedArticle[];
     getRecentResearchEntries: (count: number) => ResearchEntry[];
-    saveReport: (researchInput: ResearchInput, report: ResearchReport) => boolean;
-    saveAuthorProfile: (input: AuthorProfileInput, profile: AuthorProfile) => boolean;
-    clearKnowledgeBase: () => void;
-    updateEntryTitle: (id: string, newTitle: string) => void;
-    updateTags: (pmid: string, newTags: string[]) => void;
-    deleteArticles: (pmids: string[]) => void;
-    onMergeDuplicates: () => void;
-    addKnowledgeBaseEntries: (entries: KnowledgeBaseEntry[]) => void;
-    onPruneByRelevance: (score: number) => void;
-    addSingleArticleReport: (article: RankedArticle) => void;
+    saveReport: (researchInput: ResearchInput, report: ResearchReport) => Promise<void>;
+    saveAuthorProfile: (input: AuthorProfileInput, profile: AuthorProfile) => Promise<void>;
+    // FIX: Add saveJournalProfile to the context type
+    saveJournalProfile: (profile: JournalProfile, articles: Article[]) => Promise<void>;
+    clearKnowledgeBase: () => Promise<void>;
+    updateEntryTitle: (id: string, newTitle: string) => Promise<void>;
+    updateTags: (pmid: string, newTags: string[]) => Promise<void>;
+    deleteArticles: (pmids: string[]) => Promise<void>;
+    onMergeDuplicates: () => Promise<void>;
+    addKnowledgeBaseEntries: (entries: KnowledgeBaseEntry[]) => Promise<void>;
+    onPruneByRelevance: (score: number) => Promise<void>;
+    addSingleArticleReport: (article: RankedArticle) => Promise<void>;
+    handleViewEntry: (entry: KnowledgeBaseEntry) => void; // This needs to be defined
+    isLoading: boolean;
 }
 
 const KnowledgeBaseContext = createContext<KnowledgeBaseContextType | undefined>(undefined);
 
 export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [knowledgeBase, setKnowledgeBase] = useState<KnowledgeBaseEntry[]>(loadFromLocalStorage);
+    const [knowledgeBase, setKnowledgeBase] = useState<KnowledgeBaseEntry[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
     const { setNotification } = useUI();
 
     useEffect(() => {
-        try {
-            localStorage.setItem(KNOWLEDGE_BASE_STORAGE_KEY, JSON.stringify(knowledgeBase));
-        } catch (error) {
-            console.error("Failed to save knowledge base to localStorage", error);
-            setNotification({ id: Date.now(), message: "Error: Could not save the Knowledge Base. Storage might be full.", type: 'error' });
-        }
-    }, [knowledgeBase, setNotification]);
+        const loadData = async () => {
+            setIsLoading(true);
+            try {
+                const entries = await getAllEntries();
+                setKnowledgeBase(entries);
+            } catch (error) {
+                console.error("Failed to load data from IndexedDB:", error);
+                setNotification({ message: "Error loading knowledge base.", type: 'error', id: Date.now() });
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        loadData();
+    }, [setNotification]);
 
     const showNotification = useCallback((message: string, type: 'success' | 'error' = 'success') => {
         setNotification({ id: Date.now(), message, type });
     }, [setNotification]);
 
-    const saveEntry = useCallback((entry: Omit<KnowledgeBaseEntry, 'id' | 'timestamp'>) => {
+    const saveKnowledgeBaseEntry = useCallback(async (entryData: Omit<KnowledgeBaseEntry, 'id' | 'timestamp'>) => {
         const timestamp = Date.now();
-        const id = `${timestamp}-${Math.random()}`;
-        const newEntry: KnowledgeBaseEntry = {
-            ...entry,
-            id,
-            timestamp
+        const newEntry = {
+            ...entryData,
+            id: `${timestamp}-${Math.random()}`,
+            timestamp,
         } as KnowledgeBaseEntry;
+        
+        try {
+            await addEntry(newEntry);
+            setKnowledgeBase(prev => [...prev, newEntry].sort((a,b) => b.timestamp - a.timestamp));
+            const typeLabel = newEntry.sourceType.charAt(0).toUpperCase() + newEntry.sourceType.slice(1);
+            showNotification(`${typeLabel} entry saved to Knowledge Base.`);
+        } catch (error) {
+            console.error("Failed to save entry:", error);
+            const typeLabel = entryData.sourceType;
+            showNotification(`Error saving ${typeLabel} entry.`, 'error');
+            throw error;
+        }
+    }, [showNotification]);
 
-        setKnowledgeBase(prevKB => [...prevKB, newEntry]);
-    }, []);
-
-    const saveReport = useCallback((researchInput: ResearchInput, report: ResearchReport): boolean => {
-        const entry: Omit<ResearchEntry, 'id' | 'timestamp'> = {
+    const saveReport = useCallback(async (researchInput: ResearchInput, report: ResearchReport): Promise<void> => {
+        const newEntryData: Omit<ResearchEntry, 'id' | 'timestamp'> = {
             sourceType: 'research',
             title: researchInput.researchTopic,
             articles: report.rankedArticles || [],
             input: researchInput,
             report
         };
-        saveEntry(entry);
-        showNotification("Report saved to Knowledge Base.");
-        return true;
-    }, [saveEntry, showNotification]);
-
-    const saveAuthorProfile = useCallback((input: AuthorProfileInput, profile: AuthorProfile): boolean => {
-        const entry: Omit<AuthorProfileEntry, 'id' | 'timestamp'> = {
+        await saveKnowledgeBaseEntry(newEntryData);
+    }, [saveKnowledgeBaseEntry]);
+    
+    const saveAuthorProfile = useCallback(async (input: AuthorProfileInput, profile: AuthorProfile): Promise<void> => {
+        const newEntryData: Omit<AuthorProfileEntry, 'id' | 'timestamp'> = {
             sourceType: 'author',
             title: profile.name,
             articles: profile.publications || [],
             input,
-            profile,
+            profile
         };
-        saveEntry(entry);
-        showNotification(`Profile for ${profile.name} saved to Knowledge Base.`);
-        return true;
-    }, [saveEntry, showNotification]);
+        await saveKnowledgeBaseEntry(newEntryData);
+    }, [saveKnowledgeBaseEntry]);
 
-    const clearKnowledgeBase = useCallback(() => {
-        setKnowledgeBase([]);
-        showNotification("Knowledge Base cleared.");
+    // FIX: Implement saveJournalProfile using the internal saveKnowledgeBaseEntry function
+    const saveJournalProfile = useCallback(async (profile: JournalProfile, articles: Article[]): Promise<void> => {
+        const newEntryData: Omit<JournalEntry, 'id' | 'timestamp'> = {
+            sourceType: 'journal',
+            title: profile.name,
+            articles: articles,
+            journalProfile: profile
+        };
+        await saveKnowledgeBaseEntry(newEntryData);
+    }, [saveKnowledgeBaseEntry]);
+
+    const clearKnowledgeBase = useCallback(async () => {
+        try {
+            await clearAllEntriesFromDb();
+            setKnowledgeBase([]);
+            showNotification("Knowledge Base cleared.");
+        } catch (error) {
+            console.error("Failed to clear knowledge base:", error);
+            showNotification("Error clearing knowledge base.", 'error');
+        }
     }, [showNotification]);
 
-    const updateEntryTitle = useCallback((id: string, newTitle: string) => {
-        setKnowledgeBase(prevKB => prevKB.map(entry => {
-            if (entry.id !== id) return entry;
+    const updateEntryTitle = useCallback(async (id: string, newTitle: string) => {
+        const entryToUpdate = knowledgeBase.find(e => e.id === id);
+        if (!entryToUpdate) return;
 
-            const updatedEntry = { ...entry, title: newTitle };
-            if (updatedEntry.sourceType === 'research') {
-                updatedEntry.input = { ...updatedEntry.input, researchTopic: newTitle };
-            } else {
-                updatedEntry.input = { ...updatedEntry.input, authorName: newTitle };
-            }
-            return updatedEntry;
-        }));
-        showNotification("Entry title updated successfully.");
-    }, [showNotification]);
+        const updatedEntry = { ...entryToUpdate, title: newTitle };
+        let changes: Partial<KnowledgeBaseEntry> = { title: newTitle };
 
-    const updateTags = useCallback((pmid: string, newTags: string[]) => {
-        setKnowledgeBase(prevKB => prevKB.map(entry => {
-            const updateArticle = (article: RankedArticle) => article.pmid === pmid ? { ...article, customTags: newTags } : article;
-            
-            const newArticles = (entry.articles || []).map(updateArticle);
-            const updatedEntry = { ...entry, articles: newArticles };
-            
-            if (updatedEntry.sourceType === 'research') {
-                updatedEntry.report = {
-                    ...updatedEntry.report,
-                    rankedArticles: (updatedEntry.report.rankedArticles || []).map(updateArticle)
-                };
-            } else { // 'author'
-                updatedEntry.profile = {
-                    ...updatedEntry.profile,
-                    publications: (updatedEntry.profile.publications || []).map(updateArticle)
-                };
-            }
-            return updatedEntry;
-        }));
-    }, []);
+        if (updatedEntry.sourceType === 'research') {
+            updatedEntry.input = { ...updatedEntry.input, researchTopic: newTitle };
+            (changes as Partial<ResearchEntry>).input = updatedEntry.input;
+        } else if (updatedEntry.sourceType === 'author') {
+            updatedEntry.input = { ...updatedEntry.input, authorName: newTitle };
+            (changes as Partial<AuthorProfileEntry>).input = updatedEntry.input;
+        }
 
-    const deleteArticles = useCallback((pmids: string[]) => {
-        const pmidSet = new Set(pmids);
-        setKnowledgeBase(prevKB => {
-            const newKB = prevKB.map(entry => {
-                const filterArticles = (articles: RankedArticle[]) => (articles || []).filter(article => !pmidSet.has(article.pmid));
-                const newArticles = filterArticles(entry.articles);
-                const updatedEntry = {...entry, articles: newArticles};
+        try {
+            await updateEntry(id, changes);
+            setKnowledgeBase(prevKB => prevKB.map(entry => (entry.id === id ? updatedEntry : entry)));
+            showNotification("Entry title updated successfully.");
+        } catch (error) {
+            console.error("Failed to update title:", error);
+            showNotification("Error updating title.", "error");
+        }
+    }, [knowledgeBase, showNotification]);
 
-                if (updatedEntry.sourceType === 'research') {
-                    updatedEntry.report.rankedArticles = filterArticles(updatedEntry.report.rankedArticles);
-                } else {
-                    updatedEntry.profile.publications = filterArticles(updatedEntry.profile.publications);
+    const updateTags = useCallback(async (pmid: string, newTags: string[]) => {
+        const updatedEntries: { id: string, changes: Partial<KnowledgeBaseEntry> }[] = [];
+        const newKnowledgeBase = knowledgeBase.map(entry => {
+            let hasChanged = false;
+            const updateArticle = (article: RankedArticle) => {
+                if (article.pmid === pmid) {
+                    hasChanged = true;
+                    return { ...article, customTags: newTags };
                 }
-                return updatedEntry;
+                return article;
+            };
 
-            }).filter(entry => (entry.articles || []).length > 0);
+            const newArticles = (entry.articles || []).map(updateArticle);
+            if (!hasChanged) return entry;
             
-            showNotification(`${pmids.length} article(s) deleted from Knowledge Base.`);
-            return newKB;
-        });
-    }, [showNotification]);
+            const updatedEntry = { ...entry, articles: newArticles };
+            if (updatedEntry.sourceType === 'research') {
+                updatedEntry.report = { ...updatedEntry.report, rankedArticles: (updatedEntry.report.rankedArticles || []).map(updateArticle) };
+            } else if (updatedEntry.sourceType === 'author'){
+                updatedEntry.profile = { ...updatedEntry.profile, publications: (updatedEntry.profile.publications || []).map(updateArticle) };
+            }
 
-    const getArticles = useCallback((filterType: 'all' | 'research' | 'author' = 'all'): AggregatedArticle[] => {
+            const changesToPersist: Partial<KnowledgeBaseEntry> = { articles: updatedEntry.articles };
+            if (updatedEntry.sourceType === 'research') {
+                (changesToPersist as Partial<ResearchEntry>).report = updatedEntry.report;
+            } else if (updatedEntry.sourceType === 'author') {
+                (changesToPersist as Partial<AuthorProfileEntry>).profile = updatedEntry.profile;
+            }
+
+            updatedEntries.push({ id: entry.id, changes: changesToPersist });
+            return updatedEntry;
+        });
+
+        try {
+            await Promise.all(updatedEntries.map(e => updateEntry(e.id, e.changes)));
+            setKnowledgeBase(newKnowledgeBase);
+        } catch (error) {
+            console.error("Failed to update tags:", error);
+            showNotification("Error updating tags.", "error");
+        }
+    }, [knowledgeBase, showNotification]);
+
+    const deleteArticles = useCallback(async (pmids: string[]) => {
+       const pmidSet = new Set(pmids);
+       const updatedEntries: { id: string; changes: Partial<KnowledgeBaseEntry> }[] = [];
+       const entriesToDelete: string[] = [];
+
+       const newKb = knowledgeBase.map(entry => {
+           const initialArticleCount = entry.articles.length;
+           const newArticles = entry.articles.filter(a => !pmidSet.has(a.pmid));
+           if (newArticles.length === initialArticleCount) return entry;
+
+           if (newArticles.length === 0) {
+               entriesToDelete.push(entry.id);
+               return null;
+           }
+           
+           const updatedEntry = {...entry, articles: newArticles};
+            if (updatedEntry.sourceType === 'research') {
+                updatedEntry.report.rankedArticles = newArticles;
+            } else if (updatedEntry.sourceType === 'author') {
+                updatedEntry.profile.publications = newArticles;
+            }
+           updatedEntries.push({ id: entry.id, changes: updatedEntry });
+           return updatedEntry;
+
+       }).filter((e): e is KnowledgeBaseEntry => e !== null);
+
+       try {
+           await Promise.all(updatedEntries.map(e => updateEntry(e.id, e.changes)));
+           if (entriesToDelete.length > 0) {
+               await deleteEntriesFromDb(entriesToDelete);
+           }
+           setKnowledgeBase(newKb);
+           showNotification(`${pmids.length} article(s) deleted successfully.`);
+       } catch(e) {
+            console.error("Failed to delete articles:", e);
+            showNotification("Error deleting articles.", "error");
+       }
+
+    }, [knowledgeBase, showNotification]);
+    
+    const getArticles = useCallback((filterType: 'all' | 'research' | 'author' | 'journal' = 'all'): AggregatedArticle[] => {
         if (!Array.isArray(knowledgeBase)) return [];
 
         const articleMap = new Map<string, AggregatedArticle>();
@@ -244,57 +254,67 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
     
     const uniqueArticles = useMemo(() => getArticles('all'), [getArticles]);
 
-    const onMergeDuplicates = useCallback(() => {
-        const articleMap = new Map<string, { article: RankedArticle, entryId: string }>();
+    const onMergeDuplicates = useCallback(async () => {
+        const articleMap = new Map<string, { article: RankedArticle, entry: KnowledgeBaseEntry }>();
+        const pmidsToKeep = new Map<string, string>(); // pmid -> entryId to keep
         let duplicatesFound = 0;
-        let articlesScanned = 0;
 
         knowledgeBase.forEach(entry => {
-            if (Array.isArray(entry.articles)) {
-                entry.articles.forEach(article => {
-                    articlesScanned++;
-                    const existing = articleMap.get(article.pmid);
-                    if (existing) {
-                        duplicatesFound++;
-                        if ((article.relevanceScore || 0) > (existing.article.relevanceScore || 0)) {
-                            articleMap.set(article.pmid, { article, entryId: entry.id });
-                        }
-                    } else {
-                        articleMap.set(article.pmid, { article, entryId: entry.id });
+            entry.articles.forEach(article => {
+                const existing = articleMap.get(article.pmid);
+                if (existing) {
+                    duplicatesFound++;
+                    if (article.relevanceScore > existing.article.relevanceScore) {
+                        pmidsToKeep.set(article.pmid, entry.id);
                     }
-                });
-            }
+                } else {
+                    articleMap.set(article.pmid, { article, entry });
+                    pmidsToKeep.set(article.pmid, entry.id);
+                }
+            });
         });
 
         if (duplicatesFound === 0) {
-            showNotification("No duplicate articles found to merge.");
+            showNotification("No duplicate articles found.");
             return;
         }
 
         const newKnowledgeBase = knowledgeBase.map(entry => {
-            const keptArticles = (entry.articles || []).filter(article => articleMap.get(article.pmid)?.entryId === entry.id);
-
+            const keptArticles = (entry.articles || []).filter(article => pmidsToKeep.get(article.pmid) === entry.id);
             const updatedEntry = { ...entry, articles: keptArticles };
             if (updatedEntry.sourceType === 'research') {
                 updatedEntry.report.rankedArticles = keptArticles;
-            } else { // author
+            } else if (updatedEntry.sourceType === 'author') {
                 updatedEntry.profile.publications = keptArticles;
             }
             return updatedEntry;
         }).filter(entry => (entry.articles || []).length > 0);
 
-        setKnowledgeBase(newKnowledgeBase);
-        showNotification(`Merged ${duplicatesFound} duplicate article entries. Kept the version with the highest relevance score for each.`);
+        try {
+            await clearAllEntriesFromDb();
+            await bulkAddEntries(newKnowledgeBase);
+            setKnowledgeBase(newKnowledgeBase);
+            showNotification(`${duplicatesFound} duplicate article entries merged.`);
+        } catch(e) {
+            console.error("Failed to merge duplicates:", e);
+            showNotification("Error merging duplicates.", "error");
+        }
     }, [knowledgeBase, showNotification]);
 
 
-    const addKnowledgeBaseEntries = useCallback((entries: KnowledgeBaseEntry[]) => {
-        const validEntries = entries.filter(entry => ('sourceType' in entry) && (entry.sourceType === 'research' || entry.sourceType === 'author'));
-        setKnowledgeBase(kb => [...kb, ...validEntries]);
-        showNotification("Knowledge base imported successfully.");
+    const addKnowledgeBaseEntries = useCallback(async (entries: KnowledgeBaseEntry[]) => {
+        try {
+            const validEntries = entries.filter(e => e.id && e.sourceType);
+            await bulkAddEntries(validEntries);
+            setKnowledgeBase(kb => [...kb, ...validEntries].sort((a,b) => b.timestamp - a.timestamp));
+            showNotification(`${validEntries.length} entries imported successfully.`);
+        } catch(e) {
+            console.error("Failed to import entries:", e);
+            showNotification("Error importing entries.", "error");
+        }
     }, [showNotification]);
 
-    const addSingleArticleReport = useCallback((article: RankedArticle) => {
+    const addSingleArticleReport = useCallback(async (article: RankedArticle) => {
         const report: ResearchReport = {
             generatedQueries: [],
             rankedArticles: [article],
@@ -307,51 +327,41 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
             dateRange: 'any', articleTypes: [], synthesisFocus: 'overview',
             maxArticlesToScan: 1, topNToSynthesize: 1,
         };
-        saveReport(input, report);
-        showNotification(`Article "${article.title.substring(0, 30)}..." added to Knowledge Base.`);
-    }, [saveReport, showNotification]);
+        await saveReport(input, report);
+    }, [saveReport]);
 
-    const onPruneByRelevance = useCallback((pruneScore: number) => {
-        const articlesBefore = uniqueArticles.length;
-
-        const newKnowledgeBase = knowledgeBase.map(entry => {
-            const keptArticles = (entry.articles || []).filter(article => article.relevanceScore >= pruneScore);
-            
-            const updatedEntry = { ...entry, articles: keptArticles };
-            if (updatedEntry.sourceType === 'research') {
-                updatedEntry.report.rankedArticles = keptArticles;
-            } else { // author
-                updatedEntry.profile.publications = keptArticles;
-            }
-            return updatedEntry;
-        }).filter(entry => (entry.articles || []).length > 0);
-        
-        const articlesAfter = getArticles.call({knowledgeBase: newKnowledgeBase}, 'all').length;
-        const articlesPruned = articlesBefore - articlesAfter;
-
-        if (articlesPruned > 0) {
-            setKnowledgeBase(newKnowledgeBase);
-            showNotification(`${articlesPruned} article(s) with a score below ${pruneScore} were pruned.`);
-        } else {
-            showNotification(`No articles found with a score below ${pruneScore}.`, "error");
-        }
-    }, [knowledgeBase, showNotification, uniqueArticles, getArticles]);
-
+    const onPruneByRelevance = useCallback(async (pruneScore: number) => {
+       const allArticles = getArticles('all');
+       const articlesToPrune = allArticles.filter(a => a.relevanceScore < pruneScore);
+       if (articlesToPrune.length === 0) {
+           showNotification("No articles to prune below that score.", "error");
+           return;
+       }
+       const pmidsToPrune = articlesToPrune.map(a => a.pmid);
+       await deleteArticles(pmidsToPrune);
+       // The notification is now handled within deleteArticles
+    }, [getArticles, deleteArticles, showNotification]);
+    
     const getRecentResearchEntries = useCallback((count: number): ResearchEntry[] => {
         return knowledgeBase
             .filter((e): e is ResearchEntry => e.sourceType === 'research')
             .sort((a, b) => b.timestamp - a.timestamp)
             .slice(0, count);
     }, [knowledgeBase]);
+    
+    // Placeholder function, will be overridden in App.tsx
+    const handleViewEntry = useCallback((entry: KnowledgeBaseEntry) => {
+        console.warn("handleViewEntry called from context, but should be implemented in App.tsx");
+    }, []);
 
     const providerValue = useMemo(() => ({
-        knowledgeBase, uniqueArticles, getArticles, getRecentResearchEntries, saveReport, saveAuthorProfile, clearKnowledgeBase, updateEntryTitle,
-        updateTags, deleteArticles, onMergeDuplicates, addKnowledgeBaseEntries, onPruneByRelevance, addSingleArticleReport
+        knowledgeBase, uniqueArticles, getArticles, getRecentResearchEntries, saveReport, saveAuthorProfile, saveJournalProfile, clearKnowledgeBase, updateEntryTitle,
+        updateTags, deleteArticles, onMergeDuplicates, addKnowledgeBaseEntries, onPruneByRelevance, addSingleArticleReport, handleViewEntry,
+        isLoading
     }), [
-        knowledgeBase, uniqueArticles, getArticles, getRecentResearchEntries, saveReport, saveAuthorProfile, clearKnowledgeBase, updateEntryTitle,
-        updateTags, deleteArticles, onMergeDuplicates, addKnowledgeBaseEntries, onPruneByRelevance, addSingleArticleReport
+        knowledgeBase, uniqueArticles, getArticles, getRecentResearchEntries, saveReport, saveAuthorProfile, saveJournalProfile, clearKnowledgeBase, updateEntryTitle,
+        updateTags, deleteArticles, onMergeDuplicates, addKnowledgeBaseEntries, onPruneByRelevance, addSingleArticleReport, handleViewEntry, isLoading
     ]);
-
 
     return (
         <KnowledgeBaseContext.Provider value={providerValue}>

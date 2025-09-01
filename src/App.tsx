@@ -1,60 +1,54 @@
 
-
 import React, { useState, useCallback, useEffect, memo } from 'react';
-import { OnboardingView } from './components/OnboardingView';
-// FIX: Corrected import path for Header component
-import { Header } from './components/Header';
-import { ResearchInput, ResearchReport, KnowledgeBaseFilter, KnowledgeBaseEntry, AggregatedArticle, ChatMessage, AuthorProfile } from './types';
-import { KnowledgeBaseView } from './components/KnowledgeBaseView';
-import SettingsView from './components/SettingsView';
-import { SettingsProvider, useSettings } from './contexts/SettingsContext';
-import { PresetProvider } from './contexts/PresetContext';
-import { HelpView } from './components/HelpView';
-import { Notification } from './components/Notification';
-import { DashboardView } from './components/DashboardView';
-import { ConfirmationModal } from './components/ConfirmationModal';
-import { HistoryView } from './components/HistoryView';
-import { ResearchView } from './components/ResearchView';
-import { AuthorsView } from './components/AuthorsView';
-import { useResearchAssistant } from './hooks/useResearchAssistant';
-import { generateResearchReportStream } from './services/geminiService';
-import { OrchestratorView } from './components/OrchestratorView';
-import { KnowledgeBaseProvider, useKnowledgeBase } from './contexts/KnowledgeBaseContext';
-import { UIProvider, useUI } from './contexts/UIContext';
-import type { View } from './contexts/UIContext';
-import { CommandPalette } from './components/CommandPalette';
-import { exportKnowledgeBaseToPdf, exportToCsv, exportCitations } from './services/exportService';
-import { QuickAddModal } from './components/QuickAddModal';
-import { useChat } from './hooks/useChat';
-import { BottomNavBar } from './components/BottomNavBar';
-import { HomeView } from './components/HomeView';
-import ErrorBoundary from './components/ErrorBoundary';
+import { OnboardingView } from '@/views/OnboardingView';
+import { Header } from '@/components/Header';
+import { AuthorProfile } from '@/types';
+import { KnowledgeBaseView } from '@/views/KnowledgeBaseView';
+import SettingsView from '@/views/SettingsView';
+import { SettingsProvider, useSettings } from '@/contexts/SettingsContext';
+import { PresetProvider, usePresets } from '@/contexts/PresetContext';
+import { HelpView } from '@/views/HelpView';
+import { Notification } from '@/components/Notification';
+import { DashboardView } from '@/views/DashboardView';
+import { ConfirmationModal } from '@/components/ConfirmationModal';
+import { HistoryView } from '@/views/HistoryView';
+import { ResearchView } from '@/views/ResearchView';
+import { AuthorsView } from '@/views/AuthorsView';
+import { JournalsView } from '@/views/JournalsView';
+import { useResearchAssistant } from '@/hooks/useResearchAssistant';
+import { OrchestratorView } from '@/views/OrchestratorView';
+import { KnowledgeBaseProvider, useKnowledgeBase } from '@/contexts/KnowledgeBaseContext';
+import { UIProvider, useUI } from '@/contexts/UIContext';
+import type { View } from '@/contexts/UIContext';
+import { CommandPalette } from '@/components/CommandPalette';
+import { QuickAddModal } from '@/components/QuickAddModal';
+import { BottomNavBar } from '@/components/BottomNavBar';
+import { HomeView } from '@/views/HomeView';
+import ErrorBoundary from '@/components/ErrorBoundary';
+import { useOrchestratorLogic } from '@/hooks/useOrchestratorLogic';
+import { useKnowledgeBaseViewLogic } from '@/hooks/useKnowledgeBaseViewLogic';
 
 
 const AppLayout: React.FC = () => {
-  // Orchestrator State
-  const [researchInput, setResearchInput] = useState<ResearchInput | null>(null);
-  const [localResearchInput, setLocalResearchInput] = useState<ResearchInput | null>(null); // For editable title
-  const [report, setReport] = useState<ResearchReport | null>(null);
-  const [reportStatus, setReportStatus] = useState<'idle' | 'generating' | 'streaming' | 'done' | 'error'>('idle');
-  const [error, setError] = useState<string | null>(null);
-  const [currentPhase, setCurrentPhase] = useState<string>('');
-  const [selectedAuthorProfile, setSelectedAuthorProfile] = useState<AuthorProfile | null>(null);
-
-  // App-wide State from contexts
-  const { settings } = useSettings();
-  const { currentView, notification, setNotification, isSettingsDirty, setIsSettingsDirty, pendingNavigation, setPendingNavigation, setCurrentView, showOnboarding, setShowOnboarding, isCommandPaletteOpen, setIsCommandPaletteOpen } = useUI();
-  const { knowledgeBase, saveReport, clearKnowledgeBase, uniqueArticles, updateTags } = useKnowledgeBase();
-
-  const [isCurrentReportSaved, setIsCurrentReportSaved] = useState<boolean>(false);
-  const [selectedKbPmids, setSelectedKbPmids] = useState<string[]>([]);
-  const [showExportModal, setShowExportModal] = useState<'pdf' | 'csv' | 'bib' | 'ris' | null>(null);
-  const [isQuickAddModalOpen, setIsQuickAddModalOpen] = useState(false);
+  const { isLoading: isKbLoading } = useKnowledgeBase();
+  const { isSettingsLoading, settings, updateSettings } = useSettings();
+  const { arePresetsLoading } = usePresets();
   
-  // Chat Hook
-  const { chatHistory, isChatting, sendMessage } = useChat(report, reportStatus, settings.ai);
+  // App-wide State from contexts
+  const { currentView, notification, setNotification, isSettingsDirty, setIsSettingsDirty, pendingNavigation, setPendingNavigation, setCurrentView, isCommandPaletteOpen, setIsCommandPaletteOpen } = useUI();
+  const { knowledgeBase, uniqueArticles, clearKnowledgeBase, handleViewEntry } = useKnowledgeBase();
+  
+  // App-wide state that doesn't fit into a specific view's logic hook
+  const [selectedAuthorProfile, setSelectedAuthorProfile] = useState<AuthorProfile | null>(null);
+  const [isQuickAddModalOpen, setIsQuickAddModalOpen] = useState(false);
+  const [settingsResetToken, setSettingsResetToken] = useState(0);
+  const [initialHelpTab, setInitialHelpTab] = useState<string | null>(null);
 
-  // Research Assistant Hook
+  // Custom hooks for view-specific logic
+  const orchestratorLogic = useOrchestratorLogic();
+  const kbViewLogic = useKnowledgeBaseViewLogic();
+
+  // Research Assistant Hook (for the "Research" tab)
   const {
       isLoading: isResearching,
       phase: researchPhase,
@@ -65,18 +59,6 @@ const AppLayout: React.FC = () => {
       startResearch,
       clearResearch,
   } = useResearchAssistant(settings.ai, setCurrentView);
-  
-  const [settingsResetToken, setSettingsResetToken] = useState(0);
-  const [initialHelpTab, setInitialHelpTab] = useState<string | null>(null);
-  const [prefilledTopic, setPrefilledTopic] = useState<string | null>(null);
-  const [kbFilter, setKbFilter] = useState<KnowledgeBaseFilter>({
-    searchTerm: '',
-    selectedTopics: [],
-    selectedTags: [],
-    selectedArticleTypes: [],
-    selectedJournals: [],
-    showOpenAccessOnly: false,
-  });
 
 
   useEffect(() => {
@@ -98,12 +80,12 @@ const AppLayout: React.FC = () => {
   }, [settings.theme, settings.performance.enableAnimations, settings.appearance.fontFamily, settings.appearance.customColors]);
   
     useEffect(() => {
-        // Accessibility Best Practice: Update document title on view change
         const viewTitles: Record<View, string> = {
             home: 'Home',
             orchestrator: 'Orchestrator',
             research: 'Research',
             authors: 'Author Hub',
+            journals: 'Journal Hub',
             knowledgeBase: 'Knowledge Base',
             dashboard: 'Dashboard',
             history: 'Report History',
@@ -111,9 +93,6 @@ const AppLayout: React.FC = () => {
             help: 'Help & Documentation',
         };
         document.title = `${viewTitles[currentView] || 'Research'} | AI Research Orchestration Author`;
-        
-        // Reset scroll to top on view change for a smoother SPA experience
-        window.scrollTo(0, 0);
     }, [currentView]);
 
 
@@ -128,77 +107,8 @@ const AppLayout: React.FC = () => {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [setIsCommandPaletteOpen]);
 
-    useEffect(() => {
-        // Clear selection when navigating away from the knowledge base
-        if (currentView !== 'knowledgeBase' && selectedKbPmids.length > 0) {
-            setSelectedKbPmids([]);
-        }
-    }, [currentView, selectedKbPmids.length]);
-
-  const handleFormSubmit = useCallback(async (data: ResearchInput) => {
-    setReportStatus('generating');
-    setError(null);
-    setReport(null);
-    setResearchInput(data);
-    setLocalResearchInput(data); // Set local copy for editing
-    setCurrentView('orchestrator');
-    setIsCurrentReportSaved(false);
-
-    try {
-        const stream = generateResearchReportStream(data, settings.ai);
-        let finalSynthesis = '';
-        let isFirstChunk = true;
-        let finalReport: ResearchReport | null = null;
-        for await (const { report: partialReport, synthesisChunk, phase } of stream) {
-            setCurrentPhase(phase);
-            if (isFirstChunk && partialReport) {
-                finalReport = partialReport;
-                setReport(finalReport);
-                setReportStatus('streaming');
-                isFirstChunk = false;
-            }
-
-            if (synthesisChunk) {
-                finalSynthesis += synthesisChunk;
-                setReport(prev => prev ? { ...prev, synthesis: finalSynthesis } : null);
-            }
-        }
-        
-        const completeReport = { ...(finalReport!), synthesis: finalSynthesis };
-        setReport(completeReport);
-        setReportStatus('done');
-        
-        if (settings.defaults.autoSaveReports) {
-            if (saveReport(data, completeReport)) {
-                setIsCurrentReportSaved(true);
-            }
-        }
-    } catch (err) {
-        setError(err instanceof Error ? err.message : 'An unknown error occurred during report generation.');
-        setReportStatus('error');
-    }
-  }, [settings.ai, settings.defaults.autoSaveReports, setCurrentView, saveReport]);
-
-  const handleSaveReport = useCallback(() => {
-      if (report && localResearchInput) {
-        if(saveReport(localResearchInput, report)) {
-            setIsCurrentReportSaved(true);
-        }
-      }
-  }, [report, localResearchInput, saveReport]);
-  
-  const handleNewSearch = useCallback(() => {
-      setReport(null);
-      setResearchInput(null);
-      setLocalResearchInput(null);
-      setReportStatus('idle');
-      setError(null);
-      setIsCurrentReportSaved(false);
-      setCurrentView('orchestrator');
-  }, [setCurrentView]);
-
-  const handleClearKnowledgeBase = useCallback(() => {
-      clearKnowledgeBase();
+  const handleClearKnowledgeBase = useCallback(async () => {
+      await clearKnowledgeBase();
       setSettingsResetToken(Date.now());
   }, [clearKnowledgeBase]);
 
@@ -219,125 +129,40 @@ const AppLayout: React.FC = () => {
   }, [pendingNavigation, setCurrentView, setPendingNavigation, setIsSettingsDirty]);
 
   const handleCompleteOnboarding = useCallback(() => {
-    setShowOnboarding(false);
-    try {
-        localStorage.setItem('hasCompletedOnboarding', 'true');
-    } catch (e) {
-        console.error("Could not save onboarding status to localStorage", e);
-    }
-  }, [setShowOnboarding]);
+    updateSettings(s => ({ ...s, hasCompletedOnboarding: true }));
+  }, [updateSettings]);
   
-  const handleFilterChange = useCallback((newFilter: Partial<KnowledgeBaseFilter>) => {
-      setKbFilter(prev => ({...prev, ...newFilter}));
-  }, []);
-  
-  const handlePrefillConsumed = useCallback(() => {
-      setPrefilledTopic(null);
-  }, []);
-
-  const handleStartNewReviewFromTopic = useCallback((topic: string) => {
-      setPrefilledTopic(topic);
-      setCurrentView('orchestrator');
-  }, [setCurrentView]);
-
-  const handleViewEntry = useCallback((entry: KnowledgeBaseEntry) => {
-      if (entry.sourceType === 'research') {
-        setResearchInput(entry.input);
-        setLocalResearchInput(entry.input);
-        setReport(entry.report);
-        setReportStatus('done');
-        setError(null);
-        setIsCurrentReportSaved(true);
-        setCurrentView('orchestrator');
-      } else if (entry.sourceType === 'author') {
-          setSelectedAuthorProfile(entry.profile);
-          setCurrentView('authors');
-      }
-  }, [setCurrentView]);
-
   const handleAuthorProfileViewed = useCallback(() => {
     setSelectedAuthorProfile(null);
   }, []);
-  
-  const handleTagsUpdate = useCallback((pmid: string, newTags: string[]) => {
-    updateTags(pmid, newTags);
-    // Also update the local report state if it's being viewed
-    setReport(prevReport => {
-        if (!prevReport || !prevReport.rankedArticles.some(a => a.pmid === pmid)) {
-            return prevReport;
-        }
-        return {
-            ...prevReport,
-            rankedArticles: prevReport.rankedArticles.map(a => 
-                a.pmid === pmid ? { ...a, customTags: newTags } : a
-            )
-        };
-    });
-  }, [updateTags]);
 
-  const handleExportSelection = useCallback((format: 'pdf' | 'csv' | 'bib' | 'ris') => {
-      setShowExportModal(format);
-  }, []);
-
-  const handleConfirmExport = useCallback(() => {
-      if (!showExportModal) return;
-      
-      const articlesToExport: AggregatedArticle[] = uniqueArticles.filter(a => selectedKbPmids.includes(a.pmid));
-      if(articlesToExport.length === 0) {
-          setNotification({ id: Date.now(), message: 'No articles selected for export.', type: 'error' });
-          return;
+  const handleViewEntryWithAuthor = useCallback((entry: KnowledgeBaseEntry) => {
+      if (entry.sourceType === 'author') {
+          setSelectedAuthorProfile(entry.profile);
+          setCurrentView('authors');
+      } else {
+          handleViewEntry(entry);
       }
+  }, [handleViewEntry, setCurrentView]);
 
-      switch (showExportModal) {
-          case 'pdf':
-              exportKnowledgeBaseToPdf(articlesToExport, 'Knowledge Base Selection', (pmid) => knowledgeBase.flatMap(e => e.sourceType === 'research' ? (e.report.aiGeneratedInsights || []) : []).filter(i => (i.supportingArticles || []).includes(pmid)), settings.export.pdf);
-              break;
-          case 'csv':
-              exportToCsv(articlesToExport, 'knowledge_base_selection', settings.export.csv);
-              break;
-          case 'bib':
-          case 'ris':
-              exportCitations(articlesToExport, settings.export.citation, showExportModal);
-              break;
-      }
-      setShowExportModal(null);
-      setNotification({ id: Date.now(), message: `Exported ${articlesToExport.length} articles as ${showExportModal.toUpperCase()}.`, type: 'success' });
+  if (isSettingsLoading || isKbLoading || arePresetsLoading) {
+    return (
+        <div className="flex h-screen items-center justify-center bg-background">
+            <div className="animate-spin rounded-full h-24 w-24 border-t-4 border-b-4 border-brand-accent"></div>
+        </div>
+    );
+  }
 
-  }, [showExportModal, selectedKbPmids, uniqueArticles, settings.export, setNotification, knowledgeBase]);
-
-
-  if (showOnboarding) {
+  if (!settings.hasCompletedOnboarding) {
       return <OnboardingView onComplete={handleCompleteOnboarding} />;
   }
   
   const renderView = () => {
       switch (currentView) {
           case 'home': return <HomeView onNavigate={handleViewChange} />;
-          case 'orchestrator': return (
-            <OrchestratorView 
-                reportStatus={reportStatus}
-                currentPhase={currentPhase}
-                error={error}
-                report={report}
-                researchInput={localResearchInput}
-                isCurrentReportSaved={isCurrentReportSaved}
-                settings={settings}
-                prefilledTopic={prefilledTopic}
-                handleFormSubmit={handleFormSubmit}
-                handleSaveReport={handleSaveReport}
-                handleNewSearch={handleNewSearch}
-                onPrefillConsumed={handlePrefillConsumed}
-                handleViewReportFromHistory={handleViewEntry}
-                handleStartNewReview={handleStartNewReviewFromTopic}
-                onUpdateResearchInput={setLocalResearchInput}
-                handleTagsUpdate={handleTagsUpdate}
-                chatHistory={chatHistory}
-                isChatting={isChatting}
-                onSendMessage={sendMessage}
-            />);
+          case 'orchestrator': return <OrchestratorView logic={orchestratorLogic} />;
           case 'research': return (
             <ResearchView 
-                onStartNewReview={handleStartNewReviewFromTopic}
                 onStartResearch={startResearch}
                 onClearResearch={clearResearch}
                 isLoading={isResearching}
@@ -348,9 +173,10 @@ const AppLayout: React.FC = () => {
                 onlineFindingsState={online}
             />);
            case 'authors': return <AuthorsView initialProfile={selectedAuthorProfile} onViewedInitialProfile={handleAuthorProfileViewed} />;
-           case 'knowledgeBase': return <KnowledgeBaseView onViewChange={handleViewChange} filter={kbFilter} onFilterChange={handleFilterChange} selectedPmids={selectedKbPmids} setSelectedPmids={setSelectedKbPmids} />;
-           case 'dashboard': return <DashboardView onFilterChange={handleFilterChange} onViewChange={handleViewChange} />;
-           case 'history': return <HistoryView onViewEntry={handleViewEntry} />;
+           case 'journals': return <JournalsView />;
+           case 'knowledgeBase': return <KnowledgeBaseView logic={kbViewLogic} />;
+           case 'dashboard': return <DashboardView onFilterChange={kbViewLogic.handleFilterChange} onViewChange={handleViewChange} />;
+           case 'history': return <HistoryView onViewEntry={handleViewEntryWithAuthor} />;
            case 'settings': return <SettingsView onClearKnowledgeBase={handleClearKnowledgeBase} resetToken={settingsResetToken} onNavigateToHelpTab={(tab) => { setInitialHelpTab(tab); setCurrentView('help'); }} />;
            case 'help': return <HelpView initialTab={initialHelpTab} onTabConsumed={() => setInitialHelpTab(null)} />;
            default: return <HomeView onNavigate={handleViewChange} />;
@@ -378,8 +204,23 @@ const AppLayout: React.FC = () => {
       />
       {notification && <Notification {...notification} onClose={() => setNotification(null)} position={settings.notifications.position} duration={settings.notifications.duration} />}
       {pendingNavigation && <ConfirmationModal onConfirm={handleConfirmNavigation} onCancel={() => setPendingNavigation(null)} title="Discard Unsaved Changes?" message="You have unsaved changes in Settings. Are you sure you want to discard them and navigate away?" confirmText="Yes, Discard Changes" />}
-      {showExportModal && ['pdf', 'csv', 'bib', 'ris'].includes(showExportModal) && <ConfirmationModal onConfirm={handleConfirmExport} onCancel={() => setShowExportModal(null)} title={`Export ${selectedKbPmids.length} Articles`} message={`Are you sure you want to export citations for the ${selectedKbPmids.length} selected articles as a ${showExportModal.toUpperCase()} file?`} confirmText="Yes, Export" />}
-      {isCommandPaletteOpen && <CommandPalette isReportVisible={!!report} isCurrentReportSaved={isCurrentReportSaved} selectedArticleCount={selectedKbPmids.length} onSaveReport={handleSaveReport} onExportSelection={handleExportSelection}/>}
+      {kbViewLogic.showExportModal && (
+          <ConfirmationModal 
+            onConfirm={kbViewLogic.handleConfirmExport} 
+            onCancel={() => kbViewLogic.setShowExportModal(null)} 
+            title={`Export ${kbViewLogic.selectedPmids.length} Articles`} 
+            message={`Are you sure you want to export citations for the ${kbViewLogic.selectedPmids.length} selected articles as a ${kbViewLogic.showExportModal.toUpperCase()} file?`} 
+            confirmText={kbViewLogic.isExporting ? 'Exporting...' : 'Yes, Export'}
+            isConfirming={kbViewLogic.isExporting}
+         />
+      )}
+      {isCommandPaletteOpen && <CommandPalette 
+        isReportVisible={!!orchestratorLogic.report} 
+        isCurrentReportSaved={orchestratorLogic.isCurrentReportSaved} 
+        selectedArticleCount={kbViewLogic.selectedPmids.length} 
+        onSaveReport={orchestratorLogic.handleSaveReport} 
+        onExportSelection={kbViewLogic.setShowExportModal}
+      />}
       {isQuickAddModalOpen && <QuickAddModal onClose={() => setIsQuickAddModalOpen(false)} />}
     </>
   );

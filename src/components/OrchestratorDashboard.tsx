@@ -1,5 +1,5 @@
+
 import React from 'react';
-// FIX: Changed ResearchKnowledgeBaseEntry to ResearchEntry to match types
 import type { KnowledgeBaseEntry, ResearchEntry } from '../types';
 import { HistoryIcon } from './icons/HistoryIcon';
 import { DocumentPlusIcon } from './icons/DocumentPlusIcon';

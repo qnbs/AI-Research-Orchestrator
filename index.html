@@ -9,7 +9,17 @@
     "react": "https://aistudiocdn.com/react@^19.1.1",
     "jspdf": "https://aistudiocdn.com/jspdf@^3.0.2",
     "chart.js": "https://aistudiocdn.com/chart.js@^4.5.0",
-    "marked": "https://aistudiocdn.com/marked@^16.2.1"
+    "marked": "https://aistudiocdn.com/marked@^16.2.1",
+    "vitest": "https://aistudiocdn.com/vitest@^3.2.4",
+    "vitest/": "https://aistudiocdn.com/vitest@^3.2.4/",
+    "@tanstack/react-virtual": "https://aistudiocdn.com/@tanstack/react-virtual@^3.10.0",
+    "dexie": "https://aistudiocdn.com/dexie@^4.0.7",
+    "@testing-library/react": "https://aistudiocdn.com/@testing-library/react@^16.0.0",
+    "@testing-library/user-event": "https://aistudiocdn.com/@testing-library/user-event@^14.5.2",
+    "jsdom": "https://aistudiocdn.com/jsdom@^24.1.0",
+    "path": "https://aistudiocdn.com/path@^0.12.7",
+    "@testing-library/jest-dom/": "https://aistudiocdn.com/@testing-library/jest-dom@^6.8.0/",
+    "fake-indexeddb/": "https://aistudiocdn.com/fake-indexeddb@^6.2.2/"
   }
 }
 </script>
@@ -24,10 +34,12 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://aistudiocdn.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
       :root.dark {
+        --font-family-sans: 'Inter', sans-serif;
+        --font-family-display: 'Space Grotesk', sans-serif;
         --color-background: #010409;
         --color-surface: #0d1117;
         --color-surface-hover: #161b22;
@@ -52,6 +64,8 @@
         --color-input-bg: #161b22;
       }
       :root.light {
+        --font-family-sans: 'Inter', sans-serif;
+        --font-family-display: 'Space Grotesk', sans-serif;
         --color-background: #f7faff;
         --color-surface: rgba(255, 255, 255, 0.9);
         --color-surface-hover: rgba(250, 252, 255, 0.95);
@@ -76,9 +90,13 @@
         --aurora-3: rgba(236, 72, 153, 0.08);
       }
        body {
-         font-family: var(--font-family, 'Inter', sans-serif);
+         font-family: var(--font-family-sans);
          background-color: var(--color-background);
          color: var(--color-text-primary);
+       }
+       h1, h2, h3, h4, h5, h6, .font-display {
+         font-family: var(--font-family-display);
+         letter-spacing: -0.02em;
        }
        body::after {
         content: '';
@@ -98,7 +116,10 @@
          background-color: var(--color-brand-accent);
          color: var(--color-brand-text-on-accent);
        }
-       .prose-sm h1, .prose-sm h2, .prose-sm h3, .prose-sm h4, .prose-sm h5, .prose-sm h6 { color: var(--color-text-primary); }
+       .prose-sm h1, .prose-sm h2, .prose-sm h3, .prose-sm h4, .prose-sm h5, .prose-sm h6 { 
+        font-family: var(--font-family-display);
+        color: var(--color-text-primary); 
+       }
        .prose-sm strong { color: var(--color-text-primary); }
        .prose-sm a { color: var(--color-brand-accent); }
        .prose-sm blockquote { border-left-color: var(--color-border); }
@@ -126,6 +147,7 @@
       }
       
       .brand-gradient-text {
+        font-family: var(--font-family-display);
         background: linear-gradient(45deg, var(--color-brand-accent), var(--color-accent-cyan));
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
@@ -167,9 +189,7 @@
           extend: {
             fontFamily: {
               sans: ['Inter', 'sans-serif'],
-              roboto: ['Roboto', 'sans-serif'],
-              lato: ['Lato', 'sans-serif'],
-              'open-sans': ['Open Sans', 'sans-serif'],
+              display: ['Space Grotesk', 'sans-serif'],
             },
             colors: {
               background: 'var(--color-background)',
@@ -208,6 +228,6 @@
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/index.tsx"></script>
+    <script type="module" src="./src/index.tsx"></script>
   </body>
 </html>

@@ -1,4 +1,5 @@
 
+
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 // Fix: Import new types and remove old ones which are now locally defined for migration.
 import { KnowledgeBaseEntry, ResearchInput, ResearchReport, RankedArticle, AggregatedArticle, AuthorProfile, AuthorProfileInput, ResearchEntry, AuthorProfileEntry } from '../types';
@@ -92,22 +93,42 @@ interface KnowledgeBaseContextType {
     addKnowledgeBaseEntries: (entries: KnowledgeBaseEntry[]) => void;
     onPruneByRelevance: (score: number) => void;
     addSingleArticleReport: (article: RankedArticle) => void;
+    // FIX: Add isLoading property to the context type.
+    isLoading: boolean;
 }
 
 const KnowledgeBaseContext = createContext<KnowledgeBaseContextType | undefined>(undefined);
 
 export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [knowledgeBase, setKnowledgeBase] = useState<KnowledgeBaseEntry[]>(loadFromLocalStorage);
+    // FIX: Initialize with empty array and add loading state.
+    const [knowledgeBase, setKnowledgeBase] = useState<KnowledgeBaseEntry[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
     const { setNotification } = useUI();
+
+    // FIX: Load from localStorage within useEffect to manage loading state.
+    useEffect(() => {
+        setIsLoading(true);
+        try {
+            const entries = loadFromLocalStorage();
+            setKnowledgeBase(entries);
+        } catch (error) {
+            console.error("Failed to load knowledge base from localStorage", error);
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
 
     useEffect(() => {
         try {
-            localStorage.setItem(KNOWLEDGE_BASE_STORAGE_KEY, JSON.stringify(knowledgeBase));
+            // Do not run on initial load when knowledgeBase is empty before being populated
+            if (!isLoading) {
+                localStorage.setItem(KNOWLEDGE_BASE_STORAGE_KEY, JSON.stringify(knowledgeBase));
+            }
         } catch (error) {
             console.error("Failed to save knowledge base to localStorage", error);
             setNotification({ id: Date.now(), message: "Error: Could not save the Knowledge Base. Storage might be full.", type: 'error' });
         }
-    }, [knowledgeBase, setNotification]);
+    }, [knowledgeBase, isLoading, setNotification]);
 
     const showNotification = useCallback((message: string, type: 'success' | 'error' = 'success') => {
         setNotification({ id: Date.now(), message, type });
@@ -336,10 +357,11 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
 
     const providerValue = useMemo(() => ({
         knowledgeBase, uniqueArticles, getArticles, getRecentResearchEntries, saveReport, saveAuthorProfile, clearKnowledgeBase, updateEntryTitle,
-        updateTags, deleteArticles, onMergeDuplicates, addKnowledgeBaseEntries, onPruneByRelevance, addSingleArticleReport
+        updateTags, deleteArticles, onMergeDuplicates, addKnowledgeBaseEntries, onPruneByRelevance, addSingleArticleReport,
+        isLoading
     }), [
         knowledgeBase, uniqueArticles, getArticles, getRecentResearchEntries, saveReport, saveAuthorProfile, clearKnowledgeBase, updateEntryTitle,
-        updateTags, deleteArticles, onMergeDuplicates, addKnowledgeBaseEntries, onPruneByRelevance, addSingleArticleReport
+        updateTags, deleteArticles, onMergeDuplicates, addKnowledgeBaseEntries, onPruneByRelevance, addSingleArticleReport, isLoading
     ]);
 
 

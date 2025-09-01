@@ -1,5 +1,4 @@
 
-
 export const ARTICLE_TYPES = [
   'Randomized Controlled Trial', 
   'Meta-Analysis', 
@@ -79,7 +78,21 @@ export interface AuthorProfileEntry extends BaseEntry {
     profile: AuthorProfile;
 }
 
-export type KnowledgeBaseEntry = ResearchEntry | AuthorProfileEntry;
+export interface JournalProfile {
+    name: string;
+    issn: string;
+    description: string;
+    oaPolicy: string; // e.g. "Full Open Access", "Hybrid", "Subscription"
+    focusAreas: string[];
+}
+
+export interface JournalEntry extends BaseEntry {
+    sourceType: 'journal';
+    journalProfile: JournalProfile;
+}
+
+
+export type KnowledgeBaseEntry = ResearchEntry | AuthorProfileEntry | JournalEntry;
 
 
 export type AggregatedArticle = RankedArticle & {
@@ -100,7 +113,7 @@ export interface Preset {
   settings: ResearchInput;
 }
 
-export interface Settings {
+export interface AppSettings {
   theme: 'dark' | 'light';
   appearance: {
     density: 'comfortable' | 'compact';
@@ -167,7 +180,10 @@ export interface Settings {
     articlesPerPage: 10 | 20 | 50;
     defaultSort: 'relevance' | 'newest';
   };
+  hasCompletedOnboarding: boolean;
 }
+
+export type Settings = AppSettings; // For compatibility with older files if they use Settings
 
 export interface SimilarArticle {
   pmid: string;

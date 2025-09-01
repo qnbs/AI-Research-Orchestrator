@@ -1,6 +1,7 @@
+
 import React, { useMemo, useRef, useId, memo } from 'react';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement, Colors } from 'chart.js';
-import { Bar, Doughnut, Chart, getElementAtEvent } from 'react-chartjs-2';
+import { Bar, Doughnut, getElementAtEvent } from 'react-chartjs-2';
 import type { KnowledgeBaseFilter } from '../types';
 import { DatabaseIcon } from './icons/DatabaseIcon';
 import { useSettings } from '../contexts/SettingsContext';
@@ -12,7 +13,6 @@ import { useKnowledgeBase } from '../contexts/KnowledgeBaseContext';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement, Colors);
 
-// FIX: Update props to accept onFilterChange
 interface DashboardViewProps {
     onFilterChange: (newFilter: Partial<KnowledgeBaseFilter>) => void;
     onViewChange: (view: View) => void;

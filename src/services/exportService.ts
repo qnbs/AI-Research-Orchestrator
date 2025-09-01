@@ -1,3 +1,4 @@
+
 import jsPDF from 'jspdf';
 import { RankedArticle, ResearchInput, AggregatedArticle, ResearchReport, Settings, CSV_EXPORT_COLUMNS, KnowledgeBaseEntry } from '../types';
 
@@ -288,8 +289,6 @@ export const exportToCsv = (articlesToExport: AggregatedArticle[], topic: string
         const articleUrl = `https://pubmed.ncbi.nlm.nih.gov/${article.pmid}/`;
         const pmcidUrl = article.pmcId ? `https://www.ncbi.nlm.nih.gov/pmc/articles/${article.pmcId}/` : '';
         
-        // Fix: Ensure all optional properties have a default value to match the Record type.
-        // Fix: Changed 'sourceReportTopic' to 'sourceTitle' to match the AggregatedArticle type.
         const rowData: Record<(typeof CSV_EXPORT_COLUMNS)[number], any> = {
             pmid: article.pmid,
             pmcId: article.pmcId ?? '',

@@ -1,9 +1,7 @@
 
-
-
 import React, { useState, useMemo, useRef, useEffect, useCallback, memo } from 'react';
 import { exportKnowledgeBaseToPdf, exportToCsv, exportCitations } from '../services/exportService';
-import type { AggregatedArticle, KnowledgeBaseEntry, KnowledgeBaseFilter } from '../types';
+import type { AggregatedArticle, KnowledgeBaseFilter } from '../types';
 import { SearchIcon } from './icons/SearchIcon';
 import { DatabaseIcon } from './icons/DatabaseIcon';
 import { UnlockIcon } from './icons/UnlockIcon';
@@ -28,6 +26,7 @@ import { EmptyState } from './EmptyState';
 import { DocumentPlusIcon } from './icons/DocumentPlusIcon';
 import { DocumentIcon } from './icons/DocumentIcon';
 import { AuthorIcon } from './icons/AuthorIcon';
+import { BookOpenIcon } from './icons/BookOpenIcon';
 
 interface KnowledgeBaseViewProps {
   onViewChange: (view: View) => void;
@@ -187,7 +186,7 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({ onViewChan
     const [citationExportModalType, setCitationExportModalType] = useState<'bib' | 'ris' | null>(null);
     const [viewMode, setViewMode] = useState<'grid' | 'list'>(settings.knowledgeBase.defaultView);
     const selectPageCheckboxRef = useRef<HTMLInputElement>(null);
-    const [activeSource, setActiveSource] = useState<'all' | 'research' | 'author'>('all');
+    const [activeSource, setActiveSource] = useState<'all' | 'research' | 'author' | 'journal'>('all');
     
     const filterOptions = useMemo(() => {
         const allArticles = getArticles('all');
@@ -356,9 +355,10 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({ onViewChan
                         <input id="kb-search" type="text" placeholder="Search articles..." value={filter.searchTerm} onChange={e => onFilterChange({ searchTerm: e.target.value })} className="w-full pl-10 pr-4 py-2 bg-input-bg border border-border rounded-md text-sm" />
                     </div>
                      <div className="flex w-full bg-surface p-1 rounded-lg border border-border">
-                        <button onClick={() => setActiveSource('all')} className={`w-1/3 p-1.5 rounded-md text-sm font-medium transition-colors ${activeSource === 'all' ? 'bg-brand-accent text-brand-text-on-accent' : 'text-text-secondary hover:bg-surface-hover'}`}>All</button>
-                        <button onClick={() => setActiveSource('research')} className={`w-1/3 p-1.5 rounded-md text-sm font-medium transition-colors ${activeSource === 'research' ? 'bg-brand-accent text-brand-text-on-accent' : 'text-text-secondary hover:bg-surface-hover'}`}>Research</button>
-                        <button onClick={() => setActiveSource('author')} className={`w-1/3 p-1.5 rounded-md text-sm font-medium transition-colors ${activeSource === 'author' ? 'bg-brand-accent text-brand-text-on-accent' : 'text-text-secondary hover:bg-surface-hover'}`}>Authors</button>
+                        <button onClick={() => setActiveSource('all')} className={`w-1/4 p-1.5 rounded-md text-sm font-medium transition-colors ${activeSource === 'all' ? 'bg-brand-accent text-brand-text-on-accent' : 'text-text-secondary hover:bg-surface-hover'}`}>All</button>
+                        <button onClick={() => setActiveSource('research')} className={`w-1/4 p-1.5 rounded-md text-sm font-medium transition-colors ${activeSource === 'research' ? 'bg-brand-accent text-brand-text-on-accent' : 'text-text-secondary hover:bg-surface-hover'}`}>Research</button>
+                        <button onClick={() => setActiveSource('author')} className={`w-1/4 p-1.5 rounded-md text-sm font-medium transition-colors ${activeSource === 'author' ? 'bg-brand-accent text-brand-text-on-accent' : 'text-text-secondary hover:bg-surface-hover'}`}>Authors</button>
+                        <button onClick={() => setActiveSource('journal')} className={`w-1/4 p-1.5 rounded-md text-sm font-medium transition-colors ${activeSource === 'journal' ? 'bg-brand-accent text-brand-text-on-accent' : 'text-text-secondary hover:bg-surface-hover'}`}>Journals</button>
                     </div>
                     <MultiSelectFilter title="Source" options={filterOptions.topics} selected={filter.selectedTopics} onChange={selected => onFilterChange({ selectedTopics: selected })} />
                     <MultiSelectFilter title="Tags" options={filterOptions.tags} selected={filter.selectedTags} onChange={selected => onFilterChange({ selectedTags: selected })} />

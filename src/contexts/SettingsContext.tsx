@@ -1,13 +1,10 @@
 
-
-
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
-// FIX: Change AppSettings to Settings for consistency
-import type { Settings } from '../types';
-import { CSV_EXPORT_COLUMNS } from '../types';
-import { getSettings as getSettingsFromDb, saveSettings as saveSettingsToDb } from '../services/databaseService';
+import type { AppSettings } from '@/types';
+import { CSV_EXPORT_COLUMNS } from '@/types';
+import { getSettings as getSettingsFromDb, saveSettings as saveSettingsToDb } from '@/services/databaseService';
 
-const defaultSettings: Settings = {
+const defaultSettings: AppSettings = {
   theme: 'dark',
   appearance: {
     density: 'comfortable',
@@ -101,8 +98,8 @@ const deepMerge = (target: any, source: any): any => {
 
 
 interface SettingsContextType {
-  settings: Settings;
-  updateSettings: (newSettings: Partial<Settings> | ((prevState: Settings) => Settings)) => void;
+  settings: AppSettings;
+  updateSettings: (newSettings: Partial<AppSettings> | ((prevState: AppSettings) => AppSettings)) => void;
   resetSettings: () => void;
   isSettingsLoading: boolean;
 }
@@ -110,7 +107,7 @@ interface SettingsContextType {
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [settings, setSettings] = useState<Settings>(defaultSettings);
+  const [settings, setSettings] = useState<AppSettings>(defaultSettings);
   const [isSettingsLoading, setIsSettingsLoading] = useState(true);
 
   useEffect(() => {
@@ -126,7 +123,6 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
           }
           setSettings(mergedSettings);
         } else {
-          // No settings in DB, save the defaults for next time
           await saveSettingsToDb(defaultSettings);
           setSettings(defaultSettings);
         }
@@ -140,16 +136,16 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     loadSettings();
   }, []);
 
-  const updateSettings = useCallback((newSettings: Partial<Settings> | ((prevState: Settings) => Settings)) => {
+  const updateSettings = useCallback((newSettings: Partial<AppSettings> | ((prevState: AppSettings) => AppSettings)) => {
       setSettings(prevSettings => {
-          const updated = typeof newSettings === 'function' ? newSettings(prevSettings) : { ...prevSettings, ...newSettings };
+          const updated = typeof newSettings === 'function' ? newSettings(prevSettings) : deepMerge(prevSettings, newSettings);
           saveSettingsToDb(updated).catch(error => console.error("Failed to save settings to IndexedDB", error));
           return updated;
       });
   }, []);
 
-  const resetSettings = useCallback(() => {
-    saveSettingsToDb(defaultSettings).catch(error => console.error("Failed to reset settings in IndexedDB", error));
+  const resetSettings = useCallback(async () => {
+    await saveSettingsToDb(defaultSettings)
     setSettings(defaultSettings);
   }, []);
 

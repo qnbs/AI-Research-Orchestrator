@@ -16,6 +16,7 @@ import type { View } from '../contexts/UIContext';
 import { DocumentPlusIcon } from './icons/DocumentPlusIcon';
 import { SearchIcon } from './icons/SearchIcon';
 import { EllipsisHorizontalIcon } from './icons/EllipsisHorizontalIcon';
+import { BookOpenIcon } from './icons/BookOpenIcon';
 
 interface HeaderProps {
     onViewChange: (view: View) => void;
@@ -98,6 +99,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({ onViewChange, knowledgeBaseArt
                   </NavButton>
                   <NavButton onClick={() => onViewChange('orchestrator')} isActive={currentView === 'orchestrator'}><DocumentIcon className="h-5 w-5 mr-2" />Orchestrator</NavButton>
                   <NavButton onClick={() => onViewChange('authors')} isActive={currentView === 'authors'}><AuthorIcon className="h-5 w-5 mr-2" />Authors</NavButton>
+                  <NavButton onClick={() => onViewChange('journals')} isActive={currentView === 'journals'}><BookOpenIcon className="h-5 w-5 mr-2" />Journals</NavButton>
                   <NavButton onClick={() => onViewChange('knowledgeBase')} isActive={currentView === 'knowledgeBase'} disabled={!hasReports}><DatabaseIcon className="h-5 w-5 mr-2" />Knowledge <span className="ml-2 bg-surface text-text-secondary text-xs font-bold px-2 py-0.5 rounded-full">{displayCount}</span></NavButton>
                   <NavButton onClick={() => onViewChange('dashboard')} isActive={currentView === 'dashboard'} disabled={!hasReports}><ChartBarIcon className="h-5 w-5 mr-2" />Dashboard</NavButton>
                   <NavButton onClick={() => onViewChange('history')} isActive={currentView === 'history'} disabled={!hasReports}><HistoryIcon className="h-5 w-5 mr-2" />History</NavButton>
