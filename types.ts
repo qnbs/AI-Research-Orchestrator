@@ -87,7 +87,7 @@ export type AggregatedArticle = RankedArticle & {
     sourceId: string;
 };
 
-// Fix: Removed invalid `Omit` from type definition which caused a compile error.
+// Omit 'sourceId' as it's an internal identifier not meant for export.
 export const CSV_EXPORT_COLUMNS: (keyof Omit<AggregatedArticle, 'sourceId'> | 'URL' | 'PMCID_URL')[] = [
     'pmid', 'pmcId', 'title', 'authors', 'journal', 'pubYear', 'summary', 'aiSummary',
     'relevanceScore', 'relevanceExplanation', 'keywords', 'customTags', 

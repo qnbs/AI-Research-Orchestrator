@@ -87,7 +87,8 @@ export type AggregatedArticle = RankedArticle & {
     sourceId: string;
 };
 
-export const CSV_EXPORT_COLUMNS: (keyof Omit<AggregatedArticle, 'sourceReportTopic'> | 'URL' | 'PMCID_URL')[] = [
+// Omit 'sourceId' as it's an internal identifier not meant for export.
+export const CSV_EXPORT_COLUMNS: (keyof Omit<AggregatedArticle, 'sourceId'> | 'URL' | 'PMCID_URL')[] = [
     'pmid', 'pmcId', 'title', 'authors', 'journal', 'pubYear', 'summary', 'aiSummary',
     'relevanceScore', 'relevanceExplanation', 'keywords', 'customTags', 
     'sourceTitle', 'isOpenAccess', 'articleType', 'URL', 'PMCID_URL'

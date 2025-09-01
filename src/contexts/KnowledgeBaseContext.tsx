@@ -1,5 +1,7 @@
+
+
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
-// Fix: Import new types and remove old ones which are now locally defined for migration.
+// FIX: Import new types and remove old ones which are now locally defined for migration.
 import { KnowledgeBaseEntry, ResearchInput, ResearchReport, RankedArticle, AggregatedArticle, AuthorProfile, AuthorProfileInput, ResearchEntry, AuthorProfileEntry } from '../types';
 import { useUI } from './UIContext';
 
@@ -342,11 +344,17 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
             .slice(0, count);
     }, [knowledgeBase]);
 
+    const providerValue = useMemo(() => ({
+        knowledgeBase, uniqueArticles, getArticles, getRecentResearchEntries, saveReport, saveAuthorProfile, clearKnowledgeBase, updateEntryTitle,
+        updateTags, deleteArticles, onMergeDuplicates, addKnowledgeBaseEntries, onPruneByRelevance, addSingleArticleReport
+    }), [
+        knowledgeBase, uniqueArticles, getArticles, getRecentResearchEntries, saveReport, saveAuthorProfile, clearKnowledgeBase, updateEntryTitle,
+        updateTags, deleteArticles, onMergeDuplicates, addKnowledgeBaseEntries, onPruneByRelevance, addSingleArticleReport
+    ]);
+
+
     return (
-        <KnowledgeBaseContext.Provider value={{
-            knowledgeBase, uniqueArticles, getArticles, getRecentResearchEntries, saveReport, saveAuthorProfile, clearKnowledgeBase, updateEntryTitle,
-            updateTags, deleteArticles, onMergeDuplicates, addKnowledgeBaseEntries, onPruneByRelevance, addSingleArticleReport
-        }}>
+        <KnowledgeBaseContext.Provider value={providerValue}>
             {children}
         </KnowledgeBaseContext.Provider>
     );
