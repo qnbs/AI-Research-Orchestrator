@@ -1,7 +1,8 @@
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/qnbs/AI-Research-Orchestrator)
 > **Built with AI Studio** — [Start building](https://aistudio.google.com/apps?source=user)
 >
 > The fastest path from prompt to production with Gemini.
-
+> 
 # AI Research Orchestration Author
 
 An expert system for authoring comprehensive literature reviews by managing a swarm of specialized AI agents. It uses the PubMed database to collect, curate, and synthesize scientific research based on user-defined criteria, acting as an intelligent partner for researchers to accelerate discovery.
