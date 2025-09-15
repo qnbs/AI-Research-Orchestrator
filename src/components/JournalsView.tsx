@@ -37,9 +37,9 @@ const ArticleListItem: React.FC<{ article: Article }> = ({ article }) => (
     </a>
 );
 
-export const JournalsView: React.FC = () => {
+const JournalsView: React.FC = () => {
     const [journalName, setJournalName] = useState('');
-    const [topic, setTopic] = useState('any');
+    const [topic, setTopic] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [journalProfile, setJournalProfile] = useState<JournalProfile | null>(null);
     const [foundArticles, setFoundArticles] = useState<Article[] | null>(null);
@@ -47,7 +47,8 @@ export const JournalsView: React.FC = () => {
     const [featuredJournals, setFeaturedJournals] = useState<FeaturedJournal[]>([]);
 
     const { settings } = useSettings();
-    const { saveKnowledgeBaseEntry } = useKnowledgeBase();
+    // FIX: Replaced non-existent `saveKnowledgeBaseEntry` with `saveJournalProfile`.
+    const { saveJournalProfile } = useKnowledgeBase();
     const { setNotification } = useUI();
 
     useEffect(() => {
@@ -85,14 +86,8 @@ export const JournalsView: React.FC = () => {
             setJournalProfile(profile);
             setFoundArticles(articles);
 
-            const newEntryData: Omit<JournalEntry, 'id' | 'timestamp' | 'articles'> & { articles: Article[] } = {
-                sourceType: 'journal',
-                title: profile.name,
-                articles: articles,
-                journalProfile: profile
-            };
-            
-            await saveKnowledgeBaseEntry(newEntryData);
+            // FIX: Called `saveJournalProfile` with the correct arguments instead of creating a new entry object manually.
+            await saveJournalProfile(profile, articles);
 
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
@@ -101,12 +96,10 @@ export const JournalsView: React.FC = () => {
         } finally {
             setIsLoading(false);
         }
-    }, [journalName, topic, settings.ai, saveKnowledgeBaseEntry, setNotification]);
+    }, [journalName, topic, settings.ai, saveJournalProfile, setNotification]);
     
     const handleFeaturedSelect = (name: string) => {
         setJournalName(name);
-        // Optional: auto-submit on select
-        // handleAnalyzeJournal();
     };
 
     return (
@@ -131,7 +124,7 @@ export const JournalsView: React.FC = () => {
                         />
                     </div>
                     <div>
-                        <label htmlFor="topic" className="block text-sm font-semibold text-text-primary mb-2">Topic of Interest</label>
+                        <label htmlFor="topic" className="block text-sm font-semibold text-text-primary mb-2">Topic of Interest (Optional)</label>
                         <input
                             id="topic"
                             type="text"
@@ -139,7 +132,6 @@ export const JournalsView: React.FC = () => {
                             onChange={(e) => setTopic(e.target.value)}
                             placeholder="e.g., neuroscience"
                              className="w-full bg-input-bg border border-border rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent"
-                            required
                         />
                     </div>
                 </div>
@@ -201,3 +193,5 @@ export const JournalsView: React.FC = () => {
         </div>
     );
 };
+
+export default JournalsView;

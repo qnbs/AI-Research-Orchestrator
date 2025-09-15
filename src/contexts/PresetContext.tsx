@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
 import type { Preset, ResearchInput } from '../types';
 import { getAllPresets, addPreset as addPresetDb, removePreset as removePresetDb } from '../services/databaseService';

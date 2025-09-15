@@ -1,30 +1,27 @@
-<script type="importmap">
-{
-  "imports": {
-    "dompurify": "https://aistudiocdn.com/dompurify@^3.2.6",
-    "react-chartjs-2": "https://aistudiocdn.com/react-chartjs-2@^5.3.0",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.16.0",
-    "react/": "https://aistudiocdn.com/react@^19.1.1/",
-    "react": "https://aistudiocdn.com/react@^19.1.1",
-    "jspdf": "https://aistudiocdn.com/jspdf@^3.0.2",
-    "chart.js": "https://aistudiocdn.com/chart.js@^4.5.0",
-    "marked": "https://aistudiocdn.com/marked@^16.2.1",
-    "@tanstack/react-virtual": "https://aistudiocdn.com/@tanstack/react-virtual@^3.10.0",
-    "dexie": "https://aistudiocdn.com/dexie@^4.0.7",
-    "vitest": "https://aistudiocdn.com/vitest@^3.2.4",
-    "vitest/": "https://aistudiocdn.com/vitest@^3.2.4/"
-  }
-}
-</script>
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#F6F8FA" media="(prefers-color-scheme: light)">
-    <meta name="theme-color" content="#0D1117" media="(prefers-color-scheme: dark)">
     <title>AI Research Orchestration Author</title>
+
+    <!-- PWA and Mobile Meta Tags -->
+    <meta name="application-name" content="AI Research Orchestration Author">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="AI Research">
+    <meta name="description" content="An expert system for authoring comprehensive literature reviews.">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/manifest.json">
+
+    <meta name="theme-color" content="#0D1117" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#F6F8FA" media="(prefers-color-scheme: light)">
+    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://aistudiocdn.com">
@@ -209,10 +206,39 @@
         }
       }
     </script>
-  </head>
+  <script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
+    "dexie": "https://aistudiocdn.com/dexie@^4.2.0",
+    "vitest": "https://aistudiocdn.com/vitest@^3.2.4",
+    "vitest/": "https://aistudiocdn.com/vitest@^3.2.4/",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.19.0",
+    "react/": "https://aistudiocdn.com/react@^19.1.1/",
+    "react": "https://aistudiocdn.com/react@^19.1.1",
+    "marked": "https://aistudiocdn.com/marked@^16.3.0",
+    "chart.js": "https://aistudiocdn.com/chart.js@^4.5.0",
+    "react-chartjs-2": "https://aistudiocdn.com/react-chartjs-2@^5.3.0",
+    "jspdf": "https://aistudiocdn.com/jspdf@^3.0.2",
+    "dompurify": "https://aistudiocdn.com/dompurify@^3.2.6"
+  }
+}
+</script>
+</head>
   <body>
     <div id="root"></div>
-    <script src="https://unpkg.com/dexie@4.0.7/dist/dexie.min.js"></script>
     <script type="module" src="/src/index.tsx"></script>
+    <script>
+      // PWA Service Worker Registration
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').then(registration => {
+            console.log('ServiceWorker registration successful with scope: ', registration.scope);
+          }, err => {
+            console.log('ServiceWorker registration failed: ', err);
+          });
+        });
+      }
+    </script>
   </body>
 </html>

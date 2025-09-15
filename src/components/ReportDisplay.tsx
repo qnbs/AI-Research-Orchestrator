@@ -1,3 +1,4 @@
+
 import React, { useState, useId, useEffect, useRef, useCallback } from 'react';
 import type { ResearchReport, RankedArticle, ResearchInput, AggregatedArticle, ChatMessage } from '../types';
 import { marked } from 'marked';
@@ -252,11 +253,10 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(({ report,
       setIsExporting(true);
       setTimeout(() => {
           try {
-              // Fix: Construct AggregatedArticle with sourceTitle and a transient sourceId to match the expected type.
               const aggregatedArticles: AggregatedArticle[] = report.rankedArticles.map(a => ({
                 ...a, 
                 sourceTitle: input.researchTopic,
-                sourceId: `current-report-${a.pmid}` // Provide a placeholder ID
+                sourceId: `current-report-${a.pmid}`
               }));
               exportToCsv(aggregatedArticles, input.researchTopic, settings.export.csv);
           } catch (e) {

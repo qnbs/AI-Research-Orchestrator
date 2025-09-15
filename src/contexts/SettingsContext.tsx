@@ -1,3 +1,5 @@
+
+
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
 import type { Settings } from '../types';
 import { CSV_EXPORT_COLUMNS } from '../types';
@@ -138,6 +140,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   const updateSettings = useCallback((newSettings: Partial<Settings> | ((prevState: Settings) => Settings)) => {
       setSettings(prevSettings => {
+          // FIX: Use deepMerge to prevent nested objects from being overwritten by partial updates.
           const updated = typeof newSettings === 'function' ? newSettings(prevSettings) : deepMerge(prevSettings, newSettings);
           saveSettingsToDb(updated).catch(error => console.error("Failed to save settings to IndexedDB", error));
           return updated;

@@ -1,3 +1,5 @@
+
+
 import React, { useState, useRef, useEffect, memo } from 'react';
 import { DocumentIcon } from './icons/DocumentIcon';
 import { DatabaseIcon } from './icons/DatabaseIcon';
@@ -60,6 +62,20 @@ const HeaderComponent: React.FC<HeaderProps> = ({ onViewChange, knowledgeBaseArt
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const mobileMenuRef = useRef<HTMLDivElement>(null);
 
+    const viewTitles: Record<View, string> = {
+        home: 'Home',
+        orchestrator: 'Orchestrator',
+        research: 'Research',
+        authors: 'Author Hub',
+        // FIX: Add title for the new journals view.
+        journals: 'Journal Hub',
+        knowledgeBase: 'Knowledge Base',
+        dashboard: 'Dashboard',
+        history: 'Report History',
+        settings: 'Settings',
+        help: 'Help & Docs',
+    };
+
     // Close dropdowns on outside click
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -98,6 +114,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({ onViewChange, knowledgeBaseArt
                   </NavButton>
                   <NavButton onClick={() => onViewChange('orchestrator')} isActive={currentView === 'orchestrator'}><DocumentIcon className="h-5 w-5 mr-2" />Orchestrator</NavButton>
                   <NavButton onClick={() => onViewChange('authors')} isActive={currentView === 'authors'}><AuthorIcon className="h-5 w-5 mr-2" />Authors</NavButton>
+                  {/* FIX: Add navigation button for the new Journal Hub. */}
                   <NavButton onClick={() => onViewChange('journals')} isActive={currentView === 'journals'}><BookOpenIcon className="h-5 w-5 mr-2" />Journals</NavButton>
                   <NavButton onClick={() => onViewChange('knowledgeBase')} isActive={currentView === 'knowledgeBase'} disabled={!hasReports}><DatabaseIcon className="h-5 w-5 mr-2" />Knowledge <span className="ml-2 bg-surface text-text-secondary text-xs font-bold px-2 py-0.5 rounded-full">{displayCount}</span></NavButton>
                   <NavButton onClick={() => onViewChange('dashboard')} isActive={currentView === 'dashboard'} disabled={!hasReports}><ChartBarIcon className="h-5 w-5 mr-2" />Dashboard</NavButton>
@@ -123,10 +140,15 @@ const HeaderComponent: React.FC<HeaderProps> = ({ onViewChange, knowledgeBaseArt
           
           {/* --- MOBILE HEADER (SINGLE LINE) --- */}
           <div className="md:hidden flex items-center justify-between h-16">
-              <button onClick={() => onViewChange('home')} className="flex items-center gap-4 p-1 -m-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent rounded-md" aria-label="Go to Home">
-                <AppLogoIcon />
-              </button>
-              <div className="flex items-center space-x-1">
+              <div className="flex-1 flex justify-start">
+                  <button onClick={() => onViewChange('home')} className="flex items-center gap-4 p-1 -m-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent rounded-md" aria-label="Go to Home">
+                    <AppLogoIcon />
+                  </button>
+              </div>
+              <div className="flex-1 flex justify-center">
+                   <h1 className="text-base font-semibold text-text-primary whitespace-nowrap truncate">{viewTitles[currentView]}</h1>
+              </div>
+              <div className="flex-1 flex justify-end items-center space-x-1">
                   <button onClick={onQuickAdd} className="p-2 rounded-md transition-colors text-text-secondary hover:bg-surface-hover hover:text-text-primary" aria-label="Quick Add Article"><DocumentPlusIcon className="h-6 w-6" /></button>
                   <button onClick={() => setIsCommandPaletteOpen(true)} className="p-2 rounded-md transition-colors text-text-secondary hover:bg-surface-hover hover:text-text-primary" aria-label="Open Command Palette"><SearchIcon className="h-6 w-6" /></button>
                   <div className="relative" ref={mobileMenuRef}>

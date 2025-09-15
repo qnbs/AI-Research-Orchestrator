@@ -74,7 +74,6 @@ function getGeminiError(error: unknown): string {
     return "An unknown AI error occurred.";
 }
 
-// FIX: Moved and exported generateAuthorQuery function to make it a shared utility.
 /**
  * Generates a robust PubMed author search query from a full name.
  * Handles different common name formats like "Lander, Eric S." and "Eric S. Lander".

@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useRef, useEffect, useCallback, memo } from 'react';
 import { exportKnowledgeBaseToPdf, exportToCsv, exportCitations } from '../services/exportService';
-import type { AggregatedArticle, KnowledgeBaseFilter } from '../types';
+import type { AggregatedArticle, KnowledgeBaseEntry, KnowledgeBaseFilter } from '../types';
 import { SearchIcon } from './icons/SearchIcon';
 import { DatabaseIcon } from './icons/DatabaseIcon';
 import { UnlockIcon } from './icons/UnlockIcon';
@@ -27,7 +27,6 @@ import { EmptyState } from './EmptyState';
 import { DocumentPlusIcon } from './icons/DocumentPlusIcon';
 import { DocumentIcon } from './icons/DocumentIcon';
 import { AuthorIcon } from './icons/AuthorIcon';
-import { BookOpenIcon } from './icons/BookOpenIcon';
 
 interface KnowledgeBaseViewProps {
   onViewChange: (view: View) => void;
@@ -172,7 +171,7 @@ const ActiveFiltersComponent: React.FC<{ filter: KnowledgeBaseFilter; onFilterCh
 };
 const ActiveFilters = memo(ActiveFiltersComponent);
 
-export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({ onViewChange, filter, onFilterChange, selectedPmids, setSelectedPmids }) => {
+const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({ onViewChange, filter, onFilterChange, selectedPmids, setSelectedPmids }) => {
     const { settings } = useSettings();
     const { getArticles, knowledgeBase, deleteArticles } = useKnowledgeBase();
     const { setNotification, setCurrentView } = useUI();
@@ -435,3 +434,6 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({ onViewChan
         </div>
     );
 };
+
+// FIX: Added default export for React.lazy() compatibility.
+export default KnowledgeBaseView;

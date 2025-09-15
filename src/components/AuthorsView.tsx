@@ -637,7 +637,7 @@ interface AuthorsViewProps {
 }
 
 
-export const AuthorsView: React.FC<AuthorsViewProps> = ({ initialProfile, onViewedInitialProfile }) => {
+const AuthorsView: React.FC<AuthorsViewProps> = ({ initialProfile, onViewedInitialProfile }) => {
     const { settings } = useSettings();
     const { saveAuthorProfile } = useKnowledgeBase();
     const [view, setView] = useState<'landing' | 'disambiguation' | 'profile'>('landing');
@@ -779,7 +779,7 @@ export const AuthorsView: React.FC<AuthorsViewProps> = ({ initialProfile, onView
                 publications: allArticleDetails as RankedArticle[],
             };
 
-            saveAuthorProfile({ authorName: profile.name }, profile);
+            await saveAuthorProfile({ authorName: profile.name }, profile);
             setAuthorProfile(profile);
             setView('profile');
 
@@ -853,3 +853,5 @@ export const AuthorsView: React.FC<AuthorsViewProps> = ({ initialProfile, onView
         </div>
     );
 };
+// FIX: Changed to default export to resolve lazy loading type issue.
+export default AuthorsView;

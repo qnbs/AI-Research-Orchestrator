@@ -1,3 +1,4 @@
+
 import React, { useMemo, useRef, useId, memo } from 'react';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement, Colors } from 'chart.js';
 import { Bar, Doughnut, Chart, getElementAtEvent } from 'react-chartjs-2';
@@ -8,12 +9,10 @@ import type { View } from '../contexts/UIContext';
 import { EmptyState } from './EmptyState';
 import { DocumentPlusIcon } from './icons/DocumentPlusIcon';
 import { useKnowledgeBase } from '../contexts/KnowledgeBaseContext';
-import { useUI } from '../contexts/UIContext';
 
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement, Colors);
 
-// FIX: Update props to accept onFilterChange
 interface DashboardViewProps {
     onFilterChange: (newFilter: Partial<KnowledgeBaseFilter>) => void;
     onViewChange: (view: View) => void;
@@ -51,8 +50,6 @@ const AccessibleDataTable: React.FC<{ titleId: string; headers: string[]; data: 
 const DashboardViewComponent: React.FC<DashboardViewProps> = ({ onFilterChange, onViewChange }) => {
     const { settings } = useSettings();
     const { getArticles } = useKnowledgeBase();
-    const { setCurrentView } = useUI();
-    // FIX: Removed incorrect hook call. onFilterChange is now received from props.
 
     const chartRefs = {
         journals: useRef<ChartJS<'bar', number[], string>>(null),
@@ -203,4 +200,5 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({ onFilterChange, 
     );
 };
 
-export const DashboardView = memo(DashboardViewComponent);
+// FIX: Changed to default export to resolve lazy loading type issue.
+export default memo(DashboardViewComponent);

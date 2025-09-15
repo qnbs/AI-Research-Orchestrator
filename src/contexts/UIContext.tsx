@@ -1,5 +1,8 @@
+
+
 import React, { createContext, useContext, useState, ReactNode, useMemo } from 'react';
 
+// FIX: Add 'journals' to the View type for the new feature.
 export type View = 'home' | 'orchestrator' | 'research' | 'authors' | 'journals' | 'knowledgeBase' | 'settings' | 'help' | 'dashboard' | 'history';
 
 interface NotificationState {

@@ -45,7 +45,7 @@ const ActionButton: React.FC<{ icon: React.ReactNode; title: string; description
 );
 
 
-export const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
+const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
     return (
         <div className="max-w-4xl mx-auto text-center py-8 animate-fadeIn">
              <div className="inline-block relative mb-6">
@@ -80,6 +80,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
                     description="Analyze a researcher's body of work, impact, and collaborations."
                     onClick={() => onNavigate('authors')}
                 />
+                 {/* FIX: Add action button for the new Journal Hub view. */}
                  <ActionButton
                     icon={<BookOpenIcon className="h-6 w-6" />}
                     title="Journal Hub"
@@ -90,3 +91,6 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
         </div>
     );
 };
+
+// FIX: Added default export for React.lazy() compatibility.
+export default HomeView;

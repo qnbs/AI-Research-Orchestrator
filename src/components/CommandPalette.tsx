@@ -38,7 +38,7 @@ interface CommandPaletteProps {
     onExportSelection: (format: 'pdf' | 'csv' | 'bib' | 'ris') => void;
 }
 
-export const CommandPalette: React.FC<CommandPaletteProps> = ({
+const CommandPalette: React.FC<CommandPaletteProps> = ({
     isReportVisible,
     isCurrentReportSaved,
     selectedArticleCount,
@@ -89,6 +89,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
             { id: 'nav-orchestrator', type: 'navigation', title: 'Go to Orchestrator', icon: <DocumentIcon className="h-5 w-5" />, action: () => setCurrentView('orchestrator') },
             { id: 'nav-research', type: 'navigation', title: 'Go to Research', icon: <BeakerIcon className="h-5 w-5" />, action: () => setCurrentView('research') },
             { id: 'nav-authors', type: 'navigation', title: 'Go to Author Hub', icon: <AuthorIcon className="h-5 w-5" />, action: () => setCurrentView('authors') },
+            // FIX: Add command to navigate to the new Journal Hub.
             { id: 'nav-journals', type: 'navigation', title: 'Go to Journal Hub', icon: <BookOpenIcon className="h-5 w-5" />, action: () => setCurrentView('journals') }
         );
 
@@ -211,3 +212,6 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         </div>
     );
 };
+
+// FIX: Added default export for React.lazy() compatibility.
+export default CommandPalette;

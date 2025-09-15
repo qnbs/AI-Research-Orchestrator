@@ -1,17 +1,20 @@
-import Dexie from 'dexie';
+
+import Dexie, { type Table } from 'dexie';
 import type { KnowledgeBaseEntry, Settings, Preset } from '../types';
 
 export const db = new Dexie('AIResearchAppDatabase') as Dexie & {
-    knowledgeBaseEntries: Dexie.Table<KnowledgeBaseEntry, string>;
-    settings: Dexie.Table<Settings & { id: string }, string>;
-    presets: Dexie.Table<Preset, string>;
+    knowledgeBaseEntries: Table<KnowledgeBaseEntry, string>;
+    settings: Table<Settings & { id: string }, string>;
+    presets: Table<Preset, string>;
 };
 
-db.version(1).stores({
+// FIX: Bump version for schema change and add `title` index.
+db.version(2).stores({
     knowledgeBaseEntries: 'id, timestamp, sourceType, title',
     settings: 'id',
     presets: 'id',
 });
+
 
 // --- KnowledgeBaseEntry Operations ---
 export const getAllEntries = () => db.knowledgeBaseEntries.orderBy('timestamp').reverse().toArray();
@@ -28,5 +31,6 @@ export const saveSettings = (settings: Settings): Promise<string> => db.settings
 
 // --- Preset Operations ---
 export const getAllPresets = () => db.presets.toArray();
+// FIX: Provide the key (`preset.id`) to the add method for correctness.
 export const addPreset = (preset: Preset) => db.presets.add(preset, preset.id);
 export const removePreset = (id: string) => db.presets.delete(id);

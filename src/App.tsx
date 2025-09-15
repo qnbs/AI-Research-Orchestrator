@@ -1,37 +1,50 @@
-
-import React, { useState, useCallback, useEffect, memo } from 'react';
-import { OnboardingView } from './components/OnboardingView';
+import React, { useState, useCallback, useEffect, memo, lazy, Suspense } from 'react';
 import { Header } from './components/Header';
 import { ResearchInput, ResearchReport, KnowledgeBaseEntry, ChatMessage, AuthorProfile, KnowledgeBaseFilter, AggregatedArticle } from './types';
-import { KnowledgeBaseView } from './components/KnowledgeBaseView';
-import SettingsView from './components/SettingsView';
 import { SettingsProvider, useSettings } from './contexts/SettingsContext';
 import { PresetProvider, usePresets } from './contexts/PresetContext';
-import { HelpView } from './components/HelpView';
 import { Notification } from './components/Notification';
-import { DashboardView } from './components/DashboardView';
 import { ConfirmationModal } from './components/ConfirmationModal';
-import { HistoryView } from './components/HistoryView';
-import { ResearchView } from './components/ResearchView';
-import { AuthorsView } from './components/AuthorsView';
-import { JournalsView } from './components/JournalsView';
 import { useResearchAssistant } from './hooks/useResearchAssistant';
 import { generateResearchReportStream } from './services/geminiService';
-import { OrchestratorView } from './components/OrchestratorView';
 import { KnowledgeBaseProvider, useKnowledgeBase } from './contexts/KnowledgeBaseContext';
 import { UIProvider, useUI } from './contexts/UIContext';
 import type { View } from './contexts/UIContext';
-import { CommandPalette } from './components/CommandPalette';
 import { exportKnowledgeBaseToPdf, exportToCsv, exportCitations } from './services/exportService';
-import { QuickAddModal } from './components/QuickAddModal';
 import { useChat } from './hooks/useChat';
 import { BottomNavBar } from './components/BottomNavBar';
-import { HomeView } from './components/HomeView';
 import ErrorBoundary from './components/ErrorBoundary';
+
+// Lazy load all major view components for code splitting
+const OnboardingView = lazy(() => import('./components/OnboardingView'));
+const KnowledgeBaseView = lazy(() => import('./components/KnowledgeBaseView'));
+const SettingsView = lazy(() => import('./components/SettingsView'));
+const HelpView = lazy(() => import('./components/HelpView'));
+const DashboardView = lazy(() => import('./components/DashboardView'));
+const HistoryView = lazy(() => import('./components/HistoryView'));
+const ResearchView = lazy(() => import('./components/ResearchView'));
+const AuthorsView = lazy(() => import('./components/AuthorsView'));
+const JournalsView = lazy(() => import('./components/JournalsView'));
+const OrchestratorView = lazy(() => import('./components/OrchestratorView'));
+const HomeView = lazy(() => import('./components/HomeView'));
+const CommandPalette = lazy(() => import('./components/CommandPalette'));
+const QuickAddModal = lazy(() => import('./components/QuickAddModal'));
+
+const FullScreenSpinner: React.FC = () => (
+    <div className="flex h-screen items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-24 w-24 border-t-4 border-b-4 border-brand-accent"></div>
+    </div>
+);
+
+const ContentSpinner: React.FC = () => (
+    <div className="flex h-full min-h-[60vh] items-center justify-center">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-brand-accent"></div>
+    </div>
+);
 
 
 const AppLayout: React.FC = () => {
-  const { isLoading: isKbLoading } = useKnowledgeBase();
+  const { isLoading } = useKnowledgeBase();
   const { isSettingsLoading, settings, updateSettings } = useSettings();
   const { arePresetsLoading } = usePresets();
 
@@ -100,6 +113,7 @@ const AppLayout: React.FC = () => {
   }, [settings.theme, settings.performance.enableAnimations, settings.appearance.fontFamily, settings.appearance.customColors]);
   
     useEffect(() => {
+        // Accessibility Best Practice: Update document title on view change
         const viewTitles: Record<View, string> = {
             home: 'Home',
             orchestrator: 'Orchestrator',
@@ -128,6 +142,7 @@ const AppLayout: React.FC = () => {
     }, [setIsCommandPaletteOpen]);
 
     useEffect(() => {
+        // Clear selection when navigating away from the knowledge base
         if (currentView !== 'knowledgeBase' && selectedKbPmids.length > 0) {
             setSelectedKbPmids([]);
         }
@@ -138,7 +153,7 @@ const AppLayout: React.FC = () => {
     setError(null);
     setReport(null);
     setResearchInput(data);
-    setLocalResearchInput(data);
+    setLocalResearchInput(data); // Set local copy for editing
     setCurrentView('orchestrator');
     setIsCurrentReportSaved(false);
 
@@ -178,7 +193,7 @@ const AppLayout: React.FC = () => {
 
   const handleSaveReport = useCallback(async () => {
       if (report && localResearchInput) {
-        await saveReport(localResearchInput, report)
+        await saveReport(localResearchInput, report);
         setIsCurrentReportSaved(true);
       }
   }, [report, localResearchInput, saveReport]);
@@ -244,14 +259,17 @@ const AppLayout: React.FC = () => {
           setSelectedAuthorProfile(entry.profile);
           setCurrentView('authors');
       }
+      // Note: Journal entries are not directly "viewable" in the same way,
+      // they are just saved to the KB. History view shows their details.
   }, [setCurrentView]);
 
   const handleAuthorProfileViewed = useCallback(() => {
     setSelectedAuthorProfile(null);
   }, []);
   
-  const handleTagsUpdate = useCallback((pmid: string, newTags: string[]) => {
-    updateTags(pmid, newTags);
+  const handleTagsUpdate = useCallback(async (pmid: string, newTags: string[]) => {
+    await updateTags(pmid, newTags);
+    // Also update the local report state if it's being viewed
     setReport(prevReport => {
         if (!prevReport || !prevReport.rankedArticles.some(a => a.pmid === pmid)) {
             return prevReport;
@@ -295,16 +313,16 @@ const AppLayout: React.FC = () => {
 
   }, [showExportModal, selectedKbPmids, uniqueArticles, settings.export, setNotification, knowledgeBase]);
 
-  if (isSettingsLoading || isKbLoading || arePresetsLoading) {
-    return (
-        <div className="flex h-screen items-center justify-center bg-background">
-            <div className="animate-spin rounded-full h-24 w-24 border-t-4 border-b-4 border-brand-accent"></div>
-        </div>
-    );
+  if (isSettingsLoading || isLoading || arePresetsLoading) {
+    return <FullScreenSpinner />;
   }
 
   if (!settings.hasCompletedOnboarding) {
-      return <OnboardingView onComplete={handleCompleteOnboarding} />;
+      return (
+          <Suspense fallback={<FullScreenSpinner />}>
+              <OnboardingView onComplete={handleCompleteOnboarding} />
+          </Suspense>
+      );
   }
   
   const renderView = () => {
@@ -346,7 +364,6 @@ const AppLayout: React.FC = () => {
             />);
            case 'authors': return <AuthorsView initialProfile={selectedAuthorProfile} onViewedInitialProfile={handleAuthorProfileViewed} />;
            case 'journals': return <JournalsView />;
-           // FIX: Pass the correct state setter function `setSelectedKbPmids` to the `setSelectedPmids` prop.
            case 'knowledgeBase': return <KnowledgeBaseView onViewChange={handleViewChange} filter={kbFilter} onFilterChange={handleFilterChange} selectedPmids={selectedKbPmids} setSelectedPmids={setSelectedKbPmids} />;
            case 'dashboard': return <DashboardView onFilterChange={handleFilterChange} onViewChange={handleViewChange} />;
            case 'history': return <HistoryView onViewEntry={handleViewEntry} />;
@@ -365,8 +382,10 @@ const AppLayout: React.FC = () => {
           isResearching={isResearching}
           onQuickAdd={() => setIsQuickAddModalOpen(true)}
       />
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-32 md:pb-8">
-         {renderView()}
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24">
+         <Suspense fallback={<ContentSpinner />}>
+            {renderView()}
+         </Suspense>
       </main>
       <BottomNavBar 
         currentView={currentView}
@@ -378,8 +397,11 @@ const AppLayout: React.FC = () => {
       {notification && <Notification {...notification} onClose={() => setNotification(null)} position={settings.notifications.position} duration={settings.notifications.duration} />}
       {pendingNavigation && <ConfirmationModal onConfirm={handleConfirmNavigation} onCancel={() => setPendingNavigation(null)} title="Discard Unsaved Changes?" message="You have unsaved changes in Settings. Are you sure you want to discard them and navigate away?" confirmText="Yes, Discard Changes" />}
       {showExportModal && ['pdf', 'csv', 'bib', 'ris'].includes(showExportModal) && <ConfirmationModal onConfirm={handleConfirmExport} onCancel={() => setShowExportModal(null)} title={`Export ${selectedKbPmids.length} Articles`} message={`Are you sure you want to export citations for the ${selectedKbPmids.length} selected articles as a ${showExportModal.toUpperCase()} file?`} confirmText="Yes, Export" />}
-      {isCommandPaletteOpen && <CommandPalette isReportVisible={!!report} isCurrentReportSaved={isCurrentReportSaved} selectedArticleCount={selectedKbPmids.length} onSaveReport={handleSaveReport} onExportSelection={handleExportSelection}/>}
-      {isQuickAddModalOpen && <QuickAddModal onClose={() => setIsQuickAddModalOpen(false)} />}
+      
+      <Suspense>
+        {isCommandPaletteOpen && <CommandPalette isReportVisible={!!report} isCurrentReportSaved={isCurrentReportSaved} selectedArticleCount={selectedKbPmids.length} onSaveReport={handleSaveReport} onExportSelection={handleExportSelection}/>}
+        {isQuickAddModalOpen && <QuickAddModal onClose={() => setIsQuickAddModalOpen(false)} />}
+      </Suspense>
     </>
   );
 };
