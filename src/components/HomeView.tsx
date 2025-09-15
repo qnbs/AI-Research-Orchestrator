@@ -90,4 +90,5 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
         </div>
     );
 };
+
 export default HomeView;

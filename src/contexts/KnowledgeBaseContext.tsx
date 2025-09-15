@@ -1,5 +1,3 @@
-
-
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { KnowledgeBaseEntry, ResearchInput, ResearchReport, RankedArticle, AggregatedArticle, AuthorProfile, AuthorProfileInput, ResearchEntry, AuthorProfileEntry, JournalProfile, JournalEntry, Article } from '../types';
 import { useUI } from './UIContext';
@@ -12,7 +10,6 @@ interface KnowledgeBaseContextType {
     getRecentResearchEntries: (count: number) => ResearchEntry[];
     saveReport: (researchInput: ResearchInput, report: ResearchReport) => Promise<void>;
     saveAuthorProfile: (input: AuthorProfileInput, profile: AuthorProfile) => Promise<void>;
-    // FIX: Add function to save journal profiles.
     saveJournalProfile: (profile: JournalProfile, articles: Article[]) => Promise<void>;
     clearKnowledgeBase: () => Promise<void>;
     updateEntryTitle: (id: string, newTitle: string) => Promise<void>;
@@ -85,7 +82,6 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
         showNotification(`Profile for ${profile.name} saved to Knowledge Base.`);
     }, [showNotification]);
 
-    // FIX: Implement saveJournalProfile to handle the new entry type.
     const saveJournalProfile = useCallback(async (profile: JournalProfile, articles: Article[]): Promise<void> => {
         const timestamp = Date.now();
         const newEntry: JournalEntry = {
@@ -115,7 +111,6 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
         let updatedEntry: KnowledgeBaseEntry;
         let changesForDb: Partial<KnowledgeBaseEntry>;
         
-        // FIX: Handle all three entry types correctly when updating a title.
         if (entryToUpdate.sourceType === 'research') {
             updatedEntry = {
                 ...entryToUpdate,
@@ -160,7 +155,6 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
             const newArticles = (entry.articles || []).map(updateArticle);
             if (!hasChanged) return entry;
             
-            // FIX: Handle all entry types that contain articles.
             if (entry.sourceType === 'research') {
                 const updatedEntry: ResearchEntry = {
                     ...entry,
@@ -205,7 +199,6 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
                     toDelete.push(entry.id);
                 } else {
                     const changes: Partial<KnowledgeBaseEntry> = { articles: keptArticles };
-                    // FIX: Handle all entry types when deleting articles.
                     if (entry.sourceType === 'research') (changes as Partial<ResearchEntry>).report = { ...entry.report, rankedArticles: keptArticles };
                     else if (entry.sourceType === 'author') (changes as Partial<AuthorProfileEntry>).profile = { ...entry.profile, publications: keptArticles };
                     // No extra changes needed for 'journal' as 'articles' is top-level
@@ -244,13 +237,11 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
     const uniqueArticles = useMemo(() => getArticles('all'), [getArticles]);
 
     const onMergeDuplicates = useCallback(async () => {
-        // Implementation for merging duplicates would go here
         showNotification("Merge functionality is a work in progress.");
     }, [showNotification]);
 
 
     const addKnowledgeBaseEntries = useCallback(async (entries: KnowledgeBaseEntry[]) => {
-        // FIX: Add 'journal' to valid entry types.
         const validEntries = entries.filter(entry => ('sourceType' in entry) && ['research', 'author', 'journal'].includes(entry.sourceType));
         if (validEntries.length > 0) {
             await bulkAddEntries(validEntries);

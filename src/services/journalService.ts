@@ -1,4 +1,4 @@
-import { Article, JournalProfile, RankedArticle } from '../types';
+import { Article, JournalProfile } from '../types';
 import { searchPubMedForIds, fetchArticleDetails, generateJournalProfileAnalysis as generateProfileWithGemini } from './geminiService';
 import type { Settings } from '../types';
 

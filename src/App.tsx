@@ -208,8 +208,8 @@ const AppLayout: React.FC = () => {
       setCurrentView('orchestrator');
   }, [setCurrentView]);
 
-  const handleClearKnowledgeBase = useCallback(async () => {
-      await clearKnowledgeBase();
+  const handleClearKnowledgeBase = useCallback(() => {
+      clearKnowledgeBase();
       setSettingsResetToken(Date.now());
   }, [clearKnowledgeBase]);
 
@@ -258,9 +258,10 @@ const AppLayout: React.FC = () => {
       } else if (entry.sourceType === 'author') {
           setSelectedAuthorProfile(entry.profile);
           setCurrentView('authors');
+      } else if (entry.sourceType === 'journal') {
+          // Future: could navigate to a detailed journal view
+          setCurrentView('knowledgeBase');
       }
-      // Note: Journal entries are not directly "viewable" in the same way,
-      // they are just saved to the KB. History view shows their details.
   }, [setCurrentView]);
 
   const handleAuthorProfileViewed = useCallback(() => {
@@ -382,7 +383,7 @@ const AppLayout: React.FC = () => {
           isResearching={isResearching}
           onQuickAdd={() => setIsQuickAddModalOpen(true)}
       />
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24">
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:pb-24">
          <Suspense fallback={<ContentSpinner />}>
             {renderView()}
          </Suspense>

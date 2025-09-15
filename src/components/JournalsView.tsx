@@ -2,7 +2,6 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { useSettings } from '../contexts/SettingsContext';
 import { useKnowledgeBase } from '../contexts/KnowledgeBaseContext';
 import { useUI } from '../contexts/UIContext';
-// FIX: `findOaArticlesInJournal` is exported from `journalService`, not `geminiService`.
 import { findOaArticlesInJournal, generateJournalProfileAnalysis } from '../services/journalService';
 import type { JournalProfile, Article } from '../types';
 import { SearchIcon } from './icons/SearchIcon';
