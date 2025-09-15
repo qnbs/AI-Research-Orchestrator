@@ -86,30 +86,29 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
 
         // Navigation
         commandList.push(
-            { id: 'nav-orchestrator', type: 'navigation', title: 'Go to Orchestrator', icon: <DocumentIcon className="h-5 w-5" />, action: () => setCurrentView('orchestrator') },
-            { id: 'nav-research', type: 'navigation', title: 'Go to Research', icon: <BeakerIcon className="h-5 w-5" />, action: () => setCurrentView('research') },
-            { id: 'nav-authors', type: 'navigation', title: 'Go to Author Hub', icon: <AuthorIcon className="h-5 w-5" />, action: () => setCurrentView('authors') },
-            // FIX: Add command to navigate to the new Journal Hub.
-            { id: 'nav-journals', type: 'navigation', title: 'Go to Journal Hub', icon: <BookOpenIcon className="h-5 w-5" />, action: () => setCurrentView('journals') }
+            { id: 'nav-orchestrator', type: 'navigation', title: 'Go to Orchestrator', keywords: 'new search report', icon: <DocumentIcon className="h-5 w-5" />, action: () => setCurrentView('orchestrator') },
+            { id: 'nav-research', type: 'navigation', title: 'Go to Research', keywords: 'quick analyze question', icon: <BeakerIcon className="h-5 w-5" />, action: () => setCurrentView('research') },
+            { id: 'nav-authors', type: 'navigation', title: 'Go to Author Hub', keywords: 'researcher profile', icon: <AuthorIcon className="h-5 w-5" />, action: () => setCurrentView('authors') },
+            { id: 'nav-journals', type: 'navigation', title: 'Go to Journal Hub', keywords: 'publication venue', icon: <BookOpenIcon className="h-5 w-5" />, action: () => setCurrentView('journals') }
         );
 
         if (hasReports) {
             commandList.push(
-                { id: 'nav-kb', type: 'navigation', title: 'Go to Knowledge Base', icon: <DatabaseIcon className="h-5 w-5" />, action: () => setCurrentView('knowledgeBase') },
-                { id: 'nav-dashboard', type: 'navigation', title: 'Go to Dashboard', icon: <ChartBarIcon className="h-5 w-5" />, action: () => setCurrentView('dashboard') },
-                { id: 'nav-history', type: 'navigation', title: 'Go to History', icon: <HistoryIcon className="h-5 w-5" />, action: () => setCurrentView('history') }
+                { id: 'nav-kb', type: 'navigation', title: 'Go to Knowledge Base', keywords: 'library articles saved', icon: <DatabaseIcon className="h-5 w-5" />, action: () => setCurrentView('knowledgeBase') },
+                { id: 'nav-dashboard', type: 'navigation', title: 'Go to Dashboard', keywords: 'charts graphs stats', icon: <ChartBarIcon className="h-5 w-5" />, action: () => setCurrentView('dashboard') },
+                { id: 'nav-history', type: 'navigation', title: 'Go to History', keywords: 'past reports', icon: <HistoryIcon className="h-5 w-5" />, action: () => setCurrentView('history') }
             );
         }
         
         commandList.push(
-            { id: 'nav-settings', type: 'navigation', title: 'Go to Settings', icon: <GearIcon className="h-5 w-5" />, action: () => setCurrentView('settings') },
-            { id: 'nav-help', type: 'navigation', title: 'Go to Help', icon: <QuestionMarkCircleIcon className="h-5 w-5" />, action: () => setCurrentView('help') }
+            { id: 'nav-settings', type: 'navigation', title: 'Go to Settings', keywords: 'options config', icon: <GearIcon className="h-5 w-5" />, action: () => setCurrentView('settings') },
+            { id: 'nav-help', type: 'navigation', title: 'Go to Help', keywords: 'docs faq', icon: <QuestionMarkCircleIcon className="h-5 w-5" />, action: () => setCurrentView('help') }
         );
         
         // Theme
         commandList.push(
-             { id: 'theme-light', type: 'theme', title: 'Switch to Light Theme', icon: <SunIcon className="h-5 w-5"/>, action: () => updateSettings(s => ({...s, theme: 'light'})) },
-             { id: 'theme-dark', type: 'theme', title: 'Switch to Dark Theme', icon: <MoonIcon className="h-5 w-5"/>, action: () => updateSettings(s => ({...s, theme: 'dark'})) }
+             { id: 'theme-light', type: 'theme', title: 'Switch to Light Theme', keywords: 'light mode', icon: <SunIcon className="h-5 w-5"/>, action: () => updateSettings(s => ({...s, theme: 'light'})) },
+             { id: 'theme-dark', type: 'theme', title: 'Switch to Dark Theme', keywords: 'dark mode', icon: <MoonIcon className="h-5 w-5"/>, action: () => updateSettings(s => ({...s, theme: 'dark'})) }
         );
         
         return commandList;
@@ -212,6 +211,4 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
         </div>
     );
 };
-
-// FIX: Added default export for React.lazy() compatibility.
 export default CommandPalette;

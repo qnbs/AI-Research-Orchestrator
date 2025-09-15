@@ -2,10 +2,10 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { useSettings } from '../contexts/SettingsContext';
 import { useKnowledgeBase } from '../contexts/KnowledgeBaseContext';
 import { useUI } from '../contexts/UIContext';
+// FIX: `findOaArticlesInJournal` is exported from `journalService`, not `geminiService`.
 import { findOaArticlesInJournal, generateJournalProfileAnalysis } from '../services/journalService';
-import type { JournalProfile, Article, JournalEntry } from '../types';
+import type { JournalProfile, Article } from '../types';
 import { SearchIcon } from './icons/SearchIcon';
-import { BookOpenIcon } from './icons/BookOpenIcon';
 import { ChevronRightIcon } from './icons/ChevronRightIcon';
 
 interface FeaturedJournal {
@@ -47,7 +47,6 @@ const JournalsView: React.FC = () => {
     const [featuredJournals, setFeaturedJournals] = useState<FeaturedJournal[]>([]);
 
     const { settings } = useSettings();
-    // FIX: Replaced non-existent `saveKnowledgeBaseEntry` with `saveJournalProfile`.
     const { saveJournalProfile } = useKnowledgeBase();
     const { setNotification } = useUI();
 
@@ -80,13 +79,11 @@ const JournalsView: React.FC = () => {
         try {
             const [profile, articles] = await Promise.all([
                 generateJournalProfileAnalysis(journalName, settings.ai),
-                findOaArticlesInJournal(journalName, topic)
+                topic.trim() ? findOaArticlesInJournal(journalName, topic) : Promise.resolve([])
             ]);
 
             setJournalProfile(profile);
             setFoundArticles(articles);
-
-            // FIX: Called `saveJournalProfile` with the correct arguments instead of creating a new entry object manually.
             await saveJournalProfile(profile, articles);
 
         } catch (err) {
@@ -106,7 +103,7 @@ const JournalsView: React.FC = () => {
         <div className="max-w-4xl mx-auto animate-fadeIn space-y-8">
             <div className="text-center">
                 <h1 className="text-4xl font-bold brand-gradient-text">Journal Hub</h1>
-                <p className="mt-2 text-lg text-text-secondary">Discover and analyze Open Access journals.</p>
+                <p className="mt-2 text-lg text-text-secondary">Discover and analyze scientific journals.</p>
             </div>
 
             <form onSubmit={handleAnalyzeJournal} className="bg-surface p-6 rounded-lg border border-border shadow-lg space-y-4">
@@ -133,6 +130,7 @@ const JournalsView: React.FC = () => {
                             placeholder="e.g., neuroscience"
                              className="w-full bg-input-bg border border-border rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent"
                         />
+                         <p className="text-xs text-text-secondary mt-1">If provided, will search for open access articles on this topic within the journal.</p>
                     </div>
                 </div>
                  <button type="submit" disabled={isLoading} className="w-full inline-flex justify-center items-center py-2.5 px-4 border border-transparent shadow-sm text-sm font-semibold rounded-md text-brand-text-on-accent bg-brand-accent hover:bg-opacity-90 disabled:opacity-50">
@@ -147,9 +145,9 @@ const JournalsView: React.FC = () => {
                 </div>
             )}
             
-            {error && <div className="text-center text-red-400 p-4 bg-red-500/10 border border-red-500/20 rounded-md">{error}</div>}
+            {error && !isLoading && <div className="text-center text-red-400 p-4 bg-red-500/10 border border-red-500/20 rounded-md">{error}</div>}
 
-            {journalProfile && foundArticles && (
+            {journalProfile && foundArticles && !isLoading && (
                 <div className="space-y-6 animate-fadeIn">
                     <div className="bg-surface p-6 rounded-lg border border-border">
                         <h2 className="text-2xl font-bold text-text-primary">{journalProfile.name}</h2>
@@ -174,7 +172,7 @@ const JournalsView: React.FC = () => {
                                 {foundArticles.map(article => <ArticleListItem key={article.pmid} article={article} />)}
                              </div>
                         ) : (
-                            <p className="text-text-secondary text-center py-4">No open access articles found for this specific topic in the journal.</p>
+                            <p className="text-text-secondary text-center py-4">{topic.trim() ? `No open access articles found for "${topic}" in this journal.` : `No topic was provided to search for articles.`}</p>
                         )}
                     </div>
                 </div>

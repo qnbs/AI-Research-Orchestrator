@@ -80,17 +80,14 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
                     description="Analyze a researcher's body of work, impact, and collaborations."
                     onClick={() => onNavigate('authors')}
                 />
-                 {/* FIX: Add action button for the new Journal Hub view. */}
                  <ActionButton
                     icon={<BookOpenIcon className="h-6 w-6" />}
                     title="Journal Hub"
-                    description="Discover and analyze open-access journals in your field of study."
+                    description="Discover and analyze scientific journals in your field of study."
                     onClick={() => onNavigate('journals')}
                 />
             </div>
         </div>
     );
 };
-
-// FIX: Added default export for React.lazy() compatibility.
 export default HomeView;

@@ -1,5 +1,3 @@
-
-
 import React, { useState, useRef, useEffect, memo } from 'react';
 import { DocumentIcon } from './icons/DocumentIcon';
 import { DatabaseIcon } from './icons/DatabaseIcon';
@@ -67,7 +65,6 @@ const HeaderComponent: React.FC<HeaderProps> = ({ onViewChange, knowledgeBaseArt
         orchestrator: 'Orchestrator',
         research: 'Research',
         authors: 'Author Hub',
-        // FIX: Add title for the new journals view.
         journals: 'Journal Hub',
         knowledgeBase: 'Knowledge Base',
         dashboard: 'Dashboard',
@@ -114,7 +111,6 @@ const HeaderComponent: React.FC<HeaderProps> = ({ onViewChange, knowledgeBaseArt
                   </NavButton>
                   <NavButton onClick={() => onViewChange('orchestrator')} isActive={currentView === 'orchestrator'}><DocumentIcon className="h-5 w-5 mr-2" />Orchestrator</NavButton>
                   <NavButton onClick={() => onViewChange('authors')} isActive={currentView === 'authors'}><AuthorIcon className="h-5 w-5 mr-2" />Authors</NavButton>
-                  {/* FIX: Add navigation button for the new Journal Hub. */}
                   <NavButton onClick={() => onViewChange('journals')} isActive={currentView === 'journals'}><BookOpenIcon className="h-5 w-5 mr-2" />Journals</NavButton>
                   <NavButton onClick={() => onViewChange('knowledgeBase')} isActive={currentView === 'knowledgeBase'} disabled={!hasReports}><DatabaseIcon className="h-5 w-5 mr-2" />Knowledge <span className="ml-2 bg-surface text-text-secondary text-xs font-bold px-2 py-0.5 rounded-full">{displayCount}</span></NavButton>
                   <NavButton onClick={() => onViewChange('dashboard')} isActive={currentView === 'dashboard'} disabled={!hasReports}><ChartBarIcon className="h-5 w-5 mr-2" />Dashboard</NavButton>

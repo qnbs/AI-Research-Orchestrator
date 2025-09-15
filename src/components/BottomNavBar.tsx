@@ -49,7 +49,6 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({ currentView, onViewC
         { view: 'research', label: 'Research', icon: <BeakerIcon className="h-6 w-6" />, isSpecial: isResearching },
         { view: 'orchestrator', label: 'Orchestrate', icon: <DocumentIcon className="h-6 w-6" /> },
         { view: 'authors', label: 'Authors', icon: <AuthorIcon className="h-6 w-6" /> },
-        // FIX: Add Journals view to the navigation bar.
         { view: 'journals', label: 'Journals', icon: <BookOpenIcon className="h-6 w-6" /> },
         { view: 'knowledgeBase', label: 'Knowledge', icon: <DatabaseIcon className="h-6 w-6" />, isDisabled: !hasReports, badge: knowledgeBaseArticleCount },
     ];

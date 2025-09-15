@@ -1,4 +1,3 @@
-
 export const ARTICLE_TYPES = [
   'Randomized Controlled Trial', 
   'Meta-Analysis', 

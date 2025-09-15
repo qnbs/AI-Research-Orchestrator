@@ -8,9 +8,7 @@ export const MicroscopeIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) =
     strokeWidth={1.5} 
     stroke="currentColor" 
     {...props}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18h8" />
-    <path strokeLinecap="round" strokeLinejoin="round" d="M3 22h18" />
-    <path strokeLinecap="round" strokeLinejoin="round" d="M7 18v-5.594a5.594 5.594 0 0 1 1.6-3.906L12.5 4.5V2" />
-    <path strokeLinecap="round" strokeLinejoin="round" d="M12.5 4.5l3.89 3.89a5.594 5.594 0 0 1 1.61 3.906V18" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 7.5v6m3-3h-6" />
   </svg>
 );
