@@ -1,5 +1,4 @@
 import Dexie, { type EntityTable } from 'dexie';
-// FIX: Changed AppSettings to Settings
 import type { KnowledgeBaseEntry, Settings, Preset } from '../types';
 
 // FIX: Refactor from a class to a direct instance to solve `this.version` type issue.

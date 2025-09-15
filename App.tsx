@@ -1,46 +1,49 @@
-
-
-
-
-
-
-
-
-import React, { useState, useCallback, useEffect, memo } from 'react';
-import { OnboardingView } from './components/OnboardingView';
+import React, { useState, useCallback, useEffect, memo, lazy, Suspense } from 'react';
 import { Header } from './components/Header';
-// FIX: Add KnowledgeBaseEntry and AggregatedArticle to imports
 import { ResearchInput, ResearchReport, KnowledgeBaseEntry, ChatMessage, AuthorProfile, KnowledgeBaseFilter, AggregatedArticle } from './types';
-import { KnowledgeBaseView } from './components/KnowledgeBaseView';
-import SettingsView from './components/SettingsView';
 import { SettingsProvider, useSettings } from './contexts/SettingsContext';
 import { PresetProvider, usePresets } from './contexts/PresetContext';
-import { HelpView } from './components/HelpView';
 import { Notification } from './components/Notification';
-import { DashboardView } from './components/DashboardView';
 import { ConfirmationModal } from './components/ConfirmationModal';
-import { HistoryView } from './components/HistoryView';
-import { ResearchView } from './components/ResearchView';
-import { AuthorsView } from './components/AuthorsView';
 import { useResearchAssistant } from './hooks/useResearchAssistant';
 import { generateResearchReportStream } from './services/geminiService';
-import { OrchestratorView } from './components/OrchestratorView';
 import { KnowledgeBaseProvider, useKnowledgeBase } from './contexts/KnowledgeBaseContext';
 import { UIProvider, useUI } from './contexts/UIContext';
 import type { View } from './contexts/UIContext';
-import { CommandPalette } from './components/CommandPalette';
-// FIX: Add export service imports for handling export functionality
 import { exportKnowledgeBaseToPdf, exportToCsv, exportCitations } from './services/exportService';
-import { QuickAddModal } from './components/QuickAddModal';
 import { useChat } from './hooks/useChat';
 import { BottomNavBar } from './components/BottomNavBar';
-import { HomeView } from './components/HomeView';
 import ErrorBoundary from './components/ErrorBoundary';
+
+// Lazy load all major view components for code splitting
+const OnboardingView = lazy(() => import('./components/OnboardingView').then(module => ({ default: module.OnboardingView })));
+const KnowledgeBaseView = lazy(() => import('./components/KnowledgeBaseView').then(module => ({ default: module.KnowledgeBaseView })));
+const SettingsView = lazy(() => import('./components/SettingsView'));
+const HelpView = lazy(() => import('./components/HelpView').then(module => ({ default: module.HelpView })));
+const DashboardView = lazy(() => import('./components/DashboardView').then(module => ({ default: module.DashboardView })));
+const HistoryView = lazy(() => import('./components/HistoryView').then(module => ({ default: module.HistoryView })));
+const ResearchView = lazy(() => import('./components/ResearchView').then(module => ({ default: module.ResearchView })));
+const AuthorsView = lazy(() => import('./components/AuthorsView').then(module => ({ default: module.AuthorsView })));
+const OrchestratorView = lazy(() => import('./components/OrchestratorView').then(module => ({ default: module.OrchestratorView })));
+const HomeView = lazy(() => import('./components/HomeView').then(module => ({ default: module.HomeView })));
+const CommandPalette = lazy(() => import('./components/CommandPalette').then(module => ({ default: module.CommandPalette })));
+const QuickAddModal = lazy(() => import('./components/QuickAddModal').then(module => ({ default: module.QuickAddModal })));
+
+const FullScreenSpinner: React.FC = () => (
+    <div className="flex h-screen items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-24 w-24 border-t-4 border-b-4 border-brand-accent"></div>
+    </div>
+);
+
+const ContentSpinner: React.FC = () => (
+    <div className="flex h-full min-h-[60vh] items-center justify-center">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-brand-accent"></div>
+    </div>
+);
 
 
 const AppLayout: React.FC = () => {
-  // FIX: Destructure isLoading as isKbLoading to avoid conflict.
-  const { isLoading: isKbLoading } = useKnowledgeBase();
+  const { isLoading } = useKnowledgeBase();
   const { isSettingsLoading, settings, updateSettings } = useSettings();
   const { arePresetsLoading } = usePresets();
 
@@ -58,9 +61,7 @@ const AppLayout: React.FC = () => {
   const { knowledgeBase, saveReport, clearKnowledgeBase, uniqueArticles, updateTags } = useKnowledgeBase();
 
   const [isCurrentReportSaved, setIsCurrentReportSaved] = useState<boolean>(false);
-  // FIX: Add state for selected PMIDs to be shared across components.
   const [selectedKbPmids, setSelectedKbPmids] = useState<string[]>([]);
-  // FIX: Add state for export modal to be controlled at the app level.
   const [showExportModal, setShowExportModal] = useState<'pdf' | 'csv' | 'bib' | 'ris' | null>(null);
   const [isQuickAddModalOpen, setIsQuickAddModalOpen] = useState(false);
   
@@ -82,7 +83,6 @@ const AppLayout: React.FC = () => {
   const [settingsResetToken, setSettingsResetToken] = useState(0);
   const [initialHelpTab, setInitialHelpTab] = useState<string | null>(null);
   const [prefilledTopic, setPrefilledTopic] = useState<string | null>(null);
-  // FIX: Add state for Knowledge Base filter to be shared across components.
   const [kbFilter, setKbFilter] = useState<KnowledgeBaseFilter>({
     searchTerm: '',
     selectedTopics: [],
@@ -139,7 +139,6 @@ const AppLayout: React.FC = () => {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [setIsCommandPaletteOpen]);
 
-    // FIX: Add effect to clear selected articles when navigating away from knowledge base
     useEffect(() => {
         // Clear selection when navigating away from the knowledge base
         if (currentView !== 'knowledgeBase' && selectedKbPmids.length > 0) {
@@ -234,7 +233,6 @@ const AppLayout: React.FC = () => {
     updateSettings(s => ({ ...s, hasCompletedOnboarding: true }));
   }, [updateSettings]);
   
-  // FIX: Add handler for filter changes
   const handleFilterChange = useCallback((newFilter: Partial<KnowledgeBaseFilter>) => {
       setKbFilter(prev => ({...prev, ...newFilter}));
   }, []);
@@ -283,12 +281,10 @@ const AppLayout: React.FC = () => {
     });
   }, [updateTags]);
 
-  // FIX: Add handler to trigger export modal
   const handleExportSelection = useCallback((format: 'pdf' | 'csv' | 'bib' | 'ris') => {
       setShowExportModal(format);
   }, []);
 
-  // FIX: Add handler to perform the export action
   const handleConfirmExport = useCallback(() => {
       if (!showExportModal) return;
       
@@ -315,17 +311,16 @@ const AppLayout: React.FC = () => {
 
   }, [showExportModal, selectedKbPmids, uniqueArticles, settings.export, setNotification, knowledgeBase]);
 
-  // FIX: Use 'isKbLoading' from useKnowledgeBase hook, not 'isLoading'.
-  if (isSettingsLoading || isKbLoading || arePresetsLoading) {
-    return (
-        <div className="flex h-screen items-center justify-center bg-background">
-            <div className="animate-spin rounded-full h-24 w-24 border-t-4 border-b-4 border-brand-accent"></div>
-        </div>
-    );
+  if (isSettingsLoading || isLoading || arePresetsLoading) {
+    return <FullScreenSpinner />;
   }
 
   if (!settings.hasCompletedOnboarding) {
-      return <OnboardingView onComplete={handleCompleteOnboarding} />;
+      return (
+          <Suspense fallback={<FullScreenSpinner />}>
+              <OnboardingView onComplete={handleCompleteOnboarding} />
+          </Suspense>
+      );
   }
   
   const renderView = () => {
@@ -366,9 +361,7 @@ const AppLayout: React.FC = () => {
                 onlineFindingsState={online}
             />);
            case 'authors': return <AuthorsView initialProfile={selectedAuthorProfile} onViewedInitialProfile={handleAuthorProfileViewed} />;
-           // FIX: Pass lifted state and handlers to KnowledgeBaseView
            case 'knowledgeBase': return <KnowledgeBaseView onViewChange={handleViewChange} filter={kbFilter} onFilterChange={handleFilterChange} selectedPmids={selectedKbPmids} setSelectedPmids={setSelectedKbPmids} />;
-           // FIX: Pass filter handler to DashboardView
            case 'dashboard': return <DashboardView onFilterChange={handleFilterChange} onViewChange={handleViewChange} />;
            case 'history': return <HistoryView onViewEntry={handleViewEntry} />;
            case 'settings': return <SettingsView onClearKnowledgeBase={handleClearKnowledgeBase} resetToken={settingsResetToken} onNavigateToHelpTab={(tab) => { setInitialHelpTab(tab); setCurrentView('help'); }} />;
@@ -387,7 +380,9 @@ const AppLayout: React.FC = () => {
           onQuickAdd={() => setIsQuickAddModalOpen(true)}
       />
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:pb-24">
-         {renderView()}
+         <Suspense fallback={<ContentSpinner />}>
+            {renderView()}
+         </Suspense>
       </main>
       <BottomNavBar 
         currentView={currentView}
@@ -398,11 +393,12 @@ const AppLayout: React.FC = () => {
       />
       {notification && <Notification {...notification} onClose={() => setNotification(null)} position={settings.notifications.position} duration={settings.notifications.duration} />}
       {pendingNavigation && <ConfirmationModal onConfirm={handleConfirmNavigation} onCancel={() => setPendingNavigation(null)} title="Discard Unsaved Changes?" message="You have unsaved changes in Settings. Are you sure you want to discard them and navigate away?" confirmText="Yes, Discard Changes" />}
-      {/* FIX: Add export confirmation modal */}
       {showExportModal && ['pdf', 'csv', 'bib', 'ris'].includes(showExportModal) && <ConfirmationModal onConfirm={handleConfirmExport} onCancel={() => setShowExportModal(null)} title={`Export ${selectedKbPmids.length} Articles`} message={`Are you sure you want to export citations for the ${selectedKbPmids.length} selected articles as a ${showExportModal.toUpperCase()} file?`} confirmText="Yes, Export" />}
-      {/* FIX: Pass required props to CommandPalette */}
-      {isCommandPaletteOpen && <CommandPalette isReportVisible={!!report} isCurrentReportSaved={isCurrentReportSaved} selectedArticleCount={selectedKbPmids.length} onSaveReport={handleSaveReport} onExportSelection={handleExportSelection}/>}
-      {isQuickAddModalOpen && <QuickAddModal onClose={() => setIsQuickAddModalOpen(false)} />}
+      
+      <Suspense>
+        {isCommandPaletteOpen && <CommandPalette isReportVisible={!!report} isCurrentReportSaved={isCurrentReportSaved} selectedArticleCount={selectedKbPmids.length} onSaveReport={handleSaveReport} onExportSelection={handleExportSelection}/>}
+        {isQuickAddModalOpen && <QuickAddModal onClose={() => setIsQuickAddModalOpen(false)} />}
+      </Suspense>
     </>
   );
 };

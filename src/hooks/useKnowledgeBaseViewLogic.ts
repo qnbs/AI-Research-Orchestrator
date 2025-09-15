@@ -1,10 +1,9 @@
-
 import { useState, useCallback, useEffect } from 'react';
-import { AggregatedArticle, KnowledgeBaseFilter } from '@/types';
-import { useUI } from '@/contexts/UIContext';
-import { useKnowledgeBase } from '@/contexts/KnowledgeBaseContext';
-import { useSettings } from '@/contexts/SettingsContext';
-import { exportKnowledgeBaseToPdf, exportToCsv, exportCitations } from '@/services/exportService';
+import { AggregatedArticle, KnowledgeBaseFilter } from '../types';
+import { useUI } from '../contexts/UIContext';
+import { useKnowledgeBase } from '../contexts/KnowledgeBaseContext';
+import { useSettings } from '../contexts/SettingsContext';
+import { exportKnowledgeBaseToPdf, exportToCsv, exportCitations } from '../services/exportService';
 
 export const useKnowledgeBaseViewLogic = () => {
     const { setNotification, currentView } = useUI();

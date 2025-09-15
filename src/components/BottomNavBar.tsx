@@ -1,4 +1,3 @@
-
 import React from 'react';
 import type { View } from '../contexts/UIContext';
 import { HomeIcon } from './icons/HomeIcon';
@@ -23,7 +22,7 @@ const NavItem: React.FC<{
     isActive: boolean;
     isDisabled?: boolean;
     onClick: (view: View) => void;
-    badge?: string | number;
+    badge?: number;
     isSpecial?: boolean;
 }> = ({ view, label, icon, isActive, isDisabled, onClick, badge, isSpecial }) => (
     <button
@@ -35,8 +34,8 @@ const NavItem: React.FC<{
         aria-current={isActive ? 'page' : undefined}
     >
         {isSpecial && <span className="absolute top-1 right-1/2 translate-x-3 flex h-2.5 w-2.5"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-cyan opacity-75"></span><span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-accent-cyan"></span></span>}
-        {badge !== undefined && ((typeof badge === 'number' && badge > 0) || (typeof badge === 'string' && badge.length > 0)) && (
-             <span className="absolute top-1 right-1/2 translate-x-4 bg-brand-accent text-brand-text-on-accent text-[10px] font-bold px-1.5 py-0.5 rounded-full">{badge}</span>
+        {badge !== undefined && badge > 0 && (
+             <span className="absolute top-1 right-1/2 translate-x-4 bg-brand-accent text-brand-text-on-accent text-[10px] font-bold px-1.5 py-0.5 rounded-full">{badge > 99 ? '99+' : badge}</span>
         )}
         {icon}
         <span className="mt-1">{label}</span>
@@ -45,15 +44,13 @@ const NavItem: React.FC<{
 
 
 export const BottomNavBar: React.FC<BottomNavBarProps> = ({ currentView, onViewChange, knowledgeBaseArticleCount, hasReports, isResearching }) => {
-    const displayCount = knowledgeBaseArticleCount > 99 ? '99+' : knowledgeBaseArticleCount;
-    
-    const navItems: { view: View; label: string; icon: React.ReactNode; isDisabled?: boolean; isSpecial?: boolean; badge?: string | number}[] = [
+    const navItems: { view: View; label: string; icon: React.ReactNode; isDisabled?: boolean; isSpecial?: boolean; badge?: number}[] = [
         { view: 'home', label: 'Home', icon: <HomeIcon className="h-6 w-6" /> },
         { view: 'research', label: 'Research', icon: <BeakerIcon className="h-6 w-6" />, isSpecial: isResearching },
         { view: 'orchestrator', label: 'Orchestrate', icon: <DocumentIcon className="h-6 w-6" /> },
         { view: 'authors', label: 'Authors', icon: <AuthorIcon className="h-6 w-6" /> },
         { view: 'journals', label: 'Journals', icon: <BookOpenIcon className="h-6 w-6" /> },
-        { view: 'knowledgeBase', label: 'Knowledge', icon: <DatabaseIcon className="h-6 w-6" />, isDisabled: !hasReports, badge: displayCount },
+        { view: 'knowledgeBase', label: 'Knowledge', icon: <DatabaseIcon className="h-6 w-6" />, isDisabled: !hasReports, badge: knowledgeBaseArticleCount },
     ];
     
     return (

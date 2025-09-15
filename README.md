@@ -1,8 +1,7 @@
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/qnbs/AI-Research-Orchestrator)
-> **Built with AI Studio** — [Start building](https://aistudio.google.com/apps?source=user)
+> **Built with AI Studio** — [Start building](https://aistudio.google.com/apps?source=user) | [View App](https://ai.studio/apps/drive/19FB9X7ftbg4kXoKVBgPpsGwKDWU4Gvmp)
 >
 > The fastest path from prompt to production with Gemini.
-> 
+
 # AI Research Orchestration Author
 
 An expert system for authoring comprehensive literature reviews by managing a swarm of specialized AI agents. It uses the PubMed database to collect, curate, and synthesize scientific research based on user-defined criteria, acting as an intelligent partner for researchers to accelerate discovery.
@@ -30,7 +29,7 @@ This application significantly reduces the manual effort of literature reviews b
 
 -   **👤 Author Hub:** Analyze an author's intellectual development, collaborative ecosystem, and impact on their field by searching for their publications and generating an AI-powered career summary and profile.
 
--   **📖 Journal Hub:** Discover and analyze scientific journals. Get AI-generated profiles including a journal's focus areas and open-access policies, and find recent OA articles on a specific topic within that journal.
+-   **📖 Journal Hub (New!):** Discover and analyze scientific journals. Get AI-generated profiles including a journal's scope, open-access policy, and key focus areas. Find recent open-access articles within a journal on a specific topic.
 
 -   **🧠 Centralized & Intelligent Knowledge Base:** All articles from saved reports are aggregated into a single, searchable library. Duplicates are automatically removed, keeping the version with the highest relevance score.
 
@@ -70,7 +69,7 @@ This is for deep dives into a new topic. You provide a broad research question, 
 This is for understanding the work of a specific researcher. Provide an author's name, and the AI will find their publications, disambiguate them from others with the same name, and generate a career profile, including their core topics and publication timeline.
 
 ### 4. The Journal Analysis (Journal Hub)
-This is for discovering new publication venues. You can analyze a specific journal to understand its scope and policies, or browse featured open-access journals. You can also search for OA articles on a topic within a chosen journal.
+This is for exploring publication venues. Provide a journal's name to get an AI-generated profile, and optionally search for open-access articles on a specific topic published within it.
 
 ---
 
@@ -78,7 +77,7 @@ This is for discovering new publication venues. You can analyze a specific journ
 
 -   **Frontend:** React, TypeScript
 -   **AI Model:** Google Gemini API (`@google/genai`)
--   **Database:** Dexie.js (a wrapper for IndexedDB)
+-   **Local Database:** Dexie.js (IndexedDB Wrapper)
 -   **Styling:** Tailwind CSS
 -   **Charts:** Chart.js, react-chartjs-2
 -   **PDF Generation:** jsPDF
@@ -109,7 +108,7 @@ This application is designed with privacy as a core principle.
 
 -   **All data is stored exclusively in your local browser's IndexedDB database.**
 -   This includes your research history, saved articles, custom tags, and all settings.
--   **No information is ever uploaded to a central server.** Your research is completely private to the browser you are using.
+-   **No information is ever uploaded to a server or shared.** Your research is completely private to the browser you are using.
 -   To back up your data or move it to another machine, you **must** use the export features in `Settings > Data Management & Privacy`. Clearing your browser data will permanently delete your work unless you have a backup.
 
 ---

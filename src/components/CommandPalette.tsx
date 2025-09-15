@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 import { useUI } from '../contexts/UIContext';

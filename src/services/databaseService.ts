@@ -1,20 +1,17 @@
-
-import Dexie, { type EntityTable } from 'dexie';
-import type { KnowledgeBaseEntry, AppSettings, Preset } from '@/types';
+import Dexie from 'dexie';
+import type { KnowledgeBaseEntry, Settings, Preset } from '../types';
 
 export const db = new Dexie('AIResearchAppDatabase') as Dexie & {
-    knowledgeBaseEntries: EntityTable<KnowledgeBaseEntry, 'id'>;
-    settings: EntityTable<AppSettings & { id: string }, 'id'>;
-    presets: EntityTable<Preset, 'id'>;
+    knowledgeBaseEntries: Dexie.Table<KnowledgeBaseEntry, string>;
+    settings: Dexie.Table<Settings & { id: string }, string>;
+    presets: Dexie.Table<Preset, string>;
 };
 
-// Schema declaration
 db.version(1).stores({
-    knowledgeBaseEntries: 'id, timestamp, sourceType', // Indexing timestamp and sourceType
-    settings: 'id', // Only one settings object with a fixed ID
-    presets: 'id', // Presets identified by their unique ID
+    knowledgeBaseEntries: 'id, timestamp, sourceType, title',
+    settings: 'id',
+    presets: 'id',
 });
-
 
 // --- KnowledgeBaseEntry Operations ---
 export const getAllEntries = () => db.knowledgeBaseEntries.orderBy('timestamp').reverse().toArray();
@@ -26,10 +23,10 @@ export const clearAllEntries = () => db.knowledgeBaseEntries.clear();
 
 // --- Settings Operations ---
 const SETTINGS_ID = 'appSettings';
-export const getSettings = () => db.settings.get(SETTINGS_ID);
-export const saveSettings = (settings: AppSettings) => db.settings.put({ ...settings, id: SETTINGS_ID });
+export const getSettings = (): Promise<Settings | undefined> => db.settings.get(SETTINGS_ID);
+export const saveSettings = (settings: Settings): Promise<string> => db.settings.put({ ...settings, id: SETTINGS_ID });
 
 // --- Preset Operations ---
 export const getAllPresets = () => db.presets.toArray();
-export const addPresetDb = (preset: Preset) => db.presets.add(preset, preset.id);
-export const removePresetDb = (id: string) => db.presets.delete(id);
+export const addPreset = (preset: Preset) => db.presets.add(preset, preset.id);
+export const removePreset = (id: string) => db.presets.delete(id);

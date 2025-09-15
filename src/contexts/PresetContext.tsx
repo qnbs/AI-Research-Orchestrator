@@ -1,7 +1,6 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
-import type { Preset, ResearchInput } from '@/types';
-import { db } from '@/services/databaseService';
+import type { Preset, ResearchInput } from '../types';
+import { getAllPresets, addPreset as addPresetDb, removePreset as removePresetDb } from '../services/databaseService';
 
 interface PresetContextType {
   presets: Preset[];
@@ -20,7 +19,7 @@ export const PresetProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         const loadPresets = async () => {
             setArePresetsLoading(true);
             try {
-                const storedPresets = await db.presets.toArray();
+                const storedPresets = await getAllPresets();
                 setPresets(storedPresets);
             } catch (error) {
                 console.error("Failed to load presets from IndexedDB", error);
@@ -38,7 +37,7 @@ export const PresetProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             settings,
         };
         try {
-            await db.presets.add(newPreset);
+            await addPresetDb(newPreset);
             setPresets(prev => [...prev, newPreset]);
         } catch (error) {
             console.error("Failed to save preset to IndexedDB", error);
@@ -47,7 +46,7 @@ export const PresetProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
     const removePreset = useCallback(async (id: string) => {
         try {
-            await db.presets.delete(id);
+            await removePresetDb(id);
             setPresets(prev => prev.filter(p => p.id !== id));
         } catch (error) {
             console.error("Failed to remove preset from IndexedDB", error);

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import type { View } from '../contexts/UIContext';
 import { DocumentIcon } from './icons/DocumentIcon';

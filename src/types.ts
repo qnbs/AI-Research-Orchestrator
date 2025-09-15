@@ -82,7 +82,7 @@ export interface JournalProfile {
     name: string;
     issn: string;
     description: string;
-    oaPolicy: string; // e.g. "Full Open Access", "Hybrid", "Subscription"
+    oaPolicy: string; // e.g., "Full Open Access", "Hybrid", "Subscription"
     focusAreas: string[];
 }
 
@@ -113,7 +113,7 @@ export interface Preset {
   settings: ResearchInput;
 }
 
-export interface AppSettings {
+export interface Settings {
   theme: 'dark' | 'light';
   appearance: {
     density: 'comfortable' | 'compact';
@@ -182,8 +182,6 @@ export interface AppSettings {
   };
   hasCompletedOnboarding: boolean;
 }
-
-export type Settings = AppSettings; // For compatibility with older files if they use Settings
 
 export interface SimilarArticle {
   pmid: string;

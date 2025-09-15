@@ -1,6 +1,5 @@
-
 import { GoogleGenAI, Type, Chat } from "@google/genai";
-import type { ResearchInput, ResearchReport, Settings, RankedArticle, SimilarArticle, OnlineFindings, WebContent, ResearchAnalysis, GeneratedQuery, AuthorCluster, JournalProfile } from '../types';
+import type { ResearchInput, ResearchReport, Settings, RankedArticle, SimilarArticle, OnlineFindings, WebContent, ResearchAnalysis, GeneratedQuery, AuthorCluster, FeaturedAuthorCategory, JournalProfile } from '../types';
 
 if (!process.env.API_KEY) {
   throw new Error("API_KEY environment variable not set");
@@ -75,7 +74,15 @@ function getGeminiError(error: unknown): string {
     return "An unknown AI error occurred.";
 }
 
+// FIX: Moved and exported generateAuthorQuery function to make it a shared utility.
+/**
+ * Generates a robust PubMed author search query from a full name.
+ * Handles different common name formats like "Lander, Eric S." and "Eric S. Lander".
+ * @param fullName The full name of the author.
+ * @returns A PubMed-compatible query string.
+ */
 export const generateAuthorQuery = (fullName: string): string => {
+    // Handle formats like "Lander, Eric S." first by rearranging them
     if (fullName.includes(',')) {
         const parts = fullName.split(',');
         const lastName = parts[0].trim();
@@ -83,10 +90,11 @@ export const generateAuthorQuery = (fullName: string): string => {
         fullName = `${firstAndMiddle} ${lastName}`;
     }
 
+    // Remove periods to handle "S." vs "S" and split into parts
     const cleanedName = fullName.replace(/\./g, '');
     const parts = cleanedName.trim().split(/\s+/).filter(Boolean);
 
-    if (parts.length === 0) return `""[Author]`;
+    if (parts.length === 0) return `""[Author]`; // Should not happen with validation
     if (parts.length === 1) return `"${parts[0]}"[Author]`;
 
     const lastName = parts[parts.length - 1];
@@ -95,8 +103,14 @@ export const generateAuthorQuery = (fullName: string): string => {
     const initials = firstParts.map(p => p.charAt(0)).join('');
 
     const queryVariations = new Set<string>();
+    
+    // 1. Full name format: "First M Last"[Author] e.g. "Eric S Lander"[Author]
     queryVariations.add(`"${firstParts.join(' ')} ${lastName}"[Author]`);
+    
+    // 2. PubMed standard format: "Last FM"[Author] e.g., "Lander ES"[Author]
     queryVariations.add(`"${lastName} ${initials}"[Author]`);
+    
+    // 3. Another common format: "Last First"[Author] e.g., "Lander Eric"[Author]
     queryVariations.add(`"${lastName} ${firstName}"[Author]`);
 
     return `(${Array.from(queryVariations).join(' OR ')})`;
@@ -129,12 +143,14 @@ interface ESummaryResult {
 export async function searchPubMedForIds(query: string, retmax: number): Promise<string[]> {
     const url = `${PUBMED_API_BASE}esearch.fcgi?db=pubmed&term=${encodeURIComponent(query)}&retmax=${retmax}&sort=relevance&retmode=json`;
     try {
+        // NCBI recommends including contact info in requests
         const response = await fetch(url, { headers: { 'User-Agent': 'ai-research-orchestration-author/1.0' } });
         if (!response.ok) {
             throw new Error(`PubMed API error: ${response.statusText}. Could not connect to PubMed.`);
         }
         const data: ESearchResult = await response.json();
         
+        // Handle cases where PubMed returns a valid response but no results.
         if (data.esearchresult?.idlist) {
             return data.esearchresult.idlist;
         }
@@ -155,6 +171,7 @@ export async function searchPubMedForIds(query: string, retmax: number): Promise
  */
 export async function fetchArticleDetails(pmids: string[]): Promise<Partial<RankedArticle>[]> {
     if (pmids.length === 0) return [];
+    // POST request is better for large number of IDs
     const url = `${PUBMED_API_BASE}esummary.fcgi?db=pubmed&retmode=json`;
     try {
         const formData = new FormData();
@@ -631,7 +648,6 @@ export async function generateJournalProfileAnalysis(journalName: string, aiSett
         throw new Error(getGeminiError(error));
     }
 }
-
 
 // --- Chat Service ---
 export const startChatWithReport = (report: ResearchReport, aiSettings: Settings['ai']): Chat => {

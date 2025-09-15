@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect, memo } from 'react';
 import { DocumentIcon } from './icons/DocumentIcon';
 import { DatabaseIcon } from './icons/DatabaseIcon';

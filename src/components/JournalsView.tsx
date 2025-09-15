@@ -1,5 +1,3 @@
-
-
 import React, { useState, useCallback, useEffect } from 'react';
 import { useSettings } from '../contexts/SettingsContext';
 import { useKnowledgeBase } from '../contexts/KnowledgeBaseContext';
@@ -7,6 +5,7 @@ import { useUI } from '../contexts/UIContext';
 import { findOaArticlesInJournal, generateJournalProfileAnalysis } from '../services/journalService';
 import type { JournalProfile, Article, JournalEntry } from '../types';
 import { SearchIcon } from './icons/SearchIcon';
+import { BookOpenIcon } from './icons/BookOpenIcon';
 import { ChevronRightIcon } from './icons/ChevronRightIcon';
 
 interface FeaturedJournal {
@@ -40,7 +39,7 @@ const ArticleListItem: React.FC<{ article: Article }> = ({ article }) => (
 
 export const JournalsView: React.FC = () => {
     const [journalName, setJournalName] = useState('');
-    const [topic, setTopic] = useState('');
+    const [topic, setTopic] = useState('any');
     const [isLoading, setIsLoading] = useState(false);
     const [journalProfile, setJournalProfile] = useState<JournalProfile | null>(null);
     const [foundArticles, setFoundArticles] = useState<Article[] | null>(null);
@@ -48,8 +47,7 @@ export const JournalsView: React.FC = () => {
     const [featuredJournals, setFeaturedJournals] = useState<FeaturedJournal[]>([]);
 
     const { settings } = useSettings();
-    // FIX: Use saveJournalProfile from the context
-    const { saveJournalProfile } = useKnowledgeBase();
+    const { saveKnowledgeBaseEntry } = useKnowledgeBase();
     const { setNotification } = useUI();
 
     useEffect(() => {
@@ -68,8 +66,8 @@ export const JournalsView: React.FC = () => {
 
     const handleAnalyzeJournal = useCallback(async (e?: React.FormEvent) => {
         if (e) e.preventDefault();
-        if (!journalName.trim() || !topic.trim()) {
-            setNotification({ id: Date.now(), message: 'Please provide both a journal name and a topic.', type: 'error' });
+        if (!journalName.trim()) {
+            setNotification({ id: Date.now(), message: 'Please provide a journal name.', type: 'error' });
             return;
         }
 
@@ -87,8 +85,14 @@ export const JournalsView: React.FC = () => {
             setJournalProfile(profile);
             setFoundArticles(articles);
 
-            // FIX: Use the new saveJournalProfile function from the context
-            await saveJournalProfile(profile, articles);
+            const newEntryData: Omit<JournalEntry, 'id' | 'timestamp' | 'articles'> & { articles: Article[] } = {
+                sourceType: 'journal',
+                title: profile.name,
+                articles: articles,
+                journalProfile: profile
+            };
+            
+            await saveKnowledgeBaseEntry(newEntryData);
 
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
@@ -97,10 +101,12 @@ export const JournalsView: React.FC = () => {
         } finally {
             setIsLoading(false);
         }
-    }, [journalName, topic, settings.ai, saveJournalProfile, setNotification]);
+    }, [journalName, topic, settings.ai, saveKnowledgeBaseEntry, setNotification]);
     
     const handleFeaturedSelect = (name: string) => {
         setJournalName(name);
+        // Optional: auto-submit on select
+        // handleAnalyzeJournal();
     };
 
     return (

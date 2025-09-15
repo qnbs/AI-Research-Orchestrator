@@ -1,8 +1,6 @@
 
 
-
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
-// FIX: Change AppSettings to Settings for consistency
 import type { Settings } from '../types';
 import { CSV_EXPORT_COLUMNS } from '../types';
 import { getSettings as getSettingsFromDb, saveSettings as saveSettingsToDb } from '../services/databaseService';

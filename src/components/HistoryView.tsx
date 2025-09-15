@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, memo } from 'react';
 import type { KnowledgeBaseEntry, ResearchEntry } from '../types';
 import { useFocusTrap } from '../hooks/useFocusTrap';
@@ -15,7 +14,6 @@ import { DocumentPlusIcon } from './icons/DocumentPlusIcon';
 import { useUI } from '../contexts/UIContext';
 import { DocumentIcon } from './icons/DocumentIcon';
 import { AuthorIcon } from './icons/AuthorIcon';
-import { BookOpenIcon } from './icons/BookOpenIcon';
 
 interface HistoryViewProps {
   onViewEntry: (entry: KnowledgeBaseEntry) => void;
@@ -30,11 +28,8 @@ const synthesisFocusText: { [key: string]: string } = {
 
 const QuickViewModal: React.FC<{ entry: KnowledgeBaseEntry; onClose: () => void; onViewEntry: (entry: KnowledgeBaseEntry) => void }> = ({ entry, onClose, onViewEntry }) => {
     const modalRef = useFocusTrap<HTMLDivElement>(true);
+    const isAuthor = entry.sourceType === 'author';
     const title = entry.title;
-    
-    let typeLabel = 'Report';
-    if (entry.sourceType === 'author') typeLabel = 'Author Profile';
-    if (entry.sourceType === 'journal') typeLabel = 'Journal Profile';
 
     useEffect(() => {
         const handleEsc = (event: KeyboardEvent) => {
@@ -51,6 +46,7 @@ const QuickViewModal: React.FC<{ entry: KnowledgeBaseEntry; onClose: () => void;
         };
     }, [onClose]);
 
+    // FIX: Safely extract keywords/concepts based on entry type to avoid runtime errors.
     const keywordsAndConcepts =
         entry.sourceType === 'research'
             ? (entry.report.overallKeywords || []).slice(0, 3).map(kw => kw.keyword)
@@ -65,7 +61,7 @@ const QuickViewModal: React.FC<{ entry: KnowledgeBaseEntry; onClose: () => void;
             <div ref={modalRef} className="bg-surface rounded-lg border border-border shadow-2xl p-6 w-full max-w-lg m-4" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="quick-view-title">
                 <div className="flex justify-between items-start mb-4">
                     <div>
-                        <h3 id="quick-view-title" className="text-lg font-bold text-brand-accent">{typeLabel}</h3>
+                        <h3 id="quick-view-title" className="text-lg font-bold text-brand-accent">{isAuthor ? 'Author Profile' : 'Research Report'}</h3>
                         <p className="text-sm text-text-secondary mt-1 max-w-md">{title}</p>
                     </div>
                     <button onClick={onClose} className="p-1 rounded-full hover:bg-surface-hover">
@@ -76,7 +72,7 @@ const QuickViewModal: React.FC<{ entry: KnowledgeBaseEntry; onClose: () => void;
                 
                 <div className="space-y-4 my-6">
                     <div>
-                        <h4 className="text-xs font-semibold text-text-secondary uppercase tracking-wider">{entry.sourceType !== 'author' ? 'Articles Found' : 'Publications Found'}</h4>
+                        <h4 className="text-xs font-semibold text-text-secondary uppercase tracking-wider">{isAuthor ? 'Publications Found' : 'Articles Found'}</h4>
                         <p className="text-text-primary font-medium">{entry.articles.length}</p>
                     </div>
                     <div>
@@ -101,7 +97,7 @@ const QuickViewModal: React.FC<{ entry: KnowledgeBaseEntry; onClose: () => void;
                         onViewEntry(entry);
                         onClose();
                     }} className="px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-brand-text-on-accent bg-brand-accent hover:bg-opacity-90">
-                        View Full Details
+                        {isAuthor ? 'View Full Profile' : 'View Full Report'}
                     </button>
                 </div>
             </div>
@@ -124,16 +120,14 @@ interface HistoryListItemProps {
 }
 
 const HistoryListItem = memo<HistoryListItemProps>(({ entry, onViewEntry, onQuickView, onStartEdit, isEditing, editingTitle, onTitleChange, onSaveTitle, onCancelEdit, onEditKeyDown }) => {
-    
-    const Icon = entry.sourceType === 'research' ? DocumentIcon : entry.sourceType === 'author' ? AuthorIcon : BookOpenIcon;
-    const iconColor = entry.sourceType === 'research' ? 'text-brand-accent' : entry.sourceType === 'author' ? 'text-accent-magenta' : 'text-accent-cyan';
-    const viewButtonText = entry.sourceType === 'research' ? 'View Report' : entry.sourceType === 'author' ? 'View Profile' : 'View Details';
+    const isAuthor = entry.sourceType === 'author';
+    const Icon = isAuthor ? AuthorIcon : DocumentIcon;
 
     return (
         <li className="p-4 sm:p-6 hover:bg-surface-hover transition-colors duration-150 group focus-within:ring-2 focus-within:ring-brand-accent focus-within:ring-offset-2 focus-within:ring-offset-surface rounded-md">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="flex items-start gap-4 flex-grow min-w-0">
-                    <Icon className={`h-8 w-8 mt-1 flex-shrink-0 ${iconColor}`} />
+                    <Icon className={`h-8 w-8 mt-1 flex-shrink-0 ${isAuthor ? 'text-accent-magenta' : 'text-brand-accent'}`} />
                     <div className="flex-grow min-w-0">
                         {isEditing ? (
                             <div className="flex items-center gap-2">
@@ -166,10 +160,11 @@ const HistoryListItem = memo<HistoryListItemProps>(({ entry, onViewEntry, onQuic
                         <EyeIcon className="h-5 w-5" />
                     </button>
                     <button onClick={() => onViewEntry(entry)} className="inline-flex items-center px-3 py-1.5 border border-border text-xs font-medium rounded-md shadow-sm text-text-primary bg-surface hover:bg-surface-hover hover:border-brand-accent transition-colors">
-                        {viewButtonText}
+                        {isAuthor ? 'View Profile' : 'View Report'}
                     </button>
                 </div>
             </div>
+            {/* FIX: Add type guards for entry.sourceType to render details correctly for all entry types. */}
             <div className="mt-4 pt-4 border-t border-border/50 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-text-secondary">
                 {entry.sourceType === 'research' && (
                     <>

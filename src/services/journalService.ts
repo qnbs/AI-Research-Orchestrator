@@ -1,4 +1,5 @@
-import { Article, JournalProfile } from '../types';
+
+import { Article, JournalProfile, RankedArticle } from '../types';
 import { searchPubMedForIds, fetchArticleDetails, generateJournalProfileAnalysis as generateProfileWithGemini } from './geminiService';
 import type { Settings } from '../types';
 
@@ -17,9 +18,10 @@ export const findOaArticlesInJournal = async (journalName: string, topic: string
         }
         const articles = await fetchArticleDetails(pmids);
         
+        // Map to Article type, providing defaults for missing RankedArticle fields
         return articles.map(a => ({
             ...a,
-            relevanceScore: 0,
+            relevanceScore: 0, // Not applicable for this type of search
             relevanceExplanation: 'N/A',
             keywords: [],
         } as Article));
