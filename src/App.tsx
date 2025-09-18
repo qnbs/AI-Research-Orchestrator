@@ -16,7 +16,8 @@ import { useChat } from './hooks/useChat';
 import { BottomNavBar } from './components/BottomNavBar';
 import ErrorBoundary from './components/ErrorBoundary';
 
-// FIX: Correctly import default exports with React.lazy
+// Lazy load all major view components for code splitting
+// FIX: Updated lazy imports to correctly handle default exports.
 const OnboardingView = lazy(() => import('./components/OnboardingView'));
 const KnowledgeBaseView = lazy(() => import('./components/KnowledgeBaseView'));
 const SettingsView = lazy(() => import('./components/SettingsView'));
@@ -25,11 +26,11 @@ const DashboardView = lazy(() => import('./components/DashboardView'));
 const HistoryView = lazy(() => import('./components/HistoryView'));
 const ResearchView = lazy(() => import('./components/ResearchView'));
 const AuthorsView = lazy(() => import('./components/AuthorsView'));
-const JournalsView = lazy(() => import('./components/JournalsView'));
 const OrchestratorView = lazy(() => import('./components/OrchestratorView'));
 const HomeView = lazy(() => import('./components/HomeView'));
 const CommandPalette = lazy(() => import('./components/CommandPalette'));
 const QuickAddModal = lazy(() => import('./components/QuickAddModal'));
+const JournalsView = lazy(() => import('./components/JournalsView'));
 
 const FullScreenSpinner: React.FC = () => (
     <div className="flex h-screen items-center justify-center bg-background">
@@ -114,6 +115,7 @@ const AppLayout: React.FC = () => {
   }, [settings.theme, settings.performance.enableAnimations, settings.appearance.fontFamily, settings.appearance.customColors]);
   
     useEffect(() => {
+        // Accessibility Best Practice: Update document title on view change
         const viewTitles: Record<View, string> = {
             home: 'Home',
             orchestrator: 'Orchestrator',
@@ -140,7 +142,7 @@ const AppLayout: React.FC = () => {
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [setIsCommandPaletteOpen]);
-
+    
     useEffect(() => {
         // This interface is not part of the standard DOM library yet.
         interface BeforeInstallPromptEvent extends Event {
@@ -175,7 +177,6 @@ const AppLayout: React.FC = () => {
             window.removeEventListener('appinstalled', handleAppInstalled);
         };
     }, [setInstallPromptEvent, setIsPwaInstalled]);
-
 
     useEffect(() => {
         // Clear selection when navigating away from the knowledge base
@@ -218,6 +219,7 @@ const AppLayout: React.FC = () => {
         setReportStatus('done');
         
         if (settings.defaults.autoSaveReports) {
+            // FIX: Correctly call async saveReport without checking truthiness of void return.
             await saveReport(data, completeReport);
             setIsCurrentReportSaved(true);
         }
@@ -229,6 +231,7 @@ const AppLayout: React.FC = () => {
 
   const handleSaveReport = useCallback(async () => {
       if (report && localResearchInput) {
+        // FIX: Correctly call async saveReport without checking truthiness of void return.
         await saveReport(localResearchInput, report);
         setIsCurrentReportSaved(true);
       }
@@ -244,8 +247,8 @@ const AppLayout: React.FC = () => {
       setCurrentView('orchestrator');
   }, [setCurrentView]);
 
-  const handleClearKnowledgeBase = useCallback(() => {
-      clearKnowledgeBase();
+  const handleClearKnowledgeBase = useCallback(async () => {
+      await clearKnowledgeBase();
       setSettingsResetToken(Date.now());
   }, [clearKnowledgeBase]);
 

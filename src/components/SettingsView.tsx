@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { useSettings } from '../contexts/SettingsContext';
 import { usePresets } from '../contexts/PresetContext';
@@ -174,7 +175,7 @@ const GeneralSettingsTab: React.FC<{
                 )}
             </div>
         </SettingCard>
-         <SettingCard icon={<InstallIcon className="w-6 h-6 text-brand-accent"/>} title="Application" description="Manage the application's installation status and offline capabilities.">
+        <SettingCard icon={<InstallIcon className="w-6 h-6 text-brand-accent"/>} title="Application" description="Manage the application's installation status and offline capabilities.">
              {isPwaInstalled ? (
                 <div className="flex items-center gap-3 text-green-400 font-medium">
                     <CheckCircleIcon className="h-6 w-6"/>
