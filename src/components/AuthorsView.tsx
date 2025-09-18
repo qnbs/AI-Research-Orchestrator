@@ -25,6 +25,11 @@ import { GlobeEuropeAfricaIcon } from './icons/GlobeEuropeAfricaIcon';
 import { Tooltip } from './Tooltip';
 import { DocumentIcon } from './icons/DocumentIcon';
 import { useKnowledgeBase } from '../contexts/KnowledgeBaseContext';
+// FIX: Added missing icon imports.
+import { ScissorsIcon } from './icons/ScissorsIcon';
+import { MicroscopeIcon } from './icons/MicroscopeIcon';
+import { CogIcon } from './icons/CogIcon';
+import { CpuChipIcon } from './icons/CpuChipIcon';
 
 
 // --- Helper Functions & Components ---
@@ -32,18 +37,15 @@ import { useKnowledgeBase } from '../contexts/KnowledgeBaseContext';
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, ChartTooltip, Legend);
 
 const categoryIcons: { [key: string]: React.FC<React.SVGProps<SVGSVGElement>> } = {
-    'Pioneers of AI & Deep Learning': SparklesIcon,
-    'Software, Systems & Theory': CodeBracketIcon,
-    'Cryptography & Internet': GlobeAltIcon,
-    'Molecular Biology & Genetics': DnaIcon,
-    'Biochemistry & Pharmacology': BeakerIcon,
-    'Medical Science & Bioengineering': HeartIcon,
-    'Immunology & Microbiology': BugAntIcon,
+    'Genetics & Genomics': DnaIcon,
+    'CRISPR & Gene Editing': ScissorsIcon,
+    'Cancer Research': MicroscopeIcon,
+    'Immunology & Infectious Disease': BugAntIcon,
     'Neuroscience': BrainIcon,
-    'Chemistry & Material Science': AtomIcon,
-    'Physics & Astronomy': TelescopeIcon,
-    'Environmental & Earth Science': GlobeEuropeAfricaIcon,
-    'Bioinformatics & Computational Biology': ChartBarIcon,
+    'Biochemistry & Pharmacology': BeakerIcon,
+    'Cardiology & Public Health': HeartIcon,
+    'Bioengineering & Regenerative Medicine': CogIcon,
+    'AI & Computational Biology': CpuChipIcon,
 };
 
 
@@ -702,28 +704,22 @@ const AuthorsView: React.FC<AuthorsViewProps> = ({ initialProfile, onViewedIniti
             
             setLoadingPhase(authorLoadingPhases[4]);
 
-            // Limit the number of articles sent to the analysis prompt to prevent timeouts.
-            // Sort by publication year to get the most recent ones.
             const articlesForAnalysis = [...allArticleDetails]
                 .sort((a, b) => parseInt(b.pubYear || '0') - parseInt(a.pubYear || '0'))
-                .slice(0, 100); // Capping at 100 articles for the prompt
+                .slice(0, 100); 
             
             const { careerSummary, coreConcepts, estimatedMetrics } = await generateAuthorProfileAnalysis(cluster.nameVariant, articlesForAnalysis, settings.ai);
             
             setLoadingPhase(authorLoadingPhases[5]);
-            // Citation calculation is complex; here we simulate it based on year
             const citationsPerYear: { [key: string]: number } = {};
             const publicationYears: number[] = allArticleDetails.map(a => parseInt(a.pubYear || '0')).filter(y => y > 0);
             
-            // Simplified citation model: older papers get more citations
             publicationYears.forEach(year => {
                 const age = new Date().getFullYear() - year;
-                // Assign a random-ish number of citations based on age
                 const citations = Math.floor(Math.random() * (age * 5) + 5);
                 citationsPerYear[year] = (citationsPerYear[year] || 0) + citations;
             });
 
-            // First/Last author calculation
             let firstAuthorCount = 0;
             let lastAuthorCount = 0;
             allArticleDetails.forEach(article => {
@@ -738,6 +734,20 @@ const AuthorsView: React.FC<AuthorsViewProps> = ({ initialProfile, onViewedIniti
                 }
             });
 
+            const publications: RankedArticle[] = allArticleDetails.map(detail => ({
+                pmid: detail.pmid || '',
+                title: detail.title || 'No Title Provided',
+                authors: detail.authors || 'N/A',
+                journal: detail.journal || 'N/A',
+                pubYear: detail.pubYear || 'N/A',
+                summary: detail.summary || 'No summary available.',
+                isOpenAccess: detail.isOpenAccess ?? false,
+                pmcId: detail.pmcId,
+                relevanceScore: 0, 
+                relevanceExplanation: 'Relevance not calculated for author-centric search.',
+                keywords: [],
+            }));
+
             const profile: AuthorProfile = {
                 name: cluster.nameVariant,
                 affiliations: [cluster.primaryAffiliation],
@@ -751,7 +761,7 @@ const AuthorsView: React.FC<AuthorsViewProps> = ({ initialProfile, onViewedIniti
                 },
                 careerSummary,
                 coreConcepts,
-                publications: allArticleDetails as RankedArticle[],
+                publications,
             };
 
             await saveAuthorProfile({ authorName: profile.name }, profile);
@@ -783,7 +793,7 @@ const AuthorsView: React.FC<AuthorsViewProps> = ({ initialProfile, onViewedIniti
             }
 
             setLoadingPhase(authorLoadingPhases[1]);
-            const articleDetails = await fetchArticleDetails(pmids); // Disambiguate on all found PMIDs for consistency.
+            const articleDetails = await fetchArticleDetails(pmids);
 
             setLoadingPhase(authorLoadingPhases[2]);
             const clusters = await disambiguateAuthor(name, articleDetails, settings.ai);
