@@ -74,6 +74,47 @@ function getGeminiError(error: unknown): string {
     return "An unknown AI error occurred.";
 }
 
+/**
+ * Generates a robust PubMed author search query from a full name.
+ * Handles different common name formats like "Lander, Eric S." and "Eric S. Lander".
+ * @param fullName The full name of the author.
+ * @returns A PubMed-compatible query string.
+ */
+export const generateAuthorQuery = (fullName: string): string => {
+    // Handle formats like "Lander, Eric S." first by rearranging them
+    if (fullName.includes(',')) {
+        const parts = fullName.split(',');
+        const lastName = parts[0].trim();
+        const firstAndMiddle = parts.slice(1).join(' ').trim();
+        fullName = `${firstAndMiddle} ${lastName}`;
+    }
+
+    // Remove periods to handle "S." vs "S" and split into parts
+    const cleanedName = fullName.replace(/\./g, '');
+    const parts = cleanedName.trim().split(/\s+/).filter(Boolean);
+
+    if (parts.length === 0) return `""[Author]`; // Should not happen with validation
+    if (parts.length === 1) return `"${parts[0]}"[Author]`;
+
+    const lastName = parts[parts.length - 1];
+    const firstParts = parts.slice(0, -1);
+    const firstName = firstParts[0];
+    const initials = firstParts.map(p => p.charAt(0)).join('');
+
+    const queryVariations = new Set<string>();
+    
+    // 1. Full name format: "First M Last"[Author] e.g. "Eric S Lander"[Author]
+    queryVariations.add(`"${firstParts.join(' ')} ${lastName}"[Author]`);
+    
+    // 2. PubMed standard format: "Last FM"[Author] e.g., "Lander ES"[Author]
+    queryVariations.add(`"${lastName} ${initials}"[Author]`);
+    
+    // 3. Another common format: "Last First"[Author] e.g., "Lander Eric"[Author]
+    queryVariations.add(`"${lastName} ${firstName}"[Author]`);
+
+    return `(${Array.from(queryVariations).join(' OR ')})`;
+};
+
 
 // --- PubMed API Client ---
 

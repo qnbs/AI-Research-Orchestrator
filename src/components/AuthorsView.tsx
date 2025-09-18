@@ -29,6 +29,8 @@ import { useKnowledgeBase } from '../contexts/KnowledgeBaseContext';
 
 // --- Helper Functions & Components ---
 
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, ChartTooltip, Legend);
+
 const categoryIcons: { [key: string]: React.FC<React.SVGProps<SVGSVGElement>> } = {
     'Pioneers of AI & Deep Learning': SparklesIcon,
     'Software, Systems & Theory': CodeBracketIcon,
@@ -550,7 +552,7 @@ const AuthorProfileView: React.FC<{ profile: AuthorProfile; onReset: () => void 
             }
         },
         scales: {
-            x: { ticks: { color: textColor, maxRotation: 45, minRotation: 45 }, grid: { color: gridColor } },
+            x: { type: 'category' as const, ticks: { color: textColor, maxRotation: 45, minRotation: 45 }, grid: { color: gridColor } },
             y: { ticks: { color: textColor }, grid: { color: gridColor }, title: { display: true, text: 'Citations', color: textColor } }
         }
     };
