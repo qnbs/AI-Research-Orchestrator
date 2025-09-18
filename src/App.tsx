@@ -25,6 +25,7 @@ const DashboardView = lazy(() => import('./components/DashboardView'));
 const HistoryView = lazy(() => import('./components/HistoryView'));
 const ResearchView = lazy(() => import('./components/ResearchView'));
 const AuthorsView = lazy(() => import('./components/AuthorsView'));
+const JournalsView = lazy(() => import('./components/JournalsView'));
 const OrchestratorView = lazy(() => import('./components/OrchestratorView'));
 const HomeView = lazy(() => import('./components/HomeView'));
 const CommandPalette = lazy(() => import('./components/CommandPalette'));
@@ -58,7 +59,7 @@ const AppLayout: React.FC = () => {
   const [selectedAuthorProfile, setSelectedAuthorProfile] = useState<AuthorProfile | null>(null);
 
   // App-wide State from contexts
-  const { currentView, notification, setNotification, isSettingsDirty, setIsSettingsDirty, pendingNavigation, setPendingNavigation, setCurrentView, isCommandPaletteOpen, setIsCommandPaletteOpen } = useUI();
+  const { currentView, notification, setNotification, isSettingsDirty, setIsSettingsDirty, pendingNavigation, setPendingNavigation, setCurrentView, isCommandPaletteOpen, setIsCommandPaletteOpen, setInstallPromptEvent, setIsPwaInstalled } = useUI();
   const { knowledgeBase, saveReport, clearKnowledgeBase, uniqueArticles, updateTags } = useKnowledgeBase();
 
   const [isCurrentReportSaved, setIsCurrentReportSaved] = useState<boolean>(false);
@@ -113,8 +114,6 @@ const AppLayout: React.FC = () => {
   }, [settings.theme, settings.performance.enableAnimations, settings.appearance.fontFamily, settings.appearance.customColors]);
   
     useEffect(() => {
-        // Accessibility Best Practice: Update document title on view change
-        // FIX: Add 'journals' to the viewTitles record to match the View type.
         const viewTitles: Record<View, string> = {
             home: 'Home',
             orchestrator: 'Orchestrator',
@@ -141,6 +140,42 @@ const AppLayout: React.FC = () => {
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [setIsCommandPaletteOpen]);
+
+    useEffect(() => {
+        // This interface is not part of the standard DOM library yet.
+        interface BeforeInstallPromptEvent extends Event {
+            readonly platforms: string[];
+            readonly userChoice: Promise<{
+                outcome: 'accepted' | 'dismissed';
+                platform: string;
+            }>;
+            prompt(): Promise<void>;
+        }
+
+        const handleBeforeInstallPrompt = (e: Event) => {
+            e.preventDefault();
+            setInstallPromptEvent(e as BeforeInstallPromptEvent);
+            setIsPwaInstalled(false);
+        };
+
+        const handleAppInstalled = () => {
+            setInstallPromptEvent(null);
+            setIsPwaInstalled(true);
+        };
+        
+        if (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone) {
+            setIsPwaInstalled(true);
+        }
+
+        window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+        window.addEventListener('appinstalled', handleAppInstalled);
+
+        return () => {
+            window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+            window.removeEventListener('appinstalled', handleAppInstalled);
+        };
+    }, [setInstallPromptEvent, setIsPwaInstalled]);
+
 
     useEffect(() => {
         // Clear selection when navigating away from the knowledge base
@@ -183,7 +218,6 @@ const AppLayout: React.FC = () => {
         setReportStatus('done');
         
         if (settings.defaults.autoSaveReports) {
-            // FIX: saveReport is async and returns Promise<void>, so await it and remove the truthiness check.
             await saveReport(data, completeReport);
             setIsCurrentReportSaved(true);
         }
@@ -195,7 +229,6 @@ const AppLayout: React.FC = () => {
 
   const handleSaveReport = useCallback(async () => {
       if (report && localResearchInput) {
-        // FIX: saveReport is async and returns Promise<void>, so await it and remove the truthiness check.
         await saveReport(localResearchInput, report);
         setIsCurrentReportSaved(true);
       }
@@ -364,7 +397,7 @@ const AppLayout: React.FC = () => {
                 onlineFindingsState={online}
             />);
            case 'authors': return <AuthorsView initialProfile={selectedAuthorProfile} onViewedInitialProfile={handleAuthorProfileViewed} />;
-           // FIX: Pass the correct state setter to the KnowledgeBaseView component. The prop is `setSelectedPmids` but the state setter is `setSelectedKbPmids`.
+           case 'journals': return <JournalsView />;
            case 'knowledgeBase': return <KnowledgeBaseView onViewChange={handleViewChange} filter={kbFilter} onFilterChange={handleFilterChange} selectedPmids={selectedKbPmids} setSelectedPmids={setSelectedKbPmids} />;
            case 'dashboard': return <DashboardView onFilterChange={handleFilterChange} onViewChange={handleViewChange} />;
            case 'history': return <HistoryView onViewEntry={handleViewEntry} />;
@@ -383,7 +416,7 @@ const AppLayout: React.FC = () => {
           isResearching={isResearching}
           onQuickAdd={() => setIsQuickAddModalOpen(true)}
       />
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:pb-24">
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-24">
          <Suspense fallback={<ContentSpinner />}>
             {renderView()}
          </Suspense>

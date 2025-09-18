@@ -1,39 +1,18 @@
 {
-  "name": "AI Research Orchestration Author",
-  "short_name": "AI Research",
-  "description": "An expert system for authoring comprehensive literature reviews by managing a swarm of specialized AI agents. It uses the PubMed database to collect, curate, and synthesize scientific research based on user-defined criteria.",
+  "name": "AI Research Orchestrator: Your intelligent assistant for scientific literature reviews.",
+  "short_name": "AI Research Orchestrator",
+  "start_url": ".",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#1769AA",
+  "description": "An expert system for authoring comprehensive literature reviews by managing a swarm of specialized AI agents.",
   "icons": [
     {
-      "src": "/favicon-16x16.png",
-      "sizes": "16x16",
-      "type": "image/png"
-    },
-    {
-      "src": "/favicon-32x32.png",
-      "sizes": "32x32",
-      "type": "image/png"
-    },
-    {
-      "src": "/apple-touch-icon.png",
-      "sizes": "180x180",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/android-chrome-192x192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/android-chrome-512x512.png",
-      "sizes": "512x512",
-      "type": "image/png",
+      "src": "data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3ClinearGradient id='iconGradient' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%231f6feb;stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:%2339c5f7;stop-opacity:1' /%3E%3C/linearGradient%3E%3C/defs%3E%3Cg stroke='url(%23iconGradient)' stroke-width='5' stroke-linecap='round' fill='none'%3E%3Cpath d='M50 25 L71.65 37.5 L71.65 62.5 L50 75 L28.35 62.5 L28.35 37.5 Z' /%3E%3Cline x1='50' y1='25' x2='50' y2='5' /%3E%3Cline x1='71.65' y1='37.5' x2='89.3' y2='29' /%3E%3Cline x1='71.65' y1='62.5' x2='89.3' y2='71' /%3E%3Cline x1='50' y1='75' x2='50' y2='95' /%3E%3Cline x1='28.35' y1='62.5' x2='10.7' y2='71' /%3E%3Cline x1='28.35' y1='37.5' x2='10.7' y2='29' /%3E%3C/g%3E%3Cg fill='url(%23iconGradient)'%3E%3Ccircle cx='50' cy='5' r='5' /%3E%3Ccircle cx='89.3' cy='29' r='5' /%3E%3Ccircle cx='89.3' cy='71' r='5' /%3E%3Ccircle cx='50' cy='95' r='5' /%3E%3Ccircle cx='10.7' cy='71' r='5' /%3E%3Ccircle cx='10.7' cy='29' r='5' /%3E%3C/g%3E%3C/svg%3E",
+      "type": "image/svg+xml",
+      "sizes": "any",
       "purpose": "any maskable"
     }
-  ],
-  "start_url": ".",
-  "display": "standalone",
-  "theme_color": "#0D1117",
-  "background_color": "#010409"
+  ]
 }
