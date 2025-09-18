@@ -13,31 +13,35 @@ import { ChevronLeftIcon } from './icons/ChevronLeftIcon';
 import { ChevronRightIcon } from './icons/ChevronRightIcon';
 import { BeakerIcon } from './icons/BeakerIcon';
 import { ChartBarIcon } from './icons/ChartBarIcon';
-import { DocumentIcon } from './icons/DocumentIcon';
-import { Tooltip } from './Tooltip';
-import { useKnowledgeBase } from '../contexts/KnowledgeBaseContext';
+import { CodeBracketIcon } from './icons/CodeBracketIcon';
+import { GlobeAltIcon } from './icons/GlobeAltIcon';
 import { DnaIcon } from './icons/DnaIcon';
-import { ScissorsIcon } from './icons/ScissorsIcon';
-import { MicroscopeIcon } from './icons/MicroscopeIcon';
+import { HeartIcon } from './icons/HeartIcon';
 import { BugAntIcon } from './icons/BugAntIcon';
 import { BrainIcon } from './icons/BrainIcon';
-import { HeartIcon } from './icons/HeartIcon';
-import { CogIcon } from './icons/CogIcon';
-import { CpuChipIcon } from './icons/CpuChipIcon';
+import { AtomIcon } from './icons/AtomIcon';
+import { TelescopeIcon } from './icons/TelescopeIcon';
+import { GlobeEuropeAfricaIcon } from './icons/GlobeEuropeAfricaIcon';
+import { Tooltip } from './Tooltip';
+import { DocumentIcon } from './icons/DocumentIcon';
+import { useKnowledgeBase } from '../contexts/KnowledgeBaseContext';
 
 
 // --- Helper Functions & Components ---
 
 const categoryIcons: { [key: string]: React.FC<React.SVGProps<SVGSVGElement>> } = {
-    'Genetics & Genomics': DnaIcon,
-    'CRISPR & Gene Editing': ScissorsIcon,
-    'Cancer Research': MicroscopeIcon,
-    'Immunology & Infectious Disease': BugAntIcon,
-    'Neuroscience': BrainIcon,
+    'Pioneers of AI & Deep Learning': SparklesIcon,
+    'Software, Systems & Theory': CodeBracketIcon,
+    'Cryptography & Internet': GlobeAltIcon,
+    'Molecular Biology & Genetics': DnaIcon,
     'Biochemistry & Pharmacology': BeakerIcon,
-    'Cardiology & Public Health': HeartIcon,
-    'Bioengineering & Regenerative Medicine': CogIcon,
-    'AI & Computational Biology': CpuChipIcon,
+    'Medical Science & Bioengineering': HeartIcon,
+    'Immunology & Microbiology': BugAntIcon,
+    'Neuroscience': BrainIcon,
+    'Chemistry & Material Science': AtomIcon,
+    'Physics & Astronomy': TelescopeIcon,
+    'Environmental & Earth Science': GlobeEuropeAfricaIcon,
+    'Bioinformatics & Computational Biology': ChartBarIcon,
 };
 
 
@@ -323,10 +327,8 @@ const FeaturedAuthorsView: React.FC<{ categories: any[]; onSelectAuthor: (name: 
             </div>
 
             <div>
-                <div
-                    // Set a minimum height to prevent layout shifts when changing categories
-                    // with different numbers of authors.
-                    className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 min-h-[550px]"
+                <div 
+                    className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6"
                 >
                     {paginatedAuthors.map((author: any, index: number) => (
                          <div key={author.name} className="animate-fadeIn" style={{ animationDelay: `${index * 30}ms` }}>
@@ -687,42 +689,6 @@ const AuthorsView: React.FC<AuthorsViewProps> = ({ initialProfile, onViewedIniti
         fetchFeatured();
     }, []);
 
-    const handleSearch = useCallback(async (name: string) => {
-        setIsLoading(true);
-        setError(null);
-        setAuthorQuery(name);
-        setAuthorClusters(null);
-        setAuthorProfile(null);
-        setSuggestedAuthors(null);
-
-        try {
-            setLoadingPhase(authorLoadingPhases[0]);
-            const authorQueryString = generateAuthorQuery(name);
-            const pmids = await searchPubMedForIds(authorQueryString, settings.ai.researchAssistant.authorSearchLimit);
-            if (pmids.length === 0) {
-                throw new Error("No publications found for this author on PubMed. Try a different name variation or check spelling.");
-            }
-
-            setLoadingPhase(authorLoadingPhases[1]);
-            const articleDetails = await fetchArticleDetails(pmids.slice(0, 50)); // Disambiguate on a subset
-
-            setLoadingPhase(authorLoadingPhases[2]);
-            const clusters = await disambiguateAuthor(name, articleDetails, settings.ai);
-
-            if (clusters.length === 1) {
-                await handleSelectCluster(clusters[0]);
-            } else {
-                setAuthorClusters(clusters);
-                setView('disambiguation');
-            }
-        } catch (err) {
-            setError(err instanceof Error ? err.message : "An unknown error occurred.");
-            setView('landing');
-        } finally {
-            setIsLoading(false);
-        }
-    }, [settings.ai]);
-
     const handleSelectCluster = useCallback(async (cluster: AuthorCluster) => {
         setIsLoading(true);
         setError(null);
@@ -733,7 +699,14 @@ const AuthorsView: React.FC<AuthorsViewProps> = ({ initialProfile, onViewedIniti
             const allArticleDetails = await fetchArticleDetails(cluster.pmids);
             
             setLoadingPhase(authorLoadingPhases[4]);
-            const { careerSummary, coreConcepts, estimatedMetrics } = await generateAuthorProfileAnalysis(cluster.nameVariant, allArticleDetails, settings.ai);
+
+            // Limit the number of articles sent to the analysis prompt to prevent timeouts.
+            // Sort by publication year to get the most recent ones.
+            const articlesForAnalysis = [...allArticleDetails]
+                .sort((a, b) => parseInt(b.pubYear || '0') - parseInt(a.pubYear || '0'))
+                .slice(0, 100); // Capping at 100 articles for the prompt
+            
+            const { careerSummary, coreConcepts, estimatedMetrics } = await generateAuthorProfileAnalysis(cluster.nameVariant, articlesForAnalysis, settings.ai);
             
             setLoadingPhase(authorLoadingPhases[5]);
             // Citation calculation is complex; here we simulate it based on year
@@ -790,6 +763,42 @@ const AuthorsView: React.FC<AuthorsViewProps> = ({ initialProfile, onViewedIniti
             setIsLoading(false);
         }
     }, [settings.ai, saveAuthorProfile]);
+
+    const handleSearch = useCallback(async (name: string) => {
+        setIsLoading(true);
+        setError(null);
+        setAuthorQuery(name);
+        setAuthorClusters(null);
+        setAuthorProfile(null);
+        setSuggestedAuthors(null);
+
+        try {
+            setLoadingPhase(authorLoadingPhases[0]);
+            const authorQueryString = generateAuthorQuery(name);
+            const pmids = await searchPubMedForIds(authorQueryString, settings.ai.researchAssistant.authorSearchLimit);
+            if (pmids.length === 0) {
+                throw new Error("No publications found for this author on PubMed. Try a different name variation or check spelling.");
+            }
+
+            setLoadingPhase(authorLoadingPhases[1]);
+            const articleDetails = await fetchArticleDetails(pmids); // Disambiguate on all found PMIDs for consistency.
+
+            setLoadingPhase(authorLoadingPhases[2]);
+            const clusters = await disambiguateAuthor(name, articleDetails, settings.ai);
+
+            if (clusters.length === 1) {
+                await handleSelectCluster(clusters[0]);
+            } else {
+                setAuthorClusters(clusters);
+                setView('disambiguation');
+            }
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "An unknown error occurred.");
+            setView('landing');
+        } finally {
+            setIsLoading(false);
+        }
+    }, [settings.ai, handleSelectCluster]);
     
     const handleSuggestAuthors = useCallback(async (field: string) => {
         setIsSuggesting(true);
@@ -853,5 +862,4 @@ const AuthorsView: React.FC<AuthorsViewProps> = ({ initialProfile, onViewedIniti
         </div>
     );
 };
-// FIX: Changed to default export to resolve lazy loading type issue.
 export default AuthorsView;

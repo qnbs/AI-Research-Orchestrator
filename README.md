@@ -1,5 +1,3 @@
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/qnbs/AI-Research-Orchestrator)
-
 > **Built with AI Studio** — [Start building](https://aistudio.google.com/apps?source=user) | [View App](https://ai.studio/apps/drive/19FB9X7ftbg4kXoKVBgPpsGwKDWU4Gvmp)
 >
 > The fastest path from prompt to production with Gemini.
@@ -31,7 +29,7 @@ This application significantly reduces the manual effort of literature reviews b
 
 -   **👤 Author Hub:** Analyze an author's intellectual development, collaborative ecosystem, and impact on their field by searching for their publications and generating an AI-powered career summary and profile.
 
--   **📖 Journal Hub (New!):** Discover and analyze scientific journals. Get AI-generated profiles including a journal's scope, open-access policy, and key focus areas. Find recent open-access articles within a journal on a specific topic.
+-   **📖 Journal Hub:** Discover and analyze scientific journals. Get AI-generated profiles including a journal's scope, open-access policy, and key focus areas. Find recent open-access articles within a journal on a specific topic.
 
 -   **🧠 Centralized & Intelligent Knowledge Base:** All articles from saved reports are aggregated into a single, searchable library. Duplicates are automatically removed, keeping the version with the highest relevance score.
 

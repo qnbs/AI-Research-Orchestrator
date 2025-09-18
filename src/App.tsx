@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect, memo, lazy, Suspense } from 'react';
 import { Header } from './components/Header';
 import { ResearchInput, ResearchReport, KnowledgeBaseEntry, ChatMessage, AuthorProfile, KnowledgeBaseFilter, AggregatedArticle } from './types';
@@ -15,7 +16,7 @@ import { useChat } from './hooks/useChat';
 import { BottomNavBar } from './components/BottomNavBar';
 import ErrorBoundary from './components/ErrorBoundary';
 
-// Lazy load all major view components for code splitting
+// FIX: Correctly import default exports with React.lazy
 const OnboardingView = lazy(() => import('./components/OnboardingView'));
 const KnowledgeBaseView = lazy(() => import('./components/KnowledgeBaseView'));
 const SettingsView = lazy(() => import('./components/SettingsView'));
@@ -24,7 +25,6 @@ const DashboardView = lazy(() => import('./components/DashboardView'));
 const HistoryView = lazy(() => import('./components/HistoryView'));
 const ResearchView = lazy(() => import('./components/ResearchView'));
 const AuthorsView = lazy(() => import('./components/AuthorsView'));
-const JournalsView = lazy(() => import('./components/JournalsView'));
 const OrchestratorView = lazy(() => import('./components/OrchestratorView'));
 const HomeView = lazy(() => import('./components/HomeView'));
 const CommandPalette = lazy(() => import('./components/CommandPalette'));
@@ -114,6 +114,7 @@ const AppLayout: React.FC = () => {
   
     useEffect(() => {
         // Accessibility Best Practice: Update document title on view change
+        // FIX: Add 'journals' to the viewTitles record to match the View type.
         const viewTitles: Record<View, string> = {
             home: 'Home',
             orchestrator: 'Orchestrator',
@@ -182,6 +183,7 @@ const AppLayout: React.FC = () => {
         setReportStatus('done');
         
         if (settings.defaults.autoSaveReports) {
+            // FIX: saveReport is async and returns Promise<void>, so await it and remove the truthiness check.
             await saveReport(data, completeReport);
             setIsCurrentReportSaved(true);
         }
@@ -193,6 +195,7 @@ const AppLayout: React.FC = () => {
 
   const handleSaveReport = useCallback(async () => {
       if (report && localResearchInput) {
+        // FIX: saveReport is async and returns Promise<void>, so await it and remove the truthiness check.
         await saveReport(localResearchInput, report);
         setIsCurrentReportSaved(true);
       }
@@ -258,9 +261,6 @@ const AppLayout: React.FC = () => {
       } else if (entry.sourceType === 'author') {
           setSelectedAuthorProfile(entry.profile);
           setCurrentView('authors');
-      } else if (entry.sourceType === 'journal') {
-          // Future: could navigate to a detailed journal view
-          setCurrentView('knowledgeBase');
       }
   }, [setCurrentView]);
 
@@ -268,8 +268,8 @@ const AppLayout: React.FC = () => {
     setSelectedAuthorProfile(null);
   }, []);
   
-  const handleTagsUpdate = useCallback(async (pmid: string, newTags: string[]) => {
-    await updateTags(pmid, newTags);
+  const handleTagsUpdate = useCallback((pmid: string, newTags: string[]) => {
+    updateTags(pmid, newTags);
     // Also update the local report state if it's being viewed
     setReport(prevReport => {
         if (!prevReport || !prevReport.rankedArticles.some(a => a.pmid === pmid)) {
@@ -364,7 +364,7 @@ const AppLayout: React.FC = () => {
                 onlineFindingsState={online}
             />);
            case 'authors': return <AuthorsView initialProfile={selectedAuthorProfile} onViewedInitialProfile={handleAuthorProfileViewed} />;
-           case 'journals': return <JournalsView />;
+           // FIX: Pass the correct state setter to the KnowledgeBaseView component. The prop is `setSelectedPmids` but the state setter is `setSelectedKbPmids`.
            case 'knowledgeBase': return <KnowledgeBaseView onViewChange={handleViewChange} filter={kbFilter} onFilterChange={handleFilterChange} selectedPmids={selectedKbPmids} setSelectedPmids={setSelectedKbPmids} />;
            case 'dashboard': return <DashboardView onFilterChange={handleFilterChange} onViewChange={handleViewChange} />;
            case 'history': return <HistoryView onViewEntry={handleViewEntry} />;

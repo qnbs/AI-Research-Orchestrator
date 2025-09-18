@@ -2,6 +2,16 @@ import React, { createContext, useContext, useState, ReactNode, useMemo } from '
 
 export type View = 'home' | 'orchestrator' | 'research' | 'authors' | 'journals' | 'knowledgeBase' | 'settings' | 'help' | 'dashboard' | 'history';
 
+// This interface is not part of the standard DOM library yet.
+interface BeforeInstallPromptEvent extends Event {
+  readonly platforms: string[];
+  readonly userChoice: Promise<{
+    outcome: 'accepted' | 'dismissed';
+    platform: string;
+  }>;
+  prompt(): Promise<void>;
+}
+
 interface NotificationState {
   id: number;
   message: string;
@@ -19,6 +29,10 @@ interface UIContextType {
     setPendingNavigation: (view: View | null) => void;
     isCommandPaletteOpen: boolean;
     setIsCommandPaletteOpen: (isOpen: boolean | ((isOpen: boolean) => boolean)) => void;
+    installPromptEvent: BeforeInstallPromptEvent | null;
+    setInstallPromptEvent: (event: BeforeInstallPromptEvent | null) => void;
+    isPwaInstalled: boolean;
+    setIsPwaInstalled: (installed: boolean) => void;
 }
 
 const UIContext = createContext<UIContextType | undefined>(undefined);
@@ -29,19 +43,25 @@ export const UIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [isSettingsDirty, setIsSettingsDirty] = useState(false);
     const [pendingNavigation, setPendingNavigation] = useState<View | null>(null);
     const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+    const [installPromptEvent, setInstallPromptEvent] = useState<BeforeInstallPromptEvent | null>(null);
+    const [isPwaInstalled, setIsPwaInstalled] = useState(false);
     
     const value = useMemo(() => ({ 
         currentView, setCurrentView,
         notification, setNotification,
         isSettingsDirty, setIsSettingsDirty,
         pendingNavigation, setPendingNavigation,
-        isCommandPaletteOpen, setIsCommandPaletteOpen
+        isCommandPaletteOpen, setIsCommandPaletteOpen,
+        installPromptEvent, setInstallPromptEvent,
+        isPwaInstalled, setIsPwaInstalled
     }), [
         currentView, 
         notification, 
         isSettingsDirty, 
         pendingNavigation, 
-        isCommandPaletteOpen
+        isCommandPaletteOpen,
+        installPromptEvent,
+        isPwaInstalled
     ]);
 
 
