@@ -112,6 +112,11 @@ export const generateAuthorQuery = (fullName: string): string => {
     // 3. Another common format: "Last First"[Author] e.g., "Lander Eric"[Author]
     queryVariations.add(`"${lastName} ${firstName}"[Author]`);
 
+    // Handle format "Lander ES"
+    if (parts.length === 2 && parts[1].length > 0 && parts[1].length <= 2 && parts[1].toUpperCase() === parts[1]) {
+        queryVariations.add(`"${parts[0]} ${parts[1]}"[Author]`);
+    }
+
     return `(${Array.from(queryVariations).join(' OR ')})`;
 };
 
