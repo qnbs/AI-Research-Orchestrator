@@ -3,13 +3,26 @@ import { searchPubMedForIds, fetchArticleDetails, generateJournalProfileAnalysis
 import type { Settings } from '../types';
 
 /**
- * Searches for Open Access articles on a topic within a specific journal.
+ * Searches for articles on a topic within a specific journal.
  * @param journalName - The name of the journal.
- * @param topic - The user-provided research topic.
+ * @param topic - The user-provided research topic (optional).
+ * @param onlyOa - Whether to restrict results to Open Access articles.
  * @returns A promise that resolves to an array of `Article` objects.
  */
-export const findOaArticlesInJournal = async (journalName: string, topic: string): Promise<Article[]> => {
-    const query = `("${journalName}"[Journal]) AND ("${topic}"[Title/Abstract]) AND (open access[filter])`;
+export const findArticlesInJournal = async (journalName: string, topic: string, onlyOa: boolean = true): Promise<Article[]> => {
+    let query = `"${journalName}"[Journal]`;
+    
+    if (topic.trim()) {
+        query += ` AND ("${topic}"[Title/Abstract])`;
+    }
+    
+    if (onlyOa) {
+        query += ` AND (open access[filter])`;
+    } else {
+        // If not strictly OA, we still prefer articles with abstracts
+        query += ` AND (hasabstract[text])`;
+    }
+
     try {
         const pmids = await searchPubMedForIds(query, 50); // Limit to 50 articles
         if (pmids.length === 0) {
@@ -25,7 +38,7 @@ export const findOaArticlesInJournal = async (journalName: string, topic: string
             keywords: [],
         } as Article));
     } catch (error) {
-        console.error("Error finding OA articles in journal:", error);
+        console.error("Error finding articles in journal:", error);
         throw error;
     }
 };

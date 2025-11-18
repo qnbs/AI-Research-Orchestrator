@@ -1,129 +1,122 @@
-> **Built with AI Studio** — [Start building](https://aistudio.google.com/apps?source=user) | [View App](https://ai.studio/apps/drive/19FB9X7ftbg4kXoKVBgPpsGwKDWU4Gvmp)
->
-> The fastest path from prompt to production with Gemini.
 
 # AI Research Orchestration Author
 
-An expert system for authoring comprehensive literature reviews by managing a swarm of specialized AI agents. It uses the PubMed database to collect, curate, and synthesize scientific research based on user-defined criteria, acting as an intelligent partner for researchers to accelerate discovery.
+![Status](https://img.shields.io/badge/Status-Production_Ready-success)
+![Tech](https://img.shields.io/badge/Built_With-React_19_|_TypeScript_|_Gemini_2.5-blueviolet)
+![License](https://img.shields.io/badge/License-MIT-blue)
+![Privacy](https://img.shields.io/badge/Privacy-Local_First-green)
 
-This application significantly reduces the manual effort of literature reviews by allowing users to quickly identify relevant articles, extract key insights, and build a structured, searchable knowledge base.
+> **A sophisticated, agentic expert system for high-dimensional literature synthesis and automated knowledge discovery.**
 
-***
-
-## Table of Contents
-
-1.  [Core Features](#core-features)
-2.  [Primary Workflows](#primary-workflows)
-3.  [Technology Stack](#technology-stack)
-4.  [Getting Started](#getting-started)
-5.  [Privacy-First Architecture](#privacy-first-architecture)
-6.  [Important Disclaimers](#important-disclaimers)
+[Start Building](https://aistudio.google.com/apps?source=user) | [View Live App](https://ai.studio/apps/drive/19FB9X7ftbg4kXoKVBgPpsGwKDWU4Gvmp)
 
 ---
 
-## Core Features
+## 🌌 Overview
 
--   **🤖 AI Research Orchestration:** Generates comprehensive reports from a simple research topic. The AI formulates advanced PubMed queries, scans articles, and ranks them by relevance with detailed explanations.
+The **AI Research Orchestration Author** is a state-of-the-art frontend application designed to revolutionize how scientific literature reviews are conducted. By coupling the **PubMed** biomedical database with the cognitive reasoning capabilities of **Google's Gemini 2.5 Flash** model, it acts as an autonomous research partner.
 
--   **💡 Quick Analysis (Research Tab):** Paste any text—a question, abstract, or topic—to get an instant summary, a list of key findings, and suggestions for related articles and online discussions.
+Unlike simple summarizers, this system employs a **multi-agent orchestration pattern**. It breaks down complex research topics into search strategies, executes live retrieval, ranks findings using semantic understanding, and synthesizes narrative reports with academic rigor.
 
--   **👤 Author Hub:** Analyze an author's intellectual development, collaborative ecosystem, and impact on their field by searching for their publications and generating an AI-powered career summary and profile.
-
--   **📖 Journal Hub:** Discover and analyze scientific journals. Get AI-generated profiles including a journal's scope, open-access policy, and key focus areas. Find recent open-access articles within a journal on a specific topic.
-
--   **🧠 Centralized & Intelligent Knowledge Base:** All articles from saved reports are aggregated into a single, searchable library. Duplicates are automatically removed, keeping the version with the highest relevance score.
-
--   **🔍 Powerful Data Exploration:** The Knowledge Base features robust search, multi-faceted filtering (by keyword, report, custom tags, open-access status, journal), and multiple sorting options.
-
--   **📊 Data Visualization Dashboard:** Provides charts and graphs to visualize trends in the knowledge base, such as publication years and top journals.
-
--   **🛠️ Intelligent Knowledge Base Maintenance:**
-    -   **Merge Duplicates:** Automatically find and merge duplicate articles, keeping only the entry with the highest relevance score.
-    -   **Prune by Relevance:** Clean your library by removing articles below a specified relevance score threshold.
-
--   **💾 Robust Data Management & Export:**
-    -   **PDF:** Generate comprehensive, professionally formatted PDFs for reports and knowledge base selections, with a customizable cover page and content sections.
-    -   **CSV:** Export raw article data with configurable columns and delimiters for spreadsheets.
-    -   **Citations:** Get enhanced citation files (**BibTeX**, **RIS**) with configurable content (abstracts, keywords, tags) for reference managers like Zotero or Mendeley.
-    -   **JSON:** Back up and restore your entire research history, knowledge base, or settings with a single click.
-
--   **⚙️ Deep Customization:** A detailed settings panel allows users to manage themes, UI density, AI behavior (persona, language, creativity), form defaults, and export configurations.
-
--   **✨ Modern, Cybernetic UI/UX:** A redesigned user interface with a technological design, subtle animations, and improved readability for a first-class user experience.
-
--   **⌨️ Command Palette:** Access any part of the application or perform key actions instantly with a powerful command palette (`⌘+K`).
-
--   ** PWA & Offline First:** Install the app on your desktop or mobile device for a native-like experience. The robust service worker ensures core functionality is available even when offline.
+**Core Philosophy:**
+*   **Local-First:** Total privacy with IndexedDB storage.
+*   **Agentic:** Autonomous query formulation and decision-making.
+*   **Transparent:** Full traceability to source PMIDs (PubMed IDs).
 
 ---
 
-## Primary Workflows
+## 🚀 Key Capabilities
 
-The application is built around four primary, interconnected workflows:
+### 1. 🧠 The Orchestrator (Agentic Workflow)
+The heart of the application is a multi-step generative pipeline:
+1.  **Query Formulation Agent**: Analyzes the user's natural language intent and constructs advanced Boolean search strings optimized for PubMed's MeSH taxonomy.
+2.  **Retrieval & Filtering**: Executes live API calls to the NCBI E-utilities interface to fetch metadata for hundreds of candidate articles.
+3.  **Semantic Ranking Agent**: Reads titles and abstracts to score relevance (0-100) against the specific research context, filtering out noise.
+4.  **Synthesis Agent**: Streams a comprehensive, cited executive summary, highlighting consensus, contradictions, and gaps in the literature.
 
-### 1. The Quick Inquiry (Research Tab)
-This is for fast, focused analysis. You can paste an abstract to get a summary, ask a specific question, or explore a tangent without committing to a full review. If the results are promising, you can seamlessly transition the topic to the Orchestrator for a deep dive.
+### 2. 📚 Intelligent Knowledge Base
+A persistent, self-organizing library for your research.
+*   **Deduplication Engine**: Automatically merges duplicate entries, preserving the highest-fidelity metadata.
+*   **Semantic Search**: Filter your library not just by keywords, but by AI-generated tags, article types, and derived insights.
+*   **Data Visualization**: Integrated charts visualize publication trends over time and top journal sources.
 
-### 2. The Comprehensive Literature Review (Orchestrator)
-This is for deep dives into a new topic. You provide a broad research question, and the AI orchestrates a multi-agent process to build a full report. This is the primary way to populate your Knowledge Base with high-quality, relevant articles.
+### 3. 🔬 Rapid Research Assistant
+A lightweight tool for ad-hoc inquiry.
+*   **Abstract Analysis**: Paste complex text to get "TL;DR" summaries and key finding extraction.
+*   **Similarity Search**: Uses latent semantic understanding to find related papers based on content, not just keywords.
+*   **Grounding**: Cross-references findings with live web search data to provide broader context.
 
-### 3. The Author Analysis (Author Hub)
-This is for understanding the work of a specific researcher. Provide an author's name, and the AI will find their publications, disambiguate them from others with the same name, and generate a career profile, including their core topics and publication timeline.
-
-### 4. The Journal Analysis (Journal Hub)
-This is for exploring publication venues. Provide a journal's name to get an AI-generated profile, and optionally search for open-access articles on a specific topic published within it.
-
----
-
-## Technology Stack
-
--   **Frontend:** React, TypeScript
--   **AI Model:** Google Gemini API (`@google/genai`)
--   **Local Database:** Dexie.js (IndexedDB Wrapper)
--   **Styling:** Tailwind CSS
--   **Charts:** Chart.js, react-chartjs-2
--   **PDF Generation:** jsPDF
--   **Module Loading:** No build step required; uses modern browser `importmap`.
+### 4. 👤 Author & Journal Hubs
+*   **Author Disambiguation**: Uses AI to cluster publications and distinguish between researchers with identical names.
+*   **Impact Metrics**: Estimates H-Index and citation flows based on available metadata.
+*   **Journal Profiling**: AI-generated profiles of publication venues, including scope, Open Access policies, and impact factors.
 
 ---
 
-## Getting Started
+## 🛠️ Technical Architecture
 
-This is a client-side web app that requires no build step and can be run by serving the files from any static web server.
+This application is a **Single Page Application (SPA)** built with a modern, performance-oriented stack.
+
+### Technology Stack
+*   **Framework**: [React 19](https://react.dev/) (leveraging Suspense and concurrent features).
+*   **Language**: [TypeScript](https://www.typescriptlang.org/) for type safety and architectural robustness.
+*   **AI Integration**: [`@google/genai`](https://www.npmjs.com/package/@google/genai) SDK connecting to Gemini 2.5 Flash.
+*   **State/Storage**: [Dexie.js](https://dexie.org/) (IndexedDB wrapper) for high-performance, offline-capable local storage.
+*   **Styling**: [Tailwind CSS](https://tailwindcss.com/) with a custom "Cybernetic" design system.
+*   **Visualization**: [Chart.js](https://www.chartjs.org/) for analytics rendering.
+*   **PDF Generation**: [jsPDF](https://github.com/parallax/jsPDF) for client-side report compilation.
+
+### Design Patterns
+*   **Streaming Responses**: Utilizes Gemini's streaming API to provide immediate feedback during long-running synthesis tasks.
+*   **Resilient Networking**: Implements exponential backoff strategies for robust interaction with public APIs (PubMed).
+*   **Component Architecture**: Modular, lazy-loaded components ensure fast initial load times and code splitting.
+*   **Accessibility**: Fully ARIA-compliant UI with keyboard navigation support (Command Palette `⌘+K`).
+
+---
+
+## ⚡ Getting Started
 
 ### Prerequisites
+*   A modern browser (Chrome, Edge, Safari, Firefox).
+*   A **Google Gemini API Key**. [Get one here](https://aistudio.google.com/).
 
--   A modern web browser that supports ES modules and import maps (e.g., Chrome, Firefox, Safari, Edge).
--   A valid **API key** for the Google Gemini API.
+### Installation
+This project is built to run directly in a browser environment that supports ES Modules.
 
-### API Key Setup
-
-The Gemini API key is accessed via `process.env.API_KEY`. You must make this variable available in the execution environment where the application is run.
-
-When deploying, you must use your hosting provider's system for managing environment variables. Configure an environment variable named `API_KEY` in your provider's settings.
-
----
-
-## Privacy-First Architecture
-
-This application is designed with privacy as a core principle.
-
--   **All data is stored exclusively in your local browser's IndexedDB database.**
--   This includes your research history, saved articles, custom tags, and all settings.
--   **No information is ever uploaded to a server or shared.** Your research is completely private to the browser you are using.
--   To back up your data or move it to another machine, you **must** use the export features in `Settings > Data Management & Privacy`. Clearing your browser data will permanently delete your work unless you have a backup.
+1.  **Clone the repository** (or download source).
+2.  **Configure Environment**:
+    *   The application expects `process.env.API_KEY` to be available.
+    *   *Note: In a production build, inject this via your build tool or environment configuration.*
+3.  **Serve**:
+    *   Use any static file server (e.g., `npx serve`, `python -m http.server`).
+    *   Access `index.html` in your browser.
 
 ---
 
-## Important Disclaimers
+## ⚙️ Configuration & Customization
 
-### 🔴 AI Accuracy
+The application features a granular settings engine allowing you to tailor the AI's cognitive profile.
 
--   The AI-generated content is for informational and discovery purposes only. It is a powerful assistant, but it is **not infallible** and may contain inaccuracies, omissions, or "hallucinations" (information that sounds plausible but is incorrect).
--   This application is a tool to **accelerate research, not a substitute for scholarly review and critical evaluation.**
--   **ALWAYS VERIFY CRITICAL INFORMATION BY READING THE ORIGINAL SOURCE ARTICLES PROVIDED.** Links to PubMed are included for every article.
+*   **AI Persona**: Switch between "Neutral Scientist", "Creative Synthesizer", or "Critical Reviewer" to adjust the tone of reports.
+*   **Temperature**: Fine-tune the model's creativity (0.0 for deterministic facts, 0.8 for hypothesis generation).
+*   **Language**: Force output in specific languages (English, German, French, Spanish) regardless of input source language.
+*   **Thinking Budget**: (Experimental) Allocation of tokens for the model's internal reasoning process before output generation.
 
-### 🔵 API Usage & Costs
+---
 
--   This application makes calls to the Google Gemini API, which may be subject to usage quotas and could incur costs depending on your plan.
--   Be mindful of the settings that trigger API calls, such as generating reports, using the Research Assistant, and analyzing authors. Manage your API key and monitor your usage in the Google AI Studio dashboard.
+## 🛡️ Privacy & Security
+
+**Zero-Knowledge Architecture:**
+*   **Local Storage**: All user data (reports, history, settings) resides in your browser's IndexedDB.
+*   **Direct-to-API**: The app communicates directly with Google's Gemini API and NCBI's PubMed API. No intermediate backend server collects your data.
+*   **Exportable**: You own your data. Export complete datasets to JSON, CSV, or PDF at any time.
+
+---
+
+## 📄 License
+
+Distributed under the MIT License. See `LICENSE` for more information.
+
+---
+
+> **Disclaimer**: This tool utilizes generative AI. While it employs grounding techniques (PubMed citations), it may occasionally produce inaccuracies. Always verify findings against the original source documents linked in the reports.
