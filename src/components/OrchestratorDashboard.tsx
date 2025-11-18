@@ -1,4 +1,3 @@
-
 import React from 'react';
 import type { KnowledgeBaseEntry, ResearchEntry } from '../types';
 import { HistoryIcon } from './icons/HistoryIcon';

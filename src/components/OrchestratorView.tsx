@@ -1,5 +1,3 @@
-
-
 import React, { memo } from 'react';
 import { InputForm } from './InputForm';
 import { ReportDisplay } from './ReportDisplay';
@@ -31,7 +29,53 @@ interface OrchestratorViewProps {
     onSendMessage: (message: string) => void;
 }
 
-const OrchestratorView: React.FC<OrchestratorViewProps> = ({
+const loadingPhases = [
+  "Phase 1: AI Generating PubMed Queries...",
+  "Phase 2: Executing Real-time PubMed Search...",
+  "Phase 3: Fetching Article Details from PubMed...",
+  "Phase 4: AI Ranking & Analysis of Real Articles...",
+  "Phase 5: Synthesizing Top Findings...",
+  "Streaming Synthesis...",
+  "Finalizing Report..."
+] as const;
+
+const phaseDetails: Record<string, string[]> = {
+  "Phase 1: AI Generating PubMed Queries...": [
+    "Analyzing research topic and user criteria...",
+    "AI is constructing advanced boolean search strings...",
+    "Optimizing queries for relevance...",
+  ],
+  "Phase 2: Executing Real-time PubMed Search...": [
+    "Connecting to live NCBI PubMed database...",
+    "Submitting best query to retrieve article IDs...",
+    "Compiling list of relevant publications...",
+  ],
+  "Phase 3: Fetching Article Details from PubMed...": [
+    "Requesting abstracts and metadata for found articles...",
+    "Parsing publication data (titles, authors, journals)...",
+    "Preparing real-world data for AI analysis...",
+  ],
+  "Phase 4: AI Ranking & Analysis of Real Articles...": [
+    "AI is reading and scoring each article for relevance...",
+    "Writing relevance explanations based on content...",
+    "Identifying key themes and generating insights...",
+  ],
+  "Phase 5: Synthesizing Top Findings...": [
+    "Selecting top articles for the executive summary...",
+    "Preparing final prompt for narrative synthesis...",
+    "Initializing streaming connection with AI...",
+  ],
+  "Streaming Synthesis...": [
+    "Receiving synthesized text in real-time...",
+    "Building the narrative summary chunk by chunk...",
+  ],
+  "Finalizing Report...": [
+    "Assembling final report structure...",
+    "Finishing up...",
+  ]
+};
+
+const OrchestratorViewComponent: React.FC<OrchestratorViewProps> = ({
     reportStatus,
     currentPhase,
     error,
@@ -67,7 +111,15 @@ const OrchestratorView: React.FC<OrchestratorViewProps> = ({
                 onPrefillConsumed={onPrefillConsumed}
             />
 
-            {showLoadingIndicator && <LoadingIndicator phase={currentPhase} />}
+            {showLoadingIndicator && (
+                <LoadingIndicator 
+                    title="Orchestrating AI Agents..."
+                    phase={currentPhase}
+                    phases={loadingPhases}
+                    phaseDetails={phaseDetails}
+                    footerText="This may take up to a minute. The AI is performing multiple complex steps, including live database searches and synthesis."
+                />
+            )}
             
             {error && (
                 <div className="text-center text-red-400 font-semibold p-8 bg-surface rounded-lg border border-red-500/20">{error}</div>
@@ -102,5 +154,4 @@ const OrchestratorView: React.FC<OrchestratorViewProps> = ({
     );
 };
 
-// FIX: Changed to default export to resolve lazy loading type issue.
-export default memo(OrchestratorView);
+export default memo(OrchestratorViewComponent);

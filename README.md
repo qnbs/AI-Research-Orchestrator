@@ -53,6 +53,8 @@ This application significantly reduces the manual effort of literature reviews b
 
 -   **⌨️ Command Palette:** Access any part of the application or perform key actions instantly with a powerful command palette (`⌘+K`).
 
+-   ** PWA & Offline First:** Install the app on your desktop or mobile device for a native-like experience. The robust service worker ensures core functionality is available even when offline.
+
 ---
 
 ## Primary Workflows

@@ -3,27 +3,7 @@ import { LockClosedIcon } from './icons/LockClosedIcon';
 import { PencilIcon } from './icons/PencilIcon';
 import { SparklesIcon } from './icons/SparklesIcon';
 import { DatabaseIcon } from './icons/DatabaseIcon';
-
-
-const AppLogoIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
-        <defs>
-            <linearGradient id="logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" style={{stopColor: 'var(--color-brand-accent)', stopOpacity: 1}} />
-                <stop offset="100%" style={{stopColor: 'var(--color-accent-cyan)', stopOpacity: 1}} />
-            </linearGradient>
-        </defs>
-        <path d="M12 2L8 4V8L12 10L16 8V4L12 2Z" stroke="url(#logo-gradient)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M12 22L8 20V16L12 14L16 16V20L12 22Z" stroke="url(#logo-gradient)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M22 12L20 8L16 10L14 12L16 14L20 16L22 12Z" stroke="url(#logo-gradient)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M2 12L4 8L8 10L10 12L8 14L4 16L2 12Z" stroke="url(#logo-gradient)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M12 10V14" stroke="url(#logo-gradient)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M8 8L4 8" stroke="url(#logo-gradient)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M16 8L20 8" stroke="url(#logo-gradient)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M8 16L4 16" stroke="url(#logo-gradient)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M16 16L20 16" stroke="url(#logo-gradient)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-);
+import { AppLogo } from './AppLogo';
 
 
 interface OnboardingViewProps {
@@ -49,7 +29,7 @@ const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete }) => {
         }}></div>
         <div className="w-full max-w-4xl mx-auto text-center relative z-10 bg-surface/50 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-8 sm:p-12">
              <div className="mb-6 flex items-center justify-center">
-                <AppLogoIcon className="h-16 w-16" />
+                <AppLogo className="h-16 w-16" idPrefix="onboarding-logo" />
              </div>
             <h1 className="text-4xl sm:text-5xl font-bold text-text-primary mb-3">
                 Welcome to the <span className="brand-gradient-text">Future of Research</span>
@@ -84,5 +64,5 @@ const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete }) => {
     </div>
   );
 };
-// FIX: Changed to default export to resolve lazy loading type issue.
+
 export default OnboardingView;

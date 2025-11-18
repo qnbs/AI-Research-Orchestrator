@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect, memo } from 'react';
 import type { ResearchInput, Settings, Preset } from '../types';
 import { ARTICLE_TYPES } from '../types';

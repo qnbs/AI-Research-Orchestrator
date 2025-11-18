@@ -85,9 +85,9 @@
         right: 0;
         bottom: 0;
         background-image: 
-            radial-gradient(ellipse 80% 80% at 10% -20%, var(--aurora-1), transparent),
-            radial-gradient(ellipse 80% 80% at 90% -20%, var(--aurora-2), transparent),
-            radial-gradient(ellipse 60% 60% at 50% 110%, var(--aurora-3), transparent);
+            radial-gradient(ellipse 50% 50% at 10% -20%, var(--aurora-1), transparent),
+            radial-gradient(ellipse 50% 50% at 90% -20%, var(--aurora-2), transparent),
+            radial-gradient(ellipse 40% 40% at 50% 110%, var(--aurora-3), transparent);
          opacity: 1;
          z-index: -1;
        }
@@ -165,8 +165,6 @@
             fontFamily: {
               sans: ['Inter', 'sans-serif'],
               roboto: ['Roboto', 'sans-serif'],
-              lato: ['Lato', 'sans-serif'],
-              'open-sans': ['Open Sans', 'sans-serif'],
             },
             colors: {
               background: 'var(--color-background)',
@@ -205,29 +203,31 @@
   <script type="importmap">
 {
   "imports": {
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
-    "dexie": "https://aistudiocdn.com/dexie@^4.2.0",
-    "vitest": "https://aistudiocdn.com/vitest@^3.2.4",
-    "vitest/": "https://aistudiocdn.com/vitest@^3.2.4/",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.19.0",
-    "react/": "https://aistudiocdn.com/react@^19.1.1/",
     "react": "https://aistudiocdn.com/react@^19.1.1",
-    "marked": "https://aistudiocdn.com/marked@^16.3.0",
-    "chart.js": "https://aistudiocdn.com/chart.js@^4.5.0",
-    "react-chartjs-2": "https://aistudiocdn.com/react-chartjs-2@^5.3.0",
-    "jspdf": "https://aistudiocdn.com/jspdf@^3.0.2",
-    "dompurify": "https://aistudiocdn.com/dompurify@^3.2.6"
+    "react/": "https://aistudiocdn.com/react@^19.1.1/",
+    "react-dom/client": "https://aistudiocdn.com/react-dom@^19.1.1/client",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.19.0",
+    "dexie": "https://aistudiocdn.com/dexie@^4.0.7",
+    "dexie-react-hooks": "https://aistudiocdn.com/dexie-react-hooks@^1.1.7",
+    "marked": "https://aistudiocdn.com/marked@^13.0.2",
+    "dompurify": "https://aistudiocdn.com/dompurify@^3.1.6",
+    "chart.js": "https://aistudiocdn.com/chart.js@^4.4.3",
+    "react-chartjs-2": "https://aistudiocdn.com/react-chartjs-2@^5.2.0",
+    "jspdf": "https://aistudiocdn.com/jspdf@^2.5.1",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "vitest": "https://aistudiocdn.com/vitest@^3.2.4",
+    "vitest/": "https://aistudiocdn.com/vitest@^3.2.4/"
   }
 }
 </script>
 </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/index.tsx"></script>
+    <script type="module" src="/index.tsx"></script>
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/service-worker.js')
+          navigator.serviceWorker.register('/sw.js')
             .then(registration => {
               console.log('ServiceWorker registration successful with scope: ', registration.scope);
             })

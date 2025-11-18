@@ -110,28 +110,22 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
 
         let updatedEntry: KnowledgeBaseEntry;
         let changesForDb: Partial<KnowledgeBaseEntry>;
-        
+
         if (entryToUpdate.sourceType === 'research') {
-            updatedEntry = {
-                ...entryToUpdate,
-                title: newTitle,
-                input: { ...entryToUpdate.input, researchTopic: newTitle }
-            };
-            changesForDb = { title: newTitle, input: updatedEntry.input };
+            const researchEntry = entryToUpdate as ResearchEntry;
+            const newInput = { ...researchEntry.input, researchTopic: newTitle };
+            updatedEntry = { ...researchEntry, title: newTitle, input: newInput };
+            changesForDb = { title: newTitle, input: newInput };
         } else if (entryToUpdate.sourceType === 'author') {
-            updatedEntry = {
-                ...entryToUpdate,
-                title: newTitle,
-                input: { ...entryToUpdate.input, authorName: newTitle }
-            };
-            changesForDb = { title: newTitle, input: updatedEntry.input };
+            const authorEntry = entryToUpdate as AuthorProfileEntry;
+            const newInput = { ...authorEntry.input, authorName: newTitle };
+            updatedEntry = { ...authorEntry, title: newTitle, input: newInput };
+            changesForDb = { title: newTitle, input: newInput };
         } else { // journal
-            updatedEntry = {
-                ...entryToUpdate,
-                title: newTitle,
-                journalProfile: { ...entryToUpdate.journalProfile, name: newTitle }
-            };
-            changesForDb = { title: newTitle, journalProfile: updatedEntry.journalProfile };
+            const journalEntry = entryToUpdate as JournalEntry;
+            const newJournalProfile = { ...journalEntry.journalProfile, name: newTitle };
+            updatedEntry = { ...journalEntry, title: newTitle, journalProfile: newJournalProfile };
+            changesForDb = { title: newTitle, journalProfile: newJournalProfile };
         }
 
         await updateEntry(id, changesForDb);
@@ -237,8 +231,67 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
     const uniqueArticles = useMemo(() => getArticles('all'), [getArticles]);
 
     const onMergeDuplicates = useCallback(async () => {
-        showNotification("Merge functionality is a work in progress.");
-    }, [showNotification]);
+        const articleMap = new Map<string, { article: RankedArticle, entryId: string }>();
+        let duplicatesFound = 0;
+        let pmidsToDelete: { entryId: string, pmid: string }[] = [];
+
+        knowledgeBase.forEach(entry => {
+            entry.articles.forEach(article => {
+                const existing = articleMap.get(article.pmid);
+                if (existing) {
+                    duplicatesFound++;
+                    // Decide which one to keep
+                    if (article.relevanceScore > existing.article.relevanceScore) {
+                        // Mark old one for deletion
+                        pmidsToDelete.push({ entryId: existing.entryId, pmid: article.pmid });
+                        // Set new one
+                        articleMap.set(article.pmid, { article, entryId: entry.id });
+                    } else {
+                        // Mark current one for deletion
+                        pmidsToDelete.push({ entryId: entry.id, pmid: article.pmid });
+                    }
+                } else {
+                    articleMap.set(article.pmid, { article, entryId: entry.id });
+                }
+            });
+        });
+        
+        if (duplicatesFound === 0) {
+            showNotification("No duplicate articles found to merge.");
+            return;
+        }
+
+        const updates: { id: string, changes: Partial<KnowledgeBaseEntry> }[] = [];
+        const entriesToDelete = new Set<string>();
+
+        knowledgeBase.forEach(entry => {
+            const pmidsInThisEntryToDelete = pmidsToDelete.filter(d => d.entryId === entry.id).map(d => d.pmid);
+            if (pmidsInThisEntryToDelete.length > 0) {
+                 const keptArticles = entry.articles.filter(a => !pmidsInThisEntryToDelete.includes(a.pmid));
+                 if(keptArticles.length === 0) {
+                     entriesToDelete.add(entry.id);
+                 } else {
+                     const changes: Partial<KnowledgeBaseEntry> = { articles: keptArticles };
+                     if (entry.sourceType === 'research') (changes as Partial<ResearchEntry>).report = { ...entry.report, rankedArticles: keptArticles };
+                     else if (entry.sourceType === 'author') (changes as Partial<AuthorProfileEntry>).profile = { ...entry.profile, publications: keptArticles };
+                     updates.push({ id: entry.id, changes });
+                 }
+            }
+        });
+        
+        if (updates.length > 0) await Promise.all(updates.map(u => updateEntry(u.id, u.changes)));
+        if (entriesToDelete.size > 0) await deleteEntriesFromDb(Array.from(entriesToDelete));
+
+        setKnowledgeBase(prev => prev
+            .map(entry => {
+                const update = updates.find(u => u.id === entry.id);
+                return update ? { ...entry, ...update.changes } as KnowledgeBaseEntry : entry;
+            })
+            .filter(entry => !entriesToDelete.has(entry.id))
+        );
+        showNotification(`Merged ${duplicatesFound} duplicate article entries.`);
+
+    }, [knowledgeBase, showNotification]);
 
 
     const addKnowledgeBaseEntries = useCallback(async (entries: KnowledgeBaseEntry[]) => {

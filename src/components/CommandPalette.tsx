@@ -6,7 +6,7 @@ import { useSettings } from '../contexts/SettingsContext';
 import { useKnowledgeBase } from '../contexts/KnowledgeBaseContext';
 import { DocumentIcon } from './icons/DocumentIcon';
 import { DatabaseIcon } from './icons/DatabaseIcon';
-import { GearIcon } from './icons/GearIcon';
+import { CogIcon } from './icons/CogIcon';
 import { QuestionMarkCircleIcon } from './icons/QuestionMarkCircleIcon';
 import { ChartBarIcon } from './icons/ChartBarIcon';
 import { HistoryIcon } from './icons/HistoryIcon';
@@ -101,7 +101,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
         }
         
         commandList.push(
-            { id: 'nav-settings', type: 'navigation', title: 'Go to Settings', keywords: 'options config', icon: <GearIcon className="h-5 w-5" />, action: () => setCurrentView('settings') },
+            { id: 'nav-settings', type: 'navigation', title: 'Go to Settings', keywords: 'options config', icon: <CogIcon className="h-5 w-5" />, action: () => setCurrentView('settings') },
             { id: 'nav-help', type: 'navigation', title: 'Go to Help', keywords: 'docs faq', icon: <QuestionMarkCircleIcon className="h-5 w-5" />, action: () => setCurrentView('help') }
         );
         
@@ -149,6 +149,12 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
         }
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [isCommandPaletteOpen, filteredCommands, selectedIndex, closePalette]);
+
+    useEffect(() => {
+        if (selectedIndex >= filteredCommands.length) {
+            setSelectedIndex(0);
+        }
+    }, [filteredCommands, selectedIndex]);
 
     useEffect(() => {
         resultsRef.current?.children[selectedIndex]?.scrollIntoView({

@@ -81,14 +81,10 @@ const deepMerge = (target: any, source: any): any => {
     let output = { ...target };
     if (isObject(target) && isObject(source)) {
         Object.keys(source).forEach(key => {
-            if (isObject(source[key])) {
-                if (!(key in target)) {
-                    output = { ...output, [key]: source[key] };
-                } else {
-                    output[key] = deepMerge(target[key], source[key]);
-                }
+            if (isObject(source[key]) && key in target && isObject(target[key])) {
+                output[key] = deepMerge(target[key], source[key]);
             } else {
-                output = { ...output, [key]: source[key] };
+                output[key] = source[key];
             }
         });
     }
@@ -138,7 +134,9 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   const updateSettings = useCallback((newSettings: Partial<Settings> | ((prevState: Settings) => Settings)) => {
       setSettings(prevSettings => {
-          const updated = typeof newSettings === 'function' ? newSettings(prevSettings) : deepMerge(prevSettings, newSettings);
+          const updated = typeof newSettings === 'function' 
+              ? newSettings(prevSettings) 
+              : deepMerge(prevSettings, newSettings);
           saveSettingsToDb(updated).catch(error => console.error("Failed to save settings to IndexedDB", error));
           return updated;
       });

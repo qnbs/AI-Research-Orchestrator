@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, memo } from 'react';
 import { DocumentIcon } from './icons/DocumentIcon';
 import { DatabaseIcon } from './icons/DatabaseIcon';
-import { GearIcon } from './icons/GearIcon';
+import { CogIcon } from './icons/CogIcon';
 import { QuestionMarkCircleIcon } from './icons/QuestionMarkCircleIcon';
 import { ChartBarIcon } from './icons/ChartBarIcon';
 import { HistoryIcon } from './icons/HistoryIcon';
@@ -16,26 +16,16 @@ import { DocumentPlusIcon } from './icons/DocumentPlusIcon';
 import { SearchIcon } from './icons/SearchIcon';
 import { EllipsisHorizontalIcon } from './icons/EllipsisHorizontalIcon';
 import { BookOpenIcon } from './icons/BookOpenIcon';
+import { AppLogo } from './AppLogo';
 
 interface HeaderProps {
     onViewChange: (view: View) => void;
+    currentView: View;
     knowledgeBaseArticleCount: number;
     hasReports: boolean;
     isResearching: boolean;
     onQuickAdd: () => void;
 }
-
-const AppLogoIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
-        <defs><linearGradient id="logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style={{stopColor: 'var(--color-brand-accent)', stopOpacity: 1}} /><stop offset="100%" style={{stopColor: 'var(--color-accent-cyan)', stopOpacity: 1}} /></linearGradient></defs>
-        <path d="M12 2L8 4V8L12 10L16 8V4L12 2Z" stroke="url(#logo-gradient)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M12 22L8 20V16L12 14L16 16V20L12 22Z" stroke="url(#logo-gradient)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M22 12L20 8L16 10L14 12L16 14L20 16L22 12Z" stroke="url(#logo-gradient)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M2 12L4 8L8 10L10 12L8 14L4 16L2 12Z" stroke="url(#logo-gradient)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M12 10V14" stroke="url(#logo-gradient)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M8 8L4 8" stroke="url(#logo-gradient)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M16 8L20 8" stroke="url(#logo-gradient)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M8 16L4 16" stroke="url(#logo-gradient)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M16 16L20 16" stroke="url(#logo-gradient)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-);
-
 
 const NavButton: React.FC<{
     onClick: () => void; isActive: boolean; disabled?: boolean; children: React.ReactNode; className?: string; ariaLabel?: string;
@@ -52,9 +42,9 @@ const NavButton: React.FC<{
 );
 
 
-const HeaderComponent: React.FC<HeaderProps> = ({ onViewChange, knowledgeBaseArticleCount, hasReports, isResearching, onQuickAdd }) => {
+const HeaderComponent: React.FC<HeaderProps> = ({ onViewChange, currentView, knowledgeBaseArticleCount, hasReports, isResearching, onQuickAdd }) => {
     const { settings, updateSettings } = useSettings();
-    const { currentView, isSettingsDirty, setIsCommandPaletteOpen } = useUI();
+    const { isSettingsDirty, setIsCommandPaletteOpen } = useUI();
     
     // State for mobile "More" menu
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -94,7 +84,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({ onViewChange, knowledgeBaseArt
     const displayCount = knowledgeBaseArticleCount > 999 ? '999+' : knowledgeBaseArticleCount;
 
     return (
-      <header className="bg-surface/80 backdrop-blur-md sticky top-0 z-20 border-b border-border shadow-sm">
+      <header className="bg-surface/80 backdrop-blur-md fixed top-0 left-0 right-0 z-20 border-b border-border shadow-sm">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           
           {/* --- DESKTOP HEADER (TWO-LINE) --- */}
@@ -102,7 +92,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({ onViewChange, knowledgeBaseArt
             {/* Top Row: Logo & Navigation */}
             <div className="flex items-center justify-between">
               <button onClick={() => onViewChange('home')} className="flex items-center gap-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent rounded-md p-1 -m-1" aria-label="Go to Home">
-                <AppLogoIcon />
+                <AppLogo idPrefix="header-logo" />
               </button>
                 <nav className="flex items-center space-x-1 bg-background/50 p-1 rounded-lg border border-border" aria-label="Main navigation">
                   <NavButton onClick={() => onViewChange('research')} isActive={currentView === 'research'} className="relative">
@@ -117,59 +107,57 @@ const HeaderComponent: React.FC<HeaderProps> = ({ onViewChange, knowledgeBaseArt
                   <NavButton onClick={() => onViewChange('history')} isActive={currentView === 'history'} disabled={!hasReports}><HistoryIcon className="h-5 w-5 mr-2" />History</NavButton>
                 </nav>
             </div>
-
-            {/* Bottom Row: Actions */}
-            <div className="flex items-center justify-end space-x-1">
-                <button onClick={onQuickAdd} className="p-2 rounded-md transition-colors text-text-secondary hover:bg-surface-hover hover:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent" aria-label="Quick Add Article" title="Quick Add Article"><DocumentPlusIcon className="h-6 w-6" /></button>
-                <button onClick={() => setIsCommandPaletteOpen(true)} className="p-2 rounded-md transition-colors text-text-secondary hover:bg-surface-hover hover:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent" aria-label="Open Command Palette" title="Search / Command Palette (⌘+K)"><SearchIcon className="h-6 w-6" /></button>
-                <div className="w-px h-6 bg-border mx-2"></div>
-                <button onClick={toggleTheme} className="p-2 rounded-md transition-colors text-text-secondary hover:bg-surface-hover hover:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent" aria-label={`Switch to ${settings.theme === 'dark' ? 'light' : 'dark'} mode`}>
-                    {settings.theme === 'dark' ? <SunIcon className="h-6 w-6 text-accent-amber" /> : <MoonIcon className="h-6 w-6" />}
-                </button>
-                <button onClick={() => onViewChange('settings')} className={`relative p-2 rounded-md transition-colors text-text-secondary hover:bg-surface-hover hover:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent ${currentView === 'settings' ? 'bg-surface-hover text-brand-accent' : ''}`} aria-label="Settings">
-                    <GearIcon className="h-6 w-6" />
-                    {isSettingsDirty && <span className="absolute top-1.5 right-1.5 block h-2.5 w-2.5 rounded-full bg-accent-amber ring-2 ring-surface" />}
-                </button>
-                <button onClick={() => onViewChange('help')} className={`p-2 rounded-md transition-colors text-text-secondary hover:bg-surface-hover hover:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent ${currentView === 'help' ? 'bg-surface-hover text-brand-accent' : ''}`} aria-label="Help"><QuestionMarkCircleIcon className="h-6 w-6" /></button>
+            
+            {/* Bottom Row: Title & Actions */}
+            <div className="flex justify-between items-center">
+                <h1 className="text-lg font-bold text-text-primary">{viewTitles[currentView]}</h1>
+                 <div className="flex items-center gap-2">
+                    <button onClick={() => setIsCommandPaletteOpen(true)} className="flex items-center gap-2 px-3 py-1.5 text-sm text-text-secondary bg-surface border border-border rounded-md hover:bg-surface-hover hover:text-text-primary transition-colors" aria-label="Open command palette">
+                        <SearchIcon className="h-4 w-4" />
+                        Search...
+                        <kbd className="ml-2 px-1.5 py-0.5 text-xs font-semibold text-text-secondary bg-background border border-border rounded-md">⌘K</kbd>
+                    </button>
+                    <button onClick={onQuickAdd} className="flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary bg-surface border border-border rounded-md hover:bg-surface-hover transition-colors" aria-label="Quick Add Article">
+                        <DocumentPlusIcon className="h-4 w-4"/> Quick Add
+                    </button>
+                    <div className="w-px h-6 bg-border mx-1"></div>
+                     <NavButton onClick={() => onViewChange('settings')} isActive={currentView === 'settings'} ariaLabel="Settings">
+                        <CogIcon className={`h-5 w-5 ${isSettingsDirty ? 'text-amber-400' : ''}`} />
+                    </NavButton>
+                    <NavButton onClick={() => onViewChange('help')} isActive={currentView === 'help'} ariaLabel="Help"><QuestionMarkCircleIcon className="h-5 w-5" /></NavButton>
+                    <NavButton onClick={toggleTheme} isActive={false} ariaLabel={`Switch to ${settings.theme === 'dark' ? 'light' : 'dark'} theme`}>
+                         {settings.theme === 'dark' ? <SunIcon className="h-5 w-5" /> : <MoonIcon className="h-5 w-5" />}
+                    </NavButton>
+                </div>
             </div>
           </div>
-          
+
           {/* --- MOBILE HEADER (SINGLE LINE) --- */}
           <div className="md:hidden flex items-center justify-between h-16">
-              <div className="flex-1 flex justify-start">
-                  <button onClick={() => onViewChange('home')} className="flex items-center gap-4 p-1 -m-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent rounded-md" aria-label="Go to Home">
-                    <AppLogoIcon />
-                  </button>
-              </div>
-              <div className="flex-1 flex justify-center">
-                   <h1 className="text-base font-semibold text-text-primary whitespace-nowrap truncate">{viewTitles[currentView]}</h1>
-              </div>
-              <div className="flex-1 flex justify-end items-center space-x-1">
-                  <button onClick={onQuickAdd} className="p-2 rounded-md transition-colors text-text-secondary hover:bg-surface-hover hover:text-text-primary" aria-label="Quick Add Article"><DocumentPlusIcon className="h-6 w-6" /></button>
-                  <button onClick={() => setIsCommandPaletteOpen(true)} className="p-2 rounded-md transition-colors text-text-secondary hover:bg-surface-hover hover:text-text-primary" aria-label="Open Command Palette"><SearchIcon className="h-6 w-6" /></button>
-                  <div className="relative" ref={mobileMenuRef}>
-                      <button onClick={() => setIsMobileMenuOpen(prev => !prev)} className="p-2 rounded-md transition-colors text-text-secondary hover:bg-surface-hover hover:text-text-primary" aria-label="More options" aria-haspopup="true" aria-expanded={isMobileMenuOpen}>
+            <button onClick={() => onViewChange('home')} className="flex items-center gap-2" aria-label="Go to Home">
+                <AppLogo idPrefix="mobile-header-logo" />
+                <span className="font-bold text-lg text-text-primary">{viewTitles[currentView]}</span>
+            </button>
+            <div className="flex items-center gap-1">
+                <button onClick={() => setIsCommandPaletteOpen(true)} className="p-2 text-text-secondary hover:text-text-primary" aria-label="Search"><SearchIcon className="h-6 w-6" /></button>
+                <button onClick={onQuickAdd} className="p-2 text-text-secondary hover:text-text-primary" aria-label="Quick Add"><DocumentPlusIcon className="h-6 w-6" /></button>
+                <div ref={mobileMenuRef} className="relative">
+                    <button onClick={() => setIsMobileMenuOpen(prev => !prev)} className="p-2 text-text-secondary hover:text-text-primary" aria-label="More options">
                         <EllipsisHorizontalIcon className="h-6 w-6" />
-                      </button>
-                      {isMobileMenuOpen && (
-                          <div className="absolute right-0 mt-2 w-48 bg-surface border border-border rounded-md shadow-lg z-20 animate-fadeIn" style={{animationDuration: '150ms'}}>
-                              <div className="p-1" role="menu" aria-orientation="vertical">
-                                <button onClick={() => handleMobileMenuSelect(toggleTheme)} className="w-full text-left flex items-center justify-between px-3 py-2 text-sm font-medium rounded-md transition-colors text-text-primary hover:bg-surface-hover" role="menuitem">
-                                    <span>Toggle Theme</span>
-                                    {settings.theme === 'dark' ? <SunIcon className="h-5 w-5 text-accent-amber" /> : <MoonIcon className="h-5 w-5" />}
-                                </button>
-                                <button onClick={() => handleMobileMenuSelect(() => onViewChange('settings'))} className="w-full text-left flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors text-text-primary hover:bg-surface-hover" role="menuitem">
-                                    <GearIcon className="h-5 w-5 mr-3" /> Settings
-                                </button>
-                                <button onClick={() => handleMobileMenuSelect(() => onViewChange('help'))} className="w-full text-left flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors text-text-primary hover:bg-surface-hover" role="menuitem">
-                                    <QuestionMarkCircleIcon className="h-5 w-5 mr-3" /> Help
-                                </button>
-                              </div>
-                          </div>
-                      )}
-                  </div>
-              </div>
+                    </button>
+                    {isMobileMenuOpen && (
+                         <div className="absolute right-0 mt-2 w-48 bg-surface border border-border rounded-md shadow-lg z-10 animate-fadeIn" style={{ animationDuration: '150ms' }}>
+                             <button onClick={() => handleMobileMenuSelect(() => onViewChange('settings'))} className="w-full text-left flex items-center gap-3 px-3 py-2 text-sm hover:bg-surface-hover"><CogIcon className={`h-5 w-5 ${isSettingsDirty ? 'text-amber-400' : ''}`} /> Settings</button>
+                             <button onClick={() => handleMobileMenuSelect(() => onViewChange('help'))} className="w-full text-left flex items-center gap-3 px-3 py-2 text-sm hover:bg-surface-hover"><QuestionMarkCircleIcon className="h-5 w-5" /> Help</button>
+                             <button onClick={() => handleMobileMenuSelect(toggleTheme)} className="w-full text-left flex items-center gap-3 px-3 py-2 text-sm hover:bg-surface-hover">
+                                 {settings.theme === 'dark' ? <><SunIcon className="h-5 w-5"/> Light Mode</> : <><MoonIcon className="h-5 w-5"/> Dark Mode</>}
+                             </button>
+                         </div>
+                    )}
+                </div>
+            </div>
           </div>
+
         </div>
       </header>
     );

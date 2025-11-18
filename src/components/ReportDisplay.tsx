@@ -1,5 +1,4 @@
-
-import React, { useState, useId, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useId, useEffect, useRef, useCallback, useMemo } from 'react';
 import type { ResearchReport, RankedArticle, ResearchInput, AggregatedArticle, ChatMessage } from '../types';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
@@ -27,6 +26,11 @@ import { useKnowledgeBase } from '../contexts/KnowledgeBaseContext';
 import { ExportIcon } from './icons/ExportIcon';
 import { ChatInterface } from './ChatInterface';
 import { ChatBubbleLeftRightIcon } from './icons/ChatBubbleLeftRightIcon';
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement, Colors } from 'chart.js';
+import { Bar } from 'react-chartjs-2';
+
+// Register ChartJS components to ensure they are available
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement, Colors);
 
 interface ReportDisplayProps {
   report: ResearchReport;
@@ -234,6 +238,54 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(({ report,
       document.addEventListener("mousedown", handleClickOutside);
       return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+  
+  // Compute chart data for the report's articles
+  const chartData = useMemo(() => {
+      if (!report || !report.rankedArticles || report.rankedArticles.length === 0) return null;
+      
+      const yearCounts: Record<string, number> = {};
+      report.rankedArticles.forEach(a => {
+          if (a.pubYear) yearCounts[a.pubYear] = (yearCounts[a.pubYear] || 0) + 1;
+      });
+      
+      const sortedYears = Object.keys(yearCounts).sort();
+      
+      const isDarkMode = settings.theme === 'dark';
+      const textColor = isDarkMode ? '#7d8590' : '#57606a';
+      const gridColor = isDarkMode ? 'rgba(125, 133, 144, 0.1)' : 'rgba(87, 96, 106, 0.1)';
+      
+      return {
+          data: {
+            labels: sortedYears,
+            datasets: [{
+                label: 'Publications',
+                data: sortedYears.map(y => yearCounts[y]),
+                backgroundColor: 'rgba(31, 111, 235, 0.6)',
+                borderColor: 'rgba(31, 111, 235, 1)',
+                borderWidth: 1
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                title: { display: true, text: 'Publication Timeline', color: textColor }
+            },
+            scales: {
+                x: { 
+                    ticks: { color: textColor }, 
+                    grid: { color: gridColor } 
+                },
+                y: { 
+                    ticks: { stepSize: 1, color: textColor }, 
+                    grid: { color: gridColor },
+                    beginAtZero: true
+                }
+            }
+          }
+      };
+  }, [report, settings.theme]);
 
   const handlePdfExport = () => {
       setIsExporting(true);
@@ -377,6 +429,18 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(({ report,
                 </div>
             </AccordionSection>
             
+            <AccordionSection title="Data Visualization & Trends" defaultOpen={false}>
+                <div className="p-2">
+                   {chartData ? (
+                        <div className="h-64 bg-background border border-border rounded-md p-4">
+                            <Bar data={chartData.data} options={chartData.options as any} />
+                        </div>
+                   ) : (
+                       <p className="text-text-secondary italic">No data available for visualization.</p>
+                   )}
+                </div>
+            </AccordionSection>
+
             <AccordionSection title="Overall Keywords & Themes" count={report.overallKeywords.length}>
                 <div className="space-y-3 p-2">
                     {report.overallKeywords && report.overallKeywords.length > 0 ? (

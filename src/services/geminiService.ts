@@ -8,36 +8,71 @@ if (!process.env.API_KEY) {
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 /**
- * Extracts a JSON object or array from a string that may contain other text,
- * such as markdown code fences.
- * @param text The string to extract JSON from.
- * @returns The parsed JSON object.
- * @throws An error if no valid JSON is found or if parsing fails.
+ * Retries a fetch operation with exponential backoff.
+ */
+async function fetchWithRetry(url: string, options: RequestInit, retries = 3, backoff = 1000): Promise<Response> {
+    try {
+        const response = await fetch(url, options);
+        if (!response.ok && retries > 0 && response.status !== 404 && response.status !== 400) {
+             // Retry on server errors or timeouts, but not on 404/400
+            await new Promise(resolve => setTimeout(resolve, backoff));
+            return fetchWithRetry(url, options, retries - 1, backoff * 2);
+        }
+        return response;
+    } catch (error) {
+        if (retries > 0) {
+            await new Promise(resolve => setTimeout(resolve, backoff));
+            return fetchWithRetry(url, options, retries - 1, backoff * 2);
+        }
+        throw error;
+    }
+}
+
+/**
+ * Extracts a JSON object or array from a string that may contain other text.
+ * Enhanced to handle various markdown formats and raw JSON.
  */
 function extractAndParseJson<T>(text: string): T {
-    // Regex to find JSON in ```json ... ```, or a raw JSON object/array.
-    const jsonRegex = /```json\s*([\s\S]*?)\s*```|({[\s\S]*})|(\[[\s\S]*\])/m;
-    const match = text.match(jsonRegex);
+    // 1. Try finding JSON within markdown code blocks
+    const jsonCodeBlockRegex = /```(?:json)?\s*([\s\S]*?)\s*```/m;
+    const match = text.match(jsonCodeBlockRegex);
 
-    if (match) {
-        // Find the first non-null capture group.
-        const jsonString = match[1] || match[2] || match[3];
-        if (jsonString) {
-            try {
-                return JSON.parse(jsonString) as T;
-            } catch (error) {
-                console.error("Failed to parse extracted JSON:", jsonString, error);
-                throw new Error(`AI response contained malformed JSON. Content: ${jsonString.substring(0, 200)}...`);
-            }
+    if (match && match[1]) {
+        try {
+            return JSON.parse(match[1]) as T;
+        } catch (e) {
+            console.warn("Failed to parse JSON from code block, attempting raw parse.");
         }
     }
+
+    // 2. Try finding the first '{' or '[' and the last '}' or ']'
+    const firstBrace = text.indexOf('{');
+    const firstBracket = text.indexOf('[');
     
-    // As a fallback for cases where the model returns JSON without fences,
-    // try parsing the whole string.
+    let startIdx = -1;
+    let endIdx = -1;
+
+    if (firstBrace !== -1 && (firstBracket === -1 || firstBrace < firstBracket)) {
+        startIdx = firstBrace;
+        endIdx = text.lastIndexOf('}');
+    } else if (firstBracket !== -1) {
+        startIdx = firstBracket;
+        endIdx = text.lastIndexOf(']');
+    }
+
+    if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
+        const potentialJson = text.substring(startIdx, endIdx + 1);
+        try {
+            return JSON.parse(potentialJson) as T;
+        } catch (e) {
+             console.warn("Failed to parse extracted JSON segment:", e);
+        }
+    }
+
+    // 3. Fallback: Try parsing the whole text
     try {
         return JSON.parse(text) as T;
     } catch(e) {
-        // If everything fails, throw a clear error.
         console.error("Could not find any valid JSON in the AI response:", text);
         throw new Error("AI response did not contain valid JSON.");
     }
@@ -45,12 +80,9 @@ function extractAndParseJson<T>(text: string): T {
 
 /**
  * Parses a Gemini API error and returns a user-friendly message.
- * @param error The error object.
- * @returns A string containing a readable error message.
  */
 function getGeminiError(error: unknown): string {
     if (error && typeof error === 'object') {
-        // Check for specific Gemini response structure indicating a block reason
         if ('response' in error) {
             const response = (error as any).response;
             const candidate = response?.candidates?.[0];
@@ -74,14 +106,7 @@ function getGeminiError(error: unknown): string {
     return "An unknown AI error occurred.";
 }
 
-/**
- * Generates a robust PubMed author search query from a full name.
- * Handles different common name formats like "Lander, Eric S." and "Eric S. Lander".
- * @param fullName The full name of the author.
- * @returns A PubMed-compatible query string.
- */
 export const generateAuthorQuery = (fullName: string): string => {
-    // Handle formats like "Lander, Eric S." first by rearranging them
     if (fullName.includes(',')) {
         const parts = fullName.split(',');
         const lastName = parts[0].trim();
@@ -89,11 +114,10 @@ export const generateAuthorQuery = (fullName: string): string => {
         fullName = `${firstAndMiddle} ${lastName}`;
     }
 
-    // Remove periods to handle "S." vs "S" and split into parts
     const cleanedName = fullName.replace(/\./g, '');
     const parts = cleanedName.trim().split(/\s+/).filter(Boolean);
 
-    if (parts.length === 0) return `""[Author]`; // Should not happen with validation
+    if (parts.length === 0) return `""[Author]`;
     if (parts.length === 1) return `"${parts[0]}"[Author]`;
 
     const lastName = parts[parts.length - 1];
@@ -102,21 +126,12 @@ export const generateAuthorQuery = (fullName: string): string => {
     const initials = firstParts.map(p => p.charAt(0)).join('');
 
     const queryVariations = new Set<string>();
-    
-    // 1. Full name format: "First M Last"[Author] e.g. "Eric S Lander"[Author]
     queryVariations.add(`"${firstParts.join(' ')} ${lastName}"[Author]`);
-    
-    // 2. PubMed standard format: "Last FM"[Author] e.g., "Lander ES"[Author]
     queryVariations.add(`"${lastName} ${initials}"[Author]`);
-    
-    // 3. Another common format: "Last First"[Author] e.g., "Lander Eric"[Author]
     queryVariations.add(`"${lastName} ${firstName}"[Author]`);
 
     return `(${Array.from(queryVariations).join(' OR ')})`;
 };
-
-
-// --- PubMed API Client ---
 
 const PUBMED_API_BASE = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/';
 
@@ -133,23 +148,15 @@ interface ESummaryResult {
     }
 }
 
-/**
- * Searches PubMed for article IDs matching a query.
- * @param query The search query string.
- * @param retmax The maximum number of IDs to return.
- * @returns A promise that resolves to an array of PubMed IDs.
- */
 export async function searchPubMedForIds(query: string, retmax: number): Promise<string[]> {
     const url = `${PUBMED_API_BASE}esearch.fcgi?db=pubmed&term=${encodeURIComponent(query)}&retmax=${retmax}&sort=relevance&retmode=json`;
     try {
-        // NCBI recommends including contact info in requests
-        const response = await fetch(url, { headers: { 'User-Agent': 'ai-research-orchestration-author/1.0' } });
+        const response = await fetchWithRetry(url, { headers: { 'User-Agent': 'ai-research-orchestration-author/1.0' } });
         if (!response.ok) {
             throw new Error(`PubMed API error: ${response.statusText}. Could not connect to PubMed.`);
         }
         const data: ESearchResult = await response.json();
         
-        // Handle cases where PubMed returns a valid response but no results.
         if (data.esearchresult?.idlist) {
             return data.esearchresult.idlist;
         }
@@ -163,20 +170,14 @@ export async function searchPubMedForIds(query: string, retmax: number): Promise
     }
 }
 
-/**
- * Fetches summary details for a list of PubMed IDs.
- * @param pmids An array of PubMed IDs.
- * @returns A promise that resolves to an array of partial article data.
- */
 export async function fetchArticleDetails(pmids: string[]): Promise<Partial<RankedArticle>[]> {
     if (pmids.length === 0) return [];
-    // POST request is better for large number of IDs
     const url = `${PUBMED_API_BASE}esummary.fcgi?db=pubmed&retmode=json`;
     try {
         const formData = new FormData();
         formData.append('id', pmids.join(','));
 
-        const response = await fetch(url, { 
+        const response = await fetchWithRetry(url, { 
             method: 'POST',
             body: formData,
             headers: { 'User-Agent': 'ai-research-orchestration-author/1.0' }
@@ -286,9 +287,13 @@ Research Topic: "${input.researchTopic}"
         
         // STEP 4: AI Analyzes and Ranks Real Data
         yield { phase: "Phase 4: AI Ranking & Analysis of Real Articles..." };
-        const analysisResponse = await ai.models.generateContent({
-            model: aiSettings.model,
-            config: { systemInstruction, temperature: aiSettings.temperature, responseMimeType: "application/json", responseSchema: {
+        
+        // Use Thinking Config for better reasoning on complex analysis if using gemini-2.5 models
+        const rankingConfig: any = { 
+            systemInstruction, 
+            temperature: aiSettings.temperature, 
+            responseMimeType: "application/json", 
+            responseSchema: {
                 type: Type.OBJECT,
                 properties: {
                     rankedArticles: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { 
@@ -303,7 +308,17 @@ Research Topic: "${input.researchTopic}"
                     overallKeywords: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { keyword: { type: Type.STRING }, frequency: { type: Type.INTEGER } }, required: ["keyword", "frequency"] } },
                 },
                 required: ["rankedArticles", "aiGeneratedInsights", "overallKeywords"]
-            }},
+            }
+        };
+
+        // Enable thinking if supported and likely beneficial
+        if (aiSettings.model.includes('gemini-2.5') || aiSettings.model.includes('gemini-3')) {
+             rankingConfig.thinkingConfig = { thinkingBudget: 2048 };
+        }
+
+        const analysisResponse = await ai.models.generateContent({
+            model: aiSettings.model,
+            config: rankingConfig,
             contents: `From the provided list of articles, please perform the following analysis based on the original research topic: "${input.researchTopic}".
             1.  Rank the top ${input.topNToSynthesize} articles based on their relevance to the topic. For each, provide its PMID, a relevance score (1-100), a brief explanation for the score, 3-5 keywords from its summary, classify its article type, and write a new, concise summary (as 'aiSummary') that extracts the core methodology, key findings, and limitations of the study. Ensure you ONLY use PMIDs from the provided list.
             2.  Generate 3-5 AI-powered insights based on the provided articles. Each insight should be a question/answer pair. List the PMIDs from the provided list that support each insight.
@@ -344,10 +359,16 @@ Research Topic: "${input.researchTopic}"
         ---
         `).join('\n')}
         `;
+        
+        // Thinking config helps with better synthesis structure
+        const synthesisConfig: any = { systemInstruction, temperature: aiSettings.temperature };
+        if (aiSettings.model.includes('gemini-2.5') || aiSettings.model.includes('gemini-3')) {
+             synthesisConfig.thinkingConfig = { thinkingBudget: 2048 };
+        }
 
         const stream = await ai.models.generateContentStream({
             model: aiSettings.model,
-            config: { systemInstruction, temperature: aiSettings.temperature },
+            config: synthesisConfig,
             contents: synthesisPrompt
         });
 

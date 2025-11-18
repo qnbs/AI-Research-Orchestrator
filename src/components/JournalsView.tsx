@@ -52,7 +52,7 @@ const JournalsView: React.FC = () => {
     useEffect(() => {
         const fetchFeatured = async () => {
             try {
-                const response = await fetch('/data/featuredJournals.json');
+                const response = await fetch('/src/data/featuredJournals.json');
                 if (!response.ok) throw new Error('Failed to load featured journals');
                 const data = await response.json();
                 setFeaturedJournals(data);

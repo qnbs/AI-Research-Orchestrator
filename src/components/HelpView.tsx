@@ -344,5 +344,4 @@ const HelpView: React.FC<HelpViewProps> = ({ initialTab, onTabConsumed }) => {
     );
 };
 
-// FIX: Changed to default export to resolve lazy loading type issue.
 export default HelpView;

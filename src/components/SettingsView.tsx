@@ -1,30 +1,52 @@
-
 import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { useSettings } from '../contexts/SettingsContext';
 import { usePresets } from '../contexts/PresetContext';
 import { Settings, AggregatedArticle, CSV_EXPORT_COLUMNS, ARTICLE_TYPES, Preset } from '../types';
 import { useFocusTrap } from '../hooks/useFocusTrap';
-import { TrashIcon } from './icons/TrashIcon';
-import { UploadIcon } from './icons/UploadIcon';
-import { DownloadIcon } from './icons/DownloadIcon';
-import { SunIcon } from './icons/SunIcon';
-import { MoonIcon } from './icons/MoonIcon';
-import { InfoIcon } from './icons/InfoIcon';
-import { Tooltip } from './Tooltip';
-import { SparklesIcon } from './icons/SparklesIcon';
-import { BellIcon } from './icons/BellIcon';
-import { DatabaseIcon } from './icons/DatabaseIcon';
-import { ConfirmationModal } from './ConfirmationModal';
-import { GearIcon } from './icons/GearIcon';
-import { ExportIcon } from './icons/ExportIcon';
-import { ShieldCheckIcon } from './icons/ShieldCheckIcon';
+import { TrashIcon } from '../components/icons/TrashIcon';
+import { UploadIcon } from '../components/icons/UploadIcon';
+import { DownloadIcon } from '../components/icons/DownloadIcon';
+import { SunIcon } from '../components/icons/SunIcon';
+import { MoonIcon } from '../components/icons/MoonIcon';
+import { InfoIcon } from '../components/icons/InfoIcon';
+import { Tooltip } from '../components/Tooltip';
+import { SparklesIcon } from '../components/icons/SparklesIcon';
+import { BellIcon } from '../components/icons/BellIcon';
+import { DatabaseIcon } from '../components/icons/DatabaseIcon';
+import { ConfirmationModal } from '../components/ConfirmationModal';
+import { CogIcon } from '../components/icons/CogIcon';
+import { ExportIcon } from '../components/icons/ExportIcon';
+import { ShieldCheckIcon } from '../components/icons/ShieldCheckIcon';
 import { exportHistoryToJson, exportKnowledgeBaseToJson } from '../services/exportService';
-import { SettingCard } from './SettingCard';
-import { Toggle } from './Toggle';
+import { SettingCard } from '../components/SettingCard';
+import { Toggle } from '../components/Toggle';
 import { useKnowledgeBase } from '../contexts/KnowledgeBaseContext';
 import { useUI } from '../contexts/UIContext';
-import { InstallIcon } from './icons/InstallIcon';
-import { CheckCircleIcon } from './icons/CheckCircleIcon';
+import { InstallIcon } from '../components/icons/InstallIcon';
+import { CheckCircleIcon } from '../components/icons/CheckCircleIcon';
+import { db } from '../services/databaseService';
+
+const isObject = (item: any): item is object => {
+    return (item && typeof item === 'object' && !Array.isArray(item));
+};
+
+const deepMerge = (target: any, source: any) => {
+    let output = { ...target };
+    if (isObject(target) && isObject(source)) {
+        Object.keys(source).forEach(key => {
+            if (isObject(source[key])) {
+                if (!(key in target)) {
+                    output = { ...output, [key]: source[key] };
+                } else {
+                    output[key] = deepMerge(target[key], source[key]);
+                }
+            } else {
+                output = { ...output, [key]: source[key] };
+            }
+        });
+    }
+    return output;
+};
 
 
 type SettingsTab = 'general' | 'ai' | 'knowledgeBase' | 'export' | 'data';
@@ -213,7 +235,7 @@ const GeneralSettingsTab: React.FC<{
                 </div>
             </div>
         </SettingCard>
-        <SettingCard icon={<GearIcon className="w-6 h-6 text-text-secondary"/>} title="Performance" description="Manage performance-related settings. Disabling animations may improve responsiveness on older devices.">
+        <SettingCard icon={<CogIcon className="w-6 h-6 text-text-secondary"/>} title="Performance" description="Manage performance-related settings. Disabling animations may improve responsiveness on older devices.">
                 <Toggle checked={tempSettings.performance.enableAnimations} onChange={checked => setTempSettings(s => ({...s, performance: {...s.performance, enableAnimations: checked}}))}>
                     Enable UI Animations
                 </Toggle>
@@ -590,21 +612,24 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onClearKnowledgeBase, reset
     const [contentKey, setContentKey] = useState(activeTab);
 
     useEffect(() => {
-        try {
-            const kbItem = localStorage.getItem('aiResearchKnowledgeBase');
-            const settingsItem = localStorage.getItem('aiResearchSettings');
-            const presetsItem = localStorage.getItem('aiResearchPresets');
-            const kbSize = kbItem ? kbItem.length : 0;
-            const settingsSize = settingsItem ? settingsItem.length : 0;
-            const presetsSize = presetsItem ? presetsItem.length : 0;
-            const totalBytes = kbSize + settingsSize + presetsSize;
+        const calculateUsage = async () => {
+            if (navigator.storage && navigator.storage.estimate) {
+                const { usage, quota } = await navigator.storage.estimate();
+                if (usage && quota) {
+                    const totalMB = (usage / (1024 * 1024)).toFixed(2);
+                    const percentage = Math.min(100, (usage / quota) * 100).toFixed(1);
+                    setStorageUsage({ totalMB, percentage });
+                    return;
+                }
+            }
+            // Fallback for browsers without StorageManager API
+            const kbSize = (await db.knowledgeBaseEntries.count()) * 2048; // Estimate 2KB per entry
+            const totalBytes = kbSize;
             const totalMB = (totalBytes / (1024 * 1024)).toFixed(2);
-            // Most browsers have a 5MB or 10MB limit. 5MB is a safe assumption for the visualization.
-            const percentage = Math.min(100, (totalBytes / (5 * 1024 * 1024)) * 100).toFixed(1);
+            const percentage = Math.min(100, (totalBytes / (5 * 1024 * 1024)) * 100).toFixed(1); // Assume 5MB limit
             setStorageUsage({ totalMB, percentage });
-        } catch (e) {
-            console.error("Could not calculate storage usage:", e);
-        }
+        };
+        calculateUsage();
     }, [knowledgeBase, presets]);
 
 
@@ -612,28 +637,6 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onClearKnowledgeBase, reset
         if (!uniqueArticles) return 0;
         return uniqueArticles.filter(a => a.relevanceScore < pruneScore).length;
     }, [pruneScore, uniqueArticles]);
-
-    const isObject = (item: any): item is object => {
-        return (item && typeof item === 'object' && !Array.isArray(item));
-    };
-
-    const deepMerge = (target: any, source: any) => {
-        let output = { ...target };
-        if (isObject(target) && isObject(source)) {
-            Object.keys(source).forEach(key => {
-                if (isObject(source[key])) {
-                    if (!(key in target)) {
-                        output = { ...output, [key]: source[key] };
-                    } else {
-                        output[key] = deepMerge(target[key], source[key]);
-                    }
-                } else {
-                    output = { ...output, [key]: source[key] };
-                }
-            });
-        }
-        return output;
-    };
     
     useEffect(() => {
       setTempSettings(settings);
@@ -722,10 +725,9 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onClearKnowledgeBase, reset
         reader.onload = (event) => {
             try {
                 const importedData = JSON.parse(event.target?.result as string);
-                // Check for new and old formats
                 const dataToImport = importedData.data ? importedData.data : importedData;
 
-                if (Array.isArray(dataToImport) && dataToImport.every(item => 'input' in item && 'report' in item)) {
+                if (Array.isArray(dataToImport) && dataToImport.every(item => 'sourceType' in item)) {
                     setModalState({ type: 'import', data: dataToImport });
                 } else {
                     throw new Error("Invalid file format. The file must be an array of Knowledge Base entries.");
@@ -773,12 +775,13 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onClearKnowledgeBase, reset
 
     const handleConfirmImportSettings = (importedSettings: Partial<Settings>) => {
         const newSettings = deepMerge(settings, importedSettings);
+        updateSettings(newSettings);
         setTempSettings(newSettings);
-        setNotification({id: Date.now(), message: "Settings loaded. Review and click Save Changes.", type: "success"});
+        setNotification({id: Date.now(), message: "Settings successfully imported and saved.", type: "success"});
     };
 
-    const handlePrune = () => {
-        onPruneByRelevance(pruneScore);
+    const handlePrune = async () => {
+        await onPruneByRelevance(pruneScore);
         setModalState(null);
     };
     
@@ -788,14 +791,14 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onClearKnowledgeBase, reset
         setModalState(null);
     };
     
-    const handleDeletePreset = (preset: Preset) => {
-        removePreset(preset.id);
+    const handleDeletePreset = async (preset: Preset) => {
+        await removePreset(preset.id);
         setModalState(null);
         setNotification({id: Date.now(), message: `Preset "${preset.name}" deleted.`, type: 'success'});
     };
     
     const tabs = [
-        { id: 'general', name: 'General', icon: GearIcon },
+        { id: 'general', name: 'General', icon: CogIcon },
         { id: 'ai', name: 'AI', icon: SparklesIcon },
         { id: 'knowledgeBase', name: 'Knowledge Base', icon: DatabaseIcon },
         { id: 'export', name: 'Export', icon: ExportIcon },

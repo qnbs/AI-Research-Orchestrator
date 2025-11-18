@@ -1,11 +1,9 @@
-
 import React, { createContext, useContext, useState, ReactNode, useMemo } from 'react';
 
-// FIX: Add 'journals' to the View type
 export type View = 'home' | 'orchestrator' | 'research' | 'authors' | 'journals' | 'knowledgeBase' | 'settings' | 'help' | 'dashboard' | 'history';
 
 // This interface is not part of the standard DOM library yet.
-interface BeforeInstallPromptEvent extends Event {
+export interface BeforeInstallPromptEvent extends Event {
   readonly platforms: string[];
   readonly userChoice: Promise<{
     outcome: 'accepted' | 'dismissed';

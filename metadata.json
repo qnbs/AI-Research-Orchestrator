@@ -1,5 +1,5 @@
 {
-  "name": "AI Research Orchestration Author",
+  "name": "AI Research Orchestrator",
   "description": "An expert system for authoring comprehensive literature reviews by managing a swarm of specialized AI agents. It uses the PubMed database to collect, curate, and synthesize scientific research based on user-defined criteria.",
   "requestFramePermissions": []
 }

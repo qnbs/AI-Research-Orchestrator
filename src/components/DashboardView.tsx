@@ -1,4 +1,3 @@
-
 import React, { useMemo, useRef, useId, memo } from 'react';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement, Colors } from 'chart.js';
 import { Bar, Doughnut, Chart, getElementAtEvent } from 'react-chartjs-2';
@@ -200,5 +199,4 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({ onFilterChange, 
     );
 };
 
-// FIX: Changed to default export to resolve lazy loading type issue.
 export default memo(DashboardViewComponent);

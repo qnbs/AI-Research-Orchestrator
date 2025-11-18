@@ -46,7 +46,6 @@ const QuickViewModal: React.FC<{ entry: KnowledgeBaseEntry; onClose: () => void;
         };
     }, [onClose]);
     
-    // FIX: Correctly handle discriminated union to get keywords/concepts for each entry type.
     const keywordsAndConcepts =
         entry.sourceType === 'research'
             ? (entry.report.overallKeywords || []).slice(0, 3).map(kw => kw.keyword)
@@ -60,7 +59,7 @@ const QuickViewModal: React.FC<{ entry: KnowledgeBaseEntry; onClose: () => void;
             <div ref={modalRef} className="bg-surface rounded-lg border border-border shadow-2xl p-6 w-full max-w-lg m-4" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="quick-view-title">
                 <div className="flex justify-between items-start mb-4">
                     <div>
-                        <h3 id="quick-view-title" className="text-lg font-bold text-brand-accent">{sourceType === 'author' ? 'Author Profile' : sourceType === 'journal' ? 'Journal Profile' : 'Research Report'}</h3>
+                        <h3 id="quick-view-title" className={`text-lg font-bold text-brand-accent`}>{sourceType === 'author' ? 'Author Profile' : sourceType === 'journal' ? 'Journal Profile' : 'Research Report'}</h3>
                         <p className="text-sm text-text-secondary mt-1 max-w-md">{title}</p>
                     </div>
                     <button onClick={onClose} className="p-1 rounded-full hover:bg-surface-hover">
@@ -96,7 +95,7 @@ const QuickViewModal: React.FC<{ entry: KnowledgeBaseEntry; onClose: () => void;
                         onViewEntry(entry);
                         onClose();
                     }} className="px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-brand-text-on-accent bg-brand-accent hover:bg-opacity-90">
-                        {sourceType === 'author' ? 'View Full Profile' : 'View Full Report'}
+                        {sourceType === 'author' ? 'View Full Profile' : sourceType === 'journal' ? 'View Details' : 'View Full Report'}
                     </button>
                 </div>
             </div>
@@ -119,8 +118,7 @@ interface HistoryListItemProps {
 }
 
 const HistoryListItem = memo<HistoryListItemProps>(({ entry, onViewEntry, onQuickView, onStartEdit, isEditing, editingTitle, onTitleChange, onSaveTitle, onCancelEdit, onEditKeyDown }) => {
-    const { sourceType, title, timestamp } = entry;
-    // FIX: Select icon based on all possible source types.
+    const { sourceType, title, timestamp, articles } = entry;
     const Icon = sourceType === 'author' ? AuthorIcon : sourceType === 'journal' ? BookOpenIcon : DocumentIcon;
     const iconColor = sourceType === 'author' ? 'text-accent-magenta' : sourceType === 'journal' ? 'text-green-400' : 'text-brand-accent';
 
@@ -161,22 +159,27 @@ const HistoryListItem = memo<HistoryListItemProps>(({ entry, onViewEntry, onQuic
                         <EyeIcon className="h-5 w-5" />
                     </button>
                     <button onClick={() => onViewEntry(entry)} className="inline-flex items-center px-3 py-1.5 border border-border text-xs font-medium rounded-md shadow-sm text-text-primary bg-surface hover:bg-surface-hover hover:border-brand-accent transition-colors">
-                        {sourceType === 'author' ? 'View Profile' : 'View Report'}
+                        {sourceType === 'author' ? 'View Profile' : sourceType === 'journal' ? 'View Details' : 'View Report'}
                     </button>
                 </div>
             </div>
             <div className="mt-4 pt-4 border-t border-border/50 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-text-secondary">
-                {/* FIX: Handle all entry types to display correct details. */}
-                {entry.sourceType === 'research' ? (
+                {entry.sourceType === 'research' && (
                     <>
-                        <div><strong>{entry.articles.length}</strong> articles</div>
+                        <div><strong>{articles.length}</strong> articles</div>
                         <div><strong>Focus:</strong> {synthesisFocusText[entry.input.synthesisFocus]}</div>
                         <div><strong>Date Range:</strong> {entry.input.dateRange === 'any' ? 'Any time' : `Last ${entry.input.dateRange} years`}</div>
                     </>
-                ) : entry.sourceType === 'author' ? (
-                     <div><strong>{entry.articles.length}</strong> publications</div>
-                ) : (
-                     <div><strong>{entry.articles.length}</strong> articles found</div>
+                )}
+                {entry.sourceType === 'author' && (
+                     <div><strong>{articles.length}</strong> publications</div>
+                )}
+                {entry.sourceType === 'journal' && (
+                   <>
+                       <div><strong>{articles.length}</strong> articles</div>
+                       <div><strong>ISSN:</strong> {entry.journalProfile.issn}</div>
+                       <div><strong>OA Policy:</strong> {entry.journalProfile.oaPolicy}</div>
+                   </>
                 )}
             </div>
         </li>
@@ -273,6 +276,4 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onViewEntry }) => {
     </div>
   );
 };
-
-// FIX: Added default export for React.lazy() compatibility.
 export default HistoryView;

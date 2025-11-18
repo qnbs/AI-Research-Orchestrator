@@ -1,3 +1,4 @@
+
 import React, { useState, useId } from 'react';
 import type { ResearchAnalysis, SimilarArticle, OnlineFindings } from '../types';
 import { LoadingIndicator } from './LoadingIndicator';
@@ -75,6 +76,10 @@ const SkeletonLoader: React.FC<{ lines?: number; className?: string }> = ({ line
     </div>
 );
 
+const researchPhases = ['Analyzing input and generating summary...'];
+const researchPhaseDetails = {
+    'Analyzing input and generating summary...': ['Processing text...', 'Identifying key concepts...', 'Searching for similar content...']
+};
 
 const ResearchView: React.FC<ResearchViewProps> = ({ 
     onStartNewReview, onStartResearch, onClearResearch, isLoading, phase, error, analysis,
@@ -91,7 +96,16 @@ const ResearchView: React.FC<ResearchViewProps> = ({
 
     const renderContent = () => {
         if (isLoading) {
-            return <div className="mt-8"><LoadingIndicator phase={phase} /></div>;
+            return (
+                <div className="mt-8">
+                    <LoadingIndicator 
+                        title="Research Assistant" 
+                        phase={phase} 
+                        phases={researchPhases} 
+                        phaseDetails={researchPhaseDetails} 
+                    />
+                </div>
+            );
         }
         if (error) {
             return <div className="mt-8 text-center text-red-400 font-semibold p-8 bg-surface rounded-lg border border-red-500/20">{error}</div>;
@@ -232,5 +246,4 @@ const ResearchView: React.FC<ResearchViewProps> = ({
         </div>
     );
 };
-// FIX: Changed to default export to resolve lazy loading type issue.
 export default ResearchView;

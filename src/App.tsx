@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect, memo, lazy, Suspense } from 'react';
 import { Header } from './components/Header';
 import { ResearchInput, ResearchReport, KnowledgeBaseEntry, ChatMessage, AuthorProfile, KnowledgeBaseFilter, AggregatedArticle } from './types';
@@ -10,14 +9,13 @@ import { useResearchAssistant } from './hooks/useResearchAssistant';
 import { generateResearchReportStream } from './services/geminiService';
 import { KnowledgeBaseProvider, useKnowledgeBase } from './contexts/KnowledgeBaseContext';
 import { UIProvider, useUI } from './contexts/UIContext';
-import type { View } from './contexts/UIContext';
+import type { View, BeforeInstallPromptEvent } from './contexts/UIContext';
 import { exportKnowledgeBaseToPdf, exportToCsv, exportCitations } from './services/exportService';
 import { useChat } from './hooks/useChat';
 import { BottomNavBar } from './components/BottomNavBar';
 import ErrorBoundary from './components/ErrorBoundary';
 
 // Lazy load all major view components for code splitting
-// FIX: Updated lazy imports to correctly handle default exports.
 const OnboardingView = lazy(() => import('./components/OnboardingView'));
 const KnowledgeBaseView = lazy(() => import('./components/KnowledgeBaseView'));
 const SettingsView = lazy(() => import('./components/SettingsView'));
@@ -144,16 +142,6 @@ const AppLayout: React.FC = () => {
     }, [setIsCommandPaletteOpen]);
     
     useEffect(() => {
-        // This interface is not part of the standard DOM library yet.
-        interface BeforeInstallPromptEvent extends Event {
-            readonly platforms: string[];
-            readonly userChoice: Promise<{
-                outcome: 'accepted' | 'dismissed';
-                platform: string;
-            }>;
-            prompt(): Promise<void>;
-        }
-
         const handleBeforeInstallPrompt = (e: Event) => {
             e.preventDefault();
             setInstallPromptEvent(e as BeforeInstallPromptEvent);
@@ -219,7 +207,6 @@ const AppLayout: React.FC = () => {
         setReportStatus('done');
         
         if (settings.defaults.autoSaveReports) {
-            // FIX: Correctly call async saveReport without checking truthiness of void return.
             await saveReport(data, completeReport);
             setIsCurrentReportSaved(true);
         }
@@ -231,7 +218,6 @@ const AppLayout: React.FC = () => {
 
   const handleSaveReport = useCallback(async () => {
       if (report && localResearchInput) {
-        // FIX: Correctly call async saveReport without checking truthiness of void return.
         await saveReport(localResearchInput, report);
         setIsCurrentReportSaved(true);
       }
@@ -304,8 +290,8 @@ const AppLayout: React.FC = () => {
     setSelectedAuthorProfile(null);
   }, []);
   
-  const handleTagsUpdate = useCallback((pmid: string, newTags: string[]) => {
-    updateTags(pmid, newTags);
+  const handleTagsUpdate = useCallback(async (pmid: string, newTags: string[]) => {
+    await updateTags(pmid, newTags);
     // Also update the local report state if it's being viewed
     setReport(prevReport => {
         if (!prevReport || !prevReport.rankedArticles.some(a => a.pmid === pmid)) {
@@ -400,8 +386,8 @@ const AppLayout: React.FC = () => {
                 onlineFindingsState={online}
             />);
            case 'authors': return <AuthorsView initialProfile={selectedAuthorProfile} onViewedInitialProfile={handleAuthorProfileViewed} />;
-           case 'journals': return <JournalsView />;
            case 'knowledgeBase': return <KnowledgeBaseView onViewChange={handleViewChange} filter={kbFilter} onFilterChange={handleFilterChange} selectedPmids={selectedKbPmids} setSelectedPmids={setSelectedKbPmids} />;
+           case 'journals': return <JournalsView />;
            case 'dashboard': return <DashboardView onFilterChange={handleFilterChange} onViewChange={handleViewChange} />;
            case 'history': return <HistoryView onViewEntry={handleViewEntry} />;
            case 'settings': return <SettingsView onClearKnowledgeBase={handleClearKnowledgeBase} resetToken={settingsResetToken} onNavigateToHelpTab={(tab) => { setInitialHelpTab(tab); setCurrentView('help'); }} />;
@@ -414,12 +400,13 @@ const AppLayout: React.FC = () => {
     <>
       <Header 
           onViewChange={handleViewChange} 
+          currentView={currentView}
           knowledgeBaseArticleCount={uniqueArticles.length} 
           hasReports={knowledgeBase.length > 0}
           isResearching={isResearching}
           onQuickAdd={() => setIsQuickAddModalOpen(true)}
       />
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-24">
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 md:pt-28 pt-20 pb-24">
          <Suspense fallback={<ContentSpinner />}>
             {renderView()}
          </Suspense>

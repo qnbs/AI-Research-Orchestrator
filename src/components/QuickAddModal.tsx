@@ -84,5 +84,4 @@ const QuickAddModal: React.FC<QuickAddModalProps> = ({ onClose }) => {
         </div>
     );
 };
-// FIX: Changed to default export to resolve lazy loading type issue.
 export default QuickAddModal;

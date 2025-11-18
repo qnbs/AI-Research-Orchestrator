@@ -1,11 +1,11 @@
 {
-  "name": "AI Research Orchestrator: Your intelligent assistant for scientific literature reviews.",
-  "short_name": "AI Research Orchestrator",
+  "name": "AI Research Orchestration Author",
+  "short_name": "AI Research",
   "start_url": ".",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#000000",
-  "theme_color": "#1769AA",
+  "background_color": "#010409",
+  "theme_color": "#1f6feb",
   "description": "An expert system for authoring comprehensive literature reviews by managing a swarm of specialized AI agents.",
   "icons": [
     {

@@ -63,6 +63,7 @@ export interface BaseEntry {
     title: string;
     timestamp: number;
     articles: Article[];
+    sourceType: 'research' | 'author' | 'journal';
 }
 
 export interface ResearchEntry extends BaseEntry {
