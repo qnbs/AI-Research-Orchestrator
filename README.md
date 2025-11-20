@@ -1,6 +1,8 @@
 
 # AI Research Orchestration Author
 
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/qnbs/AI-Research-Orchestrator)
+
 ![Status](https://img.shields.io/badge/Status-Production_Ready-success)
 ![Tech](https://img.shields.io/badge/Built_With-React_19_|_TypeScript_|_Gemini_2.5-blueviolet)
 ![License](https://img.shields.io/badge/License-MIT-blue)
@@ -54,8 +56,6 @@ A lightweight tool for ad-hoc inquiry.
 ---
 
 ## 🛠️ Technical Architecture
-
-This application is a **Single Page Application (SPA)** built with a modern, performance-oriented stack.
 
 ### Technology Stack
 *   **Framework**: [React 19](https://react.dev/) (leveraging Suspense and concurrent features).
