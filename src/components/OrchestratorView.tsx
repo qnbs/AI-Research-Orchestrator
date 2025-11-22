@@ -1,3 +1,4 @@
+
 import React, { memo } from 'react';
 import { InputForm } from './InputForm';
 import { ReportDisplay } from './ReportDisplay';
@@ -6,6 +7,7 @@ import { OrchestratorDashboard } from './OrchestratorDashboard';
 import { Welcome } from './Welcome';
 import { ResearchInput, ResearchReport, KnowledgeBaseEntry, Settings, ChatMessage } from '../types';
 import { useKnowledgeBase } from '../contexts/KnowledgeBaseContext';
+import { useTranslation } from '../hooks/useTranslation';
 
 interface OrchestratorViewProps {
     reportStatus: 'idle' | 'generating' | 'streaming' | 'done' | 'error';
@@ -28,16 +30,6 @@ interface OrchestratorViewProps {
     isChatting: boolean;
     onSendMessage: (message: string) => void;
 }
-
-const loadingPhases = [
-  "Phase 1: AI Generating PubMed Queries...",
-  "Phase 2: Executing Real-time PubMed Search...",
-  "Phase 3: Fetching Article Details from PubMed...",
-  "Phase 4: AI Ranking & Analysis of Real Articles...",
-  "Phase 5: Synthesizing Top Findings...",
-  "Streaming Synthesis...",
-  "Finalizing Report..."
-] as const;
 
 const phaseDetails: Record<string, string[]> = {
   "Phase 1: AI Generating PubMed Queries...": [
@@ -97,6 +89,26 @@ const OrchestratorViewComponent: React.FC<OrchestratorViewProps> = ({
     onSendMessage,
 }) => {
     const { knowledgeBase } = useKnowledgeBase();
+    const { t } = useTranslation();
+    
+    const loadingPhases = [
+        t('orchestrator.phase1'),
+        t('orchestrator.phase2'),
+        t('orchestrator.phase3'),
+        t('orchestrator.phase4'),
+        t('orchestrator.phase5'),
+        t('orchestrator.phase6'),
+        t('orchestrator.phase7')
+    ];
+
+    // Map generic phase strings to translated ones for display if needed, 
+    // or simply pass the current phase string if it matches the translation key logic
+    // For simplicity in this update, we rely on the service sending the English key 
+    // and we map it here, or we update the service. 
+    // Ideally, the service should emit status codes, not strings.
+    // As a quick fix, we will display the passed string, but ensure the LoadingIndicator
+    // receives the translated list for the progress bar.
+
     const isProcessing = reportStatus === 'generating' || reportStatus === 'streaming';
     const showLoadingIndicator = reportStatus === 'generating';
     const showReport = (reportStatus === 'streaming' || reportStatus === 'done') && report;
@@ -113,10 +125,10 @@ const OrchestratorViewComponent: React.FC<OrchestratorViewProps> = ({
 
             {showLoadingIndicator && (
                 <LoadingIndicator 
-                    title="Orchestrating AI Agents..."
+                    title={t('orchestrator.title')}
                     phase={currentPhase}
                     phases={loadingPhases}
-                    phaseDetails={phaseDetails}
+                    phaseDetails={phaseDetails} // Details remain in English for now unless mapped
                     footerText="This may take up to a minute. The AI is performing multiple complex steps, including live database searches and synthesis."
                 />
             )}

@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef } from 'react';
 import type { AggregatedArticle, SimilarArticle, OnlineFindings } from '../types';
 import { useSettings } from '../contexts/SettingsContext';
@@ -23,10 +24,10 @@ interface ArticleDetailPanelProps {
 const SkeletonLoader: React.FC<{ lines?: number; className?: string }> = ({ lines = 3, className = '' }) => (
     <div className={`space-y-3 animate-pulse ${className}`}>
         {Array.from({ length: lines }).map((_, i) => (
-            <div key={i} className="p-3 rounded-md bg-background border border-border/70">
-                <div className="h-4 w-3/4 rounded bg-border"></div>
-                <div className="mt-2 h-2 w-1/4 rounded bg-border"></div>
-                <div className="mt-3 h-2 w-5/6 rounded bg-border"></div>
+            <div key={i} className="p-3 rounded-md bg-surface/50 border border-border/70">
+                <div className="h-4 w-3/4 rounded bg-border/50"></div>
+                <div className="mt-2 h-2 w-1/4 rounded bg-border/50"></div>
+                <div className="mt-3 h-2 w-5/6 rounded bg-border/50"></div>
             </div>
         ))}
     </div>
@@ -51,8 +52,14 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({ article,
     const panelRef = useFocusTrap<HTMLDivElement>(true);
     const contentRef = useRef<HTMLDivElement>(null);
     const [showGoToTop, setShowGoToTop] = useState(false);
+    const isMounted = useRef(true);
 
     const relatedInsights = findRelatedInsights(article.pmid);
+
+    useEffect(() => {
+        isMounted.current = true;
+        return () => { isMounted.current = false; };
+    }, []);
 
     useEffect(() => {
         const handleEsc = (e: KeyboardEvent) => {
@@ -95,11 +102,11 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({ article,
         setFindError(null);
         try {
             const result = await findSimilarArticles({ title: article.title, summary: article.summary }, settings.ai);
-            setSimilarArticles(result);
+            if (isMounted.current) setSimilarArticles(result);
         } catch (err) {
-            setFindError(err instanceof Error ? err.message : 'Failed to find similar articles.');
+            if (isMounted.current) setFindError(err instanceof Error ? err.message : 'Failed to find similar articles.');
         } finally {
-            setIsFindingSimilar(false);
+            if (isMounted.current) setIsFindingSimilar(false);
         }
     };
     
@@ -107,11 +114,11 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({ article,
         setIsFindingOnline(true);
         try {
             const result = await findRelatedOnline(article.title, settings.ai);
-            setOnlineFindings(result);
+            if (isMounted.current) setOnlineFindings(result);
         } catch (err) {
-            // handle error
+            // Handle error silently or add UI for it
         } finally {
-            setIsFindingOnline(false);
+            if (isMounted.current) setIsFindingOnline(false);
         }
     };
 
@@ -120,11 +127,11 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({ article,
         setTldrError(null);
         try {
             const result = await generateTldrSummary(article.summary, settings.ai);
-            setTldr(result);
+            if (isMounted.current) setTldr(result);
         } catch (err) {
-            setTldrError(err instanceof Error ? err.message : 'Failed to generate TL;DR.');
+            if (isMounted.current) setTldrError(err instanceof Error ? err.message : 'Failed to generate TL;DR.');
         } finally {
-            setIsGeneratingTldr(false);
+            if (isMounted.current) setIsGeneratingTldr(false);
         }
     };
 
@@ -133,53 +140,60 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({ article,
     };
 
     return (
-        <div className="fixed inset-0 bg-black/60 z-40 flex justify-end animate-fadeIn" style={{ animationDuration: '200ms' }}>
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-md z-40 flex justify-end animate-fadeIn" style={{ animationDuration: '300ms' }}>
             <div
                 ref={panelRef}
-                className="w-full max-w-2xl h-full bg-surface border-l border-border shadow-2xl flex flex-col"
+                className="w-full max-w-2xl h-full bg-surface/95 border-l border-border shadow-2xl flex flex-col backdrop-blur-xl"
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="article-detail-title"
             >
                 {/* Header */}
-                <header className="flex-shrink-0 p-4 border-b border-border flex justify-between items-center bg-surface sticky top-0 z-10">
+                <header className="flex-shrink-0 p-5 border-b border-border flex justify-between items-center bg-surface/50 sticky top-0 z-10 backdrop-blur-md">
                     <h2 id="article-detail-title" className="text-lg font-bold text-text-primary truncate pr-4">{article.title}</h2>
-                    <button onClick={onClose} className="p-2 rounded-full hover:bg-surface-hover text-text-secondary" aria-label="Close panel">
+                    <button onClick={onClose} className="p-2 rounded-full hover:bg-surface-hover text-text-secondary transition-colors" aria-label="Close panel">
                         <XIcon className="h-6 w-6" />
                     </button>
                 </header>
 
                 {/* Content */}
-                <div ref={contentRef} className="flex-grow overflow-y-auto p-6 space-y-6 relative">
+                <div ref={contentRef} className="flex-grow overflow-y-auto p-6 space-y-8 relative">
                     <div className="flex justify-between items-start gap-4">
                         <div className="flex-1">
-                            <p className="text-sm text-text-secondary">{article.authors}</p>
-                            <p className="text-sm text-text-secondary italic">{article.journal} ({article.pubYear})</p>
-                             <div className="mt-2 text-xs text-text-secondary flex items-center gap-4">
-                                <a href={`https://pubmed.ncbi.nlm.nih.gov/${article.pmid}/`} target="_blank" rel="noopener noreferrer" className="hover:text-brand-accent">PMID: {article.pmid}</a>
-                                {article.pmcId && <a href={`https://www.ncbi.nlm.nih.gov/pmc/articles/${article.pmcId}/`} target="_blank" rel="noopener noreferrer" className="hover:text-brand-accent">PMCID: {article.pmcId}</a>}
-                                <a href={`https://scholar.google.com/scholar?q=${encodeURIComponent(article.title)}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-brand-accent"><AcademicCapIcon className="h-4 w-4" /> Scholar</a>
+                            <p className="text-sm text-text-primary font-medium">{article.authors}</p>
+                            <p className="text-sm text-text-secondary italic mt-1">{article.journal} ({article.pubYear})</p>
+                             <div className="mt-3 text-xs text-text-secondary flex items-center gap-4">
+                                <a href={`https://pubmed.ncbi.nlm.nih.gov/${article.pmid}/`} target="_blank" rel="noopener noreferrer" className="hover:text-brand-accent transition-colors">PMID: {article.pmid}</a>
+                                {article.pmcId && <a href={`https://www.ncbi.nlm.nih.gov/pmc/articles/${article.pmcId}/`} target="_blank" rel="noopener noreferrer" className="hover:text-brand-accent transition-colors">PMCID: {article.pmcId}</a>}
+                                <a href={`https://scholar.google.com/scholar?q=${encodeURIComponent(article.title)}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-brand-accent transition-colors"><AcademicCapIcon className="h-4 w-4" /> Scholar</a>
                              </div>
                         </div>
                         <RelevanceScoreDisplay score={article.relevanceScore} />
                     </div>
                     
                     {article.isOpenAccess && (
-                        <div className="flex items-center text-sm text-green-400 font-medium">
-                            <UnlockIcon className="h-4 w-4 mr-1.5" />
+                        <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-500/10 text-green-400 border border-green-500/20 shadow-[0_0_10px_rgba(74,222,128,0.2)]">
+                            <UnlockIcon className="h-3 w-3 mr-1.5" />
                             <span>Open Access Article</span>
                         </div>
                     )}
 
-                    <div className="prose prose-sm prose-invert max-w-none text-text-secondary/90 leading-relaxed">
-                        <h4 className="font-semibold text-text-primary not-prose">AI Summary</h4>
-                        <p>{article.aiSummary || 'No AI summary available.'}</p>
-                        <h4 className="font-semibold text-text-primary not-prose mt-4">Original Abstract</h4>
-                        <p>{article.summary}</p>
+                    <div className="glass-panel rounded-lg p-5 shadow-none bg-surface/30">
+                        <h4 className="text-sm font-bold text-text-primary mb-2 uppercase tracking-wide text-xs opacity-80">AI Summary</h4>
+                        <div className="prose prose-sm prose-invert max-w-none text-text-secondary/90 leading-relaxed">
+                            <p>{article.aiSummary || 'No AI summary available.'}</p>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 className="text-sm font-bold text-text-primary mb-2 uppercase tracking-wide text-xs opacity-80">Original Abstract</h4>
+                        <div className="prose prose-sm prose-invert max-w-none text-text-secondary/90 leading-relaxed">
+                             <p>{article.summary}</p>
+                        </div>
                     </div>
 
-                    <div>
-                        <h4 className="font-semibold text-text-primary mb-2 flex items-center gap-2"><TagIcon className="h-5 w-5"/> Tags</h4>
+                    <div className="pt-6 border-t border-border">
+                        <h4 className="font-bold text-text-primary mb-3 flex items-center gap-2 text-sm uppercase tracking-wide"><TagIcon className="h-4 w-4"/> Tags</h4>
                         <div className="flex flex-wrap gap-2 items-center">
                             {(article.customTags || []).map(tag => (
                                 <span key={tag} className="flex items-center bg-purple-500/10 text-purple-300 text-sm font-medium pl-2 pr-1 py-0.5 rounded-full border border-purple-500/20">
@@ -189,18 +203,18 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({ article,
                                     </button>
                                 </span>
                             ))}
-                             <input type="text" value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={handleTagInputKeyDown} placeholder="Add tag..." className="bg-input-bg border-border border rounded-md py-0.5 px-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand-accent" />
+                             <input type="text" value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={handleTagInputKeyDown} placeholder="+ Add tag" className="bg-transparent border border-border rounded-full py-0.5 px-3 text-sm focus:outline-none focus:border-brand-accent text-text-primary w-24 focus:w-32 transition-all placeholder-text-secondary/50" />
                         </div>
                     </div>
                     
                     {relatedInsights.length > 0 && (
-                        <div>
-                             <h4 className="font-semibold text-text-primary mb-2">Related AI Insights</h4>
+                        <div className="pt-6 border-t border-border">
+                             <h4 className="font-bold text-text-primary mb-3 text-sm uppercase tracking-wide">Related AI Insights</h4>
                             <div className="space-y-3">
                                 {relatedInsights.map((insight, index) => (
-                                    <div key={index} className="bg-background p-3 rounded-md border border-border">
-                                        <p className="font-semibold text-brand-accent text-sm">{insight.question}</p>
-                                        <p className="mt-1 text-sm text-text-primary/90">{insight.answer}</p>
+                                    <div key={index} className="bg-background/50 p-4 rounded-lg border border-border shadow-sm">
+                                        <p className="font-semibold text-brand-accent text-sm mb-1">{insight.question}</p>
+                                        <p className="text-sm text-text-primary/90">{insight.answer}</p>
                                     </div>
                                 ))}
                             </div>
@@ -208,54 +222,54 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({ article,
                     )}
                     
                     <div className="pt-6 border-t border-border">
-                        <h3 className="text-lg font-bold text-text-primary mb-4">Discovery Tools</h3>
-                        <div className="space-y-6">
+                        <h3 className="text-lg font-bold brand-gradient-text mb-6">Discovery Tools</h3>
+                        <div className="grid grid-cols-1 gap-6">
                             {settings.ai.enableTldr && (
-                                <div>
-                                    <div className="flex justify-between items-center">
+                                <div className="glass-panel p-4 rounded-lg shadow-none bg-surface/30 hover:bg-surface/50 transition-colors">
+                                    <div className="flex justify-between items-center mb-3">
                                         <h4 className="font-semibold text-text-primary">TL;DR Summary</h4>
-                                        <button onClick={handleGenerateTldr} disabled={isGeneratingTldr} className="inline-flex items-center px-3 py-1 border border-border text-xs font-medium rounded-md shadow-sm text-text-primary bg-surface hover:bg-surface-hover disabled:opacity-50">
+                                        <button onClick={handleGenerateTldr} disabled={isGeneratingTldr} className="text-xs font-medium text-brand-accent hover:text-brand-secondary disabled:opacity-50">
                                             {isGeneratingTldr ? 'Generating...' : 'Generate'}
                                         </button>
                                     </div>
-                                    {isGeneratingTldr && <div className="h-4 w-3/4 rounded bg-border animate-pulse mt-2"></div>}
-                                    {tldrError && <p className="text-xs text-red-400 mt-2">{tldrError}</p>}
-                                    {tldr && <p className="text-sm text-text-secondary mt-2 p-3 bg-background rounded-md border border-border italic">"{tldr}"</p>}
+                                    {isGeneratingTldr && <div className="h-4 w-3/4 rounded bg-border animate-pulse"></div>}
+                                    {tldrError && <p className="text-xs text-red-400">{tldrError}</p>}
+                                    {tldr && <p className="text-sm text-text-secondary italic">"{tldr}"</p>}
                                 </div>
                             )}
 
-                             <div>
-                                <div className="flex justify-between items-center">
-                                    <h4 className="font-semibold text-text-primary flex items-center gap-2"><SparklesIcon className="h-5 w-5 text-accent-cyan"/> Similar PubMed Articles</h4>
-                                    <button onClick={handleFindSimilar} disabled={isFindingSimilar} className="inline-flex items-center px-3 py-1 border border-border text-xs font-medium rounded-md shadow-sm text-text-primary bg-surface hover:bg-surface-hover disabled:opacity-50">
+                             <div className="glass-panel p-4 rounded-lg shadow-none bg-surface/30 hover:bg-surface/50 transition-colors">
+                                <div className="flex justify-between items-center mb-3">
+                                    <h4 className="font-semibold text-text-primary flex items-center gap-2"><SparklesIcon className="h-4 w-4 text-accent-cyan"/> Similar Articles</h4>
+                                    <button onClick={handleFindSimilar} disabled={isFindingSimilar} className="text-xs font-medium text-brand-accent hover:text-brand-secondary disabled:opacity-50">
                                         {isFindingSimilar ? 'Finding...' : 'Find'}
                                     </button>
                                 </div>
-                                <div className="mt-3 space-y-3">
-                                    {isFindingSimilar && <SkeletonLoader />}
+                                <div className="space-y-3">
+                                    {isFindingSimilar && <SkeletonLoader lines={2} />}
                                     {findError && <p className="text-red-400 text-sm">{findError}</p>}
                                     {similarArticles && similarArticles.map(similar => (
-                                        <div key={similar.pmid} className="bg-background p-3 rounded-md border border-border">
-                                            <a href={`https://pubmed.ncbi.nlm.nih.gov/${similar.pmid}/`} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-text-primary hover:text-brand-accent">
+                                        <div key={similar.pmid} className="bg-background/50 p-3 rounded-md border border-border">
+                                            <a href={`https://pubmed.ncbi.nlm.nih.gov/${similar.pmid}/`} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-text-primary hover:text-brand-accent block mb-1">
                                                 {similar.title}
                                             </a>
-                                            <p className="mt-2 text-xs text-text-secondary"><strong>Reasoning:</strong> {similar.reason}</p>
+                                            <p className="text-xs text-text-secondary"><strong>Why:</strong> {similar.reason}</p>
                                         </div>
                                     ))}
                                 </div>
                             </div>
                             
-                             <div>
-                                <div className="flex justify-between items-center">
-                                     <h4 className="font-semibold text-text-primary flex items-center gap-2"><WebIcon className="h-5 w-5 text-accent-amber"/> Related Online Discussions</h4>
-                                    <button onClick={handleFindOnline} disabled={isFindingOnline} className="inline-flex items-center px-3 py-1 border border-border text-xs font-medium rounded-md shadow-sm text-text-primary bg-surface hover:bg-surface-hover disabled:opacity-50">
+                             <div className="glass-panel p-4 rounded-lg shadow-none bg-surface/30 hover:bg-surface/50 transition-colors">
+                                <div className="flex justify-between items-center mb-3">
+                                     <h4 className="font-semibold text-text-primary flex items-center gap-2"><WebIcon className="h-4 w-4 text-accent-amber"/> Online Discussions</h4>
+                                    <button onClick={handleFindOnline} disabled={isFindingOnline} className="text-xs font-medium text-brand-accent hover:text-brand-secondary disabled:opacity-50">
                                         {isFindingOnline ? 'Searching...' : 'Search'}
                                     </button>
                                 </div>
-                                 <div className="mt-3">
+                                 <div>
                                     {isFindingOnline && <SkeletonLoader lines={1} />}
                                     {onlineFindings && (
-                                        <div className="bg-background p-3 rounded-md border border-border">
+                                        <div className="bg-background/50 p-3 rounded-md border border-border">
                                             <p className="text-sm text-text-secondary mb-3">{onlineFindings.summary}</p>
                                             <ul className="space-y-1">
                                                 {onlineFindings.sources.map(source => (
@@ -273,7 +287,7 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({ article,
                         </div>
                     </div>
                      {showGoToTop && (
-                        <button onClick={scrollToTop} aria-label="Scroll to top" className="absolute bottom-6 right-6 p-2 rounded-full bg-brand-accent text-brand-text-on-accent shadow-lg hover:bg-opacity-90">
+                        <button onClick={scrollToTop} aria-label="Scroll to top" className="absolute bottom-6 right-6 p-3 rounded-full bg-brand-accent text-brand-text-on-accent shadow-lg hover:bg-opacity-90 transition-all duration-300 animate-fadeIn">
                             <ChevronUpIcon className="h-5 w-5"/>
                         </button>
                     )}

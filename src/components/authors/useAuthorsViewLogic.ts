@@ -1,5 +1,5 @@
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { AuthorCluster, AuthorProfile, RankedArticle, FeaturedAuthorCategory } from '../../types';
 import { useSettings } from '../../contexts/SettingsContext';
 import { useKnowledgeBase } from '../../contexts/KnowledgeBaseContext';
@@ -47,6 +47,15 @@ export const useAuthorsViewLogic = (
     const [isFeaturedLoading, setIsFeaturedLoading] = useState(true);
     const [featuredError, setFeaturedError] = useState<string|null>(null);
 
+    const isMounted = useRef(true);
+
+    useEffect(() => {
+        isMounted.current = true;
+        return () => {
+            isMounted.current = false;
+        };
+    }, []);
+
     useEffect(() => {
         if (initialProfile) {
             setAuthorProfile(initialProfile);
@@ -65,12 +74,18 @@ export const useAuthorsViewLogic = (
                     throw new Error(`Network response was not ok, status: ${response.status}`);
                 }
                 const categories: FeaturedAuthorCategory[] = await response.json();
-                setFeaturedCategories(categories);
+                if (isMounted.current) {
+                    setFeaturedCategories(categories);
+                }
             } catch (err) {
                 console.error("Error loading featured authors from JSON:", err);
-                setFeaturedError("Could not load featured authors. Please ensure 'src/data/featuredAuthors.json' is available.");
+                if (isMounted.current) {
+                    setFeaturedError("Could not load featured authors. Please ensure 'src/data/featuredAuthors.json' is available.");
+                }
             } finally {
-                setIsFeaturedLoading(false);
+                if (isMounted.current) {
+                    setIsFeaturedLoading(false);
+                }
             }
         };
         fetchFeatured();
@@ -85,9 +100,13 @@ export const useAuthorsViewLogic = (
             setLoadingPhase(authorLoadingPhases[3]);
             const allArticleDetails = await fetchArticleDetails(cluster.pmids);
             
+            if (!isMounted.current) return;
+
             setLoadingPhase(authorLoadingPhases[4]);
             const { careerSummary, coreConcepts, estimatedMetrics } = await generateAuthorProfileAnalysis(cluster.nameVariant, allArticleDetails, settings.ai);
             
+            if (!isMounted.current) return;
+
             setLoadingPhase(authorLoadingPhases[5]);
             const citationsPerYear: { [key: string]: number } = {};
             const publicationYears: number[] = allArticleDetails.map(a => parseInt(a.pubYear || '0')).filter(y => y > 0);
@@ -135,14 +154,21 @@ export const useAuthorsViewLogic = (
             };
 
             await saveAuthorProfile({ authorName: profile.name }, profile);
-            setAuthorProfile(profile);
-            setView('profile');
+            
+            if (isMounted.current) {
+                setAuthorProfile(profile);
+                setView('profile');
+            }
 
         } catch (err) {
-             setError(err instanceof Error ? err.message : "An unknown error occurred while building the profile.");
-             setView('landing');
+             if (isMounted.current) {
+                 setError(err instanceof Error ? err.message : "An unknown error occurred while building the profile.");
+                 setView('landing');
+             }
         } finally {
-            setIsLoading(false);
+            if (isMounted.current) {
+                setIsLoading(false);
+            }
         }
     }, [settings.ai, saveAuthorProfile]);
 
@@ -162,11 +188,17 @@ export const useAuthorsViewLogic = (
                 throw new Error("No publications found for this author on PubMed. Try a different name variation or check spelling.");
             }
 
+            if (!isMounted.current) return;
+
             setLoadingPhase(authorLoadingPhases[1]);
             const articleDetails = await fetchArticleDetails(pmids.slice(0, 50));
 
+            if (!isMounted.current) return;
+
             setLoadingPhase(authorLoadingPhases[2]);
             const clusters = await disambiguateAuthor(name, articleDetails, settings.ai);
+
+            if (!isMounted.current) return;
 
             if (clusters.length === 1) {
                 await handleSelectCluster(clusters[0]);
@@ -175,10 +207,14 @@ export const useAuthorsViewLogic = (
                 setView('disambiguation');
             }
         } catch (err) {
-            setError(err instanceof Error ? err.message : "An unknown error occurred.");
-            setView('landing');
+            if (isMounted.current) {
+                setError(err instanceof Error ? err.message : "An unknown error occurred.");
+                setView('landing');
+            }
         } finally {
-            setIsLoading(false);
+            if (isMounted.current) {
+                setIsLoading(false);
+            }
         }
     }, [settings.ai, handleSelectCluster]);
     
@@ -189,11 +225,17 @@ export const useAuthorsViewLogic = (
         setError(null);
         try {
             const result = await suggestAuthors(field, settings.ai);
-            setSuggestedAuthors(result);
+            if (isMounted.current) {
+                setSuggestedAuthors(result);
+            }
         } catch(err) {
-            setSuggestionError(err instanceof Error ? err.message : "Failed to suggest authors.");
+            if (isMounted.current) {
+                setSuggestionError(err instanceof Error ? err.message : "Failed to suggest authors.");
+            }
         } finally {
-            setIsSuggesting(false);
+            if (isMounted.current) {
+                setIsSuggesting(false);
+            }
         }
     }, [settings.ai]);
 

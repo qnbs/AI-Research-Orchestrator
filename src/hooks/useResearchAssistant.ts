@@ -1,4 +1,5 @@
-import { useState, useCallback } from 'react';
+
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { generateResearchAnalysis, findSimilarArticles, findRelatedOnline } from '../services/geminiService';
 import { ResearchAnalysis, SimilarArticle, OnlineFindings, Settings } from '../types';
 import type { View } from '../contexts/UIContext';
@@ -34,6 +35,14 @@ export const useResearchAssistant = (
     setCurrentView: (view: View) => void
 ) => {
     const [state, setState] = useState<ResearchState>(initialState);
+    const isMountedRef = useRef(true);
+
+    useEffect(() => {
+        isMountedRef.current = true;
+        return () => {
+            isMountedRef.current = false;
+        };
+    }, []);
 
     const startResearch = useCallback(async (queryText: string) => {
         if (!queryText.trim()) return;
@@ -47,6 +56,9 @@ export const useResearchAssistant = (
 
         try {
             const analysisResult = await generateResearchAnalysis(queryText, aiSettings);
+            
+            if (!isMountedRef.current) return;
+
             setState(s => ({
                 ...s,
                 isLoading: false,
@@ -72,6 +84,8 @@ export const useResearchAssistant = (
             }
 
             Promise.allSettled(fetchPromises).then(([similarResult, onlineResult]) => {
+                if (!isMountedRef.current) return;
+
                 setState(s => ({
                     ...s,
                     similar: {
@@ -88,6 +102,7 @@ export const useResearchAssistant = (
             });
 
         } catch (err) {
+            if (!isMountedRef.current) return;
             setState(s => ({
                 ...s,
                 isLoading: false,

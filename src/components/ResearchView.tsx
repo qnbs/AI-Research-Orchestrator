@@ -1,5 +1,5 @@
 
-import React, { useState, useId } from 'react';
+import React, { useState, useId, useMemo } from 'react';
 import type { ResearchAnalysis, SimilarArticle, OnlineFindings } from '../types';
 import { LoadingIndicator } from './LoadingIndicator';
 import { BeakerIcon } from './icons/BeakerIcon';
@@ -92,7 +92,10 @@ const ResearchView: React.FC<ResearchViewProps> = ({
         onStartResearch(textQuery);
     };
     
-    const hasResults = analysis || error;
+    // Memoize summary HTML to avoid re-parsing on every render
+    const summaryHtml = useMemo(() => {
+        return analysis?.summary ? secureMarkdownToHtml(analysis.summary) : '';
+    }, [analysis?.summary]);
 
     const renderContent = () => {
         if (isLoading) {
@@ -122,7 +125,7 @@ const ResearchView: React.FC<ResearchViewProps> = ({
                     </div>
                     {analysis.summary && (
                         <AccordionSection title="AI-Generated Summary" defaultOpen>
-                            <div className="prose prose-sm prose-invert max-w-none text-text-secondary/90 leading-relaxed" dangerouslySetInnerHTML={{ __html: secureMarkdownToHtml(analysis.summary) }} />
+                            <div className="prose prose-sm prose-invert max-w-none text-text-secondary/90 leading-relaxed" dangerouslySetInnerHTML={{ __html: summaryHtml }} />
                         </AccordionSection>
                     )}
                     {analysis.keyFindings?.length > 0 && (

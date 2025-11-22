@@ -1,4 +1,5 @@
-import React, { useState, useCallback, useEffect, memo, lazy, Suspense } from 'react';
+
+import React, { useState, useCallback, useEffect, memo, lazy, Suspense, useRef } from 'react';
 import { Header } from './components/Header';
 import { ResearchInput, ResearchReport, KnowledgeBaseEntry, ChatMessage, AuthorProfile, KnowledgeBaseFilter, AggregatedArticle } from './types';
 import { SettingsProvider, useSettings } from './contexts/SettingsContext';
@@ -14,6 +15,8 @@ import { exportKnowledgeBaseToPdf, exportToCsv, exportCitations } from './servic
 import { useChat } from './hooks/useChat';
 import { BottomNavBar } from './components/BottomNavBar';
 import ErrorBoundary from './components/ErrorBoundary';
+import { useTranslation } from './hooks/useTranslation';
+import { useUrlSync } from './hooks/useUrlSync';
 
 // Lazy load all major view components for code splitting
 const OnboardingView = lazy(() => import('./components/OnboardingView'));
@@ -47,6 +50,7 @@ const AppLayout: React.FC = () => {
   const { isLoading } = useKnowledgeBase();
   const { isSettingsLoading, settings, updateSettings } = useSettings();
   const { arePresetsLoading } = usePresets();
+  const { t } = useTranslation();
 
   // Orchestrator State
   const [researchInput, setResearchInput] = useState<ResearchInput | null>(null);
@@ -56,6 +60,9 @@ const AppLayout: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [currentPhase, setCurrentPhase] = useState<string>('');
   const [selectedAuthorProfile, setSelectedAuthorProfile] = useState<AuthorProfile | null>(null);
+  
+  // Ref to track the current generation session ID to prevent race conditions
+  const generationIdRef = useRef<number>(0);
 
   // App-wide State from contexts
   const { currentView, notification, setNotification, isSettingsDirty, setIsSettingsDirty, pendingNavigation, setPendingNavigation, setCurrentView, isCommandPaletteOpen, setIsCommandPaletteOpen, setInstallPromptEvent, setIsPwaInstalled } = useUI();
@@ -93,6 +100,8 @@ const AppLayout: React.FC = () => {
     showOpenAccessOnly: false,
   });
 
+  // Activate URL syncing
+  useUrlSync(currentView, setCurrentView);
 
   useEffect(() => {
       document.documentElement.className = settings.theme;
@@ -115,19 +124,19 @@ const AppLayout: React.FC = () => {
     useEffect(() => {
         // Accessibility Best Practice: Update document title on view change
         const viewTitles: Record<View, string> = {
-            home: 'Home',
-            orchestrator: 'Orchestrator',
-            research: 'Research',
-            authors: 'Author Hub',
-            journals: 'Journal Hub',
-            knowledgeBase: 'Knowledge Base',
-            dashboard: 'Dashboard',
-            history: 'Report History',
-            settings: 'Settings',
-            help: 'Help & Documentation',
+            home: t('nav.home'),
+            orchestrator: t('nav.orchestrator'),
+            research: t('nav.research'),
+            authors: t('nav.authors'),
+            journals: t('nav.journals'),
+            knowledgeBase: t('nav.knowledgeBase'),
+            dashboard: t('nav.dashboard'),
+            history: t('nav.history'),
+            settings: t('nav.settings'),
+            help: t('nav.help'),
         };
-        document.title = `${viewTitles[currentView] || 'Research'} | AI Research Orchestration Author`;
-    }, [currentView]);
+        document.title = `${viewTitles[currentView] || t('nav.research')} | ${t('app.name')}`;
+    }, [currentView, t]);
 
 
     useEffect(() => {
@@ -174,6 +183,10 @@ const AppLayout: React.FC = () => {
     }, [currentView, selectedKbPmids.length]);
 
   const handleFormSubmit = useCallback(async (data: ResearchInput) => {
+    // Increment generation ID to invalidate any previous streams
+    generationIdRef.current += 1;
+    const currentGenId = generationIdRef.current;
+
     setReportStatus('generating');
     setError(null);
     setReport(null);
@@ -187,7 +200,14 @@ const AppLayout: React.FC = () => {
         let finalSynthesis = '';
         let isFirstChunk = true;
         let finalReport: ResearchReport | null = null;
+        
         for await (const { report: partialReport, synthesisChunk, phase } of stream) {
+            // Check if this stream is still the active one
+            if (generationIdRef.current !== currentGenId) {
+                console.debug('Generation aborted: new request started.');
+                return;
+            }
+
             setCurrentPhase(phase);
             if (isFirstChunk && partialReport) {
                 finalReport = partialReport;
@@ -202,6 +222,9 @@ const AppLayout: React.FC = () => {
             }
         }
         
+        // Final check before completing
+        if (generationIdRef.current !== currentGenId) return;
+
         const completeReport = { ...(finalReport!), synthesis: finalSynthesis };
         setReport(completeReport);
         setReportStatus('done');
@@ -211,8 +234,10 @@ const AppLayout: React.FC = () => {
             setIsCurrentReportSaved(true);
         }
     } catch (err) {
-        setError(err instanceof Error ? err.message : 'An unknown error occurred during report generation.');
-        setReportStatus('error');
+        if (generationIdRef.current === currentGenId) {
+            setError(err instanceof Error ? err.message : 'An unknown error occurred during report generation.');
+            setReportStatus('error');
+        }
     }
   }, [settings.ai, settings.defaults.autoSaveReports, setCurrentView, saveReport]);
 
@@ -224,6 +249,7 @@ const AppLayout: React.FC = () => {
   }, [report, localResearchInput, saveReport]);
   
   const handleNewSearch = useCallback(() => {
+      generationIdRef.current += 1; // Invalidate any ongoing generation
       setReport(null);
       setResearchInput(null);
       setLocalResearchInput(null);
@@ -273,6 +299,8 @@ const AppLayout: React.FC = () => {
 
   const handleViewEntry = useCallback((entry: KnowledgeBaseEntry) => {
       if (entry.sourceType === 'research') {
+        // Stop any ongoing generation when viewing an old report
+        generationIdRef.current += 1;
         setResearchInput(entry.input);
         setLocalResearchInput(entry.input);
         setReport(entry.report);
@@ -336,6 +364,12 @@ const AppLayout: React.FC = () => {
 
   }, [showExportModal, selectedKbPmids, uniqueArticles, settings.export, setNotification, knowledgeBase]);
 
+  // Fix for infinite render loop: Memoize the callback passed to SettingsView
+  const handleNavigateToHelp = useCallback((tab: 'about' | 'faq') => {
+      setInitialHelpTab(tab);
+      setCurrentView('help');
+  }, [setCurrentView]);
+
   if (isSettingsLoading || isLoading || arePresetsLoading) {
     return <FullScreenSpinner />;
   }
@@ -390,7 +424,7 @@ const AppLayout: React.FC = () => {
            case 'journals': return <JournalsView />;
            case 'dashboard': return <DashboardView onFilterChange={handleFilterChange} onViewChange={handleViewChange} />;
            case 'history': return <HistoryView onViewEntry={handleViewEntry} />;
-           case 'settings': return <SettingsView onClearKnowledgeBase={handleClearKnowledgeBase} resetToken={settingsResetToken} onNavigateToHelpTab={(tab) => { setInitialHelpTab(tab); setCurrentView('help'); }} />;
+           case 'settings': return <SettingsView onClearKnowledgeBase={handleClearKnowledgeBase} resetToken={settingsResetToken} onNavigateToHelpTab={handleNavigateToHelp} />;
            case 'help': return <HelpView initialTab={initialHelpTab} onTabConsumed={() => setInitialHelpTab(null)} />;
            default: return <HomeView onNavigate={handleViewChange} />;
       }
@@ -406,7 +440,7 @@ const AppLayout: React.FC = () => {
           isResearching={isResearching}
           onQuickAdd={() => setIsQuickAddModalOpen(true)}
       />
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8 md:pt-28 pt-20 pb-24">
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 md:pt-36 pt-20 pb-24">
          <Suspense fallback={<ContentSpinner />}>
             {renderView()}
          </Suspense>

@@ -1,96 +1,9 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
+
+import React, { createContext, useContext, ReactNode, useCallback, useMemo, useEffect } from 'react';
 import type { Settings } from '../types';
-import { CSV_EXPORT_COLUMNS } from '../types';
-import { getSettings as getSettingsFromDb, saveSettings as saveSettingsToDb } from '../services/databaseService';
-
-const defaultSettings: Settings = {
-  theme: 'dark',
-  appearance: {
-    density: 'comfortable',
-    fontFamily: 'Inter',
-    customColors: {
-        enabled: false,
-        primary: '#2f81f7',
-        secondary: '#388bfd',
-        accent: '#1f6feb',
-    }
-  },
-  performance: {
-    enableAnimations: true,
-  },
-  notifications: {
-      position: 'bottom-right',
-      duration: 5000,
-  },
-  ai: {
-    model: 'gemini-2.5-flash',
-    customPreamble: '',
-    temperature: 0.2,
-    aiLanguage: 'English',
-    aiPersona: 'Neutral Scientist',
-    researchAssistant: {
-      autoFetchSimilar: true,
-      autoFetchOnline: true,
-      authorSearchLimit: 100,
-    },
-    enableTldr: true,
-  },
-  defaults: {
-    maxArticlesToScan: 50,
-    topNToSynthesize: 5,
-    autoSaveReports: true,
-    defaultDateRange: '5',
-    defaultSynthesisFocus: 'overview',
-    defaultArticleTypes: ['Randomized Controlled Trial', 'Systematic Review'],
-  },
-  export: {
-    pdf: {
-        includeCoverPage: true,
-        preparedFor: '',
-        includeSynthesis: true,
-        includeInsights: true,
-        includeQueries: false,
-        includeToc: true,
-        includeHeader: true,
-        includeFooter: true,
-    },
-    csv: {
-        columns: [...CSV_EXPORT_COLUMNS],
-        delimiter: ',',
-    },
-    citation: {
-        includeAbstract: true,
-        includeKeywords: true,
-        includeTags: true,
-        includePmcid: true,
-    }
-  },
-  knowledgeBase: {
-      defaultView: 'grid',
-      articlesPerPage: 20,
-      defaultSort: 'relevance',
-  },
-  hasCompletedOnboarding: false,
-};
-
-const isObject = (item: any): item is object => {
-    return (item && typeof item === 'object' && !Array.isArray(item));
-};
-
-const deepMerge = (target: any, source: any): any => {
-    let output = { ...target };
-    if (isObject(target) && isObject(source)) {
-        Object.keys(source).forEach(key => {
-            if (isObject(source[key]) && key in target && isObject(target[key])) {
-                output[key] = deepMerge(target[key], source[key]);
-            } else {
-                output[key] = source[key];
-            }
-        });
-    }
-    return output;
-};
-
+import { useAppSelector, useAppDispatch } from '../store/hooks';
+import { setSettings, updateSettings as updateSettingsAction, resetSettings as resetSettingsAction, setLoading } from '../store/slices/settingsSlice';
+import { getSettings as getSettingsFromDb } from '../services/databaseService';
 
 interface SettingsContextType {
   settings: Settings;
@@ -102,52 +15,43 @@ interface SettingsContextType {
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [settings, setSettings] = useState<Settings>(defaultSettings);
-  const [isSettingsLoading, setIsSettingsLoading] = useState(true);
+  const dispatch = useAppDispatch();
+  const { data: settings, isLoading } = useAppSelector(state => state.settings);
 
   useEffect(() => {
     const loadSettings = async () => {
-      setIsSettingsLoading(true);
+      dispatch(setLoading(true));
       try {
         const storedSettings = await getSettingsFromDb();
         if (storedSettings) {
-          const mergedSettings = deepMerge(defaultSettings, storedSettings);
-          
-          if (mergedSettings.ai?.model && mergedSettings.ai.model !== 'gemini-2.5-flash') {
-            mergedSettings.ai.model = 'gemini-2.5-flash';
-          }
-          setSettings(mergedSettings);
-        } else {
-          // No settings in DB, save the defaults for next time
-          await saveSettingsToDb(defaultSettings);
-          setSettings(defaultSettings);
+            // Merge logic is simpler here as we just dispatch
+            dispatch(setSettings({ ...settings, ...storedSettings }));
         }
       } catch (error) {
         console.error("Failed to load settings from IndexedDB", error);
-        setSettings(defaultSettings);
       } finally {
-        setIsSettingsLoading(false);
+        dispatch(setLoading(false));
       }
     };
     loadSettings();
-  }, []);
+  }, [dispatch]);
 
   const updateSettings = useCallback((newSettings: Partial<Settings> | ((prevState: Settings) => Settings)) => {
-      setSettings(prevSettings => {
-          const updated = typeof newSettings === 'function' 
-              ? newSettings(prevSettings) 
-              : deepMerge(prevSettings, newSettings);
-          saveSettingsToDb(updated).catch(error => console.error("Failed to save settings to IndexedDB", error));
-          return updated;
-      });
-  }, []);
+      // Resolve function if passed
+      let payload: Settings;
+      if (typeof newSettings === 'function') {
+          payload = newSettings(settings);
+          dispatch(setSettings(payload));
+      } else {
+          dispatch(updateSettingsAction(newSettings));
+      }
+  }, [dispatch, settings]);
 
   const resetSettings = useCallback(() => {
-    saveSettingsToDb(defaultSettings).catch(error => console.error("Failed to reset settings in IndexedDB", error));
-    setSettings(defaultSettings);
-  }, []);
+    dispatch(resetSettingsAction());
+  }, [dispatch]);
 
-  const value = useMemo(() => ({ settings, updateSettings, resetSettings, isSettingsLoading }), [settings, updateSettings, resetSettings, isSettingsLoading]);
+  const value = useMemo(() => ({ settings, updateSettings, resetSettings, isSettingsLoading: isLoading }), [settings, updateSettings, resetSettings, isLoading]);
 
   return (
     <SettingsContext.Provider value={value}>

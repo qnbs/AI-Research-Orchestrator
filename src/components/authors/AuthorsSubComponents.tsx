@@ -245,39 +245,41 @@ export const LandingView: React.FC = () => {
     };
 
     return (
-        <>
-            <div className="text-center">
-                <h1 className="text-4xl font-bold brand-gradient-text">Author Hub</h1>
-                <p className="mt-2 text-lg text-text-secondary max-w-3xl mx-auto">Analyze a researcher's impact or discover key figures in any scientific field.</p>
-            </div>
-            <div className="mt-8 max-w-2xl mx-auto">
-                <form onSubmit={handleSubmit} className="p-2 bg-surface border border-border rounded-lg shadow-lg">
-                    <div className="flex w-full bg-background p-1 rounded-lg border border-border mb-2">
-                        <button type="button" onClick={() => handleModeChange('search')} className={`w-1/2 p-1.5 rounded-md text-sm font-medium transition-colors ${mode === 'search' ? 'bg-brand-accent text-brand-text-on-accent' : 'text-text-secondary hover:bg-surface'}`}>
-                            Analyze Author
-                        </button>
-                        <button type="button" onClick={() => handleModeChange('suggest')} className={`w-1/2 p-1.5 rounded-md text-sm font-medium transition-colors ${mode === 'suggest' ? 'bg-brand-accent text-brand-text-on-accent' : 'text-text-secondary hover:bg-surface'}`}>
-                            Suggest Authors
-                        </button>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <input
-                            type="text"
-                            value={query}
-                            onChange={(e) => setQuery(e.target.value)}
-                            placeholder={mode === 'search' ? "e.g., 'Jennifer Doudna'" : "e.g., 'CRISPR Gene Editing'"}
-                            className="w-full bg-transparent p-2 focus:outline-none text-text-primary"
-                            aria-label={mode === 'search' ? "Author name to search" : "Field of study for suggestions"}
-                        />
-                        <button type="submit" disabled={!query.trim() || isSuggesting} className="px-4 py-2 bg-brand-accent text-brand-text-on-accent rounded-md font-semibold disabled:opacity-50 flex items-center">
-                           {mode === 'search' ? <><SearchIcon className="h-4 w-4 mr-2" />Analyze</> : <><SparklesIcon className="h-4 w-4 mr-2" />Suggest</>}
-                        </button>
-                    </div>
-                </form>
-                 {searchError && <p className="text-center text-red-400 mt-4 text-sm">{searchError}</p>}
+        <div className="pt-2 space-y-12">
+            <div className="space-y-8">
+                <div className="text-center">
+                    <h1 className="text-4xl font-bold brand-gradient-text">Author Hub</h1>
+                    <p className="mt-2 text-lg text-text-secondary max-w-3xl mx-auto">Analyze a researcher's impact or discover key figures in any scientific field.</p>
+                </div>
+                <div className="max-w-2xl mx-auto">
+                    <form onSubmit={handleSubmit} className="p-2 bg-surface border border-border rounded-lg shadow-lg">
+                        <div className="flex w-full bg-background p-1 rounded-lg border border-border mb-2">
+                            <button type="button" onClick={() => handleModeChange('search')} className={`w-1/2 p-1.5 rounded-md text-sm font-medium transition-colors ${mode === 'search' ? 'bg-brand-accent text-brand-text-on-accent' : 'text-text-secondary hover:bg-surface'}`}>
+                                Analyze Author
+                            </button>
+                            <button type="button" onClick={() => handleModeChange('suggest')} className={`w-1/2 p-1.5 rounded-md text-sm font-medium transition-colors ${mode === 'suggest' ? 'bg-brand-accent text-brand-text-on-accent' : 'text-text-secondary hover:bg-surface'}`}>
+                                Suggest Authors
+                            </button>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="text"
+                                value={query}
+                                onChange={(e) => setQuery(e.target.value)}
+                                placeholder={mode === 'search' ? "e.g., 'Jennifer Doudna'" : "e.g., 'CRISPR Gene Editing'"}
+                                className="w-full bg-transparent p-2 focus:outline-none text-text-primary"
+                                aria-label={mode === 'search' ? "Author name to search" : "Field of study for suggestions"}
+                            />
+                            <button type="submit" disabled={!query.trim() || isSuggesting} className="px-4 py-2 bg-brand-accent text-brand-text-on-accent rounded-md font-semibold disabled:opacity-50 flex items-center">
+                            {mode === 'search' ? <><SearchIcon className="h-4 w-4 mr-2" />Analyze</> : <><SparklesIcon className="h-4 w-4 mr-2" />Suggest</>}
+                            </button>
+                        </div>
+                    </form>
+                    {searchError && <p className="text-center text-red-400 mt-4 text-sm">{searchError}</p>}
+                </div>
             </div>
             
-            <div className="mt-12 max-w-4xl mx-auto">
+            <div className="max-w-4xl mx-auto">
                  {isSuggesting && (
                     <div className="text-center">
                         <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-brand-accent mx-auto mb-4"></div>
@@ -296,7 +298,7 @@ export const LandingView: React.FC = () => {
                     </div>
                  )}
             </div>
-        </>
+        </div>
     );
 };
 
@@ -305,7 +307,7 @@ export const DisambiguationView: React.FC = () => {
     if (!clusters) return null;
     
     return (
-        <div className="mt-8 animate-fadeIn">
+        <div className="mt-8 animate-fadeIn pt-2">
             <h2 className="text-2xl font-bold text-text-primary text-center">Disambiguation Required</h2>
             <p className="text-center text-text-secondary mt-2">Multiple potential author profiles were found for "{authorQuery}". Please select the correct one.</p>
             <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
@@ -429,7 +431,7 @@ export const AuthorProfileView: React.FC = () => {
     };
 
     return (
-        <div className="animate-fadeIn space-y-8">
+        <div className="animate-fadeIn space-y-8 pt-2">
             <div className="flex items-center justify-between">
                 <button onClick={onReset} className="flex items-center text-sm font-medium text-text-secondary hover:text-brand-accent transition-colors">
                     <ChevronLeftIcon className="h-4 w-4 mr-1"/>

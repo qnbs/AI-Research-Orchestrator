@@ -1,3 +1,4 @@
+
 import React from 'react';
 import type { View } from '../contexts/UIContext';
 import { HomeIcon } from './icons/HomeIcon';
@@ -28,33 +29,35 @@ const NavItem: React.FC<{
     <button
         onClick={() => onClick(view)}
         disabled={isDisabled}
-        className={`flex flex-col items-center justify-center w-full pt-2 pb-1 text-xs font-medium transition-colors duration-200 focus:outline-none relative ${
+        className={`flex flex-col items-center justify-center w-full pt-3 pb-2 text-[10px] font-medium transition-all duration-200 focus:outline-none relative ${
             isActive ? 'text-brand-accent' : 'text-text-secondary hover:text-text-primary'
-        } ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+        } ${isDisabled ? 'opacity-30 cursor-not-allowed grayscale' : ''}`}
         aria-current={isActive ? 'page' : undefined}
     >
-        {isSpecial && <span className="absolute top-1 right-1/2 translate-x-3 flex h-2.5 w-2.5"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-cyan opacity-75"></span><span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-accent-cyan"></span></span>}
-        {badge !== undefined && badge > 0 && (
-             <span className="absolute top-1 right-1/2 translate-x-4 bg-brand-accent text-brand-text-on-accent text-[10px] font-bold px-1.5 py-0.5 rounded-full">{badge > 99 ? '99+' : badge}</span>
-        )}
-        {icon}
-        <span className="mt-1">{label}</span>
+        <div className={`p-1.5 rounded-xl transition-all duration-300 ${isActive ? 'bg-brand-accent/10 -translate-y-1 shadow-[0_0_10px_rgba(56,189,248,0.2)]' : ''}`}>
+            {isSpecial && <span className="absolute top-2 right-1/2 translate-x-3 flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-cyan opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-accent-cyan"></span></span>}
+            {badge !== undefined && badge > 0 && (
+                <span className="absolute top-1 right-1/2 translate-x-4 bg-brand-accent text-brand-text-on-accent text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-sm border border-background/50 backdrop-blur-md">{badge > 99 ? '99+' : badge}</span>
+            )}
+            {icon}
+        </div>
+        <span className={`mt-1 transition-opacity ${isActive ? 'opacity-100 font-bold text-brand-accent drop-shadow-sm' : 'opacity-80'}`}>{label}</span>
     </button>
 );
 
 
 export const BottomNavBar: React.FC<BottomNavBarProps> = ({ currentView, onViewChange, knowledgeBaseArticleCount, hasReports, isResearching }) => {
     const navItems: { view: View; label: string; icon: React.ReactNode; isDisabled?: boolean; isSpecial?: boolean; badge?: number}[] = [
-        { view: 'home', label: 'Home', icon: <HomeIcon className="h-6 w-6" /> },
-        { view: 'research', label: 'Research', icon: <BeakerIcon className="h-6 w-6" />, isSpecial: isResearching },
-        { view: 'orchestrator', label: 'Orchestrate', icon: <DocumentIcon className="h-6 w-6" /> },
-        { view: 'authors', label: 'Authors', icon: <AuthorIcon className="h-6 w-6" /> },
-        { view: 'journals', label: 'Journals', icon: <BookOpenIcon className="h-6 w-6" /> },
-        { view: 'knowledgeBase', label: 'Knowledge', icon: <DatabaseIcon className="h-6 w-6" />, isDisabled: !hasReports, badge: knowledgeBaseArticleCount },
+        { view: 'home', label: 'Home', icon: <HomeIcon className="h-5 w-5" /> },
+        { view: 'research', label: 'Research', icon: <BeakerIcon className="h-5 w-5" />, isSpecial: isResearching },
+        { view: 'orchestrator', label: 'Agent', icon: <DocumentIcon className="h-5 w-5" /> },
+        { view: 'authors', label: 'Authors', icon: <AuthorIcon className="h-5 w-5" /> },
+        { view: 'journals', label: 'Journals', icon: <BookOpenIcon className="h-5 w-5" /> },
+        { view: 'knowledgeBase', label: 'Data', icon: <DatabaseIcon className="h-5 w-5" />, isDisabled: !hasReports, badge: knowledgeBaseArticleCount },
     ];
     
     return (
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-surface/80 backdrop-blur-md border-t border-border z-30 shadow-[0_-2px_10px_rgba(0,0,0,0.1)] dark:shadow-[0_-2px_10px_rgba(0,0,0,0.3)]">
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-surface/80 backdrop-blur-xl border-t border-border z-30 shadow-[0_-5px_20px_rgba(0,0,0,0.2)] pb-safe">
             <div className="flex justify-around items-center h-16 max-w-lg mx-auto">
                  {navItems.map(item => (
                     <NavItem

@@ -6,6 +6,7 @@ import { useUI } from '../../contexts/UIContext';
 import { KnowledgeBaseFilter, AggregatedArticle } from '../../types';
 import { View } from '../../contexts/UIContext';
 import { exportKnowledgeBaseToPdf, exportToCsv, exportCitations } from '../../services/exportService';
+import { useDebounce } from '../../hooks/useDebounce';
 
 export const useKnowledgeBaseLogic = (
     onViewChange: (view: View) => void,
@@ -26,6 +27,8 @@ export const useKnowledgeBaseLogic = (
     const [showExportModal, setShowExportModal] = useState<'pdf' | 'csv' | 'bib' | 'ris' | null>(null);
     const [isExporting, setIsExporting] = useState(false);
 
+    const debouncedSearchTerm = useDebounce(filter.searchTerm, 300);
+
     const { topics, tags, articleTypes, journals } = useMemo(() => {
         const topics = [...new Set(knowledgeBase.filter(e => e.sourceType === 'research').map(e => e.title))];
         const tags = [...new Set(uniqueArticles.flatMap(a => a.customTags || []))];
@@ -36,8 +39,8 @@ export const useKnowledgeBaseLogic = (
 
     const filteredArticles = useMemo(() => {
         let articles = [...uniqueArticles];
-        if (filter.searchTerm) {
-            const term = filter.searchTerm.toLowerCase();
+        if (debouncedSearchTerm) {
+            const term = debouncedSearchTerm.toLowerCase();
             articles = articles.filter(a => a.title.toLowerCase().includes(term) || a.authors.toLowerCase().includes(term) || a.summary.toLowerCase().includes(term));
         }
         if (filter.selectedTopics.length > 0) articles = articles.filter(a => filter.selectedTopics.includes(a.sourceTitle));
@@ -47,7 +50,7 @@ export const useKnowledgeBaseLogic = (
         if (filter.showOpenAccessOnly) articles = articles.filter(a => a.isOpenAccess);
 
         return articles.sort((a, b) => sortOrder === 'newest' ? new Date(b.pubYear).getTime() - new Date(a.pubYear).getTime() : b.relevanceScore - a.relevanceScore);
-    }, [uniqueArticles, filter, sortOrder]);
+    }, [uniqueArticles, filter, debouncedSearchTerm, sortOrder]);
 
     const articlesPerPage = settings.knowledgeBase.articlesPerPage;
     const totalPages = Math.ceil(filteredArticles.length / articlesPerPage);

@@ -113,8 +113,11 @@ export interface Preset {
   settings: ResearchInput;
 }
 
+export type AppLanguage = 'en' | 'de';
+
 export interface Settings {
   theme: 'dark' | 'light';
+  appLanguage: AppLanguage;
   appearance: {
     density: 'comfortable' | 'compact';
     fontFamily: 'Inter' | 'Lato' | 'Roboto' | 'Open Sans';

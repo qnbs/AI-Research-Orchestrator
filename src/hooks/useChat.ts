@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+
+import { useState, useEffect, useCallback, useRef } from 'react';
 import type { Chat } from '@google/genai';
 import type { ChatMessage, ResearchReport, Settings } from '../types';
 import { startChatWithReport } from '../services/geminiService';
@@ -13,6 +14,14 @@ export const useChat = (
     const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
     const [isChatting, setIsChatting] = useState(false);
     const { setNotification } = useUI();
+    const isMounted = useRef(true);
+
+    useEffect(() => {
+        isMounted.current = true;
+        return () => {
+            isMounted.current = false;
+        };
+    }, []);
 
     useEffect(() => {
         if (report && reportStatus === 'done') {
@@ -45,6 +54,7 @@ export const useChat = (
             setChatHistory(prev => [...prev, { role: 'model', parts: [{text: ''}], timestamp: Date.now() }]);
             
             for await (const chunk of stream) {
+                if (!isMounted.current) break;
                 responseText += chunk.text;
                 setChatHistory(prev => {
                     const newHistory = [...prev];
@@ -56,9 +66,13 @@ export const useChat = (
                 });
             }
         } catch (err) {
-             setNotification({id: Date.now(), message: `Chat error: ${err instanceof Error ? err.message : 'Unknown issue'}`, type: 'error' });
+             if (isMounted.current) {
+                setNotification({id: Date.now(), message: `Chat error: ${err instanceof Error ? err.message : 'Unknown issue'}`, type: 'error' });
+             }
         } finally {
-            setIsChatting(false);
+            if (isMounted.current) {
+                setIsChatting(false);
+            }
         }
     }, [chatSession, setNotification]);
 

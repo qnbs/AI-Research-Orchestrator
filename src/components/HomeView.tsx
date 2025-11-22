@@ -1,3 +1,4 @@
+
 import React from 'react';
 import type { View } from '../contexts/UIContext';
 import { DocumentIcon } from './icons/DocumentIcon';
@@ -5,6 +6,7 @@ import { BeakerIcon } from './icons/BeakerIcon';
 import { AuthorIcon } from './icons/AuthorIcon';
 import { BookOpenIcon } from './icons/BookOpenIcon';
 import { AppLogo } from './AppLogo';
+import { useTranslation } from '../hooks/useTranslation';
 
 interface HomeViewProps {
     onNavigate: (view: View) => void;
@@ -26,6 +28,8 @@ const ActionButton: React.FC<{ icon: React.ReactNode; title: string; description
 
 
 const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
+    const { t } = useTranslation();
+
     return (
         <div className="max-w-4xl mx-auto text-center py-8 animate-fadeIn">
              <div className="inline-block relative mb-6">
@@ -35,35 +39,35 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
                 </div>
             </div>
             <h1 className="text-4xl sm:text-5xl font-bold text-text-primary mb-3">
-                AI Research Orchestrator
+                {t('app.name')}
             </h1>
             <p className="max-w-2xl mx-auto text-lg text-text-secondary mb-12">
-                What would you like to do today?
+                {t('home.welcome')}
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-1 gap-6 text-left max-w-2xl mx-auto">
                 <ActionButton
                     icon={<BeakerIcon className="h-6 w-6" />}
-                    title="Research"
-                    description="Perform a quick, focused analysis on a specific question or abstract."
+                    title={t('home.card.research.title')}
+                    description={t('home.card.research.desc')}
                     onClick={() => onNavigate('research')}
                 />
                 <ActionButton
                     icon={<DocumentIcon className="h-6 w-6" />}
-                    title="Orchestrator"
-                    description="Conduct a comprehensive literature review on a broad topic."
+                    title={t('home.card.orchestrator.title')}
+                    description={t('home.card.orchestrator.desc')}
                     onClick={() => onNavigate('orchestrator')}
                 />
                 <ActionButton
                     icon={<AuthorIcon className="h-6 w-6" />}
-                    title="Author Hub"
-                    description="Analyze a researcher's body of work, impact, and collaborations."
+                    title={t('home.card.authors.title')}
+                    description={t('home.card.authors.desc')}
                     onClick={() => onNavigate('authors')}
                 />
                  <ActionButton
                     icon={<BookOpenIcon className="h-6 w-6" />}
-                    title="Journal Hub"
-                    description="Discover and analyze scientific journals in your field of study."
+                    title={t('home.card.journals.title')}
+                    description={t('home.card.journals.desc')}
                     onClick={() => onNavigate('journals')}
                 />
             </div>

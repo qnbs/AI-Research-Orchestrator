@@ -1,8 +1,17 @@
-import React, { createContext, useContext, useState, ReactNode, useMemo } from 'react';
+
+import React, { createContext, useContext, ReactNode, useMemo, useRef } from 'react';
+import { useAppSelector, useAppDispatch } from '../store/hooks';
+import { 
+    setCurrentView, 
+    setNotification, 
+    setIsSettingsDirty, 
+    setPendingNavigation, 
+    setIsCommandPaletteOpen,
+    setIsPwaInstalled 
+} from '../store/slices/uiSlice';
 
 export type View = 'home' | 'orchestrator' | 'research' | 'authors' | 'journals' | 'knowledgeBase' | 'settings' | 'help' | 'dashboard' | 'history';
 
-// This interface is not part of the standard DOM library yet.
 export interface BeforeInstallPromptEvent extends Event {
   readonly platforms: string[];
   readonly userChoice: Promise<{
@@ -38,32 +47,50 @@ interface UIContextType {
 const UIContext = createContext<UIContextType | undefined>(undefined);
 
 export const UIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [currentView, setCurrentView] = useState<View>('home');
-    const [notification, setNotification] = useState<NotificationState | null>(null);
-    const [isSettingsDirty, setIsSettingsDirty] = useState(false);
-    const [pendingNavigation, setPendingNavigation] = useState<View | null>(null);
-    const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
-    const [installPromptEvent, setInstallPromptEvent] = useState<BeforeInstallPromptEvent | null>(null);
-    const [isPwaInstalled, setIsPwaInstalled] = useState(false);
-    
+    const dispatch = useAppDispatch();
+    const { 
+        currentView, 
+        notification, 
+        isSettingsDirty, 
+        pendingNavigation, 
+        isCommandPaletteOpen,
+        isPwaInstalled 
+    } = useAppSelector(state => state.ui);
+
+    // Refs for non-serializable state (DOM Events)
+    const installPromptEventRef = useRef<BeforeInstallPromptEvent | null>(null);
+
     const value = useMemo(() => ({ 
-        currentView, setCurrentView,
-        notification, setNotification,
-        isSettingsDirty, setIsSettingsDirty,
-        pendingNavigation, setPendingNavigation,
-        isCommandPaletteOpen, setIsCommandPaletteOpen,
-        installPromptEvent, setInstallPromptEvent,
-        isPwaInstalled, setIsPwaInstalled
+        currentView, 
+        setCurrentView: (view: View) => dispatch(setCurrentView(view)),
+        notification, 
+        setNotification: (notif: NotificationState | null) => dispatch(setNotification(notif)),
+        isSettingsDirty, 
+        setIsSettingsDirty: (dirty: boolean) => dispatch(setIsSettingsDirty(dirty)),
+        pendingNavigation, 
+        setPendingNavigation: (view: View | null) => dispatch(setPendingNavigation(view)),
+        isCommandPaletteOpen, 
+        setIsCommandPaletteOpen: (isOpen: boolean | ((isOpen: boolean) => boolean)) => {
+            const val = typeof isOpen === 'function' ? isOpen(isCommandPaletteOpen) : isOpen;
+            dispatch(setIsCommandPaletteOpen(val));
+        },
+        installPromptEvent: installPromptEventRef.current, 
+        setInstallPromptEvent: (event: BeforeInstallPromptEvent | null) => {
+            installPromptEventRef.current = event;
+            // Force a re-render or update some dummy state if needed, 
+            // or manage 'isInstallable' boolean in Redux.
+        },
+        isPwaInstalled, 
+        setIsPwaInstalled: (val: boolean) => dispatch(setIsPwaInstalled(val))
     }), [
         currentView, 
         notification, 
         isSettingsDirty, 
         pendingNavigation, 
         isCommandPaletteOpen,
-        installPromptEvent,
-        isPwaInstalled
+        isPwaInstalled,
+        dispatch
     ]);
-
 
     return (
         <UIContext.Provider value={value}>

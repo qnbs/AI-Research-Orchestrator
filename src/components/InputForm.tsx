@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, memo } from 'react';
 import type { ResearchInput, Settings, Preset } from '../types';
 import { ARTICLE_TYPES } from '../types';
@@ -28,30 +29,30 @@ const SliderInput: React.FC<{
     step?: number;
 }> = ({ label, id, value, onChange, min, max, step = 1 }) => (
     <div>
-        <label htmlFor={id} className="block text-sm font-medium text-text-secondary mb-2">{label}</label>
-        <div className="flex items-center gap-4">
-            <input
-                type="range"
-                id={id}
-                name={id}
-                value={value}
-                onChange={onChange}
-                min={min}
-                max={max}
-                step={step}
-                className="w-full h-2 bg-border rounded-lg appearance-none cursor-pointer accent-brand-accent"
-                aria-labelledby={id}
-                aria-valuetext={String(value)}
-            />
-            <span className="font-mono text-sm text-text-primary bg-input-bg border border-border rounded-md px-2 py-1 w-16 text-center">{value}</span>
+        <div className="flex justify-between mb-2">
+             <label htmlFor={id} className="block text-sm font-medium text-text-secondary">{label}</label>
+             <span className="font-mono text-xs font-bold text-brand-accent bg-brand-accent/10 border border-brand-accent/20 rounded-md px-2 py-0.5 shadow-[0_0_10px_rgba(56,189,248,0.2)]">{value}</span>
         </div>
+        <input
+            type="range"
+            id={id}
+            name={id}
+            value={value}
+            onChange={onChange}
+            min={min}
+            max={max}
+            step={step}
+            className="w-full h-2 bg-input-bg border border-border/50 rounded-lg appearance-none cursor-pointer accent-brand-accent hover:accent-brand-secondary focus:outline-none focus:ring-2 focus:ring-brand-accent/50"
+            aria-labelledby={id}
+            aria-valuetext={String(value)}
+        />
     </div>
 );
 
 
 const CustomCheckbox: React.FC<{ id: string; value: string; checked: boolean; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; label: string; }> = ({ id, value, checked, onChange, label }) => (
-    <label htmlFor={id} className="flex items-center cursor-pointer group">
-        <div className="relative">
+    <label htmlFor={id} className={`flex items-center cursor-pointer group p-2 rounded-lg border transition-all duration-200 ${checked ? 'bg-brand-accent/10 border-brand-accent/40 shadow-[0_0_10px_rgba(56,189,248,0.1)]' : 'bg-transparent border-transparent hover:bg-surface-hover hover:border-border'}`}>
+        <div className="relative flex-shrink-0">
             <input 
                 id={id}
                 value={value}
@@ -60,11 +61,11 @@ const CustomCheckbox: React.FC<{ id: string; value: string; checked: boolean; on
                 onChange={onChange}
                 className="sr-only" // Hide original checkbox
             />
-            <div aria-hidden="true" className={`w-5 h-5 rounded-md border-2 transition-all duration-200 flex items-center justify-center group-hover:border-brand-accent ${checked ? 'bg-brand-accent border-brand-accent' : 'bg-surface border-border'}`}>
-                {checked && <CheckIcon className="w-4 h-4 text-white" />}
+            <div aria-hidden="true" className={`w-5 h-5 rounded-md border transition-all duration-200 flex items-center justify-center ${checked ? 'bg-brand-accent border-brand-accent shadow-glow' : 'bg-input-bg border-border group-hover:border-brand-accent/50'}`}>
+                {checked && <CheckIcon className="w-3.5 h-3.5 text-white" />}
             </div>
         </div>
-        <span className="ml-3 text-sm font-medium text-text-primary group-hover:text-brand-accent transition-colors">{label}</span>
+        <span className={`ml-3 text-sm font-medium transition-colors ${checked ? 'text-text-primary' : 'text-text-secondary group-hover:text-text-primary'}`}>{label}</span>
     </label>
 );
 
@@ -186,28 +187,30 @@ const InputFormComponent: React.FC<InputFormProps> = ({ onSubmit, isLoading, def
 
   return (
     <>
-    <div className="bg-surface rounded-lg border border-border shadow-lg p-6 sm:p-8">
-      <div className="flex justify-between items-start mb-6">
+    <div className="glass-panel rounded-xl p-6 sm:p-8 transition-all duration-300 hover:shadow-lg">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
           <div className="flex items-center">
-            <SparklesIcon className="h-8 w-8 brand-gradient-text mr-3" />
+            <div className="p-2 bg-brand-accent/10 rounded-lg mr-3 border border-brand-accent/20 shadow-[0_0_10px_rgba(56,189,248,0.1)]">
+                <SparklesIcon className="h-6 w-6 text-brand-accent" />
+            </div>
             <div>
-                <h2 className="text-2xl font-bold text-text-primary">Research Parameters</h2>
-                <p className="text-sm text-text-secondary">Define the scope of your literature review.</p>
+                <h2 className="text-xl font-bold text-text-primary tracking-tight">Research Parameters</h2>
+                <p className="text-xs text-text-secondary mt-0.5">Define the scope for the AI agents.</p>
             </div>
           </div>
-           <div className="flex items-center gap-2">
-                <select onChange={handleLoadPreset} defaultValue="" className="block w-full max-w-xs bg-input-bg border border-border rounded-md shadow-sm py-1.5 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-accent transition-colors">
+           <div className="flex items-center gap-3 w-full sm:w-auto">
+                <select onChange={handleLoadPreset} defaultValue="" className="glass-input block w-full sm:w-40 rounded-lg py-1.5 px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-accent transition-colors">
                     <option value="" disabled>Load preset...</option>
                     {presets.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
-                <button type="button" onClick={() => setIsPresetModalOpen(true)} className="inline-flex items-center px-3 py-1.5 border border-border text-xs font-medium rounded-md shadow-sm text-text-primary bg-surface hover:bg-surface-hover transition-colors">
+                <button type="button" onClick={() => setIsPresetModalOpen(true)} className="inline-flex flex-shrink-0 items-center px-3 py-1.5 border border-border text-xs font-medium rounded-lg shadow-sm text-text-secondary bg-surface hover:bg-surface-hover hover:text-text-primary transition-colors">
                     <BookmarkSquareIcon className="h-4 w-4 mr-1.5" />
-                    Save Preset
+                    Save
                 </button>
             </div>
       </div>
       <form onSubmit={handleSubmit} onKeyDown={handleKeyDown} className="space-y-8" role="search">
-        <fieldset>
+        <div className="group">
           <label htmlFor="researchTopic" className="block text-sm font-semibold text-text-primary mb-2">Primary Research Topic or Question</label>
           <textarea
             id="researchTopic"
@@ -215,58 +218,67 @@ const InputFormComponent: React.FC<InputFormProps> = ({ onSubmit, isLoading, def
             rows={3}
             value={formData.researchTopic}
             onChange={handleChange}
-            className="block w-full bg-input-bg border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-brand-accent sm:text-sm placeholder-text-secondary transition-colors"
+            className="glass-input block w-full rounded-lg shadow-inner py-3 px-4 text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-brand-accent transition-all text-base placeholder-text-secondary/50"
             required
-            placeholder="e.g., The impact of exercise on neuroplasticity in elderly populations"
+            placeholder="e.g., What are the long-term neurocognitive effects of COVID-19?"
           />
-        </fieldset>
+        </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <fieldset>
+            <div className="group">
                 <label htmlFor="dateRange" className="block text-sm font-semibold text-text-primary mb-2">Publication Date</label>
-                <select 
-                    id="dateRange"
-                    name="dateRange"
-                    value={formData.dateRange}
-                    onChange={handleChange}
-                    className="block w-full bg-input-bg border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-brand-accent sm:text-sm transition-colors"
-                >
-                    <option value="any">Any Time</option>
-                    <option value="1">Last Year</option>
-                    <option value="5">Last 5 Years</option>
-                    <option value="10">Last 10 Years</option>
-                </select>
-            </fieldset>
-            <fieldset>
+                <div className="relative">
+                    <select 
+                        id="dateRange"
+                        name="dateRange"
+                        value={formData.dateRange}
+                        onChange={handleChange}
+                        className="glass-input block w-full rounded-lg shadow-sm py-2.5 px-4 text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-accent appearance-none transition-colors"
+                    >
+                        <option value="any">Any Time</option>
+                        <option value="1">Last Year</option>
+                        <option value="5">Last 5 Years</option>
+                        <option value="10">Last 10 Years</option>
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-text-secondary">
+                        <svg className="h-4 w-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                    </div>
+                </div>
+            </div>
+            <div className="group">
                  <label htmlFor="synthesisFocus" className="block text-sm font-semibold text-text-primary mb-2">Synthesis Focus</label>
-                <select 
-                    id="synthesisFocus"
-                    name="synthesisFocus"
-                    value={formData.synthesisFocus}
-                    onChange={handleChange}
-                    className="block w-full bg-input-bg border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-brand-accent sm:text-sm transition-colors"
-                >
-                    <option value="overview">Broad Overview</option>
-                    <option value="clinical">Clinical Implications</option>
-                    <option value="future">Future Research</option>
-                    <option value="gaps">Contradictions & Gaps</option>
-                </select>
-            </fieldset>
+                 <div className="relative">
+                    <select 
+                        id="synthesisFocus"
+                        name="synthesisFocus"
+                        value={formData.synthesisFocus}
+                        onChange={handleChange}
+                        className="glass-input block w-full rounded-lg shadow-sm py-2.5 px-4 text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-accent appearance-none transition-colors"
+                    >
+                        <option value="overview">Broad Overview</option>
+                        <option value="clinical">Clinical Implications</option>
+                        <option value="future">Future Research</option>
+                        <option value="gaps">Contradictions & Gaps</option>
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-text-secondary">
+                        <svg className="h-4 w-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <fieldset className="bg-background/50 border border-border rounded-lg p-4">
-            <div className="flex justify-between items-center">
+        <div className="bg-surface/30 border border-border rounded-xl p-5 backdrop-blur-sm">
+            <div className="flex justify-between items-center mb-3">
                 <legend className="block text-sm font-semibold text-text-primary">Article Types</legend>
                 <button
                     type="button"
                     onClick={handleToggleAllArticleTypes}
-                    className="text-xs font-semibold text-brand-accent hover:underline focus:outline-none"
-                    aria-label={allArticleTypesSelected ? 'Deselect all article types' : 'Select all article types'}
+                    className="text-xs font-semibold text-brand-accent hover:text-brand-secondary transition-colors focus:outline-none"
                 >
                     {allArticleTypesSelected ? 'Deselect All' : 'Select All'}
                 </button>
             </div>
-            <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3">
+            <div className="grid grid-cols-2 gap-3">
                 {ARTICLE_TYPES.map(type => (
                     <CustomCheckbox 
                         key={type} 
@@ -278,12 +290,12 @@ const InputFormComponent: React.FC<InputFormProps> = ({ onSubmit, isLoading, def
                     />
                 ))}
             </div>
-        </fieldset>
+        </div>
       
-        <fieldset className="bg-background/50 border border-border rounded-lg p-4 space-y-6">
-            <div>
-                <legend className="text-sm font-semibold text-text-primary mb-1">AI Agent Configuration</legend>
-                <p className="text-xs text-text-secondary">Control the scope of the AI's search and synthesis process.</p>
+        <div className="bg-surface/30 border border-border rounded-xl p-5 space-y-6 backdrop-blur-sm">
+            <div className="flex items-center gap-2 mb-2">
+                 <div className="h-1.5 w-1.5 rounded-full bg-accent-cyan shadow-[0_0_8px_var(--color-accent-cyan)]"></div>
+                 <legend className="text-sm font-semibold text-text-primary">Agent Workload</legend>
             </div>
             <SliderInput 
                 label="Max Articles to Scan"
@@ -302,13 +314,13 @@ const InputFormComponent: React.FC<InputFormProps> = ({ onSubmit, isLoading, def
                 min={1}
                 max={20}
             />
-             {errors.topN && <p className="text-xs text-red-400 -mt-3 text-right col-span-2">{errors.topN}</p>}
-        </fieldset>
+             {errors.topN && <p className="text-xs text-red-400 font-medium bg-red-500/10 border border-red-500/20 p-2 rounded-md text-center">{errors.topN}</p>}
+        </div>
 
         <button
           type="submit"
           disabled={isLoading || hasErrors}
-          className="w-full inline-flex justify-center items-center py-3 px-4 border border-transparent shadow-md text-base font-semibold rounded-md text-brand-text-on-accent bg-gradient-to-r from-brand-primary to-accent-cyan hover:shadow-lg hover:shadow-brand-accent/30 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface focus:ring-brand-accent disabled:from-border disabled:to-border disabled:text-text-secondary disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105"
+          className="w-full inline-flex justify-center items-center py-3.5 px-4 border border-transparent shadow-lg shadow-brand-accent/20 text-base font-bold rounded-lg text-brand-text-on-accent bg-gradient-to-r from-brand-primary to-accent-cyan hover:shadow-glow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface focus:ring-brand-accent disabled:from-border disabled:to-border disabled:text-text-secondary disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-[1.01] active:scale-[0.99]"
         >
           {isLoading ? (
             <>
@@ -316,7 +328,7 @@ const InputFormComponent: React.FC<InputFormProps> = ({ onSubmit, isLoading, def
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              Processing...
+              <span className="tracking-wide">Initializing Agents...</span>
             </>
           ) : (
             <>
@@ -329,25 +341,25 @@ const InputFormComponent: React.FC<InputFormProps> = ({ onSubmit, isLoading, def
     </div>
     {isPresetModalOpen && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center backdrop-blur-sm animate-fadeIn" style={{ animationDuration: '150ms' }}>
-            <div ref={modalRef} className="bg-surface rounded-lg border border-border shadow-2xl p-6 w-full max-w-sm m-4">
+            <div ref={modalRef} className="glass-panel rounded-xl p-6 w-full max-w-sm m-4 shadow-2xl">
                 <h3 className="text-lg font-bold brand-gradient-text">Save Preset</h3>
-                <div className="mt-2 text-text-secondary">
+                <div className="mt-4">
                     <label htmlFor="presetName" className="block text-sm font-medium text-text-primary mb-1">Preset Name</label>
                     <input
                         type="text"
                         id="presetName"
                         value={newPresetName}
                         onChange={(e) => setNewPresetName(e.target.value)}
-                        className="block w-full bg-input-bg border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent sm:text-sm"
+                        className="glass-input block w-full rounded-lg shadow-sm py-2 px-3 text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-accent sm:text-sm"
                         placeholder="e.g., Clinical Trials (Last 5 Years)"
                         autoFocus
                     />
                 </div>
                 <div className="mt-6 flex justify-end space-x-3">
-                    <button onClick={() => setIsPresetModalOpen(false)} className="px-4 py-2 border border-border text-sm font-medium rounded-md shadow-sm text-text-primary bg-surface hover:bg-surface-hover">
+                    <button onClick={() => setIsPresetModalOpen(false)} className="px-4 py-2 border border-border text-sm font-medium rounded-lg shadow-sm text-text-primary bg-surface hover:bg-surface-hover transition-colors">
                         Cancel
                     </button>
-                    <button onClick={handleSavePreset} disabled={!newPresetName.trim()} className="px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-brand-accent hover:bg-opacity-90 disabled:opacity-50">
+                    <button onClick={handleSavePreset} disabled={!newPresetName.trim()} className="px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-brand-accent hover:bg-opacity-90 disabled:opacity-50 transition-colors">
                         Save
                     </button>
                 </div>

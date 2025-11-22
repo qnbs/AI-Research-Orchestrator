@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Type, Chat } from "@google/genai";
 import type { ResearchInput, ResearchReport, Settings, RankedArticle, SimilarArticle, OnlineFindings, WebContent, ResearchAnalysis, GeneratedQuery, AuthorCluster, FeaturedAuthorCategory, JournalProfile } from '../types';
 
@@ -9,18 +10,31 @@ const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 /**
  * Retries a fetch operation with exponential backoff.
+ * Specifically handles 429 Too Many Requests.
  */
 async function fetchWithRetry(url: string, options: RequestInit, retries = 3, backoff = 1000): Promise<Response> {
     try {
         const response = await fetch(url, options);
+        
+        if (response.status === 429 && retries > 0) {
+            // Rate limit hit
+            const retryAfter = response.headers.get('Retry-After');
+            const waitTime = retryAfter ? parseInt(retryAfter, 10) * 1000 : backoff * 2;
+            console.warn(`Rate limit hit. Retrying in ${waitTime}ms...`);
+            await new Promise(resolve => setTimeout(resolve, waitTime));
+            return fetchWithRetry(url, options, retries - 1, waitTime);
+        }
+
         if (!response.ok && retries > 0 && response.status !== 404 && response.status !== 400) {
              // Retry on server errors or timeouts, but not on 404/400
+            console.warn(`Fetch failed (${response.status}). Retrying...`);
             await new Promise(resolve => setTimeout(resolve, backoff));
             return fetchWithRetry(url, options, retries - 1, backoff * 2);
         }
         return response;
     } catch (error) {
         if (retries > 0) {
+            console.warn(`Network error. Retrying...`);
             await new Promise(resolve => setTimeout(resolve, backoff));
             return fetchWithRetry(url, options, retries - 1, backoff * 2);
         }
@@ -29,53 +43,88 @@ async function fetchWithRetry(url: string, options: RequestInit, retries = 3, ba
 }
 
 /**
- * Extracts a JSON object or array from a string that may contain other text.
- * Enhanced to handle various markdown formats and raw JSON.
+ * Robustly extracts JSON from AI response text.
+ * Handles Markdown code blocks, raw JSON, and surrounding chatter.
  */
 function extractAndParseJson<T>(text: string): T {
-    // 1. Try finding JSON within markdown code blocks
-    const jsonCodeBlockRegex = /```(?:json)?\s*([\s\S]*?)\s*```/m;
-    const match = text.match(jsonCodeBlockRegex);
+    if (!text) throw new Error("Empty response from AI");
 
-    if (match && match[1]) {
-        try {
-            return JSON.parse(match[1]) as T;
-        } catch (e) {
-            console.warn("Failed to parse JSON from code block, attempting raw parse.");
-        }
+    // Pre-process: remove potentially harmful unicode or control characters if necessary, 
+    // but usually JSON.parse handles strings okay.
+    // Clean up markdown code blocks first as they are the most common wrapper.
+    let cleanText = text.replace(/```json\s*([\s\S]*?)\s*```/g, "$1"); 
+    cleanText = cleanText.replace(/```\s*([\s\S]*?)\s*```/g, "$1");
+
+    // 1. Try parsing the cleaned text directly
+    try {
+        return JSON.parse(cleanText) as T;
+    } catch (e) {
+        // Continue to advanced extraction
     }
 
-    // 2. Try finding the first '{' or '[' and the last '}' or ']'
-    const firstBrace = text.indexOf('{');
-    const firstBracket = text.indexOf('[');
+    // 2. Try finding the outermost JSON object or array
+    const firstBrace = cleanText.indexOf('{');
+    const firstBracket = cleanText.indexOf('[');
     
     let startIdx = -1;
     let endIdx = -1;
 
+    // Determine if we are looking for an object or an array
     if (firstBrace !== -1 && (firstBracket === -1 || firstBrace < firstBracket)) {
         startIdx = firstBrace;
-        endIdx = text.lastIndexOf('}');
+        // Find corresponding closing brace by counting depth
+        let depth = 0;
+        for (let i = startIdx; i < cleanText.length; i++) {
+            if (cleanText[i] === '{') depth++;
+            else if (cleanText[i] === '}') depth--;
+            
+            if (depth === 0) {
+                endIdx = i;
+                break;
+            }
+        }
     } else if (firstBracket !== -1) {
         startIdx = firstBracket;
-        endIdx = text.lastIndexOf(']');
-    }
-
-    if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
-        const potentialJson = text.substring(startIdx, endIdx + 1);
-        try {
-            return JSON.parse(potentialJson) as T;
-        } catch (e) {
-             console.warn("Failed to parse extracted JSON segment:", e);
+        // Find corresponding closing bracket
+        let depth = 0;
+        for (let i = startIdx; i < cleanText.length; i++) {
+            if (cleanText[i] === '[') depth++;
+            else if (cleanText[i] === ']') depth--;
+            
+            if (depth === 0) {
+                endIdx = i;
+                break;
+            }
         }
     }
 
-    // 3. Fallback: Try parsing the whole text
-    try {
-        return JSON.parse(text) as T;
-    } catch(e) {
-        console.error("Could not find any valid JSON in the AI response:", text);
-        throw new Error("AI response did not contain valid JSON.");
+    if (startIdx !== -1 && endIdx !== -1) {
+        const potentialJson = cleanText.substring(startIdx, endIdx + 1);
+        try {
+            return JSON.parse(potentialJson) as T;
+        } catch (e) {
+             console.warn("Failed to parse extracted JSON segment via depth counting.");
+        }
     }
+
+    // 3. Fallback: Naive lastIndexOf (works if AI just stops outputting after JSON)
+    const lastBrace = cleanText.lastIndexOf('}');
+    const lastBracket = cleanText.lastIndexOf(']');
+    
+    if (startIdx !== -1) {
+        const end = (cleanText[startIdx] === '{') ? lastBrace : lastBracket;
+        if (end > startIdx) {
+             try {
+                return JSON.parse(cleanText.substring(startIdx, end + 1)) as T;
+            } catch (e) {
+                // ignore
+            }
+        }
+    }
+
+    // 4. Last Resort: Log the failure for debugging
+    console.error("CRITICAL: Could not parse JSON.", text);
+    throw new Error("AI response did not contain valid JSON. The model may have been interrupted or hallucinatory.");
 }
 
 /**
@@ -83,6 +132,7 @@ function extractAndParseJson<T>(text: string): T {
  */
 function getGeminiError(error: unknown): string {
     if (error && typeof error === 'object') {
+        // Check for GoogleGenAIError structure specifically
         if ('response' in error) {
             const response = (error as any).response;
             const candidate = response?.candidates?.[0];
@@ -93,17 +143,24 @@ function getGeminiError(error: unknown): string {
                     case 'RECITATION':
                         return "The AI's response was blocked because it was too similar to a known source. Please try a different query.";
                     case 'MAX_TOKENS':
-                        return "The request exceeded the token limit. Please try a more focused query.";
+                        return "The request exceeded the token limit. Please try a more focused query or reduce the number of articles to analyze.";
                     default:
                         return `The AI's response was blocked for an unknown reason (${candidate.finishReason}).`;
                 }
             }
         }
+        
+        if ('status' in error) {
+             const status = (error as any).status;
+             if (status === 429) return "You have exceeded the API rate limit. Please wait a moment before trying again.";
+             if (status === 503) return "The AI service is currently overloaded. Please try again later.";
+        }
+
         if (error instanceof Error) {
             return error.message;
         }
     }
-    return "An unknown AI error occurred.";
+    return "An unknown AI error occurred. Please check your network connection.";
 }
 
 export const generateAuthorQuery = (fullName: string): string => {
@@ -173,45 +230,48 @@ export async function searchPubMedForIds(query: string, retmax: number): Promise
 export async function fetchArticleDetails(pmids: string[]): Promise<Partial<RankedArticle>[]> {
     if (pmids.length === 0) return [];
     const url = `${PUBMED_API_BASE}esummary.fcgi?db=pubmed&retmode=json`;
-    try {
-        const formData = new FormData();
-        formData.append('id', pmids.join(','));
+    
+    // We allow the error to bubble up instead of swallowing it, 
+    // so the UI can properly report network failures.
+    const formData = new FormData();
+    formData.append('id', pmids.join(','));
 
-        const response = await fetchWithRetry(url, { 
-            method: 'POST',
-            body: formData,
-            headers: { 'User-Agent': 'ai-research-orchestration-author/1.0' }
-        });
-        
-        if (!response.ok) {
-            throw new Error(`PubMed API error: ${response.statusText}`);
-        }
-        const data: ESummaryResult = await response.json();
-        const articles: Partial<RankedArticle>[] = [];
-
-        for (const pmid of data.result.uids) {
-            const articleData = data.result[pmid];
-            if (!articleData) continue;
-            
-            const authors = (articleData.authors || []).map((a: { name: string }) => a.name).join(', ');
-            const pmcIdEntry = (articleData.articleids || []).find((id: { idtype: string }) => id.idtype === 'pmc');
-            
-            articles.push({
-                pmid: pmid,
-                pmcId: pmcIdEntry?.value,
-                title: articleData.title,
-                authors: authors,
-                journal: articleData.fulljournalname,
-                pubYear: articleData.pubdate.split(' ')[0],
-                summary: articleData.abstract || 'No abstract available.',
-                isOpenAccess: articleData.availablefromurl?.toLowerCase().includes('pubmed central')
-            });
-        }
-        return articles;
-    } catch (error) {
-        console.error('Error fetching article details:', error);
-        return [];
+    const response = await fetchWithRetry(url, { 
+        method: 'POST',
+        body: formData,
+        headers: { 'User-Agent': 'ai-research-orchestration-author/1.0' }
+    });
+    
+    if (!response.ok) {
+        throw new Error(`PubMed API error: ${response.statusText}`);
     }
+    
+    const data: ESummaryResult = await response.json();
+    const articles: Partial<RankedArticle>[] = [];
+
+    if (!data.result) {
+        throw new Error("Invalid response format from PubMed.");
+    }
+
+    for (const pmid of data.result.uids) {
+        const articleData = data.result[pmid];
+        if (!articleData) continue;
+        
+        const authors = (articleData.authors || []).map((a: { name: string }) => a.name).join(', ');
+        const pmcIdEntry = (articleData.articleids || []).find((id: { idtype: string }) => id.idtype === 'pmc');
+        
+        articles.push({
+            pmid: pmid,
+            pmcId: pmcIdEntry?.value,
+            title: articleData.title,
+            authors: authors,
+            journal: articleData.fulljournalname,
+            pubYear: articleData.pubdate.split(' ')[0],
+            summary: articleData.abstract || 'No abstract available.',
+            isOpenAccess: articleData.availablefromurl?.toLowerCase().includes('pubmed central')
+        });
+    }
+    return articles;
 }
 
 const getPreamble = (aiSettings: Settings['ai']) => {
@@ -288,7 +348,7 @@ Research Topic: "${input.researchTopic}"
         // STEP 4: AI Analyzes and Ranks Real Data
         yield { phase: "Phase 4: AI Ranking & Analysis of Real Articles..." };
         
-        // Use Thinking Config for better reasoning on complex analysis if using gemini-2.5 models
+        // Use Thinking Config for better reasoning on complex analysis if using gemini-2.5 or gemini-3
         const rankingConfig: any = { 
             systemInstruction, 
             temperature: aiSettings.temperature, 
@@ -312,7 +372,9 @@ Research Topic: "${input.researchTopic}"
         };
 
         // Enable thinking if supported and likely beneficial
-        if (aiSettings.model.includes('gemini-2.5') || aiSettings.model.includes('gemini-3')) {
+        if (aiSettings.model.includes('gemini-3')) {
+             rankingConfig.thinkingConfig = { thinkingBudget: 8192 };
+        } else if (aiSettings.model.includes('gemini-2.5')) {
              rankingConfig.thinkingConfig = { thinkingBudget: 2048 };
         }
 
@@ -362,7 +424,9 @@ Research Topic: "${input.researchTopic}"
         
         // Thinking config helps with better synthesis structure
         const synthesisConfig: any = { systemInstruction, temperature: aiSettings.temperature };
-        if (aiSettings.model.includes('gemini-2.5') || aiSettings.model.includes('gemini-3')) {
+        if (aiSettings.model.includes('gemini-3')) {
+             synthesisConfig.thinkingConfig = { thinkingBudget: 8192 };
+        } else if (aiSettings.model.includes('gemini-2.5')) {
              synthesisConfig.thinkingConfig = { thinkingBudget: 2048 };
         }
 

@@ -1,139 +1,148 @@
-const CACHE_NAME = 'ai-research-v2';
-// Assets to cache on install. This provides the basic offline app shell.
-const urlsToCache = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  // Data files for offline access
-  '/src/data/featuredAuthors.json',
-  '/src/data/featuredJournals.json',
-  // Key CDN assets from importmap
-  "https://aistudiocdn.com/react@^19.1.1",
-  "https://aistudiocdn.com/react-dom@^19.1.1/client",
-  "https://aistudiocdn.com/@google/genai@^1.19.0",
-  "https://aistudiocdn.com/dexie@^4.0.7",
-  "https://aistudiocdn.com/marked@^13.0.2",
-  "https://aistudiocdn.com/dompurify@^3.1.6",
-  "https://aistudiocdn.com/chart.js@^4.4.3",
-  "https://aistudiocdn.com/react-chartjs-2@^5.2.0",
-  "https://aistudiocdn.com/jspdf@^2.5.1",
-  'https://cdn.tailwindcss.com',
-  'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Roboto:wght@400;500;700&display=swap',
-];
 
-// Event: install
-// Caches core application assets.
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => {
-        console.log('Service Worker: Caching app shell');
-        return cache.addAll(urlsToCache);
-      })
-      .catch(error => {
-        console.error('Service Worker: Failed to cache app shell:', error);
-      })
-  );
-  self.skipWaiting();
-});
+importScripts('https://storage.googleapis.com/workbox-cdn/releases/7.0.0/workbox-sw.js');
 
-// Event: activate
-// Cleans up old caches to ensure the user always has the latest version.
-self.addEventListener('activate', (event) => {
-  const cacheWhitelist = [CACHE_NAME];
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheWhitelist.indexOf(cacheName) === -1) {
-            console.log('Service Worker: Deleting old cache:', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    }).then(() => self.clients.claim())
-  );
-});
+if (workbox) {
+    workbox.setConfig({ debug: false });
 
-// Event: fetch
-// Serves requests from cache or network, implementing a cache-first strategy
-// for static assets and a network-first strategy for APIs.
-self.addEventListener('fetch', (event) => {
-  const { request } = event;
-  const url = new URL(request.url);
+    // Take control immediately
+    workbox.core.clientsClaim();
+    self.skipWaiting();
 
-  // Use a network-first strategy for API calls to ensure fresh data.
-  // Fallback to cache if offline.
-  if (url.hostname.includes('ncbi.nlm.nih.gov')) {
-    event.respondWith(
-      fetch(request)
-        .then(response => {
-          // If the fetch is successful, clone it and cache it.
-          const responseToCache = response.clone();
-          caches.open(CACHE_NAME).then(cache => {
-            cache.put(request, responseToCache);
-          });
-          return response;
-        })
-        .catch(async () => {
-          // If the network fails, try to serve from the cache.
-          const cachedResponse = await caches.match(request);
-          if (cachedResponse) {
-            return cachedResponse;
-          }
-          // If not in cache either, return a generic error response.
-          return new Response('Network error and no cache available.', {
-            status: 408,
-            statusText: 'Request Timeout',
-            headers: { 'Content-Type': 'text/plain' },
-          });
+    // Cleanup old caches from previous versions
+    workbox.precaching.cleanupOutdatedCaches();
+
+    const { registerRoute, setCatchHandler } = workbox.routing;
+    const { NetworkFirst, CacheFirst, StaleWhileRevalidate } = workbox.strategies;
+    const { CacheableResponsePlugin } = workbox.cacheableResponse;
+    const { ExpirationPlugin } = workbox.expiration;
+
+    // --- 1. Navigation (App Shell) ---
+    // Strategy: Network First -> Cache Fallback.
+    // Optimized: Ensure HTML serves 200 OK before caching.
+    registerRoute(
+        ({ request }) => request.mode === 'navigate',
+        new NetworkFirst({
+            cacheName: 'pages-cache',
+            plugins: [
+                new CacheableResponsePlugin({ statuses: [0, 200] }),
+            ],
         })
     );
-    return;
-  }
-  
-  // Use a cache-first strategy for all other requests (app files, CDN assets).
-  event.respondWith(
-    caches.match(request)
-      .then((response) => {
-        // Cache hit - return response from cache.
-        if (response) {
-          return response;
-        }
-        
-        // Not in cache - fetch from network and cache it for next time.
-        return fetch(request).then(
-          (response) => {
-            // Check if we received a valid response.
-            if (!response || response.status !== 200 || response.type === 'opaque') {
-              return response;
-            }
-            
-            // IMPORTANT: Clone the response. A response is a stream
-            // and because we want the browser to consume the response
-            // as well as the cache consuming the response, we need
-            // to clone it so we have two streams.
-            if (request.method === 'GET') {
-              const responseToCache = response.clone();
-              caches.open(CACHE_NAME)
-                .then((cache) => {
-                  cache.put(request, responseToCache);
-                });
-            }
 
-            return response;
-          }
-        );
-      })
-      .catch(error => {
-        console.error('Service Worker: Error in fetch handler:', error);
-        // If there's an error (e.g., offline and not in cache),
-        // for navigation requests, serve the index.html as a fallback.
-        if (request.mode === 'navigate') {
-          return caches.match('/index.html');
+    // --- 2. Critical Data (PubMed API) ---
+    // Strategy: Network First (Fresh Data Priority)
+    // Optimization: Short timeout (5s) to prevent hanging on slow connections.
+    registerRoute(
+        ({ url }) => url.hostname.includes('ncbi.nlm.nih.gov'),
+        new NetworkFirst({
+            cacheName: 'pubmed-api-cache',
+            networkTimeoutSeconds: 5,
+            plugins: [
+                new CacheableResponsePlugin({ statuses: [0, 200] }),
+                new ExpirationPlugin({
+                    maxEntries: 200,
+                    maxAgeSeconds: 60 * 60 * 24 * 7, // 1 week
+                    purgeOnQuotaError: true,
+                }),
+            ],
+        })
+    );
+
+    // --- 3. CDN Libraries (JS/CSS) ---
+    // Strategy: StaleWhileRevalidate (Speed Priority)
+    // Optimization: Long cache life for immutable libraries.
+    registerRoute(
+        ({ url }) =>
+            url.origin.includes('aistudiocdn.com') ||
+            url.origin.includes('cdn.tailwindcss.com'),
+        new StaleWhileRevalidate({
+            cacheName: 'cdn-resources',
+            plugins: [
+                new CacheableResponsePlugin({ statuses: [0, 200] }),
+                new ExpirationPlugin({
+                    maxEntries: 50,
+                    maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+                }),
+            ],
+        })
+    );
+
+    // --- 4. Google Fonts ---
+    // Stylesheets: StaleWhileRevalidate
+    registerRoute(
+        ({ url }) => url.origin === 'https://fonts.googleapis.com',
+        new StaleWhileRevalidate({
+            cacheName: 'google-fonts-stylesheets',
+        })
+    );
+
+    // Webfonts: CacheFirst (Immutable)
+    registerRoute(
+        ({ url }) => url.origin === 'https://fonts.gstatic.com',
+        new CacheFirst({
+            cacheName: 'google-fonts-webfonts',
+            plugins: [
+                new CacheableResponsePlugin({ statuses: [0, 200] }),
+                new ExpirationPlugin({
+                    maxAgeSeconds: 60 * 60 * 24 * 365,
+                    maxEntries: 30,
+                }),
+            ],
+        })
+    );
+
+    // --- 5. Local Static Assets ---
+    registerRoute(
+        ({ request, url }) =>
+            url.origin === self.location.origin &&
+            (request.destination === 'script' ||
+             request.destination === 'style' ||
+             request.destination === 'manifest' ||
+             url.pathname.endsWith('.json')),
+        new StaleWhileRevalidate({
+            cacheName: 'static-resources',
+        })
+    );
+
+    // --- 6. Images ---
+    registerRoute(
+        ({ request }) => request.destination === 'image',
+        new CacheFirst({
+            cacheName: 'image-cache',
+            plugins: [
+                new ExpirationPlugin({
+                    maxEntries: 100,
+                    maxAgeSeconds: 60 * 60 * 24 * 30,
+                    purgeOnQuotaError: true,
+                }),
+            ],
+        })
+    );
+
+    // --- Offline Fallback ---
+    // If a navigation request fails completely (offline and no cache),
+    // try to return index.html from cache if available.
+    setCatchHandler(async ({ event }) => {
+        if (event.request.destination === 'document') {
+            return caches.match('/index.html');
         }
-        // For other requests, just let the error propagate.
-        throw error;
-      })
-  );
-});
+        return Response.error();
+    });
+
+    // --- Precache App Shell ---
+    self.addEventListener('install', (event) => {
+        const urlsToPrecache = [
+            '/',
+            '/index.html',
+            '/manifest.json',
+            '/src/data/featuredAuthors.json',
+            '/src/data/featuredJournals.json'
+        ];
+        event.waitUntil(
+            caches.open('pages-cache').then((cache) => cache.addAll(urlsToPrecache))
+        );
+    });
+
+} else {
+    console.error('Workbox failed to load inside Service Worker.');
+}
