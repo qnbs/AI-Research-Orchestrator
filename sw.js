@@ -1,6 +1,9 @@
 
 importScripts('https://storage.googleapis.com/workbox-cdn/releases/7.0.0/workbox-sw.js');
 
+// Base path for GitHub Pages deployment
+const BASE_PATH = '/AI-Research-Orchestrator';
+
 if (workbox) {
     workbox.setConfig({ debug: false });
 
@@ -124,7 +127,10 @@ if (workbox) {
     // try to return index.html from cache if available.
     setCatchHandler(async ({ event }) => {
         if (event.request.destination === 'document') {
-            return caches.match('/index.html');
+            // Try subpath first, then root
+            const cachedResponse = await caches.match(`${BASE_PATH}/index.html`) || 
+                                   await caches.match('/index.html');
+            if (cachedResponse) return cachedResponse;
         }
         return Response.error();
     });
@@ -132,11 +138,9 @@ if (workbox) {
     // --- Precache App Shell ---
     self.addEventListener('install', (event) => {
         const urlsToPrecache = [
-            '/',
-            '/index.html',
-            '/manifest.json',
-            '/src/data/featuredAuthors.json',
-            '/src/data/featuredJournals.json'
+            `${BASE_PATH}/`,
+            `${BASE_PATH}/index.html`,
+            `${BASE_PATH}/manifest.json`
         ];
         event.waitUntil(
             caches.open('pages-cache').then((cache) => cache.addAll(urlsToPrecache))

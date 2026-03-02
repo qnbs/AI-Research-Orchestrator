@@ -1,12 +1,42 @@
 
 import { GoogleGenAI, Type, Chat } from "@google/genai";
 import type { ResearchInput, ResearchReport, Settings, RankedArticle, SimilarArticle, OnlineFindings, WebContent, ResearchAnalysis, GeneratedQuery, AuthorCluster, FeaturedAuthorCategory, JournalProfile } from '../types';
+import { getApiKey } from './apiKeyService';
 
-if (!process.env.API_KEY) {
-  throw new Error("API_KEY environment variable not set");
+// Lazy initialization of the AI client
+let aiInstance: GoogleGenAI | null = null;
+let currentApiKey: string | null = null;
+
+/**
+ * Gets or creates the GoogleGenAI instance.
+ * Throws a user-friendly error if no API key is configured.
+ */
+async function getAI(): Promise<GoogleGenAI> {
+    const apiKey = await getApiKey();
+    
+    if (!apiKey) {
+        throw new Error(
+            "NO_API_KEY: Bitte konfigurieren Sie Ihren Gemini API-Key in den Einstellungen. " +
+            "Sie können einen kostenlosen Key unter https://aistudio.google.com erhalten."
+        );
+    }
+    
+    // Reinitialize if key changed
+    if (aiInstance === null || currentApiKey !== apiKey) {
+        aiInstance = new GoogleGenAI({ apiKey });
+        currentApiKey = apiKey;
+    }
+    
+    return aiInstance;
 }
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+/**
+ * Resets the AI instance (call when API key changes).
+ */
+export function resetAIInstance(): void {
+    aiInstance = null;
+    currentApiKey = null;
+}
 
 /**
  * Retries a fetch operation with exponential backoff.
@@ -287,6 +317,7 @@ const getPreamble = (aiSettings: Settings['ai']) => {
 };
 
 export async function* generateResearchReportStream(input: ResearchInput, aiSettings: Settings['ai']): AsyncGenerator<{ report?: ResearchReport; synthesisChunk?: string; phase: string; }> {
+   const ai = await getAI();
    try {
         const systemInstruction = `${getPreamble(aiSettings)} You are an expert AI research assistant. Your goal is to conduct a literature review on PubMed based on the user's criteria, rank the articles, and synthesize the findings.`;
 
@@ -448,6 +479,7 @@ Research Topic: "${input.researchTopic}"
 }
 
 export async function findSimilarArticles(article: { title: string; summary: string }, aiSettings: Settings['ai']): Promise<SimilarArticle[]> {
+   const ai = await getAI();
    try {
         const response = await ai.models.generateContent({
             model: aiSettings.model,
@@ -480,6 +512,7 @@ export async function findSimilarArticles(article: { title: string; summary: str
 }
 
 export async function findRelatedOnline(topic: string, aiSettings: Settings['ai']): Promise<OnlineFindings> {
+    const ai = await getAI();
     try {
         const response = await ai.models.generateContent({
             model: aiSettings.model,
@@ -498,6 +531,7 @@ export async function findRelatedOnline(topic: string, aiSettings: Settings['ai'
 }
 
 export async function generateTldrSummary(abstract: string, aiSettings: Settings['ai']): Promise<string> {
+    const ai = await getAI();
     try {
         const response = await ai.models.generateContent({
             model: aiSettings.model,
@@ -516,6 +550,7 @@ export async function generateTldrSummary(abstract: string, aiSettings: Settings
 }
 
 export async function generateResearchAnalysis(query: string, aiSettings: Settings['ai']): Promise<ResearchAnalysis> {
+    const ai = await getAI();
     try {
         const response = await ai.models.generateContent({
             model: aiSettings.model,
@@ -544,6 +579,7 @@ export async function generateResearchAnalysis(query: string, aiSettings: Settin
 }
 
 export async function disambiguateAuthor(authorName: string, articles: Partial<RankedArticle>[], aiSettings: Settings['ai']): Promise<AuthorCluster[]> {
+    const ai = await getAI();
     try {
         const response = await ai.models.generateContent({
             model: aiSettings.model,
@@ -578,6 +614,7 @@ export async function disambiguateAuthor(authorName: string, articles: Partial<R
 }
 
 export async function generateAuthorProfileAnalysis(authorName: string, articles: Partial<RankedArticle>[], aiSettings: Settings['ai']): Promise<{ careerSummary: string; coreConcepts: { concept: string; frequency: number }[]; estimatedMetrics: { hIndex: number | null; totalCitations: number | null; } }> {
+    const ai = await getAI();
     try {
         const response = await ai.models.generateContent({
             model: aiSettings.model,
@@ -609,6 +646,7 @@ export async function generateAuthorProfileAnalysis(authorName: string, articles
 }
 
 export async function suggestAuthors(fieldOfStudy: string, aiSettings: Settings['ai']): Promise<{name: string; description: string;}[]> {
+    const ai = await getAI();
     try {
         const response = await ai.models.generateContent({
             model: aiSettings.model,
@@ -638,6 +676,7 @@ export async function suggestAuthors(fieldOfStudy: string, aiSettings: Settings[
 }
 
 export async function analyzeSingleArticle(identifier: string, aiSettings: Settings['ai']): Promise<RankedArticle> {
+    const ai = await getAI();
     try {
         let pmid = identifier.trim();
         // Basic identifier extraction
@@ -705,6 +744,7 @@ export async function analyzeSingleArticle(identifier: string, aiSettings: Setti
 }
 
 export async function generateJournalProfileAnalysis(journalName: string, aiSettings: Settings['ai']): Promise<JournalProfile> {
+    const ai = await getAI();
     try {
         const response = await ai.models.generateContent({
             model: aiSettings.model,
@@ -734,7 +774,8 @@ export async function generateJournalProfileAnalysis(journalName: string, aiSett
 }
 
 // --- Chat Service ---
-export const startChatWithReport = (report: ResearchReport, aiSettings: Settings['ai']): Chat => {
+export const startChatWithReport = async (report: ResearchReport, aiSettings: Settings['ai']): Promise<Chat> => {
+    const ai = await getAI();
     const context = `
         You are a helpful AI assistant that answers questions about a specific research report.
         The user has just generated the following report. Your answers should be based on this context.

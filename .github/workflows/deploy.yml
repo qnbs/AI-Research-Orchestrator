@@ -1,0 +1,101 @@
+# ==============================================================================
+# GitHub Pages Deployment Workflow for Vite + React PWA
+# 
+# This workflow builds and deploys the application to GitHub Pages using the
+# official GitHub Pages Actions (2024/2025 best practices).
+#
+# Prerequisites:
+#   1. Go to Repository Settings → Pages
+#   2. Under "Build and deployment", select "GitHub Actions" as the source
+#   3. The first deployment will be triggered automatically
+# ==============================================================================
+
+name: Deploy to GitHub Pages
+
+on:
+  # Trigger on push to main branch
+  push:
+    branches:
+      - main
+  
+  # Allow manual trigger from Actions tab
+  workflow_dispatch:
+
+# Required permissions for GitHub Pages deployment
+permissions:
+  contents: read      # To checkout the repository
+  pages: write        # To deploy to Pages
+  id-token: write     # To verify deployment origin
+
+# Prevent concurrent deployments
+concurrency:
+  group: 'pages'
+  cancel-in-progress: true
+
+jobs:
+  # ==============================================================================
+  # Build Job
+  # ==============================================================================
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      # Step 1: Checkout repository
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for better caching
+
+      # Step 2: Setup Node.js with caching
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          cache: 'npm'
+
+      # Step 3: Install dependencies
+      - name: Install dependencies
+        run: npm ci
+
+      # Step 4: Run type checking (optional but recommended)
+      - name: Type check
+        run: npx tsc --noEmit
+        continue-on-error: true  # Don't fail build on type errors
+
+      # Step 5: Build for production
+      - name: Build application
+        run: npm run build
+        env:
+          NODE_ENV: production
+
+      # Step 6: Copy 404.html for SPA routing
+      - name: Setup SPA routing
+        run: cp dist/index.html dist/404.html
+
+      # Step 7: Configure GitHub Pages
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      # Step 8: Upload build artifacts
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './dist'
+
+  # ==============================================================================
+  # Deploy Job
+  # ==============================================================================
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    
+    # GitHub Pages environment
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      # Deploy to GitHub Pages
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

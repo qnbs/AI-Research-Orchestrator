@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Research Orchestrator - Redirecting...</title>
+    
+    <!-- SPA Redirect Script for GitHub Pages -->
+    <!-- This handles client-side routing for Single Page Applications -->
+    <script type="text/javascript">
+      // Store the current path and redirect to root
+      // The main app will restore the correct route
+      (function() {
+        var repo = '/AI-Research-Orchestrator';
+        var l = window.location;
+        
+        // Build the redirect URL with path as query parameter
+        var redirectUrl = l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
+          repo + '/' +
+          '?p=' + encodeURIComponent(
+            l.pathname.slice(repo.length + 1) + l.search + l.hash
+          );
+        
+        // Redirect to the main page with the path as a query parameter
+        l.replace(redirectUrl);
+      })();
+    </script>
+    
+    <!-- Fallback meta refresh -->
+    <meta http-equiv="refresh" content="0;URL='/AI-Research-Orchestrator/'" />
+    
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        background-color: #03060d;
+        color: #e6edf3;
+      }
+      .container {
+        text-align: center;
+        padding: 20px;
+      }
+      .spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid rgba(47, 129, 247, 0.3);
+        border-top-color: #2f81f7;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 20px;
+      }
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+      a {
+        color: #2f81f7;
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="spinner"></div>
+      <p>Redirecting to AI Research Orchestrator...</p>
+      <p><small>If you are not redirected, <a href="/AI-Research-Orchestrator/">click here</a>.</small></p>
+    </div>
+  </body>
+</html>

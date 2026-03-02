@@ -1,8 +1,8 @@
 {
   "name": "AI Research Orchestration Author",
   "short_name": "AI Research",
-  "start_url": ".",
-  "scope": "/",
+  "start_url": "/AI-Research-Orchestrator/",
+  "scope": "/AI-Research-Orchestrator/",
   "display": "standalone",
   "background_color": "#010409",
   "theme_color": "#1f6feb",

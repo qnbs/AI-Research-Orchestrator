@@ -25,12 +25,28 @@ export const useChat = (
 
     useEffect(() => {
         if (report && reportStatus === 'done') {
-            const session = startChatWithReport(report, aiSettings);
-            setChatSession(session);
-            // Reset chat history when a new report is finalized
-            setChatHistory([]);
+            const initChat = async () => {
+                try {
+                    const session = await startChatWithReport(report, aiSettings);
+                    if (isMounted.current) {
+                        setChatSession(session);
+                        // Reset chat history when a new report is finalized
+                        setChatHistory([]);
+                    }
+                } catch (error) {
+                    console.error('Failed to initialize chat:', error);
+                    if (isMounted.current) {
+                        setNotification({
+                            id: Date.now(),
+                            message: error instanceof Error ? error.message : 'Chat konnte nicht initialisiert werden.',
+                            type: 'error'
+                        });
+                    }
+                }
+            };
+            initChat();
         }
-    }, [report, reportStatus, aiSettings]);
+    }, [report, reportStatus, aiSettings, setNotification]);
     
     // Also reset when the report disappears (e.g., new search)
     useEffect(() => {

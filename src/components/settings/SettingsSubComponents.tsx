@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { useSettingsView } from './SettingsViewContext';
+import { ApiKeySettings } from './ApiKeySettings';
 import { SettingCard } from '../SettingCard';
 import { Toggle } from '../Toggle';
 import { Tooltip } from '../Tooltip';
@@ -224,6 +225,7 @@ export const AISettingsTab: React.FC = () => {
 
     return (
         <div className="space-y-8">
+            <ApiKeySettings />
             <SettingCard icon={<SparklesIcon className="w-6 h-6 text-accent-magenta"/>} title="AI Configuration" description="Fine-tune the AI's behavior, language, and core instructions.">
                 <div className="space-y-6">
                     <div>

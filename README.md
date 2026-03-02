@@ -11,7 +11,7 @@
 
 > **A sophisticated, agentic expert system for high-dimensional literature synthesis, automated knowledge discovery, and scientometric analysis.**
 
-[Start Building](https://aistudio.google.com/apps?source=user) | [View Live App](https://ai.studio/apps/drive/19FB9X7ftbg4kXoKVBgPpsGwKDWU4Gvmp)
+**[🚀 Live Demo](https://qnbs.github.io/AI-Research-Orchestrator/)** | [Get Gemini API Key](https://aistudio.google.com/)
 
 ---
 
@@ -81,20 +81,42 @@ This application is a **Progressive Web App (PWA)** built on a modern, performan
 
 ### ⚡ Getting Started
 
+#### Quick Start (Live App)
+1.  Visit **[https://qnbs.github.io/AI-Research-Orchestrator/](https://qnbs.github.io/AI-Research-Orchestrator/)**
+2.  Click **Settings** (gear icon) → **API Key**
+3.  Enter your Gemini API Key (stored encrypted locally, never sent to any server)
+4.  Start researching!
+
+#### Local Development
+```bash
+# Clone repository
+git clone https://github.com/qnbs/AI-Research-Orchestrator.git
+cd AI-Research-Orchestrator
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+
+# Build for production
+npm run build
+```
+
 #### Prerequisites
-*   A modern browser (Chrome, Edge, Safari, Firefox).
-*   A **Google Gemini API Key**. [Get one here](https://aistudio.google.com/).
+*   Node.js 18+ and npm
+*   A modern browser (Chrome, Edge, Safari, Firefox)
+*   A **Google Gemini API Key** — [Get one here](https://aistudio.google.com/)
 
-#### Installation
-This project is built to run directly in a browser environment supporting ES Modules.
+#### How to Set Your API Key
+The app stores your API key **securely encrypted** in your browser's IndexedDB using AES-GCM encryption:
 
-1.  **Clone the repository** (or download source).
-2.  **Configure Environment**:
-    *   The application expects `process.env.API_KEY` to be available.
-    *   *Note: In a production build, inject this via your build tool (Vite/Webpack) or environment configuration.*
-3.  **Serve**:
-    *   Use any static file server (e.g., `npx serve`, `python -m http.server`).
-    *   Access `index.html` in your browser.
+1.  Open the app
+2.  Navigate to **Settings** → **API Key**
+3.  Enter your Gemini API Key
+4.  Click **Save Key**
+
+> ⚠️ **Security Note**: Your API key is encrypted with Web Crypto API and stored locally. It never leaves your browser or gets sent to any external server (except Google's Gemini API for inference).
 
 ---
 
@@ -121,6 +143,41 @@ The application features a granular settings engine allowing precise tuning of t
 ### 📄 License
 
 Distributed under the MIT License. See `LICENSE` for more information.
+
+---
+
+### 🚀 Deployment
+
+This app is configured for **GitHub Pages** deployment:
+
+1.  **Automatic Deployment**: Push to `main` branch triggers GitHub Actions workflow
+2.  **Manual Deployment**: Run `npm run build` and deploy `dist/` folder
+
+#### GitHub Actions Setup
+The repository includes `.github/workflows/deploy.yml` that:
+- Builds the app on every push to `main`
+- Deploys to GitHub Pages automatically
+- Handles SPA routing via `404.html` fallback
+
+#### Self-Hosting
+```bash
+npm run build
+# Deploy dist/ folder to any static hosting:
+# - Netlify, Vercel, Cloudflare Pages
+# - AWS S3 + CloudFront
+# - Any web server (nginx, Apache)
+```
+
+---
+
+### 🔧 Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| "API Key Required" error | Go to Settings → API Key and enter your Gemini API key |
+| PubMed requests failing | Check internet connection; NCBI may have rate limits |
+| PWA not installing | Ensure HTTPS and valid manifest.json |
+| Blank page after navigation | Clear browser cache and reload |
 
 ---
 
@@ -186,20 +243,42 @@ Diese Anwendung ist eine **Progressive Web App (PWA)**, die auf einem modernen, 
 
 ### ⚡ Erste Schritte
 
+#### Schnellstart (Live App)
+1.  Besuchen Sie **[https://qnbs.github.io/AI-Research-Orchestrator/](https://qnbs.github.io/AI-Research-Orchestrator/)**
+2.  Klicken Sie auf **Einstellungen** (Zahnrad-Icon) → **API Key**
+3.  Geben Sie Ihren Gemini API Key ein (wird verschlüsselt lokal gespeichert)
+4.  Starten Sie Ihre Recherche!
+
+#### Lokale Entwicklung
+```bash
+# Repository klonen
+git clone https://github.com/qnbs/AI-Research-Orchestrator.git
+cd AI-Research-Orchestrator
+
+# Abhängigkeiten installieren
+npm install
+
+# Entwicklungsserver starten
+npm run dev
+
+# Für Produktion bauen
+npm run build
+```
+
 #### Voraussetzungen
-*   Ein moderner Browser (Chrome, Edge, Safari, Firefox).
-*   Ein **Google Gemini API Key**. [Hier erhalten](https://aistudio.google.com/).
+*   Node.js 18+ und npm
+*   Ein moderner Browser (Chrome, Edge, Safari, Firefox)
+*   Ein **Google Gemini API Key** — [Hier erhalten](https://aistudio.google.com/)
 
-#### Installation
-Dieses Projekt ist so konzipiert, dass es direkt in einer Browserumgebung ausgeführt werden kann, die ES-Module unterstützt.
+#### API Key einrichten
+Die App speichert Ihren API Key **sicher verschlüsselt** in der IndexedDB Ihres Browsers (AES-GCM Verschlüsselung):
 
-1.  **Repository klonen** (oder Quellcode herunterladen).
-2.  **Umgebung konfigurieren**:
-    *   Die Anwendung erwartet, dass `process.env.API_KEY` verfügbar ist.
-    *   *Hinweis: In einem Produktions-Build injizieren Sie dies über Ihr Build-Tool (Vite/Webpack) oder die Umgebungskonfiguration.*
-3.  **Ausführen**:
-    *   Verwenden Sie einen beliebigen statischen Dateiserver (z. B. `npx serve`, `python -m http.server`).
-    *   Rufen Sie `index.html` in Ihrem Browser auf.
+1.  App öffnen
+2.  Navigieren Sie zu **Einstellungen** → **API Key**
+3.  Geben Sie Ihren Gemini API Key ein
+4.  Klicken Sie auf **Schlüssel speichern**
+
+> ⚠️ **Sicherheitshinweis**: Ihr API Key wird mit der Web Crypto API verschlüsselt und lokal gespeichert. Er verlässt niemals Ihren Browser und wird an keinen externen Server gesendet (außer an die Google Gemini API für Inferenz).
 
 ---
 
