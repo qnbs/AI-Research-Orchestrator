@@ -90,12 +90,12 @@ export const useResearchAssistant = (
                     ...s,
                     similar: {
                         loading: false,
-                        articles: similarResult.status === 'fulfilled' ? similarResult.value : null,
+                        articles: similarResult.status === 'fulfilled' ? (similarResult.value as SimilarArticle[] | null) : null,
                         error: similarResult.status === 'rejected' ? (similarResult.reason as Error).message : null,
                     },
                     online: {
                         loading: false,
-                        findings: onlineResult.status === 'fulfilled' ? onlineResult.value : null,
+                        findings: onlineResult.status === 'fulfilled' ? (onlineResult.value as OnlineFindings | null) : null,
                         error: onlineResult.status === 'rejected' ? (onlineResult.reason as Error).message : null,
                     }
                 }));

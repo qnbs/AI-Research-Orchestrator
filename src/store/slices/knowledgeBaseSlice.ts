@@ -6,9 +6,9 @@ import type { RootState } from '../store';
 
 // --- Adapter for Normalized State ---
 // This optimizes performance by storing articles in a lookup table { ids: [], entities: {} }
-const entriesAdapter = createEntityAdapter<KnowledgeBaseEntry>({
-    selectId: (entry) => entry.id,
-    sortComparer: (a, b) => b.timestamp - a.timestamp,
+const entriesAdapter = createEntityAdapter({
+    selectId: (entry: KnowledgeBaseEntry) => entry.id,
+    sortComparer: (a: KnowledgeBaseEntry, b: KnowledgeBaseEntry) => b.timestamp - a.timestamp,
 });
 
 // --- Async Thunks (Side Effects & DB Interactions) ---

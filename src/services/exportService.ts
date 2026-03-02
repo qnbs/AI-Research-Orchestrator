@@ -151,8 +151,8 @@ class PdfExporter {
         this.addKeyValue('PMID:', article.pmid + (article.pmcId ? ` / PMCID: ${article.pmcId}` : ''));
         this.addKeyValue('Relevance:', `${article.relevanceScore}/100 - ${article.relevanceExplanation}`);
         this.addKeyValue('Summary:', article.aiSummary || article.summary);
-        if (article.keywords?.length > 0) this.addKeyValue('Keywords:', article.keywords.join(', '));
-        if (article.customTags?.length > 0) this.addKeyValue('Custom Tags:', article.customTags.join(', '));
+        if (article.keywords && article.keywords.length > 0) this.addKeyValue('Keywords:', article.keywords.join(', '));
+        if (article.customTags && article.customTags.length > 0) this.addKeyValue('Custom Tags:', article.customTags.join(', '));
         this.currentY += 10;
     }
 
@@ -402,10 +402,10 @@ export const exportCitations = (articles: AggregatedArticle[], settings: Setting
         content = articles.map(a => {
             let entry = `@article{PMID:${a.pmid},\n  author  = {${a.authors.split(', ').join(' and ')}},\n  title   = ${cleanForBibtex(a.title)},\n  journal = ${cleanForBibtex(a.journal)},\n  year    = {${a.pubYear}},\n  pmid    = {${a.pmid}},\n`;
             if (settings.includeAbstract) entry += `  abstract = ${cleanForBibtex(a.summary)},\n`;
-            if (settings.includeKeywords && a.keywords?.length > 0) entry += `  keywords = {${a.keywords.join(', ')}},\n`;
+            if (settings.includeKeywords && a.keywords && a.keywords.length > 0) entry += `  keywords = {${a.keywords.join(', ')}},\n`;
             
             const notes = [];
-            if (settings.includeTags && a.customTags?.length > 0) notes.push(`Custom Tags: ${a.customTags.join(', ')}`);
+            if (settings.includeTags && a.customTags && a.customTags.length > 0) notes.push(`Custom Tags: ${a.customTags.join(', ')}`);
             if (settings.includePmcid && a.pmcId) notes.push(`PMCID: ${a.pmcId}`);
             if (notes.length > 0) entry += `  note = ${cleanForBibtex(notes.join('; '))}\n`;
             
@@ -418,8 +418,8 @@ export const exportCitations = (articles: AggregatedArticle[], settings: Setting
             entry += a.authors.split(', ').map(author => `AU  - ${author}`).join('\n') + '\n';
             entry += `TI  - ${cleanForRis(a.title)}\nJO  - ${cleanForRis(a.journal)}\nYR  - ${a.pubYear}\n`;
             if (settings.includeAbstract) entry += `AB  - ${cleanForRis(a.summary)}\n`;
-            if (settings.includeKeywords && a.keywords?.length > 0) entry += `${a.keywords.map(kw => `KW  - ${cleanForRis(kw)}`).join('\n')}\n`;
-            if (settings.includeTags && a.customTags?.length > 0) entry += `${a.customTags.map(tag => `KW  - ${cleanForRis(tag)}`).join('\n')}\n`;
+            if (settings.includeKeywords && a.keywords && a.keywords.length > 0) entry += `${a.keywords.map(kw => `KW  - ${cleanForRis(kw)}`).join('\n')}\n`;
+            if (settings.includeTags && a.customTags && a.customTags.length > 0) entry += `${a.customTags.map(tag => `KW  - ${cleanForRis(tag)}`).join('\n')}\n`;
             entry += `ID  - ${a.pmid}\n`;
             if (settings.includePmcid && a.pmcId) entry += `N1  - PMCID: ${a.pmcId}\n`; // N1 is often used for notes
             entry += 'ER  - \n';

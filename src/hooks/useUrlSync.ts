@@ -49,11 +49,11 @@ export const useUrlSync = (
 
             try {
                 window.history.pushState(null, '', `#${currentView}`);
-            } catch (e) {
+            } catch {
                 try {
                     window.location.hash = `#${currentView}`;
-                } catch (e2) {
-                    console.debug("Could not update URL hash:", e2);
+                } catch {
+                    // Silently ignore URL hash update failures
                 }
             }
         }

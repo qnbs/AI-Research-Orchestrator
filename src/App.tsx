@@ -204,8 +204,7 @@ const AppLayout: React.FC = () => {
         for await (const { report: partialReport, synthesisChunk, phase } of stream) {
             // Check if this stream is still the active one
             if (generationIdRef.current !== currentGenId) {
-                console.debug('Generation aborted: new request started.');
-                return;
+                return; // Generation aborted: new request started
             }
 
             setCurrentPhase(phase);

@@ -160,7 +160,7 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
         });
 
         if (updates.length > 0) await Promise.all(updates.map(u => dispatch(updateKbEntry(u))));
-        if (toDeleteIds.length > 0) await dispatch(deleteEntriesFromDb(toDeleteIds)); // Direct DB call then refresh
+        if (toDeleteIds.length > 0) await deleteEntriesFromDb(toDeleteIds);
         
         dispatch(fetchKnowledgeBase());
     }, [dispatch, knowledgeBase]);

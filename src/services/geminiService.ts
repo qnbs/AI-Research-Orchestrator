@@ -357,7 +357,7 @@ Research Topic: "${input.researchTopic}"
             contents: buildQueryGenPrompt(input)
         });
         
-        const { generatedQueries } = extractAndParseJson<{ generatedQueries: GeneratedQuery[] }>(queryGenResponse.text);
+        const { generatedQueries } = extractAndParseJson<{ generatedQueries: GeneratedQuery[] }>(queryGenResponse.text ?? '');
         if (!generatedQueries || generatedQueries.length === 0 || !generatedQueries[0].query) {
             throw new Error("The AI failed to generate any search queries.");
         }
@@ -422,7 +422,7 @@ Research Topic: "${input.researchTopic}"
             `
         });
 
-        const analysisData = extractAndParseJson<any>(analysisResponse.text);
+        const analysisData = extractAndParseJson<any>(analysisResponse.text ?? '');
 
         const detailedRankedArticles = analysisData.rankedArticles.map((ranked: any) => {
             const details = articleDetails.find(d => d.pmid === ranked.pmid);
@@ -504,7 +504,7 @@ export async function findSimilarArticles(article: { title: string; summary: str
                 }
             }
         });
-        return extractAndParseJson<SimilarArticle[]>(response.text);
+        return extractAndParseJson<SimilarArticle[]>(response.text ?? '');
     } catch (error) {
         console.error("Error finding similar articles:", error);
         throw new Error(getGeminiError(error));
@@ -523,7 +523,7 @@ export async function findRelatedOnline(topic: string, aiSettings: Settings['ai'
             }
         });
         const sources: WebContent[] = (response.candidates?.[0]?.groundingMetadata?.groundingChunks || []).map((chunk: any) => chunk.web);
-        return { summary: response.text, sources: sources };
+        return { summary: response.text ?? '', sources: sources };
     } catch (error) {
         console.error("Error finding related online content:", error);
         throw new Error(getGeminiError(error));
@@ -542,7 +542,7 @@ export async function generateTldrSummary(abstract: string, aiSettings: Settings
                 thinkingConfig: { thinkingBudget: 0 } 
             }
         });
-        return response.text;
+        return response.text ?? '';
     } catch (error) {
         console.error("Error generating TL;DR summary:", error);
         throw new Error(getGeminiError(error));
@@ -571,7 +571,7 @@ export async function generateResearchAnalysis(query: string, aiSettings: Settin
                 }
             }
         });
-        return extractAndParseJson<ResearchAnalysis>(response.text);
+        return extractAndParseJson<ResearchAnalysis>(response.text ?? '');
     } catch (error) {
         console.error("Error generating research analysis:", error);
         throw new Error(getGeminiError(error));
@@ -606,7 +606,7 @@ export async function disambiguateAuthor(authorName: string, articles: Partial<R
                 }
             }
         });
-        return extractAndParseJson<AuthorCluster[]>(response.text);
+        return extractAndParseJson<AuthorCluster[]>(response.text ?? '');
     } catch (error) {
         console.error("Error disambiguating author:", error);
         throw new Error(getGeminiError(error));
@@ -638,7 +638,7 @@ export async function generateAuthorProfileAnalysis(authorName: string, articles
                 }
             }
         });
-        return extractAndParseJson<any>(response.text);
+        return extractAndParseJson<any>(response.text ?? '');
     } catch (error) {
         console.error("Error generating author profile:", error);
         throw new Error(getGeminiError(error));
@@ -668,7 +668,7 @@ export async function suggestAuthors(fieldOfStudy: string, aiSettings: Settings[
                 }
             }
         });
-        return extractAndParseJson<{name: string; description: string;}[]>(response.text);
+        return extractAndParseJson<{name: string; description: string;}[]>(response.text ?? '');
     } catch (error) {
         console.error("Error suggesting authors:", error);
         throw new Error(getGeminiError(error));
@@ -730,7 +730,7 @@ export async function analyzeSingleArticle(identifier: string, aiSettings: Setti
             relevanceExplanation: string;
             keywords: string[];
             articleType: string;
-        }>(response.text);
+        }>(response.text ?? '');
 
         return {
             ...articleData,
@@ -766,7 +766,7 @@ export async function generateJournalProfileAnalysis(journalName: string, aiSett
                 }
             }
         });
-        return extractAndParseJson<JournalProfile>(response.text);
+        return extractAndParseJson<JournalProfile>(response.text ?? '');
     } catch (error) {
         console.error("Error generating journal profile analysis:", error);
         throw new Error(getGeminiError(error));

@@ -9,22 +9,23 @@ import { db } from '../../services/databaseService';
 import { useTranslation } from '../../hooks/useTranslation';
 import { exportHistoryToJson, exportKnowledgeBaseToJson } from '../../services/exportService';
 
-const isObject = (item: any): item is object => {
-    return (item && typeof item === 'object' && !Array.isArray(item));
+const isObject = (item: unknown): item is Record<string, unknown> => {
+    return (item !== null && typeof item === 'object' && !Array.isArray(item));
 };
 
-export const deepMerge = (target: any, source: any) => {
-    let output = { ...target };
+export const deepMerge = <T extends object>(target: T, source: Partial<T>): T => {
+    const output = { ...target } as T;
     if (isObject(target) && isObject(source)) {
         Object.keys(source).forEach(key => {
-            if (isObject(source[key])) {
-                if (!(key in target)) {
-                    output = { ...output, [key]: source[key] };
-                } else {
-                    output[key] = deepMerge(target[key], source[key]);
-                }
-            } else {
-                output = { ...output, [key]: source[key] };
+            const sourceValue = (source as Record<string, unknown>)[key];
+            const targetValue = (target as Record<string, unknown>)[key];
+            if (isObject(sourceValue) && isObject(targetValue)) {
+                (output as Record<string, unknown>)[key] = deepMerge(
+                    targetValue as object, 
+                    sourceValue as object
+                );
+            } else if (sourceValue !== undefined) {
+                (output as Record<string, unknown>)[key] = sourceValue;
             }
         });
     }
@@ -274,12 +275,7 @@ export const useSettingsViewLogic = (
     const handleInstallPwa = useCallback(async () => {
         if (!installPromptEvent) return;
         installPromptEvent.prompt();
-        const { outcome } = await installPromptEvent.userChoice;
-        if (outcome === 'accepted') {
-            console.log('User accepted the PWA installation');
-        } else {
-            console.log('User dismissed the PWA installation');
-        }
+        await installPromptEvent.userChoice;
         setInstallPromptEvent(null);
     }, [installPromptEvent, setInstallPromptEvent]);
 

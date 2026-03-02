@@ -51,10 +51,10 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({ onFilterChange, 
     const { getArticles } = useKnowledgeBase();
 
     const chartRefs = {
-        journals: useRef<ChartJS<'bar', number[], string>>(null),
-        articleTypes: useRef<ChartJS<'doughnut', number[], string>>(null),
-        years: useRef<ChartJS<'bar', number[], string>>(null),
-        openAccess: useRef<ChartJS<'doughnut', number[], string>>(null),
+        journals: useRef<ChartJS<'bar', number[], string> | null>(null),
+        articleTypes: useRef<ChartJS<'doughnut', number[], string> | null>(null),
+        years: useRef<ChartJS<'bar', number[], string> | null>(null),
+        openAccess: useRef<ChartJS<'doughnut', number[], string> | null>(null),
     };
 
     const uniqueArticles = useMemo(() => getArticles('all'), [getArticles]);
@@ -92,7 +92,7 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({ onFilterChange, 
         };
     }, [uniqueArticles]);
 
-    const handleChartClick = (event: React.MouseEvent<HTMLCanvasElement>, chartRef: React.RefObject<ChartJS<any, any, any>>, filterKey: keyof KnowledgeBaseFilter) => {
+    const handleChartClick = (event: React.MouseEvent<HTMLCanvasElement>, chartRef: React.RefObject<ChartJS<any, any, any> | null>, filterKey: keyof KnowledgeBaseFilter) => {
         if (!chartRef.current) return;
         const element = getElementAtEvent(chartRef.current, event);
         if (!element.length) return;
@@ -177,7 +177,7 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({ onFilterChange, 
                     />
                 </ChartCard>
                  <ChartCard title="Article Types" titleId={titleIds.articleTypes} aria-label="Doughnut chart showing the distribution of different article types. Clicking a segment filters the knowledge base.">
-                    <Doughnut ref={chartRefs.articleTypes} onClick={(e) => handleChartClick(e, chartRefs.articleTypes, 'selectedArticleTypes')} options={{...commonOptions, plugins: {...commonOptions.plugins, legend: { position: 'right' as const, ...commonOptions.plugins.legend }}}} data={chartData.articleTypes} />
+                    <Doughnut ref={chartRefs.articleTypes} onClick={(e) => handleChartClick(e, chartRefs.articleTypes, 'selectedArticleTypes')} options={{...commonOptions, plugins: {...commonOptions.plugins, legend: { ...commonOptions.plugins.legend, position: 'right' as const }}}} data={chartData.articleTypes} />
                      <AccessibleDataTable
                         titleId={titleIds.articleTypes}
                         caption="Table of article type distribution."
@@ -186,7 +186,7 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({ onFilterChange, 
                     />
                 </ChartCard>
                 <ChartCard title="Open Access vs. Closed" titleId={titleIds.openAccess} aria-label="Doughnut chart showing the proportion of open access versus closed access articles.">
-                    <Doughnut ref={chartRefs.openAccess} options={{...commonOptions, plugins: {...commonOptions.plugins, legend: { position: 'right' as const, ...commonOptions.plugins.legend }}}} data={chartData.openAccess} />
+                    <Doughnut ref={chartRefs.openAccess} options={{...commonOptions, plugins: {...commonOptions.plugins, legend: { ...commonOptions.plugins.legend, position: 'right' as const }}}} data={chartData.openAccess} />
                      <AccessibleDataTable
                         titleId={titleIds.openAccess}
                         caption="Table of open vs. closed access article counts."

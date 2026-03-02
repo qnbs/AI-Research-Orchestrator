@@ -248,7 +248,7 @@ const HelpView: React.FC<HelpViewProps> = ({ initialTab, onTabConsumed }) => {
     const filteredGuideTopics = useMemo(() => {
         if (!searchTerm) return guideTopics;
         const lowercasedTerm = searchTerm.toLowerCase();
-        return guideTopics.filter(topic => topic.title.toLowerCase().includes(lowercasedTerm) || topic.keywords.includes(lowercasedTerm));
+        return guideTopics.filter(topic => topic.title.toLowerCase().includes(lowercasedTerm) || topic.keywords?.includes(lowercasedTerm));
     }, [searchTerm, guideTopics]);
     
     const filteredFaqItems = useMemo(() => {
