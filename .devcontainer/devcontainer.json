@@ -1,58 +1,143 @@
+// =============================================================================
+// AI Research Orchestrator — DevContainer Configuration
+// Supports: GitHub Codespaces · VS Code Remote Containers
+// =============================================================================
 {
-  "name": "AI Research Orchestrator — Codespaces",
+  "name": "AI Research Orchestrator",
+
+  // ── Build ──────────────────────────────────────────────────────────────────
   "build": {
     "dockerfile": "Dockerfile",
-    "context": ".."
+    "context": "..",
+    "args": { "BUILDKIT_INLINE_CACHE": "1" }
   },
-  "features": {
-    "ghcr.io/devcontainers/features/git:1": {},
-    "ghcr.io/devcontainers/features/github-cli:1": {}
-  },
-  "forwardPorts": [3000, 4173],
-  "portsAttributes": {
-    "3000": {
-      "label": "Vite Dev Server",
-      "onAutoForward": "openBrowser"
-    },
-    "4173": {
-      "label": "Vite Preview",
-      "onAutoForward": "notify"
+
+  // ── Codespaces secrets ─────────────────────────────────────────────────────
+  // These are NEVER written to disk or committed to the repo.
+  // Users must add GEMINI_API_KEY at: https://github.com/settings/codespaces
+  "secrets": {
+    "GEMINI_API_KEY": {
+      "description": "Google Gemini API key. Get one free at https://aistudio.google.com/app/apikey",
+      "documentationUrl": "https://aistudio.google.com/app/apikey"
     }
   },
-  "postCreateCommand": "npm install && npm run typecheck || true && npm run test:run || true",
-  "postStartCommand": "git config --global --add safe.directory /workspaces/AI-Research-Orchestrator",
+
+  // ── Remote environment variables ───────────────────────────────────────────
+  // Makes secrets available in VS Code terminal + launch configs.
+  "remoteEnv": {
+    "GEMINI_API_KEY": "${containerEnv:GEMINI_API_KEY}",
+    "npm_config_fund": "false",
+    "npm_config_update_notifier": "false",
+    // Playwright requires --no-sandbox inside Docker
+    "PLAYWRIGHT_CHROMIUM_SANDBOX": "false",
+    "DISPLAY": ":99"
+  },
+
+  // ── devcontainer Features ──────────────────────────────────────────────────
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": { "ppa": true, "version": "latest" },
+    "ghcr.io/devcontainers/features/github-cli:1": { "version": "latest" }
+  },
+
+  // ── Lifecycle ──────────────────────────────────────────────────────────────
+  // postCreateCommand: runs ONCE after container creation
+  //   → npm ci, Playwright Chromium install, typecheck, unit tests, key hint
+  // postStartCommand: runs on EVERY container start
+  //   → re-marks workspace as git-safe (needed if the volume remounts)
+  "postCreateCommand": "bash .devcontainer/postCreate.sh",
+  "postStartCommand": "git config --global --add safe.directory /workspaces/AI-Research-Orchestrator 2>/dev/null || true",
+
+  // ── Port forwarding ────────────────────────────────────────────────────────
+  "forwardPorts": [3000, 4173],
+  "portsAttributes": {
+    "3000": { "label": "Vite Dev Server", "onAutoForward": "openBrowser", "requireLocalPort": false },
+    "4173": { "label": "Vite Preview",    "onAutoForward": "notify" }
+  },
+
+  // ── VS Code customizations ─────────────────────────────────────────────────
   "customizations": {
     "vscode": {
       "extensions": [
+        // TypeScript + React
+        "ms-vscode.vscode-typescript-next",
+        "formulahendry.auto-rename-tag",
+        "dsznajder.es7-react-js-snippets",
+        // Tailwind
+        "bradlc.vscode-tailwindcss",
+        // Linting + Formatting
         "dbaeumer.vscode-eslint",
         "esbenp.prettier-vscode",
-        "bradlc.vscode-tailwindcss",
-        "ms-vscode.vscode-typescript-next",
+        "streetsidesoftware.code-spell-checker",
+        "usernamehw.errorlens",
+        // Testing
+        "vitest.explorer",
+        "ms-playwright.playwright",
+        // Git + GitHub
+        "eamodio.gitlens",
         "github.copilot",
         "github.copilot-chat",
-        "vitest.explorer",
-        "antfu.unocss",
-        "formulahendry.auto-rename-tag",
+        "github.vscode-pull-request-github",
+        // IDE quality
         "christian-kohler.path-intellisense",
         "redhat.vscode-yaml",
-        "eamodio.gitlens"
+        "pkief.material-icon-theme"
       ],
       "settings": {
+        // ── Security ────────────────────────────────────────────────────────
+        "security.workspace.trust.enabled": true,
+        "security.workspace.trust.startupPrompt": "never",
+        "security.workspace.trust.emptyWindow": false,
+
+        // ── Editor ──────────────────────────────────────────────────────────
         "editor.formatOnSave": true,
         "editor.defaultFormatter": "esbenp.prettier-vscode",
         "editor.tabSize": 2,
+        "editor.insertSpaces": true,
+        "editor.bracketPairColorization.enabled": true,
+        "editor.guides.bracketPairs": true,
+        "editor.inlayHints.enabled": "on",
+        "editor.codeActionsOnSave": {
+          "source.organizeImports": "explicit",
+          "source.fixAll.eslint": "explicit"
+        },
+
+        // ── TypeScript ──────────────────────────────────────────────────────
         "typescript.tsdk": "node_modules/typescript/lib",
+        "typescript.enablePromptUseWorkspaceTsdk": true,
+        "typescript.preferences.importModuleSpecifier": "relative",
+
+        // ── Tailwind ────────────────────────────────────────────────────────
         "tailwindCSS.experimental.classRegex": [
           ["clsx\\(([^)]*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"],
-          ["cn\\(([^)]*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"]
+          ["cn\\(([^)]*)\\)",   "(?:'|\"|`)([^']*)(?:'|\"|`)"],
+          ["cva\\(([^)]*)\\)",  "[\"'`]([^\"'`]*).*?[\"'`]"]
         ],
-        "files.associations": {
-          "*.css": "tailwindcss"
-        },
-        "terminal.integrated.defaultProfile.linux": "bash"
+        "files.associations": { "*.css": "tailwindcss" },
+
+        // ── Testing ─────────────────────────────────────────────────────────
+        "vitest.enable": true,
+        "vitest.commandLine": "npx vitest",
+        "playwright.reuseBrowser": false,
+        "playwright.showTrace": true,
+
+        // ── Terminal ────────────────────────────────────────────────────────
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "terminal.integrated.scrollback": 5000,
+
+        // ── File nesting ────────────────────────────────────────────────────
+        "explorer.fileNesting.enabled": true,
+        "explorer.fileNesting.patterns": {
+          "*.ts":           "${capture}.test.ts, ${capture}.spec.ts",
+          "*.tsx":          "${capture}.test.tsx, ${capture}.spec.tsx",
+          "package.json":   "package-lock.json, .nvmrc, .npmrc",
+          "vite.config.*":  "vitest.config.*, playwright.config.*",
+          "tailwind.config.*": "postcss.config.*"
+        }
       }
     }
   },
+
+  // ── Container settings ─────────────────────────────────────────────────────
   "remoteUser": "node",
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/AI-Research-Orchestrator,type=bind,consistency=cached",
   "workspaceFolder": "/workspaces/AI-Research-Orchestrator"

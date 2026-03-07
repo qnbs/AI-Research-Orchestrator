@@ -22,3 +22,31 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# ── Security: NEVER commit secrets or env files ──────────────────────────────
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+# Prevent accidental API key commits
+*secret*
+*credentials*
+
+# ── Playwright ────────────────────────────────────────────────────────────────
+/test-results/
+/playwright-report/
+/playwright/.cache/
+/blob-report/
+
+# ── Coverage ──────────────────────────────────────────────────────────────────
+coverage/
+*.lcov
+
+# ── OS ────────────────────────────────────────────────────────────────────────
+Thumbs.db
+ehthumbs.db
+Desktop.ini
