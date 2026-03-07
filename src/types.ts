@@ -115,8 +115,10 @@ export interface Preset {
 
 export type AppLanguage = 'en' | 'de';
 
+export type CyberTheme = 'dark' | 'light' | 'matrix';
+
 export interface Settings {
-  theme: 'dark' | 'light';
+  theme: CyberTheme;
   appLanguage: AppLanguage;
   appearance: {
     density: 'comfortable' | 'compact';
@@ -196,6 +198,91 @@ export interface SimilarArticle {
 export interface WebContent {
   uri: string;
   title: string;
+}
+
+// ── arXiv Types ─────────────────────────────────────────────────────────────
+
+export interface ArxivArticle {
+  arxivId: string;
+  title: string;
+  authors: string;
+  abstract: string;
+  published: string;    // ISO date string
+  updated: string;
+  categories: string[];
+  pdfUrl: string;
+  htmlUrl: string;
+  journalRef?: string;
+  doi?: string;
+  source: 'arxiv';
+}
+
+export interface UnifiedArticle extends RankedArticle {
+  source: 'pubmed' | 'arxiv';
+  arxivId?: string;
+  categories?: string[];
+  pdfUrl?: string;
+}
+
+export interface MultiDbSearchResult {
+  pubmedArticles: RankedArticle[];
+  arxivArticles: ArxivArticle[];
+  query: string;
+  timestamp: number;
+}
+
+// ── Research Collections ──────────────────────────────────────────────────────
+
+export interface ResearchCollection {
+  id: string;
+  name: string;
+  description: string;
+  color: string;          // hex color for UI
+  icon: string;           // emoji or icon name
+  entryIds: string[];     // KnowledgeBaseEntry ids
+  articlePmids: string[]; // individual article pmids
+  createdAt: number;
+  updatedAt: number;
+  shareToken?: string;    // for shareable export links
+  tags: string[];
+}
+
+// ── Agent Debugger Types ──────────────────────────────────────────────────────
+
+export type AgentName = 'QueryGenerator' | 'PubMedFetcher' | 'Ranker' | 'Synthesizer' | 'ArxivFetcher' | 'ResearchAnalyst';
+export type AgentStatus = 'idle' | 'running' | 'done' | 'error' | 'skipped';
+
+export interface AgentTokenUsage {
+  inputTokens: number;
+  outputTokens: number;
+  totalTokens: number;
+  estimatedCostUsd: number;
+}
+
+export interface AgentTraceEvent {
+  id: string;
+  agentName: AgentName;
+  status: AgentStatus;
+  message: string;
+  startedAt: number;
+  completedAt?: number;
+  durationMs?: number;
+  tokenUsage?: AgentTokenUsage;
+  inputSummary?: string;
+  outputSummary?: string;
+  error?: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface AgentPipelineTrace {
+  sessionId: string;
+  topic: string;
+  startedAt: number;
+  completedAt?: number;
+  events: AgentTraceEvent[];
+  totalTokens: number;
+  totalCostUsd: number;
+  status: 'running' | 'done' | 'error';
 }
 
 export interface GroundingChunk {

@@ -45,7 +45,41 @@ export const translations = {
         "orchestrator.phase4": "Phase 4: AI Ranking & Analysis of Real Articles...",
         "orchestrator.phase5": "Phase 5: Synthesizing Top Findings...",
         "orchestrator.phase6": "Streaming Synthesis...",
-        "orchestrator.phase7": "Finalizing Report..."
+        "orchestrator.phase7": "Finalizing Report...",
+        // ── Collections ──
+        "nav.collections": "Collections",
+        "collections.title": "Research Collections",
+        "collections.subtitle": "Organize your knowledge into curated, shareable collections.",
+        "collections.new": "New Collection",
+        "collections.empty.title": "No collections yet",
+        "collections.empty.desc": "Create your first collection to organize research reports and articles.",
+        "collections.create": "Create Collection",
+        "collections.edit": "Edit Collection",
+        "collections.delete.confirm": "Delete this collection?",
+        "collections.share": "Generate share link",
+        "collections.copied": "Link copied to clipboard!",
+        // ── Agent Debugger ──
+        "debugger.title": "Agent Debugger",
+        "debugger.live": "Live",
+        "debugger.tokens": "tokens",
+        "debugger.cost": "Estimated cost",
+        "debugger.clear": "Clear history",
+        "debugger.empty": "Start a research session to see the agent pipeline live.",
+        // ── Themes ──
+        "theme.cyber_dark": "Cyber-Dark",
+        "theme.neon_light": "Neon-Light",
+        "theme.matrix_green": "Matrix-Green",
+        "theme.switch_to": "Switch Theme",
+        // ── arXiv ──
+        "arxiv.source": "arXiv preprint",
+        "arxiv.categories": "Categories",
+        "arxiv.pdf": "View PDF",
+        // ── Scientometrics ──
+        "scientometrics.title": "Scientometric Analysis",
+        "scientometrics.authors": "Author Network",
+        "scientometrics.timeline": "Publication Timeline",
+        "scientometrics.journals": "Journal Distribution",
+        "scientometrics.keywords": "Keyword Cloud"
     },
     de: {
         "app.name": "Research Orchestrator",
@@ -92,7 +126,41 @@ export const translations = {
         "orchestrator.phase4": "Phase 4: KI bewertet & analysiert Artikel...",
         "orchestrator.phase5": "Phase 5: Synthetisiere Top-Ergebnisse...",
         "orchestrator.phase6": "Streame Zusammenfassung...",
-        "orchestrator.phase7": "Finalisiere Bericht..."
+        "orchestrator.phase7": "Finalisiere Bericht...",
+        // ── Collections ──
+        "nav.collections": "Sammlungen",
+        "collections.title": "Forschungssammlungen",
+        "collections.subtitle": "Organisieren Sie Ihr Wissen in kuratierten, teilbaren Sammlungen.",
+        "collections.new": "Neue Sammlung",
+        "collections.empty.title": "Noch keine Sammlungen",
+        "collections.empty.desc": "Erstellen Sie Ihre erste Sammlung, um Forschungsberichte und Artikel zu organisieren.",
+        "collections.create": "Sammlung erstellen",
+        "collections.edit": "Sammlung bearbeiten",
+        "collections.delete.confirm": "Diese Sammlung löschen?",
+        "collections.share": "Freigabelink erstellen",
+        "collections.copied": "Link in Zwischenablage kopiert!",
+        // ── Agent Debugger ──
+        "debugger.title": "Agenten-Debugger",
+        "debugger.live": "Live",
+        "debugger.tokens": "Token",
+        "debugger.cost": "Geschätzte Kosten",
+        "debugger.clear": "Verlauf leeren",
+        "debugger.empty": "Starten Sie eine Recherche-Session, um die Agenten-Pipeline live zu verfolgen.",
+        // ── Themes ──
+        "theme.cyber_dark": "Cyber-Dunkel",
+        "theme.neon_light": "Neon-Hell",
+        "theme.matrix_green": "Matrix-Grün",
+        "theme.switch_to": "Design wechseln",
+        // ── arXiv ──
+        "arxiv.source": "arXiv-Preprint",
+        "arxiv.categories": "Kategorien",
+        "arxiv.pdf": "PDF anzeigen",
+        // ── Scientometrics ──
+        "scientometrics.title": "Scientometrische Analyse",
+        "scientometrics.authors": "Autoren-Netzwerk",
+        "scientometrics.timeline": "Publikations-Timeline",
+        "scientometrics.journals": "Journal-Verteilung",
+        "scientometrics.keywords": "Keyword-Cloud"
     }
 };
 

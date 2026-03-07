@@ -48,7 +48,10 @@ export default defineConfig(({ mode }) => {
               // Vendor chunks
               'vendor-react': ['react', 'react-dom'],
               'vendor-redux': ['react-redux', '@reduxjs/toolkit'],
-              'vendor-charts': ['chart.js', 'react-chartjs-2'],
+              'vendor-charts': ['chart.js', 'react-chartjs-2', 'recharts'],
+              'vendor-motion': ['framer-motion'],
+              'vendor-ui': ['lucide-react', 'cmdk'],
+              'vendor-query': ['@tanstack/react-query'],
             },
             // Asset hashing for cache busting
             assetFileNames: 'assets/[name]-[hash][extname]',
@@ -66,7 +69,7 @@ export default defineConfig(({ mode }) => {
       
       // PWA and performance optimizations
       optimizeDeps: {
-        include: ['react', 'react-dom', 'react-redux', '@reduxjs/toolkit'],
+        include: ['react', 'react-dom', 'react-redux', '@reduxjs/toolkit', 'framer-motion', 'recharts'],
       },
     };
 });

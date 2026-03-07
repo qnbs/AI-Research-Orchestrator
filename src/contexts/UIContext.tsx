@@ -10,7 +10,7 @@ import {
     setIsPwaInstalled 
 } from '../store/slices/uiSlice';
 
-export type View = 'home' | 'orchestrator' | 'research' | 'authors' | 'journals' | 'knowledgeBase' | 'settings' | 'help' | 'dashboard' | 'history';
+export type View = 'home' | 'orchestrator' | 'research' | 'authors' | 'journals' | 'knowledgeBase' | 'settings' | 'help' | 'dashboard' | 'history' | 'collections';
 
 export interface BeforeInstallPromptEvent extends Event {
   readonly platforms: string[];

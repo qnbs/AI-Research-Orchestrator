@@ -1,5 +1,7 @@
 
 import React, { useState, useCallback, useEffect, memo, lazy, Suspense, useRef } from 'react';
+import { useAppDispatch } from './store/hooks';
+import { loadCollections } from './store/slices/collectionsSlice';
 import { Header } from './components/Header';
 import { ResearchInput, ResearchReport, KnowledgeBaseEntry, ChatMessage, AuthorProfile, KnowledgeBaseFilter, AggregatedArticle } from './types';
 import { SettingsProvider, useSettings } from './contexts/SettingsContext';
@@ -32,6 +34,8 @@ const HomeView = lazy(() => import('./components/HomeView'));
 const CommandPalette = lazy(() => import('./components/CommandPalette'));
 const QuickAddModal = lazy(() => import('./components/QuickAddModal'));
 const JournalsView = lazy(() => import('./components/JournalsView'));
+const CollectionsView = lazy(() => import('./components/CollectionsView'));
+const AgentDebugger = lazy(() => import('./components/AgentDebugger'));
 
 const FullScreenSpinner: React.FC = () => (
     <div className="flex h-screen items-center justify-center bg-background">
@@ -103,6 +107,10 @@ const AppLayout: React.FC = () => {
   // Activate URL syncing
   useUrlSync(currentView, setCurrentView);
 
+  // Load collections from DB on mount
+  const dispatch = useAppDispatch();
+  useEffect(() => { dispatch(loadCollections()); }, [dispatch]);
+
   useEffect(() => {
       document.documentElement.className = settings.theme;
       document.documentElement.classList.toggle('no-animations', !settings.performance.enableAnimations);
@@ -134,6 +142,7 @@ const AppLayout: React.FC = () => {
             history: t('nav.history'),
             settings: t('nav.settings'),
             help: t('nav.help'),
+            collections: t('nav.collections') || 'Collections',
         };
         document.title = `${viewTitles[currentView] || t('nav.research')} | ${t('app.name')}`;
     }, [currentView, t]);
@@ -421,6 +430,7 @@ const AppLayout: React.FC = () => {
            case 'authors': return <AuthorsView initialProfile={selectedAuthorProfile} onViewedInitialProfile={handleAuthorProfileViewed} />;
            case 'knowledgeBase': return <KnowledgeBaseView onViewChange={handleViewChange} filter={kbFilter} onFilterChange={handleFilterChange} selectedPmids={selectedKbPmids} setSelectedPmids={setSelectedKbPmids} />;
            case 'journals': return <JournalsView />;
+           case 'collections': return <CollectionsView />;
            case 'dashboard': return <DashboardView onFilterChange={handleFilterChange} onViewChange={handleViewChange} />;
            case 'history': return <HistoryView onViewEntry={handleViewEntry} />;
            case 'settings': return <SettingsView onClearKnowledgeBase={handleClearKnowledgeBase} resetToken={settingsResetToken} onNavigateToHelpTab={handleNavigateToHelp} />;
@@ -458,6 +468,7 @@ const AppLayout: React.FC = () => {
       <Suspense>
         {isCommandPaletteOpen && <CommandPalette isReportVisible={!!report} isCurrentReportSaved={isCurrentReportSaved} selectedArticleCount={selectedKbPmids.length} onSaveReport={handleSaveReport} onExportSelection={handleExportSelection}/>}
         {isQuickAddModalOpen && <QuickAddModal onClose={() => setIsQuickAddModalOpen(false)} />}
+        <AgentDebugger />
       </Suspense>
     </>
   );

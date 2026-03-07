@@ -32,7 +32,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://aistudiocdn.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
+
     <style>
       :root.dark {
         /* Deep Space Base - slightly bluer for cybernetic feel */
@@ -244,55 +244,7 @@
         background: var(--color-text-secondary); 
       }
     </style>
-    <script>
-      tailwind.config = {
-        darkMode: 'class', 
-        theme: {
-          extend: {
-            fontFamily: {
-              sans: ['Inter', 'sans-serif'],
-              roboto: ['Roboto', 'sans-serif'],
-            },
-            colors: {
-              background: 'var(--color-background)',
-              surface: 'var(--color-surface)',
-              'surface-hover': 'var(--color-surface-hover)',
-              'input-bg': 'var(--color-input-bg)',
-              border: 'var(--color-border)',
-              'text-primary': 'var(--color-text-primary)',
-              'text-secondary': 'var(--color-text-secondary)',
-              'brand-accent': 'var(--color-brand-accent)',
-              'brand-primary': 'var(--color-brand-primary)',
-              'brand-secondary': 'var(--color-brand-secondary)',
-              'brand-text-on-accent': 'var(--color-brand-text-on-accent)',
-              'accent-cyan': 'var(--color-accent-cyan)',
-              'accent-magenta': 'var(--color-accent-magenta)',
-              'accent-amber': 'var(--color-accent-amber)',
-            },
-            boxShadow: {
-              'glow': '0 0 15px var(--color-glow)',
-              'glow-lg': '0 0 30px var(--color-glow)',
-              'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
-            },
-            animation: {
-              fadeIn: 'fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-              slideInUp: 'slideInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
-              pulseGlow: 'pulseGlow 3s infinite',
-            },
-            keyframes: {
-              fadeIn: {
-                '0%': { opacity: 0, transform: 'translateY(10px)' },
-                '100%': { opacity: 1, transform: 'translateY(0)' },
-              },
-              slideInUp: {
-                '0%': { opacity: 0, transform: 'translateY(20px)' },
-                '100%': { opacity: 1, transform: 'translateY(0)' },
-              }
-            }
-          }
-        }
-      }
-    </script>
+
   <script type="importmap">
 {
   "imports": {

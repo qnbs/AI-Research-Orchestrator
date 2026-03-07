@@ -19,6 +19,7 @@ import { SearchIcon } from './icons/SearchIcon';
 import { BookmarkSquareIcon } from './icons/BookmarkSquareIcon';
 import { ExportIcon } from './icons/ExportIcon';
 import { BookOpenIcon } from './icons/BookOpenIcon';
+import type { CyberTheme } from '../types';
 
 interface Command {
     id: string;
@@ -107,8 +108,9 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
         
         // Theme
         commandList.push(
-             { id: 'theme-light', type: 'theme', title: 'Switch to Light Theme', keywords: 'light mode', icon: <SunIcon className="h-5 w-5"/>, action: () => updateSettings(s => ({...s, theme: 'light'})) },
-             { id: 'theme-dark', type: 'theme', title: 'Switch to Dark Theme', keywords: 'dark mode', icon: <MoonIcon className="h-5 w-5"/>, action: () => updateSettings(s => ({...s, theme: 'dark'})) }
+             { id: 'theme-light', type: 'theme', title: 'Switch to Neon-Light Theme', keywords: 'light mode bright', icon: <SunIcon className="h-5 w-5"/>, action: () => updateSettings(s => ({...s, theme: 'light'})) },
+             { id: 'theme-dark', type: 'theme', title: 'Switch to Cyber-Dark Theme', keywords: 'dark mode', icon: <MoonIcon className="h-5 w-5"/>, action: () => updateSettings(s => ({...s, theme: 'dark'})) },
+             { id: 'theme-matrix', type: 'theme', title: 'Switch to Matrix-Green Theme', keywords: 'matrix green hacker', icon: <span className="h-5 w-5 text-lg">🟩</span>, action: () => updateSettings(s => ({...s, theme: 'matrix' as CyberTheme})) }
         );
         
         return commandList;

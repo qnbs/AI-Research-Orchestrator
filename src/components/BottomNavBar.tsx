@@ -52,7 +52,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({ currentView, onViewC
         { view: 'research', label: 'Research', icon: <BeakerIcon className="h-5 w-5" />, isSpecial: isResearching },
         { view: 'orchestrator', label: 'Agent', icon: <DocumentIcon className="h-5 w-5" /> },
         { view: 'authors', label: 'Authors', icon: <AuthorIcon className="h-5 w-5" /> },
-        { view: 'journals', label: 'Journals', icon: <BookOpenIcon className="h-5 w-5" /> },
+        { view: 'collections', label: 'Collections', icon: <span className="text-base">📚</span> },
         { view: 'knowledgeBase', label: 'Data', icon: <DatabaseIcon className="h-5 w-5" />, isDisabled: !hasReports, badge: knowledgeBaseArticleCount },
     ];
     

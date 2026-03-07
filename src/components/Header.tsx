@@ -20,6 +20,7 @@ import { BookOpenIcon } from './icons/BookOpenIcon';
 import { AppLogo } from './AppLogo';
 import { useTranslation } from '../hooks/useTranslation';
 import { GlobeAltIcon } from './icons/GlobeAltIcon';
+import { AgentDebuggerToggle } from './AgentDebugger';
 
 interface HeaderProps {
     onViewChange: (view: View) => void;
@@ -70,6 +71,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({ onViewChange, currentView, kno
         history: t('nav.history'),
         settings: t('nav.settings'),
         help: t('nav.help'),
+        collections: t('nav.collections') || 'Collections',
     };
 
     // Close dropdowns on outside click
@@ -88,7 +90,12 @@ const HeaderComponent: React.FC<HeaderProps> = ({ onViewChange, currentView, kno
         setIsMobileMenuOpen(false);
     };
 
-    const toggleTheme = () => updateSettings(prev => ({ ...prev, theme: prev.theme === 'dark' ? 'light' : 'dark' }));
+    const toggleTheme = () => {
+        const cycle: Record<string, 'light' | 'dark' | 'matrix'> = { dark: 'light', light: 'matrix', matrix: 'dark' };
+        updateSettings(prev => ({ ...prev, theme: cycle[prev.theme] ?? 'dark' }));
+    };
+    const themeIcon = settings.theme === 'dark' ? <SunIcon className="h-5 w-5 text-accent-amber hover:rotate-45 transition-transform" /> : settings.theme === 'light' ? <MoonIcon className="h-5 w-5 text-brand-accent hover:-rotate-12 transition-transform" /> : <span className="text-base" title="Matrix Theme">🟩</span>;
+    const themeLabel = settings.theme === 'dark' ? 'Switch to Neon-Light' : settings.theme === 'light' ? 'Switch to Matrix-Green' : 'Switch to Cyber-Dark';
     
     const toggleLanguage = () => updateSettings(prev => ({ ...prev, appLanguage: prev.appLanguage === 'en' ? 'de' : 'en' }));
 
@@ -145,9 +152,10 @@ const HeaderComponent: React.FC<HeaderProps> = ({ onViewChange, currentView, kno
                         {isSettingsDirty && <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-accent-amber ring-2 ring-surface animate-pulse"></span>}
                     </button>
                     <button onClick={() => onViewChange('help')} className={`p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-colors ${currentView === 'help' ? 'bg-surface-hover text-text-primary' : ''}`} aria-label="Help"><QuestionMarkCircleIcon className="h-5 w-5" /></button>
-                    <button onClick={toggleTheme} className="p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-colors" aria-label={`Switch to ${settings.theme === 'dark' ? 'light' : 'dark'} theme`}>
-                         {settings.theme === 'dark' ? <SunIcon className="h-5 w-5 text-accent-amber hover:rotate-45 transition-transform" /> : <MoonIcon className="h-5 w-5 text-brand-accent hover:-rotate-12 transition-transform" />}
+                    <button onClick={toggleTheme} className="p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-colors" aria-label={themeLabel}>
+                         {themeIcon}
                     </button>
+                    <AgentDebuggerToggle />
                 </div>
             </div>
           </div>

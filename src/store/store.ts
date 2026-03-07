@@ -3,6 +3,9 @@ import { configureStore, createListenerMiddleware, isAnyOf } from '@reduxjs/tool
 import settingsReducer, { setSettings } from './slices/settingsSlice';
 import uiReducer, { setNotification } from './slices/uiSlice';
 import knowledgeBaseReducer, { addKbEntry, importKbEntries, deleteKbEntries, clearKb, updateKbEntry } from './slices/knowledgeBaseSlice';
+import agentDebugReducer from './slices/agentDebugSlice';
+import collectionsReducer from './slices/collectionsSlice';
+import { researchApi } from './slices/apiSlice';
 import { saveSettings } from '../services/databaseService';
 
 // --- Listener Middleware ---
@@ -48,11 +51,15 @@ export const store = configureStore({
         settings: settingsReducer,
         ui: uiReducer,
         knowledgeBase: knowledgeBaseReducer,
+        agentDebug: agentDebugReducer,
+        collections: collectionsReducer,
+        [researchApi.reducerPath]: researchApi.reducer,
     },
     middleware: (getDefaultMiddleware) => 
         getDefaultMiddleware()
             .prepend(listenerMiddleware.middleware)
-            .concat(persistenceMiddleware),
+            .concat(persistenceMiddleware)
+            .concat(researchApi.middleware),
 });
 
 // Infer the `RootState` and `AppDispatch` types from the store itself

@@ -1,10 +1,10 @@
 
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import type { Settings } from '../../types';
+import type { Settings, CyberTheme } from '../../types';
 import { CSV_EXPORT_COLUMNS } from '../../types';
 
 const defaultSettings: Settings = {
-  theme: 'dark',
+  theme: 'dark' as CyberTheme,
   appLanguage: 'en',
   appearance: {
     density: 'comfortable',
