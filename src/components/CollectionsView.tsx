@@ -27,17 +27,113 @@ function generateId() {
   return `col_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
 }
 
+// ── Collection Cover ──────────────────────────────────────────────────────────
+const CollectionCover: React.FC<{ color: string; icon: string }> = ({ color, icon }) => (
+  <div
+    className="w-full flex items-center justify-center relative overflow-hidden rounded-t-xl mb-3"
+    style={{
+      height: 72,
+      background: `linear-gradient(135deg, ${color}22 0%, ${color}44 100%)`,
+    }}
+  >
+    <span className="text-5xl z-10 relative drop-shadow-sm select-none">{icon}</span>
+    <div
+      className="absolute -right-4 -bottom-4 w-24 h-24 rounded-full blur-3xl opacity-40 pointer-events-none"
+      style={{ backgroundColor: color }}
+    />
+  </div>
+);
+
+// ── Share-Link Modal ──────────────────────────────────────────────────────────
+const ShareLinkModal: React.FC<{
+  collection: ResearchCollection;
+  onClose: () => void;
+}> = ({ collection, onClose }) => {
+  const [copied, setCopied] = useState(false);
+  const url = collection.shareToken
+    ? `${window.location.origin}?collection=${collection.shareToken}`
+    : null;
+
+  const handleCopy = () => {
+    if (!url) return;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    });
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.93, y: 16 }}
+        animate={{ scale: 1, y: 0 }}
+        exit={{ scale: 0.93, y: 16 }}
+        transition={{ type: 'spring', stiffness: 340, damping: 28 }}
+        onClick={e => e.stopPropagation()}
+        className="glass-panel rounded-2xl p-6 w-full max-w-sm"
+        style={{ boxShadow: '0 0 32px rgba(56,189,248,0.15), 0 16px 48px rgba(0,0,0,0.3)' }}
+      >
+        <div className="flex items-center gap-3 mb-4">
+          <span className="text-3xl">{collection.icon}</span>
+          <div className="min-w-0 flex-1">
+            <h2 className="text-sm font-semibold text-text-primary truncate">{collection.name}</h2>
+            <p className="text-xs text-text-secondary">Shareable export link</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-text-secondary hover:text-red-400 transition-colors text-lg leading-none"
+            aria-label="Close"
+          >
+            ✕
+          </button>
+        </div>
+
+        {url ? (
+          <>
+            <div className="bg-surface/60 rounded-xl p-3 border border-border mb-3">
+              <p className="text-xs font-mono text-text-secondary break-all leading-relaxed">{url}</p>
+            </div>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={handleCopy}
+              className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                copied
+                  ? 'bg-accent-green/20 text-accent-green border border-accent-green/30'
+                  : 'bg-brand-accent/90 hover:bg-brand-accent text-brand-text-on-accent'
+              }`}
+            >
+              {copied ? '✓ Copied to clipboard!' : '📋 Copy Link'}
+            </motion.button>
+            <p className="text-xs text-text-secondary mt-2 text-center">
+              Anyone with this link can view the collection.
+            </p>
+          </>
+        ) : (
+          <p className="text-sm text-text-secondary text-center py-4">
+            No share token yet — close and click 🔗 on the card to generate one.
+          </p>
+        )}
+      </motion.div>
+    </motion.div>
+  );
+};
+
 // ── Collection Card ───────────────────────────────────────────────────────────
 const CollectionCard: React.FC<{
   collection: ResearchCollection;
   onEdit: (c: ResearchCollection) => void;
   onDelete: (id: string) => void;
-  onShare: (id: string) => void;
+  onShare: (c: ResearchCollection) => void;
   onSelect: (c: ResearchCollection) => void;
   isSelected: boolean;
 }> = ({ collection, onEdit, onDelete, onShare, onSelect, isSelected }) => {
-  const dispatch = useAppDispatch();
-  const kbEntries = useAppSelector(s => s.knowledgeBase.ids);
   const entryCount = collection.entryIds.length;
   const articleCount = collection.articlePmids.length;
 
@@ -50,78 +146,66 @@ const CollectionCard: React.FC<{
       whileHover={{ y: -3 }}
       transition={{ duration: 0.25 }}
       onClick={() => onSelect(collection)}
-      className={`neon-card rounded-xl p-4 cursor-pointer select-none
+      className={`neon-card rounded-xl overflow-hidden cursor-pointer select-none pt-0
         ${isSelected ? 'border-brand-accent shadow-glow' : ''}`}
-      style={{ borderLeftColor: collection.color, borderLeftWidth: 3 }}
       role="button"
       aria-pressed={isSelected}
       tabIndex={0}
       onKeyDown={(e) => e.key === 'Enter' && onSelect(collection)}
     >
-      {/* Top row */}
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="text-2xl flex-shrink-0">{collection.icon}</span>
+      {/* Cover gradient */}
+      <CollectionCover color={collection.color} icon={collection.icon} />
+
+      <div className="px-4 pb-4">
+        {/* Title row */}
+        <div className="flex items-start justify-between gap-2 mb-2">
           <div className="min-w-0">
             <h3 className="text-sm font-semibold text-text-primary truncate">{collection.name}</h3>
-            <p className="text-xs text-text-secondary truncate">{collection.description}</p>
+            {collection.description && (
+              <p className="text-xs text-text-secondary line-clamp-2 mt-0.5">{collection.description}</p>
+            )}
+          </div>
+          <div className="flex gap-1 flex-shrink-0" onClick={e => e.stopPropagation()}>
+            <button
+              onClick={() => onShare(collection)}
+              title="Share collection"
+              className="p-1.5 rounded-md text-text-secondary hover:text-brand-accent transition-colors text-xs"
+              aria-label="Share collection"
+            >
+              🔗
+            </button>
+            <button
+              onClick={() => onEdit(collection)}
+              className="p-1.5 rounded-md text-text-secondary hover:text-text-primary transition-colors text-xs"
+              aria-label="Edit collection"
+            >
+              ✏️
+            </button>
+            <button
+              onClick={() => onDelete(collection.id)}
+              className="p-1.5 rounded-md text-text-secondary hover:text-red-400 transition-colors text-xs"
+              aria-label="Delete collection"
+            >
+              🗑️
+            </button>
           </div>
         </div>
-        <div className="flex gap-1 flex-shrink-0" onClick={e => e.stopPropagation()}>
-          <button
-            onClick={() => onShare(collection.id)}
-            title="Generate share link"
-            className="p-1.5 rounded-md text-text-secondary hover:text-brand-accent transition-colors text-xs"
-            aria-label="Share collection"
-          >
-            🔗
-          </button>
-          <button
-            onClick={() => onEdit(collection)}
-            className="p-1.5 rounded-md text-text-secondary hover:text-text-primary transition-colors text-xs"
-            aria-label="Edit collection"
-          >
-            ✏️
-          </button>
-          <button
-            onClick={() => onDelete(collection.id)}
-            className="p-1.5 rounded-md text-text-secondary hover:text-red-400 transition-colors text-xs"
-            aria-label="Delete collection"
-          >
-            🗑️
-          </button>
+
+        {/* Stats */}
+        <div className="flex gap-3 text-xs text-text-secondary">
+          <span className="flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: collection.color }} />
+            {entryCount} report{entryCount !== 1 ? 's' : ''}
+          </span>
+          <span>{articleCount} article{articleCount !== 1 ? 's' : ''}</span>
+          {collection.tags.length > 0 && (
+            <span className="text-accent-cyan truncate">{collection.tags.slice(0, 2).join(', ')}</span>
+          )}
+          {collection.shareToken && (
+            <span className="ml-auto text-accent-green text-[10px] flex items-center gap-0.5">🔒 Shared</span>
+          )}
         </div>
       </div>
-
-      {/* Stats */}
-      <div className="mt-3 flex gap-3 text-xs text-text-secondary">
-        <span className="flex items-center gap-1">
-          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: collection.color }} />
-          {entryCount} report{entryCount !== 1 ? 's' : ''}
-        </span>
-        <span>{articleCount} article{articleCount !== 1 ? 's' : ''}</span>
-        {collection.tags.length > 0 && (
-          <span className="text-accent-cyan">{collection.tags.slice(0, 2).join(', ')}</span>
-        )}
-      </div>
-
-      {/* Share token badge */}
-      {collection.shareToken && (
-        <div className="mt-2 flex items-center gap-1.5 text-xs text-accent-cyan font-mono truncate">
-          <span>🔒</span>
-          <span className="truncate">{collection.shareToken}</span>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              navigator.clipboard.writeText(`${window.location.origin}?collection=${collection.shareToken}`);
-            }}
-            className="text-text-secondary hover:text-brand-accent ml-auto flex-shrink-0"
-            title="Copy link"
-          >
-            📋
-          </button>
-        </div>
-      )}
     </motion.div>
   );
 };
@@ -277,6 +361,7 @@ const CollectionsView: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<ResearchCollection | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [shareTarget, setShareTarget] = useState<string | null>(null);
 
   const handleCreate = useCallback((data: Partial<ResearchCollection>) => {
     const col: ResearchCollection = {
@@ -308,8 +393,11 @@ const CollectionsView: React.FC = () => {
     }
   }, [dispatch, selectedId]);
 
-  const handleShare = useCallback((id: string) => {
-    dispatch(generateShareToken(id));
+  const handleShare = useCallback((collection: ResearchCollection) => {
+    if (!collection.shareToken) {
+      dispatch(generateShareToken(collection.id));
+    }
+    setShareTarget(collection.id);
   }, [dispatch]);
 
   const selected = collections.find(c => c.id === selectedId) ?? null;
@@ -395,6 +483,15 @@ const CollectionsView: React.FC = () => {
             onClose={() => setEditTarget(null)}
           />
         )}
+        {shareTarget && (() => {
+          const col = collections.find(c => c.id === shareTarget);
+          return col ? (
+            <ShareLinkModal
+              collection={col}
+              onClose={() => setShareTarget(null)}
+            />
+          ) : null;
+        })()}
       </AnimatePresence>
     </div>
   );

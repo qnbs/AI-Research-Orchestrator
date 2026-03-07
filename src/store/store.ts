@@ -7,6 +7,7 @@ import agentDebugReducer from './slices/agentDebugSlice';
 import collectionsReducer from './slices/collectionsSlice';
 import themeReducer, { setTheme, cycleTheme } from './slices/themeSlice';
 import { researchApi } from './slices/apiSlice';
+import { geminiApi } from './slices/geminiApiSlice';
 import { saveSettings } from '../services/databaseService';
 
 // --- Listener Middleware ---
@@ -83,12 +84,14 @@ export const store = configureStore({
         collections: collectionsReducer,
         theme: themeReducer,
         [researchApi.reducerPath]: researchApi.reducer,
+        [geminiApi.reducerPath]: geminiApi.reducer,
     },
     middleware: (getDefaultMiddleware) => 
         getDefaultMiddleware()
             .prepend(listenerMiddleware.middleware)
             .concat(persistenceMiddleware)
-            .concat(researchApi.middleware),
+            .concat(researchApi.middleware)
+            .concat(geminiApi.middleware),
 });
 
 // Infer the `RootState` and `AppDispatch` types from the store itself

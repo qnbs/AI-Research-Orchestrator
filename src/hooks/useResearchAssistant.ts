@@ -1,8 +1,8 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { generateResearchAnalysis, findSimilarArticles, findRelatedOnline } from '../services/geminiService';
 import { ResearchAnalysis, SimilarArticle, OnlineFindings, Settings } from '../types';
 import type { View } from '../contexts/UIContext';
+import { useLazyGenerateAnalysisQuery, useLazyFindSimilarArticlesQuery, useLazyFindRelatedOnlineQuery } from '../store/slices/geminiApiSlice';
 
 interface ResearchState {
     isLoading: boolean;
@@ -37,6 +37,10 @@ export const useResearchAssistant = (
     const [state, setState] = useState<ResearchState>(initialState);
     const isMountedRef = useRef(true);
 
+    const [triggerAnalysis] = useLazyGenerateAnalysisQuery();
+    const [triggerSimilar] = useLazyFindSimilarArticlesQuery();
+    const [triggerOnline] = useLazyFindRelatedOnlineQuery();
+
     useEffect(() => {
         isMountedRef.current = true;
         return () => {
@@ -55,7 +59,7 @@ export const useResearchAssistant = (
         setCurrentView('research');
 
         try {
-            const analysisResult = await generateResearchAnalysis(queryText, aiSettings);
+            const analysisResult = await triggerAnalysis({ query: queryText, aiSettings }).unwrap();
             
             if (!isMountedRef.current) return;
 
@@ -69,16 +73,23 @@ export const useResearchAssistant = (
             }));
 
             // Fetch similar articles and online findings in parallel, based on settings
-            const fetchPromises = [];
+            const fetchPromises: Promise<SimilarArticle[] | OnlineFindings | null>[] = [];
 
             if (aiSettings.researchAssistant.autoFetchSimilar) {
-                fetchPromises.push(findSimilarArticles({ title: analysisResult.synthesizedTopic, summary: analysisResult.summary }, aiSettings));
+                fetchPromises.push(
+                    triggerSimilar({
+                        article: { title: analysisResult.synthesizedTopic, summary: analysisResult.summary },
+                        aiSettings,
+                    }).unwrap()
+                );
             } else {
-                fetchPromises.push(Promise.resolve(null)); // Push a resolved null to keep array indices consistent
+                fetchPromises.push(Promise.resolve(null));
             }
 
             if (aiSettings.researchAssistant.autoFetchOnline) {
-                fetchPromises.push(findRelatedOnline(analysisResult.synthesizedTopic, aiSettings));
+                fetchPromises.push(
+                    triggerOnline({ topic: analysisResult.synthesizedTopic, aiSettings }).unwrap()
+                );
             } else {
                 fetchPromises.push(Promise.resolve(null));
             }
@@ -110,7 +121,7 @@ export const useResearchAssistant = (
                 error: err instanceof Error ? err.message : 'An unknown error occurred.',
             }));
         }
-    }, [aiSettings, setCurrentView]);
+    }, [aiSettings, setCurrentView, triggerAnalysis, triggerSimilar, triggerOnline]);
 
     const clearResearch = useCallback(() => {
         setState(initialState);

@@ -1,15 +1,13 @@
 
-import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { useSettings } from '../../contexts/SettingsContext';
 import { useKnowledgeBase } from '../../contexts/KnowledgeBaseContext';
 import { useUI } from '../../contexts/UIContext';
 import { findArticlesInJournal, generateJournalProfileAnalysis } from '../../services/journalService';
 import { JournalProfile, Article } from '../../types';
+import { useGetFeaturedJournalsQuery, type FeaturedJournal } from '../../store/slices/apiSlice';
 
-export interface FeaturedJournal {
-    name: string;
-    description: string;
-}
+export type { FeaturedJournal };
 
 export const useJournalsViewLogic = () => {
     const [journalName, setJournalName] = useState('');
@@ -19,33 +17,19 @@ export const useJournalsViewLogic = () => {
     const [journalProfile, setJournalProfile] = useState<JournalProfile | null>(null);
     const [foundArticles, setFoundArticles] = useState<Article[] | null>(null);
     const [error, setError] = useState<string | null>(null);
-    const [featuredJournals, setFeaturedJournals] = useState<FeaturedJournal[]>([]);
 
     const { settings } = useSettings();
     const { saveJournalProfile } = useKnowledgeBase();
     const { setNotification } = useUI();
+
+    // RTK Query — replaces manual fetch + useState for featured journals
+    const { data: featuredJournals = [] } = useGetFeaturedJournalsQuery();
     
     const isMounted = useRef(true);
 
     useEffect(() => {
         isMounted.current = true;
         return () => { isMounted.current = false; };
-    }, []);
-
-    useEffect(() => {
-        const fetchFeatured = async () => {
-            try {
-                const response = await fetch('/src/data/featuredJournals.json');
-                if (!response.ok) throw new Error('Failed to load featured journals');
-                const data = await response.json();
-                if (isMounted.current) {
-                    setFeaturedJournals(data);
-                }
-            } catch (err) {
-                console.error("Error fetching featured journals:", err);
-            }
-        };
-        fetchFeatured();
     }, []);
 
     const handleAnalyzeJournal = useCallback(async (e?: React.FormEvent) => {

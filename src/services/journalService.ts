@@ -1,5 +1,6 @@
 import { Article, JournalProfile } from '../types';
-import { searchPubMedForIds, fetchArticleDetails, generateJournalProfileAnalysis as generateProfileWithGemini } from './geminiService';
+import { generateJournalProfileAnalysis as generateProfileWithGemini } from './geminiService';
+import { searchPubMedForIds, fetchArticleDetails } from './pubmedUtils';
 import type { Settings } from '../types';
 
 /**

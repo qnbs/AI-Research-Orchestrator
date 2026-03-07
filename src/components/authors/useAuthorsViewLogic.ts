@@ -3,7 +3,8 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { AuthorCluster, AuthorProfile, RankedArticle, FeaturedAuthorCategory } from '../../types';
 import { useSettings } from '../../contexts/SettingsContext';
 import { useKnowledgeBase } from '../../contexts/KnowledgeBaseContext';
-import { searchPubMedForIds, fetchArticleDetails, disambiguateAuthor, generateAuthorQuery, generateAuthorProfileAnalysis, suggestAuthors } from '../../services/geminiService';
+import { disambiguateAuthor, generateAuthorQuery, generateAuthorProfileAnalysis, suggestAuthors } from '../../services/geminiService';
+import { useLazySearchPubMedIdsQuery, useLazyGetArticleDetailsFullQuery, useGetFeaturedAuthorsQuery } from '../../store/slices/apiSlice';
 
 const authorLoadingPhases = [
     "Phase 1: Searching PubMed for publications...",
@@ -42,10 +43,13 @@ export const useAuthorsViewLogic = (
     const [isSuggesting, setIsSuggesting] = useState(false);
     const [suggestionError, setSuggestionError] = useState<string|null>(null);
     const [suggestedAuthors, setSuggestedAuthors] = useState<{name: string; description: string;}[] | null>(null);
-    
-    const [featuredCategories, setFeaturedCategories] = useState<FeaturedAuthorCategory[]>([]);
-    const [isFeaturedLoading, setIsFeaturedLoading] = useState(true);
-    const [featuredError, setFeaturedError] = useState<string|null>(null);
+
+    // ── RTK Query hooks ──────────────────────────────────────────────────────
+    const { data: featuredCategories = [], isLoading: isFeaturedLoading, error: featuredQueryError } = useGetFeaturedAuthorsQuery();
+    const featuredError = featuredQueryError ? 'Could not load featured authors.' : null;
+
+    const [triggerSearchIds] = useLazySearchPubMedIdsQuery();
+    const [triggerGetDetails] = useLazyGetArticleDetailsFullQuery();
 
     const isMounted = useRef(true);
 
@@ -64,33 +68,6 @@ export const useAuthorsViewLogic = (
         }
     }, [initialProfile, onViewedInitialProfile]);
 
-    useEffect(() => {
-        const fetchFeatured = async () => {
-            setIsFeaturedLoading(true);
-            setFeaturedError(null);
-            try {
-                const response = await fetch('/src/data/featuredAuthors.json');
-                if (!response.ok) {
-                    throw new Error(`Network response was not ok, status: ${response.status}`);
-                }
-                const categories: FeaturedAuthorCategory[] = await response.json();
-                if (isMounted.current) {
-                    setFeaturedCategories(categories);
-                }
-            } catch (err) {
-                console.error("Error loading featured authors from JSON:", err);
-                if (isMounted.current) {
-                    setFeaturedError("Could not load featured authors. Please ensure 'src/data/featuredAuthors.json' is available.");
-                }
-            } finally {
-                if (isMounted.current) {
-                    setIsFeaturedLoading(false);
-                }
-            }
-        };
-        fetchFeatured();
-    }, []);
-
     const handleSelectCluster = useCallback(async (cluster: AuthorCluster) => {
         setIsLoading(true);
         setError(null);
@@ -98,7 +75,7 @@ export const useAuthorsViewLogic = (
 
         try {
             setLoadingPhase(authorLoadingPhases[3]);
-            const allArticleDetails = await fetchArticleDetails(cluster.pmids);
+            const allArticleDetails = await triggerGetDetails({ pmids: cluster.pmids }).unwrap();
             
             if (!isMounted.current) return;
 
@@ -183,7 +160,10 @@ export const useAuthorsViewLogic = (
         try {
             setLoadingPhase(authorLoadingPhases[0]);
             const authorQueryString = generateAuthorQuery(name);
-            const pmids = await searchPubMedForIds(authorQueryString, settings.ai.researchAssistant.authorSearchLimit);
+            const pmids = await triggerSearchIds({
+                query: authorQueryString,
+                maxResults: settings.ai.researchAssistant.authorSearchLimit,
+            }).unwrap();
             if (pmids.length === 0) {
                 throw new Error("No publications found for this author on PubMed. Try a different name variation or check spelling.");
             }
@@ -191,7 +171,7 @@ export const useAuthorsViewLogic = (
             if (!isMounted.current) return;
 
             setLoadingPhase(authorLoadingPhases[1]);
-            const articleDetails = await fetchArticleDetails(pmids.slice(0, 50));
+            const articleDetails = await triggerGetDetails({ pmids: pmids.slice(0, 50) }).unwrap();
 
             if (!isMounted.current) return;
 
@@ -216,7 +196,7 @@ export const useAuthorsViewLogic = (
                 setIsLoading(false);
             }
         }
-    }, [settings.ai, handleSelectCluster]);
+    }, [settings.ai, handleSelectCluster, triggerSearchIds, triggerGetDetails]);
     
     const handleSuggestAuthors = useCallback(async (field: string) => {
         setIsSuggesting(true);

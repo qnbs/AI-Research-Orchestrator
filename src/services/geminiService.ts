@@ -2,6 +2,7 @@
 import { GoogleGenAI, Type, Chat } from "@google/genai";
 import type { ResearchInput, ResearchReport, Settings, RankedArticle, SimilarArticle, OnlineFindings, WebContent, ResearchAnalysis, GeneratedQuery, AuthorCluster, FeaturedAuthorCategory, JournalProfile } from '../types';
 import { getApiKey } from './apiKeyService';
+import { searchPubMedForIds, fetchArticleDetails } from './pubmedUtils';
 
 // Lazy initialization of the AI client
 let aiInstance: GoogleGenAI | null = null;
@@ -36,40 +37,6 @@ async function getAI(): Promise<GoogleGenAI> {
 export function resetAIInstance(): void {
     aiInstance = null;
     currentApiKey = null;
-}
-
-/**
- * Retries a fetch operation with exponential backoff.
- * Specifically handles 429 Too Many Requests.
- */
-async function fetchWithRetry(url: string, options: RequestInit, retries = 3, backoff = 1000): Promise<Response> {
-    try {
-        const response = await fetch(url, options);
-        
-        if (response.status === 429 && retries > 0) {
-            // Rate limit hit
-            const retryAfter = response.headers.get('Retry-After');
-            const waitTime = retryAfter ? parseInt(retryAfter, 10) * 1000 : backoff * 2;
-            console.warn(`Rate limit hit. Retrying in ${waitTime}ms...`);
-            await new Promise(resolve => setTimeout(resolve, waitTime));
-            return fetchWithRetry(url, options, retries - 1, waitTime);
-        }
-
-        if (!response.ok && retries > 0 && response.status !== 404 && response.status !== 400) {
-             // Retry on server errors or timeouts, but not on 404/400
-            console.warn(`Fetch failed (${response.status}). Retrying...`);
-            await new Promise(resolve => setTimeout(resolve, backoff));
-            return fetchWithRetry(url, options, retries - 1, backoff * 2);
-        }
-        return response;
-    } catch (error) {
-        if (retries > 0) {
-            console.warn(`Network error. Retrying...`);
-            await new Promise(resolve => setTimeout(resolve, backoff));
-            return fetchWithRetry(url, options, retries - 1, backoff * 2);
-        }
-        throw error;
-    }
 }
 
 /**
@@ -219,90 +186,6 @@ export const generateAuthorQuery = (fullName: string): string => {
 
     return `(${Array.from(queryVariations).join(' OR ')})`;
 };
-
-const PUBMED_API_BASE = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/';
-
-interface ESearchResult {
-    esearchresult: {
-        idlist: string[];
-    }
-}
-
-interface ESummaryResult {
-    result: {
-        uids: string[];
-        [uid: string]: any;
-    }
-}
-
-export async function searchPubMedForIds(query: string, retmax: number): Promise<string[]> {
-    const url = `${PUBMED_API_BASE}esearch.fcgi?db=pubmed&term=${encodeURIComponent(query)}&retmax=${retmax}&sort=relevance&retmode=json`;
-    try {
-        const response = await fetchWithRetry(url, { headers: { 'User-Agent': 'ai-research-orchestration-author/1.0' } });
-        if (!response.ok) {
-            throw new Error(`PubMed API error: ${response.statusText}. Could not connect to PubMed.`);
-        }
-        const data: ESearchResult = await response.json();
-        
-        if (data.esearchresult?.idlist) {
-            return data.esearchresult.idlist;
-        }
-        return [];
-    } catch (error) {
-        console.error(`Error searching PubMed for query "${query}":`, error);
-        if (error instanceof Error) {
-            throw new Error(`Failed to fetch from PubMed: ${error.message}`);
-        }
-        throw new Error('An unknown network error occurred while searching PubMed.');
-    }
-}
-
-export async function fetchArticleDetails(pmids: string[]): Promise<Partial<RankedArticle>[]> {
-    if (pmids.length === 0) return [];
-    const url = `${PUBMED_API_BASE}esummary.fcgi?db=pubmed&retmode=json`;
-    
-    // We allow the error to bubble up instead of swallowing it, 
-    // so the UI can properly report network failures.
-    const formData = new FormData();
-    formData.append('id', pmids.join(','));
-
-    const response = await fetchWithRetry(url, { 
-        method: 'POST',
-        body: formData,
-        headers: { 'User-Agent': 'ai-research-orchestration-author/1.0' }
-    });
-    
-    if (!response.ok) {
-        throw new Error(`PubMed API error: ${response.statusText}`);
-    }
-    
-    const data: ESummaryResult = await response.json();
-    const articles: Partial<RankedArticle>[] = [];
-
-    if (!data.result) {
-        throw new Error("Invalid response format from PubMed.");
-    }
-
-    for (const pmid of data.result.uids) {
-        const articleData = data.result[pmid];
-        if (!articleData) continue;
-        
-        const authors = (articleData.authors || []).map((a: { name: string }) => a.name).join(', ');
-        const pmcIdEntry = (articleData.articleids || []).find((id: { idtype: string }) => id.idtype === 'pmc');
-        
-        articles.push({
-            pmid: pmid,
-            pmcId: pmcIdEntry?.value,
-            title: articleData.title,
-            authors: authors,
-            journal: articleData.fulljournalname,
-            pubYear: articleData.pubdate.split(' ')[0],
-            summary: articleData.abstract || 'No abstract available.',
-            isOpenAccess: articleData.availablefromurl?.toLowerCase().includes('pubmed central')
-        });
-    }
-    return articles;
-}
 
 const getPreamble = (aiSettings: Settings['ai']) => {
     const languagePreamble = `Your response must be in ${aiSettings.aiLanguage}.`;

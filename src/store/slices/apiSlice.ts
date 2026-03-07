@@ -1,10 +1,11 @@
 /**
  * RTK Query API Slice — AI Research Orchestrator
- * Endpoints: PubMed E-utilities + arXiv API
- * Features: caching, exponential backoff, infinite queries, error boundaries
+ * Endpoints: PubMed E-utilities + arXiv API + static data
+ * Features: caching, exponential backoff, infinite queries, error boundaries,
+ *           deduplication via serializeQueryArgs
  */
 import { createApi, fetchBaseQuery, retry } from '@reduxjs/toolkit/query/react';
-import type { RankedArticle, ArxivArticle } from '../../types';
+import type { RankedArticle, ArxivArticle, FeaturedAuthorCategory } from '../../types';
 
 // ── PubMed E-utilities base URLs ──────────────────────────────────────────────
 const PUBMED_BASE = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils';
@@ -77,6 +78,25 @@ export interface PubMedSearchArgs {
   maxResults?: number;
   dateRange?: string;   // e.g. "5" → last 5 years
   articleTypes?: string[];
+}
+
+export interface SearchPubMedIdsArgs {
+  query: string;
+  maxResults: number;
+}
+
+export interface GetArticleDetailsFullArgs {
+  pmids: string[];
+}
+
+export interface FeaturedJournal {
+  name: string;
+  description: string;
+}
+
+export interface PubMedInfiniteArgs {
+  query: string;
+  pageSize?: number;
 }
 
 export interface PubMedSearchResult {
@@ -215,27 +235,152 @@ export const researchApi = createApi({
       },
       providesTags: (result, error, pmid) => [{ type: 'ArticleDetails', id: `abstract-${pmid}` }],
     }),
+
+    // ── PubMed: ID-only search (for author/journal pipelines) ─────────────
+    searchPubMedIds: builder.query<string[], SearchPubMedIdsArgs>({
+      queryFn: async ({ query, maxResults }) => {
+        try {
+          const url = `${PUBMED_BASE}/esearch.fcgi?db=pubmed&term=${encodeURIComponent(query)}&retmax=${maxResults}&sort=relevance&retmode=json`;
+          const response = await fetchWithBackoff(url);
+          const data = await response.json();
+          return { data: data.esearchresult?.idlist ?? [] };
+        } catch (error) {
+          return { error: { status: 'CUSTOM_ERROR', error: String(error) } };
+        }
+      },
+      serializeQueryArgs: ({ queryArgs }) => `${queryArgs.query}__${queryArgs.maxResults}`,
+      providesTags: (result, error, arg) => [{ type: 'PubMed', id: `ids__${arg.query}` }],
+    }),
+
+    // ── PubMed: Full article details via POST (pmcId, abstract, etc.) ──────
+    getArticleDetailsFull: builder.query<Partial<RankedArticle>[], GetArticleDetailsFullArgs>({
+      queryFn: async ({ pmids }) => {
+        if (!pmids.length) return { data: [] };
+        try {
+          const formData = new FormData();
+          formData.append('id', pmids.join(','));
+          const url = `${PUBMED_BASE}/esummary.fcgi?db=pubmed&retmode=json`;
+          const response = await fetchWithBackoff(url, { method: 'POST', body: formData });
+          const data = await response.json();
+          const articles: Partial<RankedArticle>[] = [];
+          for (const pmid of (data.result?.uids ?? [])) {
+            const art = data.result[pmid];
+            if (!art) continue;
+            const pmcEntry = ((art.articleids ?? []) as Array<{ idtype: string; value: string }>)
+              .find(x => x.idtype === 'pmc');
+            articles.push({
+              pmid,
+              pmcId: pmcEntry?.value,
+              title: art.title ?? '',
+              authors: ((art.authors ?? []) as Array<{ name: string }>).map(a => a.name).join(', '),
+              journal: art.fulljournalname ?? '',
+              pubYear: (art.pubdate ?? '').split(' ')[0],
+              summary: art.abstract || 'No abstract available.',
+              isOpenAccess: !!pmcEntry?.value,
+              keywords: [],
+              relevanceScore: 0,
+              relevanceExplanation: '',
+            });
+          }
+          return { data: articles };
+        } catch (error) {
+          return { error: { status: 'CUSTOM_ERROR', error: String(error) } };
+        }
+      },
+      serializeQueryArgs: ({ queryArgs }) => queryArgs.pmids.slice().sort().join(','),
+      providesTags: (result) =>
+        result
+          ? result.map(a => ({ type: 'ArticleDetails' as const, id: `full-${a.pmid}` }))
+          : ['ArticleDetails'],
+    }),
+
+    // ── Static: Featured authors JSON ─────────────────────────────────────
+    getFeaturedAuthors: builder.query<FeaturedAuthorCategory[], void>({
+      queryFn: async () => {
+        try {
+          const response = await fetch('/src/data/featuredAuthors.json');
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const data: FeaturedAuthorCategory[] = await response.json();
+          return { data };
+        } catch (error) {
+          return { error: { status: 'CUSTOM_ERROR', error: String(error) } };
+        }
+      },
+      keepUnusedDataFor: 86400, // cache for 24 h — static data
+    }),
+
+    // ── Static: Featured journals JSON ────────────────────────────────────
+    getFeaturedJournals: builder.query<FeaturedJournal[], void>({
+      queryFn: async () => {
+        try {
+          const response = await fetch('/src/data/featuredJournals.json');
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const data: FeaturedJournal[] = await response.json();
+          return { data };
+        } catch (error) {
+          return { error: { status: 'CUSTOM_ERROR', error: String(error) } };
+        }
+      },
+      keepUnusedDataFor: 86400,
+    }),
+
+    // ── PubMed: Infinite/paginated search ─────────────────────────────────
+    searchPubMedInfinite: builder.infiniteQuery<
+      { pmids: string[]; total: number },
+      PubMedInfiniteArgs,
+      number // page cursor (0-based retstart)
+    >({
+      infiniteQueryOptions: {
+        initialPageParam: 0,
+        getNextPageParam: (lastPage, allPages, lastPageParam) => {
+          const loaded = allPages.flatMap(p => p.pmids).length;
+          return loaded < lastPage.total ? loaded : undefined;
+        },
+      },
+      queryFn: async ({ queryArg, pageParam }) => {
+        const pageSize = queryArg.pageSize ?? 20;
+        try {
+          const url = buildPubMedUrl('esearch', {
+            term: queryArg.query,
+            retmax: pageSize,
+            retstart: pageParam,
+          });
+          const response = await fetchWithBackoff(url);
+          const data = await response.json();
+          return {
+            data: {
+              pmids: data.esearchresult?.idlist ?? [],
+              total: parseInt(data.esearchresult?.count ?? '0', 10),
+            },
+          };
+        } catch (error) {
+          return { error: { status: 'CUSTOM_ERROR', error: String(error) } };
+        }
+      },
+      serializeQueryArgs: ({ queryArgs }) => queryArgs.query,
+      providesTags: (result, error, arg) => [{ type: 'PubMed', id: `infinite__${arg.query}` }],
+    }),
   }),
 });
 
 // ── Exponential backoff fetch ─────────────────────────────────────────────────
-async function fetchWithBackoff(url: string, retries = 3, delay = 1000): Promise<Response> {
+async function fetchWithBackoff(url: string, init?: RequestInit, retries = 3, delay = 1000): Promise<Response> {
   try {
-    const response = await fetch(url, { signal: AbortSignal.timeout(15000) });
+    const response = await fetch(url, { signal: AbortSignal.timeout(15000), ...init });
     if (response.status === 429 && retries > 0) {
       const wait = parseInt(response.headers.get('Retry-After') ?? '0', 10) * 1000 || delay * 2;
       await new Promise(r => setTimeout(r, wait));
-      return fetchWithBackoff(url, retries - 1, wait);
+      return fetchWithBackoff(url, init, retries - 1, wait);
     }
     if (!response.ok && retries > 0 && response.status >= 500) {
       await new Promise(r => setTimeout(r, delay));
-      return fetchWithBackoff(url, retries - 1, delay * 2);
+      return fetchWithBackoff(url, init, retries - 1, delay * 2);
     }
     return response;
   } catch (err) {
     if (retries > 0) {
       await new Promise(r => setTimeout(r, delay));
-      return fetchWithBackoff(url, retries - 1, delay * 2);
+      return fetchWithBackoff(url, init, retries - 1, delay * 2);
     }
     throw err;
   }
@@ -251,4 +396,13 @@ export const {
   useLazySearchArxivQuery,
   useGetPubMedAbstractQuery,
   useLazyGetPubMedAbstractQuery,
+  // New endpoints
+  useSearchPubMedIdsQuery,
+  useLazySearchPubMedIdsQuery,
+  useGetArticleDetailsFullQuery,
+  useLazyGetArticleDetailsFullQuery,
+  useGetFeaturedAuthorsQuery,
+  useGetFeaturedJournalsQuery,
+  useSearchPubMedInfiniteInfiniteQuery,
 } = researchApi;
+

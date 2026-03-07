@@ -2,8 +2,16 @@
 import React, { useState, useCallback, useEffect, memo, lazy, Suspense, useRef } from 'react';
 import { useAppDispatch } from './store/hooks';
 import { loadCollections } from './store/slices/collectionsSlice';
+import {
+  startNewTrace,
+  addTraceEvent,
+  setAgentStatus,
+  completeTrace,
+  setDebuggerVisible,
+} from './store/slices/agentDebugSlice';
 import { Header } from './components/Header';
 import { ResearchInput, ResearchReport, KnowledgeBaseEntry, ChatMessage, AuthorProfile, KnowledgeBaseFilter, AggregatedArticle } from './types';
+import type { AgentName } from './types';
 import { SettingsProvider, useSettings } from './contexts/SettingsContext';
 import { PresetProvider, usePresets } from './contexts/PresetContext';
 import { Notification } from './components/Notification';
@@ -36,6 +44,15 @@ const QuickAddModal = lazy(() => import('./components/QuickAddModal'));
 const JournalsView = lazy(() => import('./components/JournalsView'));
 const CollectionsView = lazy(() => import('./components/CollectionsView'));
 const AgentDebugger = lazy(() => import('./components/AgentDebugger'));
+
+// ── Phase → Agent mapping for trace events ────────────────────────────────────
+function getAgentForPhase(phase: string): AgentName {
+  const p = phase.toLowerCase();
+  if (p.includes('generat') || p.includes('quer')) return 'QueryGenerator';
+  if (p.includes('pubmed') || p.includes('search') || p.includes('fetch') || p.includes('detail')) return 'PubMedFetcher';
+  if (p.includes('rank') || p.includes('analys')) return 'Ranker';
+  return 'Synthesizer'; // Synthesizing, Streaming, Finalizing
+}
 
 const FullScreenSpinner: React.FC = () => (
     <div className="flex h-screen items-center justify-center bg-background">
@@ -204,6 +221,12 @@ const AppLayout: React.FC = () => {
     setCurrentView('orchestrator');
     setIsCurrentReportSaved(false);
 
+    // ── Start live trace ──────────────────────────────────────────────────────
+    const sessionId = `sess_${currentGenId}_${Date.now()}`;
+    dispatch(startNewTrace({ sessionId, topic: data.researchTopic }));
+    dispatch(setDebuggerVisible(true));
+    let prevAgent: AgentName | null = null;
+
     try {
         const stream = generateResearchReportStream(data, settings.ai);
         let finalSynthesis = '';
@@ -217,6 +240,20 @@ const AppLayout: React.FC = () => {
             }
 
             setCurrentPhase(phase);
+
+            // ── Trace: agent transition detection ────────────────────────────
+            const currentAgent = getAgentForPhase(phase);
+            if (currentAgent !== prevAgent) {
+                if (prevAgent !== null) {
+                    dispatch(setAgentStatus({ agentName: prevAgent, status: 'done' }));
+                }
+                dispatch(addTraceEvent({ agentName: currentAgent, status: 'running', message: phase, startedAt: Date.now() }));
+                prevAgent = currentAgent;
+            } else {
+                // Same agent, update message
+                dispatch(setAgentStatus({ agentName: currentAgent, status: 'running', message: phase }));
+            }
+
             if (isFirstChunk && partialReport) {
                 finalReport = partialReport;
                 setReport(finalReport);
@@ -233,6 +270,12 @@ const AppLayout: React.FC = () => {
         // Final check before completing
         if (generationIdRef.current !== currentGenId) return;
 
+        // ── Complete trace ────────────────────────────────────────────────────
+        if (prevAgent !== null) {
+            dispatch(setAgentStatus({ agentName: prevAgent, status: 'done' }));
+        }
+        dispatch(completeTrace({ status: 'done' }));
+
         const completeReport = { ...(finalReport!), synthesis: finalSynthesis };
         setReport(completeReport);
         setReportStatus('done');
@@ -243,11 +286,15 @@ const AppLayout: React.FC = () => {
         }
     } catch (err) {
         if (generationIdRef.current === currentGenId) {
+            if (prevAgent !== null) {
+                dispatch(setAgentStatus({ agentName: prevAgent, status: 'error' }));
+            }
+            dispatch(completeTrace({ status: 'error' }));
             setError(err instanceof Error ? err.message : 'An unknown error occurred during report generation.');
             setReportStatus('error');
         }
     }
-  }, [settings.ai, settings.defaults.autoSaveReports, setCurrentView, saveReport]);
+  }, [dispatch, settings.ai, settings.defaults.autoSaveReports, setCurrentView, saveReport]);
 
   const handleSaveReport = useCallback(async () => {
       if (report && localResearchInput) {
