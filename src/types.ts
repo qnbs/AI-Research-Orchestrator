@@ -12,6 +12,8 @@ export interface ResearchInput {
   synthesisFocus: string;
   maxArticlesToScan: number;
   topNToSynthesize: number;
+  /** When true, arXiv preprints are fetched in addition to PubMed articles */
+  includeArxiv?: boolean;
 }
 
 export interface GeneratedQuery {

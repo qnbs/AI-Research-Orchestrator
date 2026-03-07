@@ -3,6 +3,7 @@ import { GoogleGenAI, Type, Chat } from "@google/genai";
 import type { ResearchInput, ResearchReport, Settings, RankedArticle, SimilarArticle, OnlineFindings, WebContent, ResearchAnalysis, GeneratedQuery, AuthorCluster, FeaturedAuthorCategory, JournalProfile } from '../types';
 import { getApiKey } from './apiKeyService';
 import { searchPubMedForIds, fetchArticleDetails } from './pubmedUtils';
+import { searchAndFetchArxiv } from './arxivUtils';
 
 // Lazy initialization of the AI client
 let aiInstance: GoogleGenAI | null = null;
@@ -202,7 +203,7 @@ const getPreamble = (aiSettings: Settings['ai']) => {
 export async function* generateResearchReportStream(input: ResearchInput, aiSettings: Settings['ai']): AsyncGenerator<{ report?: ResearchReport; synthesisChunk?: string; phase: string; }> {
    const ai = await getAI();
    try {
-        const systemInstruction = `${getPreamble(aiSettings)} You are an expert AI research assistant. Your goal is to conduct a literature review on PubMed based on the user's criteria, rank the articles, and synthesize the findings.`;
+        const systemInstruction = `${getPreamble(aiSettings)} You are an expert AI research assistant. Your goal is to conduct a literature review on PubMed${input.includeArxiv ? ' and arXiv' : ''} based on the user's criteria, rank the articles, and synthesize the findings. Article identifiers from arXiv begin with "arxiv:" — treat them exactly like PubMed PMIDs.`;
 
         const buildQueryGenPrompt = (input: ResearchInput): string => {
             let filterInstructions = '';
@@ -258,7 +259,17 @@ Research Topic: "${input.researchTopic}"
         if (articleDetails.length === 0) {
             throw new Error("Could not fetch details for the articles found on PubMed.");
         }
-        
+
+        // STEP 3b: Fetch arXiv Preprints (if enabled, non-blocking)
+        if (input.includeArxiv) {
+            yield { phase: "Phase 3b: Fetching arXiv Preprints..." };
+            const arxivMax = Math.min(Math.floor(input.maxArticlesToScan / 2), 15);
+            const arxivResults = await searchAndFetchArxiv(input.researchTopic, arxivMax);
+            if (arxivResults.length > 0) {
+                articleDetails.push(...arxivResults);
+            }
+        }
+
         // STEP 4: AI Analyzes and Ranks Real Data
         yield { phase: "Phase 4: AI Ranking & Analysis of Real Articles..." };
         

@@ -75,7 +75,8 @@ const InputFormComponent: React.FC<InputFormProps> = ({ onSubmit, isLoading, def
     try {
         const savedState = sessionStorage.getItem(FORM_STATE_KEY);
         if (savedState) {
-            return JSON.parse(savedState);
+            // Spread with defaults so new fields (e.g. includeArxiv) are always present
+            return { includeArxiv: false, ...JSON.parse(savedState) };
         }
     } catch (e) {
         console.error("Could not parse form state from sessionStorage", e);
@@ -88,6 +89,7 @@ const InputFormComponent: React.FC<InputFormProps> = ({ onSubmit, isLoading, def
       synthesisFocus: defaultSettings.defaultSynthesisFocus,
       maxArticlesToScan: defaultSettings.maxArticlesToScan,
       topNToSynthesize: defaultSettings.topNToSynthesize,
+      includeArxiv: false,
     };
   });
   const [errors, setErrors] = useState<{ topN?: string }>({});
@@ -290,6 +292,37 @@ const InputFormComponent: React.FC<InputFormProps> = ({ onSubmit, isLoading, def
                     />
                 ))}
             </div>
+        </div>
+
+        {/* Search Sources */}
+        <div className="bg-surface/30 border border-border rounded-xl p-5 backdrop-blur-sm">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="h-1.5 w-1.5 rounded-full bg-accent-cyan shadow-[0_0_8px_var(--color-accent-cyan)]"></div>
+            <legend className="text-sm font-semibold text-text-primary">Search Sources</legend>
+          </div>
+          <div className="space-y-2">
+            {/* PubMed — always on */}
+            <div className="flex items-center p-2 rounded-lg bg-brand-accent/5 border border-brand-accent/20 gap-2.5">
+              <div className="w-5 h-5 rounded-md bg-brand-accent border border-brand-accent flex items-center justify-center flex-shrink-0">
+                <CheckIcon className="w-3.5 h-3.5 text-white" />
+              </div>
+              <span className="text-sm font-medium text-text-primary">PubMed</span>
+              <span className="text-xs text-text-secondary ml-auto">peer-reviewed · always on</span>
+            </div>
+            {/* arXiv — toggleable */}
+            <CustomCheckbox
+              id="includeArxiv"
+              value="arxiv"
+              checked={formData.includeArxiv ?? false}
+              onChange={(e) => setFormData(prev => ({ ...prev, includeArxiv: e.target.checked }))}
+              label="arXiv Preprints"
+            />
+            {formData.includeArxiv && (
+              <p className="text-[11px] text-text-secondary pl-2 leading-relaxed">
+                Searches cs, q-bio, physics, and other arXiv categories. Preprints are not peer-reviewed.
+              </p>
+            )}
+          </div>
         </div>
       
         <div className="bg-surface/30 border border-border rounded-xl p-5 space-y-6 backdrop-blur-sm">
