@@ -23,6 +23,7 @@ import { UIProvider, useUI } from './contexts/UIContext';
 import type { View, BeforeInstallPromptEvent } from './contexts/UIContext';
 import { exportKnowledgeBaseToPdf, exportToCsv, exportCitations } from './services/exportService';
 import { useChat } from './hooks/useChat';
+import { useHaptic } from './hooks/useHaptic';
 import { BottomNavBar } from './components/BottomNavBar';
 import ErrorBoundary from './components/ErrorBoundary';
 import { useTranslation } from './hooks/useTranslation';
@@ -87,6 +88,7 @@ const AppLayout: React.FC = () => {
   const generationIdRef = useRef<number>(0);
 
   // App-wide State from contexts
+  const haptic = useHaptic();
   const { currentView, notification, setNotification, isSettingsDirty, setIsSettingsDirty, pendingNavigation, setPendingNavigation, setCurrentView, isCommandPaletteOpen, setIsCommandPaletteOpen, setInstallPromptEvent, setIsPwaInstalled } = useUI();
   const { knowledgeBase, saveReport, clearKnowledgeBase, uniqueArticles, updateTags } = useKnowledgeBase();
 
@@ -301,8 +303,9 @@ const AppLayout: React.FC = () => {
       if (report && localResearchInput) {
         await saveReport(localResearchInput, report);
         setIsCurrentReportSaved(true);
+        haptic('success');
       }
-  }, [report, localResearchInput, saveReport]);
+  }, [report, localResearchInput, saveReport, haptic]);
   
   const handleNewSearch = useCallback(() => {
       generationIdRef.current += 1; // Invalidate any ongoing generation

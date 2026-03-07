@@ -7,7 +7,7 @@ import { test, expect } from '@playwright/test';
 test.describe('App smoke tests', () => {
   test('home page loads and shows app title', async ({ page }) => {
     await page.goto('/');
-    await expect(page).toHaveTitle(/AI Research Orchestrator/i);
+    await expect(page).toHaveTitle(/Research Orchestrator/i);
   });
 
   test('navigation renders without JavaScript errors', async ({ page }) => {

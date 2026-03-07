@@ -1,6 +1,7 @@
 
 import React from 'react';
 import type { View } from '../contexts/UIContext';
+import { useHaptic } from '../hooks/useHaptic';
 import { HomeIcon } from './icons/HomeIcon';
 import { DocumentIcon } from './icons/DocumentIcon';
 import { DatabaseIcon } from './icons/DatabaseIcon';
@@ -25,9 +26,12 @@ const NavItem: React.FC<{
     onClick: (view: View) => void;
     badge?: number;
     isSpecial?: boolean;
-}> = ({ view, label, icon, isActive, isDisabled, onClick, badge, isSpecial }) => (
+}> = ({ view, label, icon, isActive, isDisabled, onClick, badge, isSpecial }) => {
+    const haptic = useHaptic();
+    const handleClick = () => { haptic('light'); onClick(view); };
+    return (
     <button
-        onClick={() => onClick(view)}
+        onClick={handleClick}
         disabled={isDisabled}
         className={`flex flex-col items-center justify-center w-full pt-3 pb-2 text-[10px] font-medium transition-all duration-200 focus:outline-none relative ${
             isActive ? 'text-brand-accent' : 'text-text-secondary hover:text-text-primary'
@@ -43,7 +47,8 @@ const NavItem: React.FC<{
         </div>
         <span className={`mt-1 transition-opacity ${isActive ? 'opacity-100 font-bold text-brand-accent drop-shadow-sm' : 'opacity-80'}`}>{label}</span>
     </button>
-);
+    );
+};
 
 
 export const BottomNavBar: React.FC<BottomNavBarProps> = ({ currentView, onViewChange, knowledgeBaseArticleCount, hasReports, isResearching }) => {

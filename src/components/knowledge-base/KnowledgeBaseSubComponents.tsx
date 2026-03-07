@@ -1,5 +1,6 @@
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { useKnowledgeBaseView } from './KnowledgeBaseViewContext';
 import { ChevronDownIcon } from '../icons/ChevronDownIcon';
 import { SearchIcon } from '../icons/SearchIcon';
@@ -165,9 +166,25 @@ const KBArticleListItem: React.FC<{ article: AggregatedArticle; isSelected: bool
     );
 });
 
-export const ArticleList: React.FC = () => {
-    const { viewMode, paginatedArticles, selectedPmids, handleSelect, setArticleInDetail } = useKnowledgeBaseView();
+// ── Virtualization threshold ──────────────────────────────────────────────────
+// Below this count: standard pagination. At or above: full virtual scroll.
+const VIRTUAL_THRESHOLD = 30;
 
+export const ArticleList: React.FC = () => {
+    const { viewMode, filteredArticles, paginatedArticles, selectedPmids, handleSelect, setArticleInDetail } = useKnowledgeBaseView();
+    const listScrollRef = useRef<HTMLDivElement>(null);
+
+    const shouldVirtualize = viewMode === 'list' && filteredArticles.length >= VIRTUAL_THRESHOLD;
+
+    const virtualizer = useVirtualizer({
+        count: shouldVirtualize ? filteredArticles.length : 0,
+        getScrollElement: () => listScrollRef.current,
+        estimateSize: () => 90,
+        overscan: 6,
+        enabled: shouldVirtualize,
+    });
+
+    // ── GRID: paginated (unchanged) ──
     if (viewMode === 'grid') {
         return (
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -178,6 +195,45 @@ export const ArticleList: React.FC = () => {
         );
     }
 
+    // ── LIST: virtualized when large ──
+    if (shouldVirtualize) {
+        const items = virtualizer.getVirtualItems();
+        return (
+            <>
+                <p className="text-xs text-text-secondary mb-2 text-right">
+                    {filteredArticles.length} articles · virtualized scroll
+                </p>
+                <div
+                    ref={listScrollRef}
+                    className="bg-surface border border-border rounded-lg overflow-y-auto"
+                    style={{ maxHeight: 'calc(100vh - 280px)', minHeight: 240 }}
+                    role="list"
+                    aria-label="Article list"
+                >
+                    {/* Total height spacer */}
+                    <div style={{ height: virtualizer.getTotalSize(), width: '100%', position: 'relative' }}>
+                        {items.map(vRow => (
+                            <div
+                                key={vRow.key}
+                                data-index={vRow.index}
+                                ref={virtualizer.measureElement}
+                                style={{ position: 'absolute', top: 0, left: 0, width: '100%', transform: `translateY(${vRow.start}px)` }}
+                            >
+                                <KBArticleListItem
+                                    article={filteredArticles[vRow.index]}
+                                    isSelected={selectedPmids.includes(filteredArticles[vRow.index].pmid)}
+                                    onSelect={handleSelect}
+                                    onView={setArticleInDetail}
+                                />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </>
+        );
+    }
+
+    // ── LIST: small list, standard render ──
     return (
         <div className="bg-surface border border-border rounded-lg">
             {paginatedArticles.map(a => (
