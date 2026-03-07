@@ -417,6 +417,166 @@
       radial-gradient(at 80% 0%, var(--aurora-2) 0px, transparent 50%),
       radial-gradient(at 0% 50%, var(--aurora-3) 0px, transparent 50%);
   }
+
+  /* ── AgentCard glassmorphism ─────────────────────────────────────────── */
+  .agent-card {
+    background: var(--color-surface);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid var(--color-border);
+    border-left-width: 3px;
+    border-radius: 12px;
+    transition: box-shadow 0.3s ease, border-color 0.3s ease;
+  }
+
+  .agent-card--running {
+    border-left-color: var(--color-brand-accent);
+    box-shadow: 0 0 24px rgba(56, 189, 248, 0.18), var(--shadow-md);
+    animation: agentCardPulse 2s ease-in-out infinite;
+  }
+
+  .agent-card--done {
+    border-left-color: var(--color-accent-green);
+  }
+
+  .agent-card--error {
+    border-left-color: #f87171;
+    box-shadow: 0 0 16px rgba(248, 113, 113, 0.15);
+  }
+
+  .agent-card--idle,
+  .agent-card--skipped {
+    border-left-color: var(--color-border);
+    opacity: 0.7;
+  }
+
+  :root.matrix .agent-card--running {
+    border-left-color: var(--color-brand-accent);
+    box-shadow: 0 0 24px rgba(0, 255, 65, 0.25);
+  }
+
+  /* ── PipelineStep ─────────────────────────────────────────────────────── */
+  .pipeline-connector {
+    flex: 1;
+    height: 2px;
+    background: var(--color-border);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .pipeline-connector--active::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, var(--color-brand-accent), var(--color-accent-cyan));
+    animation: pipelineFlow 1.5s ease-out forwards;
+  }
+
+  .pipeline-connector--done::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, var(--color-brand-accent), var(--color-accent-green));
+  }
+
+  .pipeline-node {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--color-border);
+    background: var(--color-surface);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    flex-shrink: 0;
+    transition: all 0.3s ease;
+  }
+
+  .pipeline-node--running {
+    border-color: var(--color-brand-accent);
+    box-shadow: 0 0 0 4px var(--color-glow), 0 0 12px var(--color-brand-accent);
+    animation: pipelineNodePulse 1.5s ease-in-out infinite;
+  }
+
+  .pipeline-node--done {
+    border-color: var(--color-accent-green);
+    background: color-mix(in srgb, var(--color-accent-green) 15%, var(--color-surface));
+  }
+
+  .pipeline-node--error {
+    border-color: #f87171;
+    background: rgba(248, 113, 113, 0.1);
+  }
+
+  /* ── KnowledgeBaseItem ────────────────────────────────────────────────── */
+  .kb-item {
+    background: var(--color-surface);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+  }
+
+  .kb-item:hover {
+    border-color: color-mix(in srgb, var(--color-brand-accent) 40%, transparent);
+    box-shadow: 0 0 20px rgba(56, 189, 248, 0.12), var(--shadow-md);
+    transform: translateY(-2px);
+  }
+
+  .kb-item--selected {
+    border-color: var(--color-brand-accent);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-brand-accent) 20%, transparent),
+                var(--shadow-glow);
+  }
+
+  /* Relevance left bar */
+  .kb-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(to bottom, var(--relevance-color, var(--color-border)), transparent);
+    border-radius: 12px 0 0 12px;
+  }
+
+  /* ── Glass elevated card (deep blur) ─────────────────────────────────── */
+  .glass-elevated {
+    background: color-mix(in srgb, var(--color-surface) 90%, white 10%);
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    border: 1px solid color-mix(in srgb, var(--color-border) 60%, var(--color-brand-accent) 40%);
+    box-shadow: var(--shadow-lg), inset 0 1px 0 rgba(255,255,255,0.08);
+  }
+
+  /* ── Particle container ───────────────────────────────────────────────── */
+  .particle-field {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+
+  /* ── Theme badge pill for header toggle ──────────────────────────────── */
+  .theme-badge {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold;
+    background: color-mix(in srgb, var(--color-brand-accent) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-brand-accent) 40%, transparent);
+    color: var(--color-brand-accent);
+    transition: all 0.2s ease;
+  }
+
+  .theme-badge:hover {
+    background: color-mix(in srgb, var(--color-brand-accent) 22%, transparent);
+    box-shadow: 0 0 8px var(--color-glow);
+  }
 }
 
 /* ============================================================
@@ -487,4 +647,25 @@
 @keyframes slideInLeft {
   from { opacity: 0; transform: translateX(-20px); }
   to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes agentCardPulse {
+  0%, 100% { box-shadow: 0 0 12px rgba(56, 189, 248, 0.1), var(--shadow-md); }
+  50%       { box-shadow: 0 0 28px rgba(56, 189, 248, 0.28), var(--shadow-md); }
+}
+
+@keyframes pipelineFlow {
+  from { transform: scaleX(0); transform-origin: left; }
+  to   { transform: scaleX(1); transform-origin: left; }
+}
+
+@keyframes pipelineNodePulse {
+  0%, 100% { box-shadow: 0 0 0 2px var(--color-glow); }
+  50%       { box-shadow: 0 0 0 6px var(--color-glow), 0 0 16px var(--color-brand-accent); }
+}
+
+@keyframes particleDrift {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: var(--p-opacity); }
+  33%       { transform: translate(var(--p-dx), var(--p-dy)) scale(1.2); opacity: calc(var(--p-opacity) * 1.6); }
+  66%       { transform: translate(calc(var(--p-dx) * -0.6), calc(var(--p-dy) * 0.8)) scale(0.8); opacity: calc(var(--p-opacity) * 0.6); }
 }

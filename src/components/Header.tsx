@@ -21,6 +21,8 @@ import { AppLogo } from './AppLogo';
 import { useTranslation } from '../hooks/useTranslation';
 import { GlobeAltIcon } from './icons/GlobeAltIcon';
 import { AgentDebuggerToggle } from './AgentDebugger';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { cycleTheme, selectCurrentTheme } from '../store/slices/themeSlice';
 
 interface HeaderProps {
     onViewChange: (view: View) => void;
@@ -52,9 +54,13 @@ const NavButton: React.FC<{
 
 
 const HeaderComponent: React.FC<HeaderProps> = ({ onViewChange, currentView, knowledgeBaseArticleCount, hasReports, isResearching, onQuickAdd }) => {
-    const { settings, updateSettings } = useSettings();
+    const { updateSettings } = useSettings();
     const { isSettingsDirty, setIsCommandPaletteOpen } = useUI();
     const { t, lang } = useTranslation();
+
+    // ── Theme: driven by dedicated Redux themeSlice ──────────────────────────
+    const dispatch = useAppDispatch();
+    const currentTheme = useAppSelector(selectCurrentTheme);
     
     // State for mobile "More" menu
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -90,12 +96,13 @@ const HeaderComponent: React.FC<HeaderProps> = ({ onViewChange, currentView, kno
         setIsMobileMenuOpen(false);
     };
 
-    const toggleTheme = () => {
-        const cycle: Record<string, 'light' | 'dark' | 'matrix'> = { dark: 'light', light: 'matrix', matrix: 'dark' };
-        updateSettings(prev => ({ ...prev, theme: cycle[prev.theme] ?? 'dark' }));
-    };
-    const themeIcon = settings.theme === 'dark' ? <SunIcon className="h-5 w-5 text-accent-amber hover:rotate-45 transition-transform" /> : settings.theme === 'light' ? <MoonIcon className="h-5 w-5 text-brand-accent hover:-rotate-12 transition-transform" /> : <span className="text-base" title="Matrix Theme">🟩</span>;
-    const themeLabel = settings.theme === 'dark' ? 'Switch to Neon-Light' : settings.theme === 'light' ? 'Switch to Matrix-Green' : 'Switch to Cyber-Dark';
+    const toggleTheme = () => dispatch(cycleTheme());
+    const themeIcon = currentTheme === 'dark'
+      ? <SunIcon className="h-5 w-5 text-accent-amber hover:rotate-45 transition-transform" />
+      : currentTheme === 'light'
+      ? <MoonIcon className="h-5 w-5 text-brand-accent hover:-rotate-12 transition-transform" />
+      : <span className="text-base" title="Matrix Theme">🟩</span>;
+    const themeLabel = currentTheme === 'dark' ? 'Switch to Neon-Light' : currentTheme === 'light' ? 'Switch to Matrix-Green' : 'Switch to Cyber-Dark';
     
     const toggleLanguage = () => updateSettings(prev => ({ ...prev, appLanguage: prev.appLanguage === 'en' ? 'de' : 'en' }));
 
@@ -179,7 +186,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({ onViewChange, currentView, kno
                              <button onClick={() => handleMobileMenuSelect(() => onViewChange('settings'))} className="w-full text-left flex items-center gap-3 px-4 py-3 text-sm hover:bg-surface-hover border-b border-border/50"><CogIcon className={`h-5 w-5 ${isSettingsDirty ? 'text-accent-amber' : ''}`} /> {t('nav.settings')}</button>
                              <button onClick={() => handleMobileMenuSelect(() => onViewChange('help'))} className="w-full text-left flex items-center gap-3 px-4 py-3 text-sm hover:bg-surface-hover border-b border-border/50"><QuestionMarkCircleIcon className="h-5 w-5" /> {t('nav.help')}</button>
                              <button onClick={() => handleMobileMenuSelect(toggleTheme)} className="w-full text-left flex items-center gap-3 px-4 py-3 text-sm hover:bg-surface-hover">
-                                 {settings.theme === 'dark' ? <><SunIcon className="h-5 w-5 text-accent-amber"/> Light Mode</> : <><MoonIcon className="h-5 w-5 text-brand-accent"/> Dark Mode</>}
+                                 {currentTheme === 'dark' ? <><SunIcon className="h-5 w-5 text-accent-amber"/> Light Mode</> : currentTheme === 'matrix' ? <><MoonIcon className="h-5 w-5 text-brand-accent"/> Dark Mode</> : <><span>🟩</span> Matrix Mode</>}
                              </button>
                          </div>
                     )}
