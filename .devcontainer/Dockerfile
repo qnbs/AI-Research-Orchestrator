@@ -45,11 +45,6 @@ RUN npm config set fund false \
     && npm config set audit-level moderate \
     && npm config set update-notifier false
 
-# ── Pre-warm global Playwright CLI (no browsers yet — postCreate installs them) ─
-# The actual browser download happens in postCreate.sh because it needs
-# the project's package.json pinned Playwright version.
-RUN npx --yes playwright@latest --version 2>/dev/null || true
-
 # ── Port exposures ─────────────────────────────────────────────────────────────
 # 3000 = Vite dev server  |  4173 = Vite preview
 EXPOSE 3000 4173

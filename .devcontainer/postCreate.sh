@@ -24,13 +24,18 @@ cd "$REPO_DIR"
 npm ci --prefer-offline 2>&1 | tail -5
 ok "npm dependencies installed"
 
-# ── 3. Install Playwright Chromium browser ────────────────────────────────────
-log "Installing Playwright Chromium browser..."
-# Use the project-local playwright version for consistency
-if npx playwright install chromium 2>&1 | tail -5; then
-  ok "Playwright Chromium installed"
+# ── 3. Install Playwright Chromium browser (optional) ─────────────────────────
+# Set SKIP_PLAYWRIGHT=true to skip browser installation (saves ~60s)
+if [ "${SKIP_PLAYWRIGHT:-false}" = "true" ]; then
+  log "Skipping Playwright install (SKIP_PLAYWRIGHT=true)"
 else
-  warn "Playwright install failed — browser integration tests will be skipped"
+  log "Installing Playwright Chromium browser..."
+  # Use the project-local playwright version for consistency
+  if npx playwright install chromium 2>&1 | tail -5; then
+    ok "Playwright Chromium installed"
+  else
+    warn "Playwright install failed — browser integration tests will be skipped"
+  fi
 fi
 
 # ── 4. TypeScript type check ──────────────────────────────────────────────────
