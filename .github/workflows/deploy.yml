@@ -66,26 +66,30 @@ jobs:
       - name: Type check
         run: npx tsc --noEmit
 
-      # Step 5: Run unit tests
-      - name: Run unit tests
-        run: npx vitest run
+      # Step 5: Lint (warnings allowed up to budget; errors fail)
+      - name: ESLint
+        run: npm run lint
 
-      # Step 6: Build for production
+      # Step 6: Unit tests + coverage thresholds (store/services/hooks/lib scope — see vitest.config.ts)
+      - name: Tests with coverage
+        run: npm run test:coverage
+
+      # Step 7: Build for production
       - name: Build application
         run: npm run build
         env:
           NODE_ENV: production
 
-      # Step 7: Copy 404.html for SPA routing
+      # Step 8: Copy 404.html for SPA routing
       - name: Setup SPA routing
         run: cp dist/index.html dist/404.html
 
-      # Step 8: Configure GitHub Pages (main branch pushes / manual only)
+      # Step 9: Configure GitHub Pages (main branch pushes / manual only)
       - name: Setup Pages
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         uses: actions/configure-pages@v4
 
-      # Step 9: Upload build artifacts for Pages deployment
+      # Step 10: Upload build artifacts for Pages deployment
       - name: Upload artifact
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@v3

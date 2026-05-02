@@ -1,8 +1,8 @@
 export const ARTICLE_TYPES = [
-  'Randomized Controlled Trial', 
-  'Meta-Analysis', 
-  'Systematic Review', 
-  'Observational Study'
+  'Randomized Controlled Trial',
+  'Meta-Analysis',
+  'Systematic Review',
+  'Observational Study',
 ];
 
 export interface ResearchInput {
@@ -30,7 +30,7 @@ export interface RankedArticle {
   pubYear: string;
   summary: string;
   relevanceScore: number;
-  relevanceExplanation:string;
+  relevanceExplanation: string;
   keywords: string[];
   isOpenAccess: boolean;
   articleType?: string; // Type of article, e.g., 'Systematic Review'
@@ -39,8 +39,8 @@ export interface RankedArticle {
 }
 
 export interface OverallKeyword {
-    keyword: string;
-    frequency: number;
+  keyword: string;
+  frequency: number;
 }
 
 export interface ResearchReport {
@@ -53,60 +53,76 @@ export interface ResearchReport {
 }
 
 export interface AuthorProfileInput {
-    authorName: string;
+  authorName: string;
 }
 
 // --- NEW KNOWLEDGE BASE TYPES ---
 
-export interface Article extends RankedArticle {}
+export type Article = RankedArticle;
 
 export interface BaseEntry {
-    id: string;
-    title: string;
-    timestamp: number;
-    articles: Article[];
-    sourceType: 'research' | 'author' | 'journal';
+  id: string;
+  title: string;
+  timestamp: number;
+  articles: Article[];
+  sourceType: 'research' | 'author' | 'journal';
 }
 
 export interface ResearchEntry extends BaseEntry {
-    sourceType: 'research';
-    input: ResearchInput;
-    report: ResearchReport;
+  sourceType: 'research';
+  input: ResearchInput;
+  report: ResearchReport;
 }
 
 export interface AuthorProfileEntry extends BaseEntry {
-    sourceType: 'author';
-    input: AuthorProfileInput;
-    profile: AuthorProfile;
+  sourceType: 'author';
+  input: AuthorProfileInput;
+  profile: AuthorProfile;
 }
 
 export interface JournalProfile {
-    name: string;
-    issn: string;
-    description: string;
-    oaPolicy: string; // e.g., "Full Open Access", "Hybrid", "Subscription"
-    focusAreas: string[];
+  name: string;
+  issn: string;
+  description: string;
+  oaPolicy: string; // e.g., "Full Open Access", "Hybrid", "Subscription"
+  focusAreas: string[];
 }
 
 export interface JournalEntry extends BaseEntry {
-    sourceType: 'journal';
-    journalProfile: JournalProfile;
+  sourceType: 'journal';
+  journalProfile: JournalProfile;
 }
-
 
 export type KnowledgeBaseEntry = ResearchEntry | AuthorProfileEntry | JournalEntry;
 
-
 export type AggregatedArticle = RankedArticle & {
-    sourceTitle: string;
-    sourceId: string;
+  sourceTitle: string;
+  sourceId: string;
 };
 
 // Omit 'sourceId' as it's an internal identifier not meant for export.
-export const CSV_EXPORT_COLUMNS: (keyof Omit<AggregatedArticle, 'sourceId'> | 'URL' | 'PMCID_URL')[] = [
-    'pmid', 'pmcId', 'title', 'authors', 'journal', 'pubYear', 'summary', 'aiSummary',
-    'relevanceScore', 'relevanceExplanation', 'keywords', 'customTags', 
-    'sourceTitle', 'isOpenAccess', 'articleType', 'URL', 'PMCID_URL'
+export const CSV_EXPORT_COLUMNS: (
+  | keyof Omit<AggregatedArticle, 'sourceId'>
+  | 'URL'
+  | 'PMCID_URL'
+)[] = [
+  'pmid',
+  'pmcId',
+  'title',
+  'authors',
+  'journal',
+  'pubYear',
+  'summary',
+  'aiSummary',
+  'relevanceScore',
+  'relevanceExplanation',
+  'keywords',
+  'customTags',
+  'sourceTitle',
+  'isOpenAccess',
+  'articleType',
+  'URL',
+  'PMCID_URL',
 ];
 
 export interface Preset {
@@ -126,18 +142,18 @@ export interface Settings {
     density: 'comfortable' | 'compact';
     fontFamily: 'Inter' | 'Lato' | 'Roboto' | 'Open Sans';
     customColors: {
-        enabled: boolean;
-        primary: string;
-        secondary: string;
-        accent: string;
+      enabled: boolean;
+      primary: string;
+      secondary: string;
+      accent: string;
     };
   };
   performance: {
     enableAnimations: boolean;
   };
   notifications: {
-      position: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
-      duration: number; // in ms
+    position: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
+    duration: number; // in ms
   };
   ai: {
     model: 'gemini-2.5-flash';
@@ -162,24 +178,24 @@ export interface Settings {
   };
   export: {
     pdf: {
-        includeCoverPage: boolean;
-        preparedFor: string;
-        includeSynthesis: boolean;
-        includeInsights: boolean;
-        includeQueries: boolean;
-        includeToc: boolean;
-        includeHeader: boolean;
-        includeFooter: boolean;
+      includeCoverPage: boolean;
+      preparedFor: string;
+      includeSynthesis: boolean;
+      includeInsights: boolean;
+      includeQueries: boolean;
+      includeToc: boolean;
+      includeHeader: boolean;
+      includeFooter: boolean;
     };
     csv: {
-        columns: ((typeof CSV_EXPORT_COLUMNS)[number])[];
-        delimiter: ',' | ';' | '\t';
+      columns: (typeof CSV_EXPORT_COLUMNS)[number][];
+      delimiter: ',' | ';' | '\t';
     };
     citation: {
-        includeAbstract: boolean;
-        includeKeywords: boolean;
-        includeTags: boolean;
-        includePmcid: boolean;
+      includeAbstract: boolean;
+      includeKeywords: boolean;
+      includeTags: boolean;
+      includePmcid: boolean;
     };
   };
   knowledgeBase: {
@@ -209,7 +225,7 @@ export interface ArxivArticle {
   title: string;
   authors: string;
   abstract: string;
-  published: string;    // ISO date string
+  published: string; // ISO date string
   updated: string;
   categories: string[];
   pdfUrl: string;
@@ -239,19 +255,25 @@ export interface ResearchCollection {
   id: string;
   name: string;
   description: string;
-  color: string;          // hex color for UI
-  icon: string;           // emoji or icon name
-  entryIds: string[];     // KnowledgeBaseEntry ids
+  color: string; // hex color for UI
+  icon: string; // emoji or icon name
+  entryIds: string[]; // KnowledgeBaseEntry ids
   articlePmids: string[]; // individual article pmids
   createdAt: number;
   updatedAt: number;
-  shareToken?: string;    // for shareable export links
+  shareToken?: string; // for shareable export links
   tags: string[];
 }
 
 // ── Agent Debugger Types ──────────────────────────────────────────────────────
 
-export type AgentName = 'QueryGenerator' | 'PubMedFetcher' | 'Ranker' | 'Synthesizer' | 'ArxivFetcher' | 'ResearchAnalyst';
+export type AgentName =
+  | 'QueryGenerator'
+  | 'PubMedFetcher'
+  | 'Ranker'
+  | 'Synthesizer'
+  | 'ArxivFetcher'
+  | 'ResearchAnalyst';
 export type AgentStatus = 'idle' | 'running' | 'done' | 'error' | 'skipped';
 
 export interface AgentTokenUsage {
@@ -303,12 +325,12 @@ export interface ResearchAnalysis {
 }
 
 export interface KnowledgeBaseFilter {
-    searchTerm: string;
-    selectedTopics: string[];
-    selectedTags: string[];
-    selectedArticleTypes: string[];
-    selectedJournals: string[];
-    showOpenAccessOnly: boolean;
+  searchTerm: string;
+  selectedTopics: string[];
+  selectedTags: string[];
+  selectedArticleTypes: string[];
+  selectedJournals: string[];
+  showOpenAccessOnly: boolean;
 }
 
 // --- Author Analysis Types ---
@@ -349,6 +371,6 @@ export interface ChatMessage {
 
 // --- Featured Authors ---
 export interface FeaturedAuthorCategory {
-    category: string;
-    authors: { name: string; description: string; }[];
+  category: string;
+  authors: { name: string; description: string }[];
 }

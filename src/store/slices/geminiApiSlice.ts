@@ -97,7 +97,6 @@ export const geminiApi = createApi({
   baseQuery: fakeBaseQuery(),
   tagTypes: ['GeminiReport', 'GeminiAnalysis'],
   endpoints: (builder) => ({
-
     // ── Streaming research report ─────────────────────────────────────────
     // • queryFn seeds the cache with an empty streamable state immediately.
     // • onCacheEntryAdded drives updates from the AsyncGenerator chunks.
@@ -112,14 +111,14 @@ export const geminiApi = createApi({
         },
       }),
       async onCacheEntryAdded(arg, { updateCachedData, cacheDataLoaded, cacheEntryRemoved }) {
-        // Wait until the cache entry is in place before streaming into it.
         await cacheDataLoaded;
         const controller = new AbortController();
+        cacheEntryRemoved.then(() => controller.abort());
         try {
-          const stream = generateResearchReportStream(arg.input, arg.aiSettings);
+          const stream = generateResearchReportStream(arg.input, arg.aiSettings, controller.signal);
           for await (const chunk of stream) {
             if (controller.signal.aborted) break;
-            updateCachedData(draft => {
+            updateCachedData((draft) => {
               draft.phase = chunk.phase;
               if (chunk.synthesisChunk) draft.synthesisChunks.push(chunk.synthesisChunk);
               if (chunk.report) {
@@ -128,19 +127,22 @@ export const geminiApi = createApi({
               }
             });
           }
-          // Mark complete if the generator finished without emitting a report
-          updateCachedData(draft => {
+          updateCachedData((draft) => {
             if (!draft.isComplete) draft.isComplete = true;
           });
         } catch (err) {
-          updateCachedData(draft => {
-            draft.error = err instanceof Error ? err.message : String(err);
-            draft.isComplete = true;
-          });
+          if (err instanceof DOMException && err.name === 'AbortError') {
+            updateCachedData((draft) => {
+              draft.isComplete = true;
+            });
+          } else {
+            updateCachedData((draft) => {
+              draft.error = err instanceof Error ? err.message : String(err);
+              draft.isComplete = true;
+            });
+          }
         }
-        // Clean up when the cache entry is removed (component unmounts).
         await cacheEntryRemoved;
-        controller.abort();
       },
       // runId in the cache key ensures each invocation produces its own stream
       serializeQueryArgs: ({ queryArgs }) =>

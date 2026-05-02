@@ -14,19 +14,19 @@ The AI Research Orchestrator is a well-architected, production-ready Progressive
 
 ## Scorecard
 
-| Dimension     | Rating | Notes                                                               |
-| ------------- | ------ | ------------------------------------------------------------------- |
-| Architecture  | 5/5    | Clean layering: services, contexts, hooks, Redux, components        |
-| TypeScript    | 5/5    | Strict mode, ES2022 target, comprehensive type definitions          |
-| DevContainer  | 4/5    | Lean image, good DX; Playwright pre-warm was redundant (now fixed)  |
-| PWA/Offline   | 5/5    | Workbox service worker, manifest, offline IndexedDB fallback        |
-| Security      | 4/5    | Web Crypto API key encryption; browser-side API calls inherent risk |
-| i18n          | 5/5    | EN+DE complete, 100+ keys, namespace-based pattern                  |
+| Dimension     | Rating | Notes                                                                                 |
+| ------------- | ------ | ------------------------------------------------------------------------------------- |
+| Architecture  | 5/5    | Clean layering: services, contexts, hooks, Redux, components                          |
+| TypeScript    | 5/5    | Strict mode, ES2022 target, comprehensive type definitions                            |
+| DevContainer  | 4/5    | Lean image, good DX; Playwright pre-warm was redundant (now fixed)                    |
+| PWA/Offline   | 5/5    | Workbox service worker, manifest, offline IndexedDB fallback                          |
+| Security      | 4/5    | Web Crypto API key encryption; browser-side API calls inherent risk                   |
+| i18n          | 5/5    | EN+DE complete, 100+ keys, namespace-based pattern                                    |
 | CI/CD         | 5/5    | GitHub Actions v4; typecheck + Vitest + build; PR verification + Pages only on `main` |
-| Tests         | 2/5    | Low line coverage; 3 unit test files + 2 E2E specs                  |
-| Documentation | 5/5    | README (EN+DE), CHANGELOG, AUDIT, CONTRIBUTING, AGENTS, Cursor rules |
-| SEO           | 3/5    | Basics present; missing Open Graph, schema.org, canonical URL       |
-| Accessibility | 4/5    | Strong ARIA, focus management; minor contrast gaps in light mode    |
+| Tests         | 2/5    | Low line coverage; 3 unit test files + 2 E2E specs                                    |
+| Documentation | 5/5    | README (EN+DE), CHANGELOG, AUDIT, CONTRIBUTING, AGENTS, Cursor rules                  |
+| SEO           | 3/5    | Basics present; missing Open Graph, schema.org, canonical URL                         |
+| Accessibility | 4/5    | Strong ARIA, focus management; minor contrast gaps in light mode                      |
 
 ---
 
@@ -47,12 +47,13 @@ The AI Research Orchestrator is a well-architected, production-ready Progressive
 
 ## Maintenance (2026-05-02)
 
-| Change | Notes |
-| ------ | ----- |
-| CI pull requests | Workflow runs build + tests on PRs to `main`; Pages upload/deploy only when `github.ref == refs/heads/main` and event is not `pull_request` |
-| Cursor / onboarding | Added `AGENTS.md`, `.cursor/rules/ai-research-orchestrator.mdc`, `.vscode/extensions.json`, `CONTRIBUTING.md` |
-| Version alignment | `package.json` version aligned with semver docs (`0.1.0`); README badge updated |
-| AUDIT correction | `AuthorProfile` is defined in `types.ts`; earlier “missing type” note removed below |
+| Change                      | Notes                                                                                                                                                                                      |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| CI pull requests            | Workflow runs build + tests on PRs to `main`; Pages upload/deploy only when `github.ref == refs/heads/main` and event is not `pull_request`                                                |
+| Cursor / onboarding         | Added `AGENTS.md`, `.cursor/rules/ai-research-orchestrator.mdc`, `.vscode/extensions.json`, `CONTRIBUTING.md`                                                                              |
+| Version alignment           | `package.json` / README badge track semver (`0.1.1` as of this maintenance)                                                                                                                |
+| AUDIT correction            | `AuthorProfile` is defined in `types.ts`; earlier “missing type” note removed below                                                                                                        |
+| Production hygiene (v0.1.1) | ESLint 9 + Prettier + Husky; scoped coverage thresholds; AbortSignal for report streams; Redux-only `useUI` + install prompt store; CSV formula sanitization; CSP meta; PNG manifest icons |
 
 ---
 

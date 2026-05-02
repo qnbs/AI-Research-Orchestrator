@@ -3,6 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Baseline CSP: allows Gemini/PubMed/arXiv over HTTPS; relax further only after testing. -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https: blob:; connect-src 'self' https: blob: data: wss:; base-uri 'self';" />
     <title>AI Research Orchestration Author</title>
 
     <!-- PWA and Mobile Meta Tags -->

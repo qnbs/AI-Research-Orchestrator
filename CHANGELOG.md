@@ -7,29 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-05-02
+
 ### Added
 
-- `AGENTS.md` and `.cursor/rules/` for Cursor and other AI-assisted workflows
-- `CONTRIBUTING.md` with local QA commands and CI expectations
-- `.vscode/extensions.json` recommended extensions for VS Code / Cursor
-- GitHub Actions: verify on pull requests to `main`; Pages upload/deploy only on `main` (not on PRs)
-- CHANGELOG.md following keepachangelog standard
-- AUDIT.md with codebase audit findings and prioritized improvement roadmap
+- ESLint 9 (flat config) + Prettier + Husky + lint-staged; `npm run lint` / `npm run format`
+- Unit tests for PubMed, arXiv, CSV formula sanitization, Redux slices, Dexie settings round-trip, `useTranslation`, `useUI`, install-prompt store
+- Vitest coverage thresholds on logic layers (`store/`, `services/`, `hooks/`, `lib/`) — see `vitest.config.ts`
+- PWA PNG icons (`public/icons/icon-192.png`, `icon-512.png`) via `npm run icons`
+- Baseline `Content-Security-Policy` meta in `index.html`
+- `.npmrc` with `legacy-peer-deps=true` for consistent installs with the ESLint toolchain
 
 ### Changed
 
-- `package.json` version set to `0.1.0` to match documented semver; README version badge aligned
-- README: Tests & CI, Cursor setup, troubleshooting for CI failures; GitHub Actions section clarified (PR vs deploy)
-- Updated `.github/copilot-instructions.md` (stack; pointer to `AGENTS.md` / `.cursor/rules/`)
-- Removed redundant Playwright CLI pre-warm from Dockerfile (postCreate.sh handles installation)
-- Made Playwright browser installation optional in postCreate.sh via `SKIP_PLAYWRIGHT=true`
+- **State management**: Removed `UIProvider`; `useUI` reads/writes Redux only; PWA install prompt uses `installPromptStore` + `useSyncExternalStore`. Settings hydrate via `SettingsHydrator` with merge from `store.getState()`.
+- **Gemini streaming**: `generateResearchReportStream(..., signal?)`; `geminiApiSlice` aborts on cache entry removal; orchestrator uses `AbortController` + generation id.
+- **CSV export**: `sanitizeCsvFormulaInjection` mitigates spreadsheet formula injection.
+- CI runs `npm run lint` and `npm run test:coverage` before production build.
 
 ### Fixed
 
-- Moved `vitest` from `dependencies` to `devDependencies` to reduce production bundle
-- Fixed 142 markdown lint errors in README.md (MD030, MD022, MD031, MD032)
-- Made CI/CD pipeline type checking blocking (was `continue-on-error: true`)
-- Added unit test step to CI/CD pipeline before build
+- `geminiApiSlice`: `AbortController` ran only after `cacheEntryRemoved`, too late to stop in-flight Gemini consumption.
 
 ## [0.1.0] - 2026-04-14
 
@@ -59,5 +57,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - DevContainer support for GitHub Codespaces
 - Vitest unit tests + Playwright E2E test infrastructure
 
-[Unreleased]: https://github.com/qnbs/AI-Research-Orchestrator/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/qnbs/AI-Research-Orchestrator/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/qnbs/AI-Research-Orchestrator/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/qnbs/AI-Research-Orchestrator/releases/tag/v0.1.0

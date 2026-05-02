@@ -4,40 +4,44 @@ You are an expert full-stack React 19 + TypeScript architect specialized in agen
 
 ## Tech Stack (current, installed)
 
-| Category | Technology | Version |
-|----------|-----------|---------|
-| Framework | React | 19 |
-| Language | TypeScript | 5.8 (strict mode) |
-| Build | Vite | 6 |
-| State | Redux Toolkit + RTK Query | 2 |
-| Data Fetching | @tanstack/react-query | 5 |
-| Local DB | Dexie.js + dexie-react-hooks | 4 |
-| AI | @google/genai (Gemini 2.5 Flash + Gemini 3 Pro) | latest |
-| Styling | Tailwind CSS v4 + @tailwindcss/postcss | 4.2 |
-| Animation | Framer Motion | 12 |
-| Icons | lucide-react | latest |
-| Charts | Chart.js + react-chartjs-2, Recharts | latest |
-| Virtualization | @tanstack/react-virtual | 3 |
-| Command Palette | cmdk | 1 |
-| PDF Export | jsPDF + marked | latest |
-| Sanitization | DOMPurify | 3 |
-| Testing | Vitest + @testing-library/react + Playwright | latest |
+| Category        | Technology                                      | Version           |
+| --------------- | ----------------------------------------------- | ----------------- |
+| Framework       | React                                           | 19                |
+| Language        | TypeScript                                      | 5.8 (strict mode) |
+| Build           | Vite                                            | 6                 |
+| State           | Redux Toolkit + RTK Query                       | 2                 |
+| Data Fetching   | @tanstack/react-query                           | 5                 |
+| Local DB        | Dexie.js + dexie-react-hooks                    | 4                 |
+| AI              | @google/genai (Gemini 2.5 Flash + Gemini 3 Pro) | latest            |
+| Styling         | Tailwind CSS v4 + @tailwindcss/postcss          | 4.2               |
+| Animation       | Framer Motion                                   | 12                |
+| Icons           | lucide-react                                    | latest            |
+| Charts          | Chart.js + react-chartjs-2, Recharts            | latest            |
+| Virtualization  | @tanstack/react-virtual                         | 3                 |
+| Command Palette | cmdk                                            | 1                 |
+| PDF Export      | jsPDF + marked                                  | latest            |
+| Sanitization    | DOMPurify                                       | 3                 |
+| Testing         | Vitest + @testing-library/react + Playwright    | latest            |
 
 ## Project Rules (ALWAYS follow)
 
 ### Architecture
+
 - **Local-first**: All user data in IndexedDB via Dexie.js — zero backend dependency
 - **API-key-in-browser**: Gemini key encrypted with Web Crypto AES-GCM, stored in IndexedDB (apiKeyService.ts)
 - **Direct API calls**: Browser → Google Gemini API + NCBI PubMed E-utilities (no proxy)
 - **PWA**: Service worker (sw.js) with Workbox caching strategies, offline fallback, GitHub Pages deployment
 
 ### State Management
+
 - **Redux Toolkit** for global app state (settings, UI, knowledgeBase, agentDebug, collections, theme slices)
 - **RTK Query** for API endpoints (apiSlice.ts, geminiApiSlice.ts)
-- **Context API** only for cross-cutting providers (KnowledgeBaseContext, SettingsContext, UIContext, PresetContext)
-- **Never duplicate** state between Redux and Context — Redux is source of truth
+- **Hooks**: `useSettings` / `useUI` read from Redux; PWA `beforeinstallprompt` uses `lib/installPromptStore` + `useSyncExternalStore` (not in Redux)
+- **Context API**: `SettingsProvider` only hydrates IndexedDB → Redux once; `KnowledgeBaseContext` / `PresetContext` compose Dexie + Redux actions—no parallel copies of `settings`/`ui`
+- **Never duplicate** the same flags in Context and Redux
 
 ### Code Style
+
 - TypeScript strict mode — no `any` unless absolutely necessary
 - Functional components only with hooks
 - File structure: `src/components/`, `src/services/`, `src/store/slices/`, `src/hooks/`, `src/contexts/`, `src/i18n/`
@@ -46,6 +50,7 @@ You are an expert full-stack React 19 + TypeScript architect specialized in agen
 - Context + SubComponents pattern for large views (e.g., AuthorsViewContext + AuthorsSubComponents)
 
 ### UI/UX
+
 - **Tailwind CSS** with Cybernetic Glassmorphism design system (backdrop-blur, neon accents, ambient animations)
 - **Framer Motion** for agent flows and transitions
 - **WCAG 2.2 AA**: ARIA roles, keyboard navigation, focus management, Cmd+K palette
@@ -53,24 +58,29 @@ You are an expert full-stack React 19 + TypeScript architect specialized in agen
 - **Responsive**: Mobile-first with bottom nav bar, desktop header with two-line layout
 
 ### API Patterns
+
 - PubMed NCBI E-utilities with exponential backoff (pubmedUtils.ts)
 - arXiv search as supplementary source (arxivUtils.ts)
 - Gemini streaming responses via AsyncGenerator (geminiService.ts)
 - DOMPurify for all HTML sanitization
 
 ### Testing
-- Vitest for unit tests (src/services/*.test.ts, src/store/slices/*.test.ts)
+
+- Vitest for unit tests (src/services/_.test.ts, src/store/slices/_.test.ts)
 - Playwright for E2E (src/test/e2e/)
 - Test setup in src/test/setup.ts with IndexedDB + crypto mocks
 
 ### Safety Rules
+
 - **Never** break existing agent pipeline or Knowledge Base
 - **Never** commit API keys or secrets
 - **Always** run `npm run typecheck` before committing
 - **Always** maintain i18n parity (EN + DE) for new user-facing strings
 
 ### New Feature Checklist
+
 When adding a new feature, ensure:
+
 1. Redux slice (if stateful) or RTK Query endpoint (if API)
 2. Dexie schema update (if persistent data)
 3. i18n keys in both EN and DE

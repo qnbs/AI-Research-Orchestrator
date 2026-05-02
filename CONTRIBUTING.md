@@ -21,9 +21,10 @@ Copy `.env.example` if you use local env vars; **never** commit API keys.
 ## Quality checks (run before opening a PR)
 
 ```bash
-npm run typecheck   # TypeScript --noEmit
-npm run test:run    # Vitest unit tests
-npm run build       # Production build
+npm run typecheck    # TypeScript --noEmit
+npm run lint         # ESLint (warnings budget — see package.json)
+npm run test:coverage # Vitest + coverage thresholds (logic layers — vitest.config.ts)
+npm run build        # Production build
 ```
 
 Optional E2E (requires browsers once):
@@ -46,8 +47,9 @@ GitHub Actions (`.github/workflows/deploy.yml`) on pushes and PRs to `main`:
 
 1. `npm ci`
 2. `npx tsc --noEmit`
-3. `npx vitest run`
-4. `npm run build`
+3. `npm run lint`
+4. `npm run test:coverage`
+5. `npm run build`
 
 Deployment to GitHub Pages runs only for pushes (and manual dispatch) on `main`, not for pull requests.
 

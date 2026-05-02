@@ -10,7 +10,8 @@ Dieses Repository ist eine **React-19-PWA** mit **Gemini** und **PubMed**; Daten
 ## Checks vor Änderungen am Kernfluss
 
 - `npm run typecheck`
-- `npm run test:run`
+- `npm run lint`
+- `npm run test:coverage` (Schwellen siehe `vitest.config.ts`)
 - Bei End-to-End: `npx playwright install chromium` (einmalig), dann `npm run test:e2e`
 
 ## CI

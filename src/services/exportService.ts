@@ -1,5 +1,13 @@
 import jsPDF from 'jspdf';
-import { RankedArticle, ResearchInput, AggregatedArticle, ResearchReport, Settings, CSV_EXPORT_COLUMNS, KnowledgeBaseEntry } from '../types';
+import {
+  RankedArticle,
+  ResearchInput,
+  AggregatedArticle,
+  ResearchReport,
+  Settings,
+  CSV_EXPORT_COLUMNS,
+  KnowledgeBaseEntry,
+} from '../types';
 
 // ===================================================================================
 //
@@ -9,25 +17,40 @@ import { RankedArticle, ResearchInput, AggregatedArticle, ResearchReport, Settin
 
 const APP_NAME = 'AI Research Orchestration Author';
 const PDF_CONSTANTS = {
-    MARGIN: 15,
-    FONT_SIZES: {
-        TITLE: 22,
-        H1: 14,
-        H2: 12,
-        BODY: 10,
-        KEY_VALUE: 9,
-        FOOTER: 8,
-    },
-    COLORS: {
-        TITLE: '#000000',
-        TEXT_PRIMARY: '#000000',
-        TEXT_SECONDARY: '#505050',
-        LINK: '#2980b9',
-        LINE: '#cccccc',
-    }
+  MARGIN: 15,
+  FONT_SIZES: {
+    TITLE: 22,
+    H1: 14,
+    H2: 12,
+    BODY: 10,
+    KEY_VALUE: 9,
+    FOOTER: 8,
+  },
+  COLORS: {
+    TITLE: '#000000',
+    TEXT_PRIMARY: '#000000',
+    TEXT_SECONDARY: '#505050',
+    LINK: '#2980b9',
+    LINE: '#cccccc',
+  },
 };
 
-const cleanText = (text: string) => text ? text.replace(/<[^>]*>/g, "").replace(/[\u2018\u2019]/g, "'").replace(/[\u201C\u201D]/g, '"') : '';
+const cleanText = (text: string) =>
+  text
+    ? text
+        .replace(/<[^>]*>/g, '')
+        .replace(/[\u2018\u2019]/g, "'")
+        .replace(/[\u201C\u201D]/g, '"')
+    : '';
+
+/** Prefix cells that could be interpreted as spreadsheet formulas (=, +, -, @, tab, carriage return). */
+export function sanitizeCsvFormulaInjection(value: string): string {
+  const s = String(value ?? '');
+  if (/^[=+\-@\t\r]/.test(s)) {
+    return `\t${s}`;
+  }
+  return s;
+}
 
 // ===================================================================================
 //
@@ -39,397 +62,552 @@ const cleanText = (text: string) => text ? text.replace(/<[^>]*>/g, "").replace(
  * A stateful class to manage the creation of a PDF document.
  */
 class PdfExporter {
-    private doc: jsPDF;
-    private pageHeight: number;
-    private pageWidth: number;
-    private currentY: number;
-    private pageNumber: number;
-    private tocEntries: { title: string; page: number }[];
-    private settings: Settings['export']['pdf'];
-    private documentTitle: string;
+  private doc: jsPDF;
+  private pageHeight: number;
+  private pageWidth: number;
+  private currentY: number;
+  private pageNumber: number;
+  private tocEntries: { title: string; page: number }[];
+  private settings: Settings['export']['pdf'];
+  private documentTitle: string;
 
-    constructor(title: string, settings: Settings['export']['pdf']) {
-        this.doc = new jsPDF({ unit: 'pt' }); // Use points for better font control
-        this.pageHeight = this.doc.internal.pageSize.getHeight();
-        this.pageWidth = this.doc.internal.pageSize.getWidth();
-        this.currentY = PDF_CONSTANTS.MARGIN;
-        this.pageNumber = 1;
-        this.tocEntries = [];
-        this.settings = settings;
-        this.documentTitle = title;
-        this.doc.setProperties({ title, subject: 'AI-Generated Literature Review', author: APP_NAME, creator: APP_NAME });
-    }
-    
-    /** Adds a new page to the document, including headers and footers if enabled. */
-    private addPage() {
-        if (this.settings.includeFooter) this.addFooter();
-        this.doc.addPage();
-        this.pageNumber++;
-        this.currentY = PDF_CONSTANTS.MARGIN;
-        if (this.settings.includeHeader) this.addHeader();
-    }
+  constructor(title: string, settings: Settings['export']['pdf']) {
+    this.doc = new jsPDF({ unit: 'pt' }); // Use points for better font control
+    this.pageHeight = this.doc.internal.pageSize.getHeight();
+    this.pageWidth = this.doc.internal.pageSize.getWidth();
+    this.currentY = PDF_CONSTANTS.MARGIN;
+    this.pageNumber = 1;
+    this.tocEntries = [];
+    this.settings = settings;
+    this.documentTitle = title;
+    this.doc.setProperties({
+      title,
+      subject: 'AI-Generated Literature Review',
+      author: APP_NAME,
+      creator: APP_NAME,
+    });
+  }
 
-    /** Checks if a new page is needed before adding content. */
-    private checkPageBreak(spaceNeeded: number) {
-        if (this.currentY + spaceNeeded > this.pageHeight - PDF_CONSTANTS.MARGIN) {
-            this.addPage();
-        }
-    }
+  /** Adds a new page to the document, including headers and footers if enabled. */
+  private addPage() {
+    if (this.settings.includeFooter) this.addFooter();
+    this.doc.addPage();
+    this.pageNumber++;
+    this.currentY = PDF_CONSTANTS.MARGIN;
+    if (this.settings.includeHeader) this.addHeader();
+  }
 
-    /** Adds a header to the current page. */
-    private addHeader() {
-        this.doc.setFontSize(PDF_CONSTANTS.FONT_SIZES.FOOTER).setFont('helvetica', 'italic').setTextColor(PDF_CONSTANTS.COLORS.TEXT_SECONDARY);
-        const headerText = this.documentTitle.length > 90 ? this.documentTitle.substring(0, 87) + '...' : this.documentTitle;
-        this.doc.text(headerText, PDF_CONSTANTS.MARGIN, 10);
-        this.doc.setDrawColor(PDF_CONSTANTS.COLORS.LINE).line(PDF_CONSTANTS.MARGIN, 12, this.pageWidth - PDF_CONSTANTS.MARGIN, 12);
+  /** Checks if a new page is needed before adding content. */
+  private checkPageBreak(spaceNeeded: number) {
+    if (this.currentY + spaceNeeded > this.pageHeight - PDF_CONSTANTS.MARGIN) {
+      this.addPage();
     }
+  }
 
-    /** Adds a footer to the current page. */
-    private addFooter() {
-        this.doc.setFontSize(PDF_CONSTANTS.FONT_SIZES.FOOTER).setFont('helvetica', 'italic').setTextColor(PDF_CONSTANTS.COLORS.TEXT_SECONDARY);
-        const footerText = `Page ${this.pageNumber} | Generated by ${APP_NAME}`;
-        this.doc.text(footerText, this.pageWidth / 2, this.pageHeight - 10, { align: 'center' });
-    }
+  /** Adds a header to the current page. */
+  private addHeader() {
+    this.doc
+      .setFontSize(PDF_CONSTANTS.FONT_SIZES.FOOTER)
+      .setFont('helvetica', 'italic')
+      .setTextColor(PDF_CONSTANTS.COLORS.TEXT_SECONDARY);
+    const headerText =
+      this.documentTitle.length > 90
+        ? this.documentTitle.substring(0, 87) + '...'
+        : this.documentTitle;
+    this.doc.text(headerText, PDF_CONSTANTS.MARGIN, 10);
+    this.doc
+      .setDrawColor(PDF_CONSTANTS.COLORS.LINE)
+      .line(PDF_CONSTANTS.MARGIN, 12, this.pageWidth - PDF_CONSTANTS.MARGIN, 12);
+  }
 
-    /** Adds a main section title. */
-    private addSectionTitle(title: string, options: { addToToc?: boolean } = {}) {
-        if (options.addToToc) this.tocEntries.push({ title, page: this.pageNumber });
-        this.checkPageBreak(30);
-        this.doc.setFontSize(PDF_CONSTANTS.FONT_SIZES.H1).setFont('helvetica', 'bold').setTextColor(PDF_CONSTANTS.COLORS.TEXT_PRIMARY);
-        this.doc.text(title, PDF_CONSTANTS.MARGIN, this.currentY);
-        this.currentY += PDF_CONSTANTS.FONT_SIZES.H1 * 1.5;
-    }
+  /** Adds a footer to the current page. */
+  private addFooter() {
+    this.doc
+      .setFontSize(PDF_CONSTANTS.FONT_SIZES.FOOTER)
+      .setFont('helvetica', 'italic')
+      .setTextColor(PDF_CONSTANTS.COLORS.TEXT_SECONDARY);
+    const footerText = `Page ${this.pageNumber} | Generated by ${APP_NAME}`;
+    this.doc.text(footerText, this.pageWidth / 2, this.pageHeight - 10, { align: 'center' });
+  }
 
-    /** Adds multi-line body text. */
-    private addBodyText(text: string) {
-        const lines = this.doc.splitTextToSize(cleanText(text), this.pageWidth - PDF_CONSTANTS.MARGIN * 2);
-        this.doc.setFontSize(PDF_CONSTANTS.FONT_SIZES.BODY).setFont('helvetica', 'normal').setTextColor(PDF_CONSTANTS.COLORS.TEXT_SECONDARY);
-        for (const line of lines) {
-            this.checkPageBreak(PDF_CONSTANTS.FONT_SIZES.BODY);
-            this.doc.text(line, PDF_CONSTANTS.MARGIN, this.currentY);
-            this.currentY += PDF_CONSTANTS.FONT_SIZES.BODY * 1.2;
-        }
-        this.currentY += PDF_CONSTANTS.FONT_SIZES.BODY;
-    }
+  /** Adds a main section title. */
+  private addSectionTitle(title: string, options: { addToToc?: boolean } = {}) {
+    if (options.addToToc) this.tocEntries.push({ title, page: this.pageNumber });
+    this.checkPageBreak(30);
+    this.doc
+      .setFontSize(PDF_CONSTANTS.FONT_SIZES.H1)
+      .setFont('helvetica', 'bold')
+      .setTextColor(PDF_CONSTANTS.COLORS.TEXT_PRIMARY);
+    this.doc.text(title, PDF_CONSTANTS.MARGIN, this.currentY);
+    this.currentY += PDF_CONSTANTS.FONT_SIZES.H1 * 1.5;
+  }
 
-    /** Adds a key-value pair, handling multi-line values. */
-    private addKeyValue(key: string, value: string) {
-        if (!value) return;
-        const keyWidth = 80;
-        const valueLines = this.doc.splitTextToSize(cleanText(value), this.pageWidth - PDF_CONSTANTS.MARGIN * 2 - keyWidth);
-        this.checkPageBreak(valueLines.length * PDF_CONSTANTS.FONT_SIZES.KEY_VALUE * 1.2 + 4);
-        this.doc.setFontSize(PDF_CONSTANTS.FONT_SIZES.KEY_VALUE).setFont('helvetica', 'bold').setTextColor(PDF_CONSTANTS.COLORS.TEXT_PRIMARY);
-        this.doc.text(key, PDF_CONSTANTS.MARGIN, this.currentY);
-        this.doc.setFont('helvetica', 'normal').setTextColor(PDF_CONSTANTS.COLORS.TEXT_SECONDARY);
-        this.doc.text(valueLines, PDF_CONSTANTS.MARGIN + keyWidth, this.currentY);
-        this.currentY += valueLines.length * PDF_CONSTANTS.FONT_SIZES.KEY_VALUE * 1.2 + 4;
+  /** Adds multi-line body text. */
+  private addBodyText(text: string) {
+    const lines = this.doc.splitTextToSize(
+      cleanText(text),
+      this.pageWidth - PDF_CONSTANTS.MARGIN * 2,
+    );
+    this.doc
+      .setFontSize(PDF_CONSTANTS.FONT_SIZES.BODY)
+      .setFont('helvetica', 'normal')
+      .setTextColor(PDF_CONSTANTS.COLORS.TEXT_SECONDARY);
+    for (const line of lines) {
+      this.checkPageBreak(PDF_CONSTANTS.FONT_SIZES.BODY);
+      this.doc.text(line, PDF_CONSTANTS.MARGIN, this.currentY);
+      this.currentY += PDF_CONSTANTS.FONT_SIZES.BODY * 1.2;
     }
-    
-    private addTableOfContents() {
-        this.addSectionTitle('Table of Contents', {});
-        this.doc.setFontSize(PDF_CONSTANTS.FONT_SIZES.BODY).setFont('helvetica', 'normal');
-        this.tocEntries.forEach(entry => {
-            this.checkPageBreak(PDF_CONSTANTS.FONT_SIZES.BODY * 1.2);
-            const dots = '.'.repeat(Math.max(0, 80 - entry.title.length));
-            this.doc.text(`${entry.title} ${dots} ${entry.page}`, PDF_CONSTANTS.MARGIN, this.currentY);
-            this.currentY += PDF_CONSTANTS.FONT_SIZES.BODY * 1.2;
+    this.currentY += PDF_CONSTANTS.FONT_SIZES.BODY;
+  }
+
+  /** Adds a key-value pair, handling multi-line values. */
+  private addKeyValue(key: string, value: string) {
+    if (!value) return;
+    const keyWidth = 80;
+    const valueLines = this.doc.splitTextToSize(
+      cleanText(value),
+      this.pageWidth - PDF_CONSTANTS.MARGIN * 2 - keyWidth,
+    );
+    this.checkPageBreak(valueLines.length * PDF_CONSTANTS.FONT_SIZES.KEY_VALUE * 1.2 + 4);
+    this.doc
+      .setFontSize(PDF_CONSTANTS.FONT_SIZES.KEY_VALUE)
+      .setFont('helvetica', 'bold')
+      .setTextColor(PDF_CONSTANTS.COLORS.TEXT_PRIMARY);
+    this.doc.text(key, PDF_CONSTANTS.MARGIN, this.currentY);
+    this.doc.setFont('helvetica', 'normal').setTextColor(PDF_CONSTANTS.COLORS.TEXT_SECONDARY);
+    this.doc.text(valueLines, PDF_CONSTANTS.MARGIN + keyWidth, this.currentY);
+    this.currentY += valueLines.length * PDF_CONSTANTS.FONT_SIZES.KEY_VALUE * 1.2 + 4;
+  }
+
+  private addTableOfContents() {
+    this.addSectionTitle('Table of Contents', {});
+    this.doc.setFontSize(PDF_CONSTANTS.FONT_SIZES.BODY).setFont('helvetica', 'normal');
+    this.tocEntries.forEach((entry) => {
+      this.checkPageBreak(PDF_CONSTANTS.FONT_SIZES.BODY * 1.2);
+      const dots = '.'.repeat(Math.max(0, 80 - entry.title.length));
+      this.doc.text(`${entry.title} ${dots} ${entry.page}`, PDF_CONSTANTS.MARGIN, this.currentY);
+      this.currentY += PDF_CONSTANTS.FONT_SIZES.BODY * 1.2;
+    });
+    this.currentY += PDF_CONSTANTS.FONT_SIZES.BODY;
+  }
+
+  /** Renders an article entry in the PDF. */
+  private addArticle(article: RankedArticle, index: number) {
+    const articleLink = article.pmcId
+      ? `https://www.ncbi.nlm.nih.gov/pmc/articles/${article.pmcId}/`
+      : `https://pubmed.ncbi.nlm.nih.gov/${article.pmid}/`;
+    this.checkPageBreak(80);
+    this.doc
+      .setFontSize(PDF_CONSTANTS.FONT_SIZES.H2)
+      .setFont('helvetica', 'bold')
+      .setTextColor(PDF_CONSTANTS.COLORS.LINK);
+    this.doc.textWithLink(
+      `${index + 1}. ${cleanText(article.title)}`,
+      PDF_CONSTANTS.MARGIN,
+      this.currentY,
+      { url: articleLink },
+    );
+    this.currentY += PDF_CONSTANTS.FONT_SIZES.H2 * 1.5;
+
+    this.addKeyValue('Authors:', `${article.authors} (${article.pubYear})`);
+    this.addKeyValue('Journal:', article.journal);
+    this.addKeyValue('PMID:', article.pmid + (article.pmcId ? ` / PMCID: ${article.pmcId}` : ''));
+    this.addKeyValue(
+      'Relevance:',
+      `${article.relevanceScore}/100 - ${article.relevanceExplanation}`,
+    );
+    this.addKeyValue('Summary:', article.aiSummary || article.summary);
+    if (article.keywords && article.keywords.length > 0)
+      this.addKeyValue('Keywords:', article.keywords.join(', '));
+    if (article.customTags && article.customTags.length > 0)
+      this.addKeyValue('Custom Tags:', article.customTags.join(', '));
+    this.currentY += 10;
+  }
+
+  /** Saves the generated PDF. */
+  public save(filename: string) {
+    if (this.settings.includeFooter) {
+      for (let i = 1; i <= this.pageNumber; i++) {
+        this.doc.setPage(i);
+        this.addFooter();
+      }
+    }
+    this.doc.save(filename);
+  }
+
+  public exportResearchReport(report: ResearchReport, input: ResearchInput) {
+    if (this.settings.includeCoverPage) {
+      this.doc
+        .setFontSize(PDF_CONSTANTS.FONT_SIZES.TITLE)
+        .setFont('helvetica', 'bold')
+        .text('AI Research Report', this.pageWidth / 2, 60, { align: 'center' });
+      this.doc
+        .setFontSize(PDF_CONSTANTS.FONT_SIZES.H1)
+        .setFont('helvetica', 'normal')
+        .text(input.researchTopic, this.pageWidth / 2, 75, {
+          align: 'center',
+          maxWidth: this.pageWidth - 60,
         });
-        this.currentY += PDF_CONSTANTS.FONT_SIZES.BODY;
+      this.doc
+        .setFontSize(PDF_CONSTANTS.FONT_SIZES.BODY)
+        .setFont('helvetica', 'italic')
+        .setTextColor(PDF_CONSTANTS.COLORS.TEXT_SECONDARY);
+      this.doc.text(`Generated on ${new Date().toLocaleDateString()}`, this.pageWidth / 2, 95, {
+        align: 'center',
+      });
+      if (this.settings.preparedFor) {
+        this.doc.text(`Prepared for: ${this.settings.preparedFor}`, this.pageWidth / 2, 105, {
+          align: 'center',
+        });
+      }
+      this.doc
+        .setFontSize(PDF_CONSTANTS.FONT_SIZES.H2)
+        .setFont('helvetica', 'bold')
+        .setTextColor(PDF_CONSTANTS.COLORS.TEXT_PRIMARY);
+      this.doc.text('Research Parameters', this.pageWidth / 2, 120, { align: 'center' });
+      this.doc
+        .setFontSize(PDF_CONSTANTS.FONT_SIZES.BODY)
+        .setFont('helvetica', 'normal')
+        .setTextColor(PDF_CONSTANTS.COLORS.TEXT_SECONDARY);
+      const params = [
+        `Date Range: Last ${input.dateRange} years`,
+        `Article Types: ${input.articleTypes.join(', ') || 'Any'}`,
+        `Synthesis Focus: ${input.synthesisFocus}`,
+        `Articles Scanned: ${input.maxArticlesToScan}`,
+        `Articles Synthesized: ${input.topNToSynthesize}`,
+      ];
+      this.doc.text(params.join('\n'), this.pageWidth / 2, 130, { align: 'center' });
+      this.addPage();
     }
 
+    if (this.settings.includeToc) {
+      if (this.settings.includeSynthesis)
+        this.tocEntries.push({ title: 'Executive Synthesis', page: this.pageNumber });
+      if (this.settings.includeInsights)
+        this.tocEntries.push({ title: 'AI-Generated Insights', page: this.pageNumber });
+      this.tocEntries.push({
+        title: `Ranked Articles (Top ${report.rankedArticles.length})`,
+        page: -1,
+      });
+      if (this.settings.includeQueries)
+        this.tocEntries.push({ title: 'Generated PubMed Queries', page: -1 });
+      const tocPage = this.pageNumber;
+      this.addPage();
 
-    /** Renders an article entry in the PDF. */
-    private addArticle(article: RankedArticle, index: number) {
-        const articleLink = article.pmcId ? `https://www.ncbi.nlm.nih.gov/pmc/articles/${article.pmcId}/` : `https://pubmed.ncbi.nlm.nih.gov/${article.pmid}/`;
-        this.checkPageBreak(80);
-        this.doc.setFontSize(PDF_CONSTANTS.FONT_SIZES.H2).setFont('helvetica', 'bold').setTextColor(PDF_CONSTANTS.COLORS.LINK);
-        this.doc.textWithLink(`${index + 1}. ${cleanText(article.title)}`, PDF_CONSTANTS.MARGIN, this.currentY, { url: articleLink });
-        this.currentY += PDF_CONSTANTS.FONT_SIZES.H2 * 1.5;
+      if (this.settings.includeSynthesis) {
+        this.addSectionTitle('Executive Synthesis', { addToToc: false });
+        this.addBodyText(report.synthesis);
+      }
+      if (this.settings.includeInsights) {
+        this.addSectionTitle('AI-Generated Insights', { addToToc: false });
+        report.aiGeneratedInsights.forEach((insight) => {
+          this.checkPageBreak(25);
+          this.addKeyValue('Question:', insight.question);
+          this.addKeyValue('Answer:', insight.answer);
+          this.addKeyValue('Sources (PMID):', insight.supportingArticles.join(', '));
+          this.currentY += 5;
+        });
+      }
 
-        this.addKeyValue('Authors:', `${article.authors} (${article.pubYear})`);
-        this.addKeyValue('Journal:', article.journal);
-        this.addKeyValue('PMID:', article.pmid + (article.pmcId ? ` / PMCID: ${article.pmcId}` : ''));
-        this.addKeyValue('Relevance:', `${article.relevanceScore}/100 - ${article.relevanceExplanation}`);
-        this.addKeyValue('Summary:', article.aiSummary || article.summary);
-        if (article.keywords && article.keywords.length > 0) this.addKeyValue('Keywords:', article.keywords.join(', '));
-        if (article.customTags && article.customTags.length > 0) this.addKeyValue('Custom Tags:', article.customTags.join(', '));
+      const rankedArticlesTocIndex = this.tocEntries.findIndex((e) =>
+        e.title.startsWith('Ranked Articles'),
+      );
+      if (rankedArticlesTocIndex !== -1)
+        this.tocEntries[rankedArticlesTocIndex].page = this.pageNumber;
+      this.addSectionTitle(`Ranked Articles (Top ${report.rankedArticles.length})`, {
+        addToToc: false,
+      });
+      report.rankedArticles.forEach((article, index) => this.addArticle(article, index));
+
+      if (this.settings.includeQueries) {
+        const queriesTocIndex = this.tocEntries.findIndex((e) =>
+          e.title.startsWith('Generated PubMed Queries'),
+        );
+        if (queriesTocIndex !== -1) this.tocEntries[queriesTocIndex].page = this.pageNumber;
+        this.addSectionTitle('Generated PubMed Queries', { addToToc: false });
+        report.generatedQueries.forEach((q) => {
+          this.checkPageBreak(20);
+          this.addKeyValue('Query:', q.query);
+          this.addKeyValue('Explanation:', q.explanation);
+          this.currentY += 5;
+        });
+      }
+      this.doc.setPage(tocPage);
+      this.currentY = PDF_CONSTANTS.MARGIN;
+      this.addTableOfContents();
+    }
+
+    this.save(`report_${input.researchTopic.substring(0, 20).replace(/\s/g, '_')}.pdf`);
+  }
+
+  public exportKnowledgeBase(
+    articles: AggregatedArticle[],
+    findRelatedInsights: (
+      pmid: string,
+    ) => { question: string; answer: string; supportingArticles: string[] }[],
+  ) {
+    if (this.settings.includeCoverPage) {
+      this.doc
+        .setFontSize(PDF_CONSTANTS.FONT_SIZES.TITLE)
+        .setFont('helvetica', 'bold')
+        .text('Knowledge Base Export', this.pageWidth / 2, 80, { align: 'center' });
+      this.doc
+        .setFontSize(PDF_CONSTANTS.FONT_SIZES.H1)
+        .setFont('helvetica', 'normal')
+        .text(this.documentTitle, this.pageWidth / 2, 95, {
+          align: 'center',
+          maxWidth: this.pageWidth - 60,
+        });
+      this.doc
+        .setFontSize(PDF_CONSTANTS.FONT_SIZES.BODY)
+        .setFont('helvetica', 'italic')
+        .setTextColor(PDF_CONSTANTS.COLORS.TEXT_SECONDARY);
+      this.doc.text(
+        `Exported ${articles.length} articles on ${new Date().toLocaleDateString()}`,
+        this.pageWidth / 2,
+        110,
+        { align: 'center' },
+      );
+      if (this.settings.preparedFor) {
+        this.doc.text(`Prepared for: ${this.settings.preparedFor}`, this.pageWidth / 2, 120, {
+          align: 'center',
+        });
+      }
+      this.addPage();
+    }
+
+    this.addSectionTitle('Exported Articles', {});
+    articles.forEach((article, index) => {
+      this.addArticle(article, index);
+      const insights = findRelatedInsights(article.pmid);
+      if (this.settings.includeInsights && insights.length > 0) {
+        this.checkPageBreak(10);
+        this.addKeyValue(
+          'Related Insights:',
+          `${insights.length} insight(s) linked to this article.`,
+        );
+      }
+      this.currentY += 10;
+      if (index < articles.length - 1) {
+        this.checkPageBreak(10);
+        this.doc
+          .setDrawColor(PDF_CONSTANTS.COLORS.LINE)
+          .line(
+            PDF_CONSTANTS.MARGIN,
+            this.currentY,
+            this.pageWidth - PDF_CONSTANTS.MARGIN,
+            this.currentY,
+          );
         this.currentY += 10;
-    }
-
-    /** Saves the generated PDF. */
-    public save(filename: string) {
-        if (this.settings.includeFooter) {
-            for (let i = 1; i <= this.pageNumber; i++) {
-                this.doc.setPage(i);
-                this.addFooter();
-            }
-        }
-        this.doc.save(filename);
-    }
-    
-    public exportResearchReport(report: ResearchReport, input: ResearchInput) {
-        if (this.settings.includeCoverPage) {
-            this.doc.setFontSize(PDF_CONSTANTS.FONT_SIZES.TITLE).setFont('helvetica', 'bold').text('AI Research Report', this.pageWidth / 2, 60, { align: 'center' });
-            this.doc.setFontSize(PDF_CONSTANTS.FONT_SIZES.H1).setFont('helvetica', 'normal').text(input.researchTopic, this.pageWidth / 2, 75, { align: 'center', maxWidth: this.pageWidth - 60 });
-            this.doc.setFontSize(PDF_CONSTANTS.FONT_SIZES.BODY).setFont('helvetica', 'italic').setTextColor(PDF_CONSTANTS.COLORS.TEXT_SECONDARY);
-            this.doc.text(`Generated on ${new Date().toLocaleDateString()}`, this.pageWidth / 2, 95, { align: 'center' });
-            if(this.settings.preparedFor) {
-                this.doc.text(`Prepared for: ${this.settings.preparedFor}`, this.pageWidth / 2, 105, { align: 'center' });
-            }
-            this.doc.setFontSize(PDF_CONSTANTS.FONT_SIZES.H2).setFont('helvetica', 'bold').setTextColor(PDF_CONSTANTS.COLORS.TEXT_PRIMARY);
-            this.doc.text('Research Parameters', this.pageWidth / 2, 120, { align: 'center' });
-            this.doc.setFontSize(PDF_CONSTANTS.FONT_SIZES.BODY).setFont('helvetica', 'normal').setTextColor(PDF_CONSTANTS.COLORS.TEXT_SECONDARY);
-            const params = [`Date Range: Last ${input.dateRange} years`, `Article Types: ${input.articleTypes.join(', ') || 'Any'}`, `Synthesis Focus: ${input.synthesisFocus}`, `Articles Scanned: ${input.maxArticlesToScan}`, `Articles Synthesized: ${input.topNToSynthesize}`];
-            this.doc.text(params.join('\n'), this.pageWidth / 2, 130, { align: 'center' });
-            this.addPage();
-        }
-
-        if (this.settings.includeToc) {
-            if (this.settings.includeSynthesis) this.tocEntries.push({ title: 'Executive Synthesis', page: this.pageNumber });
-            if (this.settings.includeInsights) this.tocEntries.push({ title: 'AI-Generated Insights', page: this.pageNumber });
-            this.tocEntries.push({ title: `Ranked Articles (Top ${report.rankedArticles.length})`, page: -1 });
-            if (this.settings.includeQueries) this.tocEntries.push({ title: 'Generated PubMed Queries', page: -1 });
-            const tocPage = this.pageNumber;
-            this.addPage();
-            
-            if (this.settings.includeSynthesis) {
-                this.addSectionTitle('Executive Synthesis', { addToToc: false });
-                this.addBodyText(report.synthesis);
-            }
-            if (this.settings.includeInsights) {
-                this.addSectionTitle('AI-Generated Insights', { addToToc: false });
-                report.aiGeneratedInsights.forEach(insight => {
-                    this.checkPageBreak(25);
-                    this.addKeyValue('Question:', insight.question);
-                    this.addKeyValue('Answer:', insight.answer);
-                    this.addKeyValue('Sources (PMID):', insight.supportingArticles.join(', '));
-                    this.currentY += 5;
-                });
-            }
-
-            const rankedArticlesTocIndex = this.tocEntries.findIndex(e => e.title.startsWith('Ranked Articles'));
-            if (rankedArticlesTocIndex !== -1) this.tocEntries[rankedArticlesTocIndex].page = this.pageNumber;
-            this.addSectionTitle(`Ranked Articles (Top ${report.rankedArticles.length})`, { addToToc: false });
-            report.rankedArticles.forEach((article, index) => this.addArticle(article, index));
-            
-            if (this.settings.includeQueries) {
-                const queriesTocIndex = this.tocEntries.findIndex(e => e.title.startsWith('Generated PubMed Queries'));
-                if (queriesTocIndex !== -1) this.tocEntries[queriesTocIndex].page = this.pageNumber;
-                this.addSectionTitle('Generated PubMed Queries', { addToToc: false });
-                report.generatedQueries.forEach(q => {
-                    this.checkPageBreak(20);
-                    this.addKeyValue('Query:', q.query);
-                    this.addKeyValue('Explanation:', q.explanation);
-                    this.currentY += 5;
-                });
-            }
-            this.doc.setPage(tocPage);
-            this.currentY = PDF_CONSTANTS.MARGIN;
-            this.addTableOfContents();
-        }
-
-        this.save(`report_${input.researchTopic.substring(0, 20).replace(/\s/g, '_')}.pdf`);
-    }
-
-    public exportKnowledgeBase(articles: AggregatedArticle[], findRelatedInsights: (pmid: string) => { question: string, answer: string, supportingArticles: string[] }[]) {
-        if (this.settings.includeCoverPage) {
-            this.doc.setFontSize(PDF_CONSTANTS.FONT_SIZES.TITLE).setFont('helvetica', 'bold').text('Knowledge Base Export', this.pageWidth / 2, 80, { align: 'center' });
-            this.doc.setFontSize(PDF_CONSTANTS.FONT_SIZES.H1).setFont('helvetica', 'normal').text(this.documentTitle, this.pageWidth / 2, 95, { align: 'center', maxWidth: this.pageWidth - 60 });
-            this.doc.setFontSize(PDF_CONSTANTS.FONT_SIZES.BODY).setFont('helvetica', 'italic').setTextColor(PDF_CONSTANTS.COLORS.TEXT_SECONDARY);
-            this.doc.text(`Exported ${articles.length} articles on ${new Date().toLocaleDateString()}`, this.pageWidth / 2, 110, { align: 'center' });
-            if(this.settings.preparedFor) {
-                this.doc.text(`Prepared for: ${this.settings.preparedFor}`, this.pageWidth / 2, 120, { align: 'center' });
-            }
-            this.addPage();
-        }
-
-        this.addSectionTitle('Exported Articles', {});
-        articles.forEach((article, index) => {
-            this.addArticle(article, index);
-            const insights = findRelatedInsights(article.pmid);
-            if (this.settings.includeInsights && insights.length > 0) {
-                this.checkPageBreak(10);
-                this.addKeyValue('Related Insights:', `${insights.length} insight(s) linked to this article.`);
-            }
-            this.currentY += 10;
-            if (index < articles.length - 1) {
-                this.checkPageBreak(10);
-                this.doc.setDrawColor(PDF_CONSTANTS.COLORS.LINE).line(PDF_CONSTANTS.MARGIN, this.currentY, this.pageWidth - PDF_CONSTANTS.MARGIN, this.currentY);
-                this.currentY += 10;
-            }
-        });
-        this.save(`knowledge_base_export_${this.documentTitle.substring(0, 20).replace(/\s/g, '_')}.pdf`);
-    }
+      }
+    });
+    this.save(
+      `knowledge_base_export_${this.documentTitle.substring(0, 20).replace(/\s/g, '_')}.pdf`,
+    );
+  }
 }
 
-export const exportToPdf = (report: ResearchReport, input: ResearchInput, settings: Settings['export']['pdf']): void => {
-    const exporter = new PdfExporter(input.researchTopic, settings);
-    exporter.exportResearchReport(report, input);
+export const exportToPdf = (
+  report: ResearchReport,
+  input: ResearchInput,
+  settings: Settings['export']['pdf'],
+): void => {
+  const exporter = new PdfExporter(input.researchTopic, settings);
+  exporter.exportResearchReport(report, input);
 };
 
 export const exportKnowledgeBaseToPdf = (
-    articlesToExport: AggregatedArticle[], 
-    title: string,
-    findRelatedInsights: (pmid: string) => { question: string, answer: string, supportingArticles: string[] }[],
-    settings: Settings['export']['pdf']
+  articlesToExport: AggregatedArticle[],
+  title: string,
+  findRelatedInsights: (
+    pmid: string,
+  ) => { question: string; answer: string; supportingArticles: string[] }[],
+  settings: Settings['export']['pdf'],
 ): void => {
-    const exporter = new PdfExporter(title, settings);
-    exporter.exportKnowledgeBase(articlesToExport, findRelatedInsights);
+  const exporter = new PdfExporter(title, settings);
+  exporter.exportKnowledgeBase(articlesToExport, findRelatedInsights);
 };
 
-export const exportToCsv = (articlesToExport: AggregatedArticle[], topic: string, settings: Settings['export']['csv']): void => {
-    const escapeCsvField = (field: any): string => {
-        if (field === null || field === undefined) return '';
-        let str = String(field);
-        if (str.includes(settings.delimiter) || str.includes('"') || str.includes('\n')) str = `"${str.replace(/"/g, '""')}"`;
-        return str;
+export const exportToCsv = (
+  articlesToExport: AggregatedArticle[],
+  topic: string,
+  settings: Settings['export']['csv'],
+): void => {
+  const escapeCsvField = (field: any): string => {
+    if (field === null || field === undefined) return '';
+    let str = sanitizeCsvFormulaInjection(String(field));
+    if (str.includes(settings.delimiter) || str.includes('"') || str.includes('\n'))
+      str = `"${str.replace(/"/g, '""')}"`;
+    return str;
+  };
+
+  const headers = settings.columns;
+  const rows = articlesToExport.map((article) => {
+    const articleUrl = `https://pubmed.ncbi.nlm.nih.gov/${article.pmid}/`;
+    const pmcidUrl = article.pmcId
+      ? `https://www.ncbi.nlm.nih.gov/pmc/articles/${article.pmcId}/`
+      : '';
+
+    const rowData: Record<(typeof CSV_EXPORT_COLUMNS)[number], any> = {
+      pmid: article.pmid,
+      pmcId: article.pmcId ?? '',
+      title: article.title,
+      authors: article.authors,
+      journal: article.journal,
+      pubYear: article.pubYear,
+      summary: article.summary,
+      aiSummary: article.aiSummary ?? '',
+      relevanceScore: article.relevanceScore,
+      relevanceExplanation: article.relevanceExplanation,
+      keywords: (article.keywords || []).join('; '),
+      customTags: article.customTags?.join('; ') || '',
+      sourceTitle: article.sourceTitle || topic,
+      isOpenAccess: article.isOpenAccess,
+      articleType: article.articleType || 'N/A',
+      URL: articleUrl,
+      PMCID_URL: pmcidUrl,
     };
 
-    const headers = settings.columns;
-    const rows = articlesToExport.map(article => {
-        const articleUrl = `https://pubmed.ncbi.nlm.nih.gov/${article.pmid}/`;
-        const pmcidUrl = article.pmcId ? `https://www.ncbi.nlm.nih.gov/pmc/articles/${article.pmcId}/` : '';
-        
-        const rowData: Record<(typeof CSV_EXPORT_COLUMNS)[number], any> = {
-            pmid: article.pmid,
-            pmcId: article.pmcId ?? '',
-            title: article.title,
-            authors: article.authors,
-            journal: article.journal,
-            pubYear: article.pubYear,
-            summary: article.summary,
-            aiSummary: article.aiSummary ?? '',
-            relevanceScore: article.relevanceScore,
-            relevanceExplanation: article.relevanceExplanation,
-            keywords: (article.keywords || []).join('; '),
-            customTags: article.customTags?.join('; ') || '',
-            sourceTitle: article.sourceTitle || topic,
-            isOpenAccess: article.isOpenAccess,
-            articleType: article.articleType || 'N/A',
-            URL: articleUrl,
-            PMCID_URL: pmcidUrl
-        };
+    return headers.map((header) => escapeCsvField(rowData[header])).join(settings.delimiter);
+  });
 
-        return headers.map(header => escapeCsvField(rowData[header])).join(settings.delimiter);
-    });
-
-    const csvContent = [headers.join(settings.delimiter), ...rows].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `report_export_${topic.substring(0, 20).replace(/\s/g, '_')}.csv`;
-    link.click();
-    URL.revokeObjectURL(link.href);
+  const csvContent = [headers.join(settings.delimiter), ...rows].join('\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `report_export_${topic.substring(0, 20).replace(/\s/g, '_')}.csv`;
+  link.click();
+  URL.revokeObjectURL(link.href);
 };
 
-export const exportInsightsToCsv = (insights: ResearchReport['aiGeneratedInsights'], topic: string): void => {
-    const escapeCsvField = (field: any): string => {
-        if (field === null || field === undefined) return '';
-        let str = String(field);
-        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-            str = `"${str.replace(/"/g, '""')}"`;
-        }
-        return str;
-    };
+export const exportInsightsToCsv = (
+  insights: ResearchReport['aiGeneratedInsights'],
+  topic: string,
+): void => {
+  const escapeCsvField = (field: any): string => {
+    if (field === null || field === undefined) return '';
+    let str = sanitizeCsvFormulaInjection(String(field));
+    if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+      str = `"${str.replace(/"/g, '""')}"`;
+    }
+    return str;
+  };
 
-    const headers = ['ReportTopic', 'Question', 'Answer', 'Supporting PMIDs'];
-    const rows = insights.map(insight => [
-        topic,
-        insight.question,
-        insight.answer,
-        (insight.supportingArticles || []).join('; ')
-    ].map(escapeCsvField).join(','));
+  const headers = ['ReportTopic', 'Question', 'Answer', 'Supporting PMIDs'];
+  const rows = insights.map((insight) =>
+    [topic, insight.question, insight.answer, (insight.supportingArticles || []).join('; ')]
+      .map(escapeCsvField)
+      .join(','),
+  );
 
-    const csvContent = [headers.join(','), ...rows].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `ai_insights_${topic.substring(0, 20).replace(/\s/g, '_')}.csv`;
-    link.click();
-    URL.revokeObjectURL(link.href);
+  const csvContent = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `ai_insights_${topic.substring(0, 20).replace(/\s/g, '_')}.csv`;
+  link.click();
+  URL.revokeObjectURL(link.href);
 };
-
 
 // --- JSON Export with Metadata ---
 
 const createJsonExport = (data: any, type: string, count: number) => {
-    const exportObject = {
-        meta: {
-            appName: APP_NAME,
-            exportDate: new Date().toISOString(),
-            type: type,
-            count: count,
-        },
-        data: data
-    };
-    const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(exportObject, null, 2))}`;
-    const link = document.createElement("a");
-    link.href = jsonString;
-    const date = new Date().toISOString().split('T')[0];
-    link.download = `ai_research_orchestration_author_${type}_${date}.json`;
-    link.click();
+  const exportObject = {
+    meta: {
+      appName: APP_NAME,
+      exportDate: new Date().toISOString(),
+      type: type,
+      count: count,
+    },
+    data: data,
+  };
+  const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(exportObject, null, 2))}`;
+  const link = document.createElement('a');
+  link.href = jsonString;
+  const date = new Date().toISOString().split('T')[0];
+  link.download = `ai_research_orchestration_author_${type}_${date}.json`;
+  link.click();
 };
 
 export const exportHistoryToJson = (entries: KnowledgeBaseEntry[]): void => {
-    createJsonExport(entries, 'history', entries.length);
+  createJsonExport(entries, 'history', entries.length);
 };
 
 export const exportKnowledgeBaseToJson = (articles: AggregatedArticle[]): void => {
-    createJsonExport(articles, 'knowledge-base-articles', articles.length);
+  createJsonExport(articles, 'knowledge-base-articles', articles.length);
 };
 
-export const exportCitations = (articles: AggregatedArticle[], settings: Settings['export']['citation'], type: 'bib' | 'ris'): void => {
-    let content = '';
+export const exportCitations = (
+  articles: AggregatedArticle[],
+  settings: Settings['export']['citation'],
+  type: 'bib' | 'ris',
+): void => {
+  let content = '';
 
-    const cleanForBibtex = (text: string) => {
-        if (!text) return '{}';
-        // More comprehensive BibTeX escaping
-        let s = text.replace(/\\/g, '\\textbackslash{}');
-        s = s.replace(/([&%$#_{}])/g, '\\$1');
-        s = s.replace(/~/g, '\\textasciitilde{}');
-        s = s.replace(/\^/g, '\\textasciicircum{}');
-        return `{${s}}`;
-    };
+  const cleanForBibtex = (text: string) => {
+    if (!text) return '{}';
+    // More comprehensive BibTeX escaping
+    let s = text.replace(/\\/g, '\\textbackslash{}');
+    s = s.replace(/([&%$#_{}])/g, '\\$1');
+    s = s.replace(/~/g, '\\textasciitilde{}');
+    s = s.replace(/\^/g, '\\textasciicircum{}');
+    return `{${s}}`;
+  };
 
-    const cleanForRis = (text: string) => {
-        if (!text) return '';
-        // RIS format is line-based. Newlines in content are a problem.
-        return cleanText(text).replace(/(\r\n|\n|\r)/gm, " ").replace(/\s\s+/g, ' ').trim();
-    }
+  const cleanForRis = (text: string) => {
+    if (!text) return '';
+    // RIS format is line-based. Newlines in content are a problem.
+    return cleanText(text)
+      .replace(/(\r\n|\n|\r)/gm, ' ')
+      .replace(/\s\s+/g, ' ')
+      .trim();
+  };
 
+  if (type === 'bib') {
+    content = articles
+      .map((a) => {
+        let entry = `@article{PMID:${a.pmid},\n  author  = {${a.authors.split(', ').join(' and ')}},\n  title   = ${cleanForBibtex(a.title)},\n  journal = ${cleanForBibtex(a.journal)},\n  year    = {${a.pubYear}},\n  pmid    = {${a.pmid}},\n`;
+        if (settings.includeAbstract) entry += `  abstract = ${cleanForBibtex(a.summary)},\n`;
+        if (settings.includeKeywords && a.keywords && a.keywords.length > 0)
+          entry += `  keywords = {${a.keywords.join(', ')}},\n`;
 
-    if (type === 'bib') {
-        content = articles.map(a => {
-            let entry = `@article{PMID:${a.pmid},\n  author  = {${a.authors.split(', ').join(' and ')}},\n  title   = ${cleanForBibtex(a.title)},\n  journal = ${cleanForBibtex(a.journal)},\n  year    = {${a.pubYear}},\n  pmid    = {${a.pmid}},\n`;
-            if (settings.includeAbstract) entry += `  abstract = ${cleanForBibtex(a.summary)},\n`;
-            if (settings.includeKeywords && a.keywords && a.keywords.length > 0) entry += `  keywords = {${a.keywords.join(', ')}},\n`;
-            
-            const notes = [];
-            if (settings.includeTags && a.customTags && a.customTags.length > 0) notes.push(`Custom Tags: ${a.customTags.join(', ')}`);
-            if (settings.includePmcid && a.pmcId) notes.push(`PMCID: ${a.pmcId}`);
-            if (notes.length > 0) entry += `  note = ${cleanForBibtex(notes.join('; '))}\n`;
-            
-            entry += `}`;
-            return entry;
-        }).join('\n\n');
-    } else { // RIS
-        content = articles.map(a => {
-            let entry = `TY  - JOUR\n`;
-            entry += a.authors.split(', ').map(author => `AU  - ${author}`).join('\n') + '\n';
-            entry += `TI  - ${cleanForRis(a.title)}\nJO  - ${cleanForRis(a.journal)}\nYR  - ${a.pubYear}\n`;
-            if (settings.includeAbstract) entry += `AB  - ${cleanForRis(a.summary)}\n`;
-            if (settings.includeKeywords && a.keywords && a.keywords.length > 0) entry += `${a.keywords.map(kw => `KW  - ${cleanForRis(kw)}`).join('\n')}\n`;
-            if (settings.includeTags && a.customTags && a.customTags.length > 0) entry += `${a.customTags.map(tag => `KW  - ${cleanForRis(tag)}`).join('\n')}\n`;
-            entry += `ID  - ${a.pmid}\n`;
-            if (settings.includePmcid && a.pmcId) entry += `N1  - PMCID: ${a.pmcId}\n`; // N1 is often used for notes
-            entry += 'ER  - \n';
-            return entry;
-        }).join('\n');
-    }
-    const blob = new Blob([content], { type: 'application/octet-stream;charset=utf-8' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `citations.${type}`;
-    link.click();
-    URL.revokeObjectURL(link.href);
+        const notes = [];
+        if (settings.includeTags && a.customTags && a.customTags.length > 0)
+          notes.push(`Custom Tags: ${a.customTags.join(', ')}`);
+        if (settings.includePmcid && a.pmcId) notes.push(`PMCID: ${a.pmcId}`);
+        if (notes.length > 0) entry += `  note = ${cleanForBibtex(notes.join('; '))}\n`;
+
+        entry += `}`;
+        return entry;
+      })
+      .join('\n\n');
+  } else {
+    // RIS
+    content = articles
+      .map((a) => {
+        let entry = `TY  - JOUR\n`;
+        entry +=
+          a.authors
+            .split(', ')
+            .map((author) => `AU  - ${author}`)
+            .join('\n') + '\n';
+        entry += `TI  - ${cleanForRis(a.title)}\nJO  - ${cleanForRis(a.journal)}\nYR  - ${a.pubYear}\n`;
+        if (settings.includeAbstract) entry += `AB  - ${cleanForRis(a.summary)}\n`;
+        if (settings.includeKeywords && a.keywords && a.keywords.length > 0)
+          entry += `${a.keywords.map((kw) => `KW  - ${cleanForRis(kw)}`).join('\n')}\n`;
+        if (settings.includeTags && a.customTags && a.customTags.length > 0)
+          entry += `${a.customTags.map((tag) => `KW  - ${cleanForRis(tag)}`).join('\n')}\n`;
+        entry += `ID  - ${a.pmid}\n`;
+        if (settings.includePmcid && a.pmcId) entry += `N1  - PMCID: ${a.pmcId}\n`; // N1 is often used for notes
+        entry += 'ER  - \n';
+        return entry;
+      })
+      .join('\n');
+  }
+  const blob = new Blob([content], { type: 'application/octet-stream;charset=utf-8' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `citations.${type}`;
+  link.click();
+  URL.revokeObjectURL(link.href);
 };

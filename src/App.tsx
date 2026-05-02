@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect, memo, lazy, Suspense, useRef } from 'react';
 import { useAppDispatch } from './store/hooks';
 import { loadCollections } from './store/slices/collectionsSlice';
@@ -10,7 +9,15 @@ import {
   setDebuggerVisible,
 } from './store/slices/agentDebugSlice';
 import { Header } from './components/Header';
-import { ResearchInput, ResearchReport, KnowledgeBaseEntry, ChatMessage, AuthorProfile, KnowledgeBaseFilter, AggregatedArticle } from './types';
+import {
+  ResearchInput,
+  ResearchReport,
+  KnowledgeBaseEntry,
+  ChatMessage,
+  AuthorProfile,
+  KnowledgeBaseFilter,
+  AggregatedArticle,
+} from './types';
 import type { AgentName } from './types';
 import { SettingsProvider, useSettings } from './contexts/SettingsContext';
 import { PresetProvider, usePresets } from './contexts/PresetContext';
@@ -19,8 +26,8 @@ import { ConfirmationModal } from './components/ConfirmationModal';
 import { useResearchAssistant } from './hooks/useResearchAssistant';
 import { generateResearchReportStream } from './services/geminiService';
 import { KnowledgeBaseProvider, useKnowledgeBase } from './contexts/KnowledgeBaseContext';
-import { UIProvider, useUI } from './contexts/UIContext';
-import type { View, BeforeInstallPromptEvent } from './contexts/UIContext';
+import { useUI } from './hooks/useUI';
+import type { View, BeforeInstallPromptEvent } from './types/ui';
 import { exportKnowledgeBaseToPdf, exportToCsv, exportCitations } from './services/exportService';
 import { useChat } from './hooks/useChat';
 import { useHaptic } from './hooks/useHaptic';
@@ -51,23 +58,23 @@ function getAgentForPhase(phase: string): AgentName {
   const p = phase.toLowerCase();
   if (p.includes('generat') || p.includes('quer')) return 'QueryGenerator';
   if (p.includes('arxiv') || p.includes('preprint')) return 'ArxivFetcher';
-  if (p.includes('pubmed') || p.includes('search') || p.includes('fetch') || p.includes('detail')) return 'PubMedFetcher';
+  if (p.includes('pubmed') || p.includes('search') || p.includes('fetch') || p.includes('detail'))
+    return 'PubMedFetcher';
   if (p.includes('rank') || p.includes('analys')) return 'Ranker';
   return 'Synthesizer'; // Synthesizing, Streaming, Finalizing
 }
 
 const FullScreenSpinner: React.FC = () => (
-    <div className="flex h-screen items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-24 w-24 border-t-4 border-b-4 border-brand-accent"></div>
-    </div>
+  <div className="flex h-screen items-center justify-center bg-background">
+    <div className="animate-spin rounded-full h-24 w-24 border-t-4 border-b-4 border-brand-accent"></div>
+  </div>
 );
 
 const ContentSpinner: React.FC = () => (
-    <div className="flex h-full min-h-[60vh] items-center justify-center">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-brand-accent"></div>
-    </div>
+  <div className="flex h-full min-h-[60vh] items-center justify-center">
+    <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-brand-accent"></div>
+  </div>
 );
-
 
 const AppLayout: React.FC = () => {
   const { isLoading } = useKnowledgeBase();
@@ -79,39 +86,58 @@ const AppLayout: React.FC = () => {
   const [researchInput, setResearchInput] = useState<ResearchInput | null>(null);
   const [localResearchInput, setLocalResearchInput] = useState<ResearchInput | null>(null); // For editable title
   const [report, setReport] = useState<ResearchReport | null>(null);
-  const [reportStatus, setReportStatus] = useState<'idle' | 'generating' | 'streaming' | 'done' | 'error'>('idle');
+  const [reportStatus, setReportStatus] = useState<
+    'idle' | 'generating' | 'streaming' | 'done' | 'error'
+  >('idle');
   const [error, setError] = useState<string | null>(null);
   const [currentPhase, setCurrentPhase] = useState<string>('');
   const [selectedAuthorProfile, setSelectedAuthorProfile] = useState<AuthorProfile | null>(null);
-  
+
   // Ref to track the current generation session ID to prevent race conditions
   const generationIdRef = useRef<number>(0);
+  const streamAbortRef = useRef<AbortController | null>(null);
 
   // App-wide State from contexts
   const haptic = useHaptic();
-  const { currentView, notification, setNotification, isSettingsDirty, setIsSettingsDirty, pendingNavigation, setPendingNavigation, setCurrentView, isCommandPaletteOpen, setIsCommandPaletteOpen, setInstallPromptEvent, setIsPwaInstalled } = useUI();
-  const { knowledgeBase, saveReport, clearKnowledgeBase, uniqueArticles, updateTags } = useKnowledgeBase();
+  const {
+    currentView,
+    notification,
+    setNotification,
+    isSettingsDirty,
+    setIsSettingsDirty,
+    pendingNavigation,
+    setPendingNavigation,
+    setCurrentView,
+    isCommandPaletteOpen,
+    setIsCommandPaletteOpen,
+    setInstallPromptEvent,
+    setIsPwaInstalled,
+  } = useUI();
+  const { knowledgeBase, saveReport, clearKnowledgeBase, uniqueArticles, updateTags } =
+    useKnowledgeBase();
 
   const [isCurrentReportSaved, setIsCurrentReportSaved] = useState<boolean>(false);
   const [selectedKbPmids, setSelectedKbPmids] = useState<string[]>([]);
-  const [showExportModal, setShowExportModal] = useState<'pdf' | 'csv' | 'bib' | 'ris' | null>(null);
+  const [showExportModal, setShowExportModal] = useState<'pdf' | 'csv' | 'bib' | 'ris' | null>(
+    null,
+  );
   const [isQuickAddModalOpen, setIsQuickAddModalOpen] = useState(false);
-  
+
   // Chat Hook
   const { chatHistory, isChatting, sendMessage } = useChat(report, reportStatus, settings.ai);
 
   // Research Assistant Hook
   const {
-      isLoading: isResearching,
-      phase: researchPhase,
-      error: researchError,
-      analysis: researchAnalysis,
-      similar,
-      online,
-      startResearch,
-      clearResearch,
+    isLoading: isResearching,
+    phase: researchPhase,
+    error: researchError,
+    analysis: researchAnalysis,
+    similar,
+    online,
+    startResearch,
+    clearResearch,
   } = useResearchAssistant(settings.ai, setCurrentView);
-  
+
   const [settingsResetToken, setSettingsResetToken] = useState(0);
   const [initialHelpTab, setInitialHelpTab] = useState<string | null>(null);
   const [prefilledTopic, setPrefilledTopic] = useState<string | null>(null);
@@ -129,234 +155,292 @@ const AppLayout: React.FC = () => {
 
   // Load collections from DB on mount
   const dispatch = useAppDispatch();
-  useEffect(() => { dispatch(loadCollections()); }, [dispatch]);
+  useEffect(() => {
+    dispatch(loadCollections());
+  }, [dispatch]);
 
   useEffect(() => {
-      document.documentElement.className = settings.theme;
-      document.documentElement.classList.toggle('no-animations', !settings.performance.enableAnimations);
-      
-      const fontMap: Record<string, string> = { 'Inter': 'Inter, sans-serif', 'Lato': 'Lato, sans-serif', 'Roboto': 'Roboto, sans-serif', 'Open Sans': '"Open Sans", sans-serif' };
-      document.body.style.fontFamily = fontMap[settings.appearance.fontFamily] || fontMap['Inter'];
+    document.documentElement.className = settings.theme;
+    document.documentElement.classList.toggle(
+      'no-animations',
+      !settings.performance.enableAnimations,
+    );
 
-      if (settings.appearance.customColors.enabled) {
-          document.documentElement.style.setProperty('--color-brand-primary', settings.appearance.customColors.primary);
-          document.documentElement.style.setProperty('--color-brand-secondary', settings.appearance.customColors.secondary);
-          document.documentElement.style.setProperty('--color-brand-accent', settings.appearance.customColors.accent);
-      } else {
-          document.documentElement.style.removeProperty('--color-brand-primary');
-          document.documentElement.style.removeProperty('--color-brand-secondary');
-          document.documentElement.style.removeProperty('--color-brand-accent');
+    const fontMap: Record<string, string> = {
+      Inter: 'Inter, sans-serif',
+      Lato: 'Lato, sans-serif',
+      Roboto: 'Roboto, sans-serif',
+      'Open Sans': '"Open Sans", sans-serif',
+    };
+    document.body.style.fontFamily = fontMap[settings.appearance.fontFamily] || fontMap['Inter'];
+
+    if (settings.appearance.customColors.enabled) {
+      document.documentElement.style.setProperty(
+        '--color-brand-primary',
+        settings.appearance.customColors.primary,
+      );
+      document.documentElement.style.setProperty(
+        '--color-brand-secondary',
+        settings.appearance.customColors.secondary,
+      );
+      document.documentElement.style.setProperty(
+        '--color-brand-accent',
+        settings.appearance.customColors.accent,
+      );
+    } else {
+      document.documentElement.style.removeProperty('--color-brand-primary');
+      document.documentElement.style.removeProperty('--color-brand-secondary');
+      document.documentElement.style.removeProperty('--color-brand-accent');
+    }
+  }, [
+    settings.theme,
+    settings.performance.enableAnimations,
+    settings.appearance.fontFamily,
+    settings.appearance.customColors,
+  ]);
+
+  useEffect(() => {
+    // Accessibility Best Practice: Update document title on view change
+    const viewTitles: Record<View, string> = {
+      home: t('nav.home'),
+      orchestrator: t('nav.orchestrator'),
+      research: t('nav.research'),
+      authors: t('nav.authors'),
+      journals: t('nav.journals'),
+      knowledgeBase: t('nav.knowledgeBase'),
+      dashboard: t('nav.dashboard'),
+      history: t('nav.history'),
+      settings: t('nav.settings'),
+      help: t('nav.help'),
+      collections: t('nav.collections') || 'Collections',
+    };
+    document.title = `${viewTitles[currentView] || t('nav.research')} | ${t('app.name')}`;
+  }, [currentView, t]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsCommandPaletteOpen((prev) => !prev);
       }
-  }, [settings.theme, settings.performance.enableAnimations, settings.appearance.fontFamily, settings.appearance.customColors]);
-  
-    useEffect(() => {
-        // Accessibility Best Practice: Update document title on view change
-        const viewTitles: Record<View, string> = {
-            home: t('nav.home'),
-            orchestrator: t('nav.orchestrator'),
-            research: t('nav.research'),
-            authors: t('nav.authors'),
-            journals: t('nav.journals'),
-            knowledgeBase: t('nav.knowledgeBase'),
-            dashboard: t('nav.dashboard'),
-            history: t('nav.history'),
-            settings: t('nav.settings'),
-            help: t('nav.help'),
-            collections: t('nav.collections') || 'Collections',
-        };
-        document.title = `${viewTitles[currentView] || t('nav.research')} | ${t('app.name')}`;
-    }, [currentView, t]);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [setIsCommandPaletteOpen]);
 
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setInstallPromptEvent(e as BeforeInstallPromptEvent);
+      setIsPwaInstalled(false);
+    };
 
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-                e.preventDefault();
-                setIsCommandPaletteOpen(prev => !prev);
-            }
-        };
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [setIsCommandPaletteOpen]);
-    
-    useEffect(() => {
-        const handleBeforeInstallPrompt = (e: Event) => {
-            e.preventDefault();
-            setInstallPromptEvent(e as BeforeInstallPromptEvent);
-            setIsPwaInstalled(false);
-        };
+    const handleAppInstalled = () => {
+      setInstallPromptEvent(null);
+      setIsPwaInstalled(true);
+    };
 
-        const handleAppInstalled = () => {
-            setInstallPromptEvent(null);
-            setIsPwaInstalled(true);
-        };
-        
-        if (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone) {
-            setIsPwaInstalled(true);
-        }
+    if (
+      window.matchMedia('(display-mode: standalone)').matches ||
+      (window.navigator as any).standalone
+    ) {
+      setIsPwaInstalled(true);
+    }
 
-        window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-        window.addEventListener('appinstalled', handleAppInstalled);
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
 
-        return () => {
-            window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-            window.removeEventListener('appinstalled', handleAppInstalled);
-        };
-    }, [setInstallPromptEvent, setIsPwaInstalled]);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, [setInstallPromptEvent, setIsPwaInstalled]);
 
-    useEffect(() => {
-        // Clear selection when navigating away from the knowledge base
-        if (currentView !== 'knowledgeBase' && selectedKbPmids.length > 0) {
-            setSelectedKbPmids([]);
-        }
-    }, [currentView, selectedKbPmids.length]);
+  useEffect(() => {
+    // Clear selection when navigating away from the knowledge base
+    if (currentView !== 'knowledgeBase' && selectedKbPmids.length > 0) {
+      setSelectedKbPmids([]);
+    }
+  }, [currentView, selectedKbPmids.length]);
 
-  const handleFormSubmit = useCallback(async (data: ResearchInput) => {
-    // Increment generation ID to invalidate any previous streams
-    generationIdRef.current += 1;
-    const currentGenId = generationIdRef.current;
+  const handleFormSubmit = useCallback(
+    async (data: ResearchInput) => {
+      // Increment generation ID to invalidate any previous streams
+      generationIdRef.current += 1;
+      const currentGenId = generationIdRef.current;
 
-    setReportStatus('generating');
-    setError(null);
-    setReport(null);
-    setResearchInput(data);
-    setLocalResearchInput(data); // Set local copy for editing
-    setCurrentView('orchestrator');
-    setIsCurrentReportSaved(false);
+      setReportStatus('generating');
+      setError(null);
+      setReport(null);
+      setResearchInput(data);
+      setLocalResearchInput(data); // Set local copy for editing
+      setCurrentView('orchestrator');
+      setIsCurrentReportSaved(false);
 
-    // ── Start live trace ──────────────────────────────────────────────────────
-    const sessionId = `sess_${currentGenId}_${Date.now()}`;
-    dispatch(startNewTrace({ sessionId, topic: data.researchTopic }));
-    dispatch(setDebuggerVisible(true));
-    let prevAgent: AgentName | null = null;
+      // ── Start live trace ──────────────────────────────────────────────────────
+      const sessionId = `sess_${currentGenId}_${Date.now()}`;
+      dispatch(startNewTrace({ sessionId, topic: data.researchTopic }));
+      dispatch(setDebuggerVisible(true));
+      let prevAgent: AgentName | null = null;
 
-    try {
-        const stream = generateResearchReportStream(data, settings.ai);
+      streamAbortRef.current?.abort();
+      streamAbortRef.current = new AbortController();
+      const streamSignal = streamAbortRef.current.signal;
+
+      try {
+        const stream = generateResearchReportStream(data, settings.ai, streamSignal);
         let finalSynthesis = '';
         let isFirstChunk = true;
         let finalReport: ResearchReport | null = null;
-        
+
         for await (const { report: partialReport, synthesisChunk, phase } of stream) {
-            // Check if this stream is still the active one
-            if (generationIdRef.current !== currentGenId) {
-                return; // Generation aborted: new request started
-            }
+          // Check if this stream is still the active one
+          if (generationIdRef.current !== currentGenId) {
+            streamAbortRef.current?.abort();
+            return; // Generation aborted: new request started
+          }
 
-            setCurrentPhase(phase);
+          setCurrentPhase(phase);
 
-            // ── Trace: agent transition detection ────────────────────────────
-            const currentAgent = getAgentForPhase(phase);
-            if (currentAgent !== prevAgent) {
-                if (prevAgent !== null) {
-                    dispatch(setAgentStatus({ agentName: prevAgent, status: 'done' }));
-                }
-                dispatch(addTraceEvent({ agentName: currentAgent, status: 'running', message: phase, startedAt: Date.now() }));
-                prevAgent = currentAgent;
-            } else {
-                // Same agent, update message
-                dispatch(setAgentStatus({ agentName: currentAgent, status: 'running', message: phase }));
+          // ── Trace: agent transition detection ────────────────────────────
+          const currentAgent = getAgentForPhase(phase);
+          if (currentAgent !== prevAgent) {
+            if (prevAgent !== null) {
+              dispatch(setAgentStatus({ agentName: prevAgent, status: 'done' }));
             }
+            dispatch(
+              addTraceEvent({
+                agentName: currentAgent,
+                status: 'running',
+                message: phase,
+                startedAt: Date.now(),
+              }),
+            );
+            prevAgent = currentAgent;
+          } else {
+            // Same agent, update message
+            dispatch(
+              setAgentStatus({ agentName: currentAgent, status: 'running', message: phase }),
+            );
+          }
 
-            if (isFirstChunk && partialReport) {
-                finalReport = partialReport;
-                setReport(finalReport);
-                setReportStatus('streaming');
-                isFirstChunk = false;
-            }
+          if (isFirstChunk && partialReport) {
+            finalReport = partialReport;
+            setReport(finalReport);
+            setReportStatus('streaming');
+            isFirstChunk = false;
+          }
 
-            if (synthesisChunk) {
-                finalSynthesis += synthesisChunk;
-                setReport(prev => prev ? { ...prev, synthesis: finalSynthesis } : null);
-            }
+          if (synthesisChunk) {
+            finalSynthesis += synthesisChunk;
+            setReport((prev) => (prev ? { ...prev, synthesis: finalSynthesis } : null));
+          }
         }
-        
+
         // Final check before completing
         if (generationIdRef.current !== currentGenId) return;
 
         // ── Complete trace ────────────────────────────────────────────────────
         if (prevAgent !== null) {
-            dispatch(setAgentStatus({ agentName: prevAgent, status: 'done' }));
+          dispatch(setAgentStatus({ agentName: prevAgent, status: 'done' }));
         }
         dispatch(completeTrace({ status: 'done' }));
 
-        const completeReport = { ...(finalReport!), synthesis: finalSynthesis };
+        const completeReport = { ...finalReport!, synthesis: finalSynthesis };
         setReport(completeReport);
         setReportStatus('done');
-        
+
         if (settings.defaults.autoSaveReports) {
-            await saveReport(data, completeReport);
-            setIsCurrentReportSaved(true);
+          await saveReport(data, completeReport);
+          setIsCurrentReportSaved(true);
         }
-    } catch (err) {
+      } catch (err) {
+        if (err instanceof DOMException && err.name === 'AbortError') {
+          return;
+        }
         if (generationIdRef.current === currentGenId) {
-            if (prevAgent !== null) {
-                dispatch(setAgentStatus({ agentName: prevAgent, status: 'error' }));
-            }
-            dispatch(completeTrace({ status: 'error' }));
-            setError(err instanceof Error ? err.message : 'An unknown error occurred during report generation.');
-            setReportStatus('error');
+          if (prevAgent !== null) {
+            dispatch(setAgentStatus({ agentName: prevAgent, status: 'error' }));
+          }
+          dispatch(completeTrace({ status: 'error' }));
+          setError(
+            err instanceof Error
+              ? err.message
+              : 'An unknown error occurred during report generation.',
+          );
+          setReportStatus('error');
         }
-    }
-  }, [dispatch, settings.ai, settings.defaults.autoSaveReports, setCurrentView, saveReport]);
+      }
+    },
+    [dispatch, settings.ai, settings.defaults.autoSaveReports, setCurrentView, saveReport],
+  );
 
   const handleSaveReport = useCallback(async () => {
-      if (report && localResearchInput) {
-        await saveReport(localResearchInput, report);
-        setIsCurrentReportSaved(true);
-        haptic('success');
-      }
+    if (report && localResearchInput) {
+      await saveReport(localResearchInput, report);
+      setIsCurrentReportSaved(true);
+      haptic('success');
+    }
   }, [report, localResearchInput, saveReport, haptic]);
-  
+
   const handleNewSearch = useCallback(() => {
-      generationIdRef.current += 1; // Invalidate any ongoing generation
-      setReport(null);
-      setResearchInput(null);
-      setLocalResearchInput(null);
-      setReportStatus('idle');
-      setError(null);
-      setIsCurrentReportSaved(false);
-      setCurrentView('orchestrator');
+    generationIdRef.current += 1; // Invalidate any ongoing generation
+    streamAbortRef.current?.abort();
+    setReport(null);
+    setResearchInput(null);
+    setLocalResearchInput(null);
+    setReportStatus('idle');
+    setError(null);
+    setIsCurrentReportSaved(false);
+    setCurrentView('orchestrator');
   }, [setCurrentView]);
 
   const handleClearKnowledgeBase = useCallback(async () => {
-      await clearKnowledgeBase();
-      setSettingsResetToken(Date.now());
+    await clearKnowledgeBase();
+    setSettingsResetToken(Date.now());
   }, [clearKnowledgeBase]);
 
-  const handleViewChange = useCallback((view: View) => {
+  const handleViewChange = useCallback(
+    (view: View) => {
       if (isSettingsDirty) {
-          setPendingNavigation(view);
+        setPendingNavigation(view);
       } else {
-          setCurrentView(view);
+        setCurrentView(view);
       }
-  }, [isSettingsDirty, setCurrentView, setPendingNavigation]);
+    },
+    [isSettingsDirty, setCurrentView, setPendingNavigation],
+  );
 
   const handleConfirmNavigation = useCallback(() => {
-      if (pendingNavigation) {
-          setIsSettingsDirty(false); // Discard changes
-          setCurrentView(pendingNavigation);
-          setPendingNavigation(null);
-      }
+    if (pendingNavigation) {
+      setIsSettingsDirty(false); // Discard changes
+      setCurrentView(pendingNavigation);
+      setPendingNavigation(null);
+    }
   }, [pendingNavigation, setCurrentView, setPendingNavigation, setIsSettingsDirty]);
 
   const handleCompleteOnboarding = useCallback(() => {
-    updateSettings(s => ({ ...s, hasCompletedOnboarding: true }));
+    updateSettings((s) => ({ ...s, hasCompletedOnboarding: true }));
   }, [updateSettings]);
-  
+
   const handleFilterChange = useCallback((newFilter: Partial<KnowledgeBaseFilter>) => {
-      setKbFilter(prev => ({...prev, ...newFilter}));
-  }, []);
-  
-  const handlePrefillConsumed = useCallback(() => {
-      setPrefilledTopic(null);
+    setKbFilter((prev) => ({ ...prev, ...newFilter }));
   }, []);
 
-  const handleStartNewReviewFromTopic = useCallback((topic: string) => {
+  const handlePrefillConsumed = useCallback(() => {
+    setPrefilledTopic(null);
+  }, []);
+
+  const handleStartNewReviewFromTopic = useCallback(
+    (topic: string) => {
       setPrefilledTopic(topic);
       setCurrentView('orchestrator');
-  }, [setCurrentView]);
+    },
+    [setCurrentView],
+  );
 
-  const handleViewEntry = useCallback((entry: KnowledgeBaseEntry) => {
+  const handleViewEntry = useCallback(
+    (entry: KnowledgeBaseEntry) => {
       if (entry.sourceType === 'research') {
         // Stop any ongoing generation when viewing an old report
         generationIdRef.current += 1;
@@ -368,156 +452,256 @@ const AppLayout: React.FC = () => {
         setIsCurrentReportSaved(true);
         setCurrentView('orchestrator');
       } else if (entry.sourceType === 'author') {
-          setSelectedAuthorProfile(entry.profile);
-          setCurrentView('authors');
+        setSelectedAuthorProfile(entry.profile);
+        setCurrentView('authors');
       }
-  }, [setCurrentView]);
+    },
+    [setCurrentView],
+  );
 
   const handleAuthorProfileViewed = useCallback(() => {
     setSelectedAuthorProfile(null);
   }, []);
-  
-  const handleTagsUpdate = useCallback(async (pmid: string, newTags: string[]) => {
-    await updateTags(pmid, newTags);
-    // Also update the local report state if it's being viewed
-    setReport(prevReport => {
-        if (!prevReport || !prevReport.rankedArticles.some(a => a.pmid === pmid)) {
-            return prevReport;
+
+  const handleTagsUpdate = useCallback(
+    async (pmid: string, newTags: string[]) => {
+      await updateTags(pmid, newTags);
+      // Also update the local report state if it's being viewed
+      setReport((prevReport) => {
+        if (!prevReport || !prevReport.rankedArticles.some((a) => a.pmid === pmid)) {
+          return prevReport;
         }
         return {
-            ...prevReport,
-            rankedArticles: prevReport.rankedArticles.map(a => 
-                a.pmid === pmid ? { ...a, customTags: newTags } : a
-            )
+          ...prevReport,
+          rankedArticles: prevReport.rankedArticles.map((a) =>
+            a.pmid === pmid ? { ...a, customTags: newTags } : a,
+          ),
         };
-    });
-  }, [updateTags]);
+      });
+    },
+    [updateTags],
+  );
 
   const handleExportSelection = useCallback((format: 'pdf' | 'csv' | 'bib' | 'ris') => {
-      setShowExportModal(format);
+    setShowExportModal(format);
   }, []);
 
   const handleConfirmExport = useCallback(() => {
-      if (!showExportModal) return;
-      
-      const articlesToExport: AggregatedArticle[] = uniqueArticles.filter(a => selectedKbPmids.includes(a.pmid));
-      if(articlesToExport.length === 0) {
-          setNotification({ id: Date.now(), message: 'No articles selected for export.', type: 'error' });
-          return;
-      }
+    if (!showExportModal) return;
 
-      switch (showExportModal) {
-          case 'pdf':
-              exportKnowledgeBaseToPdf(articlesToExport, 'Knowledge Base Selection', (pmid) => knowledgeBase.flatMap(e => e.sourceType === 'research' ? (e.report.aiGeneratedInsights || []) : []).filter(i => (i.supportingArticles || []).includes(pmid)), settings.export.pdf);
-              break;
-          case 'csv':
-              exportToCsv(articlesToExport, 'knowledge_base_selection', settings.export.csv);
-              break;
-          case 'bib':
-          case 'ris':
-              exportCitations(articlesToExport, settings.export.citation, showExportModal);
-              break;
-      }
-      setShowExportModal(null);
-      setNotification({ id: Date.now(), message: `Exported ${articlesToExport.length} articles as ${showExportModal.toUpperCase()}.`, type: 'success' });
+    const articlesToExport: AggregatedArticle[] = uniqueArticles.filter((a) =>
+      selectedKbPmids.includes(a.pmid),
+    );
+    if (articlesToExport.length === 0) {
+      setNotification({
+        id: Date.now(),
+        message: 'No articles selected for export.',
+        type: 'error',
+      });
+      return;
+    }
 
-  }, [showExportModal, selectedKbPmids, uniqueArticles, settings.export, setNotification, knowledgeBase]);
+    switch (showExportModal) {
+      case 'pdf':
+        exportKnowledgeBaseToPdf(
+          articlesToExport,
+          'Knowledge Base Selection',
+          (pmid) =>
+            knowledgeBase
+              .flatMap((e) =>
+                e.sourceType === 'research' ? e.report.aiGeneratedInsights || [] : [],
+              )
+              .filter((i) => (i.supportingArticles || []).includes(pmid)),
+          settings.export.pdf,
+        );
+        break;
+      case 'csv':
+        exportToCsv(articlesToExport, 'knowledge_base_selection', settings.export.csv);
+        break;
+      case 'bib':
+      case 'ris':
+        exportCitations(articlesToExport, settings.export.citation, showExportModal);
+        break;
+    }
+    setShowExportModal(null);
+    setNotification({
+      id: Date.now(),
+      message: `Exported ${articlesToExport.length} articles as ${showExportModal.toUpperCase()}.`,
+      type: 'success',
+    });
+  }, [
+    showExportModal,
+    selectedKbPmids,
+    uniqueArticles,
+    settings.export,
+    setNotification,
+    knowledgeBase,
+  ]);
 
   // Fix for infinite render loop: Memoize the callback passed to SettingsView
-  const handleNavigateToHelp = useCallback((tab: 'about' | 'faq') => {
+  const handleNavigateToHelp = useCallback(
+    (tab: 'about' | 'faq') => {
       setInitialHelpTab(tab);
       setCurrentView('help');
-  }, [setCurrentView]);
+    },
+    [setCurrentView],
+  );
 
   if (isSettingsLoading || isLoading || arePresetsLoading) {
     return <FullScreenSpinner />;
   }
 
   if (!settings.hasCompletedOnboarding) {
-      return (
-          <Suspense fallback={<FullScreenSpinner />}>
-              <OnboardingView onComplete={handleCompleteOnboarding} />
-          </Suspense>
-      );
+    return (
+      <Suspense fallback={<FullScreenSpinner />}>
+        <OnboardingView onComplete={handleCompleteOnboarding} />
+      </Suspense>
+    );
   }
-  
+
   const renderView = () => {
-      switch (currentView) {
-          case 'home': return <HomeView onNavigate={handleViewChange} />;
-          case 'orchestrator': return (
-            <OrchestratorView 
-                reportStatus={reportStatus}
-                currentPhase={currentPhase}
-                error={error}
-                report={report}
-                researchInput={localResearchInput}
-                isCurrentReportSaved={isCurrentReportSaved}
-                settings={settings}
-                prefilledTopic={prefilledTopic}
-                handleFormSubmit={handleFormSubmit}
-                handleSaveReport={handleSaveReport}
-                handleNewSearch={handleNewSearch}
-                onPrefillConsumed={handlePrefillConsumed}
-                handleViewReportFromHistory={handleViewEntry}
-                handleStartNewReview={handleStartNewReviewFromTopic}
-                onUpdateResearchInput={setLocalResearchInput}
-                handleTagsUpdate={handleTagsUpdate}
-                chatHistory={chatHistory}
-                isChatting={isChatting}
-                onSendMessage={sendMessage}
-            />);
-          case 'research': return (
-            <ResearchView 
-                onStartNewReview={handleStartNewReviewFromTopic}
-                onStartResearch={startResearch}
-                onClearResearch={clearResearch}
-                isLoading={isResearching}
-                phase={researchPhase}
-                error={researchError}
-                analysis={researchAnalysis}
-                similarArticlesState={similar}
-                onlineFindingsState={online}
-            />);
-           case 'authors': return <AuthorsView initialProfile={selectedAuthorProfile} onViewedInitialProfile={handleAuthorProfileViewed} />;
-           case 'knowledgeBase': return <KnowledgeBaseView onViewChange={handleViewChange} filter={kbFilter} onFilterChange={handleFilterChange} selectedPmids={selectedKbPmids} setSelectedPmids={setSelectedKbPmids} />;
-           case 'journals': return <JournalsView />;
-           case 'collections': return <CollectionsView />;
-           case 'dashboard': return <DashboardView onFilterChange={handleFilterChange} onViewChange={handleViewChange} />;
-           case 'history': return <HistoryView onViewEntry={handleViewEntry} />;
-           case 'settings': return <SettingsView onClearKnowledgeBase={handleClearKnowledgeBase} resetToken={settingsResetToken} onNavigateToHelpTab={handleNavigateToHelp} />;
-           case 'help': return <HelpView initialTab={initialHelpTab} onTabConsumed={() => setInitialHelpTab(null)} />;
-           default: return <HomeView onNavigate={handleViewChange} />;
-      }
+    switch (currentView) {
+      case 'home':
+        return <HomeView onNavigate={handleViewChange} />;
+      case 'orchestrator':
+        return (
+          <OrchestratorView
+            reportStatus={reportStatus}
+            currentPhase={currentPhase}
+            error={error}
+            report={report}
+            researchInput={localResearchInput}
+            isCurrentReportSaved={isCurrentReportSaved}
+            settings={settings}
+            prefilledTopic={prefilledTopic}
+            handleFormSubmit={handleFormSubmit}
+            handleSaveReport={handleSaveReport}
+            handleNewSearch={handleNewSearch}
+            onPrefillConsumed={handlePrefillConsumed}
+            handleViewReportFromHistory={handleViewEntry}
+            handleStartNewReview={handleStartNewReviewFromTopic}
+            onUpdateResearchInput={setLocalResearchInput}
+            handleTagsUpdate={handleTagsUpdate}
+            chatHistory={chatHistory}
+            isChatting={isChatting}
+            onSendMessage={sendMessage}
+          />
+        );
+      case 'research':
+        return (
+          <ResearchView
+            onStartNewReview={handleStartNewReviewFromTopic}
+            onStartResearch={startResearch}
+            onClearResearch={clearResearch}
+            isLoading={isResearching}
+            phase={researchPhase}
+            error={researchError}
+            analysis={researchAnalysis}
+            similarArticlesState={similar}
+            onlineFindingsState={online}
+          />
+        );
+      case 'authors':
+        return (
+          <AuthorsView
+            initialProfile={selectedAuthorProfile}
+            onViewedInitialProfile={handleAuthorProfileViewed}
+          />
+        );
+      case 'knowledgeBase':
+        return (
+          <KnowledgeBaseView
+            onViewChange={handleViewChange}
+            filter={kbFilter}
+            onFilterChange={handleFilterChange}
+            selectedPmids={selectedKbPmids}
+            setSelectedPmids={setSelectedKbPmids}
+          />
+        );
+      case 'journals':
+        return <JournalsView />;
+      case 'collections':
+        return <CollectionsView />;
+      case 'dashboard':
+        return (
+          <DashboardView onFilterChange={handleFilterChange} onViewChange={handleViewChange} />
+        );
+      case 'history':
+        return <HistoryView onViewEntry={handleViewEntry} />;
+      case 'settings':
+        return (
+          <SettingsView
+            onClearKnowledgeBase={handleClearKnowledgeBase}
+            resetToken={settingsResetToken}
+            onNavigateToHelpTab={handleNavigateToHelp}
+          />
+        );
+      case 'help':
+        return (
+          <HelpView initialTab={initialHelpTab} onTabConsumed={() => setInitialHelpTab(null)} />
+        );
+      default:
+        return <HomeView onNavigate={handleViewChange} />;
+    }
   };
 
   return (
     <>
-      <Header 
-          onViewChange={handleViewChange} 
-          currentView={currentView}
-          knowledgeBaseArticleCount={uniqueArticles.length} 
-          hasReports={knowledgeBase.length > 0}
-          isResearching={isResearching}
-          onQuickAdd={() => setIsQuickAddModalOpen(true)}
+      <Header
+        onViewChange={handleViewChange}
+        currentView={currentView}
+        knowledgeBaseArticleCount={uniqueArticles.length}
+        hasReports={knowledgeBase.length > 0}
+        isResearching={isResearching}
+        onQuickAdd={() => setIsQuickAddModalOpen(true)}
       />
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 md:pt-36 pt-20 pb-24">
-         <Suspense fallback={<ContentSpinner />}>
-            {renderView()}
-         </Suspense>
+        <Suspense fallback={<ContentSpinner />}>{renderView()}</Suspense>
       </main>
-      <BottomNavBar 
+      <BottomNavBar
         currentView={currentView}
         onViewChange={handleViewChange}
         knowledgeBaseArticleCount={uniqueArticles.length}
         hasReports={knowledgeBase.length > 0}
         isResearching={isResearching}
       />
-      {notification && <Notification {...notification} onClose={() => setNotification(null)} position={settings.notifications.position} duration={settings.notifications.duration} />}
-      {pendingNavigation && <ConfirmationModal onConfirm={handleConfirmNavigation} onCancel={() => setPendingNavigation(null)} title="Discard Unsaved Changes?" message="You have unsaved changes in Settings. Are you sure you want to discard them and navigate away?" confirmText="Yes, Discard Changes" />}
-      {showExportModal && ['pdf', 'csv', 'bib', 'ris'].includes(showExportModal) && <ConfirmationModal onConfirm={handleConfirmExport} onCancel={() => setShowExportModal(null)} title={`Export ${selectedKbPmids.length} Articles`} message={`Are you sure you want to export citations for the ${selectedKbPmids.length} selected articles as a ${showExportModal.toUpperCase()} file?`} confirmText="Yes, Export" />}
-      
+      {notification && (
+        <Notification
+          {...notification}
+          onClose={() => setNotification(null)}
+          position={settings.notifications.position}
+          duration={settings.notifications.duration}
+        />
+      )}
+      {pendingNavigation && (
+        <ConfirmationModal
+          onConfirm={handleConfirmNavigation}
+          onCancel={() => setPendingNavigation(null)}
+          title="Discard Unsaved Changes?"
+          message="You have unsaved changes in Settings. Are you sure you want to discard them and navigate away?"
+          confirmText="Yes, Discard Changes"
+        />
+      )}
+      {showExportModal && ['pdf', 'csv', 'bib', 'ris'].includes(showExportModal) && (
+        <ConfirmationModal
+          onConfirm={handleConfirmExport}
+          onCancel={() => setShowExportModal(null)}
+          title={`Export ${selectedKbPmids.length} Articles`}
+          message={`Are you sure you want to export citations for the ${selectedKbPmids.length} selected articles as a ${showExportModal.toUpperCase()} file?`}
+          confirmText="Yes, Export"
+        />
+      )}
+
       <Suspense>
-        {isCommandPaletteOpen && <CommandPalette isReportVisible={!!report} isCurrentReportSaved={isCurrentReportSaved} selectedArticleCount={selectedKbPmids.length} onSaveReport={handleSaveReport} onExportSelection={handleExportSelection}/>}
+        {isCommandPaletteOpen && (
+          <CommandPalette
+            isReportVisible={!!report}
+            isCurrentReportSaved={isCurrentReportSaved}
+            selectedArticleCount={selectedKbPmids.length}
+            onSaveReport={handleSaveReport}
+            onExportSelection={handleExportSelection}
+          />
+        )}
         {isQuickAddModalOpen && <QuickAddModal onClose={() => setIsQuickAddModalOpen(false)} />}
         <AgentDebugger />
       </Suspense>
@@ -525,20 +709,17 @@ const AppLayout: React.FC = () => {
   );
 };
 
-
 const MemoizedAppLayout = memo(AppLayout);
 
 const App: React.FC = () => (
   <ErrorBoundary>
-    <UIProvider>
-      <SettingsProvider>
-          <PresetProvider>
-              <KnowledgeBaseProvider>
-                  <MemoizedAppLayout />
-              </KnowledgeBaseProvider>
-          </PresetProvider>
-      </SettingsProvider>
-    </UIProvider>
+    <SettingsProvider>
+      <PresetProvider>
+        <KnowledgeBaseProvider>
+          <MemoizedAppLayout />
+        </KnowledgeBaseProvider>
+      </PresetProvider>
+    </SettingsProvider>
   </ErrorBoundary>
 );
 
