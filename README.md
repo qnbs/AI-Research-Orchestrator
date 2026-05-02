@@ -3,7 +3,7 @@
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/qnbs/AI-Research-Orchestrator)
 
 ![Status](https://img.shields.io/badge/Status-Production_Ready-success?style=flat-square)
-![Version](https://img.shields.io/badge/Version-2.0.0-blue?style=flat-square)
+![Version](https://img.shields.io/badge/Version-0.1.0-blue?style=flat-square)
 ![Tech](https://img.shields.io/badge/Stack-React_19_|_TypeScript_|_Gemini_Pro-blueviolet?style=flat-square)
 ![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)
 ![Privacy](https://img.shields.io/badge/Privacy-Local_First-green?style=flat-square)
@@ -114,6 +114,21 @@ npm run dev
 npm run build
 ```
 
+#### Tests & CI
+
+```bash
+npm run typecheck   # TypeScript (strict, no emit)
+npm run test:run    # Vitest unit tests
+npm run test:e2e    # Playwright E2E (one-time: npx playwright install chromium)
+npm run build       # Production bundle
+```
+
+On every **push** to `main` and on **pull requests** targeting `main`, GitHub Actions runs install, typecheck, Vitest, and production build (see `.github/workflows/deploy.yml`). Upload and deployment to GitHub Pages run only when the ref is `refs/heads/main` and the event is not a pull request.
+
+#### Cursor / IDE setup
+
+For AI-assisted work in Cursor, see [`AGENTS.md`](./AGENTS.md), `.cursor/rules/`, and [CONTRIBUTING.md](./CONTRIBUTING.md).
+
 #### Prerequisites
 
 * Node.js 18+ and npm
@@ -171,8 +186,8 @@ This app is configured for **GitHub Pages** deployment:
 
 The repository includes `.github/workflows/deploy.yml` that:
 
-- Builds the app on every push to `main`
-- Deploys to GitHub Pages automatically
+- Runs install, TypeScript, Vitest, and production build on every push to `main` and on pull requests targeting `main`
+- Uploads and deploys to GitHub Pages only for pushes (or manual dispatch) on `main` — not for pull requests
 - Handles SPA routing via `404.html` fallback
 
 #### Self-Hosting
@@ -195,6 +210,7 @@ npm run build
 | PubMed requests failing | Check internet connection; NCBI may have rate limits |
 | PWA not installing | Ensure HTTPS and valid manifest.json |
 | Blank page after navigation | Clear browser cache and reload |
+| CI fails on TypeScript or tests | Run `npm run typecheck` and `npm run test:run` locally; fix reported errors |
 
 ---
 
@@ -292,6 +308,21 @@ npm run dev
 # Für Produktion bauen
 npm run build
 ```
+
+#### Tests & CI
+
+```bash
+npm run typecheck   # TypeScript (strikt, ohne Emit)
+npm run test:run    # Vitest (Unit-Tests)
+npm run test:e2e    # Playwright E2E (einmalig: npx playwright install chromium)
+npm run build       # Produktionsbundle
+```
+
+Bei jedem **Push** auf `main` und bei **Pull Requests** gegen `main` führt GitHub Actions Installation, Typecheck, Vitest und Production-Build aus (`.github/workflows/deploy.yml`). Upload und Deploy nach GitHub Pages erfolgen nur auf `refs/heads/main`, nicht bei PRs.
+
+#### Cursor / IDE
+
+Für KI-gestützte Entwicklung in Cursor: [`AGENTS.md`](./AGENTS.md), `.cursor/rules/` und [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 #### Voraussetzungen
 

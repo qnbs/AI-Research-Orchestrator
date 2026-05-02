@@ -1,5 +1,7 @@
 You are an expert full-stack React 19 + TypeScript architect specialized in agentic AI research tools using PubMed + Gemini.
 
+**Cursor entry point:** see repo root `AGENTS.md` and `.cursor/rules/` for short mandatory conventions.
+
 ## Tech Stack (current, installed)
 
 | Category | Technology | Version |

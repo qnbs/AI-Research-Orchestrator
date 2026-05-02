@@ -7,23 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `AGENTS.md` and `.cursor/rules/` for Cursor and other AI-assisted workflows
+- `CONTRIBUTING.md` with local QA commands and CI expectations
+- `.vscode/extensions.json` recommended extensions for VS Code / Cursor
+- GitHub Actions: verify on pull requests to `main`; Pages upload/deploy only on `main` (not on PRs)
+- CHANGELOG.md following keepachangelog standard
+- AUDIT.md with codebase audit findings and prioritized improvement roadmap
+
+### Changed
+
+- `package.json` version set to `0.1.0` to match documented semver; README version badge aligned
+- README: Tests & CI, Cursor setup, troubleshooting for CI failures; GitHub Actions section clarified (PR vs deploy)
+- Updated `.github/copilot-instructions.md` (stack; pointer to `AGENTS.md` / `.cursor/rules/`)
+- Removed redundant Playwright CLI pre-warm from Dockerfile (postCreate.sh handles installation)
+- Made Playwright browser installation optional in postCreate.sh via `SKIP_PLAYWRIGHT=true`
+
 ### Fixed
 
 - Moved `vitest` from `dependencies` to `devDependencies` to reduce production bundle
 - Fixed 142 markdown lint errors in README.md (MD030, MD022, MD031, MD032)
 - Made CI/CD pipeline type checking blocking (was `continue-on-error: true`)
 - Added unit test step to CI/CD pipeline before build
-
-### Changed
-
-- Updated `.github/copilot-instructions.md` to reflect current installed dependencies and conventions
-- Removed redundant Playwright CLI pre-warm from Dockerfile (postCreate.sh handles installation)
-- Made Playwright browser installation optional in postCreate.sh via `SKIP_PLAYWRIGHT=true`
-
-### Added
-
-- CHANGELOG.md following keepachangelog standard
-- AUDIT.md with comprehensive codebase audit findings and prioritized improvement roadmap
 
 ## [0.1.0] - 2026-04-14
 

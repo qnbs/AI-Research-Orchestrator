@@ -1,6 +1,6 @@
 # Codebase Audit Report
 
-> **Date**: 2026-04-14
+> **Date**: 2026-05-02 (updated)
 > **Overall Rating**: B+ (8.5/10)
 > **Auditor**: Automated Copilot Audit
 
@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-The AI Research Orchestrator is a well-architected, production-ready Progressive Web App with a clean separation of concerns, strong TypeScript usage, and a professional DevContainer/CI/CD setup. The main areas for improvement are test coverage (~5%), missing linting configuration files, and some state management redundancy.
+The AI Research Orchestrator is a well-architected, production-ready Progressive Web App with a clean separation of concerns, strong TypeScript usage, and a professional DevContainer/CI/CD setup. The main areas for improvement remain moderate automated test coverage, optional ESLint/Prettier checked into the repo (IDE extensions are assumed), and occasional Redux/Context overlap worth documenting explicitly.
 
 ---
 
@@ -22,9 +22,9 @@ The AI Research Orchestrator is a well-architected, production-ready Progressive
 | PWA/Offline   | 5/5    | Workbox service worker, manifest, offline IndexedDB fallback        |
 | Security      | 4/5    | Web Crypto API key encryption; browser-side API calls inherent risk |
 | i18n          | 5/5    | EN+DE complete, 100+ keys, namespace-based pattern                  |
-| CI/CD         | 4/5    | GitHub Actions v4; tests now run before deploy (was missing)        |
-| Tests         | 2/5    | ~5% coverage; only 2 unit test files + 2 E2E specs                  |
-| Documentation | 4/5    | Excellent README (EN+DE); missing API docs, CONTRIBUTING.md         |
+| CI/CD         | 5/5    | GitHub Actions v4; typecheck + Vitest + build; PR verification + Pages only on `main` |
+| Tests         | 2/5    | Low line coverage; 3 unit test files + 2 E2E specs                  |
+| Documentation | 5/5    | README (EN+DE), CHANGELOG, AUDIT, CONTRIBUTING, AGENTS, Cursor rules |
 | SEO           | 3/5    | Basics present; missing Open Graph, schema.org, canonical URL       |
 | Accessibility | 4/5    | Strong ARIA, focus management; minor contrast gaps in light mode    |
 
@@ -42,6 +42,17 @@ The AI Research Orchestrator is a well-architected, production-ready Progressive
 | Dockerfile: Redundant Playwright CLI pre-warm           | Low      | Removed `RUN npx playwright@latest`    |
 | postCreate.sh: Mandatory Playwright install             | Low      | Made optional via `SKIP_PLAYWRIGHT`    |
 | Missing CHANGELOG.md                                    | Low      | Created with keepachangelog format     |
+
+---
+
+## Maintenance (2026-05-02)
+
+| Change | Notes |
+| ------ | ----- |
+| CI pull requests | Workflow runs build + tests on PRs to `main`; Pages upload/deploy only when `github.ref == refs/heads/main` and event is not `pull_request` |
+| Cursor / onboarding | Added `AGENTS.md`, `.cursor/rules/ai-research-orchestrator.mdc`, `.vscode/extensions.json`, `CONTRIBUTING.md` |
+| Version alignment | `package.json` version aligned with semver docs (`0.1.0`); README badge updated |
+| AUDIT correction | `AuthorProfile` is defined in `types.ts`; earlier “missing type” note removed below |
 
 ---
 
@@ -193,7 +204,6 @@ Add `npm run lint` to CI/CD pipeline and package.json scripts.
 - **Dual state management**: Redux + Context for the same data is a source of confusion and potential bugs. Pick one pattern.
 - **Large components**: `ReportDisplay.tsx` (~550 lines) and `AgentDebugger.tsx` (~550 lines) should be decomposed into sub-components.
 - **Error boundaries**: Only one global `ErrorBoundary`. Critical views (Orchestrator, Research) should have their own boundaries.
-- **Missing type**: `AuthorProfile` is referenced in `KnowledgeBaseContext.tsx` but not defined in `types.ts`. This may cause runtime issues.
 
 ---
 

@@ -18,6 +18,11 @@ on:
     branches:
       - main
 
+  # Verify build + tests on PRs targeting main (no Pages deploy)
+  pull_request:
+    branches:
+      - main
+
   # Allow manual trigger from Actions tab
   workflow_dispatch:
 
@@ -75,12 +80,14 @@ jobs:
       - name: Setup SPA routing
         run: cp dist/index.html dist/404.html
 
-      # Step 8: Configure GitHub Pages
+      # Step 8: Configure GitHub Pages (main branch pushes / manual only)
       - name: Setup Pages
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         uses: actions/configure-pages@v4
 
-      # Step 9: Upload build artifacts
+      # Step 9: Upload build artifacts for Pages deployment
       - name: Upload artifact
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@v3
         with:
           path: "./dist"
@@ -90,6 +97,7 @@ jobs:
   # ==============================================================================
   deploy:
     needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
 
     # GitHub Pages environment
