@@ -128,7 +128,7 @@ On every **push** to `main` and on **pull requests** targeting `main`, GitHub Ac
 
 #### Cursor / IDE setup
 
-For AI-assisted work in Cursor, see [`AGENTS.md`](./AGENTS.md), `.cursor/rules/`, and [CONTRIBUTING.md](./CONTRIBUTING.md).
+For AI-assisted work in Cursor, see [`AGENTS.md`](./AGENTS.md), [`.cursor/index.mdc`](./.cursor/index.mdc) (always-on manifest), `.cursor/rules/*.mdc`, and [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 #### Prerequisites
 
@@ -324,7 +324,7 @@ Bei jedem **Push** auf `main` und bei **Pull Requests** gegen `main` führt GitH
 
 #### Cursor / IDE
 
-Für KI-gestützte Entwicklung in Cursor: [`AGENTS.md`](./AGENTS.md), `.cursor/rules/` und [CONTRIBUTING.md](./CONTRIBUTING.md).
+Für KI-gestützte Entwicklung in Cursor: [`AGENTS.md`](./AGENTS.md), [`.cursor/index.mdc`](./.cursor/index.mdc), `.cursor/rules/*.mdc` und [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 #### Voraussetzungen
 

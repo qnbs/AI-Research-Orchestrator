@@ -1,0 +1,16 @@
+---
+description: Ship accessible UI; editing components under src/components with Tailwind v4
+globs: src/components/**/*.tsx,src/components/**/*.ts
+alwaysApply: false
+---
+
+# UI-Komponenten (React + Tailwind v4)
+
+- **Paradigma:** Funktionale Komponenten + Hooks. Vite-SPA — Lazy-Loading wie in `App.tsx`; kein Next.js RSC-Split.
+- **Props:** Klare TS-Typen; booleans benannt (`isOpen`, `disabled`); `children` nur bei echter Komposition.
+- **Tailwind:** Utility-First; Cybernetic/Glass-Patterns vom bestehenden Designsystem; Inline-Styles nur für dynamische Werte.
+- **A11y:** Fokus, `aria-*`, Tastatur (inkl. Cmd+K); jsx-a11y ernst nehmen — keine blinden `eslint-disable`.
+- **i18n:** Sichtbare Strings nur über `t()` / `translations.ts`, EN+DE-Paarität.
+- **Motion:** Framer Motion sparsam; Layout-Thrashing vermeiden.
+
+Siehe `@src/App.tsx`, `@src/i18n/translations.ts`, `@src/components/ui/`.

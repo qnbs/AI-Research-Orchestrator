@@ -46,7 +46,7 @@ npm run test:e2e
 GitHub Actions (`.github/workflows/deploy.yml`) on pushes and PRs to `main`:
 
 1. `npm ci`
-2. `npx tsc --noEmit`
+2. `npm run typecheck`
 3. `npm run lint`
 4. `npm run test:coverage`
 5. `npm run build`

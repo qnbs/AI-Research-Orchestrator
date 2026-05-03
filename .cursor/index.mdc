@@ -1,0 +1,18 @@
+---
+description: Load project manifest; always-on context for AI Research Orchestrator stack
+alwaysApply: true
+---
+
+# AI Research Orchestrator — Manifest
+
+**Zweck:** Lokale PWA für agentische Literaturrecherche: PubMed/NCBI, arXiv, Gemini-Streaming, Knowledge Base, Export — kein eigenes Backend für Nutzerdaten.
+
+**Stack:** React 19, TypeScript strict, Vite 6, Redux Toolkit, TanStack Query/Virtual, Dexie 4 + dexie-react-hooks (IndexedDB), Tailwind CSS v4, `@google/genai`, Marked/DOMPurify, jsPDF, Chart.js/Recharts, Framer Motion, cmdk, Vitest + Testing Library, Playwright E2E.
+
+**Architektur:** Browser-only → Gemini API + NCBI E-utilities (+ arXiv); AES-GCM über `apiKeyService`; Redux als Single Source of Truth; Context nur für Hydration/Komposition (`SettingsProvider`, KB) — keine parallelen Kopien derselben Settings/UI-Flags.
+
+**Konventionen:** EN+DE in `src/i18n/translations.ts`; WCAG-orientiert (ARIA, Tastatur); neue persistente Daten → Dexie-Schema in `databaseService`; vor Commit: `npm run typecheck`, `npm run lint`, `npm run test:coverage` (wie CI).
+
+**Modulare Regeln:** `.cursor/rules/` — `001–099` Security, `100–199` APIs, `200–299` Architektur, `300–399` UI, `800–899` QA/Workflows; Details in `000-cursor-rules.mdc`.
+
+**Kanonisch:** `AGENTS.md`, `.github/copilot-instructions.md`, `README.md`, `.github/workflows/deploy.yml`.

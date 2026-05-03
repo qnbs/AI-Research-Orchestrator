@@ -1,0 +1,14 @@
+---
+description: Evolve Dexie schema safely; edits to databaseService or persisted models
+globs: src/services/databaseService.ts,src/services/databaseService.test.ts
+alwaysApply: false
+---
+
+# Dexie / IndexedDB (Local-First)
+
+- **Single entry:** Persistenz und Schema über `@src/services/databaseService.ts` bündeln; keine zweite parallele Dexie-Instanz ohne Review.
+- **Migrationen:** Version bumps und Upgrade-Transaktionen explizit; Defaults für neue Felder dokumentieren; Breaking Changes in CHANGELOG erwähnen.
+- **Tests:** `fake-indexeddb` / Setup aus `@src/test/setup.ts` nutzen; keine Live-Netzwerk/IndexedDB-Abhängigkeit in Unit-Tests.
+- **Performance:** Indizes nur wo nötig; große Writes batchen wo das Schema es erlaubt.
+
+Siehe `@src/services/databaseService.ts`, `@vitest.config.ts` (Coverage-Scope).

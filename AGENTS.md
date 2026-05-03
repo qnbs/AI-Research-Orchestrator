@@ -5,7 +5,8 @@ Dieses Repository ist eine **React-19-PWA** mit **Gemini** und **PubMed**; Daten
 ## Pflichtlektüre
 
 1. **`.github/copilot-instructions.md`** — aktueller Stack, Ordnerstruktur, State-Management, Testing, Safety-Regeln.
-2. **`.cursor/rules/ai-research-orchestrator.mdc`** — kurze Projektregeln (immer aktiv in Cursor).
+2. **`.cursor/index.mdc`** — Always-On-Projektmanifest (Stack, Architektur, Konventionen).
+3. **`.cursor/rules/*.mdc`** — kontextbezogene Regeln (Security, APIs, UI, Tests, Meta — siehe `000-cursor-rules.mdc`).
 
 ## Checks vor Änderungen am Kernfluss
 
@@ -16,7 +17,7 @@ Dieses Repository ist eine **React-19-PWA** mit **Gemini** und **PubMed**; Daten
 
 ## CI
 
-Workflow: `.github/workflows/deploy.yml` — bei **Push** und **Pull Request** auf `main`: Install, TypeScript, Vitest, Build. **GitHub Pages**-Upload und Deploy nur auf `refs/heads/main`, nicht bei PRs.
+Workflow: `.github/workflows/deploy.yml` — bei **Push** und **Pull Request** auf `main`: `npm ci`, Typecheck, ESLint, Vitest mit Coverage (Schwellen siehe `vitest.config.ts`), Production-Build. **GitHub Pages**-Upload und Deploy nur auf `refs/heads/main`, nicht bei PRs.
 
 ## Dokumentation für Menschen
 

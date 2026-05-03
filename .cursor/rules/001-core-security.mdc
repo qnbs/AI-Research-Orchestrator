@@ -1,0 +1,15 @@
+---
+description: Enforce secret hygiene and safe UX; touching apiKey, storage, or HTML rendering
+globs: *.*
+alwaysApply: false
+---
+
+# Core Security & Secrets
+
+- **Secrets:** Keine API-Keys/Tokens/Passwörter in Quelltext oder Git. Gemini nur über `apiKeyService` / Einstellungen; AES-GCM wie implementiert. Lokale Hilfsvariablen nur über `.env`/`.env.example`-Muster — nie Keys committen.
+- **IndexedDB/Dexie:** Nutzerdaten nur clientseitig; keine Secrets außerhalb der vorgesehenen Key-Verwaltung persistieren.
+- **Externe Aufrufe:** Über bestehende Services (`geminiService`, `pubmedUtils`, `arxivUtils`, RTK-Slices); keine Fetch-URLs mit eingebetteten Credentials.
+- **Fehler:** Nutzer Meldungen per i18n; keine Stacktraces/IDs in UI leaken; kein sensibles Logging in Produktion.
+- **HTML/Markdown:** Sanitisierung wie im Projekt etabliert (DOMPurify); kein `dangerouslySetInnerHTML` ohne bestehendes Review-Muster.
+
+Siehe `@src/services/apiKeyService.ts`, `@AGENTS.md`, `@.env.example`.

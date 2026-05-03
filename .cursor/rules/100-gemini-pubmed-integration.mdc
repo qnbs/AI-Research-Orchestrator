@@ -1,0 +1,15 @@
+---
+description: Unify Gemini and literature APIs; edits in services or gemini/api slices
+globs: src/services/**/*.ts,src/store/slices/geminiApiSlice.ts,src/store/slices/apiSlice.ts
+alwaysApply: false
+---
+
+# Gemini, PubMed & verwandte APIs
+
+- **Gemini:** `@google/genai` nur über `geminiService` / RTK-Patterns (Streams, AbortSignal). Model-/Routing-Änderungen zentral; keine Keys in diesen Dateien.
+- **PubMed/NCBI:** Rate-Limits und Backoff aus `pubmedUtils`; keine Scraping-Umgehungen gegenüber NCBI-ToS.
+- **arXiv:** Nur über `arxivUtils` anbinden.
+- **TanStack Query / RTK Query:** Keys/Tags/Invalidierung konsistent zu bestehenden Endpoints.
+- **Netzwerk:** Fehler abfangen; Feedback über Redux/UI statt stiller `alert`-Only-Pfade.
+
+Siehe `@src/services/geminiService.ts`, `@src/services/pubmedUtils.ts`, `@src/store/slices/geminiApiSlice.ts`.

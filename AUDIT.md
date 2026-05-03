@@ -1,6 +1,6 @@
 # Codebase Audit Report
 
-> **Date**: 2026-05-02 (updated)
+> **Date**: 2026-05-04 (documentation & Cursor rules refresh)
 > **Overall Rating**: B+ (8.5/10)
 > **Auditor**: Automated Copilot Audit
 
@@ -14,19 +14,19 @@ The AI Research Orchestrator is a well-architected, production-ready Progressive
 
 ## Scorecard
 
-| Dimension     | Rating | Notes                                                                                 |
-| ------------- | ------ | ------------------------------------------------------------------------------------- |
-| Architecture  | 5/5    | Clean layering: services, contexts, hooks, Redux, components                          |
-| TypeScript    | 5/5    | Strict mode, ES2022 target, comprehensive type definitions                            |
-| DevContainer  | 4/5    | Lean image, good DX; Playwright pre-warm was redundant (now fixed)                    |
-| PWA/Offline   | 5/5    | Workbox service worker, manifest, offline IndexedDB fallback                          |
-| Security      | 4/5    | Web Crypto API key encryption; browser-side API calls inherent risk                   |
-| i18n          | 5/5    | EN+DE complete, 100+ keys, namespace-based pattern                                    |
-| CI/CD         | 5/5    | GitHub Actions v4; typecheck + Vitest + build; PR verification + Pages only on `main` |
-| Tests         | 2/5    | Low line coverage; 3 unit test files + 2 E2E specs                                    |
-| Documentation | 5/5    | README (EN+DE), CHANGELOG, AUDIT, CONTRIBUTING, AGENTS, Cursor rules                  |
-| SEO           | 3/5    | Basics present; missing Open Graph, schema.org, canonical URL                         |
-| Accessibility | 4/5    | Strong ARIA, focus management; minor contrast gaps in light mode                      |
+| Dimension     | Rating | Notes                                                                                                              |
+| ------------- | ------ | ------------------------------------------------------------------------------------------------------------------ |
+| Architecture  | 5/5    | Clean layering: services, contexts, hooks, Redux, components                                                       |
+| TypeScript    | 5/5    | Strict mode, ES2022 target, comprehensive type definitions                                                         |
+| DevContainer  | 4/5    | Lean image, good DX; Playwright pre-warm was redundant (now fixed)                                                 |
+| PWA/Offline   | 5/5    | Workbox service worker, manifest, offline IndexedDB fallback                                                       |
+| Security      | 4/5    | Web Crypto API key encryption; browser-side API calls inherent risk                                                |
+| i18n          | 5/5    | EN+DE complete, 100+ keys, namespace-based pattern                                                                 |
+| CI/CD         | 5/5    | GitHub Actions v4; typecheck, ESLint, Vitest+coverage (Schwellen `vitest.config.ts`), build; Pages nur auf `main`  |
+| Tests         | 3/5    | Vitest + thresholds on logic layers; mehrere Service-/Slice-/Hook-Tests + E2E — Zeilen-Coverage weiter ausbaufähig |
+| Documentation | 5/5    | README (EN+DE), CHANGELOG, AUDIT, CONTRIBUTING, AGENTS; Cursor `.cursor/index.mdc` + `.cursor/rules/*.mdc`         |
+| SEO           | 3/5    | Basics present; missing Open Graph, schema.org, canonical URL                                                      |
+| Accessibility | 4/5    | Strong ARIA, focus management; minor contrast gaps in light mode                                                   |
 
 ---
 
@@ -47,13 +47,14 @@ The AI Research Orchestrator is a well-architected, production-ready Progressive
 
 ## Maintenance (2026-05-02)
 
-| Change                      | Notes                                                                                                                                                                                      |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| CI pull requests            | Workflow runs build + tests on PRs to `main`; Pages upload/deploy only when `github.ref == refs/heads/main` and event is not `pull_request`                                                |
-| Cursor / onboarding         | Added `AGENTS.md`, `.cursor/rules/ai-research-orchestrator.mdc`, `.vscode/extensions.json`, `CONTRIBUTING.md`                                                                              |
-| Version alignment           | `package.json` / README badge track semver (`0.1.1` as of this maintenance)                                                                                                                |
-| AUDIT correction            | `AuthorProfile` is defined in `types.ts`; earlier “missing type” note removed below                                                                                                        |
-| Production hygiene (v0.1.1) | ESLint 9 + Prettier + Husky; scoped coverage thresholds; AbortSignal for report streams; Redux-only `useUI` + install prompt store; CSV formula sanitization; CSP meta; PNG manifest icons |
+| Change                           | Notes                                                                                                                                                                                                                               |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| CI pull requests                 | Workflow runs build + tests on PRs to `main`; Pages upload/deploy only when `github.ref == refs/heads/main` and event is not `pull_request`                                                                                         |
+| Cursor / onboarding              | `AGENTS.md`, `.vscode/extensions.json`, `CONTRIBUTING.md`; Always-On `.cursor/index.mdc`, modulare `.cursor/rules/` (`000` Meta, `001` Security, `100`/`101` APIs & Dexie, `200` Architektur, `300` UI, `800` Tests, `850` PRD/MCP) |
+| Version alignment                | `package.json` / README badge track semver (`0.1.1` as of this maintenance)                                                                                                                                                         |
+| AUDIT correction                 | `AuthorProfile` is defined in `types.ts`; earlier “missing type” note removed below                                                                                                                                                 |
+| Docs / CI alignment (2026-05-04) | GitHub Actions Typecheck = `npm run typecheck`; README/AGENTS/CONTRIBUTING/copilot referenzieren `.cursor/index.mdc`; `package.json` `engines.node`; CHANGELOG [Unreleased] ergänzt                                                 |
+| Production hygiene (v0.1.1)      | ESLint 9 + Prettier + Husky; scoped coverage thresholds; AbortSignal for report streams; Redux-only `useUI` + install prompt store; CSV formula sanitization; CSP meta; PNG manifest icons                                          |
 
 ---
 
@@ -61,85 +62,34 @@ The AI Research Orchestrator is a well-architected, production-ready Progressive
 
 ### P0 — Critical (address soon)
 
-#### 1. Expand Test Coverage (target: 40%+)
+#### 1. Expand Test Coverage (target: 40%+ line coverage on logic layers)
 
-**Current state**: 2 unit test files (`apiKeyService.test.ts`, `geminiService.test.ts`), 2 E2E specs.
+**Current state (2026-05-04)**: Vitest mit Coverage-Schwellen (`vitest.config.ts`) auf `store/`, `services/`, `hooks/`, `lib/`; zahlreiche Unit-Tests (u. a. PubMed, arXiv, Dexie-Roundtrip, Slices, Hooks) sowie Playwright E2E unter `src/test/e2e/`.
 
-**Recommended additions**:
+**Next steps**:
 
-- `src/services/pubmedUtils.test.ts` — Test `fetchWithBackoff()`, `searchPubMed()`, XML parsing
-- `src/services/databaseService.test.ts` — Test Dexie CRUD operations with mock IndexedDB
-- `src/store/slices/settingsSlice.test.ts` — Test deep merge logic, default state
-- `src/store/slices/collectionsSlice.test.ts` — Test async thunks
-- `src/hooks/useTranslation.test.ts` — Test key resolution, fallback behavior
-- Component tests with `@testing-library/react` for critical views
+- Kritische Views zusätzlich mit `@testing-library/react` absichern (Orchestrator, Knowledge Base).
+- Coverage-Schwellen schrittweise anheben, wenn neue Tests stabil sind.
 
-**Effort**: 2-3 days
+**Effort**: fortlaufend
 
-#### 2. Add ESLint + Prettier Configuration
+#### 2. ESLint + Prettier + CI lint gate — **Done** (v0.1.1+)
 
-**Current state**: Extensions installed in DevContainer but no config files exist in repo.
-
-**Recommended**:
-
-```bash
-npm init @eslint/config@latest
-```
-
-Create `.eslintrc.cjs` with:
-
-- `@typescript-eslint/recommended`
-- `plugin:react-hooks/recommended`
-- `plugin:jsx-a11y/recommended`
-
-Create `.prettierrc`:
-
-```json
-{
-  "semi": true,
-  "singleQuote": true,
-  "trailingComma": "all",
-  "tabWidth": 2,
-  "printWidth": 100
-}
-```
-
-Add `npm run lint` to CI/CD pipeline and package.json scripts.
-
-**Effort**: 1-2 hours
+**State**: Flat Config `eslint.config.js`, Prettier, Husky/lint-staged; `npm run lint` in CI (`deploy.yml`). Empfohlene VS Code Extensions in `.vscode/extensions.json`.
 
 ### P1 — Important (next sprint)
 
-#### 3. Fix AbortController Leaks in geminiApiSlice
+#### 3. AbortController / Streaming — **Largely addressed** (v0.1.1 CHANGELOG)
 
-**File**: `src/store/slices/geminiApiSlice.ts`
+Streaming akzeptiert `AbortSignal`; `geminiApiSlice` invalidiert bei Bedarf — weiter beobachten bei Langläufern und Edge-Cases.
 
-**Problem**: Streaming endpoints create AbortController but don't properly abort in-flight requests when `cacheEntryRemoved` fires during active streaming.
+#### 4. Redux + Context State Management
 
-**Fix**: Ensure the abort signal is passed to the Gemini SDK call and that the stream loop checks `controller.signal.aborted` before processing each chunk.
+**Problem**: Überlappung dokumentieren oder weiter verschlanken (`SettingsProvider`, KB-Contexts).
 
-**Effort**: 1-2 hours
+**Recommendation**: Nur ein Muster als „Source of Truth“ pro Flag; Dokumentation in `copilot-instructions.md` / `AGENTS.md` ist angeglichen — bei Refactor UX und Hydration sichern.
 
-#### 4. Consolidate Redux + Context State Management
-
-**Problem**: `SettingsContext` and `UIContext` both read from Redux and re-expose the same state. This creates potential for state divergence and unnecessary re-renders.
-
-**Recommendation**: Either:
-
-- Remove Context wrappers and use Redux hooks (`useAppSelector`) directly in components
-- Or keep Context as the ONLY consumer of Redux, but document the pattern clearly
-
-**Effort**: 4-6 hours
-
-#### 5. Add Request Cancellation to Report Generation
-
-**File**: `src/App.tsx`, `src/services/geminiService.ts`
-
-**Problem**: Generation ID prevents rendering stale results but doesn't cancel in-flight Gemini API calls. Previous requests continue consuming API quota.
-
-**Fix**: Pass `AbortSignal` to `generateResearchReportStream()` and abort in the async generator when signal fires.
-
-**Effort**: 2-3 hours
+**Effort**: bei geplanter UX-Änderung einplanen
 
 ### P2 — Nice to Have (backlog)
 
@@ -153,15 +103,9 @@ Add `npm run lint` to CI/CD pipeline and package.json scripts.
 
 **Effort**: 1-2 hours
 
-#### 7. PWA Icon Completion
+#### 7. PWA Icon Completion — **Done** (PNG icons + SVG in `manifest.json`)
 
-**File**: `manifest.json`
-
-**Problem**: Missing `icons` array with proper PNG variants (192x192, 512x512).
-
-**Fix**: Generate icon PNGs from the existing SVG and add to manifest.
-
-**Effort**: 30 minutes
+Weitere Optimierung: Maskable-Safe-Zones und zusätzliche Auflösungen nur bei Bedarf.
 
 #### 8. Performance Optimizations
 
@@ -172,21 +116,19 @@ Add `npm run lint` to CI/CD pipeline and package.json scripts.
 
 **Effort**: 4-6 hours
 
-#### 9. Security Hardening
+#### 9. Security Hardening — **Partially done** (v0.1.1)
 
-- Add Content Security Policy (CSP) meta tag to `index.html`
-- Add CSV formula injection protection in `exportService.ts` (prefix cells starting with `=`, `+`, `-`, `@` with a tab character)
-- Consider API key session timeout (clear decrypted key from memory after inactivity)
+- CSP-Baseline und CSV-Formel-Injektionsschutz sind umgesetzt (siehe CHANGELOG v0.1.1).
+- Optional: API-Key-Session-Timeout / Arbeitsspeicher-Härtung weiter evaluieren.
 
-**Effort**: 2-3 hours
+**Effort**: optional / backlog
 
-#### 10. Documentation Expansion
+#### 10. Documentation Expansion — **Partially done**
 
-- Create `CONTRIBUTING.md` with development workflow, PR template, coding standards
-- Add inline JSDoc to public service functions (`geminiService.ts`, `pubmedUtils.ts`)
-- Create `/docs` folder with architecture decision records (ADRs)
+- `CONTRIBUTING.md`, `AGENTS.md`, Cursor-Regeln und README sind vorhanden und mit CI abgestimmt.
+- Optional: JSDoc auf öffentliche Service-APIs, `/docs` mit ADRs bei größeren Releases.
 
-**Effort**: 2-3 hours
+**Effort**: bei Bedarf
 
 ---
 
@@ -232,16 +174,16 @@ Add `npm run lint` to CI/CD pipeline and package.json scripts.
 
 ## File-Level Findings
 
-| File                                     | Issue                                                                       | Severity |
-| ---------------------------------------- | --------------------------------------------------------------------------- | -------- |
-| `src/services/geminiService.ts`          | `extractAndParseJson()` uses brace counting without handling string escapes | Medium   |
-| `src/services/exportService.ts`          | CSV export doesn't protect against formula injection                        | Low      |
-| `src/services/exportService.ts`          | PDF export doesn't explicitly set UTF-8 encoding                            | Low      |
-| `src/services/pubmedUtils.ts`            | `pubYear` extraction via substring has no validation                        | Low      |
-| `src/store/slices/apiSlice.ts`           | RTK Query endpoints partially implemented, no cache invalidation            | Medium   |
-| `src/store/slices/knowledgeBaseSlice.ts` | Delete logic incomplete for async thunks                                    | Medium   |
-| `src/hooks/useFocusTrap.ts`              | Defined but never imported anywhere                                         | Low      |
-| `src/hooks/useHaptic.ts`                 | Imported in App.tsx but never used                                          | Low      |
-| `src/App.tsx`                            | Some `useCallback` dependency arrays may be incomplete                      | Low      |
-| `manifest.json`                          | Missing `icons` array for full PWA installability                           | Low      |
-| `index.html`                             | Missing canonical URL, Open Graph, Twitter Card meta tags                   | Low      |
+| File                                     | Issue                                                                              | Severity |
+| ---------------------------------------- | ---------------------------------------------------------------------------------- | -------- |
+| `src/services/geminiService.ts`          | `extractAndParseJson()` uses brace counting without handling string escapes        | Medium   |
+| `src/services/exportService.ts`          | CSV formula injection mitigated (`sanitizeCsvFormulaInjection`); weiter beobachten | Low      |
+| `src/services/exportService.ts`          | PDF export doesn't explicitly set UTF-8 encoding                                   | Low      |
+| `src/services/pubmedUtils.ts`            | `pubYear` extraction via substring has no validation                               | Low      |
+| `src/store/slices/apiSlice.ts`           | RTK Query endpoints partially implemented, no cache invalidation                   | Medium   |
+| `src/store/slices/knowledgeBaseSlice.ts` | Delete logic incomplete for async thunks                                           | Medium   |
+| `src/hooks/useFocusTrap.ts`              | Defined but never imported anywhere                                                | Low      |
+| `src/hooks/useHaptic.ts`                 | Imported in App.tsx but never used                                                 | Low      |
+| `src/App.tsx`                            | Some `useCallback` dependency arrays may be incomplete                             | Low      |
+| `manifest.json`                          | PNG/SVG icons present; SEO/social meta still optional                              | Low      |
+| `index.html`                             | Missing canonical URL, Open Graph, Twitter Card meta tags                          | Low      |

@@ -1,0 +1,16 @@
+---
+description: Keep tests deterministic; editing *.test.* or Playwright specs or test setup
+globs: **/*.test.ts,**/*.test.tsx,**/*.spec.ts
+alwaysApply: false
+---
+
+# Testing (Vitest / Playwright)
+
+- **Determinismus:** Keine Abhängigkeit von Uhrzeit, Netzwerk-Randomness oder nicht-deterministischer Reihenfolge. Gemini/PubMed/arXiv/IndexedDB/Crypto **mocken** (`@src/test/setup.ts`, bestehende Specs als Vorlage).
+- **Verboten:** Tests auskommentieren/löschen, um CI grün zu tricksen — Ursachen beheben oder Assertions präzisieren.
+- **Isolation:** Specs unabhängig lauffähig; kein geteilter mutable Global-State zwischen Files.
+- **E2E:** `src/test/e2e/` — stabile Selektoren (`getByRole` bevorzugt); `sleep` nur mit Begründung.
+
+Coverage-Schwellen für Logik-Layer: `@vitest.config.ts`. CI nutzt `npm run test:coverage`.
+
+Siehe `@src/test/setup.ts`, `@vitest.config.ts`.

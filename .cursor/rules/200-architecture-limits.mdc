@@ -1,0 +1,20 @@
+---
+description: Keep files maintainable; TS/TSX growing beyond size or duplicate logic appears
+globs: *.*
+alwaysApply: false
+---
+
+# Architektur: KISS, DRY, Dateigröße
+
+- **KISS / DRY:** Duplikate in `src/hooks/`, `src/services/`, `src/lib/` oder Subkomponenten konsolidieren.
+- **Größe:** Ziel **200–400 Zeilen** pro Datei; **harte Obergrenze 700**. Darüber: View + Context + `use*Logic` splitten (vgl. Authors/Journals/KB).
+- **Redux:** Neue Domain-Zustände in passende Slices; bei Slice-Wachstum Selektoren/Hilfsfunktionen auslagern.
+- **Komplexität:** Tiefe Verschachtelung vermeiden; große JSX-Blöcke extrahieren.
+
+<example>
+Feature wird groß → `FeatureView.tsx` + `FeatureViewContext.tsx` + `useFeatureLogic.ts`.
+</example>
+
+<example type="invalid">
+Eine Datei mit Orchestrator-Logik, drei Modalen und Export — alles inline >900 Zeilen.
+</example>

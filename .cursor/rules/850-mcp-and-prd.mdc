@@ -1,0 +1,10 @@
+---
+description: Gate major changes by PRD and notes; macro workflow; MCP readiness without secrets
+alwaysApply: false
+---
+
+# PRD, Consciousness Stream & MCP
+
+- **PRD:** Vor größeren Architektur-/Produktentscheidungen Anforderungen lesen — `instructions.md` / `PRD.md` sobald vorhanden; bis dahin `AGENTS.md`, `README.md`, `CHANGELOG.md`.
+- **`.notes/meeting_notes.md`:** Kurze datierte Entscheidungen (Warum/Was/Impact) für spätere Sessions.
+- **MCP:** Nur mit Nutzerfreigabe aktivieren (GitHub-Issues/PRs, Docs-Suche). Keine Tokens oder Repo-URLs mit Credentials in Regeln committen.

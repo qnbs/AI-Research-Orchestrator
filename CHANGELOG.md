@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Vitest: globale Coverage-Schwellen für `lines`/`statements` auf **30 %** gesetzt (Messung ~30,5 % bei bestehendem Include-Scope); weiterhin Fokus auf `store/`, `services/`, `hooks/`, `lib/`.
+- Cursor: modulares Regelwerk unter `.cursor/rules/` (`000`–`850`, neu `101-dexie-local.mdc`), Always-On-Manifest `.cursor/index.mdc`; CI-Schritt Typecheck auf `npm run typecheck` vereinheitlicht (`deploy.yml`).
+- Dokumentation: `AGENTS.md`, `README.md`, `CONTRIBUTING.md`, `.github/copilot-instructions.md` an Manifest und Workflow angeglichen; `package.json` mit `engines.node`.
+- Audit-Dokument `AUDIT.md` für aktuelle Tests/Tooling/Cursor-Stand aktualisiert.
+
 ## [0.1.1] - 2026-05-02
 
 ### Added

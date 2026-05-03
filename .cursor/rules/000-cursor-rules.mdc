@@ -1,0 +1,37 @@
+---
+description: Author new rules on request; user teaches lesson or asks rule change; numbered .mdc policy
+globs:
+alwaysApply: false
+---
+
+# Meta: Regeln für Regeln
+
+- Nutzer weist an, eine Regel zu erstellen/zu ändern **oder** ich soll eine Korrektur dauerhaft festhalten → **immer** `.mdc` unter `.cursor/rules/` anlegen oder ändern.
+- **Nummernkreis** (Kebab-Case): `001–099` Core/Security, `100–199` Integrationen/APIs, `200–299` Architektur/Patterns, `300–399` UI/Styling, `800–899` Workflows/Testing.
+- **`description`:** ATO (Action, Trigger, Outcome), **≤120 Zeichen**, Englisch oder kompaktes DE ok.
+- **`globs`:** Keine Leerzeichen nach Kommas, keine Anführungszeichen — z. B. `globs: *.ts,src/**/*.tsx`.
+- **Länge:** Regeln **≤200 Zeilen**; Code nicht duplizieren — verweisen auf `@PFAD` (z. B. `@src/services/apiKeyService.ts`).
+- **Beispiele:** `<example>` und `<example type="invalid">` für gültige vs. verbotene Muster.
+- **Editor:** Bevorzugt Standard-Editor zum Schreiben (MDC-Editor-Glitches vermeiden).
+
+<example>
+
+```yaml
+---
+description: Block secrets in src; editing services or settings; safe commits and reviews
+globs: src/**/*.ts,src/**/*.tsx
+alwaysApply: false
+---
+```
+
+</example>
+
+<example type="invalid">
+
+```yaml
+globs: "*.tsx", src/**/*.ts
+```
+
+Leerzeichen nach Kommas und Quotes sind verboten.
+
+</example>
