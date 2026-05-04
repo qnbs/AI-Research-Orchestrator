@@ -34,7 +34,7 @@
     ]
   },
   "dependencies": {
-    "@google/genai": "^1.19.0",
+    "@google/genai": "^1.51.0",
     "@reduxjs/toolkit": "^2.2.5",
     "@tanstack/react-virtual": "^3.13.21",
     "chart.js": "^4.4.3",
