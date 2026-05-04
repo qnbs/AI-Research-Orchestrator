@@ -6,6 +6,7 @@
  */
 import { createApi, fetchBaseQuery, retry } from '@reduxjs/toolkit/query/react';
 import type { RankedArticle, ArxivArticle, FeaturedAuthorCategory } from '../../types';
+import { combineAbortSignals } from '../../lib/abortUtils';
 
 // ── PubMed E-utilities base URLs ──────────────────────────────────────────────
 const PUBMED_BASE = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils';
@@ -14,13 +15,19 @@ const ARXIV_BASE = 'https://export.arxiv.org/api/query';
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function buildPubMedUrl(endpoint: string, params: Record<string, string | number>): string {
-  const p = new URLSearchParams({ db: 'pubmed', retmode: 'json', ...Object.fromEntries(Object.entries(params).map(([k, v]) => [k, String(v)])) });
+  const p = new URLSearchParams({
+    db: 'pubmed',
+    retmode: 'json',
+    ...Object.fromEntries(Object.entries(params).map(([k, v]) => [k, String(v)])),
+  });
   return `${PUBMED_BASE}/${endpoint}.fcgi?${p.toString()}`;
 }
 
 /** Parse PubMed XML summary to RankedArticle */
 function parsePubMedSummary(uid: string, docsum: Record<string, unknown>): RankedArticle {
-  const authors = (docsum.authors as Array<{ name: string }> | undefined)?.map(a => a.name).join(', ') ?? 'Unknown';
+  const authors =
+    (docsum.authors as Array<{ name: string }> | undefined)?.map((a) => a.name).join(', ') ??
+    'Unknown';
   return {
     pmid: uid,
     title: String(docsum.title ?? ''),
@@ -42,17 +49,21 @@ function parseArxivFeed(xmlText: string): ArxivArticle[] {
   const parser = new DOMParser();
   const doc = parser.parseFromString(xmlText, 'application/xml');
   const entries = Array.from(doc.querySelectorAll('entry'));
-  return entries.map(entry => {
+  return entries.map((entry) => {
     const id = entry.querySelector('id')?.textContent ?? '';
     const arxivId = id.split('/abs/').pop()?.replace(/v\d+$/, '') ?? id;
-    const categories = Array.from(entry.querySelectorAll('category')).map(c => c.getAttribute('term') ?? '');
+    const categories = Array.from(entry.querySelectorAll('category')).map(
+      (c) => c.getAttribute('term') ?? '',
+    );
     const links = Array.from(entry.querySelectorAll('link'));
-    const pdfLink = links.find(l => l.getAttribute('title') === 'pdf');
-    const htmlLink = links.find(l => l.getAttribute('rel') === 'alternate');
+    const pdfLink = links.find((l) => l.getAttribute('title') === 'pdf');
+    const htmlLink = links.find((l) => l.getAttribute('rel') === 'alternate');
     return {
       arxivId,
       title: entry.querySelector('title')?.textContent?.trim() ?? '',
-      authors: Array.from(entry.querySelectorAll('author name')).map(a => a.textContent ?? '').join(', '),
+      authors: Array.from(entry.querySelectorAll('author name'))
+        .map((a) => a.textContent ?? '')
+        .join(', '),
       abstract: entry.querySelector('summary')?.textContent?.trim() ?? '',
       published: entry.querySelector('published')?.textContent ?? '',
       updated: entry.querySelector('updated')?.textContent ?? '',
@@ -67,16 +78,13 @@ function parseArxivFeed(xmlText: string): ArxivArticle[] {
 }
 
 // ── RTK Query base with retry ─────────────────────────────────────────────────
-const baseQueryWithRetry = retry(
-  fetchBaseQuery({ baseUrl: '/' }),
-  { maxRetries: 3 }
-);
+const baseQueryWithRetry = retry(fetchBaseQuery({ baseUrl: '/' }), { maxRetries: 3 });
 
 // ── Request/Response types ────────────────────────────────────────────────────
 export interface PubMedSearchArgs {
   query: string;
   maxResults?: number;
-  dateRange?: string;   // e.g. "5" → last 5 years
+  dateRange?: string; // e.g. "5" → last 5 years
   articleTypes?: string[];
 }
 
@@ -129,10 +137,9 @@ export const researchApi = createApi({
   tagTypes: ['PubMed', 'Arxiv', 'ArticleDetails'],
   keepUnusedDataFor: 600, // Cache for 10 minutes
   endpoints: (builder) => ({
-
     // ── PubMed: Search (esearch) ───────────────────────────────────────────
     searchPubMed: builder.query<PubMedSearchResult, PubMedSearchArgs>({
-      queryFn: async ({ query, maxResults = 100, dateRange, articleTypes }) => {
+      queryFn: async ({ query, maxResults = 100, dateRange, articleTypes }, api) => {
         try {
           let fullQuery = query;
           if (dateRange) {
@@ -140,7 +147,7 @@ export const researchApi = createApi({
             fullQuery += ` AND ("${fromYear}"[PDAT] : "3000"[PDAT])`;
           }
           if (articleTypes?.length) {
-            const typeFilters = articleTypes.map(t => `"${t}"[pt]`).join(' OR ');
+            const typeFilters = articleTypes.map((t) => `"${t}"[pt]`).join(' OR ');
             fullQuery += ` AND (${typeFilters})`;
           }
           const url = buildPubMedUrl('esearch', {
@@ -148,7 +155,7 @@ export const researchApi = createApi({
             retmax: maxResults,
             usehistory: 'y',
           });
-          const response = await fetchWithBackoff(url);
+          const response = await fetchWithBackoff(url, { signal: api.signal });
           const data = await response.json();
           return {
             data: {
@@ -166,20 +173,22 @@ export const researchApi = createApi({
 
     // ── PubMed: Fetch article summaries (esummary) ─────────────────────────
     getPubMedDetails: builder.query<RankedArticle[], PubMedDetailsArgs>({
-      queryFn: async ({ pmids }) => {
+      queryFn: async ({ pmids }, api) => {
         if (!pmids.length) return { data: [] };
         try {
           const url = buildPubMedUrl('esummary', {
             id: pmids.join(','),
             retmax: pmids.length,
           });
-          const response = await fetchWithBackoff(url);
+          const response = await fetchWithBackoff(url, { signal: api.signal });
           const data = await response.json();
-          const result = pmids.map(uid => {
-            const docsum = data.result?.[uid];
-            if (!docsum) return null;
-            return parsePubMedSummary(uid, docsum);
-          }).filter((a): a is RankedArticle => a !== null);
+          const result = pmids
+            .map((uid) => {
+              const docsum = data.result?.[uid];
+              if (!docsum) return null;
+              return parsePubMedSummary(uid, docsum);
+            })
+            .filter((a): a is RankedArticle => a !== null);
           return { data: result };
         } catch (error) {
           return { error: { status: 'CUSTOM_ERROR', error: String(error) } };
@@ -193,11 +202,11 @@ export const researchApi = createApi({
 
     // ── arXiv: Full-text search ────────────────────────────────────────────
     searchArxiv: builder.query<ArxivSearchResult, ArxivSearchArgs>({
-      queryFn: async ({ query, maxResults = 50, categories = [], sortBy = 'relevance' }) => {
+      queryFn: async ({ query, maxResults = 50, categories = [], sortBy = 'relevance' }, api) => {
         try {
           let searchQuery = `all:${encodeURIComponent(query)}`;
           if (categories.length) {
-            const catFilter = categories.map(c => `cat:${c}`).join('+OR+');
+            const catFilter = categories.map((c) => `cat:${c}`).join('+OR+');
             searchQuery += `+AND+(${catFilter})`;
           }
           const params = new URLSearchParams({
@@ -207,12 +216,15 @@ export const researchApi = createApi({
             sortOrder: 'descending',
           });
           const url = `${ARXIV_BASE}?${params.toString()}`;
-          const response = await fetchWithBackoff(url);
+          const response = await fetchWithBackoff(url, { signal: api.signal });
           const text = await response.text();
           const articles = parseArxivFeed(text);
           // Extract totalResults from feed
           const doc = new DOMParser().parseFromString(text, 'application/xml');
-          const total = parseInt(doc.querySelector('opensearch\\:totalResults, totalResults')?.textContent ?? '0', 10);
+          const total = parseInt(
+            doc.querySelector('opensearch\\:totalResults, totalResults')?.textContent ?? '0',
+            10,
+          );
           return { data: { articles, totalResults: total, query } };
         } catch (error) {
           return { error: { status: 'CUSTOM_ERROR', error: String(error) } };
@@ -223,10 +235,10 @@ export const researchApi = createApi({
 
     // ── PubMed: Abstract fetch ─────────────────────────────────────────────
     getPubMedAbstract: builder.query<string, string>({
-      queryFn: async (pmid) => {
+      queryFn: async (pmid, api) => {
         try {
           const url = buildPubMedUrl('efetch', { id: pmid, rettype: 'abstract', retmode: 'text' });
-          const response = await fetchWithBackoff(url);
+          const response = await fetchWithBackoff(url, { signal: api.signal });
           const text = await response.text();
           return { data: text.trim() };
         } catch (error) {
@@ -238,10 +250,10 @@ export const researchApi = createApi({
 
     // ── PubMed: ID-only search (for author/journal pipelines) ─────────────
     searchPubMedIds: builder.query<string[], SearchPubMedIdsArgs>({
-      queryFn: async ({ query, maxResults }) => {
+      queryFn: async ({ query, maxResults }, api) => {
         try {
           const url = `${PUBMED_BASE}/esearch.fcgi?db=pubmed&term=${encodeURIComponent(query)}&retmax=${maxResults}&sort=relevance&retmode=json`;
-          const response = await fetchWithBackoff(url);
+          const response = await fetchWithBackoff(url, { signal: api.signal });
           const data = await response.json();
           return { data: data.esearchresult?.idlist ?? [] };
         } catch (error) {
@@ -254,25 +266,32 @@ export const researchApi = createApi({
 
     // ── PubMed: Full article details via POST (pmcId, abstract, etc.) ──────
     getArticleDetailsFull: builder.query<Partial<RankedArticle>[], GetArticleDetailsFullArgs>({
-      queryFn: async ({ pmids }) => {
+      queryFn: async ({ pmids }, api) => {
         if (!pmids.length) return { data: [] };
         try {
           const formData = new FormData();
           formData.append('id', pmids.join(','));
           const url = `${PUBMED_BASE}/esummary.fcgi?db=pubmed&retmode=json`;
-          const response = await fetchWithBackoff(url, { method: 'POST', body: formData });
+          const response = await fetchWithBackoff(url, {
+            method: 'POST',
+            body: formData,
+            signal: api.signal,
+          });
           const data = await response.json();
           const articles: Partial<RankedArticle>[] = [];
-          for (const pmid of (data.result?.uids ?? [])) {
+          for (const pmid of data.result?.uids ?? []) {
             const art = data.result[pmid];
             if (!art) continue;
-            const pmcEntry = ((art.articleids ?? []) as Array<{ idtype: string; value: string }>)
-              .find(x => x.idtype === 'pmc');
+            const pmcEntry = (
+              (art.articleids ?? []) as Array<{ idtype: string; value: string }>
+            ).find((x) => x.idtype === 'pmc');
             articles.push({
               pmid,
               pmcId: pmcEntry?.value,
               title: art.title ?? '',
-              authors: ((art.authors ?? []) as Array<{ name: string }>).map(a => a.name).join(', '),
+              authors: ((art.authors ?? []) as Array<{ name: string }>)
+                .map((a) => a.name)
+                .join(', '),
               journal: art.fulljournalname ?? '',
               pubYear: (art.pubdate ?? '').split(' ')[0],
               summary: art.abstract || 'No abstract available.',
@@ -290,7 +309,7 @@ export const researchApi = createApi({
       serializeQueryArgs: ({ queryArgs }) => queryArgs.pmids.slice().sort().join(','),
       providesTags: (result) =>
         result
-          ? result.map(a => ({ type: 'ArticleDetails' as const, id: `full-${a.pmid}` }))
+          ? result.map((a) => ({ type: 'ArticleDetails' as const, id: `full-${a.pmid}` }))
           : ['ArticleDetails'],
     }),
 
@@ -333,11 +352,11 @@ export const researchApi = createApi({
       infiniteQueryOptions: {
         initialPageParam: 0,
         getNextPageParam: (lastPage, allPages, lastPageParam) => {
-          const loaded = allPages.flatMap(p => p.pmids).length;
+          const loaded = allPages.flatMap((p) => p.pmids).length;
           return loaded < lastPage.total ? loaded : undefined;
         },
       },
-      queryFn: async ({ queryArg, pageParam }) => {
+      queryFn: async ({ queryArg, pageParam }, api) => {
         const pageSize = queryArg.pageSize ?? 20;
         try {
           const url = buildPubMedUrl('esearch', {
@@ -345,7 +364,7 @@ export const researchApi = createApi({
             retmax: pageSize,
             retstart: pageParam,
           });
-          const response = await fetchWithBackoff(url);
+          const response = await fetchWithBackoff(url, { signal: api.signal });
           const data = await response.json();
           return {
             data: {
@@ -364,22 +383,28 @@ export const researchApi = createApi({
 });
 
 // ── Exponential backoff fetch ─────────────────────────────────────────────────
-async function fetchWithBackoff(url: string, init?: RequestInit, retries = 3, delay = 1000): Promise<Response> {
+async function fetchWithBackoff(
+  url: string,
+  init?: RequestInit,
+  retries = 3,
+  delay = 1000,
+): Promise<Response> {
   try {
-    const response = await fetch(url, { signal: AbortSignal.timeout(15000), ...init });
+    const signal = combineAbortSignals(15000, init?.signal);
+    const response = await fetch(url, { ...init, signal });
     if (response.status === 429 && retries > 0) {
       const wait = parseInt(response.headers.get('Retry-After') ?? '0', 10) * 1000 || delay * 2;
-      await new Promise(r => setTimeout(r, wait));
+      await new Promise((r) => setTimeout(r, wait));
       return fetchWithBackoff(url, init, retries - 1, wait);
     }
     if (!response.ok && retries > 0 && response.status >= 500) {
-      await new Promise(r => setTimeout(r, delay));
+      await new Promise((r) => setTimeout(r, delay));
       return fetchWithBackoff(url, init, retries - 1, delay * 2);
     }
     return response;
   } catch (err) {
     if (retries > 0) {
-      await new Promise(r => setTimeout(r, delay));
+      await new Promise((r) => setTimeout(r, delay));
       return fetchWithBackoff(url, init, retries - 1, delay * 2);
     }
     throw err;
@@ -405,4 +430,3 @@ export const {
   useGetFeaturedJournalsQuery,
   useSearchPubMedInfiniteInfiniteQuery,
 } = researchApi;
-

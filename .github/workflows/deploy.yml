@@ -62,6 +62,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: npm audit (high+)
+        run: npm audit --audit-level=high
+
       # Step 4: Run type checking (aligned with package.json "typecheck")
       - name: Type check
         run: npm run typecheck

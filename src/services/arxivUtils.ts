@@ -8,6 +8,7 @@
  * PubMed results only — never blocks the main research flow.
  */
 import type { RankedArticle } from '../types';
+import { combineAbortSignals } from '../lib/abortUtils';
 
 const ARXIV_BASE = 'https://export.arxiv.org/api/query';
 
@@ -15,22 +16,23 @@ async function fetchWithRetry(
   url: string,
   retries = 3,
   backoff = 1200,
+  signal?: AbortSignal,
 ): Promise<Response> {
   try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(18_000) });
+    const res = await fetch(url, { signal: combineAbortSignals(18_000, signal) });
     if (res.status === 429 && retries > 0) {
-      await new Promise(r => setTimeout(r, backoff * 2));
-      return fetchWithRetry(url, retries - 1, backoff * 2);
+      await new Promise((r) => setTimeout(r, backoff * 2));
+      return fetchWithRetry(url, retries - 1, backoff * 2, signal);
     }
     if (!res.ok && res.status >= 500 && retries > 0) {
-      await new Promise(r => setTimeout(r, backoff));
-      return fetchWithRetry(url, retries - 1, backoff * 2);
+      await new Promise((r) => setTimeout(r, backoff));
+      return fetchWithRetry(url, retries - 1, backoff * 2, signal);
     }
     return res;
   } catch (err) {
     if (retries > 0) {
-      await new Promise(r => setTimeout(r, backoff));
-      return fetchWithRetry(url, retries - 1, backoff * 2);
+      await new Promise((r) => setTimeout(r, backoff));
+      return fetchWithRetry(url, retries - 1, backoff * 2, signal);
     }
     throw err;
   }
@@ -46,37 +48,36 @@ function entryToRankedArticle(entry: Element): Partial<RankedArticle> {
   const arxivId = idRaw.replace(/.*\/abs\//, '').replace(/v\d+$/, '');
 
   const authors = Array.from(entry.getElementsByTagName('author'))
-    .map(a => a.getElementsByTagName('name')[0]?.textContent?.trim() ?? '')
+    .map((a) => a.getElementsByTagName('name')[0]?.textContent?.trim() ?? '')
     .filter(Boolean)
     .join(', ');
 
   const categories = Array.from(entry.getElementsByTagName('category'))
-    .map(c => c.getAttribute('term') ?? '')
+    .map((c) => c.getAttribute('term') ?? '')
     .filter(Boolean);
 
   const pdfLinkEl = Array.from(entry.getElementsByTagName('link')).find(
-    l => l.getAttribute('type') === 'application/pdf',
+    (l) => l.getAttribute('type') === 'application/pdf',
   );
-  const pdfUrl =
-    pdfLinkEl?.getAttribute('href') ?? `https://arxiv.org/pdf/${arxivId}`;
+  const pdfUrl = pdfLinkEl?.getAttribute('href') ?? `https://arxiv.org/pdf/${arxivId}`;
 
   // arXiv uses a namespace for journal_ref and doi — try both with and without NS
   const journalRef =
-    entry.getElementsByTagNameNS('http://arxiv.org/schemas/atom', 'journal_ref')[0]
-      ?.textContent?.trim() ??
-    entry.getElementsByTagName('journal_ref')[0]?.textContent?.trim();
+    entry
+      .getElementsByTagNameNS('http://arxiv.org/schemas/atom', 'journal_ref')[0]
+      ?.textContent?.trim() ?? entry.getElementsByTagName('journal_ref')[0]?.textContent?.trim();
 
   const pubDate = getText('published').split('T')[0]; // YYYY-MM-DD
   const pubYear = pubDate.split('-')[0];
 
   return {
-    pmid: `arxiv:${arxivId}`,          // synthetic PMID keeps the pipeline unified
+    pmid: `arxiv:${arxivId}`, // synthetic PMID keeps the pipeline unified
     title: getText('title').replace(/\s+/g, ' '),
     authors,
     journal: journalRef ?? (categories[0] ? `arXiv [${categories[0]}]` : 'arXiv Preprint'),
     pubYear,
     summary: getText('summary').replace(/\s+/g, ' '),
-    isOpenAccess: true,               // arXiv is always open access
+    isOpenAccess: true, // arXiv is always open access
     keywords: categories,
     relevanceScore: 0,
     relevanceExplanation: '',
@@ -95,6 +96,7 @@ function entryToRankedArticle(entry: Element): Partial<RankedArticle> {
 export async function searchAndFetchArxiv(
   topic: string,
   maxResults: number,
+  signal?: AbortSignal,
 ): Promise<Partial<RankedArticle>[]> {
   try {
     const query = encodeURIComponent(topic);
@@ -103,7 +105,7 @@ export async function searchAndFetchArxiv(
       `&start=0&max_results=${maxResults}` +
       `&sortBy=relevance&sortOrder=descending`;
 
-    const res = await fetchWithRetry(url);
+    const res = await fetchWithRetry(url, 3, 1200, signal);
     if (!res.ok) return [];
 
     const xml = await res.text();

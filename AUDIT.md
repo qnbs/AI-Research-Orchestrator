@@ -174,16 +174,20 @@ Weitere Optimierung: Maskable-Safe-Zones und zusätzliche Auflösungen nur bei B
 
 ## File-Level Findings
 
-| File                                     | Issue                                                                              | Severity |
-| ---------------------------------------- | ---------------------------------------------------------------------------------- | -------- |
-| `src/services/geminiService.ts`          | `extractAndParseJson()` uses brace counting without handling string escapes        | Medium   |
-| `src/services/exportService.ts`          | CSV formula injection mitigated (`sanitizeCsvFormulaInjection`); weiter beobachten | Low      |
-| `src/services/exportService.ts`          | PDF export doesn't explicitly set UTF-8 encoding                                   | Low      |
-| `src/services/pubmedUtils.ts`            | `pubYear` extraction via substring has no validation                               | Low      |
-| `src/store/slices/apiSlice.ts`           | RTK Query endpoints partially implemented, no cache invalidation                   | Medium   |
-| `src/store/slices/knowledgeBaseSlice.ts` | Delete logic incomplete for async thunks                                           | Medium   |
-| `src/hooks/useFocusTrap.ts`              | Defined but never imported anywhere                                                | Low      |
-| `src/hooks/useHaptic.ts`                 | Imported in App.tsx but never used                                                 | Low      |
-| `src/App.tsx`                            | Some `useCallback` dependency arrays may be incomplete                             | Low      |
-| `manifest.json`                          | PNG/SVG icons present; SEO/social meta still optional                              | Low      |
-| `index.html`                             | Missing canonical URL, Open Graph, Twitter Card meta tags                          | Low      |
+| File                                     | Issue                                                                                              | Severity |
+| ---------------------------------------- | -------------------------------------------------------------------------------------------------- | -------- |
+| `src/services/geminiService.ts`          | `extractAndParseJson()` uses brace counting without handling string escapes                        | Medium   |
+| `src/services/exportService.ts`          | CSV formula injection mitigated (`sanitizeCsvFormulaInjection`); weiter beobachten                 | Low      |
+| `src/services/exportService.ts`          | PDF export doesn't explicitly set UTF-8 encoding                                                   | Low      |
+| `src/services/pubmedUtils.ts`            | `pubYear` extraction via substring has no validation                                               | Low      |
+| `src/store/slices/apiSlice.ts`           | RTK Query endpoints partially implemented, no cache invalidation                                   | Medium   |
+| `src/store/slices/knowledgeBaseSlice.ts` | Delete logic incomplete for async thunks                                                           | Medium   |
+| `src/hooks/useFocusTrap.ts`              | Defined but never imported anywhere                                                                | Low      |
+| `src/hooks/useHaptic.ts`                 | Imported in App.tsx but never used                                                                 | Low      |
+| `src/App.tsx`                            | Some `useCallback` dependency arrays may be incomplete                                             | Low      |
+| `public/manifest.json`                   | Icons + PWA manifest served from `public/` for Vite build                                          | Low      |
+| `index.html`                             | Canonical, OG/Twitter meta, JSON-LD SoftwareApplication; SPA bootstrap in `public/spa-fallback.js` | Low      |
+
+## P2 backlog (planned)
+
+- Semantic Scholar / zusätzliche Literaturquellen; erweiterte Exportformate; Voll-Audit axe/Lighthouse; weitere UI-Sprachen.

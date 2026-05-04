@@ -18,6 +18,13 @@ npm run dev
 
 Copy `.env.example` if you use local env vars; **never** commit API keys.
 
+## State management (Redux-first)
+
+- **Domain state** (settings, UI chrome, knowledge base, collections, theme, Gemini/PubMed caches) lives in **Redux** (`src/store/`). Prefer RTK Query slices (`researchApi`, `geminiApi`) for networked data.
+- **`SettingsProvider`** only hydrates Redux once from IndexedDB via `useSettings`; no parallel settings store.
+- **`useUI`** reads/writes **`uiSlice`** (navigation, notifications). `UIContext` is a barrel — do not add duplicate navigation state elsewhere.
+- **Feature contexts** (`KnowledgeBaseViewContext`, `PresetContext`, view-specific `*ViewContext`) may hold **local UI** (filters, pagination, panel visibility). Avoid duplicating the same facts in Context and Redux; pick one source of truth per fact.
+
 ## Quality checks (run before opening a PR)
 
 ```bash
@@ -46,10 +53,11 @@ npm run test:e2e
 GitHub Actions (`.github/workflows/deploy.yml`) on pushes and PRs to `main`:
 
 1. `npm ci`
-2. `npm run typecheck`
-3. `npm run lint`
-4. `npm run test:coverage`
-5. `npm run build`
+2. `npm audit --audit-level=high`
+3. `npm run typecheck`
+4. `npm run lint`
+5. `npm run test:coverage`
+6. `npm run build`
 
 Deployment to GitHub Pages runs only for pushes (and manual dispatch) on `main`, not for pull requests.
 

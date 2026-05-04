@@ -3,26 +3,25 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- Baseline CSP: allows Gemini/PubMed/arXiv over HTTPS; relax further only after testing. -->
+    <!-- CSP: SPA route restore runs from bundled `src/spaRouteRestore.ts`; unsafe-inline for JSON-LD + legacy boot. -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https: blob:; connect-src 'self' https: blob: data: wss:; base-uri 'self';" />
     <title>AI Research Orchestration Author</title>
 
     <!-- PWA and Mobile Meta Tags -->
     <meta name="application-name" content="AI Research Orchestration Author">
     <meta name="description" content="An expert system for authoring comprehensive literature reviews.">
+    <link rel="canonical" href="https://qnbs.github.io/AI-Research-Orchestrator/" />
+    <meta property="og:title" content="AI Research Orchestrator" />
+    <meta property="og:description" content="Local-first expert system for PubMed literature reviews with Gemini agents." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://qnbs.github.io/AI-Research-Orchestrator/" />
+    <meta name="twitter:card" content="summary" />
     <meta name="format-detection" content="telephone=no">
     <meta name="mobile-web-app-capable" content="yes">
     
     <link rel="manifest" href="manifest.json" />
-    <!-- SPA Fallback: Restore route after GitHub Pages 404 redirect -->
-    <script>
-      (function(){
-        var redirect = sessionStorage.getItem('spa-redirect');
-        if (redirect) {
-          sessionStorage.removeItem('spa-redirect');
-          window.history.replaceState(null, null, redirect);
-        }
-      })();
+    <script type="application/ld+json">
+      {"@context":"https://schema.org","@type":"SoftwareApplication","name":"AI Research Orchestrator","applicationCategory":"EducationalApplication","operatingSystem":"Web","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"url":"https://qnbs.github.io/AI-Research-Orchestrator/"}
     </script>
     <meta name="theme-color" content="#010409" />
     <meta name="apple-mobile-web-app-capable" content="yes" />

@@ -20,12 +20,12 @@ export default defineConfig({
         'src/lib/**/*.ts',
       ],
       exclude: ['node_modules/', 'src/test/', 'dist/', '**/*.{test,spec}.{ts,tsx}'],
-      /** Baseline aligned with measured aggregate coverage on logic-layer includes (large services e.g. gemini keep totals ~30%). */
+      /** Raised after expanded unit tests (logic-layer ~65% lines aggregate). */
       thresholds: {
-        lines: 30,
-        statements: 30,
-        branches: 20,
-        functions: 27,
+        lines: 65,
+        statements: 65,
+        branches: 52,
+        functions: 52,
       },
     },
   },

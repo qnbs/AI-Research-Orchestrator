@@ -10,12 +10,12 @@ import type {
   ResearchAnalysis,
   GeneratedQuery,
   AuthorCluster,
-  FeaturedAuthorCategory,
   JournalProfile,
 } from '../types';
 import { getApiKey } from './apiKeyService';
 import { searchPubMedForIds, fetchArticleDetails } from './pubmedUtils';
 import { searchAndFetchArxiv } from './arxivUtils';
+import { sanitizePromptFragment } from '../lib/promptSanitize';
 
 function throwIfAborted(signal?: AbortSignal): void {
   if (signal?.aborted) {
@@ -61,8 +61,9 @@ export function resetAIInstance(): void {
 /**
  * Robustly extracts JSON from AI response text.
  * Handles Markdown code blocks, raw JSON, and surrounding chatter.
+ * Exported for unit tests and reuse.
  */
-function extractAndParseJson<T>(text: string): T {
+export function parseGeminiResponseJson<T>(text: string): T {
   if (!text) throw new Error('Empty response from AI');
 
   // Pre-process: remove potentially harmful unicode or control characters if necessary,
@@ -231,6 +232,8 @@ export async function* generateResearchReportStream(
 ): AsyncGenerator<{ report?: ResearchReport; synthesisChunk?: string; phase: string }> {
   const ai = await getAI();
   throwIfAborted(signal);
+  const topicSafe = sanitizePromptFragment(input.researchTopic);
+  const focusSafe = sanitizePromptFragment(input.synthesisFocus);
   try {
     const systemInstruction = `${getPreamble(aiSettings)} You are an expert AI research assistant. Your goal is to conduct a literature review on PubMed${input.includeArxiv ? ' and arXiv' : ''} based on the user's criteria, rank the articles, and synthesize the findings. Article identifiers from arXiv begin with "arxiv:" — treat them exactly like PubMed PMIDs.`;
 
@@ -252,7 +255,7 @@ export async function* generateResearchReportStream(
 - Ensure the main topic part of the query is enclosed in parentheses if it contains OR operators, before you AND the filters.
 - For example, for the topic "effects of aspirin on heart attack" with a filter for "Randomized Controlled Trial", a good query would be: (("aspirin"[MeSH Terms] OR "aspirin"[Title/Abstract]) AND ("myocardial infarction"[MeSH Terms] OR "heart attack"[Title/Abstract])) AND ("Randomized Controlled Trial"[Publication Type])
 
-Research Topic: "${input.researchTopic}"
+Research Topic: "${topicSafe}"
 `;
     };
 
@@ -283,7 +286,7 @@ Research Topic: "${input.researchTopic}"
       contents: buildQueryGenPrompt(input),
     });
 
-    const { generatedQueries } = extractAndParseJson<{ generatedQueries: GeneratedQuery[] }>(
+    const { generatedQueries } = parseGeminiResponseJson<{ generatedQueries: GeneratedQuery[] }>(
       queryGenResponse.text ?? '',
     );
     if (!generatedQueries || generatedQueries.length === 0 || !generatedQueries[0].query) {
@@ -293,7 +296,11 @@ Research Topic: "${input.researchTopic}"
     throwIfAborted(signal);
     // STEP 2: Execute Real PubMed Search
     yield { phase: 'Phase 2: Executing Real-time PubMed Search...' };
-    const pmids = await searchPubMedForIds(generatedQueries[0].query, input.maxArticlesToScan);
+    const pmids = await searchPubMedForIds(
+      generatedQueries[0].query,
+      input.maxArticlesToScan,
+      signal,
+    );
     if (pmids.length === 0) {
       throw new Error(
         'Your search returned no results from PubMed. This can be due to a very specific topic or strict filters. Try broadening your topic, adjusting the date range, or changing article types.',
@@ -303,7 +310,7 @@ Research Topic: "${input.researchTopic}"
     throwIfAborted(signal);
     // STEP 3: Fetch Real Article Details
     yield { phase: 'Phase 3: Fetching Article Details from PubMed...' };
-    const articleDetails = await fetchArticleDetails(pmids);
+    const articleDetails = await fetchArticleDetails(pmids, signal);
     if (articleDetails.length === 0) {
       throw new Error('Could not fetch details for the articles found on PubMed.');
     }
@@ -313,7 +320,7 @@ Research Topic: "${input.researchTopic}"
     if (input.includeArxiv) {
       yield { phase: 'Phase 3b: Fetching arXiv Preprints...' };
       const arxivMax = Math.min(Math.floor(input.maxArticlesToScan / 2), 15);
-      const arxivResults = await searchAndFetchArxiv(input.researchTopic, arxivMax);
+      const arxivResults = await searchAndFetchArxiv(topicSafe, arxivMax, signal);
       if (arxivResults.length > 0) {
         articleDetails.push(...arxivResults);
       }
@@ -393,7 +400,7 @@ Research Topic: "${input.researchTopic}"
     const analysisResponse = await ai.models.generateContent({
       model: aiSettings.model,
       config: rankingConfig,
-      contents: `From the provided list of articles, please perform the following analysis based on the original research topic: "${input.researchTopic}".
+      contents: `From the provided list of articles, please perform the following analysis based on the original research topic: "${topicSafe}".
             1.  Rank the top ${input.topNToSynthesize} articles based on their relevance to the topic. For each, provide its PMID, a relevance score (1-100), a brief explanation for the score, 3-5 keywords from its summary, classify its article type, and write a new, concise summary (as 'aiSummary') that extracts the core methodology, key findings, and limitations of the study. Ensure you ONLY use PMIDs from the provided list.
             2.  Generate 3-5 AI-powered insights based on the provided articles. Each insight should be a question/answer pair. List the PMIDs from the provided list that support each insight.
             3.  Analyze the keywords from all ranked articles to identify overall themes. List the top 5-10 keywords and their frequency.
@@ -403,7 +410,7 @@ Research Topic: "${input.researchTopic}"
             `,
     });
 
-    const analysisData = extractAndParseJson<any>(analysisResponse.text ?? '');
+    const analysisData = parseGeminiResponseJson<any>(analysisResponse.text ?? '');
 
     const detailedRankedArticles = analysisData.rankedArticles
       .map((ranked: any) => {
@@ -423,7 +430,7 @@ Research Topic: "${input.researchTopic}"
 
     throwIfAborted(signal);
     // STEP 5: AI Generates Synthesis
-    const synthesisPrompt = `Based on the following articles, write a comprehensive synthesis focusing on "${input.synthesisFocus}". This should be a well-structured narrative in markdown format.
+    const synthesisPrompt = `Based on the following articles, write a comprehensive synthesis focusing on "${focusSafe}". This should be a well-structured narrative in markdown format.
         
         Articles:
         ${detailedRankedArticles
@@ -470,8 +477,10 @@ Research Topic: "${input.researchTopic}"
 export async function findSimilarArticles(
   article: { title: string; summary: string },
   aiSettings: Settings['ai'],
+  signal?: AbortSignal,
 ): Promise<SimilarArticle[]> {
   const ai = await getAI();
+  throwIfAborted(signal);
   try {
     const response = await ai.models.generateContent({
       model: aiSettings.model,
@@ -496,7 +505,7 @@ export async function findSimilarArticles(
         },
       },
     });
-    return extractAndParseJson<SimilarArticle[]>(response.text ?? '');
+    return parseGeminiResponseJson<SimilarArticle[]>(response.text ?? '');
   } catch (error) {
     console.error('Error finding similar articles:', error);
     throw new Error(getGeminiError(error));
@@ -506,12 +515,15 @@ export async function findSimilarArticles(
 export async function findRelatedOnline(
   topic: string,
   aiSettings: Settings['ai'],
+  signal?: AbortSignal,
 ): Promise<OnlineFindings> {
   const ai = await getAI();
+  throwIfAborted(signal);
+  const topicSafe = sanitizePromptFragment(topic);
   try {
     const response = await ai.models.generateContent({
       model: aiSettings.model,
-      contents: `Provide a brief summary of the online discussion, news, or recent developments related to "${topic}".`,
+      contents: `Provide a brief summary of the online discussion, news, or recent developments related to "${topicSafe}".`,
       config: {
         systemInstruction: getPreamble(aiSettings),
         tools: [{ googleSearch: {} }],
@@ -530,12 +542,15 @@ export async function findRelatedOnline(
 export async function generateTldrSummary(
   abstract: string,
   aiSettings: Settings['ai'],
+  signal?: AbortSignal,
 ): Promise<string> {
   const ai = await getAI();
+  throwIfAborted(signal);
+  const abstractSafe = sanitizePromptFragment(abstract, 12000);
   try {
     const response = await ai.models.generateContent({
       model: aiSettings.model,
-      contents: `Summarize the following abstract in a single, concise sentence (TL;DR format): "${abstract}"`,
+      contents: `Summarize the following abstract in a single, concise sentence (TL;DR format): "${abstractSafe}"`,
       config: {
         systemInstruction: getPreamble(aiSettings),
         temperature: 0,
@@ -552,13 +567,16 @@ export async function generateTldrSummary(
 export async function generateResearchAnalysis(
   query: string,
   aiSettings: Settings['ai'],
+  signal?: AbortSignal,
 ): Promise<ResearchAnalysis> {
   const ai = await getAI();
+  throwIfAborted(signal);
+  const querySafe = sanitizePromptFragment(query, 12000);
   try {
     const response = await ai.models.generateContent({
       model: aiSettings.model,
       contents: `Analyze the following text. Provide a concise summary, a bulleted list of 3-5 key findings, and synthesize a clear, specific research topic suitable for a PubMed search.
-            Text: "${query}"`,
+            Text: "${querySafe}"`,
       config: {
         systemInstruction: getPreamble(aiSettings),
         temperature: 0.2,
@@ -574,7 +592,7 @@ export async function generateResearchAnalysis(
         },
       },
     });
-    return extractAndParseJson<ResearchAnalysis>(response.text ?? '');
+    return parseGeminiResponseJson<ResearchAnalysis>(response.text ?? '');
   } catch (error) {
     console.error('Error generating research analysis:', error);
     throw new Error(getGeminiError(error));
@@ -585,12 +603,15 @@ export async function disambiguateAuthor(
   authorName: string,
   articles: Partial<RankedArticle>[],
   aiSettings: Settings['ai'],
+  signal?: AbortSignal,
 ): Promise<AuthorCluster[]> {
   const ai = await getAI();
+  throwIfAborted(signal);
+  const nameSafe = sanitizePromptFragment(authorName, 500);
   try {
     const response = await ai.models.generateContent({
       model: aiSettings.model,
-      contents: `Given the author name "${authorName}" and this list of their potential publications, disambiguate them into distinct author profiles. For each profile, provide a likely name variant, their most common primary affiliation, top 3 co-authors, core research topics, total publication count, and a list of their PMIDs.
+      contents: `Given the author name "${nameSafe}" and this list of their potential publications, disambiguate them into distinct author profiles. For each profile, provide a likely name variant, their most common primary affiliation, top 3 co-authors, core research topics, total publication count, and a list of their PMIDs.
             Articles: ${JSON.stringify(articles.map((a) => ({ pmid: a.pmid, title: a.title, authors: a.authors, journal: a.journal })))}`,
       config: {
         systemInstruction: getPreamble(aiSettings),
@@ -620,7 +641,7 @@ export async function disambiguateAuthor(
         },
       },
     });
-    return extractAndParseJson<AuthorCluster[]>(response.text ?? '');
+    return parseGeminiResponseJson<AuthorCluster[]>(response.text ?? '');
   } catch (error) {
     console.error('Error disambiguating author:', error);
     throw new Error(getGeminiError(error));
@@ -631,16 +652,19 @@ export async function generateAuthorProfileAnalysis(
   authorName: string,
   articles: Partial<RankedArticle>[],
   aiSettings: Settings['ai'],
+  signal?: AbortSignal,
 ): Promise<{
   careerSummary: string;
   coreConcepts: { concept: string; frequency: number }[];
   estimatedMetrics: { hIndex: number | null; totalCitations: number | null };
 }> {
   const ai = await getAI();
+  throwIfAborted(signal);
+  const nameSafe = sanitizePromptFragment(authorName, 500);
   try {
     const response = await ai.models.generateContent({
       model: aiSettings.model,
-      contents: `Analyze the following publication list for author "${authorName}". Based strictly on this list, provide:
+      contents: `Analyze the following publication list for author "${nameSafe}". Based strictly on this list, provide:
             1. A narrative career summary (in markdown format).
             2. A list of their core research concepts with frequency.
             3. An estimation of their h-index and total citations. If the provided data is insufficient for a reasonable estimation, return null for these metric fields.
@@ -674,7 +698,7 @@ export async function generateAuthorProfileAnalysis(
         },
       },
     });
-    return extractAndParseJson<any>(response.text ?? '');
+    return parseGeminiResponseJson<any>(response.text ?? '');
   } catch (error) {
     console.error('Error generating author profile:', error);
     throw new Error(getGeminiError(error));
@@ -684,12 +708,15 @@ export async function generateAuthorProfileAnalysis(
 export async function suggestAuthors(
   fieldOfStudy: string,
   aiSettings: Settings['ai'],
+  signal?: AbortSignal,
 ): Promise<{ name: string; description: string }[]> {
   const ai = await getAI();
+  throwIfAborted(signal);
+  const fieldSafe = sanitizePromptFragment(fieldOfStudy, 2000);
   try {
     const response = await ai.models.generateContent({
       model: aiSettings.model,
-      contents: `Suggest 5-10 prominent researchers in the field of "${fieldOfStudy}". For each, provide their name and a brief (1-sentence) description of their key contribution.`,
+      contents: `Suggest 5-10 prominent researchers in the field of "${fieldSafe}". For each, provide their name and a brief (1-sentence) description of their key contribution.`,
       config: {
         systemInstruction: getPreamble(aiSettings),
         temperature: 0.5,
@@ -707,7 +734,7 @@ export async function suggestAuthors(
         },
       },
     });
-    return extractAndParseJson<{ name: string; description: string }[]>(response.text ?? '');
+    return parseGeminiResponseJson<{ name: string; description: string }[]>(response.text ?? '');
   } catch (error) {
     console.error('Error suggesting authors:', error);
     throw new Error(getGeminiError(error));
@@ -717,8 +744,10 @@ export async function suggestAuthors(
 export async function analyzeSingleArticle(
   identifier: string,
   aiSettings: Settings['ai'],
+  signal?: AbortSignal,
 ): Promise<RankedArticle> {
   const ai = await getAI();
+  throwIfAborted(signal);
   try {
     let pmid = identifier.trim();
     // Basic identifier extraction
@@ -727,12 +756,12 @@ export async function analyzeSingleArticle(
       if (match) pmid = match[1];
     } else if (identifier.includes('doi.org/')) {
       // Can't directly convert DOI to PMID reliably without another API, so we'll just search for the DOI
-      const ids = await searchPubMedForIds(identifier, 1);
+      const ids = await searchPubMedForIds(identifier, 1, signal);
       if (ids.length > 0) pmid = ids[0];
       else throw new Error('DOI not found in PubMed.');
     }
 
-    const articleDetails = await fetchArticleDetails([pmid]);
+    const articleDetails = await fetchArticleDetails([pmid], signal);
     if (!articleDetails || articleDetails.length === 0) {
       throw new Error('Could not fetch article details from PubMed. Please check the identifier.');
     }
@@ -778,7 +807,7 @@ export async function analyzeSingleArticle(
       },
     });
 
-    const analysis = extractAndParseJson<{
+    const analysis = parseGeminiResponseJson<{
       relevanceScore: number;
       relevanceExplanation: string;
       keywords: string[];
@@ -799,12 +828,15 @@ export async function analyzeSingleArticle(
 export async function generateJournalProfileAnalysis(
   journalName: string,
   aiSettings: Settings['ai'],
+  signal?: AbortSignal,
 ): Promise<JournalProfile> {
   const ai = await getAI();
+  throwIfAborted(signal);
+  const journalSafe = sanitizePromptFragment(journalName, 500);
   try {
     const response = await ai.models.generateContent({
       model: aiSettings.model,
-      contents: `Act as an expert academic librarian. Analyze the journal '${journalName}'. Provide a JSON object with the following structure: { "name": "...", "issn": "...", "description": "...", "oaPolicy": "...", "focusAreas": ["..."] }. Find the correct ISSN. For oaPolicy, use one of: "Full Open Access", "Hybrid", "Subscription".`,
+      contents: `Act as an expert academic librarian. Analyze the journal '${journalSafe}'. Provide a JSON object with the following structure: { "name": "...", "issn": "...", "description": "...", "oaPolicy": "...", "focusAreas": ["..."] }. Find the correct ISSN. For oaPolicy, use one of: "Full Open Access", "Hybrid", "Subscription".`,
       config: {
         systemInstruction: getPreamble(aiSettings),
         temperature: 0.2,
@@ -822,7 +854,7 @@ export async function generateJournalProfileAnalysis(
         },
       },
     });
-    return extractAndParseJson<JournalProfile>(response.text ?? '');
+    return parseGeminiResponseJson<JournalProfile>(response.text ?? '');
   } catch (error) {
     console.error('Error generating journal profile analysis:', error);
     throw new Error(getGeminiError(error));
@@ -833,8 +865,10 @@ export async function generateJournalProfileAnalysis(
 export const startChatWithReport = async (
   report: ResearchReport,
   aiSettings: Settings['ai'],
+  signal?: AbortSignal,
 ): Promise<Chat> => {
   const ai = await getAI();
+  throwIfAborted(signal);
   const context = `
         You are a helpful AI assistant that answers questions about a specific research report.
         The user has just generated the following report. Your answers should be based on this context.

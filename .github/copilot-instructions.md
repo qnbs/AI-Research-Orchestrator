@@ -4,24 +4,23 @@ You are an expert full-stack React 19 + TypeScript architect specialized in agen
 
 ## Tech Stack (current, installed)
 
-| Category        | Technology                                      | Version           |
-| --------------- | ----------------------------------------------- | ----------------- |
-| Framework       | React                                           | 19                |
-| Language        | TypeScript                                      | 5.8 (strict mode) |
-| Build           | Vite                                            | 6                 |
-| State           | Redux Toolkit + RTK Query                       | 2                 |
-| Data Fetching   | @tanstack/react-query                           | 5                 |
-| Local DB        | Dexie.js + dexie-react-hooks                    | 4                 |
-| AI              | @google/genai (Gemini 2.5 Flash + Gemini 3 Pro) | latest            |
-| Styling         | Tailwind CSS v4 + @tailwindcss/postcss          | 4.2               |
-| Animation       | Framer Motion                                   | 12                |
-| Icons           | lucide-react                                    | latest            |
-| Charts          | Chart.js + react-chartjs-2, Recharts            | latest            |
-| Virtualization  | @tanstack/react-virtual                         | 3                 |
-| Command Palette | cmdk                                            | 1                 |
-| PDF Export      | jsPDF + marked                                  | latest            |
-| Sanitization    | DOMPurify                                       | 3                 |
-| Testing         | Vitest + @testing-library/react + Playwright    | latest            |
+| Category        | Technology                                             | Version           |
+| --------------- | ------------------------------------------------------ | ----------------- |
+| Framework       | React                                                  | 19                |
+| Language        | TypeScript                                             | 5.8 (strict mode) |
+| Build           | Vite                                                   | 6                 |
+| State / APIs    | Redux Toolkit + RTK Query (`researchApi`, `geminiApi`) | 2                 |
+| Local DB        | Dexie.js + dexie-react-hooks                           | 4                 |
+| AI              | @google/genai (Gemini 2.5 Flash + Gemini 3 Pro)        | latest            |
+| Styling         | Tailwind CSS v4 + @tailwindcss/postcss                 | 4.2               |
+| Animation       | Framer Motion                                          | 12                |
+| Icons           | lucide-react                                           | latest            |
+| Charts          | Chart.js + react-chartjs-2, Recharts                   | latest            |
+| Virtualization  | @tanstack/react-virtual                                | 3                 |
+| Command Palette | cmdk                                                   | 1                 |
+| PDF Export      | jsPDF + marked                                         | latest            |
+| Sanitization    | DOMPurify                                              | 3                 |
+| Testing         | Vitest + @testing-library/react + Playwright           | latest            |
 
 ## Project Rules (ALWAYS follow)
 

@@ -2,6 +2,10 @@
 
 Dieses Repository ist eine **React-19-PWA** mit **Gemini** und **PubMed**; Daten liegen **nur lokal** (IndexedDB/Dexie).
 
+## Runtime-Literaturschwarm (App, nicht IDE-Agent)
+
+Die Orchestrierung läuft in **`src/services/geminiService.ts`** (AsyncGenerator `generateResearchReportStream`): Phasen wie Query-Generierung, PubMed-/optional arXiv-Fetch, Ranking, Streaming-Synthese. Grobe Zuordnung zu UI/Trace (`App.tsx`, `getAgentForPhase`): PubMed-/Suchphasen → **PubMedFetcher** bzw. Query-Erzeugung → **QueryGenerator**, Ranking → **Ranker**, Synthese/Streaming → **Synthesizer**. Das sind **konzeptionelle Rollen** (Prompts/Phasen), keine separaten SDK-Prozesse.
+
 ## Pflichtlektüre
 
 1. **`.github/copilot-instructions.md`** — aktueller Stack, Ordnerstruktur, State-Management, Testing, Safety-Regeln.
@@ -17,7 +21,7 @@ Dieses Repository ist eine **React-19-PWA** mit **Gemini** und **PubMed**; Daten
 
 ## CI
 
-Workflow: `.github/workflows/deploy.yml` — bei **Push** und **Pull Request** auf `main`: `npm ci`, Typecheck, ESLint, Vitest mit Coverage (Schwellen siehe `vitest.config.ts`), Production-Build. **GitHub Pages**-Upload und Deploy nur auf `refs/heads/main`, nicht bei PRs.
+Workflow: `.github/workflows/deploy.yml` — bei **Push** und **Pull Request** auf `main`: `npm ci`, `npm audit --audit-level=high`, Typecheck, ESLint, Vitest mit Coverage (Schwellen siehe `vitest.config.ts`), Production-Build. **GitHub Pages**-Upload und Deploy nur auf `refs/heads/main`, nicht bei PRs.
 
 ## Dokumentation für Menschen
 

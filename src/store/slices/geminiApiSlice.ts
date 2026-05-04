@@ -151,9 +151,9 @@ export const geminiApi = createApi({
 
     // ── One-shot research analysis ────────────────────────────────────────
     generateAnalysis: builder.query<ResearchAnalysis, GenerateAnalysisArgs>({
-      queryFn: async ({ query, aiSettings }) => {
+      queryFn: async ({ query, aiSettings }, { signal }) => {
         try {
-          const data = await generateResearchAnalysis(query, aiSettings);
+          const data = await generateResearchAnalysis(query, aiSettings, signal);
           return { data };
         } catch (error) {
           return { error: { status: 'CUSTOM_ERROR', error: String(error) } };
@@ -164,9 +164,9 @@ export const geminiApi = createApi({
 
     // ── Similar articles ──────────────────────────────────────────────────
     findSimilarArticles: builder.query<SimilarArticle[], FindSimilarArgs>({
-      queryFn: async ({ article, aiSettings }) => {
+      queryFn: async ({ article, aiSettings }, { signal }) => {
         try {
-          const data = await findSimilarArticles(article, aiSettings);
+          const data = await findSimilarArticles(article, aiSettings, signal);
           return { data };
         } catch (error) {
           return { error: { status: 'CUSTOM_ERROR', error: String(error) } };
@@ -177,9 +177,9 @@ export const geminiApi = createApi({
 
     // ── Online findings ───────────────────────────────────────────────────
     findRelatedOnline: builder.query<OnlineFindings, FindOnlineArgs>({
-      queryFn: async ({ topic, aiSettings }) => {
+      queryFn: async ({ topic, aiSettings }, { signal }) => {
         try {
-          const data = await findRelatedOnline(topic, aiSettings);
+          const data = await findRelatedOnline(topic, aiSettings, signal);
           return { data };
         } catch (error) {
           return { error: { status: 'CUSTOM_ERROR', error: String(error) } };
@@ -190,9 +190,9 @@ export const geminiApi = createApi({
 
     // ── TLDR summary ──────────────────────────────────────────────────────
     generateTldr: builder.query<string, GenerateTldrArgs>({
-      queryFn: async ({ abstract, aiSettings }) => {
+      queryFn: async ({ abstract, aiSettings }, { signal }) => {
         try {
-          const data = await generateTldrSummary(abstract, aiSettings);
+          const data = await generateTldrSummary(abstract, aiSettings, signal);
           return { data };
         } catch (error) {
           return { error: { status: 'CUSTOM_ERROR', error: String(error) } };
@@ -203,9 +203,9 @@ export const geminiApi = createApi({
 
     // ── Author disambiguation ─────────────────────────────────────────────
     disambiguateAuthor: builder.query<AuthorCluster[], DisambiguateAuthorArgs>({
-      queryFn: async ({ authorName, articles, aiSettings }) => {
+      queryFn: async ({ authorName, articles, aiSettings }, { signal }) => {
         try {
-          const data = await disambiguateAuthor(authorName, articles, aiSettings);
+          const data = await disambiguateAuthor(authorName, articles, aiSettings, signal);
           return { data };
         } catch (error) {
           return { error: { status: 'CUSTOM_ERROR', error: String(error) } };
@@ -216,9 +216,14 @@ export const geminiApi = createApi({
 
     // ── Author profile analysis ───────────────────────────────────────────
     generateAuthorProfile: builder.query<AuthorProfileResult, AuthorProfileArgs>({
-      queryFn: async ({ authorName, articles, aiSettings }) => {
+      queryFn: async ({ authorName, articles, aiSettings }, { signal }) => {
         try {
-          const data = await generateAuthorProfileAnalysis(authorName, articles, aiSettings);
+          const data = await generateAuthorProfileAnalysis(
+            authorName,
+            articles,
+            aiSettings,
+            signal,
+          );
           return { data };
         } catch (error) {
           return { error: { status: 'CUSTOM_ERROR', error: String(error) } };
@@ -229,9 +234,9 @@ export const geminiApi = createApi({
 
     // ── Author suggestions ────────────────────────────────────────────────
     suggestAuthors: builder.query<{ name: string; description: string }[], SuggestAuthorsArgs>({
-      queryFn: async ({ fieldOfStudy, aiSettings }) => {
+      queryFn: async ({ fieldOfStudy, aiSettings }, { signal }) => {
         try {
-          const data = await suggestAuthors(fieldOfStudy, aiSettings);
+          const data = await suggestAuthors(fieldOfStudy, aiSettings, signal);
           return { data };
         } catch (error) {
           return { error: { status: 'CUSTOM_ERROR', error: String(error) } };
