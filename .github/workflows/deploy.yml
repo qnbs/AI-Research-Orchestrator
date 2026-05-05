@@ -32,7 +32,7 @@ permissions:
 
 # Prevent concurrent deployments
 concurrency:
-  group: "pages"
+  group: "${{ github.workflow }}-${{ github.ref }}"
   cancel-in-progress: true
 
 jobs:
