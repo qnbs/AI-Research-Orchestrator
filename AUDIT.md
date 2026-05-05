@@ -53,7 +53,7 @@ The AI Research Orchestrator is a well-architected, production-ready Progressive
 | Cursor / onboarding              | `AGENTS.md`, `.vscode/extensions.json`, `CONTRIBUTING.md`; Always-On `.cursor/index.mdc`, modulare `.cursor/rules/` (`000` Meta, `001` Security, `100`/`101` APIs & Dexie, `200` Architektur, `300` UI, `800` Tests, `850` PRD/MCP) |
 | Version alignment                | `package.json` / README badge track semver (`0.1.1` as of this maintenance)                                                                                                                                                         |
 | AUDIT correction                 | `AuthorProfile` is defined in `types.ts`; earlier “missing type” note removed below                                                                                                                                                 |
-| Docs / CI alignment (2026-05-04) | GitHub Actions Typecheck = `npm run typecheck`; README/AGENTS/CONTRIBUTING/copilot referenzieren `.cursor/index.mdc`; `package.json` `engines.node`; CHANGELOG [Unreleased] ergänzt                                                 |
+| Docs / CI alignment (2026-05-04) | GitHub Actions Typecheck = `pnpm run typecheck`; README/AGENTS/CONTRIBUTING/copilot referenzieren `.cursor/index.mdc`; `package.json` `engines.node`; CHANGELOG [Unreleased] ergänzt                                                |
 | Production hygiene (v0.1.1)      | ESLint 9 + Prettier + Husky; scoped coverage thresholds; AbortSignal for report streams; Redux-only `useUI` + install prompt store; CSV formula sanitization; CSP meta; PNG manifest icons                                          |
 
 ---
@@ -75,7 +75,7 @@ The AI Research Orchestrator is a well-architected, production-ready Progressive
 
 #### 2. ESLint + Prettier + CI lint gate — **Done** (v0.1.1+)
 
-**State**: Flat Config `eslint.config.js`, Prettier, Husky/lint-staged; `npm run lint` in CI (`deploy.yml`). Empfohlene VS Code Extensions in `.vscode/extensions.json`.
+**State**: Flat Config `eslint.config.js`, Prettier, Husky/lint-staged; `pnpm run lint` in CI (`deploy.yml`). Empfohlene VS Code Extensions in `.vscode/extensions.json`.
 
 ### P1 — Important (next sprint)
 

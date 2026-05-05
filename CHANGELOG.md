@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Vitest: globale Coverage-Schwellen für `lines`/`statements` auf **30 %** gesetzt (Messung ~30,5 % bei bestehendem Include-Scope); weiterhin Fokus auf `store/`, `services/`, `hooks/`, `lib/`.
-- Cursor: modulares Regelwerk unter `.cursor/rules/` (`000`–`850`, neu `101-dexie-local.mdc`), Always-On-Manifest `.cursor/index.mdc`; CI-Schritt Typecheck auf `npm run typecheck` vereinheitlicht (`deploy.yml`).
+- Cursor: modulares Regelwerk unter `.cursor/rules/` (`000`–`850`, neu `101-dexie-local.mdc`), Always-On-Manifest `.cursor/index.mdc`; CI-Schritt Typecheck auf `pnpm run typecheck` vereinheitlicht (`deploy.yml`).
 - Dokumentation: `AGENTS.md`, `README.md`, `CONTRIBUTING.md`, `.github/copilot-instructions.md` an Manifest und Workflow angeglichen; `package.json` mit `engines.node`.
 - Audit-Dokument `AUDIT.md` für aktuelle Tests/Tooling/Cursor-Stand aktualisiert.
 
@@ -18,10 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- ESLint 9 (flat config) + Prettier + Husky + lint-staged; `npm run lint` / `npm run format`
+- ESLint 9 (flat config) + Prettier + Husky + lint-staged; `pnpm run lint` / `pnpm run format`
 - Unit tests for PubMed, arXiv, CSV formula sanitization, Redux slices, Dexie settings round-trip, `useTranslation`, `useUI`, install-prompt store
 - Vitest coverage thresholds on logic layers (`store/`, `services/`, `hooks/`, `lib/`) — see `vitest.config.ts`
-- PWA PNG icons (`public/icons/icon-192.png`, `icon-512.png`) via `npm run icons`
+- PWA PNG icons (`public/icons/icon-192.png`, `icon-512.png`) via `pnpm run icons`
 - Baseline `Content-Security-Policy` meta in `index.html`
 - `.npmrc` with `legacy-peer-deps=true` for consistent installs with the ESLint toolchain
 
@@ -30,7 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **State management**: Removed `UIProvider`; `useUI` reads/writes Redux only; PWA install prompt uses `installPromptStore` + `useSyncExternalStore`. Settings hydrate via `SettingsHydrator` with merge from `store.getState()`.
 - **Gemini streaming**: `generateResearchReportStream(..., signal?)`; `geminiApiSlice` aborts on cache entry removal; orchestrator uses `AbortController` + generation id.
 - **CSV export**: `sanitizeCsvFormulaInjection` mitigates spreadsheet formula injection.
-- CI runs `npm run lint` and `npm run test:coverage` before production build.
+- CI runs `pnpm run lint` and `pnpm run test:coverage` before production build.
 
 ### Fixed
 

@@ -11,7 +11,7 @@ alwaysApply: true
 
 **Architektur:** Browser-only → Gemini API + NCBI E-utilities (+ arXiv); AES-GCM über `apiKeyService`; Redux als Single Source of Truth; Context nur für Hydration/Komposition (`SettingsProvider`, KB) — keine parallelen Kopien derselben Settings/UI-Flags.
 
-**Konventionen:** EN+DE in `src/i18n/translations.ts`; WCAG-orientiert (ARIA, Tastatur); neue persistente Daten → Dexie-Schema in `databaseService`; vor Commit: `npm run typecheck`, `npm run lint`, `npm run test:coverage` (wie CI).
+**Konventionen:** EN+DE in `src/i18n/translations.ts`; WCAG-orientiert (ARIA, Tastatur); neue persistente Daten → Dexie-Schema in `databaseService`; Runtime Node **>=22**; Abhängigkeiten via `pnpm install --frozen-lockfile`; vor Commit: `pnpm run typecheck`, `pnpm run lint`, `pnpm run test:coverage` (wie CI) und Security-Gate `pnpm audit --audit-level=high`.
 
 **Modulare Regeln:** `.cursor/rules/` — `001–099` Security, `100–199` APIs, `200–299` Architektur, `300–399` UI, `800–899` QA/Workflows; Details in `000-cursor-rules.mdc`.
 

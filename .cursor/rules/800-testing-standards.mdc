@@ -1,6 +1,6 @@
 ---
-description: Keep tests deterministic; editing *.test.* or Playwright specs or test setup
-globs: **/*.test.ts,**/*.test.tsx,**/*.spec.ts
+description: Keep tests deterministic; editing unit, integration, e2e, or setup files
+globs: **/*.test.ts,**/*.test.tsx,**/*.spec.ts,**/*.spec.tsx,src/test/setup.ts,playwright.config.ts
 alwaysApply: false
 ---
 
@@ -11,6 +11,6 @@ alwaysApply: false
 - **Isolation:** Specs unabhängig lauffähig; kein geteilter mutable Global-State zwischen Files.
 - **E2E:** `src/test/e2e/` — stabile Selektoren (`getByRole` bevorzugt); `sleep` nur mit Begründung.
 
-Coverage-Schwellen für Logik-Layer: `@vitest.config.ts`. CI nutzt `npm run test:coverage`.
+Coverage-Schwellen für Logik-Layer: `@vitest.config.ts`. CI nutzt `pnpm run test:coverage`.
 
 Siehe `@src/test/setup.ts`, `@vitest.config.ts`.

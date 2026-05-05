@@ -105,23 +105,23 @@ git clone https://github.com/qnbs/AI-Research-Orchestrator.git
 cd AI-Research-Orchestrator
 
 # Install dependencies
-npm install
+pnpm install
 
 # Start development server
-npm run dev
+pnpm run dev
 
 # Build for production
-npm run build
+pnpm run build
 ```
 
 #### Tests & CI
 
 ```bash
-npm run typecheck    # TypeScript (strict, no emit)
-npm run lint         # ESLint (warning budget in package.json)
-npm run test:coverage # Vitest + coverage thresholds (logic layers — vitest.config.ts)
-npm run test:e2e     # Playwright E2E (one-time: npx playwright install chromium)
-npm run build        # Production bundle
+pnpm run typecheck    # TypeScript (strict, no emit)
+pnpm run lint         # ESLint (warning budget in package.json)
+pnpm run test:coverage # Vitest + coverage thresholds (logic layers — vitest.config.ts)
+pnpm run test:e2e     # Playwright E2E (one-time: pnpm exec playwright install chromium)
+pnpm run build        # Production bundle
 ```
 
 On every **push** to `main` and on **pull requests** targeting `main`, GitHub Actions runs install, typecheck, lint, tests with coverage, and production build (see `.github/workflows/deploy.yml`). Upload and deployment to GitHub Pages run only when the ref is `refs/heads/main` and the event is not a pull request.
@@ -132,7 +132,7 @@ For AI-assisted work in Cursor, see [`AGENTS.md`](./AGENTS.md), [`.cursor/index.
 
 #### Prerequisites
 
-- Node.js 18+ and npm
+- Node.js 22+ and pnpm 11
 - A modern browser (Chrome, Edge, Safari, Firefox)
 - A **Google Gemini API Key** — [Get one here](https://aistudio.google.com/)
 
@@ -181,7 +181,7 @@ Distributed under the MIT License. See `LICENSE` for more information.
 This app is configured for **GitHub Pages** deployment:
 
 1. **Automatic Deployment**: Push to `main` branch triggers GitHub Actions workflow
-2. **Manual Deployment**: Run `npm run build` and deploy `dist/` folder
+2. **Manual Deployment**: Run `pnpm run build` and deploy `dist/` folder
 
 #### GitHub Actions Setup
 
@@ -194,7 +194,7 @@ The repository includes `.github/workflows/deploy.yml` that:
 #### Self-Hosting
 
 ```bash
-npm run build
+pnpm run build
 # Deploy dist/ folder to any static hosting:
 # - Netlify, Vercel, Cloudflare Pages
 # - AWS S3 + CloudFront
@@ -205,17 +205,13 @@ npm run build
 
 ### 🔧 Troubleshooting
 
-| Issue                           | Solution                                                                    |
-| ------------------------------- | --------------------------------------------------------------------------- |
-| "API Key Required" error        | Go to Settings → API Key and enter your Gemini API key                      |
-| PubMed requests failing         | Check internet connection; NCBI may have rate limits                        |
-| PWA not installing              | Ensure HTTPS and valid manifest.json                                        |
-| Blank page after navigation     | Clear browser cache and reload                                              |
-| CI fails on TypeScript or tests | Run `npm run typecheck` and `npm run test:run` locally; fix reported errors |
+- `"API Key Required" error`: Go to Settings -> API Key and enter your Gemini API key.
+- `PubMed requests failing`: Check internet connection; NCBI may have rate limits.
+- `PWA not installing`: Ensure HTTPS and a valid `manifest.json`.
+- `Blank page after navigation`: Clear browser cache and reload.
+- `CI fails on TypeScript or tests`: Run `pnpm run typecheck` and `pnpm run test:run` locally and fix reported errors.
 
 ---
-
-<br/>
 
 ## 🇩🇪 Deutsche Dokumentation
 
@@ -301,23 +297,23 @@ git clone https://github.com/qnbs/AI-Research-Orchestrator.git
 cd AI-Research-Orchestrator
 
 # Abhängigkeiten installieren
-npm install
+pnpm install
 
 # Entwicklungsserver starten
-npm run dev
+pnpm run dev
 
 # Für Produktion bauen
-npm run build
+pnpm run build
 ```
 
-#### Tests & CI
+#### Tests & CI (Deutsch)
 
 ```bash
-npm run typecheck    # TypeScript (strikt, ohne Emit)
-npm run lint         # ESLint (Warnbudget in package.json)
-npm run test:coverage # Vitest + Coverage-Schwellen (Logiklayer — vitest.config.ts)
-npm run test:e2e     # Playwright E2E (einmalig: npx playwright install chromium)
-npm run build        # Produktionsbundle
+pnpm run typecheck    # TypeScript (strikt, ohne Emit)
+pnpm run lint         # ESLint (Warnbudget in package.json)
+pnpm run test:coverage # Vitest + Coverage-Schwellen (Logiklayer — vitest.config.ts)
+pnpm run test:e2e     # Playwright E2E (einmalig: pnpm exec playwright install chromium)
+pnpm run build        # Produktionsbundle
 ```
 
 Bei jedem **Push** auf `main` und bei **Pull Requests** gegen `main` führt GitHub Actions Installation, Typecheck, Lint, Tests mit Coverage und Production-Build aus (`.github/workflows/deploy.yml`). Upload und Deploy nach GitHub Pages erfolgen nur auf `refs/heads/main`, nicht bei PRs.
@@ -328,7 +324,7 @@ Für KI-gestützte Entwicklung in Cursor: [`AGENTS.md`](./AGENTS.md), [`.cursor/
 
 #### Voraussetzungen
 
-- Node.js 18+ und npm
+- Node.js 22+ und pnpm 11
 - Ein moderner Browser (Chrome, Edge, Safari, Firefox)
 - Ein **Google Gemini API Key** — [Hier erhalten](https://aistudio.google.com/)
 

@@ -4,16 +4,16 @@ Thank you for improving this project. This document describes how to work on the
 
 ## Prerequisites
 
-- Node.js **18+** (CI uses `lts/*`)
-- npm
+- Node.js **22+** (CI uses `22`)
+- pnpm 11
 
 ## Getting started
 
 ```bash
 git clone https://github.com/qnbs/AI-Research-Orchestrator.git
 cd AI-Research-Orchestrator
-npm ci
-npm run dev
+pnpm install --frozen-lockfile
+pnpm run dev
 ```
 
 Copy `.env.example` if you use local env vars; **never** commit API keys.
@@ -28,17 +28,17 @@ Copy `.env.example` if you use local env vars; **never** commit API keys.
 ## Quality checks (run before opening a PR)
 
 ```bash
-npm run typecheck    # TypeScript --noEmit
-npm run lint         # ESLint (warnings budget — see package.json)
-npm run test:coverage # Vitest + coverage thresholds (logic layers — vitest.config.ts)
-npm run build        # Production build
+pnpm run typecheck    # TypeScript --noEmit
+pnpm run lint         # ESLint (warnings budget — see package.json)
+pnpm run test:coverage # Vitest + coverage thresholds (logic layers — vitest.config.ts)
+pnpm run build        # Production build
 ```
 
 Optional E2E (requires browsers once):
 
 ```bash
-npx playwright install chromium
-npm run test:e2e
+pnpm exec playwright install chromium
+pnpm run test:e2e
 ```
 
 ## Pull requests
@@ -52,12 +52,12 @@ npm run test:e2e
 
 GitHub Actions (`.github/workflows/deploy.yml`) on pushes and PRs to `main`:
 
-1. `npm ci`
-2. `npm audit --audit-level=high`
-3. `npm run typecheck`
-4. `npm run lint`
-5. `npm run test:coverage`
-6. `npm run build`
+1. `pnpm install --frozen-lockfile`
+2. `pnpm audit --audit-level=high`
+3. `pnpm run typecheck`
+4. `pnpm run lint`
+5. `pnpm run test:coverage`
+6. `pnpm run build`
 
 Deployment to GitHub Pages runs only for pushes (and manual dispatch) on `main`, not for pull requests.
 

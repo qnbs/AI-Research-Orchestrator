@@ -1,6 +1,6 @@
 ---
-description: Keep files maintainable; TS/TSX growing beyond size or duplicate logic appears
-globs: *.*
+description: Keep files maintainable; split oversized files and avoid duplication
+globs: src/**/*.ts,src/**/*.tsx
 alwaysApply: false
 ---
 

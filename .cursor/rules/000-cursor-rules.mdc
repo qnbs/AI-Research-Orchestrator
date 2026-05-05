@@ -1,6 +1,6 @@
 ---
-description: Author new rules on request; user teaches lesson or asks rule change; numbered .mdc policy
-globs:
+description: Author new rules on request with numbered .mdc policy and lint checks
+globs: .cursor/rules/*.mdc,.cursor/index.mdc,AGENTS.md
 alwaysApply: false
 ---
 
@@ -13,6 +13,7 @@ alwaysApply: false
 - **Länge:** Regeln **≤200 Zeilen**; Code nicht duplizieren — verweisen auf `@PFAD` (z. B. `@src/services/apiKeyService.ts`).
 - **Beispiele:** `<example>` und `<example type="invalid">` für gültige vs. verbotene Muster.
 - **Editor:** Bevorzugt Standard-Editor zum Schreiben (MDC-Editor-Glitches vermeiden).
+- **Rule-Lint:** Vor Abschluss prüfen: Scope passt zum Regeltext, rekursive Globs wo nötig, keine leeren/ambigen `globs`.
 
 <example>
 

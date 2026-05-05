@@ -26,11 +26,9 @@ on:
   # Allow manual trigger from Actions tab
   workflow_dispatch:
 
-# Required permissions for GitHub Pages deployment
+# Required permissions (minimal by default)
 permissions:
   contents: read # To checkout the repository
-  pages: write # To deploy to Pages
-  id-token: write # To verify deployment origin
 
 # Prevent concurrent deployments
 concurrency:
@@ -42,7 +40,8 @@ jobs:
   # Build Job
   # ==============================================================================
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
 
     steps:
       # Step 1: Checkout repository
@@ -50,49 +49,62 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0 # Full history for better caching
+          persist-credentials: false
 
-      # Step 2: Setup Node.js with caching
+      # Step 2: Setup pnpm (version via packageManager in package.json)
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          run_install: false
+
+      # Step 3: Setup Node.js with pnpm caching
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "lts/*"
-          cache: "npm"
+          node-version: "22"
+          cache: "pnpm"
+          cache-dependency-path: pnpm-lock.yaml
 
-      # Step 3: Install dependencies
+      - name: Verify pnpm major version
+        run: |
+          pnpm --version
+          pnpm --version | grep -E '^11\.'
+
+      # Step 4: Install dependencies
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
-      - name: npm audit (high+)
-        run: npm audit --audit-level=high
+      - name: pnpm audit (high+)
+        run: pnpm audit --audit-level=high
 
-      # Step 4: Run type checking (aligned with package.json "typecheck")
+      # Step 5: Run type checking (aligned with package.json "typecheck")
       - name: Type check
-        run: npm run typecheck
+        run: pnpm run typecheck
 
-      # Step 5: Lint (warnings allowed up to budget; errors fail)
+      # Step 6: Lint (warnings allowed up to budget; errors fail)
       - name: ESLint
-        run: npm run lint
+        run: pnpm run lint
 
-      # Step 6: Unit tests + coverage thresholds (store/services/hooks/lib scope — see vitest.config.ts)
+      # Step 7: Unit tests + coverage thresholds (store/services/hooks/lib scope — see vitest.config.ts)
       - name: Tests with coverage
-        run: npm run test:coverage
+        run: pnpm run test:coverage
 
-      # Step 7: Build for production
+      # Step 8: Build for production
       - name: Build application
-        run: npm run build
+        run: pnpm run build
         env:
           NODE_ENV: production
 
-      # Step 8: Copy 404.html for SPA routing
+      # Step 9: Copy 404.html for SPA routing
       - name: Setup SPA routing
         run: cp dist/index.html dist/404.html
 
-      # Step 9: Configure GitHub Pages (main branch pushes / manual only)
+      # Step 10: Configure GitHub Pages (main branch pushes / manual only)
       - name: Setup Pages
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         uses: actions/configure-pages@v4
 
-      # Step 10: Upload build artifacts for Pages deployment
+      # Step 11: Upload build artifacts for Pages deployment
       - name: Upload artifact
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@v3
@@ -105,7 +117,11 @@ jobs:
   deploy:
     needs: build
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
 
     # GitHub Pages environment
     environment:

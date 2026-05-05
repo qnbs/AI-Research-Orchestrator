@@ -18,11 +18,11 @@ log "Marking workspace as trusted Git directory..."
 git config --global --add safe.directory "$REPO_DIR" 2>/dev/null || true
 ok "Git safe.directory configured"
 
-# ── 2. Install npm dependencies (ci = reproducible, lock-file based) ─────────
-log "Installing npm dependencies via npm ci..."
+# ── 2. Install pnpm dependencies (frozen lockfile = reproducible) ─────────────
+log "Installing dependencies via pnpm..."
 cd "$REPO_DIR"
-npm ci --prefer-offline 2>&1 | tail -5
-ok "npm dependencies installed"
+pnpm install --frozen-lockfile 2>&1 | tail -5
+ok "pnpm dependencies installed"
 
 # ── 3. Install Playwright Chromium browser (optional) ─────────────────────────
 # Set SKIP_PLAYWRIGHT=true to skip browser installation (saves ~60s)
@@ -31,7 +31,7 @@ if [ "${SKIP_PLAYWRIGHT:-false}" = "true" ]; then
 else
   log "Installing Playwright Chromium browser..."
   # Use the project-local playwright version for consistency
-  if npx playwright install chromium 2>&1 | tail -5; then
+  if pnpm exec playwright install chromium 2>&1 | tail -5; then
     ok "Playwright Chromium installed"
   else
     warn "Playwright install failed — browser integration tests will be skipped"
@@ -40,7 +40,7 @@ fi
 
 # ── 4. TypeScript type check ──────────────────────────────────────────────────
 log "Running TypeScript type check..."
-if npm run typecheck 2>&1 | grep -E "error TS|Found [^0]" | head -20; then
+if pnpm run typecheck 2>&1 | grep -E "error TS|Found [^0]" | head -20; then
   warn "TypeScript errors found (see above) — continuing setup"
 else
   ok "TypeScript check passed"
@@ -48,7 +48,7 @@ fi
 
 # ── 5. Unit tests ────────────────────────────────────────────────────────────
 log "Running unit tests..."
-if npm run test:run 2>&1 | tail -15; then
+if pnpm run test:run 2>&1 | tail -15; then
   ok "Tests completed"
 else
   warn "Some tests failed — check output above"
@@ -94,9 +94,9 @@ else
 fi
 
 echo ""
-echo "  Start dev server: npm run dev"
-echo "  Run tests:        npm run test"
-echo "  Type check:       npm run typecheck"
-echo "  Build:            npm run build"
+echo "  Start dev server: pnpm run dev"
+echo "  Run tests:        pnpm run test"
+echo "  Type check:       pnpm run typecheck"
+echo "  Build:            pnpm run build"
 echo ""
 echo "════════════════════════════════════════════════════"

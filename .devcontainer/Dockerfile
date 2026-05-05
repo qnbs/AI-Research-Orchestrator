@@ -40,10 +40,23 @@ USER node
 
 WORKDIR /home/node
 
-# ── npm hardening (as node user) ───────────────────────────────────────────────
-RUN npm config set fund false \
-    && npm config set audit-level moderate \
-    && npm config set update-notifier false
+# ── pnpm + corepack bootstrap (as node user) ──────────────────────────────────
+ENV PNPM_HOME=/pnpm
+ENV PATH=$PNPM_HOME:$PATH
+
+RUN corepack enable \
+    && corepack prepare pnpm@11.0.0 --activate
+
+RUN pnpm config set fund false \
+    && pnpm config set audit-level moderate \
+    && pnpm config set update-notifier false
+
+# Warm pnpm store with BuildKit cache mount for faster container bootstrap.
+WORKDIR /tmp/pnpm-bootstrap
+COPY --chown=node:node package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm fetch --frozen-lockfile
+
+WORKDIR /home/node
 
 # ── Port exposures ─────────────────────────────────────────────────────────────
 # 3000 = Vite dev server  |  4173 = Vite preview

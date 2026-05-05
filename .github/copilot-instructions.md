@@ -73,7 +73,7 @@ You are an expert full-stack React 19 + TypeScript architect specialized in agen
 
 - **Never** break existing agent pipeline or Knowledge Base
 - **Never** commit API keys or secrets
-- **Always** run `npm run typecheck` before committing
+- **Always** run `pnpm run typecheck` before committing
 - **Always** maintain i18n parity (EN + DE) for new user-facing strings
 
 ### New Feature Checklist

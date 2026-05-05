@@ -14,14 +14,14 @@ Die Orchestrierung läuft in **`src/services/geminiService.ts`** (AsyncGenerator
 
 ## Checks vor Änderungen am Kernfluss
 
-- `npm run typecheck`
-- `npm run lint`
-- `npm run test:coverage` (Schwellen siehe `vitest.config.ts`)
-- Bei End-to-End: `npx playwright install chromium` (einmalig), dann `npm run test:e2e`
+- `pnpm run typecheck`
+- `pnpm run lint`
+- `pnpm run test:coverage` (Schwellen siehe `vitest.config.ts`)
+- Bei End-to-End: `pnpm exec playwright install chromium` (einmalig), dann `pnpm run test:e2e`
 
 ## CI
 
-Workflow: `.github/workflows/deploy.yml` — bei **Push** und **Pull Request** auf `main`: `npm ci`, `npm audit --audit-level=high`, Typecheck, ESLint, Vitest mit Coverage (Schwellen siehe `vitest.config.ts`), Production-Build. **GitHub Pages**-Upload und Deploy nur auf `refs/heads/main`, nicht bei PRs.
+Workflow: `.github/workflows/deploy.yml` — bei **Push** und **Pull Request** auf `main`: `pnpm install --frozen-lockfile`, `pnpm audit --audit-level=high`, Typecheck, ESLint, Vitest mit Coverage (Schwellen siehe `vitest.config.ts`), Production-Build. **GitHub Pages**-Upload und Deploy nur auf `refs/heads/main`, nicht bei PRs.
 
 ## Dokumentation für Menschen
 

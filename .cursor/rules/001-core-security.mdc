@@ -1,12 +1,13 @@
 ---
-description: Enforce secret hygiene and safe UX; touching apiKey, storage, or HTML rendering
-globs: *.*
+description: Enforce secret hygiene and safe UX for app, config, docs, and CI edits
+globs: src/**/*.ts,src/**/*.tsx,*.{md,mdc,json},.github/workflows/**/*.yml
 alwaysApply: false
 ---
 
 # Core Security & Secrets
 
 - **Secrets:** Keine API-Keys/Tokens/Passwörter in Quelltext oder Git. Gemini nur über `apiKeyService` / Einstellungen; AES-GCM wie implementiert. Lokale Hilfsvariablen nur über `.env`/`.env.example`-Muster — nie Keys committen.
+- **Frontend-Env:** In Vite/SPA sind `VITE_*` Werte clientseitig sichtbar; dort niemals echte Secrets hinterlegen.
 - **IndexedDB/Dexie:** Nutzerdaten nur clientseitig; keine Secrets außerhalb der vorgesehenen Key-Verwaltung persistieren.
 - **Externe Aufrufe:** Über bestehende Services (`geminiService`, `pubmedUtils`, `arxivUtils`, RTK-Slices); keine Fetch-URLs mit eingebetteten Credentials.
 - **Fehler:** Nutzer Meldungen per i18n; keine Stacktraces/IDs in UI leaken; kein sensibles Logging in Produktion.

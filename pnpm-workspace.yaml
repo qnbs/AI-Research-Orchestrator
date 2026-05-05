@@ -1,0 +1,22 @@
+packages:
+  - "."
+allowBuilds:
+  core-js: true
+  esbuild: true
+  protobufjs: true
+  sharp: true
+
+autoInstallPeers: false
+minimumReleaseAge: 1440
+onlyBuiltDependencies:
+  - "@tailwindcss/oxide"
+  - core-js
+  - esbuild
+  - protobufjs
+  - sharp
+peerDependencyRules:
+  allowedVersions:
+    typescript: "5.8.3"
+  ignoreMissing:
+    - "@types/node"
+strictPeerDependencies: true
