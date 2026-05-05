@@ -15,27 +15,27 @@ import type { AgentName, AgentStatus } from '../../types';
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const STATUS_LABELS: Record<AgentStatus, string> = {
-  idle:    'Idle',
+  idle: 'Idle',
   running: 'Running',
-  done:    'Done',
-  error:   'Error',
+  done: 'Done',
+  error: 'Error',
   skipped: 'Skipped',
 };
 
 const STATUS_DOT_COLORS: Record<AgentStatus, string> = {
-  idle:    'bg-text-secondary',
+  idle: 'bg-text-secondary',
   running: 'bg-brand-accent',
-  done:    'bg-accent-green',
-  error:   'bg-red-400',
+  done: 'bg-accent-green',
+  error: 'bg-red-400',
   skipped: 'bg-border',
 };
 
 const AGENT_ICONS: Record<AgentName, string> = {
-  QueryGenerator:  '🔍',
-  PubMedFetcher:   '📚',
-  ArxivFetcher:    '📡',
-  Ranker:          '⚡',
-  Synthesizer:     '🧬',
+  QueryGenerator: '🔍',
+  PubMedFetcher: '📚',
+  ArxivFetcher: '📡',
+  Ranker: '⚡',
+  Synthesizer: '🧬',
   ResearchAnalyst: '🔬',
 };
 
@@ -151,20 +151,13 @@ const AgentCardInner: React.FC<AgentCardProps> = ({
       {/* Header row */}
       <div className="relative flex items-start justify-between gap-3">
         <div className="flex items-center gap-2.5">
-          <span
-            className="text-xl select-none"
-            aria-hidden="true"
-          >
+          <span className="text-xl select-none" aria-hidden="true">
             {AGENT_ICONS[agentName] ?? '🤖'}
           </span>
           <div>
-            <p className="text-sm font-semibold text-text-primary leading-tight">
-              {agentName}
-            </p>
+            <p className="text-sm font-semibold text-text-primary leading-tight">{agentName}</p>
             {description && (
-              <p className="text-xs text-text-secondary mt-0.5 line-clamp-2">
-                {description}
-              </p>
+              <p className="text-xs text-text-secondary mt-0.5 line-clamp-2">{description}</p>
             )}
           </div>
         </div>
@@ -195,12 +188,7 @@ const AgentCardInner: React.FC<AgentCardProps> = ({
       )}
 
       {/* Token bar */}
-      {metrics && (
-        <TokenBar
-          tokensIn={metrics.tokensIn}
-          tokensOut={metrics.tokensOut}
-        />
-      )}
+      {metrics && <TokenBar tokensIn={metrics.tokensIn} tokensOut={metrics.tokensOut} />}
 
       {/* Custom content */}
       {children && <div className="relative mt-3">{children}</div>}

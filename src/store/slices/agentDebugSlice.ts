@@ -54,9 +54,12 @@ export const agentDebugSlice = createSlice({
         state.currentTrace.totalCostUsd += event.tokenUsage.estimatedCostUsd;
       }
     },
-    updateTraceEvent: (state, action: PayloadAction<{ id: string; updates: Partial<AgentTraceEvent> }>) => {
+    updateTraceEvent: (
+      state,
+      action: PayloadAction<{ id: string; updates: Partial<AgentTraceEvent> }>,
+    ) => {
       if (!state.currentTrace) return;
-      const event = state.currentTrace.events.find(e => e.id === action.payload.id);
+      const event = state.currentTrace.events.find((e) => e.id === action.payload.id);
       if (event) {
         Object.assign(event, action.payload.updates);
         if (action.payload.updates.completedAt && event.startedAt) {
@@ -78,10 +81,15 @@ export const agentDebugSlice = createSlice({
     clearHistory: (state) => {
       state.history = [];
     },
-    setAgentStatus: (state, action: PayloadAction<{ agentName: AgentName; status: AgentStatus; message?: string }>) => {
+    setAgentStatus: (
+      state,
+      action: PayloadAction<{ agentName: AgentName; status: AgentStatus; message?: string }>,
+    ) => {
       if (!state.currentTrace) return;
       // Find the last event for this agent and update, or add a status event
-      const existing = [...state.currentTrace.events].reverse().find(e => e.agentName === action.payload.agentName);
+      const existing = [...state.currentTrace.events]
+        .reverse()
+        .find((e) => e.agentName === action.payload.agentName);
       if (existing) {
         existing.status = action.payload.status;
         if (action.payload.message) existing.message = action.payload.message;

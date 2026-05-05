@@ -17,18 +17,33 @@ import type { RankedArticle } from '../../types';
 /** Maps 0–1 relevance score to a CSS colour string. */
 function relevanceColor(score: number): string {
   if (score >= 0.85) return 'var(--color-accent-green)';
-  if (score >= 0.70) return 'var(--color-brand-accent)';
-  if (score >= 0.50) return 'var(--color-accent-cyan)';
-  if (score >= 0.30) return 'var(--color-accent-amber)';
+  if (score >= 0.7) return 'var(--color-brand-accent)';
+  if (score >= 0.5) return 'var(--color-accent-cyan)';
+  if (score >= 0.3) return 'var(--color-accent-amber)';
   return 'var(--color-border)';
 }
 
 /** Short human-readable label for the relevance score. */
 function relevanceLabel(score: number): { label: string; className: string } {
-  if (score >= 0.85) return { label: 'Highly Relevant', className: 'bg-accent-green/10 text-accent-green border-accent-green/30' };
-  if (score >= 0.70) return { label: 'Relevant',        className: 'bg-brand-accent/10 text-brand-accent border-brand-accent/30' };
-  if (score >= 0.50) return { label: 'Possibly Relevant', className: 'bg-accent-cyan/10 text-accent-cyan border-accent-cyan/30' };
-  return                     { label: 'Low Relevance',   className: 'bg-text-secondary/10 text-text-secondary border-border' };
+  if (score >= 0.85)
+    return {
+      label: 'Highly Relevant',
+      className: 'bg-accent-green/10 text-accent-green border-accent-green/30',
+    };
+  if (score >= 0.7)
+    return {
+      label: 'Relevant',
+      className: 'bg-brand-accent/10 text-brand-accent border-brand-accent/30',
+    };
+  if (score >= 0.5)
+    return {
+      label: 'Possibly Relevant',
+      className: 'bg-accent-cyan/10 text-accent-cyan border-accent-cyan/30',
+    };
+  return {
+    label: 'Low Relevance',
+    className: 'bg-text-secondary/10 text-text-secondary border-border',
+  };
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -41,9 +56,7 @@ const OABadge: React.FC = () => (
 
 const SourcePill: React.FC<{ type?: string }> = ({ type }) => {
   if (!type) return null;
-  return (
-    <span className="source-pill-pubmed">{type}</span>
-  );
+  return <span className="source-pill-pubmed">{type}</span>;
 };
 
 const TagList: React.FC<{ tags: string[]; max?: number }> = ({ tags, max = 5 }) => {
@@ -128,7 +141,10 @@ const KnowledgeBaseItemInner: React.FC<KnowledgeBaseItemProps> = ({
       aria-selected={isSelected}
       tabIndex={0}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect?.(); }
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onSelect?.();
+        }
       }}
     >
       {/* Top metadata row */}
@@ -136,9 +152,7 @@ const KnowledgeBaseItemInner: React.FC<KnowledgeBaseItemProps> = ({
         <div className="flex items-center gap-1.5 flex-wrap min-w-0">
           {isOpenAccess && <OABadge />}
           <SourcePill type={articleType} />
-          <span className="text-[10px] text-text-secondary font-mono">
-            PMID {pmid}
-          </span>
+          <span className="text-[10px] text-text-secondary font-mono">PMID {pmid}</span>
         </div>
         <span
           className={`flex-shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded border ${relClass}`}
@@ -156,12 +170,15 @@ const KnowledgeBaseItemInner: React.FC<KnowledgeBaseItemProps> = ({
       </h3>
 
       {/* Authors + meta */}
-      <p className="text-xs text-text-secondary truncate mb-1">
-        {authors}
-      </p>
+      <p className="text-xs text-text-secondary truncate mb-1">{authors}</p>
       <p className="text-xs text-text-secondary">
         <span className="text-brand-accent/80 font-medium">{journal}</span>
-        {pubYear && <> · <span>{pubYear}</span></>}
+        {pubYear && (
+          <>
+            {' '}
+            · <span>{pubYear}</span>
+          </>
+        )}
       </p>
 
       {/* AI Summary */}
@@ -178,7 +195,10 @@ const KnowledgeBaseItemInner: React.FC<KnowledgeBaseItemProps> = ({
       {onOpen && (
         <div className="mt-3 flex justify-end">
           <button
-            onClick={(e) => { e.stopPropagation(); onOpen(); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpen();
+            }}
             className="btn-neon text-[11px] px-3 py-1"
             aria-label={`Open article: ${title}`}
           >

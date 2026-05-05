@@ -13,10 +13,10 @@ import { useCallback } from 'react';
 export type HapticPreset = 'light' | 'medium' | 'success' | 'error';
 
 const PATTERNS: Record<HapticPreset, number | number[]> = {
-  light:   20,
-  medium:  50,
+  light: 20,
+  medium: 50,
   success: [30, 50, 100],
-  error:   [50, 30, 50, 30, 80],
+  error: [50, 30, 50, 30, 80],
 };
 
 export function useHaptic() {

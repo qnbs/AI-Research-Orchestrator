@@ -52,13 +52,21 @@ const NEON_COLORS = [
 ];
 
 // ── Tooltip ───────────────────────────────────────────────────────────────────
-const CustomTooltip: React.FC<{ active?: boolean; payload?: Array<{ payload: AuthorNode }> }> = ({ active, payload }) => {
+const CustomTooltip: React.FC<{ active?: boolean; payload?: Array<{ payload: AuthorNode }> }> = ({
+  active,
+  payload,
+}) => {
   if (!active || !payload?.length) return null;
   const node = payload[0].payload;
   return (
-    <div className="glass-panel rounded-xl p-3 text-xs max-w-[220px]" style={{ border: '1px solid var(--color-brand-accent)' }}>
+    <div
+      className="glass-panel rounded-xl p-3 text-xs max-w-[220px]"
+      style={{ border: '1px solid var(--color-brand-accent)' }}
+    >
       <p className="font-semibold text-text-primary text-sm mb-1">{node.name}</p>
-      <p className="text-text-secondary">{node.articleCount} article{node.articleCount !== 1 ? 's' : ''}</p>
+      <p className="text-text-secondary">
+        {node.articleCount} article{node.articleCount !== 1 ? 's' : ''}
+      </p>
       <p className="text-accent-cyan">Avg relevance: {node.avgRelevance.toFixed(1)}</p>
       {node.journals.length > 0 && (
         <p className="text-text-secondary mt-1 truncate">{node.journals.slice(0, 2).join(', ')}</p>
@@ -71,12 +79,17 @@ const CustomTooltip: React.FC<{ active?: boolean; payload?: Array<{ payload: Aut
 function parseAuthors(articles: AggregatedArticle[]): AuthorNode[] {
   const map = new Map<string, { articles: AggregatedArticle[]; collaborators: Set<string> }>();
 
-  articles.forEach(article => {
-    const authors = article.authors.split(/,\s*/).map(a => a.trim()).filter(Boolean);
-    authors.forEach(author => {
+  articles.forEach((article) => {
+    const authors = article.authors
+      .split(/,\s*/)
+      .map((a) => a.trim())
+      .filter(Boolean);
+    authors.forEach((author) => {
       if (!map.has(author)) map.set(author, { articles: [], collaborators: new Set() });
       map.get(author)!.articles.push(article);
-      authors.filter(a => a !== author).forEach(collab => map.get(author)!.collaborators.add(collab));
+      authors
+        .filter((a) => a !== author)
+        .forEach((collab) => map.get(author)!.collaborators.add(collab));
     });
   });
 
@@ -84,14 +97,15 @@ function parseAuthors(articles: AggregatedArticle[]): AuthorNode[] {
   let i = 0;
   map.forEach((data, name) => {
     if (data.articles.length < 1) return;
-    const avgRelevance = data.articles.reduce((s, a) => s + (a.relevanceScore ?? 0), 0) / data.articles.length;
+    const avgRelevance =
+      data.articles.reduce((s, a) => s + (a.relevanceScore ?? 0), 0) / data.articles.length;
     const angle = (i / map.size) * Math.PI * 2;
     const radius = 30 + Math.log(data.articles.length + 1) * 15;
     nodes.push({
       name,
       articleCount: data.articles.length,
       avgRelevance,
-      journals: [...new Set(data.articles.map(a => a.journal).filter(Boolean))],
+      journals: [...new Set(data.articles.map((a) => a.journal).filter(Boolean))],
       collaborators: [...data.collaborators].slice(0, 5),
       x: 50 + Math.cos(angle) * radius,
       y: 50 + Math.sin(angle) * radius,
@@ -104,7 +118,7 @@ function parseAuthors(articles: AggregatedArticle[]): AuthorNode[] {
 
 function getYearDistribution(articles: AggregatedArticle[]) {
   const map = new Map<string, number>();
-  articles.forEach(a => {
+  articles.forEach((a) => {
     const y = a.pubYear || 'Unknown';
     map.set(y, (map.get(y) ?? 0) + 1);
   });
@@ -115,7 +129,7 @@ function getYearDistribution(articles: AggregatedArticle[]) {
 
 function getJournalDistribution(articles: AggregatedArticle[]) {
   const map = new Map<string, number>();
-  articles.forEach(a => {
+  articles.forEach((a) => {
     const j = a.journal || 'Unknown';
     map.set(j, (map.get(j) ?? 0) + 1);
   });
@@ -143,16 +157,17 @@ const ScientometricHub: React.FC<Props> = ({ articles, keywords = [], title }) =
   const journalData = useMemo(() => getJournalDistribution(articles), [articles]);
 
   // Top 30 keywords for cloud
-  const topKeywords = useMemo(() =>
-    [...keywords].sort((a, b) => b.frequency - a.frequency).slice(0, 30),
-    [keywords]
+  const topKeywords = useMemo(
+    () => [...keywords].sort((a, b) => b.frequency - a.frequency).slice(0, 30),
+    [keywords],
   );
 
-  if (!articles.length) return (
-    <div className="flex items-center justify-center h-40 text-text-secondary text-sm">
-      No articles to visualize.
-    </div>
-  );
+  if (!articles.length)
+    return (
+      <div className="flex items-center justify-center h-40 text-text-secondary text-sm">
+        No articles to visualize.
+      </div>
+    );
 
   return (
     <div className="glass-panel rounded-2xl overflow-hidden">
@@ -168,14 +183,16 @@ const ScientometricHub: React.FC<Props> = ({ articles, keywords = [], title }) =
 
       {/* Tabs */}
       <div className="flex gap-1 px-4 pt-3 pb-0 overflow-x-auto">
-        {TABS.map(tab => (
+        {TABS.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-t-lg text-xs font-medium transition-all whitespace-nowrap
-              ${activeTab === tab.id
-                ? 'bg-brand-accent/10 text-brand-accent border border-brand-accent/30 border-b-0'
-                : 'text-text-secondary hover:text-text-primary'}`}
+              ${
+                activeTab === tab.id
+                  ? 'bg-brand-accent/10 text-brand-accent border border-brand-accent/30 border-b-0'
+                  : 'text-text-secondary hover:text-text-primary'
+              }`}
           >
             <span>{tab.icon}</span>
             <span>{tab.label}</span>
@@ -200,26 +217,9 @@ const ScientometricHub: React.FC<Props> = ({ articles, keywords = [], title }) =
               <ResponsiveContainer width="100%" height={300}>
                 <ScatterChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                  <XAxis
-                    type="number"
-                    dataKey="x"
-                    name="Position"
-                    hide
-                    domain={[0, 100]}
-                  />
-                  <YAxis
-                    type="number"
-                    dataKey="y"
-                    name="Position"
-                    hide
-                    domain={[0, 100]}
-                  />
-                  <ZAxis
-                    type="number"
-                    dataKey="articleCount"
-                    range={[40, 400]}
-                    name="Articles"
-                  />
+                  <XAxis type="number" dataKey="x" name="Position" hide domain={[0, 100]} />
+                  <YAxis type="number" dataKey="y" name="Position" hide domain={[0, 100]} />
+                  <ZAxis type="number" dataKey="articleCount" range={[40, 400]} name="Articles" />
                   <Tooltip content={<CustomTooltip />} />
                   <Scatter data={authorNodes} name="Authors">
                     {authorNodes.map((entry, index) => (
@@ -321,7 +321,10 @@ const ScientometricHub: React.FC<Props> = ({ articles, keywords = [], title }) =
                 />
                 <Legend
                   formatter={(value) => (
-                    <span style={{ color: 'var(--color-text-secondary)', fontSize: 11 }} title={value}>
+                    <span
+                      style={{ color: 'var(--color-text-secondary)', fontSize: 11 }}
+                      title={value}
+                    >
                       {value.length > 30 ? value.slice(0, 28) + '…' : value}
                     </span>
                   )}

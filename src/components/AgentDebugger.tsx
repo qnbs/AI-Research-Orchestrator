@@ -73,26 +73,22 @@ const TokenBudgetBar: React.FC<{
     pct < 30
       ? 'from-accent-green to-brand-accent'
       : pct < 70
-      ? 'from-brand-accent to-accent-cyan'
-      : 'from-accent-amber to-red-400';
+        ? 'from-brand-accent to-accent-cyan'
+        : 'from-accent-amber to-red-400';
 
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between text-[11px] font-mono">
         <span className="text-text-secondary">
-          <span className="text-text-primary font-semibold">{used.toLocaleString()}</span>
-          {' '}/{' '}{TOKEN_BUDGET.toLocaleString()} tokens
+          <span className="text-text-primary font-semibold">{used.toLocaleString()}</span> /{' '}
+          {TOKEN_BUDGET.toLocaleString()} tokens
         </span>
         <div className="flex items-center gap-3 text-text-secondary">
           <span className="text-accent-amber">${cost.toFixed(5)}</span>
           {durationSec !== null && <span>⏱ {durationSec.toFixed(1)}s</span>}
           <span
             className={`font-medium ${
-              pct < 30
-                ? 'text-accent-green'
-                : pct < 70
-                ? 'text-brand-accent'
-                : 'text-accent-amber'
+              pct < 30 ? 'text-accent-green' : pct < 70 ? 'text-brand-accent' : 'text-accent-amber'
             }`}
           >
             {pct.toFixed(1)}%
@@ -162,9 +158,7 @@ const EventRow: React.FC<{
           <span className="text-[10px] capitalize text-text-secondary bg-surface/80 px-1.5 py-0.5 rounded-md border border-border/60">
             {event.status}
           </span>
-          {dur && (
-            <span className="ml-auto text-[11px] text-accent-cyan font-mono">{dur}</span>
-          )}
+          {dur && <span className="ml-auto text-[11px] text-accent-cyan font-mono">{dur}</span>}
         </div>
 
         <p className="text-xs text-text-secondary mt-0.5 line-clamp-2">{event.message}</p>
@@ -181,7 +175,7 @@ const EventRow: React.FC<{
 
         {hasDetails && (
           <button
-            onClick={() => setExpanded(e => !e)}
+            onClick={() => setExpanded((e) => !e)}
             className="flex items-center gap-1 text-[10px] text-brand-accent/80 hover:text-brand-accent mt-1 transition-colors"
           >
             <motion.span
@@ -270,13 +264,9 @@ const HistoryRow: React.FC<{
     >
       <div className="flex items-center gap-2">
         <StatusDot
-          status={
-            trace.status === 'done' ? 'done' : trace.status === 'error' ? 'error' : 'running'
-          }
+          status={trace.status === 'done' ? 'done' : trace.status === 'error' ? 'error' : 'running'}
         />
-        <span className="text-xs font-medium text-text-primary truncate flex-1">
-          {trace.topic}
-        </span>
+        <span className="text-xs font-medium text-text-primary truncate flex-1">{trace.topic}</span>
         <span className="text-[10px] text-text-secondary flex-shrink-0">{date}</span>
       </div>
       <div className="flex gap-3 mt-0.5 text-[10px] font-mono text-text-secondary">
@@ -292,9 +282,7 @@ const HistoryRow: React.FC<{
 // ── Main Component ─────────────────────────────────────────────────────────────
 const AgentDebugger: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { isVisible, currentTrace, history, isPinned } = useAppSelector(
-    s => s.agentDebug,
-  );
+  const { isVisible, currentTrace, history, isPinned } = useAppSelector((s) => s.agentDebug);
   const [activeTab, setActiveTab] = useState<'trace' | 'history'>('trace');
   const [selectedHistory, setSelectedHistory] = useState<number | null>(null);
 
@@ -323,9 +311,7 @@ const AgentDebugger: React.FC = () => {
   if (!isVisible) return null;
 
   const displayTrace =
-    activeTab === 'history' && selectedHistory !== null
-      ? history[selectedHistory]
-      : currentTrace;
+    activeTab === 'history' && selectedHistory !== null ? history[selectedHistory] : currentTrace;
 
   const totalSec =
     displayTrace?.completedAt && displayTrace.startedAt
@@ -358,27 +344,20 @@ const AgentDebugger: React.FC = () => {
           role="dialog"
           aria-modal="true"
           aria-label="Agent Debugger"
-          initial={
-            isPinned ? { opacity: 0, x: 40 } : { opacity: 0, scale: 0.94, y: 18 }
-          }
+          initial={isPinned ? { opacity: 0, x: 40 } : { opacity: 0, scale: 0.94, y: 18 }}
           animate={isPinned ? { opacity: 1, x: 0 } : { opacity: 1, scale: 1, y: 0 }}
-          exit={
-            isPinned ? { opacity: 0, x: 40 } : { opacity: 0, scale: 0.94, y: 18 }
-          }
+          exit={isPinned ? { opacity: 0, x: 40 } : { opacity: 0, scale: 0.94, y: 18 }}
           transition={{ type: 'spring', stiffness: 320, damping: 30 }}
           className={`${panelCls} flex flex-col glass-elevated rounded-2xl overflow-hidden`}
           style={{
-            boxShadow:
-              '0 0 40px rgba(56,189,248,0.18), 0 24px 64px rgba(0,0,0,0.35)',
+            boxShadow: '0 0 40px rgba(56,189,248,0.18), 0 24px 64px rgba(0,0,0,0.35)',
           }}
         >
           {/* ── Header ── */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border flex-shrink-0">
             <div className="flex items-center gap-2">
               <span className="text-base select-none">🐛</span>
-              <span className="text-sm font-semibold text-text-primary">
-                Agent Debugger
-              </span>
+              <span className="text-sm font-semibold text-text-primary">Agent Debugger</span>
               {currentTrace?.status === 'running' && (
                 <motion.span
                   animate={{ opacity: [0.5, 1, 0.5] }}
@@ -415,7 +394,7 @@ const AgentDebugger: React.FC = () => {
 
           {/* ── Tabs ── */}
           <div className="flex border-b border-border flex-shrink-0 px-4 bg-surface/20">
-            {(['trace', 'history'] as const).map(tab => (
+            {(['trace', 'history'] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -474,8 +453,7 @@ const AgentDebugger: React.FC = () => {
                         event={ev}
                         index={i}
                         isLast={
-                          i === currentTrace.events.length - 1 &&
-                          currentTrace.status !== 'running'
+                          i === currentTrace.events.length - 1 && currentTrace.status !== 'running'
                         }
                       />
                     ))}
@@ -511,9 +489,7 @@ const AgentDebugger: React.FC = () => {
                           trace={t}
                           index={i}
                           isSelected={selectedHistory === i}
-                          onSelect={() =>
-                            setSelectedHistory(s => (s === i ? null : i))
-                          }
+                          onSelect={() => setSelectedHistory((s) => (s === i ? null : i))}
                         />
                       ))}
                     </div>
@@ -527,9 +503,7 @@ const AgentDebugger: React.FC = () => {
                             key={ev.id}
                             event={ev}
                             index={i}
-                            isLast={
-                              i === history[selectedHistory].events.length - 1
-                            }
+                            isLast={i === history[selectedHistory].events.length - 1}
                           />
                         ))}
                       </div>
@@ -565,7 +539,7 @@ export default AgentDebugger;
 // ── Toggle Button ──────────────────────────────────────────────────────────────
 export const AgentDebuggerToggle: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { isVisible, currentTrace } = useAppSelector(s => s.agentDebug);
+  const { isVisible, currentTrace } = useAppSelector((s) => s.agentDebug);
   const isRunning = currentTrace?.status === 'running';
 
   return (

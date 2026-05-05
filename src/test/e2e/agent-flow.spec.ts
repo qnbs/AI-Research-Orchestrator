@@ -130,9 +130,9 @@ test.describe('1. Application Bootstrap', () => {
   test('onboarding screen renders on first load', async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
-    await expect(
-      page.getByRole('button', { name: /start researching/i }),
-    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('button', { name: /start researching/i })).toBeVisible({
+      timeout: 15_000,
+    });
   });
 
   test('completing onboarding shows main header', async ({ page }) => {
@@ -152,9 +152,9 @@ test.describe('2. Navigation', () => {
 
   test('desktop header nav is visible at 1280px', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
-    await expect(
-      page.getByRole('navigation', { name: /main navigation/i }),
-    ).toBeVisible({ timeout: 5_000 });
+    await expect(page.getByRole('navigation', { name: /main navigation/i })).toBeVisible({
+      timeout: 5_000,
+    });
   });
 
   test('mobile bottom nav is visible at 390px', async ({ page }) => {
@@ -170,13 +170,20 @@ test.describe('2. Navigation', () => {
   });
 
   test('clicking settings opens settings view', async ({ page }) => {
-    await page.getByRole('button', { name: /settings/i }).first().click();
-    await expect(page.getByText(/API|Appearance|settings/i).first()).toBeVisible({ timeout: 8_000 });
+    await page
+      .getByRole('button', { name: /settings/i })
+      .first()
+      .click();
+    await expect(page.getByText(/API|Appearance|settings/i).first()).toBeVisible({
+      timeout: 8_000,
+    });
   });
 
   test('clicking help opens help view', async ({ page }) => {
     await page.getByRole('button', { name: /help/i }).first().click();
-    await expect(page.getByText(/FAQ|how to use|frequently/i).first()).toBeVisible({ timeout: 8_000 });
+    await expect(page.getByText(/FAQ|how to use|frequently/i).first()).toBeVisible({
+      timeout: 8_000,
+    });
   });
 });
 
@@ -191,7 +198,10 @@ test.describe('3. Orchestrator Form', () => {
     await navigateToView(page, '#orchestrator');
     // Wait for the lazy-loaded InputForm — fallback to clicking nav button if hash is slow
     const topic = page.locator('#researchTopic');
-    const visible = await topic.waitFor({ state: 'visible', timeout: 10_000 }).then(() => true).catch(() => false);
+    const visible = await topic
+      .waitFor({ state: 'visible', timeout: 10_000 })
+      .then(() => true)
+      .catch(() => false);
     if (!visible) {
       const orchBtn = page.getByRole('button', { name: /orchestrator|agent/i }).first();
       await orchBtn.click();
@@ -242,7 +252,11 @@ test.describe('4. Full Agent Pipeline (mocked APIs)', () => {
 
   test('submitting form triggers loading or error UI', async ({ page }) => {
     await page.evaluate((key) => {
-      try { localStorage.setItem('gemini_api_key', key); } catch { /* noop */ }
+      try {
+        localStorage.setItem('gemini_api_key', key);
+      } catch {
+        /* noop */
+      }
     }, FAKE_API_KEY);
 
     const input = page.locator('#researchTopic');
@@ -257,14 +271,20 @@ test.describe('4. Full Agent Pipeline (mocked APIs)', () => {
         .or(page.locator('[aria-live]'))
         .or(page.getByText(/phase|searching|analyzing|error|key/i))
         .first(),
-    ).toBeVisible({ timeout: 12_000 }).catch(() => {
-      // Soft: pipeline may have completed or shown a key prompt
-    });
+    )
+      .toBeVisible({ timeout: 12_000 })
+      .catch(() => {
+        // Soft: pipeline may have completed or shown a key prompt
+      });
   });
 
   test('pipeline timeline renders during loading', async ({ page }) => {
     await page.evaluate((key) => {
-      try { localStorage.setItem('gemini_api_key', key); } catch { /* noop */ }
+      try {
+        localStorage.setItem('gemini_api_key', key);
+      } catch {
+        /* noop */
+      }
     }, FAKE_API_KEY);
 
     const input = page.locator('#researchTopic');
@@ -273,11 +293,9 @@ test.describe('4. Full Agent Pipeline (mocked APIs)', () => {
     await page.locator('button[type="submit"]').first().click();
 
     const pipeline = page.locator('[role="list"][aria-label*="pipeline"]');
-    await pipeline
-      .waitFor({ state: 'visible', timeout: 12_000 })
-      .catch(() => {
-        // Pipeline may not appear if API key is rejected
-      });
+    await pipeline.waitFor({ state: 'visible', timeout: 12_000 }).catch(() => {
+      // Pipeline may not appear if API key is rejected
+    });
   });
 });
 
@@ -303,9 +321,11 @@ test.describe('5. Knowledge Base View', () => {
     const sidebar = page.locator('aside');
     const count = await sidebar.count();
     if (count > 0) {
-      await expect(sidebar.first()).toBeHidden({ timeout: 3_000 }).catch(() => {
-        // Soft pass — sidebar might not exist on mobile layout
-      });
+      await expect(sidebar.first())
+        .toBeHidden({ timeout: 3_000 })
+        .catch(() => {
+          // Soft pass — sidebar might not exist on mobile layout
+        });
     }
   });
 });
@@ -322,10 +342,15 @@ test.describe('6. Command Palette', () => {
   test('Ctrl+K opens command palette', async ({ page }) => {
     await page.keyboard.press('Control+k');
     await expect(
-      page.getByRole('dialog').or(page.getByPlaceholder(/search|command/i)).first(),
-    ).toBeVisible({ timeout: 4_000 }).catch(() => {
-      // Container environments may block keyboard shortcuts
-    });
+      page
+        .getByRole('dialog')
+        .or(page.getByPlaceholder(/search|command/i))
+        .first(),
+    )
+      .toBeVisible({ timeout: 4_000 })
+      .catch(() => {
+        // Container environments may block keyboard shortcuts
+      });
   });
 
   test('command palette button exists in desktop header', async ({ page }) => {
@@ -366,10 +391,13 @@ test.describe('7. Settings — API Key', () => {
     const input = page.locator('#api-key-input');
     await input.fill('BAD_KEY');
     // Click the API key "Speichern" button (NOT the header "Save Changes")
-    await page.getByRole('button', { name: /speichern/i }).first().click();
-    await expect(
-      page.getByText(/ungültig|invalid|format|AIza/i).first(),
-    ).toBeVisible({ timeout: 5_000 });
+    await page
+      .getByRole('button', { name: /speichern/i })
+      .first()
+      .click();
+    await expect(page.getByText(/ungültig|invalid|format|AIza/i).first()).toBeVisible({
+      timeout: 5_000,
+    });
   });
 });
 

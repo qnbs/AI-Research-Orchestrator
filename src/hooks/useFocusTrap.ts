@@ -7,53 +7,54 @@ import { useEffect, useRef } from 'react';
  * @returns A ref object to be attached to the container element.
  */
 export const useFocusTrap = <T extends HTMLElement>(isOpen: boolean) => {
-    const containerRef = useRef<T>(null);
+  const containerRef = useRef<T>(null);
 
-    useEffect(() => {
-        if (!isOpen || !containerRef.current) return;
+  useEffect(() => {
+    if (!isOpen || !containerRef.current) return;
 
-        const focusableElements = containerRef.current.querySelectorAll<HTMLElement>(
-            'a[href]:not([disabled]), button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled])'
-        );
-        
-        if (focusableElements.length === 0) return;
+    const focusableElements = containerRef.current.querySelectorAll<HTMLElement>(
+      'a[href]:not([disabled]), button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled])',
+    );
 
-        const firstElement = focusableElements[0];
-        const lastElement = focusableElements[focusableElements.length - 1];
-        
-        // Store the element that was focused before the modal opened
-        const previouslyFocusedElement = document.activeElement as HTMLElement;
+    if (focusableElements.length === 0) return;
 
-        // Move focus to the first focusable element in the container
-        firstElement.focus();
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
 
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key !== 'Tab') return;
+    // Store the element that was focused before the modal opened
+    const previouslyFocusedElement = document.activeElement as HTMLElement;
 
-            // Handle Shift + Tab to go backwards
-            if (e.shiftKey) { 
-                if (document.activeElement === firstElement) {
-                    lastElement.focus();
-                    e.preventDefault();
-                }
-            } else { // Handle Tab to go forwards
-                if (document.activeElement === lastElement) {
-                    firstElement.focus();
-                    e.preventDefault();
-                }
-            }
-        };
+    // Move focus to the first focusable element in the container
+    firstElement.focus();
 
-        const container = containerRef.current;
-        container.addEventListener('keydown', handleKeyDown);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return;
 
-        // When the component unmounts or isOpen becomes false, clean up
-        return () => {
-            container.removeEventListener('keydown', handleKeyDown);
-            // Restore focus to the element that was focused before the modal opened
-            previouslyFocusedElement?.focus();
-        };
-    }, [isOpen]);
+      // Handle Shift + Tab to go backwards
+      if (e.shiftKey) {
+        if (document.activeElement === firstElement) {
+          lastElement.focus();
+          e.preventDefault();
+        }
+      } else {
+        // Handle Tab to go forwards
+        if (document.activeElement === lastElement) {
+          firstElement.focus();
+          e.preventDefault();
+        }
+      }
+    };
 
-    return containerRef;
+    const container = containerRef.current;
+    container.addEventListener('keydown', handleKeyDown);
+
+    // When the component unmounts or isOpen becomes false, clean up
+    return () => {
+      container.removeEventListener('keydown', handleKeyDown);
+      // Restore focus to the element that was focused before the modal opened
+      previouslyFocusedElement?.focus();
+    };
+  }, [isOpen]);
+
+  return containerRef;
 };

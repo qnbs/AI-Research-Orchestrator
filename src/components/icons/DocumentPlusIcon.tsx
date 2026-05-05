@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 export const DocumentPlusIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (

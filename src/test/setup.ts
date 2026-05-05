@@ -36,7 +36,9 @@ const cryptoMock = {
     encrypt: vi.fn(),
     decrypt: vi.fn(),
     importKey: vi.fn(),
-    exportKey: vi.fn(),    digest: vi.fn().mockResolvedValue(new ArrayBuffer(32)),  },
+    exportKey: vi.fn(),
+    digest: vi.fn().mockResolvedValue(new ArrayBuffer(32)),
+  },
   getRandomValues: vi.fn((arr: Uint8Array) => {
     for (let i = 0; i < arr.length; i++) {
       arr[i] = Math.floor(Math.random() * 256);
@@ -78,8 +80,7 @@ beforeAll(() => {
   console.error = (...args: unknown[]) => {
     if (
       typeof args[0] === 'string' &&
-      (args[0].includes('Warning: ReactDOM.render') ||
-        args[0].includes('act(...)'))
+      (args[0].includes('Warning: ReactDOM.render') || args[0].includes('act(...)'))
     ) {
       return;
     }

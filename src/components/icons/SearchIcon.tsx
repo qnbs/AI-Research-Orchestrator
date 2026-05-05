@@ -1,5 +1,3 @@
-
-
 import React from 'react';
 
 export const SearchIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (

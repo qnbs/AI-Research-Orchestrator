@@ -18,8 +18,14 @@ import { useTranslation } from '../hooks/useTranslation';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const COLLECTION_COLORS = [
-  '#38bdf8', '#a78bfa', '#34d399', '#fb923c', '#f472b6',
-  '#facc15', '#60a5fa', '#e879f9',
+  '#38bdf8',
+  '#a78bfa',
+  '#34d399',
+  '#fb923c',
+  '#f472b6',
+  '#facc15',
+  '#60a5fa',
+  '#e879f9',
 ];
 const COLLECTION_ICONS = ['📚', '🔬', '🧠', '⚡', '🌟', '🔭', '🧬', '💡', '🎯', '📊'];
 
@@ -75,7 +81,7 @@ const ShareLinkModal: React.FC<{
         animate={{ scale: 1, y: 0 }}
         exit={{ scale: 0.93, y: 16 }}
         transition={{ type: 'spring', stiffness: 340, damping: 28 }}
-        onClick={e => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
         className="glass-panel rounded-2xl p-6 w-full max-w-sm"
         style={{ boxShadow: '0 0 32px rgba(56,189,248,0.15), 0 16px 48px rgba(0,0,0,0.3)' }}
       >
@@ -97,7 +103,9 @@ const ShareLinkModal: React.FC<{
         {url ? (
           <>
             <div className="bg-surface/60 rounded-xl p-3 border border-border mb-3">
-              <p className="text-xs font-mono text-text-secondary break-all leading-relaxed">{url}</p>
+              <p className="text-xs font-mono text-text-secondary break-all leading-relaxed">
+                {url}
+              </p>
             </div>
             <motion.button
               whileHover={{ scale: 1.02 }}
@@ -162,10 +170,12 @@ const CollectionCard: React.FC<{
           <div className="min-w-0">
             <h3 className="text-sm font-semibold text-text-primary truncate">{collection.name}</h3>
             {collection.description && (
-              <p className="text-xs text-text-secondary line-clamp-2 mt-0.5">{collection.description}</p>
+              <p className="text-xs text-text-secondary line-clamp-2 mt-0.5">
+                {collection.description}
+              </p>
             )}
           </div>
-          <div className="flex gap-1 flex-shrink-0" onClick={e => e.stopPropagation()}>
+          <div className="flex gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
             <button
               onClick={() => onShare(collection)}
               title="Share collection"
@@ -194,15 +204,24 @@ const CollectionCard: React.FC<{
         {/* Stats */}
         <div className="flex gap-3 text-xs text-text-secondary">
           <span className="flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: collection.color }} />
+            <span
+              className="w-1.5 h-1.5 rounded-full"
+              style={{ backgroundColor: collection.color }}
+            />
             {entryCount} report{entryCount !== 1 ? 's' : ''}
           </span>
-          <span>{articleCount} article{articleCount !== 1 ? 's' : ''}</span>
+          <span>
+            {articleCount} article{articleCount !== 1 ? 's' : ''}
+          </span>
           {collection.tags.length > 0 && (
-            <span className="text-accent-cyan truncate">{collection.tags.slice(0, 2).join(', ')}</span>
+            <span className="text-accent-cyan truncate">
+              {collection.tags.slice(0, 2).join(', ')}
+            </span>
           )}
           {collection.shareToken && (
-            <span className="ml-auto text-accent-green text-[10px] flex items-center gap-0.5">🔒 Shared</span>
+            <span className="ml-auto text-accent-green text-[10px] flex items-center gap-0.5">
+              🔒 Shared
+            </span>
           )}
         </div>
       </div>
@@ -230,7 +249,10 @@ const CollectionModal: React.FC<{
       description: description.trim(),
       color,
       icon,
-      tags: tagsInput.split(',').map(t => t.trim()).filter(Boolean),
+      tags: tagsInput
+        .split(',')
+        .map((t) => t.trim())
+        .filter(Boolean),
     });
   };
 
@@ -247,7 +269,7 @@ const CollectionModal: React.FC<{
         animate={{ scale: 1, y: 0 }}
         exit={{ scale: 0.92, y: 20 }}
         transition={{ type: 'spring', stiffness: 350, damping: 28 }}
-        onClick={e => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
         className="glass-panel rounded-2xl p-6 w-full max-w-md"
       >
         <h2 className="text-lg font-semibold text-text-primary mb-4">
@@ -259,7 +281,7 @@ const CollectionModal: React.FC<{
           <div>
             <label className="text-xs text-text-secondary mb-1 block">Icon</label>
             <div className="flex flex-wrap gap-2">
-              {COLLECTION_ICONS.map(ic => (
+              {COLLECTION_ICONS.map((ic) => (
                 <button
                   key={ic}
                   type="button"
@@ -275,11 +297,13 @@ const CollectionModal: React.FC<{
 
           {/* Name */}
           <div>
-            <label htmlFor="col-name" className="text-xs text-text-secondary mb-1 block">Name *</label>
+            <label htmlFor="col-name" className="text-xs text-text-secondary mb-1 block">
+              Name *
+            </label>
             <input
               id="col-name"
               value={name}
-              onChange={e => setName(e.target.value)}
+              onChange={(e) => setName(e.target.value)}
               placeholder="My Research Collection"
               required
               className="glass-input w-full px-3 py-2 rounded-lg text-sm text-text-primary focus:outline-none"
@@ -288,11 +312,13 @@ const CollectionModal: React.FC<{
 
           {/* Description */}
           <div>
-            <label htmlFor="col-desc" className="text-xs text-text-secondary mb-1 block">Description</label>
+            <label htmlFor="col-desc" className="text-xs text-text-secondary mb-1 block">
+              Description
+            </label>
             <textarea
               id="col-desc"
               value={description}
-              onChange={e => setDescription(e.target.value)}
+              onChange={(e) => setDescription(e.target.value)}
               placeholder="What is this collection about?"
               rows={2}
               className="glass-input w-full px-3 py-2 rounded-lg text-sm text-text-primary focus:outline-none resize-none"
@@ -303,7 +329,7 @@ const CollectionModal: React.FC<{
           <div>
             <label className="text-xs text-text-secondary mb-1 block">Color</label>
             <div className="flex gap-2">
-              {COLLECTION_COLORS.map(c => (
+              {COLLECTION_COLORS.map((c) => (
                 <button
                   key={c}
                   type="button"
@@ -318,11 +344,13 @@ const CollectionModal: React.FC<{
 
           {/* Tags */}
           <div>
-            <label htmlFor="col-tags" className="text-xs text-text-secondary mb-1 block">Tags (comma-separated)</label>
+            <label htmlFor="col-tags" className="text-xs text-text-secondary mb-1 block">
+              Tags (comma-separated)
+            </label>
             <input
               id="col-tags"
               value={tagsInput}
-              onChange={e => setTagsInput(e.target.value)}
+              onChange={(e) => setTagsInput(e.target.value)}
               placeholder="immunology, oncology, AI"
               className="glass-input w-full px-3 py-2 rounded-lg text-sm text-text-primary focus:outline-none"
             />
@@ -355,52 +383,64 @@ const CollectionModal: React.FC<{
 const CollectionsView: React.FC = () => {
   const dispatch = useAppDispatch();
   const { t } = useTranslation();
-  const collections = useAppSelector(s => s.collections.items);
-  const isLoading = useAppSelector(s => s.collections.isLoading);
+  const collections = useAppSelector((s) => s.collections.items);
+  const isLoading = useAppSelector((s) => s.collections.isLoading);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<ResearchCollection | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [shareTarget, setShareTarget] = useState<string | null>(null);
 
-  const handleCreate = useCallback((data: Partial<ResearchCollection>) => {
-    const col: ResearchCollection = {
-      id: generateId(),
-      name: data.name ?? 'Untitled',
-      description: data.description ?? '',
-      color: data.color ?? COLLECTION_COLORS[0],
-      icon: data.icon ?? '📚',
-      entryIds: [],
-      articlePmids: [],
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-      tags: data.tags ?? [],
-    };
-    dispatch(createCollection(col));
-    setIsModalOpen(false);
-  }, [dispatch]);
+  const handleCreate = useCallback(
+    (data: Partial<ResearchCollection>) => {
+      const col: ResearchCollection = {
+        id: generateId(),
+        name: data.name ?? 'Untitled',
+        description: data.description ?? '',
+        color: data.color ?? COLLECTION_COLORS[0],
+        icon: data.icon ?? '📚',
+        entryIds: [],
+        articlePmids: [],
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        tags: data.tags ?? [],
+      };
+      dispatch(createCollection(col));
+      setIsModalOpen(false);
+    },
+    [dispatch],
+  );
 
-  const handleEdit = useCallback((data: Partial<ResearchCollection>) => {
-    if (!editTarget) return;
-    dispatch(updateCollection({ id: editTarget.id, changes: data }));
-    setEditTarget(null);
-  }, [dispatch, editTarget]);
+  const handleEdit = useCallback(
+    (data: Partial<ResearchCollection>) => {
+      if (!editTarget) return;
+      dispatch(updateCollection({ id: editTarget.id, changes: data }));
+      setEditTarget(null);
+    },
+    [dispatch, editTarget],
+  );
 
-  const handleDelete = useCallback((id: string) => {
-    if (window.confirm('Delete this collection?')) {
-      dispatch(deleteCollection(id));
-      if (selectedId === id) setSelectedId(null);
-    }
-  }, [dispatch, selectedId]);
+  const handleDelete = useCallback(
+    (id: string) => {
+      if (window.confirm('Delete this collection?')) {
+        dispatch(deleteCollection(id));
+        if (selectedId === id) setSelectedId(null);
+      }
+    },
+    [dispatch, selectedId],
+  );
 
-  const handleShare = useCallback((collection: ResearchCollection) => {
-    if (!collection.shareToken) {
-      dispatch(generateShareToken(collection.id));
-    }
-    setShareTarget(collection.id);
-  }, [dispatch]);
+  const handleShare = useCallback(
+    (collection: ResearchCollection) => {
+      if (!collection.shareToken) {
+        dispatch(generateShareToken(collection.id));
+      }
+      setShareTarget(collection.id);
+    },
+    [dispatch],
+  );
 
-  const selected = collections.find(c => c.id === selectedId) ?? null;
+  const selected = collections.find((c) => c.id === selectedId) ?? null;
 
   return (
     <div className="flex flex-col h-full gap-6 px-4 py-6 max-w-6xl mx-auto">
@@ -439,7 +479,9 @@ const CollectionsView: React.FC = () => {
         >
           <span className="text-5xl mb-4">📚</span>
           <p className="text-text-primary font-semibold">No collections yet</p>
-          <p className="text-sm text-text-secondary mt-1">Create your first collection to organize research reports and articles.</p>
+          <p className="text-sm text-text-secondary mt-1">
+            Create your first collection to organize research reports and articles.
+          </p>
           <button
             onClick={() => setIsModalOpen(true)}
             className="mt-4 px-4 py-2 rounded-lg btn-neon text-sm"
@@ -448,19 +490,16 @@ const CollectionsView: React.FC = () => {
           </button>
         </motion.div>
       ) : (
-        <motion.div
-          layout
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
-        >
+        <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <AnimatePresence>
-            {collections.map(col => (
+            {collections.map((col) => (
               <CollectionCard
                 key={col.id}
                 collection={col}
                 onEdit={(c) => setEditTarget(c)}
                 onDelete={handleDelete}
                 onShare={handleShare}
-                onSelect={(c) => setSelectedId(s => s === c.id ? null : c.id)}
+                onSelect={(c) => setSelectedId((s) => (s === c.id ? null : c.id))}
                 isSelected={selectedId === col.id}
               />
             ))}
@@ -471,10 +510,7 @@ const CollectionsView: React.FC = () => {
       {/* Modals */}
       <AnimatePresence>
         {isModalOpen && (
-          <CollectionModal
-            onSave={handleCreate}
-            onClose={() => setIsModalOpen(false)}
-          />
+          <CollectionModal onSave={handleCreate} onClose={() => setIsModalOpen(false)} />
         )}
         {editTarget && (
           <CollectionModal
@@ -483,15 +519,13 @@ const CollectionsView: React.FC = () => {
             onClose={() => setEditTarget(null)}
           />
         )}
-        {shareTarget && (() => {
-          const col = collections.find(c => c.id === shareTarget);
-          return col ? (
-            <ShareLinkModal
-              collection={col}
-              onClose={() => setShareTarget(null)}
-            />
-          ) : null;
-        })()}
+        {shareTarget &&
+          (() => {
+            const col = collections.find((c) => c.id === shareTarget);
+            return col ? (
+              <ShareLinkModal collection={col} onClose={() => setShareTarget(null)} />
+            ) : null;
+          })()}
       </AnimatePresence>
     </div>
   );

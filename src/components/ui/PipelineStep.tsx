@@ -57,15 +57,33 @@ const NodeIcon: React.FC<{ status: AgentStatus; icon?: React.ReactNode; label: s
 }) => {
   if (status === 'done') {
     return (
-      <svg className="w-4 h-4 text-accent-green" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+      <svg
+        className="w-4 h-4 text-accent-green"
+        viewBox="0 0 20 20"
+        fill="currentColor"
+        aria-hidden="true"
+      >
+        <path
+          fillRule="evenodd"
+          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+          clipRule="evenodd"
+        />
       </svg>
     );
   }
   if (status === 'error') {
     return (
-      <svg className="w-4 h-4 text-red-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-        <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+      <svg
+        className="w-4 h-4 text-red-400"
+        viewBox="0 0 20 20"
+        fill="currentColor"
+        aria-hidden="true"
+      >
+        <path
+          fillRule="evenodd"
+          d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+          clipRule="evenodd"
+        />
       </svg>
     );
   }
@@ -84,11 +102,7 @@ const HStepNode: React.FC<{
   <div className="flex flex-col items-center gap-1.5 flex-shrink-0" style={{ minWidth: 60 }}>
     <motion.button
       className={`pipeline-node pipeline-node--${status} ${onClick ? 'cursor-pointer' : ''}`}
-      animate={
-        status === 'running'
-          ? { scale: [1, 1.08, 1] }
-          : { scale: 1 }
-      }
+      animate={status === 'running' ? { scale: [1, 1.08, 1] } : { scale: 1 }}
       transition={
         status === 'running'
           ? { duration: 1.5, repeat: Infinity, ease: 'easeInOut' }
@@ -107,10 +121,10 @@ const HStepNode: React.FC<{
           status === 'running'
             ? 'text-brand-accent'
             : status === 'done'
-            ? 'text-accent-green'
-            : status === 'error'
-            ? 'text-red-400'
-            : 'text-text-secondary'
+              ? 'text-accent-green'
+              : status === 'error'
+                ? 'text-red-400'
+                : 'text-text-secondary'
         }`}
       >
         {step.label}
@@ -136,7 +150,9 @@ const HConnector: React.FC<{ leftStatus: AgentStatus }> = ({ leftStatus }) => {
   const isActive = leftStatus === 'running';
 
   return (
-    <div className={`pipeline-connector ${isDone ? 'pipeline-connector--done' : isActive ? 'pipeline-connector--active' : ''}`}>
+    <div
+      className={`pipeline-connector ${isDone ? 'pipeline-connector--done' : isActive ? 'pipeline-connector--active' : ''}`}
+    >
       <AnimatePresence>
         {(isDone || isActive) && (
           <motion.div
@@ -186,10 +202,13 @@ const VPipelineStep: React.FC<PipelineStepProps> = ({
           <div className="flex-1 min-w-0 pb-1">
             <p
               className={`text-sm font-semibold ${
-                stepStatus === 'running' ? 'text-brand-accent' :
-                stepStatus === 'done'    ? 'text-accent-green' :
-                stepStatus === 'error'   ? 'text-red-400' :
-                                           'text-text-secondary'
+                stepStatus === 'running'
+                  ? 'text-brand-accent'
+                  : stepStatus === 'done'
+                    ? 'text-accent-green'
+                    : stepStatus === 'error'
+                      ? 'text-red-400'
+                      : 'text-text-secondary'
               }`}
             >
               {step.label}
@@ -212,9 +231,10 @@ const VPipelineStep: React.FC<PipelineStepProps> = ({
             <div
               className="absolute left-[17px] top-9 bottom-0 w-px"
               style={{
-                background: stepStatus === 'done'
-                  ? 'linear-gradient(to bottom, var(--color-brand-accent), var(--color-border))'
-                  : 'var(--color-border)',
+                background:
+                  stepStatus === 'done'
+                    ? 'linear-gradient(to bottom, var(--color-brand-accent), var(--color-border))'
+                    : 'var(--color-border)',
               }}
             />
           )}
@@ -227,7 +247,14 @@ const VPipelineStep: React.FC<PipelineStepProps> = ({
 // ─── Main export ──────────────────────────────────────────────────────────────
 
 const PipelineStepInner: React.FC<PipelineStepProps> = (props) => {
-  const { steps, currentStep, status = 'idle', orientation = 'horizontal', className = '', onStepClick } = props;
+  const {
+    steps,
+    currentStep,
+    status = 'idle',
+    orientation = 'horizontal',
+    className = '',
+    onStepClick,
+  } = props;
 
   if (orientation === 'vertical') {
     return <VPipelineStep {...props} />;

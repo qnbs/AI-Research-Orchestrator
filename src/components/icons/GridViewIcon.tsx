@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 export const GridViewIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (

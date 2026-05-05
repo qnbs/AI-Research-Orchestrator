@@ -1,7 +1,7 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from 'vitest';
 
 // Mock the databaseService before importing the slice
-vi.mock("../../services/databaseService", () => ({
+vi.mock('../../services/databaseService', () => ({
   getAllEntries: vi.fn().mockResolvedValue([]),
   addEntry: vi.fn().mockResolvedValue(undefined),
   bulkAddEntries: vi.fn().mockResolvedValue(undefined),
@@ -14,16 +14,16 @@ import knowledgeBaseReducer, {
   clearSelection,
   setFilter,
   setSelectedPmids,
-} from "./knowledgeBaseSlice";
+} from './knowledgeBaseSlice';
 
-describe("knowledgeBaseSlice", () => {
+describe('knowledgeBaseSlice', () => {
   const initialState = {
     ids: [],
     entities: {},
     isLoading: false,
     error: null,
     filter: {
-      searchTerm: "",
+      searchTerm: '',
       selectedTopics: [],
       selectedTags: [],
       selectedArticleTypes: [],
@@ -33,59 +33,50 @@ describe("knowledgeBaseSlice", () => {
     selectedPmids: [],
   };
 
-  describe("reducers", () => {
-    it("should return the initial state", () => {
-      const result = knowledgeBaseReducer(undefined, { type: "unknown" });
-      expect(result.filter.searchTerm).toBe("");
+  describe('reducers', () => {
+    it('should return the initial state', () => {
+      const result = knowledgeBaseReducer(undefined, { type: 'unknown' });
+      expect(result.filter.searchTerm).toBe('');
       expect(result.selectedPmids).toEqual([]);
       expect(result.isLoading).toBe(false);
     });
 
-    it("should handle setFilter", () => {
-      const newFilter = { searchTerm: "test query", showOpenAccessOnly: true };
+    it('should handle setFilter', () => {
+      const newFilter = { searchTerm: 'test query', showOpenAccessOnly: true };
       const result = knowledgeBaseReducer(initialState, setFilter(newFilter));
 
-      expect(result.filter.searchTerm).toBe("test query");
+      expect(result.filter.searchTerm).toBe('test query');
       expect(result.filter.showOpenAccessOnly).toBe(true);
       // Other filter properties should remain unchanged
       expect(result.filter.selectedTopics).toEqual([]);
     });
 
-    it("should handle setSelectedPmids", () => {
-      const pmids = ["12345", "67890"];
-      const result = knowledgeBaseReducer(
-        initialState,
-        setSelectedPmids(pmids),
-      );
+    it('should handle setSelectedPmids', () => {
+      const pmids = ['12345', '67890'];
+      const result = knowledgeBaseReducer(initialState, setSelectedPmids(pmids));
 
-      expect(result.selectedPmids).toEqual(["12345", "67890"]);
+      expect(result.selectedPmids).toEqual(['12345', '67890']);
     });
 
-    it("should handle clearSelection", () => {
+    it('should handle clearSelection', () => {
       const stateWithSelection = {
         ...initialState,
-        selectedPmids: ["12345", "67890"],
+        selectedPmids: ['12345', '67890'],
       };
       const result = knowledgeBaseReducer(stateWithSelection, clearSelection());
 
       expect(result.selectedPmids).toEqual([]);
     });
 
-    it("should handle multiple filter updates", () => {
+    it('should handle multiple filter updates', () => {
       let state: ReturnType<typeof knowledgeBaseReducer> = initialState;
 
-      state = knowledgeBaseReducer(state, setFilter({ searchTerm: "cancer" }));
-      state = knowledgeBaseReducer(
-        state,
-        setFilter({ selectedArticleTypes: ["Meta-Analysis"] }),
-      );
-      state = knowledgeBaseReducer(
-        state,
-        setFilter({ showOpenAccessOnly: true }),
-      );
+      state = knowledgeBaseReducer(state, setFilter({ searchTerm: 'cancer' }));
+      state = knowledgeBaseReducer(state, setFilter({ selectedArticleTypes: ['Meta-Analysis'] }));
+      state = knowledgeBaseReducer(state, setFilter({ showOpenAccessOnly: true }));
 
-      expect(state.filter.searchTerm).toBe("cancer");
-      expect(state.filter.selectedArticleTypes).toEqual(["Meta-Analysis"]);
+      expect(state.filter.searchTerm).toBe('cancer');
+      expect(state.filter.selectedArticleTypes).toEqual(['Meta-Analysis']);
       expect(state.filter.showOpenAccessOnly).toBe(true);
     });
   });

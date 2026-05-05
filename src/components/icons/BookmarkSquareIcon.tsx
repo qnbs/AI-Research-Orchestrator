@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 export const BookmarkSquareIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (

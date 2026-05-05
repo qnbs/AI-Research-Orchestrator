@@ -35,7 +35,7 @@ export const createCollection = createAsyncThunk(
   async (collection: ResearchCollection) => {
     await addCollection(collection);
     return collection;
-  }
+  },
 );
 
 export const updateCollection = createAsyncThunk(
@@ -43,16 +43,13 @@ export const updateCollection = createAsyncThunk(
   async ({ id, changes }: { id: string; changes: Partial<ResearchCollection> }) => {
     await dbUpdateCollection(id, { ...changes, updatedAt: Date.now() });
     return { id, changes };
-  }
+  },
 );
 
-export const deleteCollection = createAsyncThunk(
-  'collections/delete',
-  async (id: string) => {
-    await dbDeleteCollection(id);
-    return id;
-  }
-);
+export const deleteCollection = createAsyncThunk('collections/delete', async (id: string) => {
+  await dbDeleteCollection(id);
+  return id;
+});
 
 // ── Slice ─────────────────────────────────────────────────────────────────────
 
@@ -63,22 +60,28 @@ export const collectionsSlice = createSlice({
     setEditingId: (state, action: PayloadAction<string | null>) => {
       state.editingId = action.payload;
     },
-    addEntryToCollection: (state, action: PayloadAction<{ collectionId: string; entryId: string }>) => {
-      const col = state.items.find(c => c.id === action.payload.collectionId);
+    addEntryToCollection: (
+      state,
+      action: PayloadAction<{ collectionId: string; entryId: string }>,
+    ) => {
+      const col = state.items.find((c) => c.id === action.payload.collectionId);
       if (col && !col.entryIds.includes(action.payload.entryId)) {
         col.entryIds.push(action.payload.entryId);
         col.updatedAt = Date.now();
       }
     },
-    removeEntryFromCollection: (state, action: PayloadAction<{ collectionId: string; entryId: string }>) => {
-      const col = state.items.find(c => c.id === action.payload.collectionId);
+    removeEntryFromCollection: (
+      state,
+      action: PayloadAction<{ collectionId: string; entryId: string }>,
+    ) => {
+      const col = state.items.find((c) => c.id === action.payload.collectionId);
       if (col) {
-        col.entryIds = col.entryIds.filter(id => id !== action.payload.entryId);
+        col.entryIds = col.entryIds.filter((id) => id !== action.payload.entryId);
         col.updatedAt = Date.now();
       }
     },
     generateShareToken: (state, action: PayloadAction<string>) => {
-      const col = state.items.find(c => c.id === action.payload);
+      const col = state.items.find((c) => c.id === action.payload);
       if (col) {
         col.shareToken = btoa(`col:${col.id}:${Date.now()}`).replace(/=/g, '');
         col.updatedAt = Date.now();
@@ -87,7 +90,9 @@ export const collectionsSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(loadCollections.pending, (state) => { state.isLoading = true; })
+      .addCase(loadCollections.pending, (state) => {
+        state.isLoading = true;
+      })
       .addCase(loadCollections.fulfilled, (state, action) => {
         state.isLoading = false;
         state.items = action.payload;
@@ -100,22 +105,22 @@ export const collectionsSlice = createSlice({
         state.items.unshift(action.payload);
       })
       .addCase(updateCollection.fulfilled, (state, action) => {
-        const idx = state.items.findIndex(c => c.id === action.payload.id);
+        const idx = state.items.findIndex((c) => c.id === action.payload.id);
         if (idx >= 0) {
-          state.items[idx] = { ...state.items[idx], ...action.payload.changes, updatedAt: Date.now() };
+          state.items[idx] = {
+            ...state.items[idx],
+            ...action.payload.changes,
+            updatedAt: Date.now(),
+          };
         }
       })
       .addCase(deleteCollection.fulfilled, (state, action) => {
-        state.items = state.items.filter(c => c.id !== action.payload);
+        state.items = state.items.filter((c) => c.id !== action.payload);
       });
   },
 });
 
-export const {
-  setEditingId,
-  addEntryToCollection,
-  removeEntryFromCollection,
-  generateShareToken,
-} = collectionsSlice.actions;
+export const { setEditingId, addEntryToCollection, removeEntryFromCollection, generateShareToken } =
+  collectionsSlice.actions;
 
 export default collectionsSlice.reducer;

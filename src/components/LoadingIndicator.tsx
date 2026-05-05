@@ -11,20 +11,76 @@ interface LoadingIndicatorProps {
 
 // ── Cybernetic Spinner (unchanged) ───────────────────────────────────────────
 const CyberneticSpinner: React.FC = () => (
-    <svg viewBox="0 0 100 100" className="w-24 h-24">
-        <circle cx="50" cy="50" r="45" fill="none" stroke="var(--color-border)" strokeWidth="1" opacity="0.5" />
-        <circle cx="50" cy="50" r="35" fill="none" stroke="var(--color-border)" strokeWidth="1" strokeDasharray="3 3" opacity="0.5" />
-        <circle cx="50" cy="50" r="45" fill="none" stroke="var(--color-brand-accent)" strokeWidth="1.5" strokeLinecap="round" strokeDasharray="60 220">
-            <animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="8s" repeatCount="indefinite" />
-        </circle>
-        <circle cx="50" cy="50" r="35" fill="none" stroke="var(--color-accent-cyan)" strokeWidth="1.5" strokeLinecap="round" strokeDasharray="40 180">
-            <animateTransform attributeName="transform" type="rotate" from="360 50 50" to="0 50 50" dur="6s" repeatCount="indefinite" />
-        </circle>
-        <circle cx="50" cy="50" r="10" fill="var(--color-brand-accent)">
-            <animate attributeName="r" from="10" to="12" dur="1s" begin="0s" repeatCount="indefinite" />
-            <animate attributeName="opacity" from="1" to="0.5" dur="1s" begin="0s" repeatCount="indefinite" />
-        </circle>
-    </svg>
+  <svg viewBox="0 0 100 100" className="w-24 h-24">
+    <circle
+      cx="50"
+      cy="50"
+      r="45"
+      fill="none"
+      stroke="var(--color-border)"
+      strokeWidth="1"
+      opacity="0.5"
+    />
+    <circle
+      cx="50"
+      cy="50"
+      r="35"
+      fill="none"
+      stroke="var(--color-border)"
+      strokeWidth="1"
+      strokeDasharray="3 3"
+      opacity="0.5"
+    />
+    <circle
+      cx="50"
+      cy="50"
+      r="45"
+      fill="none"
+      stroke="var(--color-brand-accent)"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeDasharray="60 220"
+    >
+      <animateTransform
+        attributeName="transform"
+        type="rotate"
+        from="0 50 50"
+        to="360 50 50"
+        dur="8s"
+        repeatCount="indefinite"
+      />
+    </circle>
+    <circle
+      cx="50"
+      cy="50"
+      r="35"
+      fill="none"
+      stroke="var(--color-accent-cyan)"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeDasharray="40 180"
+    >
+      <animateTransform
+        attributeName="transform"
+        type="rotate"
+        from="360 50 50"
+        to="0 50 50"
+        dur="6s"
+        repeatCount="indefinite"
+      />
+    </circle>
+    <circle cx="50" cy="50" r="10" fill="var(--color-brand-accent)">
+      <animate attributeName="r" from="10" to="12" dur="1s" begin="0s" repeatCount="indefinite" />
+      <animate
+        attributeName="opacity"
+        from="1"
+        to="0.5"
+        dur="1s"
+        begin="0s"
+        repeatCount="indefinite"
+      />
+    </circle>
+  </svg>
 );
 
 // ── Phase chip short label ────────────────────────────────────────────────────
@@ -69,8 +125,8 @@ const PipelineTimeline: React.FC<{
       aria-label="Agent pipeline phases"
     >
       {phases.map((phase, i) => {
-        const isDone    = i < currentIndex;
-        const isActive  = i === currentIndex;
+        const isDone = i < currentIndex;
+        const isActive = i === currentIndex;
         const isPending = i > currentIndex;
 
         return (
@@ -91,14 +147,14 @@ const PipelineTimeline: React.FC<{
               'flex flex-col items-center gap-1 px-3 py-2.5 rounded-xl border',
               'text-[11px] font-medium w-[120px] text-center leading-tight',
               'transition-colors duration-300',
-              isDone   ? 'border-green-500/30 bg-green-500/10 text-green-400' : '',
-              isActive ? 'border-brand-accent/60 bg-brand-accent/10 text-brand-accent shadow-[0_0_12px_rgba(56,189,248,0.18)]' : '',
+              isDone ? 'border-green-500/30 bg-green-500/10 text-green-400' : '',
+              isActive
+                ? 'border-brand-accent/60 bg-brand-accent/10 text-brand-accent shadow-[0_0_12px_rgba(56,189,248,0.18)]'
+                : '',
               isPending ? 'border-border/25 bg-surface/20 text-text-secondary/50' : '',
             ].join(' ')}
           >
-            <span className="text-base leading-none">
-              {isDone ? '✓' : phaseIcon(i)}
-            </span>
+            <span className="text-base leading-none">{isDone ? '✓' : phaseIcon(i)}</span>
             <span>{shortLabel(phase)}</span>
             {isActive && (
               <motion.span
@@ -127,7 +183,7 @@ export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
   const subPhaseIntervalRef = useRef<number | null>(null);
 
   useEffect(() => {
-    const index = phases.findIndex(p => p === phase);
+    const index = phases.findIndex((p) => p === phase);
     if (index !== -1) setCurrentPhaseIndex(index);
 
     if (subPhaseIntervalRef.current) clearInterval(subPhaseIntervalRef.current);
@@ -144,7 +200,9 @@ export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
       setCurrentSubPhase('');
     }
 
-    return () => { if (subPhaseIntervalRef.current) clearInterval(subPhaseIntervalRef.current); };
+    return () => {
+      if (subPhaseIntervalRef.current) clearInterval(subPhaseIntervalRef.current);
+    };
   }, [phase, phases, phaseDetails]);
 
   const progress = ((currentPhaseIndex + 1) / phases.length) * 100;
@@ -210,9 +268,7 @@ export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
           ← Swipe to explore pipeline stages →
         </p>
 
-        {footerText && (
-          <p className="text-xs text-text-secondary/70 mt-4">{footerText}</p>
-        )}
+        {footerText && <p className="text-xs text-text-secondary/70 mt-4">{footerText}</p>}
       </div>
     </div>
   );

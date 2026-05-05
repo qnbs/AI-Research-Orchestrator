@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 export const BugAntIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (

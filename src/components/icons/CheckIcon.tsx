@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 export const CheckIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
@@ -10,10 +9,6 @@ export const CheckIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     stroke="currentColor"
     {...props}
   >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      d="M4.5 12.75l6 6 9-13.5"
-    />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
   </svg>
 );
