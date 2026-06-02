@@ -64,10 +64,3 @@ describe('apiKeyService', () => {
     });
   });
 });
-
-describe('databaseService', () => {
-  // These tests would require more complex IndexedDB mocking
-  // Placeholder for future integration tests
-  it.todo('should save and retrieve settings');
-  it.todo('should add and retrieve knowledge base entries');
-});

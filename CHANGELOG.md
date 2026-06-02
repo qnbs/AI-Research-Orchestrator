@@ -16,12 +16,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `docs/ADR-001-state-management.md` — Redux as source of truth, Context as facade
 - Unit tests: `parseGeminiJson`, `knowledgeBaseSlice` delete sync, `OrchestratorView` (RTL)
 - Report display submodules under `src/components/report-display/`
+- Agent debugger submodules under `src/components/agent-debugger/` (`AgentDebuggerParts`, toggle, constants)
 
 ### Changed
 
 - **Knowledge Base**: `deleteKbEntries.fulfilled` now removes entries in Redux and prunes selection
 - **ReportDisplay**: decomposed into `ReportArticleCard`, `ReportAccordionSection`, utils (~530 LOC main file)
-- **ESLint**: `--max-warnings` tightened from 650 → **115**; `react/no-unescaped-entities` off for i18n JSX
+- **AgentDebugger**: shell ~263 LOC; parts in `agent-debugger/*` (was 569 LOC monolith)
+- **ESLint**: `--max-warnings 0` in CI and lint-staged (was 650, then 115); `react/no-unescaped-entities` off for i18n JSX
 - **AUDIT.md**: scorecard updated to A− (9.0/10); Phase 0 baseline documented
 
 ### Fixed
