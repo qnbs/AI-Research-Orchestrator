@@ -1,4 +1,5 @@
 import { GoogleGenAI, Type, Chat } from '@google/genai';
+import type { GenerateContentConfig } from '@google/genai';
 import type {
   ResearchInput,
   ResearchReport,
@@ -17,6 +18,7 @@ import { searchPubMedForIds, fetchArticleDetails } from './pubmedUtils';
 import { searchAndFetchArxiv } from './arxivUtils';
 import { sanitizePromptFragment } from '../lib/promptSanitize';
 import { parseGeminiResponseJson } from '../lib/parseGeminiJson';
+import { getResponseFromGeminiError, getStatusFromGeminiError } from '../lib/geminiErrorTypes';
 
 export { parseGeminiResponseJson, GeminiJsonParseError } from '../lib/parseGeminiJson';
 
@@ -68,7 +70,7 @@ function getGeminiError(error: unknown): string {
   if (error && typeof error === 'object') {
     // Check for GoogleGenAIError structure specifically
     if ('response' in error) {
-      const response = (error as any).response;
+      const response = getResponseFromGeminiError(error);
       const candidate = response?.candidates?.[0];
       if (candidate?.finishReason && candidate.finishReason !== 'STOP') {
         switch (candidate.finishReason) {
@@ -85,7 +87,7 @@ function getGeminiError(error: unknown): string {
     }
 
     if ('status' in error) {
-      const status = (error as any).status;
+      const status = getStatusFromGeminiError(error);
       if (status === 429)
         return 'You have exceeded the API rate limit. Please wait a moment before trying again.';
       if (status === 503) return 'The AI service is currently overloaded. Please try again later.';
@@ -246,7 +248,7 @@ Research Topic: "${topicSafe}"
     yield { phase: 'Phase 4: AI Ranking & Analysis of Real Articles...' };
 
     // Use Thinking Config for better reasoning on complex analysis if using gemini-2.5 or gemini-3
-    const rankingConfig: any = {
+    const rankingConfig: GenerateContentConfig = {
       systemInstruction,
       temperature: aiSettings.temperature,
       responseMimeType: 'application/json',
@@ -325,14 +327,23 @@ Research Topic: "${topicSafe}"
             `,
     });
 
-    const analysisData = parseGeminiResponseJson<any>(analysisResponse.text ?? '');
+    interface RankingAnalysisPayload {
+      rankedArticles: Array<Partial<RankedArticle> & { pmid: string }>;
+      aiGeneratedInsights: ResearchReport['aiGeneratedInsights'];
+      overallKeywords: ResearchReport['overallKeywords'];
+    }
+
+    const analysisData = parseGeminiResponseJson<RankingAnalysisPayload>(
+      analysisResponse.text ?? '',
+    );
 
     const detailedRankedArticles = analysisData.rankedArticles
-      .map((ranked: any) => {
+      .map((ranked) => {
         const details = articleDetails.find((d) => d.pmid === ranked.pmid);
-        return { ...details, ...ranked };
+        return { ...details, ...ranked } as RankedArticle;
       })
-      .sort((a: RankedArticle, b: RankedArticle) => b.relevanceScore - a.relevanceScore);
+      .filter((article): article is RankedArticle => Boolean(article.pmid && article.title))
+      .sort((a, b) => b.relevanceScore - a.relevanceScore);
 
     const partialReport: ResearchReport = {
       generatedQueries,
@@ -364,7 +375,10 @@ Research Topic: "${topicSafe}"
         `;
 
     // Thinking config helps with better synthesis structure
-    const synthesisConfig: any = { systemInstruction, temperature: aiSettings.temperature };
+    const synthesisConfig: GenerateContentConfig = {
+      systemInstruction,
+      temperature: aiSettings.temperature,
+    };
     if (aiSettings.model.includes('gemini-3')) {
       synthesisConfig.thinkingConfig = { thinkingBudget: 8192 };
     } else if (aiSettings.model.includes('gemini-2.5')) {
@@ -446,7 +460,13 @@ export async function findRelatedOnline(
     });
     const sources: WebContent[] = (
       response.candidates?.[0]?.groundingMetadata?.groundingChunks || []
-    ).map((chunk: any) => chunk.web);
+    )
+      .map((chunk) => {
+        const web = chunk.web;
+        if (!web?.uri || !web.title) return null;
+        return { uri: web.uri, title: web.title };
+      })
+      .filter((web): web is WebContent => web !== null);
     return { summary: response.text ?? '', sources: sources };
   } catch (error) {
     console.error('Error finding related online content:', error);
@@ -613,7 +633,11 @@ export async function generateAuthorProfileAnalysis(
         },
       },
     });
-    return parseGeminiResponseJson<any>(response.text ?? '');
+    return parseGeminiResponseJson<{
+      careerSummary: string;
+      coreConcepts: { concept: string; frequency: number }[];
+      estimatedMetrics: { hIndex: number | null; totalCitations: number | null };
+    }>(response.text ?? '');
   } catch (error) {
     console.error('Error generating author profile:', error);
     throw new Error(getGeminiError(error));

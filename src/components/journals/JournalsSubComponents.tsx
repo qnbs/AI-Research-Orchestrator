@@ -2,7 +2,6 @@ import React from 'react';
 import { useJournalsView } from './JournalsViewContext';
 import { ChevronRightIcon } from '../icons/ChevronRightIcon';
 import { Article } from '../../types';
-import { ChartBarIcon } from '../icons/ChartBarIcon';
 import { Doughnut, Bar } from 'react-chartjs-2';
 import {
   Chart as ChartJS,

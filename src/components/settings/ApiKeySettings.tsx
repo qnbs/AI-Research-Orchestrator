@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   saveApiKey,
   getApiKey,
@@ -25,11 +25,7 @@ export const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({ onKeyChange }) =
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  useEffect(() => {
-    checkStoredKey();
-  }, []);
-
-  const checkStoredKey = async () => {
+  const checkStoredKey = useCallback(async () => {
     setIsLoading(true);
     try {
       const stored = await hasApiKey();
@@ -40,7 +36,11 @@ export const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({ onKeyChange }) =
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [onKeyChange]);
+
+  useEffect(() => {
+    void checkStoredKey();
+  }, [checkStoredKey]);
 
   const handleSave = async () => {
     setError(null);

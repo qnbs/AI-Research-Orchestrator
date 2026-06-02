@@ -20,11 +20,8 @@ import {
   JournalEntry,
   Article,
 } from '../types';
-import {
-  updateEntry,
-  deleteEntries as deleteEntriesFromDb,
-  bulkAddEntries,
-} from '../services/databaseService';
+import { deleteEntries as deleteEntriesFromDb } from '../services/databaseService';
+import { kbEntryChangesWithArticles, kbEntryTitleChanges } from '../lib/kbEntryUpdates';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { setNotification } from '../store/slices/uiSlice';
 import {
@@ -34,7 +31,6 @@ import {
   clearKb,
   selectUniqueArticles,
   selectAllEntries,
-  selectRecentResearchEntries,
   updateKbEntry,
 } from '../store/slices/knowledgeBaseSlice';
 
@@ -135,15 +131,7 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
       const entryToUpdate = knowledgeBase.find((e) => e.id === id);
       if (!entryToUpdate) return;
 
-      const changesForDb: any = { title: newTitle };
-      if (entryToUpdate.sourceType === 'research')
-        changesForDb.input = { ...entryToUpdate.input, researchTopic: newTitle };
-      else if (entryToUpdate.sourceType === 'author')
-        changesForDb.input = { ...entryToUpdate.input, authorName: newTitle };
-      else if (entryToUpdate.sourceType === 'journal')
-        changesForDb.journalProfile = { ...entryToUpdate.journalProfile, name: newTitle };
-
-      await dispatch(updateKbEntry({ id, changes: changesForDb }));
+      await dispatch(updateKbEntry({ id, changes: kbEntryTitleChanges(entryToUpdate, newTitle) }));
       showNotification('Entry title updated successfully.');
     },
     [dispatch, knowledgeBase, showNotification],
@@ -166,13 +154,10 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
         const newArticles = (entry.articles || []).map(updateArticle);
         if (!hasChanged) return;
 
-        const changes: Partial<KnowledgeBaseEntry> = { articles: newArticles };
-        if (entry.sourceType === 'research')
-          (changes as any).report = { ...entry.report, rankedArticles: newArticles };
-        else if (entry.sourceType === 'author')
-          (changes as any).profile = { ...entry.profile, publications: newArticles };
-
-        updatedEntries.push({ id: entry.id, changes });
+        updatedEntries.push({
+          id: entry.id,
+          changes: kbEntryChangesWithArticles(entry, newArticles),
+        });
       });
 
       if (updatedEntries.length > 0) {
@@ -196,12 +181,10 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
           if (keptArticles.length === 0) {
             toDeleteIds.push(entry.id);
           } else {
-            const changes: Partial<KnowledgeBaseEntry> = { articles: keptArticles };
-            if (entry.sourceType === 'research')
-              (changes as any).report = { ...entry.report, rankedArticles: keptArticles };
-            else if (entry.sourceType === 'author')
-              (changes as any).profile = { ...entry.profile, publications: keptArticles };
-            updates.push({ id: entry.id, changes });
+            updates.push({
+              id: entry.id,
+              changes: kbEntryChangesWithArticles(entry, keptArticles),
+            });
           }
         }
       });
@@ -279,12 +262,10 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
           if (keptArticles.length === 0) {
             entriesToDelete.add(entry.id);
           } else {
-            const changes: Partial<KnowledgeBaseEntry> = { articles: keptArticles };
-            if (entry.sourceType === 'research')
-              (changes as any).report = { ...entry.report, rankedArticles: keptArticles };
-            else if (entry.sourceType === 'author')
-              (changes as any).profile = { ...entry.profile, publications: keptArticles };
-            updates.push({ id: entry.id, changes });
+            updates.push({
+              id: entry.id,
+              changes: kbEntryChangesWithArticles(entry, keptArticles),
+            });
           }
         }
       });

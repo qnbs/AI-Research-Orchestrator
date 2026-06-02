@@ -16,7 +16,7 @@ db.version(3)
     presets: 'id',
     collections: 'id, name, createdAt, updatedAt',
   })
-  .upgrade((tx) => {
+  .upgrade((_tx) => {
     // Migrate existing data — no structural changes needed for existing tables
     return Promise.resolve();
   });

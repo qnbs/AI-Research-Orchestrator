@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 import { useUI } from '../contexts/UIContext';
-import type { View } from '../contexts/UIContext';
 import { useSettings } from '../contexts/SettingsContext';
 import { useKnowledgeBase } from '../contexts/KnowledgeBaseContext';
 import { DocumentIcon } from './icons/DocumentIcon';
@@ -47,7 +46,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
   onExportSelection,
 }) => {
   const { isCommandPaletteOpen, setIsCommandPaletteOpen, setCurrentView, currentView } = useUI();
-  const { settings, updateSettings } = useSettings();
+  const { updateSettings } = useSettings();
   const { knowledgeBase } = useKnowledgeBase();
   const [search, setSearch] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -292,14 +291,16 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
   if (!isCommandPaletteOpen) return null;
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-start justify-center pt-20"
-      onMouseDown={closePalette}
-    >
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20">
+      <button
+        type="button"
+        className="absolute inset-0 bg-black/40 border-0 cursor-default"
+        aria-label="Close command palette"
+        onClick={closePalette}
+      />
       <div
         ref={paletteRef}
-        onMouseDown={(e) => e.stopPropagation()}
-        className="w-full max-w-xl bg-surface/80 backdrop-blur-xl border border-border rounded-lg shadow-2xl animate-fadeIn"
+        className="relative w-full max-w-xl bg-surface/80 backdrop-blur-xl border border-border rounded-lg shadow-2xl animate-fadeIn"
         style={{ animationDuration: '200ms' }}
         role="dialog"
         aria-modal="true"

@@ -6,8 +6,6 @@ import { DocumentIcon } from './icons/DocumentIcon';
 import { DatabaseIcon } from './icons/DatabaseIcon';
 import { BeakerIcon } from './icons/BeakerIcon';
 import { AuthorIcon } from './icons/AuthorIcon';
-import { BookOpenIcon } from './icons/BookOpenIcon';
-
 interface BottomNavBarProps {
   currentView: View;
   onViewChange: (view: View) => void;

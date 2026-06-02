@@ -56,11 +56,6 @@ function entryToRankedArticle(entry: Element): Partial<RankedArticle> {
     .map((c) => c.getAttribute('term') ?? '')
     .filter(Boolean);
 
-  const pdfLinkEl = Array.from(entry.getElementsByTagName('link')).find(
-    (l) => l.getAttribute('type') === 'application/pdf',
-  );
-  const pdfUrl = pdfLinkEl?.getAttribute('href') ?? `https://arxiv.org/pdf/${arxivId}`;
-
   // arXiv uses a namespace for journal_ref and doi — try both with and without NS
   const journalRef =
     entry

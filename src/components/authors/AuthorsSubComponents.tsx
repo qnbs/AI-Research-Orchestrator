@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo, useId } from 'react';
 import { useAuthorsView } from './AuthorsViewContext';
-import { AuthorCluster, AuthorProfile } from '../../types';
 import { ChevronLeftIcon } from '../icons/ChevronLeftIcon';
 import { ChevronRightIcon } from '../icons/ChevronRightIcon';
 import { ChevronDownIcon } from '../icons/ChevronDownIcon';
@@ -200,7 +199,7 @@ export const FeaturedAuthorsView: React.FC = () => {
 
       <div>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {paginatedAuthors.map((author: any, index: number) => (
+          {paginatedAuthors.map((author: { name: string; description: string }, index: number) => (
             <div
               key={author.name}
               className="animate-fadeIn"
@@ -655,7 +654,7 @@ export const AuthorProfileView: React.FC = () => {
             <div>
               <h3 className="text-xl font-bold text-text-primary mb-4">Citation Impact Timeline</h3>
               <div className="h-64 bg-background p-4 rounded-lg border border-border">
-                <Bar options={chartOptions as any} data={chartData} />
+                <Bar options={chartOptions} data={chartData} />
               </div>
             </div>
           </div>

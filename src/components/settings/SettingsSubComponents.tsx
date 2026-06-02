@@ -19,6 +19,7 @@ import { ExportIcon } from '../icons/ExportIcon';
 import { ShieldCheckIcon } from '../icons/ShieldCheckIcon';
 import { DownloadIcon } from '../icons/DownloadIcon';
 import { UploadIcon } from '../icons/UploadIcon';
+import type { Settings } from '../../types';
 import { ARTICLE_TYPES, CSV_EXPORT_COLUMNS } from '../../types';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 
@@ -130,36 +131,38 @@ export const GeneralSettingsTab: React.FC = () => {
           </button>
         </div>
         <div className="pt-4 mt-4 border-t border-border">
-          <div className="flex items-center gap-2 mb-2">
-            <label className="block text-sm font-medium text-text-primary">UI Density</label>
-            <Tooltip content="Adjust the spacing and size of UI elements. 'Compact' is useful for smaller screens or fitting more information.">
-              <InfoIcon className="h-4 w-4 text-text-secondary cursor-help" />
-            </Tooltip>
-          </div>
-          <div className="flex w-full max-w-xs bg-surface p-1 rounded-lg border border-border">
-            <button
-              onClick={() =>
-                setTempSettings((s) => ({
-                  ...s,
-                  appearance: { ...s.appearance, density: 'comfortable' },
-                }))
-              }
-              className={`w-1/2 p-1.5 rounded-md text-sm font-medium transition-colors ${tempSettings.appearance.density === 'comfortable' ? 'bg-brand-accent text-brand-text-on-accent' : 'text-text-secondary hover:bg-surface-hover'}`}
-            >
-              Comfortable
-            </button>
-            <button
-              onClick={() =>
-                setTempSettings((s) => ({
-                  ...s,
-                  appearance: { ...s.appearance, density: 'compact' },
-                }))
-              }
-              className={`w-1/2 p-1.5 rounded-md text-sm font-medium transition-colors ${tempSettings.appearance.density === 'compact' ? 'bg-brand-accent text-brand-text-on-accent' : 'text-text-secondary hover:bg-surface-hover'}`}
-            >
-              Compact
-            </button>
-          </div>
+          <fieldset>
+            <legend className="flex items-center gap-2 mb-2 text-sm font-medium text-text-primary">
+              UI Density
+              <Tooltip content="Adjust the spacing and size of UI elements. 'Compact' is useful for smaller screens or fitting more information.">
+                <InfoIcon className="h-4 w-4 text-text-secondary cursor-help" />
+              </Tooltip>
+            </legend>
+            <div className="flex w-full max-w-xs bg-surface p-1 rounded-lg border border-border">
+              <button
+                onClick={() =>
+                  setTempSettings((s) => ({
+                    ...s,
+                    appearance: { ...s.appearance, density: 'comfortable' },
+                  }))
+                }
+                className={`w-1/2 p-1.5 rounded-md text-sm font-medium transition-colors ${tempSettings.appearance.density === 'comfortable' ? 'bg-brand-accent text-brand-text-on-accent' : 'text-text-secondary hover:bg-surface-hover'}`}
+              >
+                Comfortable
+              </button>
+              <button
+                onClick={() =>
+                  setTempSettings((s) => ({
+                    ...s,
+                    appearance: { ...s.appearance, density: 'compact' },
+                  }))
+                }
+                className={`w-1/2 p-1.5 rounded-md text-sm font-medium transition-colors ${tempSettings.appearance.density === 'compact' ? 'bg-brand-accent text-brand-text-on-accent' : 'text-text-secondary hover:bg-surface-hover'}`}
+              >
+                Compact
+              </button>
+            </div>
+          </fieldset>
         </div>
         <div className="pt-4 mt-4 border-t border-border">
           <label htmlFor="font-family" className="block text-sm font-medium text-text-primary mb-2">
@@ -171,7 +174,10 @@ export const GeneralSettingsTab: React.FC = () => {
             onChange={(e) =>
               setTempSettings((s) => ({
                 ...s,
-                appearance: { ...s.appearance, fontFamily: e.target.value as any },
+                appearance: {
+                  ...s.appearance,
+                  fontFamily: e.target.value as Settings['appearance']['fontFamily'],
+                },
               }))
             }
             className="block w-full max-w-xs bg-input-bg border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent"
@@ -305,7 +311,10 @@ export const GeneralSettingsTab: React.FC = () => {
               onChange={(e) =>
                 setTempSettings((s) => ({
                   ...s,
-                  notifications: { ...s.notifications, position: e.target.value as any },
+                  notifications: {
+                    ...s.notifications,
+                    position: e.target.value as Settings['notifications']['position'],
+                  },
                 }))
               }
               className="block w-full bg-input-bg border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent"
@@ -389,7 +398,10 @@ export const AISettingsTab: React.FC = () => {
               id="ai-model"
               value={tempSettings.ai.model}
               onChange={(e) =>
-                setTempSettings((s) => ({ ...s, ai: { ...s.ai, model: e.target.value as any } }))
+                setTempSettings((s) => ({
+                  ...s,
+                  ai: { ...s.ai, model: e.target.value as Settings['ai']['model'] },
+                }))
               }
               className="mt-1 block w-full bg-input-bg border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent"
             >
@@ -403,34 +415,42 @@ export const AISettingsTab: React.FC = () => {
           </div>
 
           <div>
-            <label className="font-medium text-text-primary block">AI Persona</label>
             <fieldset className="mt-2">
-              <legend className="sr-only">AI Persona</legend>
+              <legend className="font-medium text-text-primary block mb-2">AI Persona</legend>
               <div className="space-y-2">
-                {Object.entries(personaDescriptions).map(([key, description]) => (
-                  <label
-                    key={key}
-                    className="flex items-start p-3 rounded-md border has-[:checked]:border-brand-accent has-[:checked]:bg-brand-accent/10 transition-colors cursor-pointer dark:border-border dark:has-[:checked]:border-brand-accent"
-                  >
-                    <input
-                      type="radio"
-                      name="ai-persona"
-                      value={key}
-                      checked={tempSettings.ai.aiPersona === key}
-                      onChange={(e) =>
-                        setTempSettings((s) => ({
-                          ...s,
-                          ai: { ...s.ai, aiPersona: e.target.value as any },
-                        }))
-                      }
-                      className="h-4 w-4 mt-0.5 text-brand-accent focus:ring-brand-accent border-border bg-input-bg"
-                    />
-                    <span className="ml-3 text-sm">
-                      <span className="font-medium text-text-primary block">{key}</span>
-                      <span className="text-text-secondary">{description}</span>
-                    </span>
-                  </label>
-                ))}
+                {Object.entries(personaDescriptions).map(([key, description]) => {
+                  const personaId = `ai-persona-${key.replace(/\s+/g, '-').toLowerCase()}`;
+                  return (
+                    <label
+                      key={key}
+                      htmlFor={personaId}
+                      className="flex items-start p-3 rounded-md border has-[:checked]:border-brand-accent has-[:checked]:bg-brand-accent/10 transition-colors cursor-pointer dark:border-border dark:has-[:checked]:border-brand-accent"
+                    >
+                      <input
+                        id={personaId}
+                        type="radio"
+                        name="ai-persona"
+                        value={key}
+                        aria-label={`${key}: ${description}`}
+                        checked={tempSettings.ai.aiPersona === key}
+                        onChange={(e) =>
+                          setTempSettings((s) => ({
+                            ...s,
+                            ai: {
+                              ...s.ai,
+                              aiPersona: e.target.value as Settings['ai']['aiPersona'],
+                            },
+                          }))
+                        }
+                        className="h-4 w-4 mt-0.5 text-brand-accent focus:ring-brand-accent border-border bg-input-bg"
+                      />
+                      <span className="ml-3 text-sm">
+                        <span className="font-medium text-text-primary block">{key}</span>
+                        <span className="text-text-secondary">{description}</span>
+                      </span>
+                    </label>
+                  );
+                })}
               </div>
             </fieldset>
           </div>
@@ -494,7 +514,7 @@ export const AISettingsTab: React.FC = () => {
               onChange={(e) =>
                 setTempSettings((s) => ({
                   ...s,
-                  ai: { ...s.ai, aiLanguage: e.target.value as any },
+                  ai: { ...s.ai, aiLanguage: e.target.value as Settings['ai']['aiLanguage'] },
                 }))
               }
               className="mt-1 block w-full bg-input-bg border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent"
@@ -784,7 +804,10 @@ export const KnowledgeBaseSettingsTab: React.FC = () => {
               onChange={(e) =>
                 setTempSettings((s) => ({
                   ...s,
-                  knowledgeBase: { ...s.knowledgeBase, defaultView: e.target.value as any },
+                  knowledgeBase: {
+                    ...s.knowledgeBase,
+                    defaultView: e.target.value as Settings['knowledgeBase']['defaultView'],
+                  },
                 }))
               }
               className="block w-full bg-input-bg border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent"
@@ -803,7 +826,10 @@ export const KnowledgeBaseSettingsTab: React.FC = () => {
               onChange={(e) =>
                 setTempSettings((s) => ({
                   ...s,
-                  knowledgeBase: { ...s.knowledgeBase, defaultSort: e.target.value as any },
+                  knowledgeBase: {
+                    ...s.knowledgeBase,
+                    defaultSort: e.target.value as Settings['knowledgeBase']['defaultSort'],
+                  },
                 }))
               }
               className="block w-full bg-input-bg border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent"
@@ -824,7 +850,10 @@ export const KnowledgeBaseSettingsTab: React.FC = () => {
                   ...s,
                   knowledgeBase: {
                     ...s.knowledgeBase,
-                    articlesPerPage: parseInt(e.target.value, 10) as any,
+                    articlesPerPage: parseInt(
+                      e.target.value,
+                      10,
+                    ) as Settings['knowledgeBase']['articlesPerPage'],
                   },
                 }))
               }
@@ -1035,7 +1064,10 @@ export const ExportSettingsTab: React.FC = () => {
                   ...s,
                   export: {
                     ...s.export,
-                    csv: { ...s.export.csv, delimiter: e.target.value as any },
+                    csv: {
+                      ...s.export.csv,
+                      delimiter: e.target.value as Settings['export']['csv']['delimiter'],
+                    },
                   },
                 }))
               }

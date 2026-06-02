@@ -10,12 +10,8 @@ import {
   deleteCollection,
   updateCollection,
   generateShareToken,
-  addEntryToCollection,
-  removeEntryFromCollection,
 } from '../store/slices/collectionsSlice';
 import type { ResearchCollection } from '../types';
-import { useTranslation } from '../hooks/useTranslation';
-
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const COLLECTION_COLORS = [
   '#38bdf8',
@@ -175,9 +171,13 @@ const CollectionCard: React.FC<{
               </p>
             )}
           </div>
-          <div className="flex gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+          <div className="flex gap-1 flex-shrink-0" role="group" aria-label="Collection actions">
             <button
-              onClick={() => onShare(collection)}
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onShare(collection);
+              }}
               title="Share collection"
               className="p-1.5 rounded-md text-text-secondary hover:text-brand-accent transition-colors text-xs"
               aria-label="Share collection"
@@ -185,14 +185,22 @@ const CollectionCard: React.FC<{
               🔗
             </button>
             <button
-              onClick={() => onEdit(collection)}
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(collection);
+              }}
               className="p-1.5 rounded-md text-text-secondary hover:text-text-primary transition-colors text-xs"
               aria-label="Edit collection"
             >
               ✏️
             </button>
             <button
-              onClick={() => onDelete(collection.id)}
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(collection.id);
+              }}
               className="p-1.5 rounded-md text-text-secondary hover:text-red-400 transition-colors text-xs"
               aria-label="Delete collection"
             >
@@ -278,8 +286,8 @@ const CollectionModal: React.FC<{
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Icon picker */}
-          <div>
-            <label className="text-xs text-text-secondary mb-1 block">Icon</label>
+          <fieldset>
+            <legend className="text-xs text-text-secondary mb-1 block">Icon</legend>
             <div className="flex flex-wrap gap-2">
               {COLLECTION_ICONS.map((ic) => (
                 <button
@@ -293,7 +301,7 @@ const CollectionModal: React.FC<{
                 </button>
               ))}
             </div>
-          </div>
+          </fieldset>
 
           {/* Name */}
           <div>
@@ -326,8 +334,8 @@ const CollectionModal: React.FC<{
           </div>
 
           {/* Color */}
-          <div>
-            <label className="text-xs text-text-secondary mb-1 block">Color</label>
+          <fieldset>
+            <legend className="text-xs text-text-secondary mb-1 block">Color</legend>
             <div className="flex gap-2">
               {COLLECTION_COLORS.map((c) => (
                 <button
@@ -340,7 +348,7 @@ const CollectionModal: React.FC<{
                 />
               ))}
             </div>
-          </div>
+          </fieldset>
 
           {/* Tags */}
           <div>
@@ -382,7 +390,6 @@ const CollectionModal: React.FC<{
 // ── Main View ─────────────────────────────────────────────────────────────────
 const CollectionsView: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { t } = useTranslation();
   const collections = useAppSelector((s) => s.collections.items);
   const isLoading = useAppSelector((s) => s.collections.isLoading);
 
@@ -439,8 +446,6 @@ const CollectionsView: React.FC = () => {
     },
     [dispatch],
   );
-
-  const selected = collections.find((c) => c.id === selectedId) ?? null;
 
   return (
     <div className="flex flex-col h-full gap-6 px-4 py-6 max-w-6xl mx-auto">

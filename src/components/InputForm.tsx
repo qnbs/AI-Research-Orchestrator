@@ -1,5 +1,5 @@
-import React, { useState, useEffect, memo } from 'react';
-import type { ResearchInput, Settings, Preset } from '../types';
+import React, { useState, useEffect, memo, useRef } from 'react';
+import type { ResearchInput, Settings } from '../types';
 import { ARTICLE_TYPES } from '../types';
 import { usePresets } from '../contexts/PresetContext';
 import { SearchIcon } from './icons/SearchIcon';
@@ -120,6 +120,13 @@ const InputFormComponent: React.FC<InputFormProps> = ({
   const [isPresetModalOpen, setIsPresetModalOpen] = useState(false);
   const [newPresetName, setNewPresetName] = useState('');
   const modalRef = useFocusTrap<HTMLDivElement>(isPresetModalOpen);
+  const presetNameInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isPresetModalOpen) {
+      presetNameInputRef.current?.focus();
+    }
+  }, [isPresetModalOpen]);
 
   useEffect(() => {
     try {
@@ -174,13 +181,23 @@ const InputFormComponent: React.FC<InputFormProps> = ({
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
-    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-      if (Object.keys(errors).length === 0 && !isLoading) {
-        onSubmit(formData);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    const formEl = formRef.current;
+    if (!formEl) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+        if (Object.keys(errors).length === 0 && !isLoading) {
+          onSubmit(formData);
+        }
       }
-    }
-  };
+    };
+
+    formEl.addEventListener('keydown', handleKeyDown);
+    return () => formEl.removeEventListener('keydown', handleKeyDown);
+  }, [errors, formData, isLoading, onSubmit]);
 
   const handleSavePreset = () => {
     if (newPresetName.trim()) {
@@ -251,7 +268,7 @@ const InputFormComponent: React.FC<InputFormProps> = ({
             </button>
           </div>
         </div>
-        <form onSubmit={handleSubmit} onKeyDown={handleKeyDown} className="space-y-8" role="search">
+        <form ref={formRef} onSubmit={handleSubmit} className="space-y-8">
           <div className="group">
             <label
               htmlFor="researchTopic"
@@ -481,13 +498,13 @@ const InputFormComponent: React.FC<InputFormProps> = ({
                 Preset Name
               </label>
               <input
+                ref={presetNameInputRef}
                 type="text"
                 id="presetName"
                 value={newPresetName}
                 onChange={(e) => setNewPresetName(e.target.value)}
                 className="glass-input block w-full rounded-lg shadow-sm py-2 px-3 text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-accent sm:text-sm"
                 placeholder="e.g., Clinical Trials (Last 5 Years)"
-                autoFocus
               />
             </div>
             <div className="mt-6 flex justify-end space-x-3">

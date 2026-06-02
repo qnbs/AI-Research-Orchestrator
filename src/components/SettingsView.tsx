@@ -124,7 +124,7 @@ const SettingsViewLayout: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
         <aside className="md:col-span-1">
-          <nav className="space-y-1 sticky top-24" role="tablist" aria-label="Settings categories">
+          <div className="space-y-1 sticky top-24" role="tablist" aria-label="Settings categories">
             <div className="relative">
               {tabs.map((tab, index) => (
                 <button
@@ -165,7 +165,7 @@ const SettingsViewLayout: React.FC = () => {
                 <span>FAQ & Shortcuts</span>
               </button>
             </div>
-          </nav>
+          </div>
         </aside>
 
         <main className="md:col-span-3">

@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { deepMergeRecords } from '../../lib/deepMerge';
 import type { Settings, CyberTheme } from '../../types';
 import { CSV_EXPORT_COLUMNS } from '../../types';
 
@@ -94,29 +95,10 @@ export const settingsSlice = createSlice({
       state.isLoading = false;
     },
     updateSettings: (state, action: PayloadAction<Partial<Settings>>) => {
-      // Deep merge could be handled here, but for simple partial updates, we rely on the payload being correct or use a deep merge utility if needed.
-      // For Redux, usually granular actions are better, but we'll support the existing pattern.
-      const deepMerge = (target: any, source: any): any => {
-        const output = { ...target };
-        if (
-          target &&
-          typeof target === 'object' &&
-          !Array.isArray(target) &&
-          source &&
-          typeof source === 'object' &&
-          !Array.isArray(source)
-        ) {
-          Object.keys(source).forEach((key) => {
-            if (typeof source[key] === 'object' && source[key] !== null && key in target) {
-              output[key] = deepMerge(target[key], source[key]);
-            } else {
-              output[key] = source[key];
-            }
-          });
-        }
-        return output;
-      };
-      state.data = deepMerge(state.data, action.payload);
+      state.data = deepMergeRecords(
+        state.data as Record<string, unknown>,
+        action.payload as Record<string, unknown>,
+      ) as unknown as Settings;
     },
     resetSettings: (state) => {
       state.data = defaultSettings;

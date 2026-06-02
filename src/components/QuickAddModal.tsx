@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 import { XIcon } from './icons/XIcon';
 import { DocumentPlusIcon } from './icons/DocumentPlusIcon';
@@ -15,6 +15,11 @@ const QuickAddModal: React.FC<QuickAddModalProps> = ({ onClose }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const modalRef = useFocusTrap<HTMLDivElement>(true);
+  const identifierInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    identifierInputRef.current?.focus();
+  }, []);
 
   const { settings } = useSettings();
   const { addSingleArticleReport } = useKnowledgeBase();
@@ -68,13 +73,13 @@ const QuickAddModal: React.FC<QuickAddModalProps> = ({ onClose }) => {
             Article Identifier
           </label>
           <input
+            ref={identifierInputRef}
             id="article-identifier"
             type="text"
             value={identifier}
             onChange={(e) => setIdentifier(e.target.value)}
             className="block w-full bg-input-bg border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent sm:text-sm"
             placeholder="e.g., 31354136 or https://pubmed.ncbi.nlm.nih.gov/..."
-            autoFocus
           />
           {error && <p className="text-xs text-red-400 mt-2">{error}</p>}
           <div className="mt-6 flex justify-end space-x-3">

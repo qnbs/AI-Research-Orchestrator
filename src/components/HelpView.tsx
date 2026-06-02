@@ -10,6 +10,30 @@ import { ChevronUpIcon } from './icons/ChevronUpIcon';
 
 type HelpSection = 'guide' | 'faq' | 'glossary' | 'about';
 
+interface HelpContentItem {
+  title: string;
+  content: React.ReactNode;
+  keywords?: string | string[];
+}
+
+function topicMatchesSearch(topic: HelpContentItem, term: string): boolean {
+  if (topic.title.toLowerCase().includes(term)) return true;
+  if (!topic.keywords) return false;
+  if (typeof topic.keywords === 'string') return topic.keywords.includes(term);
+  return topic.keywords.some((kw) => kw.includes(term));
+}
+
+function getTextFromReactNode(node: React.ReactNode): string {
+  if (typeof node === 'string') return node;
+  if (typeof node === 'number') return String(node);
+  if (Array.isArray(node)) return node.map(getTextFromReactNode).join('');
+  if (React.isValidElement(node)) {
+    const { children } = node.props as { children?: React.ReactNode };
+    if (children != null) return getTextFromReactNode(children);
+  }
+  return '';
+}
+
 interface AccordionItemProps {
   title: string;
   children: React.ReactNode;
@@ -99,7 +123,10 @@ const AccordionItem: React.FC<AccordionItemProps> = ({ title, children, defaultO
   );
 };
 
-const GuideSection: React.FC<{ items: any[]; searchTerm: string }> = ({ items, searchTerm }) => {
+const GuideSection: React.FC<{ items: HelpContentItem[]; searchTerm: string }> = ({
+  items,
+  searchTerm,
+}) => {
   return (
     <div>
       {items.map((topic, index) => (
@@ -116,7 +143,10 @@ const GuideSection: React.FC<{ items: any[]; searchTerm: string }> = ({ items, s
   );
 };
 
-const FAQSection: React.FC<{ items: any[]; searchTerm: string }> = ({ items, searchTerm }) => (
+const FAQSection: React.FC<{ items: HelpContentItem[]; searchTerm: string }> = ({
+  items,
+  searchTerm,
+}) => (
   <div>
     {items.map((item, index) => (
       <AccordionItem key={index} title={item.title} defaultOpen={!!searchTerm}>
@@ -131,7 +161,10 @@ const FAQSection: React.FC<{ items: any[]; searchTerm: string }> = ({ items, sea
   </div>
 );
 
-const GlossarySection: React.FC<{ items: any[]; searchTerm: string }> = ({ items, searchTerm }) => (
+const GlossarySection: React.FC<{ items: HelpContentItem[]; searchTerm: string }> = ({
+  items,
+  searchTerm,
+}) => (
   <div>
     {items.map((item, index) => (
       <AccordionItem key={index} title={item.title} defaultOpen={!!searchTerm}>
@@ -645,24 +678,10 @@ const HelpView: React.FC<HelpViewProps> = ({ initialTab, onTabConsumed }) => {
     [],
   );
 
-  const getTextFromReactNode = (node: React.ReactNode): string => {
-    if (typeof node === 'string') return node;
-    if (typeof node === 'number') return String(node);
-    if (Array.isArray(node)) return node.map(getTextFromReactNode).join('');
-    if (React.isValidElement(node) && (node.props as any).children) {
-      return getTextFromReactNode((node.props as any).children);
-    }
-    return '';
-  };
-
   const filteredGuideTopics = useMemo(() => {
     if (!searchTerm) return guideTopics;
     const lowercasedTerm = searchTerm.toLowerCase();
-    return guideTopics.filter(
-      (topic) =>
-        topic.title.toLowerCase().includes(lowercasedTerm) ||
-        topic.keywords?.includes(lowercasedTerm),
-    );
+    return guideTopics.filter((topic) => topicMatchesSearch(topic, lowercasedTerm));
   }, [searchTerm, guideTopics]);
 
   const filteredFaqItems = useMemo(() => {

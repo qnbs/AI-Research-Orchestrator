@@ -351,7 +351,7 @@ export const researchApi = createApi({
     >({
       infiniteQueryOptions: {
         initialPageParam: 0,
-        getNextPageParam: (lastPage, allPages, lastPageParam) => {
+        getNextPageParam: (lastPage, allPages, _lastPageParam) => {
           const loaded = allPages.flatMap((p) => p.pmids).length;
           return loaded < lastPage.total ? loaded : undefined;
         },

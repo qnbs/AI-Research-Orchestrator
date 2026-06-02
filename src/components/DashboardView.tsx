@@ -10,7 +10,7 @@
  *  6. Keyword Clusters       — Recharts Treemap + SVG export
  *  7. Co-authorship Network  — Custom SVG force-directed graph + export
  */
-import React, { useMemo, useRef, useCallback, useId } from 'react';
+import React, { useMemo, useRef, useCallback } from 'react';
 import {
   BarChart,
   Bar,
@@ -25,6 +25,12 @@ import {
   Pie,
   Cell,
   Treemap,
+} from 'recharts';
+import type {
+  TooltipContentProps,
+  TreemapNode,
+  BarRectangleItem,
+  PieSectorDataItem,
 } from 'recharts';
 import { motion } from 'framer-motion';
 import type { KnowledgeBaseFilter, AggregatedArticle } from '../types';
@@ -71,7 +77,7 @@ function exportSVG(ref: React.RefObject<HTMLDivElement | null>, filename: string
 }
 
 // ── Custom Tooltip ────────────────────────────────────────────────────────────
-const CyberTooltip = ({ active, payload, label }: any) => {
+const CyberTooltip = ({ active, payload, label }: TooltipContentProps) => {
   if (!active || !payload?.length) return null;
   return (
     <div
@@ -87,7 +93,7 @@ const CyberTooltip = ({ active, payload, label }: any) => {
       {label != null && (
         <p style={{ color: '#7d8590', marginBottom: 4, fontWeight: 500 }}>{label}</p>
       )}
-      {payload.map((p: any, i: number) => (
+      {payload.map((p, i) => (
         <p key={i} style={{ color: p.color ?? C[i % C.length], fontWeight: 600, margin: 0 }}>
           {p.name}: <span style={{ color: '#e6edf3' }}>{p.value}</span>
         </p>
@@ -97,7 +103,7 @@ const CyberTooltip = ({ active, payload, label }: any) => {
 };
 
 // ── Treemap Cell ──────────────────────────────────────────────────────────────
-const TreemapCell = (props: any) => {
+const TreemapCell = (props: TreemapNode) => {
   const { x, y, width, height, name, value, index, depth } = props;
   if (!width || !height || depth > 1) return <g />;
   const color = C[index % C.length];
@@ -398,7 +404,6 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({ onFilterChange, 
   const refOA = useRef<HTMLDivElement>(null);
   const refSource = useRef<HTMLDivElement>(null);
   const refKeywords = useRef<HTMLDivElement>(null);
-  const id = { y: useId(), j: useId(), t: useId(), o: useId(), s: useId(), k: useId() };
 
   const data = useMemo(() => {
     if (!articles.length) return null;
@@ -497,7 +502,7 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({ onFilterChange, 
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(125,133,144,0.1)" />
               <XAxis dataKey="year" tick={{ fontSize: 10, fill: '#7d8590' }} />
               <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: '#7d8590' }} />
-              <Tooltip content={<CyberTooltip />} />
+              <Tooltip content={(props) => <CyberTooltip {...props} />} />
               <Bar dataKey="count" name="Articles" radius={[4, 4, 0, 0]}>
                 {data.years.map((_, i) => (
                   <Cell key={i} fill={C[0]} fillOpacity={0.82} />
@@ -540,14 +545,18 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({ onFilterChange, 
                 width={115}
                 tick={{ fontSize: 9, fill: '#7d8590' }}
               />
-              <Tooltip content={<CyberTooltip />} />
+              <Tooltip content={(props) => <CyberTooltip {...props} />} />
               <Bar
                 dataKey="count"
                 name="Articles"
                 radius={[0, 4, 4, 0]}
-                onClick={(d: any) => {
-                  onFilterChange({ selectedJournals: [d.fullName ?? d.name] });
-                  onViewChange('knowledgeBase');
+                onClick={(d: BarRectangleItem) => {
+                  const row = d.payload as { fullName?: string; name: string } | undefined;
+                  const journal = row?.fullName ?? row?.name;
+                  if (journal) {
+                    onFilterChange({ selectedJournals: [journal] });
+                    onViewChange('knowledgeBase');
+                  }
                 }}
               >
                 {data.journals.map((_, i) => (
@@ -591,16 +600,18 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({ onFilterChange, 
                   (percent ?? 0) > 0.06 ? `${((percent ?? 0) * 100).toFixed(0)}%` : ''
                 }
                 labelLine={{ stroke: 'rgba(125,133,144,0.4)' }}
-                onClick={(d: any) => {
-                  onFilterChange({ selectedArticleTypes: [d.name] });
-                  onViewChange('knowledgeBase');
+                onClick={(d: PieSectorDataItem) => {
+                  if (d.name) {
+                    onFilterChange({ selectedArticleTypes: [String(d.name)] });
+                    onViewChange('knowledgeBase');
+                  }
                 }}
               >
                 {data.types.map((_, i) => (
                   <Cell key={i} fill={C[i % C.length]} fillOpacity={0.82} stroke="transparent" />
                 ))}
               </Pie>
-              <Tooltip content={<CyberTooltip />} />
+              <Tooltip content={(props) => <CyberTooltip {...props} />} />
               <Legend
                 iconType="circle"
                 iconSize={8}
@@ -628,7 +639,7 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({ onFilterChange, 
                 <Cell fill="#34d399" fillOpacity={0.85} stroke="transparent" />
                 <Cell fill="#7d8590" fillOpacity={0.5} stroke="transparent" />
               </Pie>
-              <Tooltip content={<CyberTooltip />} />
+              <Tooltip content={(props) => <CyberTooltip {...props} />} />
               <Legend
                 iconType="circle"
                 iconSize={8}
@@ -661,7 +672,7 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({ onFilterChange, 
                 <Cell fill="#38bdf8" fillOpacity={0.85} stroke="transparent" />
                 <Cell fill="#a78bfa" fillOpacity={0.85} stroke="transparent" />
               </Pie>
-              <Tooltip content={<CyberTooltip />} />
+              <Tooltip content={(props) => <CyberTooltip {...props} />} />
               <Legend
                 iconType="circle"
                 iconSize={8}
@@ -686,7 +697,7 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({ onFilterChange, 
               dataKey="value"
               nameKey="name"
               aspectRatio={4 / 3}
-              content={<TreemapCell />}
+              content={(props) => <TreemapCell {...props} />}
             />
           </ResponsiveContainer>
         </ChartCard>

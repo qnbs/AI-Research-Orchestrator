@@ -156,7 +156,7 @@ export interface Settings {
     duration: number; // in ms
   };
   ai: {
-    model: 'gemini-2.5-flash';
+    model: 'gemini-2.5-flash' | 'gemini-3-pro-preview';
     customPreamble: string;
     temperature: number;
     aiLanguage: 'English' | 'German' | 'French' | 'Spanish';

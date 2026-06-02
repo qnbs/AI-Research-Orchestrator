@@ -3,7 +3,7 @@ import { useSettings } from '../../contexts/SettingsContext';
 import { usePresets } from '../../contexts/PresetContext';
 import { useKnowledgeBase } from '../../contexts/KnowledgeBaseContext';
 import { useUI } from '../../contexts/UIContext';
-import { Settings, Preset, CSV_EXPORT_COLUMNS } from '../../types';
+import { Settings, Preset, KnowledgeBaseEntry, CSV_EXPORT_COLUMNS } from '../../types';
 import { db } from '../../services/databaseService';
 import { useTranslation } from '../../hooks/useTranslation';
 import { exportHistoryToJson, exportKnowledgeBaseToJson } from '../../services/exportService';
@@ -58,10 +58,16 @@ export const useSettingsViewLogic = (
 
   const [tempSettings, setTempSettings] = useState(settings);
   const [activeTab, setActiveTab] = useState<SettingsTab>('general');
-  const [modalState, setModalState] = useState<{
-    type: 'clear' | 'reset' | 'import' | 'prune' | 'merge' | 'confirmModelChange' | 'deletePreset';
-    data?: any;
-  } | null>(null);
+  type SettingsModalState =
+    | { type: 'clear' }
+    | { type: 'reset' }
+    | { type: 'import'; data: KnowledgeBaseEntry[] }
+    | { type: 'prune' }
+    | { type: 'merge' }
+    | { type: 'confirmModelChange' }
+    | { type: 'deletePreset'; data: Preset };
+
+  const [modalState, setModalState] = useState<SettingsModalState | null>(null);
   const [pruneScore, setPruneScore] = useState(20);
   const [errors, setErrors] = useState<{ formDefaults?: string }>({});
   const [storageUsage, setStorageUsage] = useState({ totalMB: '0.00', percentage: '0' });
@@ -145,7 +151,7 @@ export const useSettingsViewLogic = (
 
     if (isNaN(topN) || isNaN(maxScan)) {
       setErrors((e) => {
-        const { formDefaults, ...rest } = e;
+        const { formDefaults: _formDefaults, ...rest } = e;
         return rest;
       });
       return;
@@ -158,7 +164,7 @@ export const useSettingsViewLogic = (
       }));
     } else {
       setErrors((e) => {
-        const { formDefaults, ...rest } = e;
+        const { formDefaults: _formDefaults, ...rest } = e;
         return rest;
       });
     }

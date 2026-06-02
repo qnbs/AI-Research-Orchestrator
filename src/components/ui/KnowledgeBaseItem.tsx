@@ -137,7 +137,7 @@ const KnowledgeBaseItemInner: React.FC<KnowledgeBaseItemProps> = ({
         ['--relevance-color' as string]: relevanceColor(relevanceScore),
       }}
       onClick={onSelect}
-      role="article"
+      role="option"
       aria-selected={isSelected}
       tabIndex={0}
       onKeyDown={(e) => {

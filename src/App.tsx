@@ -13,7 +13,6 @@ import {
   ResearchInput,
   ResearchReport,
   KnowledgeBaseEntry,
-  ChatMessage,
   AuthorProfile,
   KnowledgeBaseFilter,
   AggregatedArticle,
@@ -84,8 +83,7 @@ const AppLayout: React.FC = () => {
   const { t } = useTranslation();
 
   // Orchestrator State
-  const [researchInput, setResearchInput] = useState<ResearchInput | null>(null);
-  const [localResearchInput, setLocalResearchInput] = useState<ResearchInput | null>(null); // For editable title
+  const [localResearchInput, setLocalResearchInput] = useState<ResearchInput | null>(null);
   const [report, setReport] = useState<ResearchReport | null>(null);
   const [reportStatus, setReportStatus] = useState<
     'idle' | 'generating' | 'streaming' | 'done' | 'error'
@@ -243,7 +241,7 @@ const AppLayout: React.FC = () => {
 
     if (
       window.matchMedia('(display-mode: standalone)').matches ||
-      (window.navigator as any).standalone
+      (window.navigator as Navigator & { standalone?: boolean }).standalone
     ) {
       setIsPwaInstalled(true);
     }
@@ -273,8 +271,7 @@ const AppLayout: React.FC = () => {
       setReportStatus('generating');
       setError(null);
       setReport(null);
-      setResearchInput(data);
-      setLocalResearchInput(data); // Set local copy for editing
+      setLocalResearchInput(data);
       setCurrentView('orchestrator');
       setIsCurrentReportSaved(false);
 
@@ -388,7 +385,6 @@ const AppLayout: React.FC = () => {
     generationIdRef.current += 1; // Invalidate any ongoing generation
     streamAbortRef.current?.abort();
     setReport(null);
-    setResearchInput(null);
     setLocalResearchInput(null);
     setReportStatus('idle');
     setError(null);
@@ -445,7 +441,6 @@ const AppLayout: React.FC = () => {
       if (entry.sourceType === 'research') {
         // Stop any ongoing generation when viewing an old report
         generationIdRef.current += 1;
-        setResearchInput(entry.input);
         setLocalResearchInput(entry.input);
         setReport(entry.report);
         setReportStatus('done');

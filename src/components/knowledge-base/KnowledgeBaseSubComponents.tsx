@@ -96,23 +96,30 @@ const MultiSelectFilter: React.FC<{
               className="w-full px-2 py-1 bg-input-bg border border-border rounded-md text-sm mb-1"
             />
           </div>
-          <ul role="listbox" className="py-1">
+          <div role="listbox" className="py-1">
             {filteredOptions.map((option) => (
-              <li key={option} role="option" aria-selected={selected.includes(option)}>
-                <label className="flex items-center px-3 py-2 text-sm text-text-primary hover:bg-surface-hover cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={selected.includes(option)}
-                    onChange={() => handleOptionClick(option)}
-                    className="h-4 w-4 rounded border-border bg-input-bg text-brand-accent focus:ring-brand-accent"
-                  />
-                  <span className="ml-3 truncate" title={option}>
-                    {option}
-                  </span>
-                </label>
-              </li>
+              <button
+                key={option}
+                type="button"
+                role="option"
+                aria-selected={selected.includes(option)}
+                onClick={() => handleOptionClick(option)}
+                className="flex w-full items-center px-3 py-2 text-sm text-text-primary hover:bg-surface-hover cursor-pointer text-left"
+              >
+                <input
+                  type="checkbox"
+                  readOnly
+                  tabIndex={-1}
+                  checked={selected.includes(option)}
+                  className="h-4 w-4 rounded border-border bg-input-bg text-brand-accent pointer-events-none"
+                  aria-hidden
+                />
+                <span className="ml-3 truncate" title={option}>
+                  {option}
+                </span>
+              </button>
             ))}
-          </ul>
+          </div>
         </div>
       )}
     </div>
@@ -192,7 +199,7 @@ export const HeaderControls: React.FC = () => {
       <div className="flex items-center gap-2">
         <select
           value={sortOrder}
-          onChange={(e) => setSortOrder(e.target.value as any)}
+          onChange={(e) => setSortOrder(e.target.value as 'relevance' | 'newest')}
           className="bg-input-bg border border-border rounded-md p-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-accent"
         >
           <option value="relevance">Sort by Relevance</option>
@@ -282,7 +289,7 @@ const KBArticleCard: React.FC<{
   isSelected: boolean;
   onSelect: (pmid: string) => void;
   onView: (article: AggregatedArticle) => void;
-}> = React.memo(({ article, isSelected, onSelect, onView }) => {
+}> = React.memo(function KBArticleCard({ article, isSelected, onSelect, onView }) {
   const { settings } = useSettings();
   const densityClasses =
     settings.appearance.density === 'compact'
@@ -350,7 +357,7 @@ const KBArticleListItem: React.FC<{
   isSelected: boolean;
   onSelect: (pmid: string) => void;
   onView: (article: AggregatedArticle) => void;
-}> = React.memo(({ article, isSelected, onSelect, onView }) => {
+}> = React.memo(function KBArticleListItem({ article, isSelected, onSelect, onView }) {
   return (
     <div
       className={`flex items-start gap-4 p-4 border-b border-border last:border-b-0 group transition-colors ${isSelected ? 'bg-brand-accent/5' : 'hover:bg-surface-hover'}`}

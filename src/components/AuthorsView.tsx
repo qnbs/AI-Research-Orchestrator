@@ -17,18 +17,8 @@ interface AuthorsViewProps {
 }
 
 const AuthorsViewContent: React.FC = () => {
-  const {
-    view,
-    isLoading,
-    loadingPhase,
-    authorLoadingPhases,
-    authorPhaseDetails,
-    authorClusters,
-    authorProfile,
-    featuredCategories,
-    isFeaturedLoading,
-    featuredError,
-  } = useAuthorsView();
+  const { view, isLoading, loadingPhase, authorLoadingPhases, authorPhaseDetails } =
+    useAuthorsView();
 
   if (isLoading) {
     return (
