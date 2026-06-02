@@ -47,7 +47,8 @@ export default tseslint.config(
       ),
       'react/react-in-jsx-scope': 'off',
       'react/prop-types': 'off',
-      'react/no-unescaped-entities': 'warn',
+      // i18n copy uses apostrophes/quotes in JSX text; escaping hurts readability.
+      'react/no-unescaped-entities': 'off',
       'react/display-name': 'warn',
       '@typescript-eslint/no-empty-object-type': 'warn',
       'jsx-a11y/no-static-element-interactions': 'warn',

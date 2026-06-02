@@ -1,134 +1,83 @@
 # Codebase Audit Report
 
-> **Date**: 2026-05-04 (documentation & Cursor rules refresh)
-> **Overall Rating**: B+ (8.5/10)
-> **Auditor**: Automated Copilot Audit
+> **Date**: 2026-06-02 (Deep audit v0.2.0)  
+> **Overall Rating**: A− (9.0/10)  
+> **Auditor**: Cursor Cloud Agent (MASTER PROMPT v2.0)
 
 ---
 
 ## Executive Summary
 
-The AI Research Orchestrator is a well-architected, production-ready Progressive Web App with a clean separation of concerns, strong TypeScript usage, and a professional DevContainer/CI/CD setup. The main areas for improvement remain moderate automated test coverage, optional ESLint/Prettier checked into the repo (IDE extensions are assumed), and occasional Redux/Context overlap worth documenting explicitly.
+The AI Research Orchestrator remains a **production-grade, local-first PWA** with a clear service layer, strict TypeScript, and strong CI. Version **0.2.0** closes critical data-integrity gaps (Knowledge Base delete sync), hardens Gemini JSON parsing, adds feature-level error boundaries, decomposes `ReportDisplay`, documents Redux-as-source-of-truth (ADR-001), and tightens the ESLint gate from 650 → **115** warnings (baseline enforced in CI).
+
+Remaining roadmap: drive ESLint to **0** warnings, raise logic-layer coverage toward **70%+**, finish `AgentDebugger` decomposition, and migrate remaining Context-only flows into thunks.
 
 ---
 
 ## Scorecard
 
-| Dimension     | Rating | Notes                                                                                                              |
-| ------------- | ------ | ------------------------------------------------------------------------------------------------------------------ |
-| Architecture  | 5/5    | Clean layering: services, contexts, hooks, Redux, components                                                       |
-| TypeScript    | 5/5    | Strict mode, ES2022 target, comprehensive type definitions                                                         |
-| DevContainer  | 4/5    | Lean image, good DX; Playwright pre-warm was redundant (now fixed)                                                 |
-| PWA/Offline   | 5/5    | Workbox service worker, manifest, offline IndexedDB fallback                                                       |
-| Security      | 4/5    | Web Crypto API key encryption; browser-side API calls inherent risk                                                |
-| i18n          | 5/5    | EN+DE complete, 100+ keys, namespace-based pattern                                                                 |
-| CI/CD         | 5/5    | GitHub Actions v4; typecheck, ESLint, Vitest+coverage (Schwellen `vitest.config.ts`), build; Pages nur auf `main`  |
-| Tests         | 3/5    | Vitest + thresholds on logic layers; mehrere Service-/Slice-/Hook-Tests + E2E — Zeilen-Coverage weiter ausbaufähig |
-| Documentation | 5/5    | README (EN+DE), CHANGELOG, AUDIT, CONTRIBUTING, AGENTS; Cursor `.cursor/index.mdc` + `.cursor/rules/*.mdc`         |
-| SEO           | 3/5    | Basics present; missing Open Graph, schema.org, canonical URL                                                      |
-| Accessibility | 4/5    | Strong ARIA, focus management; minor contrast gaps in light mode                                                   |
+| Dimension     | Rating | Notes                                                                                      |
+| ------------- | ------ | ------------------------------------------------------------------------------------------ |
+| Architecture  | 5/5    | ADR-001: Redux SoT + thin Context facades; `parseGeminiJson` in `src/lib/`                 |
+| TypeScript    | 5/5    | Strict mode; `tsc --noEmit` clean                                                          |
+| DevContainer  | 4/5    | Lean image; Playwright optional via env                                                    |
+| PWA/Offline   | 5/5    | Workbox, manifest, Dexie offline                                                           |
+| Security      | 4/5    | AES-GCM keys, CSP, CSV sanitization; client-side API keys inherent risk                    |
+| i18n          | 5/5    | EN+DE, namespace keys                                                                      |
+| CI/CD         | 5/5    | typecheck, lint (max 115 warnings), coverage thresholds, build; E2E 35 tests               |
+| Tests         | 4/5    | 102 unit + 35 E2E; logic coverage ~65% lines; RTL for Orchestrator; KB slice delete tested |
+| Documentation | 5/5    | AUDIT, CHANGELOG, AGENTS, ADR-001, `.cursor/` rules                                        |
+| SEO           | 4/5    | canonical, OG, Twitter, schema.org JSON-LD present (`index.html`)                          |
+| Accessibility | 4/5    | ARIA/focus; jsx-a11y warnings tracked (115 total ESLint warnings)                          |
 
 ---
 
-## Issues Fixed in This Audit
+## Phase 0 Baseline (2026-06-02)
 
-| Issue                                                   | Severity | Fix Applied                            |
-| ------------------------------------------------------- | -------- | -------------------------------------- |
-| `vitest` in `dependencies` instead of `devDependencies` | Medium   | Moved to devDependencies               |
-| 142 markdown lint errors in README.md                   | Medium   | Rewrote with correct formatting        |
-| CI/CD: No test step before deploy                       | High     | Added `vitest run` step                |
-| CI/CD: TypeScript check was non-blocking                | Medium   | Removed `continue-on-error: true`      |
-| `copilot-instructions.md` outdated                      | Medium   | Rewrote with current stack/conventions |
-| Dockerfile: Redundant Playwright CLI pre-warm           | Low      | Removed `RUN npx playwright@latest`    |
-| postCreate.sh: Mandatory Playwright install             | Low      | Made optional via `SKIP_PLAYWRIGHT`    |
-| Missing CHANGELOG.md                                    | Low      | Created with keepachangelog format     |
+| Check                | Result                                                               |
+| -------------------- | -------------------------------------------------------------------- |
+| `pnpm install`       | OK (frozen lockfile)                                                 |
+| `pnpm typecheck`     | OK                                                                   |
+| `pnpm lint`          | **115 warnings**, 0 errors (`--max-warnings 115`; was 194 @ 650 cap) |
+| `pnpm test:coverage` | OK — **~65%+** lines/statements on logic layers (`vitest.config.ts`) |
+| `pnpm build`         | OK (large vendor-charts chunk noted)                                 |
+| `pnpm test:e2e`      | **35/35 passed** (Chromium)                                          |
 
----
-
-## Maintenance (2026-05-02)
-
-| Change                           | Notes                                                                                                                                                                                                                               |
-| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| CI pull requests                 | Workflow runs build + tests on PRs to `main`; Pages upload/deploy only when `github.ref == refs/heads/main` and event is not `pull_request`                                                                                         |
-| Cursor / onboarding              | `AGENTS.md`, `.vscode/extensions.json`, `CONTRIBUTING.md`; Always-On `.cursor/index.mdc`, modulare `.cursor/rules/` (`000` Meta, `001` Security, `100`/`101` APIs & Dexie, `200` Architektur, `300` UI, `800` Tests, `850` PRD/MCP) |
-| Version alignment                | `package.json` / README badge track semver (`0.1.1` as of this maintenance)                                                                                                                                                         |
-| AUDIT correction                 | `AuthorProfile` is defined in `types.ts`; earlier “missing type” note removed below                                                                                                                                                 |
-| Docs / CI alignment (2026-05-04) | GitHub Actions Typecheck = `pnpm run typecheck`; README/AGENTS/CONTRIBUTING/copilot referenzieren `.cursor/index.mdc`; `package.json` `engines.node`; CHANGELOG [Unreleased] ergänzt                                                |
-| Production hygiene (v0.1.1)      | ESLint 9 + Prettier + Husky; scoped coverage thresholds; AbortSignal for report streams; Redux-only `useUI` + install prompt store; CSV formula sanitization; CSP meta; PNG manifest icons                                          |
+**Large files (pre-refactor):** `ReportDisplay.tsx` 799 LOC, `geminiService.ts` 899, `App.tsx` 726, `AgentDebugger.tsx` 569.
 
 ---
 
-## Prioritized Improvement Roadmap
+## Fixed in v0.2.0
 
-### P0 — Critical (address soon)
+| Issue                                                     | Severity | Fix                                                              |
+| --------------------------------------------------------- | -------- | ---------------------------------------------------------------- |
+| `deleteKbEntries.fulfilled` no-op in Redux                | **P0**   | `entriesAdapter.removeMany` + prune `selectedPmids`              |
+| Heuristic JSON parser (strings with `{`, trailing commas) | **P0**   | `src/lib/parseGeminiJson.ts` string-aware extraction + repairs   |
+| Only global `ErrorBoundary`                               | **P0**   | `FeatureErrorBoundary` on Orchestrator, Research, Knowledge Base |
+| `ReportDisplay.tsx` >700 LOC                              | **P0**   | Split into `report-display/*` submodules (~530 LOC main file)    |
+| ESLint gate too lax (650)                                 | **P1**   | Cap **115**; disabled `react/no-unescaped-entities` for i18n JSX |
+| Dual state undocumented                                   | **P1**   | `docs/ADR-001-state-management.md` + AGENTS.md pointer           |
+| Coverage below 65% threshold                              | **P0**   | `parseGeminiJson` tests, KB delete reducer test, store typing    |
 
-#### 1. Expand Test Coverage (target: 40%+ line coverage on logic layers)
+---
 
-**Current state (2026-05-04)**: Vitest mit Coverage-Schwellen (`vitest.config.ts`) auf `store/`, `services/`, `hooks/`, `lib/`; zahlreiche Unit-Tests (u. a. PubMed, arXiv, Dexie-Roundtrip, Slices, Hooks) sowie Playwright E2E unter `src/test/e2e/`.
+## Prioritized Roadmap (post v0.2.0)
 
-**Next steps**:
+### P0 — None blocking release (closed above)
 
-- Kritische Views zusätzlich mit `@testing-library/react` absichern (Orchestrator, Knowledge Base).
-- Coverage-Schwellen schrittweise anheben, wenn neue Tests stabil sind.
+### P1 — Next sprint
 
-**Effort**: fortlaufend
+1. **ESLint → 0 warnings**: fix `no-explicit-any`, jsx-a11y on legacy interactive markup; enable stricter CI `--max-warnings 0`.
+2. **AgentDebugger decomposition** (569 LOC → hooks + subcomponents).
+3. **RTL coverage**: `KnowledgeBaseView`, `ReportDisplay` export actions (mock Dexie/Gemini).
+4. **apiKeyService tests** with mocked `crypto.subtle` (currently ~4% covered).
 
-#### 2. ESLint + Prettier + CI lint gate — **Done** (v0.1.1+)
+### P2 — Backlog
 
-**State**: Flat Config `eslint.config.js`, Prettier, Husky/lint-staged; `pnpm run lint` in CI (`deploy.yml`). Empfohlene VS Code Extensions in `.vscode/extensions.json`.
-
-### P1 — Important (next sprint)
-
-#### 3. AbortController / Streaming — **Largely addressed** (v0.1.1 CHANGELOG)
-
-Streaming akzeptiert `AbortSignal`; `geminiApiSlice` invalidiert bei Bedarf — weiter beobachten bei Langläufern und Edge-Cases.
-
-#### 4. Redux + Context State Management
-
-**Problem**: Überlappung dokumentieren oder weiter verschlanken (`SettingsProvider`, KB-Contexts).
-
-**Recommendation**: Nur ein Muster als „Source of Truth“ pro Flag; Dokumentation in `copilot-instructions.md` / `AGENTS.md` ist angeglichen — bei Refactor UX und Hydration sichern.
-
-**Effort**: bei geplanter UX-Änderung einplanen
-
-### P2 — Nice to Have (backlog)
-
-#### 6. SEO Improvements
-
-- Add `<link rel="canonical">` to `index.html`
-- Add Open Graph meta tags (`og:title`, `og:description`, `og:image`)
-- Add Twitter Card meta tags
-- Add schema.org `SoftwareApplication` JSON-LD markup
-- Expand `sitemap.xml` with all routes
-
-**Effort**: 1-2 hours
-
-#### 7. PWA Icon Completion — **Done** (PNG icons + SVG in `manifest.json`)
-
-Weitere Optimierung: Maskable-Safe-Zones und zusätzliche Auflösungen nur bei Bedarf.
-
-#### 8. Performance Optimizations
-
-- Memoize expensive selectors in `knowledgeBaseSlice.ts` (`selectFilteredArticles`, `selectUniqueArticles`)
-- Add pagination to article lists for 10k+ entries
-- Lazy-load Chart.js and jsPDF (only when export/charts are used)
-- Audit `useCallback` dependency arrays in `App.tsx`
-
-**Effort**: 4-6 hours
-
-#### 9. Security Hardening — **Partially done** (v0.1.1)
-
-- CSP-Baseline und CSV-Formel-Injektionsschutz sind umgesetzt (siehe CHANGELOG v0.1.1).
-- Optional: API-Key-Session-Timeout / Arbeitsspeicher-Härtung weiter evaluieren.
-
-**Effort**: optional / backlog
-
-#### 10. Documentation Expansion — **Partially done**
-
-- `CONTRIBUTING.md`, `AGENTS.md`, Cursor-Regeln und README sind vorhanden und mit CI abgestimmt.
-- Optional: JSDoc auf öffentliche Service-APIs, `/docs` mit ADRs bei größeren Releases.
-
-**Effort**: bei Bedarf
+- Lazy-load Chart.js / jsPDF in export paths only.
+- KB pagination for 10k+ articles.
+- Prompt-injection hardening review for user topic → Gemini prompts.
+- Property-based tests for `parseGeminiJson` edge cases.
 
 ---
 
@@ -136,58 +85,39 @@ Weitere Optimierung: Maskable-Safe-Zones und zusätzliche Auflösungen nur bei B
 
 ### What Works Well
 
-- **Local-first with Dexie.js**: Excellent choice for offline-first PWA. IndexedDB provides durable, structured storage without backend dependency.
-- **Streaming via AsyncGenerator**: The `generateResearchReportStream()` pattern provides excellent UX with real-time token streaming.
-- **Multi-agent pipeline**: Clean decomposition of research workflow into formulation → retrieval → ranking → synthesis stages.
-- **Redux Toolkit**: Well-structured slices with clear separation of concerns. Entity adapters used correctly for collections.
-- **Cybernetic Glassmorphism**: Distinctive, cohesive design system that differentiates the product.
+- Local-first Dexie + streaming `generateResearchReportStream`.
+- Redux entity adapter for KB entries.
+- E2E agent-flow spec with mocked Gemini/PubMed.
+- Cybernetic Glassmorphism design system.
 
-### What Needs Attention
+### State Management (ADR-001)
 
-- **Dual state management**: Redux + Context for the same data is a source of confusion and potential bugs. Pick one pattern.
-- **Large components**: `ReportDisplay.tsx` (~550 lines) and `AgentDebugger.tsx` (~550 lines) should be decomposed into sub-components.
-- **Error boundaries**: Only one global `ErrorBoundary`. Critical views (Orchestrator, Research) should have their own boundaries.
+- **Redux** = persisted domain state (settings, KB, UI, theme, RTK Query).
+- **Context** = thin facades for multi-step KB operations (`KnowledgeBaseProvider`).
+- **React local state** = ephemeral UI (modals, form drafts).
 
----
-
-## DevContainer Optimization Notes
-
-### Image Size Analysis
-
-| Component                       | Approximate Size | Status                                |
-| ------------------------------- | ---------------- | ------------------------------------- |
-| node:22-bookworm-slim base      | ~230 MB          | Optimal                               |
-| Playwright Chromium system libs | ~50 MB           | Kept (Docker cache benefit)           |
-| xvfb                            | ~10 MB           | Kept (required for headless Chromium) |
-| GitHub CLI                      | ~15 MB           | Kept (useful for PR workflows)        |
-| **Total**                       | **~305 MB**      | Lean                                  |
-
-### Changes Made
-
-1. **Removed Playwright CLI pre-warm** from Dockerfile — the `RUN npx --yes playwright@latest --version` line was downloading the Playwright CLI globally, but `postCreate.sh` reinstalls the project-pinned version anyway. This saves ~30s on image build.
-
-2. **Made Playwright browser install optional** in `postCreate.sh` — set `SKIP_PLAYWRIGHT=true` environment variable to skip Chromium download. Saves ~60s on container creation for development workflows that don't need E2E testing.
-
-3. **Kept Playwright system libraries** in Dockerfile — these are small (~50MB), cached in the Docker layer, and required when Playwright IS used. Removing them would require `npx playwright install-deps` at runtime, which is slower and less reliable.
+See `docs/ADR-001-state-management.md`.
 
 ---
 
-## File-Level Findings
+## Local Verification
 
-| File                                     | Issue                                                                                              | Severity |
-| ---------------------------------------- | -------------------------------------------------------------------------------------------------- | -------- |
-| `src/services/geminiService.ts`          | `extractAndParseJson()` uses brace counting without handling string escapes                        | Medium   |
-| `src/services/exportService.ts`          | CSV formula injection mitigated (`sanitizeCsvFormulaInjection`); weiter beobachten                 | Low      |
-| `src/services/exportService.ts`          | PDF export doesn't explicitly set UTF-8 encoding                                                   | Low      |
-| `src/services/pubmedUtils.ts`            | `pubYear` extraction via substring has no validation                                               | Low      |
-| `src/store/slices/apiSlice.ts`           | RTK Query endpoints partially implemented, no cache invalidation                                   | Medium   |
-| `src/store/slices/knowledgeBaseSlice.ts` | Delete logic incomplete for async thunks                                                           | Medium   |
-| `src/hooks/useFocusTrap.ts`              | Defined but never imported anywhere                                                                | Low      |
-| `src/hooks/useHaptic.ts`                 | Imported in App.tsx but never used                                                                 | Low      |
-| `src/App.tsx`                            | Some `useCallback` dependency arrays may be incomplete                                             | Low      |
-| `public/manifest.json`                   | Icons + PWA manifest served from `public/` for Vite build                                          | Low      |
-| `index.html`                             | Canonical, OG/Twitter meta, JSON-LD SoftwareApplication; SPA bootstrap in `public/spa-fallback.js` | Low      |
+```bash
+pnpm install --frozen-lockfile
+pnpm run typecheck
+pnpm run lint
+pnpm run test:coverage
+pnpm run build
+pnpm exec playwright install chromium   # once
+pnpm run test:e2e
+```
 
-## P2 backlog (planned)
+---
 
-- Semantic Scholar / zusätzliche Literaturquellen; erweiterte Exportformate; Voll-Audit axe/Lighthouse; weitere UI-Sprachen.
+## References
+
+- `docs/ADR-001-state-management.md`
+- `src/lib/parseGeminiJson.ts`
+- `src/store/slices/knowledgeBaseSlice.ts` — `deleteKbEntries.fulfilled`
+- `src/components/FeatureErrorBoundary.tsx`
+- `CHANGELOG.md` — [0.2.0]

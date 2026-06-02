@@ -1,7 +1,7 @@
 {
   "name": "ai-research-orchestrator",
   "private": true,
-  "version": "0.1.1",
+  "version": "0.2.0",
   "type": "module",
   "packageManager": "pnpm@11.0.0",
   "engines": {
@@ -25,7 +25,7 @@
     "test:e2e": "playwright test",
     "test:e2e:report": "playwright show-report",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint . --max-warnings 650",
+    "lint": "eslint . --max-warnings 115",
     "format": "prettier --write \"src/**/*.{ts,tsx,css}\" \"*.{json,md}\" \".github/**/*.md\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,css}\" \"*.{json,md}\" \".github/**/*.md\"",
     "icons": "node scripts/generate-pwa-icons.mjs",
@@ -34,7 +34,7 @@
   },
   "lint-staged": {
     "*.{ts,tsx}": [
-      "eslint --fix --max-warnings 650",
+      "eslint --fix --max-warnings 115",
       "prettier --write"
     ],
     "*.{json,css,md}": [

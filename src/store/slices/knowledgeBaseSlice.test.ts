@@ -12,9 +12,11 @@ vi.mock('../../services/databaseService', () => ({
 
 import knowledgeBaseReducer, {
   clearSelection,
+  deleteKbEntries,
   setFilter,
   setSelectedPmids,
 } from './knowledgeBaseSlice';
+import type { ResearchEntry } from '../../types';
 
 describe('knowledgeBaseSlice', () => {
   const initialState = {
@@ -78,6 +80,72 @@ describe('knowledgeBaseSlice', () => {
       expect(state.filter.searchTerm).toBe('cancer');
       expect(state.filter.selectedArticleTypes).toEqual(['Meta-Analysis']);
       expect(state.filter.showOpenAccessOnly).toBe(true);
+    });
+  });
+
+  describe('deleteKbEntries.fulfilled', () => {
+    const entryA: ResearchEntry = {
+      id: 'entry-a',
+      timestamp: 1,
+      sourceType: 'research',
+      title: 'Topic A',
+      articles: [
+        {
+          pmid: '111',
+          title: 'A',
+          summary: 's',
+          authors: 'x',
+          journal: 'j',
+          pubYear: '2020',
+          keywords: [],
+          relevanceScore: 1,
+          relevanceExplanation: '',
+          isOpenAccess: false,
+        },
+      ],
+      input: {
+        researchTopic: 't',
+        dateRange: 'any',
+        articleTypes: [],
+        synthesisFocus: 'f',
+        maxArticlesToScan: 1,
+        topNToSynthesize: 1,
+        includeArxiv: false,
+      },
+      report: {
+        generatedQueries: [],
+        rankedArticles: [],
+        synthesis: '',
+        aiGeneratedInsights: [],
+        overallKeywords: [],
+      },
+    };
+
+    const entryB: ResearchEntry = {
+      ...entryA,
+      id: 'entry-b',
+      articles: [
+        {
+          ...entryA.articles[0],
+          pmid: '222',
+        },
+      ],
+    };
+
+    it('removes entries from state and prunes selected pmids', () => {
+      const populated = knowledgeBaseReducer(
+        {
+          ...initialState,
+          ids: ['entry-a', 'entry-b'],
+          entities: { 'entry-a': entryA, 'entry-b': entryB },
+          selectedPmids: ['111', '222'],
+        },
+        deleteKbEntries.fulfilled(['entry-a'], 'req', ['entry-a']),
+      );
+
+      expect(populated.ids).toEqual(['entry-b']);
+      expect(populated.entities['entry-a']).toBeUndefined();
+      expect(populated.selectedPmids).toEqual(['222']);
     });
   });
 });

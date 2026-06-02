@@ -1,12 +1,15 @@
-import { configureStore, createListenerMiddleware, isAnyOf } from '@reduxjs/toolkit';
+import {
+  configureStore,
+  createListenerMiddleware,
+  isAnyOf,
+  type Middleware,
+} from '@reduxjs/toolkit';
 import settingsReducer, { setSettings, updateSettings } from './slices/settingsSlice';
 import uiReducer, { setNotification } from './slices/uiSlice';
 import knowledgeBaseReducer, {
   addKbEntry,
   importKbEntries,
   deleteKbEntries,
-  clearKb,
-  updateKbEntry,
 } from './slices/knowledgeBaseSlice';
 import agentDebugReducer from './slices/agentDebugSlice';
 import collectionsReducer from './slices/collectionsSlice';
@@ -75,13 +78,16 @@ listenerMiddleware.startListening({
 
 // --- Persistence Middleware ---
 // Manually handling settings persistence to IndexedDB on change
-const persistenceMiddleware = (store: any) => (next: any) => (action: any) => {
+const persistenceMiddleware: Middleware = (store) => (next) => (action) => {
   const result = next(action);
-  if (action.type.startsWith('settings/')) {
-    const state = store.getState();
-    saveSettings(state.settings.data).catch((err) =>
-      console.error('Failed to persist settings:', err),
-    );
+  if (typeof action === 'object' && action !== null && 'type' in action) {
+    const type = String((action as { type: string }).type);
+    if (type.startsWith('settings/')) {
+      const state = store.getState() as { settings: { data: Parameters<typeof saveSettings>[0] } };
+      saveSettings(state.settings.data).catch((err) =>
+        console.error('Failed to persist settings:', err),
+      );
+    }
   }
   return result;
 };

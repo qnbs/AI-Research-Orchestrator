@@ -7,12 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-06-02
+
+### Added
+
+- `src/lib/parseGeminiJson.ts` — string-aware Gemini JSON extraction, trailing-comma repair, `GeminiJsonParseError`
+- `FeatureErrorBoundary` for Orchestrator, Research Assistant, and Knowledge Base views
+- `docs/ADR-001-state-management.md` — Redux as source of truth, Context as facade
+- Unit tests: `parseGeminiJson`, `knowledgeBaseSlice` delete sync, `OrchestratorView` (RTL)
+- Report display submodules under `src/components/report-display/`
+
 ### Changed
 
-- Vitest: globale Coverage-Schwellen für `lines`/`statements` auf **30 %** gesetzt (Messung ~30,5 % bei bestehendem Include-Scope); weiterhin Fokus auf `store/`, `services/`, `hooks/`, `lib/`.
-- Cursor: modulares Regelwerk unter `.cursor/rules/` (`000`–`850`, neu `101-dexie-local.mdc`), Always-On-Manifest `.cursor/index.mdc`; CI-Schritt Typecheck auf `pnpm run typecheck` vereinheitlicht (`deploy.yml`).
-- Dokumentation: `AGENTS.md`, `README.md`, `CONTRIBUTING.md`, `.github/copilot-instructions.md` an Manifest und Workflow angeglichen; `package.json` mit `engines.node`.
-- Audit-Dokument `AUDIT.md` für aktuelle Tests/Tooling/Cursor-Stand aktualisiert.
+- **Knowledge Base**: `deleteKbEntries.fulfilled` now removes entries in Redux and prunes selection
+- **ReportDisplay**: decomposed into `ReportArticleCard`, `ReportAccordionSection`, utils (~530 LOC main file)
+- **ESLint**: `--max-warnings` tightened from 650 → **115**; `react/no-unescaped-entities` off for i18n JSX
+- **AUDIT.md**: scorecard updated to A− (9.0/10); Phase 0 baseline documented
+
+### Fixed
+
+- Redux state drift after deleting full KB entries (empty `deleteKbEntries` reducer body)
+- JSON parse false positives when `{` appeared inside string values
 
 ## [0.1.1] - 2026-05-02
 

@@ -16,6 +16,9 @@ import { getApiKey } from './apiKeyService';
 import { searchPubMedForIds, fetchArticleDetails } from './pubmedUtils';
 import { searchAndFetchArxiv } from './arxivUtils';
 import { sanitizePromptFragment } from '../lib/promptSanitize';
+import { parseGeminiResponseJson } from '../lib/parseGeminiJson';
+
+export { parseGeminiResponseJson, GeminiJsonParseError } from '../lib/parseGeminiJson';
 
 function throwIfAborted(signal?: AbortSignal): void {
   if (signal?.aborted) {
@@ -56,94 +59,6 @@ async function getAI(): Promise<GoogleGenAI> {
 export function resetAIInstance(): void {
   aiInstance = null;
   currentApiKey = null;
-}
-
-/**
- * Robustly extracts JSON from AI response text.
- * Handles Markdown code blocks, raw JSON, and surrounding chatter.
- * Exported for unit tests and reuse.
- */
-export function parseGeminiResponseJson<T>(text: string): T {
-  if (!text) throw new Error('Empty response from AI');
-
-  // Pre-process: remove potentially harmful unicode or control characters if necessary,
-  // but usually JSON.parse handles strings okay.
-  // Clean up markdown code blocks first as they are the most common wrapper.
-  let cleanText = text.replace(/```json\s*([\s\S]*?)\s*```/g, '$1');
-  cleanText = cleanText.replace(/```\s*([\s\S]*?)\s*```/g, '$1');
-
-  // 1. Try parsing the cleaned text directly
-  try {
-    return JSON.parse(cleanText) as T;
-  } catch (e) {
-    // Continue to advanced extraction
-  }
-
-  // 2. Try finding the outermost JSON object or array
-  const firstBrace = cleanText.indexOf('{');
-  const firstBracket = cleanText.indexOf('[');
-
-  let startIdx = -1;
-  let endIdx = -1;
-
-  // Determine if we are looking for an object or an array
-  if (firstBrace !== -1 && (firstBracket === -1 || firstBrace < firstBracket)) {
-    startIdx = firstBrace;
-    // Find corresponding closing brace by counting depth
-    let depth = 0;
-    for (let i = startIdx; i < cleanText.length; i++) {
-      if (cleanText[i] === '{') depth++;
-      else if (cleanText[i] === '}') depth--;
-
-      if (depth === 0) {
-        endIdx = i;
-        break;
-      }
-    }
-  } else if (firstBracket !== -1) {
-    startIdx = firstBracket;
-    // Find corresponding closing bracket
-    let depth = 0;
-    for (let i = startIdx; i < cleanText.length; i++) {
-      if (cleanText[i] === '[') depth++;
-      else if (cleanText[i] === ']') depth--;
-
-      if (depth === 0) {
-        endIdx = i;
-        break;
-      }
-    }
-  }
-
-  if (startIdx !== -1 && endIdx !== -1) {
-    const potentialJson = cleanText.substring(startIdx, endIdx + 1);
-    try {
-      return JSON.parse(potentialJson) as T;
-    } catch (e) {
-      console.warn('Failed to parse extracted JSON segment via depth counting.');
-    }
-  }
-
-  // 3. Fallback: Naive lastIndexOf (works if AI just stops outputting after JSON)
-  const lastBrace = cleanText.lastIndexOf('}');
-  const lastBracket = cleanText.lastIndexOf(']');
-
-  if (startIdx !== -1) {
-    const end = cleanText[startIdx] === '{' ? lastBrace : lastBracket;
-    if (end > startIdx) {
-      try {
-        return JSON.parse(cleanText.substring(startIdx, end + 1)) as T;
-      } catch (e) {
-        // ignore
-      }
-    }
-  }
-
-  // 4. Last Resort: Log the failure for debugging
-  console.error('CRITICAL: Could not parse JSON.', text);
-  throw new Error(
-    'AI response did not contain valid JSON. The model may have been interrupted or hallucinatory.',
-  );
 }
 
 /**

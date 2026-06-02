@@ -6,11 +6,19 @@ Dieses Repository ist eine **React-19-PWA** mit **Gemini** und **PubMed**; Daten
 
 Die Orchestrierung läuft in **`src/services/geminiService.ts`** (AsyncGenerator `generateResearchReportStream`): Phasen wie Query-Generierung, PubMed-/optional arXiv-Fetch, Ranking, Streaming-Synthese. Grobe Zuordnung zu UI/Trace (`App.tsx`, `getAgentForPhase`): PubMed-/Suchphasen → **PubMedFetcher** bzw. Query-Erzeugung → **QueryGenerator**, Ranking → **Ranker**, Synthese/Streaming → **Synthesizer**. Das sind **konzeptionelle Rollen** (Prompts/Phasen), keine separaten SDK-Prozesse.
 
+## State Management (v0.2.0)
+
+- **Source of truth:** Redux Toolkit (`settingsSlice`, `knowledgeBaseSlice`, `uiSlice`, `themeSlice`, RTK Query).
+- **Context:** thin facades only (e.g. `KnowledgeBaseProvider` for multi-step Dexie + dispatch flows).
+- **Gemini JSON:** parse via `src/lib/parseGeminiJson.ts` (re-exported from `geminiService`).
+- **ADR:** `docs/ADR-001-state-management.md`
+
 ## Pflichtlektüre
 
 1. **`.github/copilot-instructions.md`** — aktueller Stack, Ordnerstruktur, State-Management, Testing, Safety-Regeln.
 2. **`.cursor/index.mdc`** — Always-On-Projektmanifest (Stack, Architektur, Konventionen).
 3. **`.cursor/rules/*.mdc`** — kontextbezogene Regeln (Security, APIs, UI, Tests, Meta — siehe `000-cursor-rules.mdc`).
+4. **`docs/ADR-001-state-management.md`** — Redux vs. Context (bei Store-/KB-Änderungen).
 
 ## Checks vor Änderungen am Kernfluss
 

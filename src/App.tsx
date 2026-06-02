@@ -33,6 +33,7 @@ import { useChat } from './hooks/useChat';
 import { useHaptic } from './hooks/useHaptic';
 import { BottomNavBar } from './components/BottomNavBar';
 import ErrorBoundary from './components/ErrorBoundary';
+import { FeatureErrorBoundary } from './components/FeatureErrorBoundary';
 import { useTranslation } from './hooks/useTranslation';
 import { useUrlSync } from './hooks/useUrlSync';
 
@@ -565,41 +566,45 @@ const AppLayout: React.FC = () => {
         return <HomeView onNavigate={handleViewChange} />;
       case 'orchestrator':
         return (
-          <OrchestratorView
-            reportStatus={reportStatus}
-            currentPhase={currentPhase}
-            error={error}
-            report={report}
-            researchInput={localResearchInput}
-            isCurrentReportSaved={isCurrentReportSaved}
-            settings={settings}
-            prefilledTopic={prefilledTopic}
-            handleFormSubmit={handleFormSubmit}
-            handleSaveReport={handleSaveReport}
-            handleNewSearch={handleNewSearch}
-            onPrefillConsumed={handlePrefillConsumed}
-            handleViewReportFromHistory={handleViewEntry}
-            handleStartNewReview={handleStartNewReviewFromTopic}
-            onUpdateResearchInput={setLocalResearchInput}
-            handleTagsUpdate={handleTagsUpdate}
-            chatHistory={chatHistory}
-            isChatting={isChatting}
-            onSendMessage={sendMessage}
-          />
+          <FeatureErrorBoundary featureName="Research Orchestrator">
+            <OrchestratorView
+              reportStatus={reportStatus}
+              currentPhase={currentPhase}
+              error={error}
+              report={report}
+              researchInput={localResearchInput}
+              isCurrentReportSaved={isCurrentReportSaved}
+              settings={settings}
+              prefilledTopic={prefilledTopic}
+              handleFormSubmit={handleFormSubmit}
+              handleSaveReport={handleSaveReport}
+              handleNewSearch={handleNewSearch}
+              onPrefillConsumed={handlePrefillConsumed}
+              handleViewReportFromHistory={handleViewEntry}
+              handleStartNewReview={handleStartNewReviewFromTopic}
+              onUpdateResearchInput={setLocalResearchInput}
+              handleTagsUpdate={handleTagsUpdate}
+              chatHistory={chatHistory}
+              isChatting={isChatting}
+              onSendMessage={sendMessage}
+            />
+          </FeatureErrorBoundary>
         );
       case 'research':
         return (
-          <ResearchView
-            onStartNewReview={handleStartNewReviewFromTopic}
-            onStartResearch={startResearch}
-            onClearResearch={clearResearch}
-            isLoading={isResearching}
-            phase={researchPhase}
-            error={researchError}
-            analysis={researchAnalysis}
-            similarArticlesState={similar}
-            onlineFindingsState={online}
-          />
+          <FeatureErrorBoundary featureName="Research Assistant">
+            <ResearchView
+              onStartNewReview={handleStartNewReviewFromTopic}
+              onStartResearch={startResearch}
+              onClearResearch={clearResearch}
+              isLoading={isResearching}
+              phase={researchPhase}
+              error={researchError}
+              analysis={researchAnalysis}
+              similarArticlesState={similar}
+              onlineFindingsState={online}
+            />
+          </FeatureErrorBoundary>
         );
       case 'authors':
         return (
@@ -610,13 +615,15 @@ const AppLayout: React.FC = () => {
         );
       case 'knowledgeBase':
         return (
-          <KnowledgeBaseView
-            onViewChange={handleViewChange}
-            filter={kbFilter}
-            onFilterChange={handleFilterChange}
-            selectedPmids={selectedKbPmids}
-            setSelectedPmids={setSelectedKbPmids}
-          />
+          <FeatureErrorBoundary featureName="Knowledge Base">
+            <KnowledgeBaseView
+              onViewChange={handleViewChange}
+              filter={kbFilter}
+              onFilterChange={handleFilterChange}
+              selectedPmids={selectedKbPmids}
+              setSelectedPmids={setSelectedKbPmids}
+            />
+          </FeatureErrorBoundary>
         );
       case 'journals':
         return <JournalsView />;
