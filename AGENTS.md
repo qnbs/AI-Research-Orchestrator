@@ -28,3 +28,30 @@ Workflow: `.github/workflows/deploy.yml` — bei **Push** und **Pull Request** a
 - `README.md` — Überblick, Setup (EN/DE)
 - `CONTRIBUTING.md` — Beiträge, Branching, Qualitätssicherung
 - `CHANGELOG.md`, `AUDIT.md`
+
+## Cursor Cloud specific instructions
+
+Einzelne **React-19-PWA** (kein Monorepo, kein Backend). Paketmanager: **pnpm 11** (`packageManager` in `package.json`, Lockfile: `pnpm-lock.yaml`). Node **≥22** (`.nvmrc`: `22`).
+
+### pnpm in Cloud-VMs
+
+Standard: `corepack enable` + `pnpm install --frozen-lockfile` (wie CI/Devcontainer). Scheitert **Corepack/npm** beim TLS-Handshake zu `registry.npmjs.org`, funktioniert oft trotzdem **`pnpm install`** mit einem **standalone-pnpm** unter `~/.local/bin` (Release `pnpm-linux-x64.tar.gz` von GitHub, z. B. per `gh api` + `Accept: application/octet-stream`, falls `release-assets.githubusercontent.com` blockiert ist). Danach: `export PATH="$HOME/.local/bin:$PATH"`.
+
+### Services
+
+| Service      | Port | Befehl                                     |
+| ------------ | ---- | ------------------------------------------ |
+| Vite Dev     | 3000 | `pnpm run dev` (`host: 0.0.0.0`)           |
+| Vite Preview | 4173 | `pnpm run preview` (nach `pnpm run build`) |
+
+Lang laufende Prozesse in **tmux** starten (z. B. Session `vite-dev-server`). Playwright E2E startet den Dev-Server bei Bedarf selbst (`playwright.config.ts`).
+
+### Checks (Reihenfolge wie CI)
+
+Siehe `package.json` / `.github/workflows/deploy.yml`: `pnpm run typecheck`, `pnpm run lint`, `pnpm run test:coverage`, `pnpm run build`. E2E (optional): einmalig `pnpm exec playwright install chromium`, dann `pnpm run test:e2e` (mocks für Gemini/PubMed).
+
+**Hinweis:** `test:coverage` kann knapp an der globalen Schwellwertgrenze scheitern (z. B. Lines ~64,4 % vs. 65 % in `vitest.config.ts`); `pnpm run test:run` läuft ohne Coverage-Gate.
+
+### Secrets / KI-Funktionen
+
+Gemini-Key in der App unter **Settings → API Key** (lokal verschlüsselt). Optional: `GEMINI_API_KEY` in der Umgebung (Devcontainer/Codespaces). Ohne Key: UI und Navigation testbar; echte Literatursynthese benötigt einen Key.
