@@ -1,0 +1,20 @@
+---
+description: Require AppError and circuit breakers for external service calls
+globs: src/services/**/*.ts,src/lib/errors.ts,src/lib/circuitBreaker.ts,src/lib/resilience.ts
+alwaysApply: false
+---
+
+# Resilience for External Calls
+
+- **Errors:** Prefer `AppError` / `toAppError` from `@src/lib/errors.ts` over bare `Error` for Gemini, PubMed, arXiv, storage failures. Preserve abort via `STREAM_ABORTED` / `isAbortError`.
+- **Circuits:** Guard network entry points with `withCircuitBreaker` / `getCircuitBreaker` (`@src/lib/circuitBreaker.ts`). Do not retry `AbortError`.
+- **Backoff:** Use `withExponentialBackoff` for transient HTTP failures; honor `Retry-After` when present.
+- **Tests:** Every new external call path needs happy-path + failure + abort coverage.
+
+<example>
+`await withCircuitBreaker('pubmed', () => fetchWithRetry(url, { signal }))`
+</example>
+
+<example type="invalid">
+`catch { await sleep(); return fetch(url); }` — retries aborts and ignores circuit state.
+</example>

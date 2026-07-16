@@ -1,0 +1,26 @@
+---
+description: Process every open Dependabot PR fully before leaving dependency debt
+alwaysApply: true
+---
+
+# Dependabot PR Processing Gate
+
+When Dependabot (or similar) PRs are open, **do not leave them idle**. Process each PR specifically and comprehensively.
+
+## Per-PR checklist
+
+1. Read the PR title/diff (package, from→to, files).
+2. Classify: patch/minor (prefer adopt) vs major (compat review + tests).
+3. Rebase/reconcile with current `main` (or active feature base).
+4. Run quality gates impacted by the change (`typecheck`, `lint`, `test:run` / `test:coverage`, `build` as needed).
+5. Fix breakages in the same change set (types, eslint config, lockfile, workflows).
+6. Prefer a **tested consolidation PR** when many Dependabot PRs overlap/conflict; then comment on each original PR with disposition (merged into #N / superseded / deferred with reason).
+7. Trigger/address CodeRabbit on the resulting PR before merge (see `011-coderabbit-pr-gate.mdc`).
+
+## Do not
+
+- Bulk-close Dependabot PRs without testing or a written disposition.
+- Merge majors (e.g. lucide-react 0→1, vitest 3→4) without gates green.
+- Leave Actions bumps only on `deploy.yml` while `security.yml` stays stale.
+
+English for PR comments/docs (`010-english-content.mdc`).

@@ -94,11 +94,11 @@ class ErrorBoundary extends Component<Props, State> {
             </div>
 
             <h1 className="text-3xl font-bold text-text-primary mb-2 tracking-tight">
-              System Critical Failure
+              Unexpected Application Error
             </h1>
             <p className="text-text-secondary mb-8 max-w-md mx-auto leading-relaxed">
-              The application encountered an unexpected anomaly. <br />
-              Our agents have been notified.
+              The application encountered an unexpected error. Your local data in IndexedDB is
+              preserved. You can retry, return home, or reload the page.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3 justify-center mb-8">

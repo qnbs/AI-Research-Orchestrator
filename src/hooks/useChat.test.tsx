@@ -41,6 +41,7 @@ const ai: Settings['ai'] = {
     authorSearchLimit: 10,
   },
   enableTldr: true,
+  ncbiApiKey: '',
 };
 
 describe('useChat', () => {

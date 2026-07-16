@@ -167,6 +167,8 @@ export interface Settings {
       authorSearchLimit: number;
     };
     enableTldr: boolean;
+    /** Optional NCBI E-utilities API key for higher PubMed rate limits. */
+    ncbiApiKey: string;
   };
   defaults: {
     maxArticlesToScan: number;

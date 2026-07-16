@@ -1,0 +1,32 @@
+---
+description: Resolve every CodeRabbit PR review comment before merging to main
+alwaysApply: true
+---
+
+# CodeRabbit Review Gate (Pre-Merge)
+
+Before merging any PR to `main`, **trigger and fully resolve all CodeRabbit review feedback** on that PR.
+
+## Scope (mandatory)
+
+Address **every** CodeRabbit item, including:
+
+- Critical / high / medium findings
+- **Nitpicks**
+- **Outside-of-diff-range** comments
+- Suggestions, refactors, and doc notes from CodeRabbit
+
+## Workflow
+
+1. After pushing PR updates, wait for / re-request CodeRabbit review when available.
+2. Collect all CodeRabbit review threads (inline + summary + out-of-range).
+3. For each item: fix in code/docs, or reply with a clear rationale if intentionally deferred (rare — prefer fixing).
+4. Push follow-up commits; re-check until CodeRabbit threads are resolved / addressed.
+5. Do **not** merge while unresolved CodeRabbit comments remain.
+
+## Exceptions
+
+- Duplicate comments already fixed in a later commit: mark resolved and cite the commit.
+- False positives: short English reply explaining why + resolve thread after confirmation.
+
+See also English content policy `@.cursor/rules/010-english-content.mdc`.
