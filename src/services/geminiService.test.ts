@@ -39,6 +39,7 @@ vi.mock('@google/genai', () => ({
 
 vi.mock('./apiKeyService', () => ({
   getApiKey: vi.fn().mockResolvedValue('test-api-key'),
+  getNcbiApiKey: vi.fn().mockResolvedValue('ncbi-vault-key'),
 }));
 
 const mockPubMed = vi.hoisted(() => ({
@@ -67,6 +68,7 @@ const mockAi: Settings['ai'] = {
     authorSearchLimit: 10,
   },
   enableTldr: true,
+  ncbiApiKey: '',
 };
 
 const mockInput: ResearchInput = {
@@ -232,13 +234,30 @@ describe('geminiService with mocked SDK', () => {
     }
     expect(phases.some((p) => p.includes('Phase 1'))).toBe(true);
     expect(phases.some((p) => p.includes('Phase 5') || p.includes('Streaming'))).toBe(true);
+    expect(mockPubMed.searchPubMedForIds).toHaveBeenCalledWith(
+      'cancer[Title]',
+      10,
+      undefined,
+      'ncbi-vault-key',
+    );
+    expect(mockPubMed.fetchArticleDetails).toHaveBeenCalledWith(
+      ['123'],
+      undefined,
+      'ncbi-vault-key',
+    );
   });
 
   it('generateResearchReportStream aborts when signal is aborted early', async () => {
     const ac = new AbortController();
     ac.abort();
     const gen = generateResearchReportStream(mockInput, mockAi, ac.signal);
-    await expect(gen.next()).rejects.toThrow();
+    await expect(gen.next()).rejects.toMatchObject({ code: 'STREAM_ABORTED' });
+  });
+
+  it('throws NO_API_KEY AppError when key missing', async () => {
+    const { getApiKey } = await import('./apiKeyService');
+    vi.mocked(getApiKey).mockResolvedValueOnce(null);
+    await expect(generateTldrSummary('x', mockAi)).rejects.toMatchObject({ code: 'NO_API_KEY' });
   });
 
   it('findRelatedOnline maps grounding chunks when present', async () => {

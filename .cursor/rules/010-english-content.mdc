@@ -1,0 +1,32 @@
+---
+description: Enforce English for repo docs, commits, comments, and new default UI copy
+alwaysApply: true
+---
+
+# English-Only Repository Content
+
+From 2026-07-16 onward, **all new and edited repository content must be English**:
+
+- Documentation (`README*`, `CHANGELOG`, `AUDIT`, `SECURITY`, `AGENTS`, `CONTRIBUTING`, ADRs, `.notes/`, PR/issue bodies)
+- Code comments, JSDoc/TSDoc, commit messages, CI workflow `name`/`run` echo text
+- Default / fallback user-facing strings in new code (e.g. `AppError.toUserMessage()`)
+- Cursor rules (`.cursor/rules/*.mdc`, `.cursor/index.mdc`) — write rule bodies in English
+
+## Exceptions (keep as-is unless deliberately migrating)
+
+- Existing `src/i18n/translations.ts` **German locale values** (product i18n)
+- Historical CHANGELOG entries already published
+- Third-party license text
+
+## Agent / contributor behavior
+
+- Prefer English for PR titles/bodies and review comments on this repo.
+- Do not add new German prose to docs or default error strings; use i18n keys when the UI must show DE.
+
+<example>
+`throw new AppError({ code: 'NO_API_KEY', message: 'Configure your Gemini API key in Settings.' })`
+</example>
+
+<example type="invalid">
+`// Bitte API-Key in den Einstellungen setzen` in a new service file
+</example>

@@ -1,65 +1,50 @@
 # ==============================================================================
 # GitHub Pages Deployment Workflow for Vite + React PWA
 #
-# This workflow builds and deploys the application to GitHub Pages using the
-# official GitHub Pages Actions (2024/2025 best practices).
-#
-# Prerequisites:
-#   1. Go to Repository Settings → Pages
-#   2. Under "Build and deployment", select "GitHub Actions" as the source
-#   3. The first deployment will be triggered automatically
+# PR/main: quality gates (lint, typecheck, tests, build)
+# main only: Pages upload + deploy
 # ==============================================================================
 
 name: Deploy to GitHub Pages
 
 on:
-  # Trigger on push to main branch
   push:
     branches:
       - main
-
-  # Verify build + tests on PRs targeting main (no Pages deploy)
   pull_request:
     branches:
       - main
-
-  # Allow manual trigger from Actions tab
   workflow_dispatch:
 
-# Required permissions (minimal by default)
 permissions:
-  contents: read # To checkout the repository
+  contents: read
 
-# Prevent concurrent deployments
 concurrency:
   group: "${{ github.workflow }}-${{ github.ref }}"
   cancel-in-progress: true
 
 jobs:
-  # ==============================================================================
-  # Build Job
-  # ==============================================================================
-  build:
+  quality:
+    name: Typecheck, Lint & Tests
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
-
+    timeout-minutes: 20
     steps:
-      # Step 1: Checkout repository
       - name: Checkout repository
-        uses: actions/checkout@v4
+        # actions/checkout@v7
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
         with:
-          fetch-depth: 0 # Full history for better caching
+          fetch-depth: 0
           persist-credentials: false
 
-      # Step 2: Setup pnpm (version via packageManager in package.json)
       - name: Setup pnpm
-        uses: pnpm/action-setup@v6
+        # pnpm/action-setup@v6
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271
         with:
           run_install: false
 
-      # Step 3: Setup Node.js with pnpm caching
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        # actions/setup-node@v6
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
         with:
           node-version: "22"
           cache: "pnpm"
@@ -70,50 +55,80 @@ jobs:
           pnpm --version
           pnpm --version | grep -E '^11\.'
 
-      # Step 4: Install dependencies
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
       - name: pnpm audit (high+)
         run: pnpm audit --audit-level=high
 
-      # Step 5: Run type checking (aligned with package.json "typecheck")
       - name: Type check
         run: pnpm run typecheck
 
-      # Step 6: Lint (warnings allowed up to budget; errors fail)
       - name: ESLint
         run: pnpm run lint
 
-      # Step 7: Unit tests + coverage thresholds (store/services/hooks/lib scope — see vitest.config.ts)
       - name: Tests with coverage
         run: pnpm run test:coverage
 
-      # Step 8: Build for production
+      - name: Upload coverage artifact
+        if: always()
+        # actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 14
+
+  build:
+    name: Production Build
+    needs: quality
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        # actions/checkout@v7
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup pnpm
+        # pnpm/action-setup@v6
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271
+        with:
+          run_install: false
+
+      - name: Setup Node.js
+        # actions/setup-node@v6
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: "22"
+          cache: "pnpm"
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
       - name: Build application
         run: pnpm run build
         env:
           NODE_ENV: production
 
-      # Step 9: Copy 404.html for SPA routing
       - name: Setup SPA routing
         run: cp dist/index.html dist/404.html
 
-      # Step 10: Configure GitHub Pages (main branch pushes / manual only)
       - name: Setup Pages
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-        uses: actions/configure-pages@v4
+        # actions/configure-pages@v6
+        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d
 
-      # Step 11: Upload build artifacts for Pages deployment
       - name: Upload artifact
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-        uses: actions/upload-pages-artifact@v3
+        # actions/upload-pages-artifact@v5
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9
         with:
           path: "./dist"
 
-  # ==============================================================================
-  # Deploy Job
-  # ==============================================================================
   deploy:
     needs: build
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
@@ -122,14 +137,11 @@ jobs:
     permissions:
       pages: write
       id-token: write
-
-    # GitHub Pages environment
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-
     steps:
-      # Deploy to GitHub Pages
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        # actions/deploy-pages@v5
+        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128

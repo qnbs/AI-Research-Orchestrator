@@ -2,6 +2,7 @@ import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { BugAntIcon } from './icons/BugAntIcon';
 import { HomeIcon } from './icons/HomeIcon';
 import { ClipboardIcon } from './icons/ClipboardIcon';
+import { errorBoundaryCopy } from './errorBoundaryCopy';
 
 // Inline Refresh Icon for self-containment
 const RefreshIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -68,8 +69,10 @@ class ErrorBoundary extends Component<Props, State> {
 
   private handleCopyError = () => {
     const { error, errorInfo } = this.state;
-    const text = `Error: ${error?.toString()}\n\nComponent Stack:\n${errorInfo?.componentStack || 'N/A'}`;
-    navigator.clipboard.writeText(text).catch((err) => console.error('Failed to copy error:', err));
+    const text = `Error: ${error?.toString()}\n\n${errorBoundaryCopy.componentStackLabel}:\n${errorInfo?.componentStack || errorBoundaryCopy.fallbackStack}`;
+    navigator.clipboard
+      .writeText(text)
+      .catch((err) => console.error(errorBoundaryCopy.copyFailureLog, err));
   };
 
   public render() {
@@ -94,11 +97,10 @@ class ErrorBoundary extends Component<Props, State> {
             </div>
 
             <h1 className="text-3xl font-bold text-text-primary mb-2 tracking-tight">
-              System Critical Failure
+              {errorBoundaryCopy.title}
             </h1>
             <p className="text-text-secondary mb-8 max-w-md mx-auto leading-relaxed">
-              The application encountered an unexpected anomaly. <br />
-              Our agents have been notified.
+              {errorBoundaryCopy.description}
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3 justify-center mb-8">
@@ -107,20 +109,20 @@ class ErrorBoundary extends Component<Props, State> {
                 className="inline-flex items-center justify-center px-5 py-2.5 border border-brand-accent text-brand-accent bg-brand-accent/5 hover:bg-brand-accent/10 rounded-lg font-medium transition-all duration-200 focus:ring-2 focus:ring-offset-2 focus:ring-brand-accent"
               >
                 <RefreshIcon className="w-4 h-4 mr-2" />
-                Try Again
+                {errorBoundaryCopy.tryAgain}
               </button>
               <button
                 onClick={this.handleHomeReset}
                 className="inline-flex items-center justify-center px-5 py-2.5 border border-border text-text-primary bg-surface hover:bg-surface-hover rounded-lg font-medium transition-all duration-200"
               >
                 <HomeIcon className="w-4 h-4 mr-2" />
-                Return Home
+                {errorBoundaryCopy.returnHome}
               </button>
               <button
                 onClick={this.handleHardReload}
                 className="inline-flex items-center justify-center px-5 py-2.5 border border-transparent text-white bg-red-600 hover:bg-red-700 shadow-lg shadow-red-600/20 rounded-lg font-medium transition-all duration-200"
               >
-                Reload Page
+                {errorBoundaryCopy.reloadPage}
               </button>
             </div>
 
@@ -128,7 +130,7 @@ class ErrorBoundary extends Component<Props, State> {
               <div className="text-left">
                 <details className="group bg-background/50 rounded-lg border border-border overflow-hidden transition-all duration-300">
                   <summary className="flex items-center justify-between p-3 cursor-pointer text-xs font-mono text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-colors">
-                    <span>Technical Diagnostics</span>
+                    <span>{errorBoundaryCopy.technicalDiagnostics}</span>
                     <span className="opacity-50 group-open:rotate-180 transition-transform">▼</span>
                   </summary>
                   <div className="p-4 pt-0 border-t border-border/50 mt-2">
@@ -137,7 +139,8 @@ class ErrorBoundary extends Component<Props, State> {
                         onClick={this.handleCopyError}
                         className="flex items-center text-[10px] text-brand-accent hover:text-brand-secondary uppercase tracking-wider font-bold"
                       >
-                        <ClipboardIcon className="w-3 h-3 mr-1" /> Copy Stack Trace
+                        <ClipboardIcon className="w-3 h-3 mr-1" />{' '}
+                        {errorBoundaryCopy.copyStackTrace}
                       </button>
                     </div>
                     <pre className="text-[10px] leading-relaxed whitespace-pre-wrap break-all text-red-300 font-mono bg-black/20 p-3 rounded border border-red-500/10 max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
@@ -152,7 +155,8 @@ class ErrorBoundary extends Component<Props, State> {
             )}
 
             <div className="mt-8 pt-6 border-t border-border/50 text-xs text-text-secondary/50 font-mono">
-              Error Code: {this.state.error?.name || 'UNKNOWN'} | {new Date().toISOString()}
+              {errorBoundaryCopy.errorCodeLabel}: {this.state.error?.name || 'UNKNOWN'} |{' '}
+              {new Date().toISOString()}
             </div>
           </div>
         </div>

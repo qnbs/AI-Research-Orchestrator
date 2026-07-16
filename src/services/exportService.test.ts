@@ -31,6 +31,7 @@ import {
   exportInsightsToCsv,
   exportToPdf,
   exportKnowledgeBaseToPdf,
+  exportToCsv,
 } from './exportService';
 
 describe('sanitizeCsvFormulaInjection', () => {
@@ -217,5 +218,35 @@ describe('export helpers', () => {
     };
     exportCitations(articles, cite, 'bib');
     expect(anchorMocks[0].click).toHaveBeenCalled();
+  });
+
+  it('exportToCsv triggers download with sanitized cells', async () => {
+    const articles: AggregatedArticle[] = [
+      {
+        pmid: '1',
+        title: '=HACK',
+        authors: 'A',
+        journal: 'J',
+        pubYear: '2020',
+        summary: 'S',
+        relevanceScore: 1,
+        relevanceExplanation: '',
+        keywords: ['k'],
+        isOpenAccess: true,
+        pmcId: 'PMC1',
+        sourceTitle: 'src',
+        sourceId: 'sid',
+      },
+    ];
+    exportToCsv(articles, 'topic', {
+      columns: ['pmid', 'title', 'URL'],
+      delimiter: ',',
+    });
+    expect(anchorMocks[0].click).toHaveBeenCalled();
+    expect(URL.createObjectURL).toHaveBeenCalled();
+    const blob = vi.mocked(URL.createObjectURL).mock.calls[0][0] as Blob;
+    const csv = await blob.text();
+    expect(csv).toContain('\t=HACK');
+    expect(csv).not.toContain(',=HACK,');
   });
 });

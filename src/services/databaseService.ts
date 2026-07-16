@@ -1,14 +1,22 @@
 import Dexie, { type Table } from 'dexie';
 import type { KnowledgeBaseEntry, Settings, Preset, ResearchCollection } from '../types';
+import type { ResearchCheckpoint } from '../lib/researchCheckpoint';
 
 export const db = new Dexie('AIResearchAppDatabase') as Dexie & {
   knowledgeBaseEntries: Table<KnowledgeBaseEntry, string>;
   settings: Table<Settings & { id: string }, string>;
   presets: Table<Preset, string>;
   collections: Table<ResearchCollection, string>;
+  researchCheckpoints: Table<ResearchCheckpoint, string>;
 };
 
-// Version 3: Added collections table for Research Collections feature
+// Keep older versions for upgrade path (Dexie requires ascending declaration order).
+db.version(2).stores({
+  knowledgeBaseEntries: 'id, timestamp, sourceType, title',
+  settings: 'id',
+  presets: 'id',
+});
+
 db.version(3)
   .stores({
     knowledgeBaseEntries: 'id, timestamp, sourceType, title',
@@ -16,17 +24,18 @@ db.version(3)
     presets: 'id',
     collections: 'id, name, createdAt, updatedAt',
   })
-  .upgrade((tx) => {
-    // Migrate existing data — no structural changes needed for existing tables
-    return Promise.resolve();
-  });
+  .upgrade(() => Promise.resolve());
 
-// Keep version 2 for backward compatibility
-db.version(2).stores({
-  knowledgeBaseEntries: 'id, timestamp, sourceType, title',
-  settings: 'id',
-  presets: 'id',
-});
+// Version 4: research checkpoints for partial-save / resume after abort or error
+db.version(4)
+  .stores({
+    knowledgeBaseEntries: 'id, timestamp, sourceType, title',
+    settings: 'id',
+    presets: 'id',
+    collections: 'id, name, createdAt, updatedAt',
+    researchCheckpoints: 'id, createdAt, topic, reason',
+  })
+  .upgrade(() => Promise.resolve());
 
 // --- KnowledgeBaseEntry Operations ---
 export const getAllEntries = () => db.knowledgeBaseEntries.orderBy('timestamp').reverse().toArray();
@@ -40,9 +49,17 @@ export const clearAllEntries = () => db.knowledgeBaseEntries.clear();
 
 // --- Settings Operations ---
 const SETTINGS_ID = 'appSettings';
+const sanitizeSettingsForStorage = (settings: Settings): Settings => ({
+  ...settings,
+  ai: {
+    ...settings.ai,
+    ncbiApiKey: '',
+  },
+});
+
 export const getSettings = (): Promise<Settings | undefined> => db.settings.get(SETTINGS_ID);
 export const saveSettings = (settings: Settings): Promise<string> =>
-  db.settings.put({ ...settings, id: SETTINGS_ID });
+  db.settings.put({ ...sanitizeSettingsForStorage(settings), id: SETTINGS_ID });
 
 // --- Preset Operations ---
 export const getAllPresets = () => db.presets.toArray();
@@ -55,3 +72,12 @@ export const addCollection = (col: ResearchCollection) => db.collections.add(col
 export const updateCollection = (id: string, changes: Partial<ResearchCollection>) =>
   db.collections.update(id, changes);
 export const deleteCollection = (id: string) => db.collections.delete(id);
+
+// --- Research checkpoint Operations (partial save / resume) ---
+export const saveResearchCheckpoint = (checkpoint: ResearchCheckpoint) =>
+  db.researchCheckpoints.put(checkpoint);
+export const getResearchCheckpoint = (id: string) => db.researchCheckpoints.get(id);
+export const getLatestResearchCheckpoints = (limit = 20) =>
+  db.researchCheckpoints.orderBy('createdAt').reverse().limit(limit).toArray();
+export const deleteResearchCheckpoint = (id: string) => db.researchCheckpoints.delete(id);
+export const clearResearchCheckpoints = () => db.researchCheckpoints.clear();

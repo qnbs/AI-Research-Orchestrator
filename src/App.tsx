@@ -25,6 +25,8 @@ import { Notification } from './components/Notification';
 import { ConfirmationModal } from './components/ConfirmationModal';
 import { useResearchAssistant } from './hooks/useResearchAssistant';
 import { generateResearchReportStream } from './services/geminiService';
+import { handleResearchStreamFailure } from './lib/researchStreamFailure';
+import { estimateResearchRunCostUsd, shouldWarnAboutResearchCost } from './lib/resilience';
 import { KnowledgeBaseProvider, useKnowledgeBase } from './contexts/KnowledgeBaseContext';
 import { useUI } from './hooks/useUI';
 import type { View, BeforeInstallPromptEvent } from './types/ui';
@@ -33,6 +35,7 @@ import { useChat } from './hooks/useChat';
 import { useHaptic } from './hooks/useHaptic';
 import { BottomNavBar } from './components/BottomNavBar';
 import ErrorBoundary from './components/ErrorBoundary';
+import { FeatureErrorBoundary } from './components/FeatureErrorBoundary';
 import { useTranslation } from './hooks/useTranslation';
 import { useUrlSync } from './hooks/useUrlSync';
 
@@ -277,6 +280,20 @@ const AppLayout: React.FC = () => {
       setCurrentView('orchestrator');
       setIsCurrentReportSaved(false);
 
+      const costEstimate = estimateResearchRunCostUsd({
+        topic: data.researchTopic,
+        maxArticlesToScan: data.maxArticlesToScan,
+        topNToSynthesize: data.topNToSynthesize,
+        model: settings.ai.model,
+      });
+      if (shouldWarnAboutResearchCost(costEstimate.estimatedUsd)) {
+        setNotification({
+          id: Date.now(),
+          type: 'success',
+          message: `Estimated Gemini usage ~$${costEstimate.estimatedUsd.toFixed(3)} (${costEstimate.tier}). This is an approximate pre-flight estimate.`,
+        });
+      }
+
       // ── Start live trace ──────────────────────────────────────────────────────
       const sessionId = `sess_${currentGenId}_${Date.now()}`;
       dispatch(startNewTrace({ sessionId, topic: data.researchTopic }));
@@ -287,11 +304,13 @@ const AppLayout: React.FC = () => {
       streamAbortRef.current = new AbortController();
       const streamSignal = streamAbortRef.current.signal;
 
+      let finalSynthesis = '';
+      let finalReport: ResearchReport | null = null;
+      let lastPhase = 'Initializing...';
+
       try {
         const stream = generateResearchReportStream(data, settings.ai, streamSignal);
-        let finalSynthesis = '';
         let isFirstChunk = true;
-        let finalReport: ResearchReport | null = null;
 
         for await (const { report: partialReport, synthesisChunk, phase } of stream) {
           // Check if this stream is still the active one
@@ -300,6 +319,7 @@ const AppLayout: React.FC = () => {
             return; // Generation aborted: new request started
           }
 
+          lastPhase = phase;
           setCurrentPhase(phase);
 
           // ── Trace: agent transition detection ────────────────────────────
@@ -355,24 +375,31 @@ const AppLayout: React.FC = () => {
           setIsCurrentReportSaved(true);
         }
       } catch (err) {
-        if (err instanceof DOMException && err.name === 'AbortError') {
-          return;
-        }
-        if (generationIdRef.current === currentGenId) {
-          if (prevAgent !== null) {
-            dispatch(setAgentStatus({ agentName: prevAgent, status: 'error' }));
-          }
-          dispatch(completeTrace({ status: 'error' }));
-          setError(
-            err instanceof Error
-              ? err.message
-              : 'An unknown error occurred during report generation.',
-          );
-          setReportStatus('error');
-        }
+        await handleResearchStreamFailure({
+          error: err,
+          currentGenerationId: currentGenId,
+          getActiveGenerationId: () => generationIdRef.current,
+          input: data,
+          phase: lastPhase,
+          finalReport,
+          finalSynthesis,
+          previousAgent: prevAgent,
+          dispatch,
+          setReport,
+          setReportStatus,
+          setError,
+          setNotification,
+        });
       }
     },
-    [dispatch, settings.ai, settings.defaults.autoSaveReports, setCurrentView, saveReport],
+    [
+      dispatch,
+      settings.ai,
+      settings.defaults.autoSaveReports,
+      setCurrentView,
+      saveReport,
+      setNotification,
+    ],
   );
 
   const handleSaveReport = useCallback(async () => {
@@ -565,41 +592,45 @@ const AppLayout: React.FC = () => {
         return <HomeView onNavigate={handleViewChange} />;
       case 'orchestrator':
         return (
-          <OrchestratorView
-            reportStatus={reportStatus}
-            currentPhase={currentPhase}
-            error={error}
-            report={report}
-            researchInput={localResearchInput}
-            isCurrentReportSaved={isCurrentReportSaved}
-            settings={settings}
-            prefilledTopic={prefilledTopic}
-            handleFormSubmit={handleFormSubmit}
-            handleSaveReport={handleSaveReport}
-            handleNewSearch={handleNewSearch}
-            onPrefillConsumed={handlePrefillConsumed}
-            handleViewReportFromHistory={handleViewEntry}
-            handleStartNewReview={handleStartNewReviewFromTopic}
-            onUpdateResearchInput={setLocalResearchInput}
-            handleTagsUpdate={handleTagsUpdate}
-            chatHistory={chatHistory}
-            isChatting={isChatting}
-            onSendMessage={sendMessage}
-          />
+          <FeatureErrorBoundary featureName="Research Orchestrator">
+            <OrchestratorView
+              reportStatus={reportStatus}
+              currentPhase={currentPhase}
+              error={error}
+              report={report}
+              researchInput={localResearchInput}
+              isCurrentReportSaved={isCurrentReportSaved}
+              settings={settings}
+              prefilledTopic={prefilledTopic}
+              handleFormSubmit={handleFormSubmit}
+              handleSaveReport={handleSaveReport}
+              handleNewSearch={handleNewSearch}
+              onPrefillConsumed={handlePrefillConsumed}
+              handleViewReportFromHistory={handleViewEntry}
+              handleStartNewReview={handleStartNewReviewFromTopic}
+              onUpdateResearchInput={setLocalResearchInput}
+              handleTagsUpdate={handleTagsUpdate}
+              chatHistory={chatHistory}
+              isChatting={isChatting}
+              onSendMessage={sendMessage}
+            />
+          </FeatureErrorBoundary>
         );
       case 'research':
         return (
-          <ResearchView
-            onStartNewReview={handleStartNewReviewFromTopic}
-            onStartResearch={startResearch}
-            onClearResearch={clearResearch}
-            isLoading={isResearching}
-            phase={researchPhase}
-            error={researchError}
-            analysis={researchAnalysis}
-            similarArticlesState={similar}
-            onlineFindingsState={online}
-          />
+          <FeatureErrorBoundary featureName="Research Assistant">
+            <ResearchView
+              onStartNewReview={handleStartNewReviewFromTopic}
+              onStartResearch={startResearch}
+              onClearResearch={clearResearch}
+              isLoading={isResearching}
+              phase={researchPhase}
+              error={researchError}
+              analysis={researchAnalysis}
+              similarArticlesState={similar}
+              onlineFindingsState={online}
+            />
+          </FeatureErrorBoundary>
         );
       case 'authors':
         return (
@@ -610,13 +641,15 @@ const AppLayout: React.FC = () => {
         );
       case 'knowledgeBase':
         return (
-          <KnowledgeBaseView
-            onViewChange={handleViewChange}
-            filter={kbFilter}
-            onFilterChange={handleFilterChange}
-            selectedPmids={selectedKbPmids}
-            setSelectedPmids={setSelectedKbPmids}
-          />
+          <FeatureErrorBoundary featureName="Knowledge Base">
+            <KnowledgeBaseView
+              onViewChange={handleViewChange}
+              filter={kbFilter}
+              onFilterChange={handleFilterChange}
+              selectedPmids={selectedKbPmids}
+              setSelectedPmids={setSelectedKbPmids}
+            />
+          </FeatureErrorBoundary>
         );
       case 'journals':
         return <JournalsView />;

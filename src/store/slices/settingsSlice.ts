@@ -35,6 +35,7 @@ export const defaultSettings: Settings = {
       authorSearchLimit: 100,
     },
     enableTldr: true,
+    ncbiApiKey: '',
   },
   defaults: {
     maxArticlesToScan: 50,

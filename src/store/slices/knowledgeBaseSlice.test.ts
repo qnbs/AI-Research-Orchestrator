@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock the databaseService before importing the slice
 vi.mock('../../services/databaseService', () => ({
@@ -14,7 +14,22 @@ import knowledgeBaseReducer, {
   clearSelection,
   setFilter,
   setSelectedPmids,
+  fetchKnowledgeBase,
+  addKbEntry,
+  deleteKbEntries,
+  clearKb,
+  importKbEntries,
+  updateKbEntry,
 } from './knowledgeBaseSlice';
+import type { KnowledgeBaseEntry } from '../../types';
+import {
+  getAllEntries,
+  addEntry,
+  bulkAddEntries,
+  deleteEntries,
+  clearAllEntries,
+  updateEntry,
+} from '../../services/databaseService';
 
 describe('knowledgeBaseSlice', () => {
   const initialState = {
@@ -32,6 +47,10 @@ describe('knowledgeBaseSlice', () => {
     },
     selectedPmids: [],
   };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   describe('reducers', () => {
     it('should return the initial state', () => {
@@ -78,6 +97,121 @@ describe('knowledgeBaseSlice', () => {
       expect(state.filter.searchTerm).toBe('cancer');
       expect(state.filter.selectedArticleTypes).toEqual(['Meta-Analysis']);
       expect(state.filter.showOpenAccessOnly).toBe(true);
+    });
+  });
+
+  describe('async thunks', () => {
+    const sampleArticle = {
+      pmid: 'pmid-1',
+      title: 'Article',
+      authors: 'Author',
+      journal: 'Journal',
+      pubYear: '2024',
+      summary: 'Summary',
+      relevanceScore: 1,
+      relevanceExplanation: '',
+      keywords: [],
+      isOpenAccess: false,
+    };
+
+    const sampleEntry = {
+      id: 'e1',
+      sourceType: 'research' as const,
+      timestamp: 1000,
+      title: 'T',
+      articles: [sampleArticle],
+    } as unknown as KnowledgeBaseEntry;
+
+    it('fetchKnowledgeBase populates entities', () => {
+      vi.mocked(getAllEntries).mockResolvedValueOnce([sampleEntry]);
+      let state = knowledgeBaseReducer(initialState, fetchKnowledgeBase.pending('', undefined));
+      expect(state.isLoading).toBe(true);
+      state = knowledgeBaseReducer(
+        state,
+        fetchKnowledgeBase.fulfilled([sampleEntry], '', undefined),
+      );
+      expect(state.isLoading).toBe(false);
+      expect(state.ids).toContain('e1');
+      expect(state.entities.e1?.title).toBe('T');
+    });
+
+    it('fetchKnowledgeBase stores error message on reject', () => {
+      const state = knowledgeBaseReducer(
+        initialState,
+        fetchKnowledgeBase.rejected(new Error('db down'), '', undefined, 'db down'),
+      );
+      expect(state.isLoading).toBe(false);
+      expect(state.error).toBeTruthy();
+    });
+
+    it('addKbEntry / importKbEntries / update / delete / clear', () => {
+      let state = knowledgeBaseReducer(
+        initialState,
+        addKbEntry.fulfilled(sampleEntry, '', sampleEntry),
+      );
+      expect(state.ids).toContain('e1');
+
+      const second = { ...sampleEntry, id: 'e2', title: 'T2' } as KnowledgeBaseEntry;
+      state = knowledgeBaseReducer(state, importKbEntries.fulfilled([second], '', [second]));
+      expect(state.ids).toEqual(expect.arrayContaining(['e1', 'e2']));
+
+      state = knowledgeBaseReducer(
+        state,
+        updateKbEntry.fulfilled({ id: 'e1', changes: { title: 'Updated' } }, '', {
+          id: 'e1',
+          changes: { title: 'Updated' },
+        }),
+      );
+      expect(state.entities.e1?.title).toBe('Updated');
+
+      state = knowledgeBaseReducer(state, deleteKbEntries.fulfilled(['e2'], '', ['e2']));
+      expect(state.ids).not.toContain('e2');
+      expect(state.ids).toContain('e1');
+
+      state = knowledgeBaseReducer(state, clearKb.fulfilled(undefined, '', undefined));
+      expect(state.ids).toEqual([]);
+    });
+
+    it('removes selected PMIDs for deleted entries without touching unaffected selections', () => {
+      const deletedEntry = {
+        ...sampleEntry,
+        id: 'e2',
+        articles: [{ ...sampleArticle, pmid: 'pmid-delete' }],
+      } as KnowledgeBaseEntry;
+      let state = knowledgeBaseReducer(
+        initialState,
+        importKbEntries.fulfilled([deletedEntry], '', [deletedEntry]),
+      );
+      state = knowledgeBaseReducer(state, setSelectedPmids(['pmid-delete', 'pmid-keep']));
+
+      state = knowledgeBaseReducer(state, deleteKbEntries.fulfilled(['e2'], '', ['e2']));
+
+      expect(state.selectedPmids).toEqual(['pmid-keep']);
+    });
+
+    it('thunks invoke databaseService side effects', async () => {
+      vi.mocked(getAllEntries).mockResolvedValueOnce([sampleEntry]);
+      await fetchKnowledgeBase()(vi.fn(), () => ({}) as never, undefined);
+      expect(getAllEntries).toHaveBeenCalled();
+
+      await addKbEntry(sampleEntry)(vi.fn(), () => ({}) as never, undefined);
+      expect(addEntry).toHaveBeenCalledWith(sampleEntry);
+
+      await deleteKbEntries(['e1'])(vi.fn(), () => ({}) as never, undefined);
+      expect(deleteEntries).toHaveBeenCalledWith(['e1']);
+
+      await clearKb()(vi.fn(), () => ({}) as never, undefined);
+      expect(clearAllEntries).toHaveBeenCalled();
+
+      await importKbEntries([sampleEntry])(vi.fn(), () => ({}) as never, undefined);
+      expect(bulkAddEntries).toHaveBeenCalled();
+
+      await updateKbEntry({ id: 'e1', changes: { title: 'X' } })(
+        vi.fn(),
+        () => ({}) as never,
+        undefined,
+      );
+      expect(updateEntry).toHaveBeenCalled();
     });
   });
 });

@@ -12,14 +12,24 @@ import type {
   AuthorCluster,
   JournalProfile,
 } from '../types';
-import { getApiKey } from './apiKeyService';
+import { getApiKey, getNcbiApiKey } from './apiKeyService';
 import { searchPubMedForIds, fetchArticleDetails } from './pubmedUtils';
 import { searchAndFetchArxiv } from './arxivUtils';
 import { sanitizePromptFragment } from '../lib/promptSanitize';
+import {
+  parseGeminiResponseJson as parseGeminiJsonCore,
+  GeminiJsonParseError,
+} from '../lib/parseGeminiJson';
+import { AppError, toAppError } from '../lib/errors';
 
 function throwIfAborted(signal?: AbortSignal): void {
   if (signal?.aborted) {
-    throw new DOMException('Aborted', 'AbortError');
+    throw new AppError({
+      code: 'STREAM_ABORTED',
+      message: 'Aborted',
+      retryable: false,
+      cause: new DOMException('Aborted', 'AbortError'),
+    });
   }
 }
 
@@ -35,10 +45,13 @@ async function getAI(): Promise<GoogleGenAI> {
   const apiKey = await getApiKey();
 
   if (!apiKey) {
-    throw new Error(
-      'NO_API_KEY: Bitte konfigurieren Sie Ihren Gemini API-Key in den Einstellungen. ' +
-        'Sie können einen kostenlosen Key unter https://aistudio.google.com erhalten.',
-    );
+    throw new AppError({
+      code: 'NO_API_KEY',
+      message:
+        'NO_API_KEY: Please configure your Gemini API key in Settings. ' +
+        'You can get a free key at https://aistudio.google.com.',
+      retryable: false,
+    });
   }
 
   // Reinitialize if key changed
@@ -61,89 +74,22 @@ export function resetAIInstance(): void {
 /**
  * Robustly extracts JSON from AI response text.
  * Handles Markdown code blocks, raw JSON, and surrounding chatter.
- * Exported for unit tests and reuse.
+ * Exported for unit tests and reuse — delegates to string-aware parser.
  */
 export function parseGeminiResponseJson<T>(text: string): T {
-  if (!text) throw new Error('Empty response from AI');
-
-  // Pre-process: remove potentially harmful unicode or control characters if necessary,
-  // but usually JSON.parse handles strings okay.
-  // Clean up markdown code blocks first as they are the most common wrapper.
-  let cleanText = text.replace(/```json\s*([\s\S]*?)\s*```/g, '$1');
-  cleanText = cleanText.replace(/```\s*([\s\S]*?)\s*```/g, '$1');
-
-  // 1. Try parsing the cleaned text directly
   try {
-    return JSON.parse(cleanText) as T;
-  } catch (e) {
-    // Continue to advanced extraction
-  }
-
-  // 2. Try finding the outermost JSON object or array
-  const firstBrace = cleanText.indexOf('{');
-  const firstBracket = cleanText.indexOf('[');
-
-  let startIdx = -1;
-  let endIdx = -1;
-
-  // Determine if we are looking for an object or an array
-  if (firstBrace !== -1 && (firstBracket === -1 || firstBrace < firstBracket)) {
-    startIdx = firstBrace;
-    // Find corresponding closing brace by counting depth
-    let depth = 0;
-    for (let i = startIdx; i < cleanText.length; i++) {
-      if (cleanText[i] === '{') depth++;
-      else if (cleanText[i] === '}') depth--;
-
-      if (depth === 0) {
-        endIdx = i;
-        break;
-      }
+    return parseGeminiJsonCore<T>(text);
+  } catch (error) {
+    if (error instanceof GeminiJsonParseError) {
+      throw new AppError({
+        code: 'GEMINI_PARSE_FAILURE',
+        message: error.message,
+        retryable: true,
+        cause: error,
+      });
     }
-  } else if (firstBracket !== -1) {
-    startIdx = firstBracket;
-    // Find corresponding closing bracket
-    let depth = 0;
-    for (let i = startIdx; i < cleanText.length; i++) {
-      if (cleanText[i] === '[') depth++;
-      else if (cleanText[i] === ']') depth--;
-
-      if (depth === 0) {
-        endIdx = i;
-        break;
-      }
-    }
+    throw error;
   }
-
-  if (startIdx !== -1 && endIdx !== -1) {
-    const potentialJson = cleanText.substring(startIdx, endIdx + 1);
-    try {
-      return JSON.parse(potentialJson) as T;
-    } catch (e) {
-      console.warn('Failed to parse extracted JSON segment via depth counting.');
-    }
-  }
-
-  // 3. Fallback: Naive lastIndexOf (works if AI just stops outputting after JSON)
-  const lastBrace = cleanText.lastIndexOf('}');
-  const lastBracket = cleanText.lastIndexOf(']');
-
-  if (startIdx !== -1) {
-    const end = cleanText[startIdx] === '{' ? lastBrace : lastBracket;
-    if (end > startIdx) {
-      try {
-        return JSON.parse(cleanText.substring(startIdx, end + 1)) as T;
-      } catch (e) {
-        // ignore
-      }
-    }
-  }
-
-  // 4. Last Resort: Log the failure for debugging
-  console.error('CRITICAL: Could not parse JSON.', text);
-  throw new Error(
-    'AI response did not contain valid JSON. The model may have been interrupted or hallucinatory.',
-  );
 }
 
 /**
@@ -232,6 +178,8 @@ export async function* generateResearchReportStream(
 ): AsyncGenerator<{ report?: ResearchReport; synthesisChunk?: string; phase: string }> {
   const ai = await getAI();
   throwIfAborted(signal);
+  const ncbiApiKey = (await getNcbiApiKey()) ?? undefined;
+  throwIfAborted(signal);
   const topicSafe = sanitizePromptFragment(input.researchTopic);
   const focusSafe = sanitizePromptFragment(input.synthesisFocus);
   try {
@@ -300,6 +248,7 @@ Research Topic: "${topicSafe}"
       generatedQueries[0].query,
       input.maxArticlesToScan,
       signal,
+      ncbiApiKey,
     );
     if (pmids.length === 0) {
       throw new Error(
@@ -310,7 +259,7 @@ Research Topic: "${topicSafe}"
     throwIfAborted(signal);
     // STEP 3: Fetch Real Article Details
     yield { phase: 'Phase 3: Fetching Article Details from PubMed...' };
-    const articleDetails = await fetchArticleDetails(pmids, signal);
+    const articleDetails = await fetchArticleDetails(pmids, signal, ncbiApiKey);
     if (articleDetails.length === 0) {
       throw new Error('Could not fetch details for the articles found on PubMed.');
     }
@@ -748,6 +697,8 @@ export async function analyzeSingleArticle(
 ): Promise<RankedArticle> {
   const ai = await getAI();
   throwIfAborted(signal);
+  const ncbiApiKey = (await getNcbiApiKey()) ?? undefined;
+  throwIfAborted(signal);
   try {
     let pmid = identifier.trim();
     // Basic identifier extraction
@@ -756,12 +707,19 @@ export async function analyzeSingleArticle(
       if (match) pmid = match[1];
     } else if (identifier.includes('doi.org/')) {
       // Can't directly convert DOI to PMID reliably without another API, so we'll just search for the DOI
-      const ids = await searchPubMedForIds(identifier, 1, signal);
+      const ids = await searchPubMedForIds(identifier, 1, signal, ncbiApiKey);
       if (ids.length > 0) pmid = ids[0];
-      else throw new Error('DOI not found in PubMed.');
+      else {
+        throw new AppError({
+          code: 'VALIDATION',
+          message: 'DOI not found in PubMed.',
+          retryable: false,
+          context: 'article_analysis',
+        });
+      }
     }
 
-    const articleDetails = await fetchArticleDetails([pmid], signal);
+    const articleDetails = await fetchArticleDetails([pmid], signal, ncbiApiKey);
     if (!articleDetails || articleDetails.length === 0) {
       throw new Error('Could not fetch article details from PubMed. Please check the identifier.');
     }
@@ -821,7 +779,7 @@ export async function analyzeSingleArticle(
     };
   } catch (error) {
     console.error('Error analyzing single article:', error);
-    throw new Error(getGeminiError(error));
+    throw toAppError(error, 'article_analysis');
   }
 }
 

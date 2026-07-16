@@ -1,0 +1,42 @@
+---
+description: Resolve every automated PR review comment before merging to main
+alwaysApply: true
+---
+
+# Automated PR Review Gate (Pre-Merge)
+
+Before merging any PR to `main`, **trigger and fully resolve all automated review feedback** on that PR.
+
+## Bots / sources in scope
+
+Address findings from **all** of these when present:
+
+- **CodeRabbit** (`coderabbitai`)
+- **CodeAntai** / Code Antai (and similarly named AI reviewers)
+- Other automated PR reviewers that post inline or summary comments (e.g. Socket Security actionable items when they block merge, Cursor Bugbot when requested)
+
+Human review comments that request concrete fixes are also in scope when they are open on the PR.
+
+## Scope (mandatory)
+
+Address **every** item, including:
+
+- Critical / high / medium findings
+- **Nitpicks**
+- **Outside-of-diff-range** comments
+- Suggestions, refactors, and doc notes from the reviewer
+
+## Workflow (loop until clear)
+
+1. After pushing PR updates, wait for / re-request review when available (`@coderabbitai review`, etc.).
+2. Collect **all** review threads (inline + summary + out-of-range) from every in-scope bot.
+3. For each item: fix in code/docs, or reply with a clear English rationale if intentionally deferred (rare — prefer fixing).
+4. Push follow-up commits; re-request review; **repeat until no new actionable comments remain**.
+5. Do **not** merge while unresolved automated review comments remain.
+
+## Exceptions
+
+- Duplicate comments already fixed in a later commit: mark resolved and cite the commit.
+- False positives: short English reply explaining why + resolve thread after confirmation.
+
+See also English content policy `@.cursor/rules/010-english-content.mdc`.

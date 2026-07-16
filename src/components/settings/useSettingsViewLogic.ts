@@ -175,7 +175,15 @@ export const useSettingsViewLogic = (
       });
       return;
     }
-    updateSettings(tempSettings);
+    const settingsToSave = {
+      ...tempSettings,
+      ai: {
+        ...tempSettings.ai,
+        ncbiApiKey: '',
+      },
+    };
+    updateSettings(settingsToSave);
+    setTempSettings(settingsToSave);
     setNotification({ id: Date.now(), message: 'Settings saved successfully!', type: 'success' });
   }, [hasErrors, tempSettings, updateSettings, setNotification]);
 

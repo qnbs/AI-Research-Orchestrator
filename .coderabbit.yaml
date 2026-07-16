@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+language: en-US
+reviews:
+  profile: assertive
+  request_changes_workflow: true
+  high_level_summary: true
+  poem: false
+  review_status: true
+  # Review draft PRs so Cloud Agents can address feedback before merge.
+  auto_review:
+    drafts: true
+    auto_incremental_review: true
+  path_filters:
+    - "!**/pnpm-lock.yaml"
+chat:
+  auto_reply: true
