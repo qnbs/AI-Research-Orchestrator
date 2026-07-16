@@ -80,3 +80,40 @@ export function estimateTokensFromText(text: string): number {
   if (!text) return 0;
   return Math.ceil(text.length / 4);
 }
+
+/**
+ * Rough cost estimate for a full research run (query + rank + synthesis).
+ * Used for pre-flight warnings — not a billing guarantee.
+ */
+export function estimateResearchRunCostUsd(params: {
+  topic: string;
+  maxArticlesToScan: number;
+  topNToSynthesize: number;
+  model?: string;
+}): {
+  estimatedUsd: number;
+  estimatedInputTokens: number;
+  estimatedOutputTokens: number;
+  tier: 'flash' | 'pro';
+} {
+  const tier: 'flash' | 'pro' = /pro/i.test(params.model ?? '') ? 'pro' : 'flash';
+  const topicTokens = estimateTokensFromText(params.topic);
+  const estimatedInputTokens =
+    topicTokens + 800 + params.maxArticlesToScan * 400 + params.topNToSynthesize * 200;
+  const estimatedOutputTokens = 600 + params.topNToSynthesize * 150 + 1200;
+  return {
+    tier,
+    estimatedInputTokens,
+    estimatedOutputTokens,
+    estimatedUsd: estimateGeminiCostUsd({
+      inputTokens: estimatedInputTokens,
+      outputTokens: estimatedOutputTokens,
+      tier,
+    }),
+  };
+}
+
+/** Warn when estimated cost exceeds a soft threshold (USD). */
+export function shouldWarnAboutResearchCost(estimatedUsd: number, thresholdUsd = 0.05): boolean {
+  return estimatedUsd >= thresholdUsd;
+}

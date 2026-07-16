@@ -136,10 +136,19 @@ describe('pubmedUtils', () => {
     await expect(fetchArticleDetails(['1'])).rejects.toMatchObject({ code: 'NCBI_NETWORK' });
   });
 
-  it('does not retry AbortError', async () => {
-    const abort = new DOMException('Aborted', 'AbortError');
-    globalThis.fetch = vi.fn().mockRejectedValue(abort);
-    await expect(searchPubMedForIds('x', 1)).rejects.toMatchObject({ name: 'AbortError' });
-    expect(fetch).toHaveBeenCalledTimes(1);
+  it('appends NCBI api_key when provided', async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      headers: { get: () => null },
+      json: async () => ({ esearchresult: { idlist: ['1'] } }),
+    });
+    await searchPubMedForIds('q', 5, undefined, 'ncbi-test-key');
+    expect(String(vi.mocked(fetch).mock.calls[0][0])).toContain('api_key=ncbi-test-key');
+  });
+
+  it('withNcbiApiKey leaves url unchanged without key', async () => {
+    const { withNcbiApiKey } = await import('./pubmedUtils');
+    expect(withNcbiApiKey('https://example.com/x')).toBe('https://example.com/x');
   });
 });

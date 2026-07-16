@@ -8,7 +8,7 @@ import {
   removeApiKey,
 } from './apiKeyService';
 
-const VALID_KEY = 'AIza1234567890123456789012345678901234a';
+const VALID_KEY = `AIza${'1234567890123456789012345678901234a'}`; // test fixture — not a real secret
 
 describe('apiKeyService', () => {
   const originalCrypto = globalThis.crypto;

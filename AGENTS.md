@@ -38,5 +38,6 @@ Workflow: `.github/workflows/deploy.yml` — bei **Push** und **Pull Request** a
 - **Coverage gate:** `pnpm run test:coverage` enforces logic-layer thresholds in `vitest.config.ts` (Phase 0: **70%** lines/statements). Use `pnpm run test:run` for fast loops.
 - **Resilience:** External calls via `AppError` / circuit breaker (`src/lib/errors.ts`, `circuitBreaker.ts`) — see `.cursor/rules/102-resilience-external-calls.mdc`.
 - **English content:** New docs, comments, commits, and default strings must be English (`.cursor/rules/010-english-content.mdc`). Product UI i18n DE values stay in `translations.ts`.
+- **CodeRabbit gate:** Resolve all CodeRabbit PR comments (including nitpicks and out-of-diff) before merging to `main` (`.cursor/rules/011-coderabbit-pr-gate.mdc`). Use `@coderabbitai review` on drafts if auto-skip.
 - **E2E:** Once: `pnpm exec playwright install chromium`, then `pnpm run test:e2e` (Playwright starts Vite and uses a fake key).
 - **ADRs / Security:** `docs/adr/`, `SECURITY.md`, living backlog in `AUDIT.md`.

@@ -10,29 +10,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Resilience layer: typed `AppError` taxonomy (`src/lib/errors.ts`), per-service circuit breaker (`circuitBreaker.ts`), exponential backoff + Gemini cost heuristics (`resilience.ts`).
+- Research checkpoints (Dexie `researchCheckpoints`) for partial save on abort/error; pre-flight cost estimate toast in orchestrator.
+- Optional NCBI API key in Settings (`ai.ncbiApiKey`) passed to PubMed E-utilities.
 - String-aware Gemini JSON parser (`src/lib/parseGeminiJson.ts`) with unit tests.
 - `SECURITY.md` with threat model, disclosure process, and key-handling guidance.
 - Architecture Decision Records: `docs/adr/0001`–`0004` (state, orchestration, security model, PWA offline).
-- GitHub Actions `security.yml`: CodeQL, Dependency Review (PRs), scheduled pnpm audit, gitleaks.
+- GitHub Actions `security.yml`: CodeQL, Dependency Review (PRs), scheduled pnpm audit, gitleaks (`.gitleaks.toml`).
+- `.coderabbit.yaml` (auto-review drafts) + Cursor rules `010-english-content`, `011-coderabbit-pr-gate`.
 - CI coverage artifact upload; quality vs build job split in `deploy.yml`.
-- ErrorBoundary unit tests; expanded PubMed, API key vault, and knowledge-base thunk tests.
-
-- Cursor rule `010-english-content.mdc`: English-only for new docs, comments, commits, and default UI strings (i18n DE locale values remain).
+- Expanded unit tests (ErrorBoundary, checkpoints, settings hook, PubMed NCBI key, exports).
 
 ### Changed
 
-- Vitest coverage thresholds raised to **70%** lines/statements and **55%** branches/functions (logic layers).
+- Vitest coverage thresholds raised to **72%** lines/statements (measured ~74%) and **55%** branches/functions.
+- Dependency hardening via `pnpm audit --fix=update` + workspace overrides (`vite`, `undici`, `ws`, `protobufjs`); `pnpm.overrides` moved to `pnpm-workspace.yaml` (pnpm 11).
 - `parseGeminiResponseJson` in `geminiService` delegates to the new parser and maps failures to `AppError`.
 - Abort in orchestrator throws `AppError` (`STREAM_ABORTED`); missing API key throws `AppError` (`NO_API_KEY`).
 - PubMed fetches use circuit breaker, abort-aware retries, and typed rate-limit / network errors.
 - ErrorBoundary copy no longer claims agents were notified; clarifies local data preservation.
-- July 2026 full re-audit documented in `AUDIT.md`.
-- Default `AppError` user messages are English (UI i18n remains the path for localized product copy).
+- ApiKeySettings UI copy in English; July 2026 full re-audit in `AUDIT.md`.
+- Default `AppError` user messages are English (UI i18n remains for localized product copy).
 
 ### Fixed
 
 - Knowledge Base Redux: `deleteKbEntries.fulfilled` now removes entities via `removeMany` (previously a no-op).
 - PubMed `pubYear` only kept when a valid 4-digit year is present.
+- Gitleaks false positive on Gemini-shaped test fixtures (allowlist + constructed fixture string).
 
 ## [0.1.1] - 2026-05-02
 

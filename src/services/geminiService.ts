@@ -246,6 +246,7 @@ Research Topic: "${topicSafe}"
       generatedQueries[0].query,
       input.maxArticlesToScan,
       signal,
+      aiSettings.ncbiApiKey,
     );
     if (pmids.length === 0) {
       throw new Error(
@@ -256,7 +257,7 @@ Research Topic: "${topicSafe}"
     throwIfAborted(signal);
     // STEP 3: Fetch Real Article Details
     yield { phase: 'Phase 3: Fetching Article Details from PubMed...' };
-    const articleDetails = await fetchArticleDetails(pmids, signal);
+    const articleDetails = await fetchArticleDetails(pmids, signal, aiSettings.ncbiApiKey);
     if (articleDetails.length === 0) {
       throw new Error('Could not fetch details for the articles found on PubMed.');
     }
@@ -702,12 +703,12 @@ export async function analyzeSingleArticle(
       if (match) pmid = match[1];
     } else if (identifier.includes('doi.org/')) {
       // Can't directly convert DOI to PMID reliably without another API, so we'll just search for the DOI
-      const ids = await searchPubMedForIds(identifier, 1, signal);
+      const ids = await searchPubMedForIds(identifier, 1, signal, aiSettings.ncbiApiKey);
       if (ids.length > 0) pmid = ids[0];
       else throw new Error('DOI not found in PubMed.');
     }
 
-    const articleDetails = await fetchArticleDetails([pmid], signal);
+    const articleDetails = await fetchArticleDetails([pmid], signal, aiSettings.ncbiApiKey);
     if (!articleDetails || articleDetails.length === 0) {
       throw new Error('Could not fetch article details from PubMed. Please check the identifier.');
     }

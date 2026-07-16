@@ -61,16 +61,18 @@ See `SECURITY.md` and `docs/adr/0003-security-model-client-side-keys.md`.
 | P0-7  | ADRs / SECURITY.md / re-audit docs    | **Closed** | `docs/adr/*`, `SECURITY.md`, this file                                 |
 | P0-8  | CI feedback / coverage artifact       | **Closed** | Split `quality` / `build` jobs; upload coverage                        |
 | P0-14 | English-only repo content policy      | **Closed** | `.cursor/rules/010-english-content.mdc`                                |
+| P0-15 | CodeRabbit pre-merge review gate      | **Closed** | `.cursor/rules/011-coderabbit-pr-gate.mdc` + `.coderabbit.yaml`        |
+| P0-16 | High+ audit / gitleaks CI failures    | **Closed** | `pnpm audit --fix=update` + workspace overrides; `.gitleaks.toml`      |
 
 ### P0 → P1 carry-over (stabilization next)
 
-| ID    | Item                                       | Status | Target                      |
-| ----- | ------------------------------------------ | ------ | --------------------------- |
-| P0-9  | Coverage ≥75% then ≥80% on logic layers    | Open   | Phase 0.1 / 1               |
-| P0-10 | Partial report save + resume from phase    | Open   | Phase 0.1                   |
-| P0-11 | Cost/quota estimator UI                    | Open   | Phase 1 (lib helpers exist) |
-| P0-12 | Optional NCBI API key in Settings          | Open   | Phase 1                     |
-| P0-13 | Nested ErrorBoundaries for Orchestrator/KB | Open   | Phase 1                     |
+| ID    | Item                                       | Status      | Target                                 |
+| ----- | ------------------------------------------ | ----------- | -------------------------------------- |
+| P0-9  | Coverage ≥75% then ≥80% on logic layers    | Open        | ~74% lines; gate 72% — push to 75/80   |
+| P0-10 | Partial report save + resume from phase    | **Partial** | Checkpoint save done; resume UI next   |
+| P0-11 | Cost/quota estimator UI                    | **Partial** | Pre-flight toast done; dashboard next  |
+| P0-12 | Optional NCBI API key in Settings          | **Closed**  | `ai.ncbiApiKey` + PubMed + Settings UI |
+| P0-13 | Nested ErrorBoundaries for Orchestrator/KB | Open        | Phase 1                                |
 
 ### P1 — High
 

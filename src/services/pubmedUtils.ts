@@ -14,6 +14,14 @@ import { AppError, isAbortError } from '../lib/errors';
 const PUBMED_BASE = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils';
 const PUBMED_CIRCUIT = 'pubmed';
 
+/** Append NCBI api_key when provided (higher rate limits). */
+export function withNcbiApiKey(url: string, apiKey?: string): string {
+  const key = apiKey?.trim();
+  if (!key) return url;
+  const sep = url.includes('?') ? '&' : '?';
+  return `${url}${sep}api_key=${encodeURIComponent(key)}`;
+}
+
 async function fetchWithRetry(
   url: string,
   init: RequestInit = {},
@@ -70,8 +78,12 @@ export async function searchPubMedForIds(
   query: string,
   retmax: number,
   signal?: AbortSignal,
+  apiKey?: string,
 ): Promise<string[]> {
-  const url = `${PUBMED_BASE}/esearch.fcgi?db=pubmed&term=${encodeURIComponent(query)}&retmax=${retmax}&sort=relevance&retmode=json`;
+  const url = withNcbiApiKey(
+    `${PUBMED_BASE}/esearch.fcgi?db=pubmed&term=${encodeURIComponent(query)}&retmax=${retmax}&sort=relevance&retmode=json`,
+    apiKey,
+  );
   try {
     const response = await pubmedFetch(url, { signal });
     if (response.status === 429) {
@@ -111,9 +123,10 @@ export async function searchPubMedForIds(
 export async function fetchArticleDetails(
   pmids: string[],
   signal?: AbortSignal,
+  apiKey?: string,
 ): Promise<Partial<RankedArticle>[]> {
   if (!pmids.length) return [];
-  const url = `${PUBMED_BASE}/esummary.fcgi?db=pubmed&retmode=json`;
+  const url = withNcbiApiKey(`${PUBMED_BASE}/esummary.fcgi?db=pubmed&retmode=json`, apiKey);
   const formData = new FormData();
   formData.append('id', pmids.join(','));
   const response = await pubmedFetch(url, { method: 'POST', body: formData, signal });

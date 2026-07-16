@@ -1,7 +1,9 @@
 import { describe, it, expect, vi } from 'vitest';
 import {
   estimateGeminiCostUsd,
+  estimateResearchRunCostUsd,
   estimateTokensFromText,
+  shouldWarnAboutResearchCost,
   withExponentialBackoff,
 } from './resilience';
 
@@ -73,5 +75,19 @@ describe('cost estimators', () => {
       tier: 'pro',
     });
     expect(pro).toBeCloseTo(1.25, 5);
+  });
+
+  it('estimates research run cost and warning threshold', () => {
+    const est = estimateResearchRunCostUsd({
+      topic: 'cancer',
+      maxArticlesToScan: 50,
+      topNToSynthesize: 5,
+      model: 'gemini-2.5-flash',
+    });
+    expect(est.tier).toBe('flash');
+    expect(est.estimatedInputTokens).toBeGreaterThan(1000);
+    expect(est.estimatedUsd).toBeGreaterThan(0);
+    expect(shouldWarnAboutResearchCost(0.01, 0.05)).toBe(false);
+    expect(shouldWarnAboutResearchCost(0.1, 0.05)).toBe(true);
   });
 });

@@ -67,6 +67,7 @@ const mockAi: Settings['ai'] = {
     authorSearchLimit: 10,
   },
   enableTldr: true,
+  ncbiApiKey: '',
 };
 
 const mockInput: ResearchInput = {

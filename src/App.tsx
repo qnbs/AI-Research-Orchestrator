@@ -25,6 +25,10 @@ import { Notification } from './components/Notification';
 import { ConfirmationModal } from './components/ConfirmationModal';
 import { useResearchAssistant } from './hooks/useResearchAssistant';
 import { generateResearchReportStream } from './services/geminiService';
+import { createResearchCheckpoint, isResumableCheckpoint } from './lib/researchCheckpoint';
+import { saveResearchCheckpoint } from './services/databaseService';
+import { isAbortError, isAppError, toAppError } from './lib/errors';
+import { estimateResearchRunCostUsd, shouldWarnAboutResearchCost } from './lib/resilience';
 import { KnowledgeBaseProvider, useKnowledgeBase } from './contexts/KnowledgeBaseContext';
 import { useUI } from './hooks/useUI';
 import type { View, BeforeInstallPromptEvent } from './types/ui';
@@ -277,6 +281,20 @@ const AppLayout: React.FC = () => {
       setCurrentView('orchestrator');
       setIsCurrentReportSaved(false);
 
+      const costEstimate = estimateResearchRunCostUsd({
+        topic: data.researchTopic,
+        maxArticlesToScan: data.maxArticlesToScan,
+        topNToSynthesize: data.topNToSynthesize,
+        model: settings.ai.model,
+      });
+      if (shouldWarnAboutResearchCost(costEstimate.estimatedUsd)) {
+        setNotification({
+          id: Date.now(),
+          type: 'success',
+          message: `Estimated Gemini usage ~$${costEstimate.estimatedUsd.toFixed(3)} (${costEstimate.tier}). This is an approximate pre-flight estimate.`,
+        });
+      }
+
       // ── Start live trace ──────────────────────────────────────────────────────
       const sessionId = `sess_${currentGenId}_${Date.now()}`;
       dispatch(startNewTrace({ sessionId, topic: data.researchTopic }));
@@ -287,11 +305,13 @@ const AppLayout: React.FC = () => {
       streamAbortRef.current = new AbortController();
       const streamSignal = streamAbortRef.current.signal;
 
+      let finalSynthesis = '';
+      let finalReport: ResearchReport | null = null;
+      let lastPhase = 'Initializing...';
+
       try {
         const stream = generateResearchReportStream(data, settings.ai, streamSignal);
-        let finalSynthesis = '';
         let isFirstChunk = true;
-        let finalReport: ResearchReport | null = null;
 
         for await (const { report: partialReport, synthesisChunk, phase } of stream) {
           // Check if this stream is still the active one
@@ -300,6 +320,7 @@ const AppLayout: React.FC = () => {
             return; // Generation aborted: new request started
           }
 
+          lastPhase = phase;
           setCurrentPhase(phase);
 
           // ── Trace: agent transition detection ────────────────────────────
@@ -355,24 +376,67 @@ const AppLayout: React.FC = () => {
           setIsCurrentReportSaved(true);
         }
       } catch (err) {
-        if (err instanceof DOMException && err.name === 'AbortError') {
+        const aborted = isAbortError(err);
+        if (aborted && generationIdRef.current !== currentGenId) {
+          return; // superseded by a newer run
+        }
+
+        const appErr = toAppError(err, lastPhase);
+        const checkpoint = createResearchCheckpoint({
+          input: data,
+          phase: lastPhase,
+          reason: aborted ? 'abort' : 'error',
+          report: finalReport
+            ? { ...finalReport, synthesis: finalSynthesis || finalReport.synthesis }
+            : null,
+          synthesisSoFar: finalSynthesis,
+          errorMessage: aborted ? undefined : appErr.toUserMessage(),
+        });
+
+        if (isResumableCheckpoint(checkpoint)) {
+          try {
+            await saveResearchCheckpoint(checkpoint);
+            if (finalReport) {
+              setReport({ ...finalReport, synthesis: finalSynthesis || finalReport.synthesis });
+            }
+            setNotification({
+              id: Date.now(),
+              type: aborted ? 'success' : 'error',
+              message: aborted
+                ? 'Partial research saved locally. You can review ranked articles already collected.'
+                : `Research failed — partial results saved locally. ${appErr.toUserMessage()}`,
+            });
+          } catch (saveErr) {
+            console.error('Failed to persist research checkpoint', saveErr);
+          }
+        }
+
+        if (aborted) {
+          if (generationIdRef.current === currentGenId) {
+            dispatch(completeTrace({ status: 'error' }));
+            setReportStatus(finalReport ? 'done' : 'idle');
+          }
           return;
         }
+
         if (generationIdRef.current === currentGenId) {
           if (prevAgent !== null) {
             dispatch(setAgentStatus({ agentName: prevAgent, status: 'error' }));
           }
           dispatch(completeTrace({ status: 'error' }));
-          setError(
-            err instanceof Error
-              ? err.message
-              : 'An unknown error occurred during report generation.',
-          );
+          setError(isAppError(err) ? err.toUserMessage() : appErr.toUserMessage());
           setReportStatus('error');
         }
       }
     },
-    [dispatch, settings.ai, settings.defaults.autoSaveReports, setCurrentView, saveReport],
+    [
+      dispatch,
+      settings.ai,
+      settings.defaults.autoSaveReports,
+      setCurrentView,
+      saveReport,
+      setNotification,
+    ],
   );
 
   const handleSaveReport = useCallback(async () => {

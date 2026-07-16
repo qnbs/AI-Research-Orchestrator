@@ -20,10 +20,10 @@ export default defineConfig({
         'src/lib/**/*.ts',
       ],
       exclude: ['node_modules/', 'src/test/', 'dist/', '**/*.{test,spec}.{ts,tsx}'],
-      /** Phase 0 (2026-07): raised after resilience libs + apiKey/KB/PubMed coverage surge. Target 80% next. */
+      /** Phase 0.1 (2026-07): ~74% after checkpoints/NCBI/settings tests. Target 75–80% next. */
       thresholds: {
-        lines: 70,
-        statements: 70,
+        lines: 72,
+        statements: 72,
         branches: 55,
         functions: 55,
       },

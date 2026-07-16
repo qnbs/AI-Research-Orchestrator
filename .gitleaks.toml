@@ -1,0 +1,12 @@
+# Gitleaks configuration — allow documented test fixtures only.
+title = "AI Research Orchestrator"
+
+[allowlist]
+description = "Test fixtures and docs that intentionally look like API keys"
+paths = [
+  '''src/.*\.test\.(ts|tsx)$''',
+  '''src/test/.*''',
+]
+regexes = [
+  '''AIza[0-9]{35}a''',
+]
