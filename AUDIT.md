@@ -158,8 +158,10 @@ Documented in **ADR 0001**. Summary: Redux for settings/UI/KB/collections/theme/
 - [x] KB delete sync
 - [x] Security workflows
 - [x] CI split + coverage artifact
-- [x] Coverage thresholds raised to 70%
+- [x] Coverage thresholds raised to 72%
+- [x] FeatureErrorBoundary on Orchestrator / Research / Knowledge Base
 - [ ] Partial-save / resume UX (deferred P0-10)
+- [ ] AgentDebugger / large-view splits from superseded PR #19 (backlog; AgentDebugger still ~569 LOC)
 - [ ] GitHub Release v0.2.0 (prepare after merge)
 
 ---

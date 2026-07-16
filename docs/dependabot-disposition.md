@@ -25,7 +25,10 @@ Also: vite/vitest security pins via workspace overrides; high+ audit clean (1 mo
 
 ## Related non-Dependabot PRs
 
-| PR  | Notes                                                                                         | Status |
-| --- | --------------------------------------------------------------------------------------------- | ------ |
-| #23 | Phase 0-only branch — fully included in #25                                                   | Closed |
-| #24 | CodeRabbit UTG tests — useful cases absorbed into #25; original PR failed audit on stale main | Closed |
+| PR  | Notes                                                                                                                                                          | Status |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| #23 | Phase 0-only branch — fully included in #25                                                                                                                    | Closed |
+| #24 | CodeRabbit UTG tests — useful cases absorbed into #25; original PR failed audit on stale main                                                                  | Closed |
+| #19 | v0.2.0 deep audit (June) — P0 core superseded by Phase 0 in #25; `FeatureErrorBoundary` absorbed; remaining UI splits (AgentDebugger etc.) deferred to backlog | Closed |
+| #18 | Cursor Cloud AGENTS notes — superseded by expanded English Cloud section in `AGENTS.md` on #25 (also largely on `main` via #22)                                | Closed |
+| #10 | Vitest 4 major — left open as tracking vehicle (see table above)                                                                                               | Open   |

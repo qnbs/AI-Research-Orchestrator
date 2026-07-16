@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cursor rule `012-dependabot-pr-gate.mdc`.
 - Resilience layer: typed `AppError` taxonomy (`src/lib/errors.ts`), per-service circuit breaker (`circuitBreaker.ts`), exponential backoff + Gemini cost heuristics (`resilience.ts`).
 - Research checkpoints (Dexie `researchCheckpoints`) for partial save on abort/error; pre-flight cost estimate toast in orchestrator.
-- Optional NCBI API key in Settings (`ai.ncbiApiKey`) passed to PubMed E-utilities.
+- Optional NCBI API key (encrypted vault via `apiKeyService`, Settings → AI Configuration) passed to PubMed E-utilities.
 - String-aware Gemini JSON parser (`src/lib/parseGeminiJson.ts`) with unit tests.
 - `SECURITY.md` with threat model, disclosure process, and key-handling guidance.
 - Architecture Decision Records: `docs/adr/0001`–`0004` (state, orchestration, security model, PWA offline).
@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `.coderabbit.yaml` (auto-review drafts) + Cursor rules `010-english-content`, `011-coderabbit-pr-gate`.
 - CI coverage artifact upload; quality vs build job split in `deploy.yml`.
 - Expanded unit tests (ErrorBoundary, checkpoints, settings hook, PubMed NCBI key, exports).
+- `FeatureErrorBoundary` on Orchestrator, Research Assistant, and Knowledge Base (absorbed from superseded PR #19).
 
 ### Changed
 

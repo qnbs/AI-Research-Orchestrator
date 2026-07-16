@@ -31,13 +31,15 @@ Workflow: `.github/workflows/deploy.yml` — bei **Push** und **Pull Request** a
 
 ## Cursor Cloud specific instructions
 
-- **Ein einziger Service:** Reine Client-PWA, kein Backend/DB/Docker. Nur der Vite-Dev-Server läuft lokal: `pnpm run dev` (Port `3000`, Host `0.0.0.0`). Standardbefehle siehe `README.md` / `package.json`.
-- **CDN-Abhängigkeit zur Laufzeit:** `index.html` nutzt eine Importmap, die React & Co. von `aistudiocdn.com` lädt. Der Browser braucht Egress zu dieser CDN, sonst rendert die App nicht (der Vite-Server selbst liefert nur den Bootstrap).
-- **Gemini-Key ist kein Env-Secret:** Der Key wird zur Laufzeit über die UI (Settings → AI Configuration) eingegeben und AES-GCM-verschlüsselt in IndexedDB abgelegt. Gültiges Format: 39 Zeichen, Präfix `AIza`.
-- **Alle KI-Features brauchen den Key:** Orchestrator-Recherche, Quick Add und der Rapid Research Assistant liefern ohne konfigurierten Key `NO_API_KEY`. Für eine echte End-to-End-KI-Recherche ist daher ein nutzereigener Gemini-Key nötig (nicht im Repo/Env hinterlegen).
-- **Coverage gate:** `pnpm run test:coverage` enforces logic-layer thresholds in `vitest.config.ts` (Phase 0: **70%** lines/statements). Use `pnpm run test:run` for fast loops.
+- **Single service:** Client-only PWA (no backend/DB/Docker). Vite dev server: `pnpm run dev` (port `3000`, host `0.0.0.0`). Preview: `pnpm run preview` (port `4173` after build). Keep long-running processes in **tmux**.
+- **Package manager:** pnpm 11 (`packageManager` in `package.json`) + Node ≥22 (`.nvmrc`). Prefer `corepack enable` then `pnpm install --frozen-lockfile`. If Corepack/npm TLS to `registry.npmjs.org` fails, a standalone `pnpm-linux-x64` under `~/.local/bin` (GitHub release asset) often still works.
+- **CDN at runtime:** `index.html` import-map loads React & Co. from `aistudiocdn.com` — browser needs egress; Vite only bootstraps.
+- **Gemini key is not an env secret:** Entered in Settings → AI Configuration, AES-GCM encrypted in IndexedDB. Format: 39 chars, prefix `AIza`. Optional NCBI key uses the same vault.
+- **All AI features need the key:** Orchestrator, Quick Add, Rapid Research Assistant return `NO_API_KEY` without it. Never commit real keys.
+- **Coverage gate:** `pnpm run test:coverage` enforces logic-layer thresholds in `vitest.config.ts` (**72%** lines/statements). Use `pnpm run test:run` for fast loops.
 - **Resilience:** External calls via `AppError` / circuit breaker (`src/lib/errors.ts`, `circuitBreaker.ts`) — see `.cursor/rules/102-resilience-external-calls.mdc`.
 - **English content:** New docs, comments, commits, and default strings must be English (`.cursor/rules/010-english-content.mdc`). Product UI i18n DE values stay in `translations.ts`.
-- **CodeRabbit gate:** Resolve all CodeRabbit PR comments (including nitpicks and out-of-diff) before merging to `main` (`.cursor/rules/011-coderabbit-pr-gate.mdc`). Use `@coderabbitai review` on drafts if auto-skip.
+- **Automated review gate:** Resolve **all** PR review bot comments (CodeRabbit, CodeAntai, etc.), including nitpicks and out-of-diff, looping until clear (`.cursor/rules/011-coderabbit-pr-gate.mdc`).
+- **Dependabot gate:** Process every open Dependabot PR (`.cursor/rules/012-dependabot-pr-gate.mdc`); disposition in `docs/dependabot-disposition.md`.
 - **E2E:** Once: `pnpm exec playwright install chromium`, then `pnpm run test:e2e` (Playwright starts Vite and uses a fake key).
 - **ADRs / Security:** `docs/adr/`, `SECURITY.md`, living backlog in `AUDIT.md`.
