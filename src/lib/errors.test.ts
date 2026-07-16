@@ -25,6 +25,46 @@ describe('AppError', () => {
       /circuit breaker/i,
     );
   });
+
+  it('maps remaining codes to distinct, non-empty user messages', () => {
+    expect(new AppError({ code: 'GEMINI_QUOTA', message: 'x' }).toUserMessage()).toMatch(/quota/i);
+    expect(new AppError({ code: 'GEMINI_RATE_LIMIT', message: 'x' }).toUserMessage()).toMatch(
+      /rate limit/i,
+    );
+    expect(new AppError({ code: 'GEMINI_PARSE_FAILURE', message: 'x' }).toUserMessage()).toMatch(
+      /AI response/i,
+    );
+    expect(new AppError({ code: 'NCBI_RATE_LIMIT', message: 'x' }).toUserMessage()).toMatch(
+      /PubMed\/NCBI rate limit/i,
+    );
+    expect(new AppError({ code: 'NCBI_NETWORK', message: 'x' }).toUserMessage()).toMatch(
+      /PubMed is temporarily unavailable/i,
+    );
+    expect(new AppError({ code: 'ARXIV_NETWORK', message: 'x' }).toUserMessage()).toMatch(
+      /arXiv is temporarily unavailable/i,
+    );
+    expect(new AppError({ code: 'STORAGE', message: 'x' }).toUserMessage()).toMatch(
+      /local storage/i,
+    );
+    expect(new AppError({ code: 'UNKNOWN', message: 'x' }).toUserMessage()).toMatch(
+      /unexpected error/i,
+    );
+  });
+
+  it('VALIDATION user message echoes the original message', () => {
+    expect(new AppError({ code: 'VALIDATION', message: 'Title is required' }).toUserMessage()).toBe(
+      'Title is required',
+    );
+  });
+
+  it('defaults retryable to false and exposes cause/context', () => {
+    const cause = new Error('root cause');
+    const err = new AppError({ code: 'STORAGE', message: 'db write failed', cause, context: 'kb' });
+    expect(err.retryable).toBe(false);
+    expect(err.cause).toBe(cause);
+    expect(err.context).toBe('kb');
+    expect(err.name).toBe('AppError');
+  });
 });
 
 describe('isAbortError / toAppError', () => {
@@ -62,5 +102,29 @@ describe('isAbortError / toAppError', () => {
     const app = toAppError('boom');
     expect(app.code).toBe('UNKNOWN');
     expect(app.message).toBe('boom');
+  });
+
+  it('detects plain Error with AbortError name (non-DOMException)', () => {
+    const abort = new Error('Aborted');
+    abort.name = 'AbortError';
+    expect(isAbortError(abort)).toBe(true);
+    expect(toAppError(abort).code).toBe('STREAM_ABORTED');
+  });
+
+  it('isAbortError returns false for non-abort inputs', () => {
+    expect(isAbortError(null)).toBe(false);
+    expect(isAbortError(undefined)).toBe(false);
+    expect(isAbortError('AbortError')).toBe(false);
+    expect(isAbortError(new Error('plain'))).toBe(false);
+  });
+
+  it('maps NCBI rate limit when message mentions pubmed', () => {
+    expect(toAppError(new Error('pubmed 429 rate limit exceeded')).code).toBe('NCBI_RATE_LIMIT');
+  });
+
+  it('routes rate limit to NCBI via context when message is generic', () => {
+    const app = toAppError(new Error('429 too many requests'), 'pubmed');
+    expect(app.code).toBe('NCBI_RATE_LIMIT');
+    expect(app.status).toBe(429);
   });
 });

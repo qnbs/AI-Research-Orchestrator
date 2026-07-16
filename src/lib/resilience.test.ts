@@ -57,6 +57,40 @@ describe('withExponentialBackoff', () => {
       withExponentialBackoff(async () => 1, { signal: ctrl.signal, sleep: async () => {} }),
     ).rejects.toMatchObject({ name: 'AbortError' });
   });
+
+  it('throws the last error once retries are exhausted', async () => {
+    const fn = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('first'))
+      .mockRejectedValueOnce(new Error('second'))
+      .mockRejectedValueOnce(new Error('third'));
+    await expect(
+      withExponentialBackoff(fn, { retries: 2, baseMs: 5, sleep: async () => {} }),
+    ).rejects.toThrow('third');
+    expect(fn).toHaveBeenCalledTimes(3);
+  });
+
+  it('passes the current attempt number to fn and shouldRetry', async () => {
+    const attempts: number[] = [];
+    const shouldRetryAttempts: number[] = [];
+    const fn = vi.fn(async (attempt: number) => {
+      attempts.push(attempt);
+      if (attempt < 2) throw new Error('retry-me');
+      return 'success';
+    });
+    await expect(
+      withExponentialBackoff(fn, {
+        retries: 3,
+        sleep: async () => {},
+        shouldRetry: (_err, attempt) => {
+          shouldRetryAttempts.push(attempt);
+          return true;
+        },
+      }),
+    ).resolves.toBe('success');
+    expect(attempts).toEqual([0, 1, 2]);
+    expect(shouldRetryAttempts).toEqual([0, 1]);
+  });
 });
 
 describe('cost estimators', () => {
@@ -75,6 +109,27 @@ describe('cost estimators', () => {
       tier: 'pro',
     });
     expect(pro).toBeCloseTo(1.25, 5);
+  });
+
+  it('defaults to the flash tier when tier is omitted', () => {
+    const flashDefault = estimateGeminiCostUsd({ inputTokens: 1_000_000, outputTokens: 0 });
+    const flashExplicit = estimateGeminiCostUsd({
+      inputTokens: 1_000_000,
+      outputTokens: 0,
+      tier: 'flash',
+    });
+    expect(flashDefault).toBeCloseTo(flashExplicit, 10);
+    expect(flashDefault).toBeCloseTo(0.15, 5);
+  });
+
+  it('returns 0 cost for zero tokens', () => {
+    expect(estimateGeminiCostUsd({ inputTokens: 0, outputTokens: 0 })).toBe(0);
+  });
+
+  it('rounds token estimate up to the nearest whole token', () => {
+    expect(estimateTokensFromText('a')).toBe(1);
+    expect(estimateTokensFromText('abcde')).toBe(2);
+    expect(estimateTokensFromText('abcdefgh')).toBe(2);
   });
 
   it('estimates research run cost and warning threshold', () => {
