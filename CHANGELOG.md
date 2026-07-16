@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Soft checkpoint **resume UX** (`CheckpointResumeBanner`): restore partial report, re-run from start, or discard (P0-10).
+- Settings **cost estimator** card (`CostEstimateCard`) with i18n pre-flight toast copy (P0-11).
+- Agent Debugger modular split under `src/components/agentDebugger/`.
+- Optional bundle visualizer: `pnpm run analyze` (`ANALYZE=1`, `rollup-plugin-visualizer` → `dist/stats.html`).
+- Playwright a11y: `@axe-core/playwright` critical/serious check on `#root` in smoke tests (P1-5).
 - Dependabot consolidation: GitHub Actions bumps (checkout@7, setup-node@6, configure-pages@6, upload-pages-artifact@5, deploy-pages@5) across deploy + security workflows; npm bumps from open Dependabot PRs (see `docs/dependabot-disposition.md`).
 - Cursor rule `012-dependabot-pr-gate.mdc`.
 - Resilience layer: typed `AppError` taxonomy (`src/lib/errors.ts`), per-service circuit breaker (`circuitBreaker.ts`), exponential backoff + Gemini cost heuristics (`resilience.ts`).
@@ -20,12 +25,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions `security.yml`: CodeQL, Dependency Review (PRs), scheduled pnpm audit, gitleaks (`.gitleaks.toml`).
 - `.coderabbit.yaml` (auto-review drafts) + Cursor rules `010-english-content`, `011-coderabbit-pr-gate`.
 - CI coverage artifact upload; quality vs build job split in `deploy.yml`.
-- Expanded unit tests (ErrorBoundary, checkpoints, settings hook, PubMed NCBI key, exports).
+- Expanded unit tests (ErrorBoundary, checkpoints, settings hook, PubMed NCBI key, exports, geminiApiSlice streaming).
 - `FeatureErrorBoundary` on Orchestrator, Research Assistant, and Knowledge Base (absorbed from superseded PR #19).
 
 ### Changed
 
-- Vitest coverage thresholds raised to **72%** lines/statements (measured ~74%) and **55%** branches/functions.
+- Vitest coverage thresholds raised to **75%** lines/statements (measured ~78%) and **55%** branches/functions.
 - Dependency hardening via `pnpm audit --fix=update` + workspace overrides (`vite`, `undici`, `ws`, `protobufjs`); `pnpm.overrides` moved to `pnpm-workspace.yaml` (pnpm 11).
 - `parseGeminiResponseJson` in `geminiService` delegates to the new parser and maps failures to `AppError`.
 - Abort in orchestrator throws `AppError` (`STREAM_ABORTED`); missing API key throws `AppError` (`NO_API_KEY`).

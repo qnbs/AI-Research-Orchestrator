@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
 
 /**
  * Smoke tests — verify the app loads correctly.
@@ -20,9 +21,18 @@ test.describe('App smoke tests', () => {
     expect(errors).toHaveLength(0);
   });
 
-  test('has no detectable accessibility violations on root', async ({ page }) => {
+  test('has no critical accessibility violations on root', async ({ page }) => {
     await page.goto('/');
-    // Check that the root element is mounted
     await expect(page.locator('#root')).toBeVisible();
+
+    const results = await new AxeBuilder({ page })
+      .include('#root')
+      .withTags(['wcag2a', 'wcag2aa'])
+      .analyze();
+
+    const critical = results.violations.filter(
+      (v) => v.impact === 'critical' || v.impact === 'serious',
+    );
+    expect(critical, critical.map((v) => `${v.id}: ${v.help}`).join('\n')).toEqual([]);
   });
 });

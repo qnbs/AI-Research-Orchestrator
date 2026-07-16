@@ -27,6 +27,8 @@ import { useResearchAssistant } from './hooks/useResearchAssistant';
 import { generateResearchReportStream } from './services/geminiService';
 import { handleResearchStreamFailure } from './lib/researchStreamFailure';
 import { estimateResearchRunCostUsd, shouldWarnAboutResearchCost } from './lib/resilience';
+import { reportFromCheckpoint, type ResearchCheckpoint } from './lib/researchCheckpoint';
+import { deleteResearchCheckpoint, getLatestResearchCheckpoints } from './services/databaseService';
 import { KnowledgeBaseProvider, useKnowledgeBase } from './contexts/KnowledgeBaseContext';
 import { useUI } from './hooks/useUI';
 import type { View, BeforeInstallPromptEvent } from './types/ui';
@@ -125,6 +127,8 @@ const AppLayout: React.FC = () => {
     null,
   );
   const [isQuickAddModalOpen, setIsQuickAddModalOpen] = useState(false);
+  const [resumeCheckpoints, setResumeCheckpoints] = useState<ResearchCheckpoint[]>([]);
+  const [checkpointRefreshToken, setCheckpointRefreshToken] = useState(0);
 
   // Chat Hook
   const { chatHistory, isChatting, sendMessage } = useChat(report, reportStatus, settings.ai);
@@ -266,6 +270,71 @@ const AppLayout: React.FC = () => {
     }
   }, [currentView, selectedKbPmids.length]);
 
+  useEffect(() => {
+    if (
+      currentView !== 'orchestrator' ||
+      reportStatus === 'generating' ||
+      reportStatus === 'streaming'
+    ) {
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        const latest = await getLatestResearchCheckpoints(10);
+        if (!cancelled) setResumeCheckpoints(latest);
+      } catch (err) {
+        console.error('Failed to load research checkpoints', err);
+        if (!cancelled) setResumeCheckpoints([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [currentView, reportStatus, checkpointRefreshToken]);
+
+  const refreshCheckpoints = useCallback(() => {
+    setCheckpointRefreshToken((n) => n + 1);
+  }, []);
+
+  const handleDiscardCheckpoint = useCallback(
+    async (id: string) => {
+      await deleteResearchCheckpoint(id);
+      setResumeCheckpoints((prev) => prev.filter((c) => c.id !== id));
+      setNotification({
+        id: Date.now(),
+        type: 'success',
+        message: t('checkpoint.discarded'),
+      });
+    },
+    [setNotification, t],
+  );
+
+  const handleRestoreCheckpoint = useCallback(
+    async (ckpt: ResearchCheckpoint) => {
+      const restored = reportFromCheckpoint(ckpt);
+      if (!restored) return;
+      generationIdRef.current += 1;
+      streamAbortRef.current?.abort();
+      setResearchInput(ckpt.input);
+      setLocalResearchInput(ckpt.input);
+      setReport(restored);
+      setReportStatus('done');
+      setError(ckpt.errorMessage ?? null);
+      setCurrentPhase(ckpt.phase);
+      setIsCurrentReportSaved(false);
+      setCurrentView('orchestrator');
+      await deleteResearchCheckpoint(ckpt.id);
+      setResumeCheckpoints((prev) => prev.filter((c) => c.id !== ckpt.id));
+      setNotification({
+        id: Date.now(),
+        type: 'success',
+        message: t('checkpoint.restored'),
+      });
+    },
+    [setCurrentView, setNotification, t],
+  );
+
   const handleFormSubmit = useCallback(
     async (data: ResearchInput) => {
       // Increment generation ID to invalidate any previous streams
@@ -287,10 +356,13 @@ const AppLayout: React.FC = () => {
         model: settings.ai.model,
       });
       if (shouldWarnAboutResearchCost(costEstimate.estimatedUsd)) {
+        const msg = t('orchestrator.cost_preflight')
+          .replace('${usd}', costEstimate.estimatedUsd.toFixed(3))
+          .replace('${tier}', costEstimate.tier);
         setNotification({
           id: Date.now(),
           type: 'success',
-          message: `Estimated Gemini usage ~$${costEstimate.estimatedUsd.toFixed(3)} (${costEstimate.tier}). This is an approximate pre-flight estimate.`,
+          message: msg,
         });
       }
 
@@ -390,6 +462,7 @@ const AppLayout: React.FC = () => {
           setError,
           setNotification,
         });
+        refreshCheckpoints();
       }
     },
     [
@@ -399,7 +472,19 @@ const AppLayout: React.FC = () => {
       setCurrentView,
       saveReport,
       setNotification,
+      t,
+      refreshCheckpoints,
     ],
+  );
+
+  // Soft re-run: discard checkpoint then start a fresh full pipeline with the same input.
+  const handleRerunCheckpoint = useCallback(
+    async (ckpt: ResearchCheckpoint) => {
+      await deleteResearchCheckpoint(ckpt.id);
+      setResumeCheckpoints((prev) => prev.filter((c) => c.id !== ckpt.id));
+      await handleFormSubmit(ckpt.input);
+    },
+    [handleFormSubmit],
   );
 
   const handleSaveReport = useCallback(async () => {
@@ -613,6 +698,10 @@ const AppLayout: React.FC = () => {
               chatHistory={chatHistory}
               isChatting={isChatting}
               onSendMessage={sendMessage}
+              resumeCheckpoints={resumeCheckpoints}
+              onRestoreCheckpoint={handleRestoreCheckpoint}
+              onRerunCheckpoint={handleRerunCheckpoint}
+              onDiscardCheckpoint={handleDiscardCheckpoint}
             />
           </FeatureErrorBoundary>
         );

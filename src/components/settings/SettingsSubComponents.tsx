@@ -1,6 +1,7 @@
 import React from 'react';
 import { useSettingsView } from './SettingsViewContext';
 import { ApiKeySettings } from './ApiKeySettings';
+import { CostEstimateCard } from './CostEstimateCard';
 import { SettingCard } from '../SettingCard';
 import { Toggle } from '../Toggle';
 import { Tooltip } from '../Tooltip';
@@ -375,6 +376,7 @@ export const AISettingsTab: React.FC = () => {
   return (
     <div className="space-y-8">
       <ApiKeySettings />
+      <CostEstimateCard />
       <SettingCard
         icon={<SparklesIcon className="w-6 h-6 text-accent-magenta" />}
         title="AI Configuration"

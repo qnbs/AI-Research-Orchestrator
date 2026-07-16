@@ -20,10 +20,10 @@ export default defineConfig({
         'src/lib/**/*.ts',
       ],
       exclude: ['node_modules/', 'src/test/', 'dist/', '**/*.{test,spec}.{ts,tsx}'],
-      /** Phase 0.1 (2026-07): ~74% after checkpoints/NCBI/settings tests. Target 75–80% next. */
+      /** Phase 1 (2026-07): measured ~78% lines/statements after geminiApiSlice + checkpoint depth. */
       thresholds: {
-        lines: 72,
-        statements: 72,
+        lines: 75,
+        statements: 75,
         branches: 55,
         functions: 55,
       },
