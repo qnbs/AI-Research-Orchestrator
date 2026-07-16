@@ -65,6 +65,7 @@ function repairTrailingCommas(json: string): string {
 }
 
 type JsonContainer = 'object' | 'array';
+type ParseResult<T> = { ok: true; value: T } | { ok: false };
 
 function* findBalancedJsonSegments(
   text: string,
@@ -126,28 +127,28 @@ function pickContainerType(text: string): JsonContainer | null {
   return firstBrace < firstBracket ? 'object' : 'array';
 }
 
-function tryParse<T>(candidate: string): T | null {
+function tryParse<T>(candidate: string): ParseResult<T> {
   const attempts = [candidate, repairTrailingCommas(candidate)];
   for (const json of attempts) {
     try {
-      return JSON.parse(json) as T;
+      return { ok: true, value: JSON.parse(json) as T };
     } catch {
       // try next repair
     }
   }
-  return null;
+  return { ok: false };
 }
 
 function tryParseBalancedSegments<T>(
   text: string,
   openChar: '{' | '[',
   closeChar: '}' | ']',
-): T | null {
+): ParseResult<T> {
   for (const segment of findBalancedJsonSegments(text, openChar, closeChar)) {
     const parsed = tryParse<T>(segment);
-    if (parsed !== null) return parsed;
+    if (parsed.ok) return parsed;
   }
-  return null;
+  return { ok: false };
 }
 
 /**
@@ -161,15 +162,15 @@ export function parseGeminiResponseJson<T>(text: string): T {
   const cleanText = unwrapMarkdownFences(stripBom(text));
 
   const direct = tryParse<T>(cleanText);
-  if (direct !== null) return direct;
+  if (direct.ok) return direct.value;
 
   const container = pickContainerType(cleanText);
   if (container === 'object') {
     const parsed = tryParseBalancedSegments<T>(cleanText, '{', '}');
-    if (parsed !== null) return parsed;
+    if (parsed.ok) return parsed.value;
   } else if (container === 'array') {
     const parsed = tryParseBalancedSegments<T>(cleanText, '[', ']');
-    if (parsed !== null) return parsed;
+    if (parsed.ok) return parsed.value;
   }
 
   // Fallback: slice from first container char to last closing char
@@ -188,7 +189,7 @@ export function parseGeminiResponseJson<T>(text: string): T {
     if (lastClose > startIdx) {
       const sliced = cleanText.substring(startIdx, lastClose + 1);
       const parsed = tryParse<T>(sliced);
-      if (parsed !== null) return parsed;
+      if (parsed.ok) return parsed.value;
     }
   }
 

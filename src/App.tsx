@@ -25,9 +25,7 @@ import { Notification } from './components/Notification';
 import { ConfirmationModal } from './components/ConfirmationModal';
 import { useResearchAssistant } from './hooks/useResearchAssistant';
 import { generateResearchReportStream } from './services/geminiService';
-import { createResearchCheckpoint, isResumableCheckpoint } from './lib/researchCheckpoint';
-import { saveResearchCheckpoint } from './services/databaseService';
-import { isAbortError, isAppError, toAppError } from './lib/errors';
+import { handleResearchStreamFailure } from './lib/researchStreamFailure';
 import { estimateResearchRunCostUsd, shouldWarnAboutResearchCost } from './lib/resilience';
 import { KnowledgeBaseProvider, useKnowledgeBase } from './contexts/KnowledgeBaseContext';
 import { useUI } from './hooks/useUI';
@@ -376,64 +374,21 @@ const AppLayout: React.FC = () => {
           setIsCurrentReportSaved(true);
         }
       } catch (err) {
-        if (generationIdRef.current !== currentGenId) {
-          return; // superseded by a newer run
-        }
-
-        const aborted = isAbortError(err);
-
-        const appErr = toAppError(err, lastPhase);
-        const checkpoint = createResearchCheckpoint({
+        await handleResearchStreamFailure({
+          error: err,
+          currentGenerationId: currentGenId,
+          getActiveGenerationId: () => generationIdRef.current,
           input: data,
           phase: lastPhase,
-          reason: aborted ? 'abort' : 'error',
-          report: finalReport
-            ? { ...finalReport, synthesis: finalSynthesis || finalReport.synthesis }
-            : null,
-          synthesisSoFar: finalSynthesis,
-          errorMessage: aborted ? undefined : appErr.toUserMessage(),
+          finalReport,
+          finalSynthesis,
+          previousAgent: prevAgent,
+          dispatch,
+          setReport,
+          setReportStatus,
+          setError,
+          setNotification,
         });
-
-        if (isResumableCheckpoint(checkpoint)) {
-          try {
-            await saveResearchCheckpoint(checkpoint);
-            if (finalReport) {
-              setReport({ ...finalReport, synthesis: finalSynthesis || finalReport.synthesis });
-            }
-            setNotification({
-              id: Date.now(),
-              type: aborted ? 'success' : 'error',
-              message: aborted
-                ? 'Partial research saved locally. You can review ranked articles already collected.'
-                : `Research failed — partial results saved locally. ${appErr.toUserMessage()}`,
-            });
-          } catch (saveErr) {
-            console.error('Failed to persist research checkpoint', saveErr);
-            setNotification({
-              id: Date.now(),
-              type: 'error',
-              message:
-                'Research stopped, but partial results could not be saved locally. Please export or copy any visible results before leaving this page.',
-            });
-          }
-        }
-
-        if (aborted) {
-          if (generationIdRef.current === currentGenId) {
-            dispatch(completeTrace({ status: 'error' }));
-            setReportStatus(finalReport ? 'done' : 'idle');
-          }
-          return;
-        }
-
-        if (generationIdRef.current === currentGenId) {
-          if (prevAgent !== null) {
-            dispatch(setAgentStatus({ agentName: prevAgent, status: 'error' }));
-          }
-          dispatch(completeTrace({ status: 'error' }));
-          setError(isAppError(err) ? err.toUserMessage() : appErr.toUserMessage());
-          setReportStatus('error');
-        }
       }
     },
     [

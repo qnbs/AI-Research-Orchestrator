@@ -72,6 +72,10 @@ export class CircuitBreaker {
   }
 
   recordFailure(): void {
+    this.maybeTransitionToHalfOpen();
+    if (this.state === 'open') {
+      return;
+    }
     if (this.state === 'half-open') {
       this.trip();
       return;

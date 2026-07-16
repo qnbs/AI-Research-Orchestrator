@@ -27,13 +27,15 @@ db.version(3)
   .upgrade(() => Promise.resolve());
 
 // Version 4: research checkpoints for partial-save / resume after abort or error
-db.version(4).stores({
-  knowledgeBaseEntries: 'id, timestamp, sourceType, title',
-  settings: 'id',
-  presets: 'id',
-  collections: 'id, name, createdAt, updatedAt',
-  researchCheckpoints: 'id, createdAt, topic, reason',
-});
+db.version(4)
+  .stores({
+    knowledgeBaseEntries: 'id, timestamp, sourceType, title',
+    settings: 'id',
+    presets: 'id',
+    collections: 'id, name, createdAt, updatedAt',
+    researchCheckpoints: 'id, createdAt, topic, reason',
+  })
+  .upgrade(() => Promise.resolve());
 
 // --- KnowledgeBaseEntry Operations ---
 export const getAllEntries = () => db.knowledgeBaseEntries.orderBy('timestamp').reverse().toArray();

@@ -57,6 +57,22 @@ describe('CircuitBreaker', () => {
     expect(breaker.getState()).toBe('open');
   });
 
+  it('ignores failures while open without refreshing cooldown', () => {
+    let t = 0;
+    const breaker = new CircuitBreaker('open-cooldown', {
+      failureThreshold: 1,
+      cooldownMs: 100,
+      now: () => t,
+    });
+
+    breaker.recordFailure();
+    expect(breaker.getState()).toBe('open');
+    t = 50;
+    breaker.recordFailure();
+    t = 100;
+    expect(breaker.getState()).toBe('half-open');
+  });
+
   it('withCircuitBreaker records success and failure', async () => {
     const ok = await withCircuitBreaker('test-ok', async () => 42, { failureThreshold: 1 });
     expect(ok).toBe(42);

@@ -20,6 +20,10 @@ describe('parseGeminiResponseJson', () => {
     expect(parseGeminiResponseJson<number[]>('[1,2,3]')).toEqual([1, 2, 3]);
   });
 
+  it('parses top-level JSON null', () => {
+    expect(parseGeminiResponseJson<null>('null')).toBeNull();
+  });
+
   it('handles braces inside JSON strings', () => {
     const text = '{"msg": "use {curly} carefully", "ok": true}';
     expect(parseGeminiResponseJson<{ ok: boolean }>(text).ok).toBe(true);

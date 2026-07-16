@@ -1,5 +1,5 @@
 import React from 'react';
-import { describe, it, expect, vi } from 'vitest';
+import { afterEach, describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import ErrorBoundary from './ErrorBoundary';
 
@@ -8,7 +8,29 @@ function ControllableBoom({ shouldThrow }: { shouldThrow: boolean }): React.Reac
   return <div>recovered</div>;
 }
 
+const originalLocationDescriptor = Object.getOwnPropertyDescriptor(window, 'location');
+const originalClipboardDescriptor = Object.getOwnPropertyDescriptor(navigator, 'clipboard');
+
+function restoreProperty<T extends object, K extends PropertyKey>(
+  target: T,
+  property: K,
+  descriptor: PropertyDescriptor | undefined,
+): void {
+  if (descriptor) {
+    Object.defineProperty(target, property, descriptor);
+    return;
+  }
+  Reflect.deleteProperty(target, property);
+}
+
 describe('ErrorBoundary', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    restoreProperty(window, 'location', originalLocationDescriptor);
+    restoreProperty(navigator, 'clipboard', originalClipboardDescriptor);
+    window.history.replaceState(null, '', '/');
+  });
+
   it('renders fallback UI on child error', () => {
     const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
     render(
@@ -21,7 +43,7 @@ describe('ErrorBoundary', () => {
     expect(screen.getByText(/IndexedDB is preserved/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Try Again/i })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /Try Again/i }));
-    // Child still throws → fallback remains
+    // Child still throws, so the fallback remains.
     expect(screen.getByText(/Unexpected Application Error/i)).toBeInTheDocument();
     spy.mockRestore();
   });
@@ -112,6 +134,7 @@ describe('ErrorBoundary', () => {
 
     expect(writeText).toHaveBeenCalledTimes(1);
     expect(writeText.mock.calls[0][0]).toContain('test-boom');
+    expect(writeText.mock.calls[0][0]).toContain('Component Stack');
     spy.mockRestore();
   });
 
