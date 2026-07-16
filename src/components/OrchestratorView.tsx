@@ -4,7 +4,9 @@ import { ReportDisplay } from './ReportDisplay';
 import { LoadingIndicator } from './LoadingIndicator';
 import { OrchestratorDashboard } from './OrchestratorDashboard';
 import { Welcome } from './Welcome';
+import { CheckpointResumeBanner } from './CheckpointResumeBanner';
 import { ResearchInput, ResearchReport, KnowledgeBaseEntry, Settings, ChatMessage } from '../types';
+import type { ResearchCheckpoint } from '../lib/researchCheckpoint';
 import { useKnowledgeBase } from '../contexts/KnowledgeBaseContext';
 import { useTranslation } from '../hooks/useTranslation';
 
@@ -28,6 +30,10 @@ interface OrchestratorViewProps {
   chatHistory: ChatMessage[];
   isChatting: boolean;
   onSendMessage: (message: string) => void;
+  resumeCheckpoints: ResearchCheckpoint[];
+  onRestoreCheckpoint: (checkpoint: ResearchCheckpoint) => void;
+  onRerunCheckpoint: (checkpoint: ResearchCheckpoint) => void;
+  onDiscardCheckpoint: (id: string) => void;
 }
 
 const phaseDetails: Record<string, string[]> = {
@@ -83,6 +89,10 @@ const OrchestratorViewComponent: React.FC<OrchestratorViewProps> = ({
   chatHistory,
   isChatting,
   onSendMessage,
+  resumeCheckpoints,
+  onRestoreCheckpoint,
+  onRerunCheckpoint,
+  onDiscardCheckpoint,
 }) => {
   const { knowledgeBase } = useKnowledgeBase();
   const { t } = useTranslation();
@@ -97,17 +107,10 @@ const OrchestratorViewComponent: React.FC<OrchestratorViewProps> = ({
     t('orchestrator.phase7'),
   ];
 
-  // Map generic phase strings to translated ones for display if needed,
-  // or simply pass the current phase string if it matches the translation key logic
-  // For simplicity in this update, we rely on the service sending the English key
-  // and we map it here, or we update the service.
-  // Ideally, the service should emit status codes, not strings.
-  // As a quick fix, we will display the passed string, but ensure the LoadingIndicator
-  // receives the translated list for the progress bar.
-
   const isProcessing = reportStatus === 'generating' || reportStatus === 'streaming';
   const showLoadingIndicator = reportStatus === 'generating';
   const showReport = (reportStatus === 'streaming' || reportStatus === 'done') && report;
+  const showResumeBanner = !isProcessing && resumeCheckpoints.length > 0;
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
@@ -119,12 +122,21 @@ const OrchestratorViewComponent: React.FC<OrchestratorViewProps> = ({
         onPrefillConsumed={onPrefillConsumed}
       />
 
+      {showResumeBanner && (
+        <CheckpointResumeBanner
+          checkpoints={resumeCheckpoints}
+          onRestore={onRestoreCheckpoint}
+          onRerun={onRerunCheckpoint}
+          onDiscard={onDiscardCheckpoint}
+        />
+      )}
+
       {showLoadingIndicator && (
         <LoadingIndicator
           title={t('orchestrator.title')}
           phase={currentPhase}
           phases={loadingPhases}
-          phaseDetails={phaseDetails} // Details remain in English for now unless mapped
+          phaseDetails={phaseDetails}
           footerText="This may take up to a minute. The AI is performing multiple complex steps, including live database searches and synthesis."
         />
       )}

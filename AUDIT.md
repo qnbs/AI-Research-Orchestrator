@@ -1,34 +1,32 @@
 # Codebase Audit Report
 
-> **Date**: 2026-07-16 (Phase 0 full-scale re-audit)
-> **Previous**: 2026-05-04 hygiene refresh
-> **Overall Rating**: A- (9.0/10) — foundations excellent; Phase 0 closes critical gates
-> **Auditor**: Cursor Agent (July 2026 Master Prompt / Phase 0)
+> **Date**: 2026-07-16 (Phase 1 stabilization pass)
+> **Previous**: 2026-07-16 Phase 0 full-scale re-audit
+> **Overall Rating**: A (9.2/10) — Phase 0 gates closed; Phase 1 resume/cost/a11y foundations landed
+> **Auditor**: Cursor Agent (July 2026 Master Prompt / Phase 1)
 
 ---
 
 ## Executive Summary
 
-The AI Research Orchestrator remains a high-quality local-first scientific research PWA. The May 2026 hygiene sprint (AbortSignal, CSP, ESLint/Prettier, pnpm 11, coverage gates, CI concurrency) left a strong base. This July 2026 Phase 0 re-audit found **coverage just under the 65% gate (~64.4%)**, incomplete resilience taxonomy, missing security automation (CodeQL / Dependency Review / secret scan), undocumented state SoT, and a **KB delete Redux sync gap**.
-
-Phase 0 delivers: typed `AppError` + circuit breaker + backoff helpers, string-aware Gemini JSON parser, PubMed resilience wiring, KB `removeMany` fix, ADRs, `SECURITY.md`, security workflow, CI job split + coverage artifacts, and raised coverage thresholds (70% lines/statements).
+The AI Research Orchestrator remains a high-quality local-first scientific research PWA. Phase 0 delivered resilience taxonomy, security automation, coverage gates, and ADRs. **Phase 1** closes the remaining P0 carry-overs: soft **checkpoint resume UX**, **cost estimator dashboard** in Settings, documents nested **FeatureErrorBoundary** coverage, splits **AgentDebugger**, adds **axe** smoke automation and optional **bundle visualizer** (`pnpm run analyze`).
 
 ---
 
-## Scorecard (2026-07-16)
+## Scorecard (2026-07-16 Phase 1)
 
-| Dimension     | Rating | Notes                                                                                         |
-| ------------- | ------ | --------------------------------------------------------------------------------------------- |
-| Architecture  | 5/5    | Clear services / Redux / Dexie layering; ADRs document SoT & orchestration                    |
-| TypeScript    | 5/5    | Strict mode; typed error taxonomy                                                             |
-| Security      | 4.5/5  | AES-GCM keys, CSP, SECURITY.md, CodeQL + Dependency Review + gitleaks; residual XSS threat    |
-| Resilience    | 4/5    | Circuit breaker, AppError, abort-aware PubMed retries; partial-save / cost UI still P1        |
-| Tests         | 4/5    | Logic-layer gate **70%** lines/statements; gaps remain in exportService / geminiApiSlice / UI |
-| CI/CD         | 5/5    | Split quality/build jobs; security.yml scheduled; Pages deploy only on main                   |
-| Documentation | 5/5    | AUDIT, CHANGELOG, ADRs, SECURITY, AGENTS, CONTRIBUTING                                        |
-| PWA/Offline   | 4.5/5  | Dexie SoT offline; SW strategy documented in ADR 0004                                         |
-| SEO           | 4/5    | Canonical/OG/JSON-LD present post-May; expand sitemap as needed                               |
-| Accessibility | 4/5    | Strong ARIA baseline; automate axe in Phase 1                                                 |
+| Dimension     | Rating | Notes                                                                                      |
+| ------------- | ------ | ------------------------------------------------------------------------------------------ |
+| Architecture  | 5/5    | Clear services / Redux / Dexie layering; ADRs document SoT & orchestration                 |
+| TypeScript    | 5/5    | Strict mode; typed error taxonomy                                                          |
+| Security      | 4.5/5  | AES-GCM keys, CSP, SECURITY.md, CodeQL + Dependency Review + gitleaks; residual XSS threat |
+| Resilience    | 4.5/5  | Circuit breaker, AppError, checkpoints + soft resume UI, cost estimator card               |
+| Tests         | 4.5/5  | Logic-layer gate **72%**; deeper geminiApiSlice / checkpoint tests; axe smoke              |
+| CI/CD         | 5/5    | Split quality/build jobs; security.yml scheduled; Pages deploy only on main                |
+| Documentation | 5/5    | AUDIT, CHANGELOG, ADRs, SECURITY, AGENTS, CONTRIBUTING                                     |
+| PWA/Offline   | 4.5/5  | Dexie SoT offline; SW strategy documented in ADR 0004                                      |
+| SEO           | 4/5    | Canonical/OG/JSON-LD present post-May; expand sitemap as needed                            |
+| Accessibility | 4.5/5  | Strong ARIA baseline; `@axe-core/playwright` on smoke root                                 |
 
 ---
 
@@ -41,7 +39,7 @@ See `SECURITY.md` and `docs/adr/0003-security-model-client-side-keys.md`.
 | XSS steals API key             | Med        | High   | CSP, DOMPurify, no `dangerouslySetInnerHTML` |
 | Malicious browser extension    | Med        | High   | User education; dedicated research browser   |
 | Dependency supply chain        | Low–Med    | High   | pnpm audit, Dependency Review, Dependabot    |
-| NCBI / Gemini abuse via key    | Med        | Med    | User quotas; future cost estimator UI        |
+| NCBI / Gemini abuse via key    | Med        | Med    | User quotas; Settings cost estimator UI      |
 | Stale SW cache of live science | Low        | Med    | Network-first for APIs (ADR 0004)            |
 
 ---
@@ -64,26 +62,26 @@ See `SECURITY.md` and `docs/adr/0003-security-model-client-side-keys.md`.
 | P0-15 | CodeRabbit pre-merge review gate      | **Closed** | `.cursor/rules/011-coderabbit-pr-gate.mdc` + `.coderabbit.yaml`        |
 | P0-16 | High+ audit / gitleaks CI failures    | **Closed** | `pnpm audit --fix=update` + workspace overrides; `.gitleaks.toml`      |
 
-### P0 → P1 carry-over (stabilization next)
+### P0 → P1 carry-over (stabilization)
 
-| ID    | Item                                       | Status      | Target                                 |
-| ----- | ------------------------------------------ | ----------- | -------------------------------------- |
-| P0-9  | Coverage ≥75% then ≥80% on logic layers    | Open        | ~74% lines; gate 72% — push to 75/80   |
-| P0-10 | Partial report save + resume from phase    | **Partial** | Checkpoint save done; resume UI next   |
-| P0-11 | Cost/quota estimator UI                    | **Partial** | Pre-flight toast done; dashboard next  |
-| P0-12 | Optional NCBI API key in Settings          | **Closed**  | `ai.ncbiApiKey` + PubMed + Settings UI |
-| P0-13 | Nested ErrorBoundaries for Orchestrator/KB | Open        | Phase 1                                |
+| ID    | Item                                       | Status      | Notes                                                                    |
+| ----- | ------------------------------------------ | ----------- | ------------------------------------------------------------------------ |
+| P0-9  | Coverage ≥75% then ≥80% on logic layers    | **Partial** | Gate raised to **75%** (measured ~78%); 80% still open                   |
+| P0-10 | Partial report save + resume from phase    | **Closed**  | Soft resume banner (restore / re-run / discard); no phase-skip in gemini |
+| P0-11 | Cost/quota estimator UI                    | **Closed**  | Settings `CostEstimateCard` + i18n pre-flight toast                      |
+| P0-12 | Optional NCBI API key in Settings          | **Closed**  | `ai.ncbiApiKey` + PubMed + Settings UI                                   |
+| P0-13 | Nested ErrorBoundaries for Orchestrator/KB | **Closed**  | `FeatureErrorBoundary` on Orchestrator / Research / KB                   |
 
 ### P1 — High
 
-| ID   | Item                                          | Status |
-| ---- | --------------------------------------------- | ------ |
-| P1-1 | Bundle budget + visualizer in CI              | Open   |
-| P1-2 | Lighthouse CI ≥95                             | Open   |
-| P1-3 | Full JSDoc on public services/hooks           | Open   |
-| P1-4 | Agent eval harness + structured outputs       | Open   |
-| P1-5 | a11y automation (axe)                         | Open   |
-| P1-6 | exportService / geminiApiSlice coverage depth | Open   |
+| ID   | Item                                          | Status      | Notes                                                  |
+| ---- | --------------------------------------------- | ----------- | ------------------------------------------------------ |
+| P1-1 | Bundle budget + visualizer in CI              | **Partial** | `pnpm run analyze` → `dist/stats.html`; CI budget next |
+| P1-2 | Lighthouse CI ≥95                             | Open        |                                                        |
+| P1-3 | Full JSDoc on public services/hooks           | Open        |                                                        |
+| P1-4 | Agent eval harness + structured outputs       | Open        |                                                        |
+| P1-5 | a11y automation (axe)                         | **Closed**  | `@axe-core/playwright` in `smoke.spec.ts`              |
+| P1-6 | exportService / geminiApiSlice coverage depth | **Partial** | Streaming + endpoint signal tests expanded             |
 
 ### P2 — Medium
 
@@ -126,31 +124,37 @@ Multi-LLM adapter, multimodal figures, local vector RAG, collaborative encrypted
 
 Documented in **ADR 0001**. Summary: Redux for settings/UI/KB/collections/theme/traces; Dexie for durability; PresetContext for presets; install prompt outside Redux; orchestrator stream local to `App.tsx`.
 
-### Resilience Layer (new)
+### Resilience Layer
 
 - `src/lib/errors.ts` — `AppError` codes + `toAppError`
 - `src/lib/circuitBreaker.ts` — per-service breaker
 - `src/lib/resilience.ts` — exponential backoff + cost heuristics
 - `src/lib/parseGeminiJson.ts` — string-aware JSON extraction
+- `src/lib/researchCheckpoint.ts` — checkpoint helpers + soft resume merge
+- `CheckpointResumeBanner` + Settings `CostEstimateCard`
+
+### Agent Debugger
+
+Split into `src/components/agentDebugger/*` (panel, toggle, rows, constants) with thin re-export at `AgentDebugger.tsx`.
 
 ---
 
 ## File-Level Findings (updated)
 
-| File                                     | Issue                                  | Severity | Status    |
-| ---------------------------------------- | -------------------------------------- | -------- | --------- |
-| `src/store/slices/knowledgeBaseSlice.ts` | Delete fulfilled no-op                 | High     | **Fixed** |
-| `src/services/geminiService.ts`          | JSON depth ignore strings              | Medium   | **Fixed** |
-| `src/services/pubmedUtils.ts`            | Abort retried; no circuit breaker      | Medium   | **Fixed** |
-| `src/components/ErrorBoundary.tsx`       | Misleading “agents notified” copy      | Low      | **Fixed** |
-| `src/services/exportService.ts`          | Coverage ~47%; PDF UTF-8               | Medium   | Open      |
-| `src/store/slices/geminiApiSlice.ts`     | Coverage ~48%; dual path vs App stream | Medium   | Open      |
-| `src/hooks/useFocusTrap.ts`              | Historically unused — now tested       | Low      | Mitigated |
-| `index.html` CSP                         | `unsafe-inline` + broad connect-src    | Medium   | Open P2   |
+| File                                     | Issue                               | Severity | Status    |
+| ---------------------------------------- | ----------------------------------- | -------- | --------- |
+| `src/store/slices/knowledgeBaseSlice.ts` | Delete fulfilled no-op              | High     | **Fixed** |
+| `src/services/geminiService.ts`          | JSON depth ignore strings           | Medium   | **Fixed** |
+| `src/services/pubmedUtils.ts`            | Abort retried; no circuit breaker   | Medium   | **Fixed** |
+| `src/components/ErrorBoundary.tsx`       | Misleading “agents notified” copy   | Low      | **Fixed** |
+| `src/services/exportService.ts`          | Coverage depth / PDF UTF-8          | Medium   | Mitigated |
+| `src/store/slices/geminiApiSlice.ts`     | Coverage / dual path vs App stream  | Medium   | Mitigated |
+| `src/hooks/useFocusTrap.ts`              | Historically unused — now tested    | Low      | Mitigated |
+| `index.html` CSP                         | `unsafe-inline` + broad connect-src | Medium   | Open P2   |
 
 ---
 
-## Phase 0 Acceptance
+## Phase 0 / Phase 1 Acceptance
 
 - [x] Re-audit documented
 - [x] ADRs 0001–0004 + SECURITY.md
@@ -158,14 +162,19 @@ Documented in **ADR 0001**. Summary: Redux for settings/UI/KB/collections/theme/
 - [x] KB delete sync
 - [x] Security workflows
 - [x] CI split + coverage artifact
-- [x] Coverage thresholds raised to 72%
+- [x] Coverage thresholds raised to **75%** (measured ~78%)
 - [x] FeatureErrorBoundary on Orchestrator / Research / Knowledge Base
-- [ ] Partial-save / resume UX (deferred P0-10)
-- [ ] AgentDebugger / large-view splits from superseded PR #19 (backlog; AgentDebugger still ~569 LOC)
+- [x] Partial-save / soft resume UX (P0-10)
+- [x] Cost estimator dashboard (P0-11)
+- [x] AgentDebugger split (`agentDebugger/` modules)
+- [x] axe smoke automation (P1-5)
+- [x] Bundle visualizer behind `ANALYZE=1` (P1-1 partial)
+- [ ] Coverage ≥80% (P0-9 remaining)
+- [ ] Lighthouse CI ≥95 (P1-2)
 - [ ] GitHub Release v0.2.0 (prepare after merge)
 
 ---
 
 ## DevContainer / Ops
 
-Unchanged lean image notes from May audit remain valid. Prefer `pnpm run test:run` for fast loops; `test:coverage` for gate verification.
+Unchanged lean image notes from May audit remain valid. Prefer `pnpm run test:run` for fast loops; `test:coverage` for gate verification. Bundle report: `pnpm run analyze` → `dist/stats.html`.

@@ -12,3 +12,20 @@
 
 - New libs under `src/lib/` are in Vitest coverage include and lift aggregate %.
 - KB deletes now sync Redux entities (data-integrity fix).
+
+---
+
+# 2026-07-16 — Phase 1 audit continuation (post PR #25 merge)
+
+## Decisions
+
+- Soft resume only (restore partial report / re-run / discard) — no Gemini phase-skip (matches ADR orchestration constraints).
+- Cost dashboard lives in Settings → AI (`CostEstimateCard`); pre-flight toast stays i18n-aware.
+- AgentDebugger split into `agentDebugger/` modules; keep thin `AgentDebugger.tsx` re-export for lazy import stability.
+- Bundle visualizer is opt-in (`ANALYZE=1` / `pnpm run analyze`), not a hard CI gate yet (P1-1 partial).
+- axe smoke checks critical/serious only on `#root` to avoid flaky moderate noise.
+
+## Impact
+
+- P0-10 / P0-11 / P0-13 closed in AUDIT; P1-5 closed; P1-1/P1-6 partial.
+- Next: Lighthouse CI, JSDoc pass, chart consolidation, CSP tighten, Release v0.2.0.

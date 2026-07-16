@@ -2,7 +2,9 @@ import { describe, it, expect } from 'vitest';
 import {
   buildCheckpointId,
   createResearchCheckpoint,
+  formatCheckpointAge,
   isResumableCheckpoint,
+  reportFromCheckpoint,
 } from './researchCheckpoint';
 import type { ResearchInput } from '../types';
 
@@ -77,5 +79,29 @@ describe('researchCheckpoint', () => {
       now: 3,
     });
     expect(isResumableCheckpoint(withReport)).toBe(true);
+  });
+
+  it('formatCheckpointAge and reportFromCheckpoint', () => {
+    expect(formatCheckpointAge(Date.now() - 30_000)).toBe('just now');
+    expect(formatCheckpointAge(Date.now() - 5 * 60_000)).toBe('5m ago');
+    expect(formatCheckpointAge(Date.now() - 3 * 3600_000)).toBe('3h ago');
+
+    const ckpt = createResearchCheckpoint({
+      input,
+      phase: 'Phase 6',
+      reason: 'abort',
+      synthesisSoFar: 'Hello synth',
+      report: {
+        synthesis: 'old',
+        rankedArticles: [],
+        generatedQueries: [{ query: 'q', explanation: 'e' }],
+        aiGeneratedInsights: [],
+        overallKeywords: [],
+      },
+      now: 10,
+    });
+    const report = reportFromCheckpoint(ckpt);
+    expect(report?.synthesis).toBe('Hello synth');
+    expect(report?.generatedQueries).toHaveLength(1);
   });
 });

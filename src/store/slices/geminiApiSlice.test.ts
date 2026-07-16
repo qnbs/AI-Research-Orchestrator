@@ -97,4 +97,120 @@ describe('geminiApiSlice', () => {
     );
     expect(geminiMocks.generateTldrSummary.mock.calls[0][2]).toBeInstanceOf(AbortSignal);
   });
+
+  it('findRelatedOnline forwards signal', async () => {
+    const store = makeStore();
+    await store.dispatch(
+      geminiApi.endpoints.findRelatedOnline.initiate({
+        topic: 'q',
+        aiSettings: ai,
+      }),
+    );
+    expect(geminiMocks.findRelatedOnline.mock.calls[0][2]).toBeInstanceOf(AbortSignal);
+  });
+
+  it('disambiguateAuthor forwards signal', async () => {
+    const store = makeStore();
+    await store.dispatch(
+      geminiApi.endpoints.disambiguateAuthor.initiate({
+        authorName: 'Ada Lovelace',
+        articles: [],
+        aiSettings: ai,
+      }),
+    );
+    expect(geminiMocks.disambiguateAuthor.mock.calls[0][3]).toBeInstanceOf(AbortSignal);
+  });
+
+  it('generateAuthorProfile forwards signal', async () => {
+    const store = makeStore();
+    await store.dispatch(
+      geminiApi.endpoints.generateAuthorProfile.initiate({
+        authorName: 'Ada Lovelace',
+        articles: [],
+        aiSettings: ai,
+      }),
+    );
+    expect(geminiMocks.generateAuthorProfileAnalysis.mock.calls[0][3]).toBeInstanceOf(AbortSignal);
+  });
+
+  it('suggestAuthors forwards signal', async () => {
+    const store = makeStore();
+    await store.dispatch(
+      geminiApi.endpoints.suggestAuthors.initiate({
+        fieldOfStudy: 'oncology',
+        aiSettings: ai,
+      }),
+    );
+    expect(geminiMocks.suggestAuthors.mock.calls[0][2]).toBeInstanceOf(AbortSignal);
+  });
+
+  it('generateReport streams chunks into cache', async () => {
+    async function* fakeStream() {
+      yield {
+        phase: 'Phase 1',
+        synthesisChunk: 'Hello ',
+        report: null,
+      };
+      yield {
+        phase: 'Finalizing Report...',
+        synthesisChunk: 'world',
+        report: {
+          synthesis: 'Hello world',
+          rankedArticles: [],
+          generatedQueries: [],
+          aiGeneratedInsights: [],
+          overallKeywords: [],
+        },
+      };
+    }
+    geminiMocks.generateResearchReportStream.mockReturnValue(fakeStream());
+
+    const store = makeStore();
+    const promise = store.dispatch(
+      geminiApi.endpoints.generateReport.initiate({
+        input: {
+          researchTopic: 't',
+          dateRange: 'any',
+          articleTypes: [],
+          synthesisFocus: 'overview',
+          maxArticlesToScan: 5,
+          topNToSynthesize: 2,
+        },
+        aiSettings: ai,
+        runId: 1,
+      }),
+    );
+
+    await vi.waitFor(() => {
+      const entry = geminiApi.endpoints.generateReport.select({
+        input: {
+          researchTopic: 't',
+          dateRange: 'any',
+          articleTypes: [],
+          synthesisFocus: 'overview',
+          maxArticlesToScan: 5,
+          topNToSynthesize: 2,
+        },
+        aiSettings: ai,
+        runId: 1,
+      })(store.getState());
+      expect(entry.data?.isComplete).toBe(true);
+    });
+
+    const entry = geminiApi.endpoints.generateReport.select({
+      input: {
+        researchTopic: 't',
+        dateRange: 'any',
+        articleTypes: [],
+        synthesisFocus: 'overview',
+        maxArticlesToScan: 5,
+        topNToSynthesize: 2,
+      },
+      aiSettings: ai,
+      runId: 1,
+    })(store.getState());
+    expect(entry.data?.synthesisChunks.join('')).toBe('Hello world');
+    expect(entry.data?.report?.synthesis).toBe('Hello world');
+    promise.unsubscribe();
+  });
 });

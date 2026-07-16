@@ -81,6 +81,37 @@ export const translations = {
     'scientometrics.timeline': 'Publication Timeline',
     'scientometrics.journals': 'Journal Distribution',
     'scientometrics.keywords': 'Keyword Cloud',
+    // ── Checkpoints / resume ──
+    'checkpoint.resume.title': 'Interrupted research',
+    'checkpoint.resume.desc':
+      'A previous run stopped early. Restore the partial report or re-run from the start.',
+    'checkpoint.restore': 'Restore partial',
+    'checkpoint.rerun': 'Re-run from start',
+    'checkpoint.discard': 'Discard',
+    'checkpoint.reason.abort': 'aborted',
+    'checkpoint.reason.error': 'error',
+    'checkpoint.reason.manual': 'saved',
+    'checkpoint.articles': 'articles',
+    'checkpoint.has_synthesis': 'has synthesis',
+    'checkpoint.restored': 'Partial report restored. Re-run if you need a complete synthesis.',
+    'checkpoint.discarded': 'Checkpoint discarded.',
+    // ── Cost estimator ──
+    'settings.cost.title': 'Estimated run cost',
+    'settings.cost.desc':
+      'Approximate Gemini usage for one orchestrator run with your current defaults. Not a billing guarantee.',
+    'settings.cost.estimate': 'Est. USD',
+    'settings.cost.tier': 'Pricing tier',
+    'settings.cost.input_tokens': 'Est. input tokens',
+    'settings.cost.output_tokens': 'Est. output tokens',
+    'settings.cost.based_on': 'Based on',
+    'settings.cost.scan': 'articles to scan',
+    'settings.cost.top_n': 'to synthesize',
+    'settings.cost.warn':
+      'This configuration may exceed the soft pre-flight cost warning threshold (~$0.05).',
+    'settings.cost.disclaimer':
+      'Estimates use public list-price heuristics and typical prompt sizes. Actual usage varies.',
+    'orchestrator.cost_preflight':
+      'Estimated Gemini usage ~${usd} (${tier}). This is an approximate pre-flight estimate.',
   },
   de: {
     'app.name': 'Research Orchestrator',
@@ -168,6 +199,38 @@ export const translations = {
     'scientometrics.timeline': 'Publikations-Timeline',
     'scientometrics.journals': 'Journal-Verteilung',
     'scientometrics.keywords': 'Keyword-Cloud',
+    // ── Checkpoints / resume ──
+    'checkpoint.resume.title': 'Unterbrochene Recherche',
+    'checkpoint.resume.desc':
+      'Ein früherer Lauf wurde vorzeitig beendet. Stellen Sie den Teilbericht wieder her oder starten Sie neu.',
+    'checkpoint.restore': 'Teilbericht wiederherstellen',
+    'checkpoint.rerun': 'Von vorne neu starten',
+    'checkpoint.discard': 'Verwerfen',
+    'checkpoint.reason.abort': 'abgebrochen',
+    'checkpoint.reason.error': 'Fehler',
+    'checkpoint.reason.manual': 'gespeichert',
+    'checkpoint.articles': 'Artikel',
+    'checkpoint.has_synthesis': 'mit Synthese',
+    'checkpoint.restored':
+      'Teilbericht wiederhergestellt. Neu starten, wenn Sie eine vollständige Synthese brauchen.',
+    'checkpoint.discarded': 'Checkpoint verworfen.',
+    // ── Cost estimator ──
+    'settings.cost.title': 'Geschätzte Laufkosten',
+    'settings.cost.desc':
+      'Ungefährer Gemini-Verbrauch für einen Orchestrator-Lauf mit Ihren aktuellen Defaults. Keine Abrechnungsgarantie.',
+    'settings.cost.estimate': 'Geschätzte USD',
+    'settings.cost.tier': 'Preisstufe',
+    'settings.cost.input_tokens': 'Geschätzte Input-Token',
+    'settings.cost.output_tokens': 'Geschätzte Output-Token',
+    'settings.cost.based_on': 'Basierend auf',
+    'settings.cost.scan': 'zu scannenden Artikeln',
+    'settings.cost.top_n': 'zur Synthese',
+    'settings.cost.warn':
+      'Diese Konfiguration kann die Soft-Warnschwelle für Pre-Flight-Kosten (~0,05 $) überschreiten.',
+    'settings.cost.disclaimer':
+      'Schätzungen nutzen öffentliche Listenpreise und typische Prompt-Größen. Der tatsächliche Verbrauch variiert.',
+    'orchestrator.cost_preflight':
+      'Geschätzter Gemini-Verbrauch ~${usd} (${tier}). Ungefähre Pre-Flight-Schätzung.',
   },
 };
 

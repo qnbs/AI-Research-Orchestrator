@@ -75,3 +75,29 @@ export function createResearchCheckpoint(params: {
 export function isResumableCheckpoint(ckpt: ResearchCheckpoint): boolean {
   return Boolean(ckpt.report?.rankedArticles?.length || ckpt.synthesisSoFar.trim());
 }
+
+/** Human-readable relative age for checkpoint banners (English, UI may wrap). */
+export function formatCheckpointAge(updatedAt: number, now = Date.now()): string {
+  const deltaMs = Math.max(0, now - updatedAt);
+  const minutes = Math.floor(deltaMs / 60_000);
+  if (minutes < 1) return 'just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 48) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
+
+/** Merge checkpoint synthesis into a displayable report for soft resume. */
+export function reportFromCheckpoint(ckpt: ResearchCheckpoint) {
+  const base = ckpt.report;
+  const synthesis = ckpt.synthesisSoFar.trim() || base?.synthesis || '';
+  if (!base && !synthesis) return null;
+  return {
+    synthesis,
+    rankedArticles: base?.rankedArticles ?? [],
+    generatedQueries: base?.generatedQueries ?? [],
+    aiGeneratedInsights: base?.aiGeneratedInsights ?? [],
+    overallKeywords: base?.overallKeywords ?? [],
+  };
+}
