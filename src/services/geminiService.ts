@@ -12,7 +12,7 @@ import type {
   AuthorCluster,
   JournalProfile,
 } from '../types';
-import { getApiKey } from './apiKeyService';
+import { getApiKey, getNcbiApiKey } from './apiKeyService';
 import { searchPubMedForIds, fetchArticleDetails } from './pubmedUtils';
 import { searchAndFetchArxiv } from './arxivUtils';
 import { sanitizePromptFragment } from '../lib/promptSanitize';
@@ -20,7 +20,7 @@ import {
   parseGeminiResponseJson as parseGeminiJsonCore,
   GeminiJsonParseError,
 } from '../lib/parseGeminiJson';
-import { AppError } from '../lib/errors';
+import { AppError, toAppError } from '../lib/errors';
 
 function throwIfAborted(signal?: AbortSignal): void {
   if (signal?.aborted) {
@@ -178,6 +178,8 @@ export async function* generateResearchReportStream(
 ): AsyncGenerator<{ report?: ResearchReport; synthesisChunk?: string; phase: string }> {
   const ai = await getAI();
   throwIfAborted(signal);
+  const ncbiApiKey = (await getNcbiApiKey()) ?? undefined;
+  throwIfAborted(signal);
   const topicSafe = sanitizePromptFragment(input.researchTopic);
   const focusSafe = sanitizePromptFragment(input.synthesisFocus);
   try {
@@ -246,7 +248,7 @@ Research Topic: "${topicSafe}"
       generatedQueries[0].query,
       input.maxArticlesToScan,
       signal,
-      aiSettings.ncbiApiKey,
+      ncbiApiKey,
     );
     if (pmids.length === 0) {
       throw new Error(
@@ -257,7 +259,7 @@ Research Topic: "${topicSafe}"
     throwIfAborted(signal);
     // STEP 3: Fetch Real Article Details
     yield { phase: 'Phase 3: Fetching Article Details from PubMed...' };
-    const articleDetails = await fetchArticleDetails(pmids, signal, aiSettings.ncbiApiKey);
+    const articleDetails = await fetchArticleDetails(pmids, signal, ncbiApiKey);
     if (articleDetails.length === 0) {
       throw new Error('Could not fetch details for the articles found on PubMed.');
     }
@@ -695,6 +697,8 @@ export async function analyzeSingleArticle(
 ): Promise<RankedArticle> {
   const ai = await getAI();
   throwIfAborted(signal);
+  const ncbiApiKey = (await getNcbiApiKey()) ?? undefined;
+  throwIfAborted(signal);
   try {
     let pmid = identifier.trim();
     // Basic identifier extraction
@@ -703,12 +707,19 @@ export async function analyzeSingleArticle(
       if (match) pmid = match[1];
     } else if (identifier.includes('doi.org/')) {
       // Can't directly convert DOI to PMID reliably without another API, so we'll just search for the DOI
-      const ids = await searchPubMedForIds(identifier, 1, signal, aiSettings.ncbiApiKey);
+      const ids = await searchPubMedForIds(identifier, 1, signal, ncbiApiKey);
       if (ids.length > 0) pmid = ids[0];
-      else throw new Error('DOI not found in PubMed.');
+      else {
+        throw new AppError({
+          code: 'VALIDATION',
+          message: 'DOI not found in PubMed.',
+          retryable: false,
+          context: 'article_analysis',
+        });
+      }
     }
 
-    const articleDetails = await fetchArticleDetails([pmid], signal, aiSettings.ncbiApiKey);
+    const articleDetails = await fetchArticleDetails([pmid], signal, ncbiApiKey);
     if (!articleDetails || articleDetails.length === 0) {
       throw new Error('Could not fetch article details from PubMed. Please check the identifier.');
     }
@@ -768,7 +779,7 @@ export async function analyzeSingleArticle(
     };
   } catch (error) {
     console.error('Error analyzing single article:', error);
-    throw new Error(getGeminiError(error));
+    throw toAppError(error, 'article_analysis');
   }
 }
 

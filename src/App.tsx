@@ -376,10 +376,11 @@ const AppLayout: React.FC = () => {
           setIsCurrentReportSaved(true);
         }
       } catch (err) {
-        const aborted = isAbortError(err);
-        if (aborted && generationIdRef.current !== currentGenId) {
+        if (generationIdRef.current !== currentGenId) {
           return; // superseded by a newer run
         }
+
+        const aborted = isAbortError(err);
 
         const appErr = toAppError(err, lastPhase);
         const checkpoint = createResearchCheckpoint({
@@ -408,6 +409,12 @@ const AppLayout: React.FC = () => {
             });
           } catch (saveErr) {
             console.error('Failed to persist research checkpoint', saveErr);
+            setNotification({
+              id: Date.now(),
+              type: 'error',
+              message:
+                'Research stopped, but partial results could not be saved locally. Please export or copy any visible results before leaving this page.',
+            });
           }
         }
 

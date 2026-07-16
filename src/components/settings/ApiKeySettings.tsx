@@ -5,8 +5,10 @@ import {
   removeApiKey,
   hasApiKey,
   validateApiKeyFormat,
+  saveNcbiApiKey,
+  getNcbiApiKey,
+  removeNcbiApiKey,
 } from '../../services/apiKeyService';
-import { useSettingsView } from './SettingsViewContext';
 import { ShieldCheckIcon } from '../icons/ShieldCheckIcon';
 import { ExclamationTriangleIcon } from '../icons/ExclamationTriangleIcon';
 import { EyeIcon } from '../icons/EyeIcon';
@@ -18,14 +20,19 @@ interface ApiKeySettingsProps {
 }
 
 export const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({ onKeyChange }) => {
-  const { tempSettings, setTempSettings } = useSettingsView();
   const [apiKey, setApiKey] = useState('');
+  const [ncbiApiKey, setNcbiApiKey] = useState('');
   const [hasStoredKey, setHasStoredKey] = useState(false);
+  const [hasStoredNcbiKey, setHasStoredNcbiKey] = useState(false);
   const [showKey, setShowKey] = useState(false);
+  const [showNcbiKey, setShowNcbiKey] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isNcbiSaving, setIsNcbiSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [ncbiError, setNcbiError] = useState<string | null>(null);
+  const [ncbiSuccess, setNcbiSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     void checkStoredKey();
@@ -34,8 +41,10 @@ export const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({ onKeyChange }) =
   const checkStoredKey = async () => {
     setIsLoading(true);
     try {
-      const stored = await hasApiKey();
+      const [stored, storedNcbiKey] = await Promise.all([hasApiKey(), getNcbiApiKey()]);
       setHasStoredKey(stored);
+      setHasStoredNcbiKey(!!storedNcbiKey);
+      setNcbiApiKey(storedNcbiKey ?? '');
       onKeyChange?.(stored);
     } catch (err) {
       console.error('Error checking API key:', err);
@@ -87,6 +96,45 @@ export const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({ onKeyChange }) =
       console.error(err);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleSaveNcbi = async () => {
+    setNcbiError(null);
+    setNcbiSuccess(null);
+    setIsNcbiSaving(true);
+    try {
+      const trimmed = ncbiApiKey.trim();
+      await saveNcbiApiKey(trimmed);
+      setNcbiApiKey(trimmed);
+      setHasStoredNcbiKey(trimmed.length > 0);
+      setNcbiSuccess(
+        trimmed.length > 0
+          ? 'NCBI API key saved securely in this browser.'
+          : 'NCBI API key removed.',
+      );
+    } catch (err) {
+      setNcbiError('Failed to save the NCBI API key.');
+      console.error(err);
+    } finally {
+      setIsNcbiSaving(false);
+    }
+  };
+
+  const handleRemoveNcbi = async () => {
+    setNcbiError(null);
+    setNcbiSuccess(null);
+    setIsNcbiSaving(true);
+    try {
+      await removeNcbiApiKey();
+      setNcbiApiKey('');
+      setHasStoredNcbiKey(false);
+      setNcbiSuccess('NCBI API key removed.');
+    } catch (err) {
+      setNcbiError('Failed to remove the NCBI API key.');
+      console.error(err);
+    } finally {
+      setIsNcbiSaving(false);
     }
   };
 
@@ -245,8 +293,8 @@ export const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({ onKeyChange }) =
           Optional NCBI API key
         </label>
         <p className="text-sm text-text-secondary">
-          Improves PubMed/NCBI rate limits. Stored with app settings (local IndexedDB), not in the
-          encrypted Gemini vault. Get a key at{' '}
+          Improves PubMed/NCBI rate limits. Stored encrypted in the same browser vault pattern as
+          the Gemini key, never in general app settings. Get a key at{' '}
           <a
             href="https://www.ncbi.nlm.nih.gov/account/"
             target="_blank"
@@ -257,21 +305,70 @@ export const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({ onKeyChange }) =
           </a>
           .
         </p>
-        <input
-          id="ncbi-api-key"
-          type="password"
-          value={tempSettings.ai.ncbiApiKey ?? ''}
-          onChange={(e) =>
-            setTempSettings((prev) => ({
-              ...prev,
-              ai: { ...prev.ai, ncbiApiKey: e.target.value.trim() },
-            }))
-          }
-          placeholder="NCBI API key (optional)"
-          className="w-full bg-input-bg border border-border rounded-lg px-4 py-3 text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-transparent font-mono"
-          autoComplete="off"
-          spellCheck={false}
-        />
+        <div className="flex items-center gap-3 p-4 rounded-lg border border-border bg-surface-hover/30">
+          {hasStoredNcbiKey ? (
+            <ShieldCheckIcon className="h-5 w-5 text-green-500" />
+          ) : (
+            <KeyIcon className="h-5 w-5 text-text-secondary" />
+          )}
+          <p className="text-sm text-text-secondary">
+            {hasStoredNcbiKey ? 'NCBI API key configured.' : 'No NCBI API key configured.'}
+          </p>
+        </div>
+        <div className="relative">
+          <input
+            id="ncbi-api-key"
+            type={showNcbiKey ? 'text' : 'password'}
+            value={ncbiApiKey}
+            onChange={(e) => {
+              setNcbiApiKey(e.target.value);
+              setNcbiError(null);
+              setNcbiSuccess(null);
+            }}
+            placeholder="NCBI API key (optional)"
+            className="w-full bg-input-bg border border-border rounded-lg px-4 py-3 pr-20 text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-transparent font-mono"
+            autoComplete="off"
+            spellCheck={false}
+          />
+          <button
+            type="button"
+            onClick={() => setShowNcbiKey(!showNcbiKey)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-text-secondary hover:text-text-primary transition-colors"
+            aria-label={showNcbiKey ? 'Hide NCBI key' : 'Show NCBI key'}
+          >
+            {showNcbiKey ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
+          </button>
+        </div>
+        {ncbiError && (
+          <p className="text-sm text-red-400 flex items-center gap-2">
+            <ExclamationTriangleIcon className="h-4 w-4" />
+            {ncbiError}
+          </p>
+        )}
+        {ncbiSuccess && (
+          <p className="text-sm text-green-400 flex items-center gap-2">
+            <ShieldCheckIcon className="h-4 w-4" />
+            {ncbiSuccess}
+          </p>
+        )}
+        <div className="flex gap-3">
+          <button
+            onClick={handleSaveNcbi}
+            disabled={isNcbiSaving}
+            className="flex-1 px-4 py-2.5 bg-brand-accent text-brand-text-on-accent font-medium rounded-lg hover:bg-brand-accent/90 focus:outline-none focus:ring-2 focus:ring-brand-accent focus:ring-offset-2 focus:ring-offset-background disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          >
+            {isNcbiSaving ? 'Saving...' : 'Save NCBI key'}
+          </button>
+          {hasStoredNcbiKey && (
+            <button
+              onClick={handleRemoveNcbi}
+              disabled={isNcbiSaving}
+              className="px-4 py-2.5 bg-red-500/10 text-red-400 border border-red-500/30 font-medium rounded-lg hover:bg-red-500/20 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-background disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              Remove
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="text-sm text-text-secondary border-t border-border pt-4 space-y-2">

@@ -58,6 +58,27 @@ describe('withExponentialBackoff', () => {
     ).rejects.toMatchObject({ name: 'AbortError' });
   });
 
+  it('aborts immediately during a pending backoff delay', async () => {
+    const ctrl = new AbortController();
+    const fn = vi.fn().mockRejectedValue(new Error('temporary'));
+    const sleep = vi.fn(() => new Promise<void>(() => {}));
+
+    const promise = withExponentialBackoff(fn, {
+      retries: 3,
+      baseMs: 10,
+      jitter: 0,
+      signal: ctrl.signal,
+      sleep,
+    });
+
+    await Promise.resolve();
+    expect(sleep).toHaveBeenCalledWith(10);
+    ctrl.abort();
+
+    await expect(promise).rejects.toMatchObject({ name: 'AbortError' });
+    expect(fn).toHaveBeenCalledTimes(1);
+  });
+
   it('throws the last error once retries are exhausted', async () => {
     const fn = vi
       .fn()
@@ -102,7 +123,7 @@ describe('cost estimators', () => {
       outputTokens: 1_000_000,
       tier: 'flash',
     });
-    expect(cost).toBeCloseTo(0.75, 5);
+    expect(cost).toBeCloseTo(2.8, 5);
     const pro = estimateGeminiCostUsd({
       inputTokens: 1_000_000,
       outputTokens: 0,
@@ -119,7 +140,7 @@ describe('cost estimators', () => {
       tier: 'flash',
     });
     expect(flashDefault).toBeCloseTo(flashExplicit, 10);
-    expect(flashDefault).toBeCloseTo(0.15, 5);
+    expect(flashDefault).toBeCloseTo(0.3, 5);
   });
 
   it('returns 0 cost for zero tokens', () => {

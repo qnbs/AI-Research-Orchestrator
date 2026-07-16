@@ -9,12 +9,13 @@ The product is a static GitHub Pages PWA with no backend. Users must supply a Ge
 
 ## Decision
 
-1. User enters key in Settings UI.
-2. Key is AES-GCM encrypted with a Web Crypto key stored in IndexedDB vault `APIKeyVault`.
-3. Ciphertext stored alongside in the same origin DB.
-4. Runtime reads decrypt in memory for Gemini SDK calls only.
-5. Document residual XSS risk in `SECURITY.md`; CSP + DOMPurify reduce XSS surface.
-6. CI enforces dependency audit, CodeQL, Dependency Review, and secret scanning.
+1. User enters keys in Settings → AI Configuration.
+2. **Gemini key validation before encrypt:** accept only keys matching `AIza` + 35 alphanumerics (39 chars total via `validateApiKeyFormat`). Reject malformed input without storing or encrypting.
+3. Gemini (and optional NCBI) keys are AES-GCM encrypted with a Web Crypto key stored in IndexedDB vault `APIKeyVault`.
+4. Ciphertext stored alongside in the same origin DB (separate storage keys per credential).
+5. Runtime decrypts in memory for Gemini SDK / NCBI E-utilities calls only.
+6. Document residual XSS risk in `SECURITY.md`; CSP + DOMPurify reduce XSS surface.
+7. CI enforces dependency audit, CodeQL, Dependency Review, and secret scanning.
 
 ## Consequences
 

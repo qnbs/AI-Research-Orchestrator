@@ -47,9 +47,17 @@ export const clearAllEntries = () => db.knowledgeBaseEntries.clear();
 
 // --- Settings Operations ---
 const SETTINGS_ID = 'appSettings';
+const sanitizeSettingsForStorage = (settings: Settings): Settings => ({
+  ...settings,
+  ai: {
+    ...settings.ai,
+    ncbiApiKey: '',
+  },
+});
+
 export const getSettings = (): Promise<Settings | undefined> => db.settings.get(SETTINGS_ID);
 export const saveSettings = (settings: Settings): Promise<string> =>
-  db.settings.put({ ...settings, id: SETTINGS_ID });
+  db.settings.put({ ...sanitizeSettingsForStorage(settings), id: SETTINGS_ID });
 
 // --- Preset Operations ---
 export const getAllPresets = () => db.presets.toArray();

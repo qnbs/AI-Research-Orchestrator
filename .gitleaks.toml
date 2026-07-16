@@ -8,5 +8,6 @@ paths = [
   '''src/test/.*''',
 ]
 regexes = [
-  '''AIza[0-9]{35}a''',
+  # Gemini fixtures: 39 chars total = "AIza" + 35 alphanumerics (allowlisted pattern)
+  '''AIza[0-9]{35}''',
 ]

@@ -10,17 +10,17 @@ The app historically mixed Redux Toolkit with React Context providers (`Settings
 
 ## Decision
 
-| Domain                                         | Source of Truth                               | Persistence                                                         |
-| ---------------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------- |
-| Settings                                       | Redux `settingsSlice`                         | Dexie via `SettingsHydrator` / `useSettings` (hydrate once → Redux) |
-| UI / navigation / notifications                | Redux `uiSlice`                               | Ephemeral (session)                                                 |
-| Knowledge Base entities + filters              | Redux `knowledgeBaseSlice` (entity adapter)   | Dexie thunks (`fetch`/`add`/`delete`/`update`)                      |
-| Collections                                    | Redux `collectionsSlice`                      | Dexie                                                               |
-| Theme                                          | Redux `themeSlice`                            | Local preference via existing slice                                 |
-| Agent debug traces                             | Redux `agentDebugSlice`                       | Ephemeral                                                           |
-| Research presets                               | `PresetContext` + Dexie                       | Context-local (not Redux) — intentional for lighter UX              |
-| PWA install prompt event                       | `installPromptStore` + `useSyncExternalStore` | Non-serializable browser event — must stay outside Redux            |
-| Live orchestrator run (status, streaming text) | Local React state in `App.tsx`                | Ephemeral; optional future: Dexie partial-save                      |
+| Domain                                         | Source of Truth                               | Persistence                                                                                                                  |
+| ---------------------------------------------- | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Settings                                       | Redux `settingsSlice`                         | Dexie via `SettingsHydrator` / `useSettings` (hydrate once → Redux)                                                          |
+| UI / navigation / notifications                | Redux `uiSlice`                               | Ephemeral (session)                                                                                                          |
+| Knowledge Base entities + filters              | Redux `knowledgeBaseSlice` (entity adapter)   | Dexie thunks (`fetch`/`add`/`delete`/`update`)                                                                               |
+| Collections                                    | Redux `collectionsSlice`                      | Dexie                                                                                                                        |
+| Theme                                          | Redux `themeSlice`                            | Local preference via existing slice                                                                                          |
+| Agent debug traces                             | Redux `agentDebugSlice`                       | Ephemeral                                                                                                                    |
+| Research presets                               | `PresetContext` + Dexie                       | Context-local (not Redux) — intentional for lighter UX                                                                       |
+| PWA install prompt event                       | `installPromptStore` + `useSyncExternalStore` | Non-serializable browser event — must stay outside Redux                                                                     |
+| Live orchestrator run (status, streaming text) | Local React state in `App.tsx`                | Ephemeral stream; Dexie `researchCheckpoints` persists abort/error snapshots (`researchCheckpoint.ts`). Resume UX still TBD. |
 
 `KnowledgeBaseContext` remains a **facade** over Redux for compatibility; new code should prefer Redux hooks (`useAppSelector` / thunks).
 

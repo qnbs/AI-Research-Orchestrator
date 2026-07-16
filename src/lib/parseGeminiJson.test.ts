@@ -30,6 +30,16 @@ describe('parseGeminiResponseJson', () => {
     expect(parseGeminiResponseJson<{ a: number; b: number }>(text)).toEqual({ a: 1, b: 2 });
   });
 
+  it('does not repair trailing-comma patterns inside JSON strings', () => {
+    const text = '{"note":"ends,}",}';
+    expect(parseGeminiResponseJson<{ note: string }>(text)).toEqual({ note: 'ends,}' });
+  });
+
+  it('continues to later balanced JSON after an invalid candidate', () => {
+    const text = 'first {"broken":,} then {"valid": true}';
+    expect(parseGeminiResponseJson<{ valid: boolean }>(text)).toEqual({ valid: true });
+  });
+
   it('throws GeminiJsonParseError on empty input', () => {
     expect(() => parseGeminiResponseJson('')).toThrow(GeminiJsonParseError);
     expect(() => parseGeminiResponseJson('   ')).toThrow(/Empty response/);

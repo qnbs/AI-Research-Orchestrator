@@ -6,6 +6,10 @@ import {
   getApiKey,
   hasApiKey,
   removeApiKey,
+  saveNcbiApiKey,
+  getNcbiApiKey,
+  hasNcbiApiKey,
+  removeNcbiApiKey,
 } from './apiKeyService';
 
 const VALID_KEY = `AIza${'1234567890123456789012345678901234a'}`; // test fixture — not a real secret
@@ -22,6 +26,7 @@ describe('apiKeyService', () => {
     });
     try {
       await removeApiKey();
+      await removeNcbiApiKey();
     } catch {
       // vault may not exist yet
     }
@@ -30,6 +35,7 @@ describe('apiKeyService', () => {
   afterEach(async () => {
     try {
       await removeApiKey();
+      await removeNcbiApiKey();
     } catch {
       // ignore
     }
@@ -122,6 +128,26 @@ describe('apiKeyService', () => {
       const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
       await expect(getApiKey()).resolves.toBeNull();
       spy.mockRestore();
+    });
+
+    it('saveNcbiApiKey / getNcbiApiKey round-trips trimmed keys', async () => {
+      await saveNcbiApiKey('  ncbi-test-key  ');
+      await expect(getNcbiApiKey()).resolves.toBe('ncbi-test-key');
+      await expect(hasNcbiApiKey()).resolves.toBe(true);
+    });
+
+    it('removeNcbiApiKey clears stored NCBI key', async () => {
+      await saveNcbiApiKey('ncbi-test-key');
+      await removeNcbiApiKey();
+      await expect(getNcbiApiKey()).resolves.toBeNull();
+      await expect(hasNcbiApiKey()).resolves.toBe(false);
+    });
+
+    it('saveNcbiApiKey removes the stored key when saving an empty string', async () => {
+      await saveNcbiApiKey('ncbi-test-key');
+      await saveNcbiApiKey('   ');
+      await expect(getNcbiApiKey()).resolves.toBeNull();
+      await expect(hasNcbiApiKey()).resolves.toBe(false);
     });
   });
 });

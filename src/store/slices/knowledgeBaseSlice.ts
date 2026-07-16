@@ -132,10 +132,13 @@ export const knowledgeBaseSlice = createSlice({
         entriesAdapter.addMany(state, action.payload);
       })
       .addCase(deleteKbEntries.fulfilled, (state, action) => {
+        const deletedPmids = new Set(
+          action.payload.flatMap((id) =>
+            (state.entities[id]?.articles ?? []).map((article) => article.pmid),
+          ),
+        );
         entriesAdapter.removeMany(state, action.payload);
-        // Drop selection for deleted entry ids when they overlap PMIDs/ids
-        const deleted = new Set(action.payload);
-        state.selectedPmids = state.selectedPmids.filter((id) => !deleted.has(id));
+        state.selectedPmids = state.selectedPmids.filter((pmid) => !deletedPmids.has(pmid));
       })
       .addCase(clearKb.fulfilled, (state) => {
         entriesAdapter.removeAll(state);

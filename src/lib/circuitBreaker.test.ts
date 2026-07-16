@@ -78,6 +78,60 @@ describe('CircuitBreaker', () => {
     ).rejects.toThrow(CircuitOpenError);
   });
 
+  it('does not record AbortError as a service failure', async () => {
+    const abortError = new DOMException('Aborted', 'AbortError');
+
+    await expect(
+      withCircuitBreaker(
+        'abort-service',
+        async () => {
+          throw abortError;
+        },
+        { failureThreshold: 1 },
+      ),
+    ).rejects.toBe(abortError);
+
+    expect(getCircuitBreaker('abort-service').getState()).toBe('closed');
+  });
+
+  it('allows only one half-open probe at a time', async () => {
+    let t = 0;
+    const options = {
+      failureThreshold: 1,
+      cooldownMs: 10,
+      now: () => t,
+    };
+
+    await expect(
+      withCircuitBreaker(
+        'single-probe',
+        async () => {
+          throw new Error('first failure');
+        },
+        options,
+      ),
+    ).rejects.toThrow('first failure');
+
+    t = 20;
+    let resolveProbe!: (value: string) => void;
+    const firstProbe = withCircuitBreaker(
+      'single-probe',
+      () =>
+        new Promise<string>((resolve) => {
+          resolveProbe = resolve;
+        }),
+      options,
+    );
+
+    await expect(
+      withCircuitBreaker('single-probe', async () => 'blocked', options),
+    ).rejects.toThrow(CircuitOpenError);
+
+    resolveProbe('ok');
+    await expect(firstProbe).resolves.toBe('ok');
+    expect(getCircuitBreaker('single-probe').getState()).toBe('closed');
+  });
+
   it('does not open when failures stay below threshold', () => {
     const breaker = new CircuitBreaker('below-threshold', { failureThreshold: 3 });
     breaker.recordFailure();

@@ -1,3 +1,5 @@
+import { isAbortError } from './errors';
+
 /**
  * Lightweight per-service circuit breaker for client-side external calls.
  * States: closed → open (after failure threshold) → half-open (after cooldown) → closed.
@@ -30,6 +32,7 @@ export class CircuitBreaker {
   private successes = 0;
   private state: CircuitState = 'closed';
   private openedAt = 0;
+  private halfOpenProbeInFlight = false;
   private readonly failureThreshold: number;
   private readonly cooldownMs: number;
   private readonly successThreshold: number;
@@ -84,12 +87,25 @@ export class CircuitBreaker {
     this.successes = 0;
     this.state = 'closed';
     this.openedAt = 0;
+    this.halfOpenProbeInFlight = false;
+  }
+
+  tryAcquireHalfOpenProbe(): boolean {
+    if (this.getState() !== 'half-open') return true;
+    if (this.halfOpenProbeInFlight) return false;
+    this.halfOpenProbeInFlight = true;
+    return true;
+  }
+
+  releaseHalfOpenProbe(): void {
+    this.halfOpenProbeInFlight = false;
   }
 
   private trip(): void {
     this.state = 'open';
     this.openedAt = this.now();
     this.successes = 0;
+    this.halfOpenProbeInFlight = false;
   }
 
   private maybeTransitionToHalfOpen(): void {
@@ -97,6 +113,7 @@ export class CircuitBreaker {
     if (this.now() - this.openedAt >= this.cooldownMs) {
       this.state = 'half-open';
       this.successes = 0;
+      this.halfOpenProbeInFlight = false;
     }
   }
 }
@@ -130,13 +147,20 @@ export async function withCircuitBreaker<T>(
 ): Promise<T> {
   const breaker = getCircuitBreaker(service, options);
   breaker.assertClosed();
+  const acquiredProbe = breaker.tryAcquireHalfOpenProbe();
+  if (!acquiredProbe) {
+    throw new CircuitOpenError(service);
+  }
   try {
     const result = await fn();
     breaker.recordSuccess();
     return result;
   } catch (error) {
     if (error instanceof CircuitOpenError) throw error;
+    if (isAbortError(error)) throw error;
     breaker.recordFailure();
     throw error;
+  } finally {
+    breaker.releaseHalfOpenProbe();
   }
 }

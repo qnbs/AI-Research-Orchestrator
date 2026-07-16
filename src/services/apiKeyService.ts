@@ -1,11 +1,12 @@
 /**
  * Secure API Key Service
- * Handles encryption, storage, and retrieval of the Gemini API key.
+ * Handles encryption, storage, and retrieval of API keys.
  * Uses Web Crypto API for AES-GCM encryption and IndexedDB for storage.
  */
 
 const ENCRYPTION_KEY_NAME = 'ai-research-encryption-key';
 const STORAGE_KEY = 'encrypted-api-key';
+const STORAGE_KEY_NCBI = 'encrypted-ncbi-api-key';
 
 /**
  * Generates or retrieves the encryption key from IndexedDB.
@@ -114,10 +115,10 @@ async function decryptApiKey(iv: Uint8Array, encrypted: Uint8Array): Promise<str
 }
 
 /**
- * Saves the API key securely to IndexedDB.
+ * Saves a secret securely to IndexedDB.
  */
-export async function saveApiKey(apiKey: string): Promise<void> {
-  const { iv, encrypted } = await encryptApiKey(apiKey);
+async function saveEncryptedSecret(storageKey: string, value: string): Promise<void> {
+  const { iv, encrypted } = await encryptApiKey(value);
   const db = await openKeyDatabase();
 
   // Store IV and encrypted data together
@@ -125,16 +126,16 @@ export async function saveApiKey(apiKey: string): Promise<void> {
   combined.set(iv, 0);
   combined.set(encrypted, iv.length);
 
-  await saveToKeyStore(db, STORAGE_KEY, combined);
+  await saveToKeyStore(db, storageKey, combined);
 }
 
 /**
- * Retrieves and decrypts the API key from IndexedDB.
+ * Retrieves and decrypts a secret from IndexedDB.
  */
-export async function getApiKey(): Promise<string | null> {
+async function getEncryptedSecret(storageKey: string, label: string): Promise<string | null> {
   try {
     const db = await openKeyDatabase();
-    const combined = await getFromKeyStore(db, STORAGE_KEY);
+    const combined = await getFromKeyStore(db, storageKey);
 
     if (!combined) {
       return null;
@@ -145,13 +146,27 @@ export async function getApiKey(): Promise<string | null> {
 
     return await decryptApiKey(iv, encrypted);
   } catch (error) {
-    console.error('Failed to retrieve API key:', error);
+    console.error(`Failed to retrieve ${label}:`, error);
     return null;
   }
 }
 
 /**
- * Checks if an API key is stored.
+ * Saves the Gemini API key securely to IndexedDB.
+ */
+export async function saveApiKey(apiKey: string): Promise<void> {
+  await saveEncryptedSecret(STORAGE_KEY, apiKey);
+}
+
+/**
+ * Retrieves and decrypts the Gemini API key from IndexedDB.
+ */
+export async function getApiKey(): Promise<string | null> {
+  return getEncryptedSecret(STORAGE_KEY, 'API key');
+}
+
+/**
+ * Checks if a Gemini API key is stored.
  */
 export async function hasApiKey(): Promise<boolean> {
   const key = await getApiKey();
@@ -159,11 +174,47 @@ export async function hasApiKey(): Promise<boolean> {
 }
 
 /**
- * Removes the stored API key.
+ * Removes the stored Gemini API key.
  */
 export async function removeApiKey(): Promise<void> {
   const db = await openKeyDatabase();
   await deleteFromKeyStore(db, STORAGE_KEY);
+}
+
+/**
+ * Saves the NCBI API key securely to IndexedDB.
+ * NCBI keys have variable formats, so only trimming is applied.
+ */
+export async function saveNcbiApiKey(apiKey: string): Promise<void> {
+  const trimmed = apiKey.trim();
+  if (!trimmed) {
+    await removeNcbiApiKey();
+    return;
+  }
+  await saveEncryptedSecret(STORAGE_KEY_NCBI, trimmed);
+}
+
+/**
+ * Retrieves and decrypts the NCBI API key from IndexedDB.
+ */
+export async function getNcbiApiKey(): Promise<string | null> {
+  return getEncryptedSecret(STORAGE_KEY_NCBI, 'NCBI API key');
+}
+
+/**
+ * Checks if an NCBI API key is stored.
+ */
+export async function hasNcbiApiKey(): Promise<boolean> {
+  const key = await getNcbiApiKey();
+  return key !== null && key.length > 0;
+}
+
+/**
+ * Removes the stored NCBI API key.
+ */
+export async function removeNcbiApiKey(): Promise<void> {
+  const db = await openKeyDatabase();
+  await deleteFromKeyStore(db, STORAGE_KEY_NCBI);
 }
 
 /**

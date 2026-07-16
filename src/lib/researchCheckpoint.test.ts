@@ -17,7 +17,9 @@ const input: ResearchInput = {
 
 describe('researchCheckpoint', () => {
   it('buildCheckpointId slugifies topic', () => {
-    expect(buildCheckpointId('Cancer Immunotherapy!', 1)).toBe('ckpt_cancer-immunotherapy_1');
+    expect(buildCheckpointId('Cancer Immunotherapy!', 1, 'uuid-test')).toBe(
+      'ckpt_cancer-immunotherapy_1_uuid-test',
+    );
   });
 
   it('createResearchCheckpoint fills defaults', () => {

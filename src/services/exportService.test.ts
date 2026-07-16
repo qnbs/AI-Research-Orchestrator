@@ -220,7 +220,7 @@ describe('export helpers', () => {
     expect(anchorMocks[0].click).toHaveBeenCalled();
   });
 
-  it('exportToCsv triggers download with sanitized cells', () => {
+  it('exportToCsv triggers download with sanitized cells', async () => {
     const articles: AggregatedArticle[] = [
       {
         pmid: '1',
@@ -244,5 +244,9 @@ describe('export helpers', () => {
     });
     expect(anchorMocks[0].click).toHaveBeenCalled();
     expect(URL.createObjectURL).toHaveBeenCalled();
+    const blob = vi.mocked(URL.createObjectURL).mock.calls[0][0] as Blob;
+    const csv = await blob.text();
+    expect(csv).toContain('\t=HACK');
+    expect(csv).not.toContain(',=HACK,');
   });
 });

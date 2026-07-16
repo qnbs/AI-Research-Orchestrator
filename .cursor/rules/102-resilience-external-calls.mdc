@@ -1,5 +1,5 @@
 ---
-description: Require AppError and circuit breakers for external service calls
+description: When adding external calls, require typed errors and circuit breakers to preserve resilience
 globs: src/services/**/*.ts,src/lib/errors.ts,src/lib/circuitBreaker.ts,src/lib/resilience.ts
 alwaysApply: false
 ---

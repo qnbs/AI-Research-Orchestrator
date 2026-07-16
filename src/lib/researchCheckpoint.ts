@@ -19,14 +19,32 @@ export interface ResearchCheckpoint {
   errorMessage?: string;
 }
 
-export function buildCheckpointId(topic: string, now = Date.now()): string {
+function createCheckpointNonce(): string {
+  if (typeof globalThis.crypto?.randomUUID === 'function') {
+    return globalThis.crypto.randomUUID();
+  }
+
+  const bytes = new Uint8Array(16);
+  if (typeof globalThis.crypto?.getRandomValues === 'function') {
+    globalThis.crypto.getRandomValues(bytes);
+    return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+  }
+
+  return `${Math.random().toString(36).slice(2)}${Math.random().toString(36).slice(2)}`;
+}
+
+export function buildCheckpointId(
+  topic: string,
+  now = Date.now(),
+  nonce = createCheckpointNonce(),
+): string {
   const slug = topic
     .trim()
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '')
     .slice(0, 48);
-  return `ckpt_${slug || 'research'}_${now}`;
+  return `ckpt_${slug || 'research'}_${now}_${nonce}`;
 }
 
 export function createResearchCheckpoint(params: {

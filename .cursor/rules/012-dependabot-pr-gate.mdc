@@ -1,5 +1,5 @@
 ---
-description: Process every open Dependabot PR fully before leaving dependency debt
+description: When Dependabot PRs are open, process and validate every PR before merge
 alwaysApply: true
 ---
 
@@ -24,3 +24,11 @@ When Dependabot (or similar) PRs are open, **do not leave them idle**. Process e
 - Leave Actions bumps only on `deploy.yml` while `security.yml` stays stale.
 
 English for PR comments/docs (`010-english-content.mdc`).
+
+<example>
+Open Dependabot PRs for `actions/checkout` and `dompurify` → land both in one consolidation branch, run `typecheck`/`lint`/`test:coverage`/`build`/`audit`, document disposition in `docs/dependabot-disposition.md`, comment each Dependabot PR with link to the consolidation PR, close superseded PRs, leave majors deferred with reason.
+</example>
+
+<example type="invalid">
+Close all open Dependabot PRs in bulk without running gates or writing per-PR disposition comments.
+</example>

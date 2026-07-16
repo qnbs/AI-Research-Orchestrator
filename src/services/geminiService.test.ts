@@ -39,6 +39,7 @@ vi.mock('@google/genai', () => ({
 
 vi.mock('./apiKeyService', () => ({
   getApiKey: vi.fn().mockResolvedValue('test-api-key'),
+  getNcbiApiKey: vi.fn().mockResolvedValue('ncbi-vault-key'),
 }));
 
 const mockPubMed = vi.hoisted(() => ({
@@ -233,6 +234,17 @@ describe('geminiService with mocked SDK', () => {
     }
     expect(phases.some((p) => p.includes('Phase 1'))).toBe(true);
     expect(phases.some((p) => p.includes('Phase 5') || p.includes('Streaming'))).toBe(true);
+    expect(mockPubMed.searchPubMedForIds).toHaveBeenCalledWith(
+      'cancer[Title]',
+      10,
+      undefined,
+      'ncbi-vault-key',
+    );
+    expect(mockPubMed.fetchArticleDetails).toHaveBeenCalledWith(
+      ['123'],
+      undefined,
+      'ncbi-vault-key',
+    );
   });
 
   it('generateResearchReportStream aborts when signal is aborted early', async () => {

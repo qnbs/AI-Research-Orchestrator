@@ -2,6 +2,8 @@
  * Shared retry / backoff helpers for external service calls.
  */
 
+import { isAbortError } from './errors';
+
 export interface BackoffOptions {
   retries?: number;
   /** Initial delay in ms. Default 1000. */
@@ -18,6 +20,43 @@ export interface BackoffOptions {
 
 function defaultSleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function createAbortError(): DOMException {
+  return new DOMException('Aborted', 'AbortError');
+}
+
+function throwIfAborted(signal?: AbortSignal): void {
+  if (signal?.aborted) {
+    throw createAbortError();
+  }
+}
+
+function sleepWithAbort(
+  ms: number,
+  sleep: (ms: number) => Promise<void>,
+  signal?: AbortSignal,
+): Promise<void> {
+  throwIfAborted(signal);
+  if (!signal) return sleep(ms);
+
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const cleanup = () => signal.removeEventListener('abort', onAbort);
+    const settle = (fn: () => void) => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      fn();
+    };
+    const onAbort = () => settle(() => reject(createAbortError()));
+
+    signal.addEventListener('abort', onAbort, { once: true });
+    sleep(ms).then(
+      () => settle(() => resolve()),
+      (error) => settle(() => reject(error)),
+    );
+  });
 }
 
 function computeDelay(attempt: number, baseMs: number, maxMs: number, jitter: number): number {
@@ -43,17 +82,14 @@ export async function withExponentialBackoff<T>(
 
   let lastError: unknown;
   for (let attempt = 0; attempt <= retries; attempt++) {
-    if (options.signal?.aborted) {
-      throw new DOMException('Aborted', 'AbortError');
-    }
+    throwIfAborted(options.signal);
     try {
       return await fn(attempt);
     } catch (error) {
       lastError = error;
-      if (error instanceof DOMException && error.name === 'AbortError') throw error;
-      if (error instanceof Error && error.name === 'AbortError') throw error;
+      if (isAbortError(error)) throw error;
       if (attempt >= retries || !shouldRetry(error, attempt)) throw error;
-      await sleep(computeDelay(attempt, baseMs, maxMs, jitter));
+      await sleepWithAbort(computeDelay(attempt, baseMs, maxMs, jitter), sleep, options.signal);
     }
   }
   throw lastError;
@@ -68,7 +104,7 @@ export function estimateGeminiCostUsd(params: {
 }): number {
   const tier = params.tier ?? 'flash';
   // Approximate public list prices mid-2026 (USD per 1M tokens) — estimator only.
-  const rates = tier === 'pro' ? { input: 1.25, output: 10.0 } : { input: 0.15, output: 0.6 };
+  const rates = tier === 'pro' ? { input: 1.25, output: 10.0 } : { input: 0.3, output: 2.5 };
   return (
     (params.inputTokens / 1_000_000) * rates.input +
     (params.outputTokens / 1_000_000) * rates.output

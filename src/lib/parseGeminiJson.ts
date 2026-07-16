@@ -25,52 +25,95 @@ function unwrapMarkdownFences(text: string): string {
 
 /** Remove trailing commas before `}` or `]` (common LLM mistake). */
 function repairTrailingCommas(json: string): string {
-  return json.replace(/,\s*([}\]])/g, '$1');
-}
-
-type JsonContainer = 'object' | 'array';
-
-function findBalancedJsonSegment(
-  text: string,
-  openChar: '{' | '[',
-  closeChar: '}' | ']',
-): string | null {
-  const startIdx = text.indexOf(openChar);
-  if (startIdx === -1) return null;
-
-  let depth = 0;
+  let out = '';
   let inString = false;
   let escaped = false;
 
-  for (let i = startIdx; i < text.length; i++) {
-    const ch = text[i];
+  for (let i = 0; i < json.length; i++) {
+    const ch = json[i];
 
     if (inString) {
+      out += ch;
       if (escaped) {
         escaped = false;
-        continue;
-      }
-      if (ch === '\\') {
+      } else if (ch === '\\') {
         escaped = true;
-        continue;
+      } else if (ch === '"') {
+        inString = false;
       }
-      if (ch === '"') inString = false;
       continue;
     }
 
     if (ch === '"') {
       inString = true;
+      out += ch;
       continue;
     }
 
-    if (ch === openChar) depth++;
-    else if (ch === closeChar) {
-      depth--;
-      if (depth === 0) return text.substring(startIdx, i + 1);
+    if (ch === ',') {
+      let j = i + 1;
+      while (/\s/.test(json[j] ?? '')) j++;
+      if (json[j] === '}' || json[j] === ']') {
+        continue;
+      }
     }
+
+    out += ch;
   }
 
-  return null;
+  return out;
+}
+
+type JsonContainer = 'object' | 'array';
+
+function* findBalancedJsonSegments(
+  text: string,
+  openChar: '{' | '[',
+  closeChar: '}' | ']',
+): Generator<string> {
+  let searchFrom = 0;
+
+  while (searchFrom < text.length) {
+    const startIdx = text.indexOf(openChar, searchFrom);
+    if (startIdx === -1) return;
+
+    let depth = 0;
+    let inString = false;
+    let escaped = false;
+
+    for (let i = startIdx; i < text.length; i++) {
+      const ch = text[i];
+
+      if (inString) {
+        if (escaped) {
+          escaped = false;
+          continue;
+        }
+        if (ch === '\\') {
+          escaped = true;
+          continue;
+        }
+        if (ch === '"') inString = false;
+        continue;
+      }
+
+      if (ch === '"') {
+        inString = true;
+        continue;
+      }
+
+      if (ch === openChar) depth++;
+      else if (ch === closeChar) {
+        depth--;
+        if (depth === 0) {
+          yield text.substring(startIdx, i + 1);
+          break;
+        }
+      }
+    }
+
+    searchFrom = startIdx + 1;
+  }
 }
 
 function pickContainerType(text: string): JsonContainer | null {
@@ -95,6 +138,18 @@ function tryParse<T>(candidate: string): T | null {
   return null;
 }
 
+function tryParseBalancedSegments<T>(
+  text: string,
+  openChar: '{' | '[',
+  closeChar: '}' | ']',
+): T | null {
+  for (const segment of findBalancedJsonSegments(text, openChar, closeChar)) {
+    const parsed = tryParse<T>(segment);
+    if (parsed !== null) return parsed;
+  }
+  return null;
+}
+
 /**
  * Parses JSON from AI response text. Throws {@link GeminiJsonParseError} on failure.
  */
@@ -110,17 +165,11 @@ export function parseGeminiResponseJson<T>(text: string): T {
 
   const container = pickContainerType(cleanText);
   if (container === 'object') {
-    const segment = findBalancedJsonSegment(cleanText, '{', '}');
-    if (segment) {
-      const parsed = tryParse<T>(segment);
-      if (parsed !== null) return parsed;
-    }
+    const parsed = tryParseBalancedSegments<T>(cleanText, '{', '}');
+    if (parsed !== null) return parsed;
   } else if (container === 'array') {
-    const segment = findBalancedJsonSegment(cleanText, '[', ']');
-    if (segment) {
-      const parsed = tryParse<T>(segment);
-      if (parsed !== null) return parsed;
-    }
+    const parsed = tryParseBalancedSegments<T>(cleanText, '[', ']');
+    if (parsed !== null) return parsed;
   }
 
   // Fallback: slice from first container char to last closing char

@@ -1,28 +1,38 @@
 ---
-description: Resolve every CodeRabbit PR review comment before merging to main
+description: Resolve every automated PR review comment before merging to main
 alwaysApply: true
 ---
 
-# CodeRabbit Review Gate (Pre-Merge)
+# Automated PR Review Gate (Pre-Merge)
 
-Before merging any PR to `main`, **trigger and fully resolve all CodeRabbit review feedback** on that PR.
+Before merging any PR to `main`, **trigger and fully resolve all automated review feedback** on that PR.
+
+## Bots / sources in scope
+
+Address findings from **all** of these when present:
+
+- **CodeRabbit** (`coderabbitai`)
+- **CodeAntai** / Code Antai (and similarly named AI reviewers)
+- Other automated PR reviewers that post inline or summary comments (e.g. Socket Security actionable items when they block merge, Cursor Bugbot when requested)
+
+Human review comments that request concrete fixes are also in scope when they are open on the PR.
 
 ## Scope (mandatory)
 
-Address **every** CodeRabbit item, including:
+Address **every** item, including:
 
 - Critical / high / medium findings
 - **Nitpicks**
 - **Outside-of-diff-range** comments
-- Suggestions, refactors, and doc notes from CodeRabbit
+- Suggestions, refactors, and doc notes from the reviewer
 
-## Workflow
+## Workflow (loop until clear)
 
-1. After pushing PR updates, wait for / re-request CodeRabbit review when available.
-2. Collect all CodeRabbit review threads (inline + summary + out-of-range).
-3. For each item: fix in code/docs, or reply with a clear rationale if intentionally deferred (rare — prefer fixing).
-4. Push follow-up commits; re-check until CodeRabbit threads are resolved / addressed.
-5. Do **not** merge while unresolved CodeRabbit comments remain.
+1. After pushing PR updates, wait for / re-request review when available (`@coderabbitai review`, etc.).
+2. Collect **all** review threads (inline + summary + out-of-range) from every in-scope bot.
+3. For each item: fix in code/docs, or reply with a clear English rationale if intentionally deferred (rare — prefer fixing).
+4. Push follow-up commits; re-request review; **repeat until no new actionable comments remain**.
+5. Do **not** merge while unresolved automated review comments remain.
 
 ## Exceptions
 

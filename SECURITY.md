@@ -14,14 +14,14 @@ This application is a **local-first, zero-backend PWA**. There is no application
 ### Assets
 
 - Gemini API key (user-supplied)
-- Optional NCBI API key (future / settings)
+- Optional NCBI API key (Settings → AI Configuration, encrypted vault)
 - Local research reports, knowledge base, collections (IndexedDB / Dexie)
 - Session UI state (Redux)
 
 ### Trust Boundaries
 
 1. **Browser process** — fully trusted by the user; XSS or malicious extensions can read IndexedDB and memory.
-2. **External APIs** — Google Gemini, NCBI E-utilities, arXiv; only public data + user keys leave the device.
+2. **External APIs** — Google Gemini, NCBI E-utilities, arXiv. Payloads that leave the device include: the user’s research topic/query, PubMed/arXiv article metadata and abstracts, generated report context used for ranking/synthesis/chat, plus the user’s Gemini (and optional NCBI) credentials.
 3. **GitHub Pages origin** — static assets only; CSP restricts script sources.
 
 ### Mitigations
@@ -61,4 +61,4 @@ We aim to acknowledge reports within **7 days** and ship fixes as soon as practi
 2. Enter the key only via **Settings → AI Configuration**.
 3. Revoke keys that may have been exposed (browser compromise, shared machine).
 4. Prefer a personal device; avoid untrusted browser extensions on research machines.
-5. For higher PubMed rate limits, use an NCBI API key when the setting is available — never paste keys into prompts or issue trackers.
+5. For higher PubMed rate limits, enter an NCBI API key under **Settings → AI Configuration** (encrypted like the Gemini key) — never paste keys into prompts or issue trackers.

@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock the databaseService before importing the slice
 vi.mock('../../services/databaseService', () => ({
@@ -47,6 +47,10 @@ describe('knowledgeBaseSlice', () => {
     },
     selectedPmids: [],
   };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   describe('reducers', () => {
     it('should return the initial state', () => {
@@ -97,12 +101,25 @@ describe('knowledgeBaseSlice', () => {
   });
 
   describe('async thunks', () => {
+    const sampleArticle = {
+      pmid: 'pmid-1',
+      title: 'Article',
+      authors: 'Author',
+      journal: 'Journal',
+      pubYear: '2024',
+      summary: 'Summary',
+      relevanceScore: 1,
+      relevanceExplanation: '',
+      keywords: [],
+      isOpenAccess: false,
+    };
+
     const sampleEntry = {
       id: 'e1',
-      type: 'research' as const,
+      sourceType: 'research' as const,
       timestamp: 1000,
       title: 'T',
-      data: {},
+      articles: [sampleArticle],
     } as unknown as KnowledgeBaseEntry;
 
     it('fetchKnowledgeBase populates entities', () => {
@@ -155,7 +172,28 @@ describe('knowledgeBaseSlice', () => {
       expect(state.ids).toEqual([]);
     });
 
+    it('removes selected PMIDs for deleted entries without touching unaffected selections', () => {
+      const deletedEntry = {
+        ...sampleEntry,
+        id: 'e2',
+        articles: [{ ...sampleArticle, pmid: 'pmid-delete' }],
+      } as KnowledgeBaseEntry;
+      let state = knowledgeBaseReducer(
+        initialState,
+        importKbEntries.fulfilled([deletedEntry], '', [deletedEntry]),
+      );
+      state = knowledgeBaseReducer(state, setSelectedPmids(['pmid-delete', 'pmid-keep']));
+
+      state = knowledgeBaseReducer(state, deleteKbEntries.fulfilled(['e2'], '', ['e2']));
+
+      expect(state.selectedPmids).toEqual(['pmid-keep']);
+    });
+
     it('thunks invoke databaseService side effects', async () => {
+      vi.mocked(getAllEntries).mockResolvedValueOnce([sampleEntry]);
+      await fetchKnowledgeBase()(vi.fn(), () => ({}) as never, undefined);
+      expect(getAllEntries).toHaveBeenCalled();
+
       await addKbEntry(sampleEntry)(vi.fn(), () => ({}) as never, undefined);
       expect(addEntry).toHaveBeenCalledWith(sampleEntry);
 
