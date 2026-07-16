@@ -8,12 +8,8 @@ import {
 import type {
   KnowledgeBaseEntry,
   AggregatedArticle,
-  RankedArticle,
-  ResearchReport,
-  AuthorProfileEntry,
-  JournalEntry,
-  ResearchEntry,
   KnowledgeBaseFilter,
+  ResearchEntry,
 } from '../../types';
 import {
   getAllEntries,
@@ -136,18 +132,10 @@ export const knowledgeBaseSlice = createSlice({
         entriesAdapter.addMany(state, action.payload);
       })
       .addCase(deleteKbEntries.fulfilled, (state, action) => {
-        // Note: Logic to remove articles from within entries is complex if we store full entries.
-        // For full entry deletion:
-        // entriesAdapter.removeMany(state, action.payload);
-        // However, the app logic often deletes *articles* inside entries.
-        // If the ID passed is an Entry ID, we remove the entry.
-        // If we are pruning articles, we might need to update entries.
-        // For this slice, we assume we are deleting full Entries or triggering updates.
-        // To keep it simple and consistent with the previous context logic which updated specific entries:
-        // Real update logic should happen in the Thunk/Service, and we reload or update state here.
-        // For now, let's assume we might reload or handle updates via `updateKbEntry`.
-        // If we deleted full entries:
-        // entriesAdapter.removeMany(state, action.payload);
+        entriesAdapter.removeMany(state, action.payload);
+        // Drop selection for deleted entry ids when they overlap PMIDs/ids
+        const deleted = new Set(action.payload);
+        state.selectedPmids = state.selectedPmids.filter((id) => !deleted.has(id));
       })
       .addCase(clearKb.fulfilled, (state) => {
         entriesAdapter.removeAll(state);

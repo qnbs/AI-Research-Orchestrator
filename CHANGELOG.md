@@ -7,12 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Resilience layer: typed `AppError` taxonomy (`src/lib/errors.ts`), per-service circuit breaker (`circuitBreaker.ts`), exponential backoff + Gemini cost heuristics (`resilience.ts`).
+- String-aware Gemini JSON parser (`src/lib/parseGeminiJson.ts`) with unit tests.
+- `SECURITY.md` with threat model, disclosure process, and key-handling guidance.
+- Architecture Decision Records: `docs/adr/0001`–`0004` (state, orchestration, security model, PWA offline).
+- GitHub Actions `security.yml`: CodeQL, Dependency Review (PRs), scheduled pnpm audit, gitleaks.
+- CI coverage artifact upload; quality vs build job split in `deploy.yml`.
+- ErrorBoundary unit tests; expanded PubMed, API key vault, and knowledge-base thunk tests.
+
+- Cursor rule `010-english-content.mdc`: English-only for new docs, comments, commits, and default UI strings (i18n DE locale values remain).
+
 ### Changed
 
-- Vitest: globale Coverage-Schwellen für `lines`/`statements` auf **30 %** gesetzt (Messung ~30,5 % bei bestehendem Include-Scope); weiterhin Fokus auf `store/`, `services/`, `hooks/`, `lib/`.
-- Cursor: modulares Regelwerk unter `.cursor/rules/` (`000`–`850`, neu `101-dexie-local.mdc`), Always-On-Manifest `.cursor/index.mdc`; CI-Schritt Typecheck auf `pnpm run typecheck` vereinheitlicht (`deploy.yml`).
-- Dokumentation: `AGENTS.md`, `README.md`, `CONTRIBUTING.md`, `.github/copilot-instructions.md` an Manifest und Workflow angeglichen; `package.json` mit `engines.node`.
-- Audit-Dokument `AUDIT.md` für aktuelle Tests/Tooling/Cursor-Stand aktualisiert.
+- Vitest coverage thresholds raised to **70%** lines/statements and **55%** branches/functions (logic layers).
+- `parseGeminiResponseJson` in `geminiService` delegates to the new parser and maps failures to `AppError`.
+- Abort in orchestrator throws `AppError` (`STREAM_ABORTED`); missing API key throws `AppError` (`NO_API_KEY`).
+- PubMed fetches use circuit breaker, abort-aware retries, and typed rate-limit / network errors.
+- ErrorBoundary copy no longer claims agents were notified; clarifies local data preservation.
+- July 2026 full re-audit documented in `AUDIT.md`.
+- Default `AppError` user messages are English (UI i18n remains the path for localized product copy).
+
+### Fixed
+
+- Knowledge Base Redux: `deleteKbEntries.fulfilled` now removes entities via `removeMany` (previously a no-op).
+- PubMed `pubYear` only kept when a valid 4-digit year is present.
 
 ## [0.1.1] - 2026-05-02
 

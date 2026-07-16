@@ -238,7 +238,13 @@ describe('geminiService with mocked SDK', () => {
     const ac = new AbortController();
     ac.abort();
     const gen = generateResearchReportStream(mockInput, mockAi, ac.signal);
-    await expect(gen.next()).rejects.toThrow();
+    await expect(gen.next()).rejects.toMatchObject({ code: 'STREAM_ABORTED' });
+  });
+
+  it('throws NO_API_KEY AppError when key missing', async () => {
+    const { getApiKey } = await import('./apiKeyService');
+    vi.mocked(getApiKey).mockResolvedValueOnce(null);
+    await expect(generateTldrSummary('x', mockAi)).rejects.toMatchObject({ code: 'NO_API_KEY' });
   });
 
   it('findRelatedOnline maps grounding chunks when present', async () => {

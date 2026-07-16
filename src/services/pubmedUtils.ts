@@ -8,8 +8,11 @@
  */
 import type { RankedArticle } from '../types';
 import { combineAbortSignals } from '../lib/abortUtils';
+import { withCircuitBreaker, CircuitOpenError } from '../lib/circuitBreaker';
+import { AppError, isAbortError } from '../lib/errors';
 
 const PUBMED_BASE = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils';
+const PUBMED_CIRCUIT = 'pubmed';
 
 async function fetchWithRetry(
   url: string,
@@ -33,9 +36,30 @@ async function fetchWithRetry(
     }
     return response;
   } catch (err) {
+    if (isAbortError(err)) throw err;
     if (retries > 0) {
       await new Promise((r) => setTimeout(r, backoff));
       return fetchWithRetry(url, init, retries - 1, backoff * 2);
+    }
+    throw err;
+  }
+}
+
+async function pubmedFetch(url: string, init: RequestInit = {}): Promise<Response> {
+  try {
+    return await withCircuitBreaker(PUBMED_CIRCUIT, () => fetchWithRetry(url, init), {
+      failureThreshold: 5,
+      cooldownMs: 30_000,
+    });
+  } catch (err) {
+    if (err instanceof CircuitOpenError) {
+      throw new AppError({
+        code: 'CIRCUIT_OPEN',
+        message: err.message,
+        retryable: true,
+        context: 'pubmed',
+        cause: err,
+      });
     }
     throw err;
   }
@@ -49,13 +73,37 @@ export async function searchPubMedForIds(
 ): Promise<string[]> {
   const url = `${PUBMED_BASE}/esearch.fcgi?db=pubmed&term=${encodeURIComponent(query)}&retmax=${retmax}&sort=relevance&retmode=json`;
   try {
-    const response = await fetchWithRetry(url, { signal });
+    const response = await pubmedFetch(url, { signal });
+    if (response.status === 429) {
+      throw new AppError({
+        code: 'NCBI_RATE_LIMIT',
+        message: 'PubMed rate limit (429)',
+        retryable: true,
+        context: 'pubmed',
+        status: 429,
+      });
+    }
     if (!response.ok) throw new Error(`PubMed API error: ${response.statusText}`);
     const data = await response.json();
     return data.esearchresult?.idlist ?? [];
   } catch (error) {
-    if (error instanceof Error) throw new Error(`Failed to fetch from PubMed: ${error.message}`);
-    throw new Error('An unknown network error occurred while searching PubMed.');
+    if (isAbortError(error) || error instanceof AppError) throw error;
+    if (error instanceof Error) {
+      throw new AppError({
+        code: 'NCBI_NETWORK',
+        message: `Failed to fetch from PubMed: ${error.message}`,
+        retryable: true,
+        context: 'pubmed',
+        cause: error,
+      });
+    }
+    throw new AppError({
+      code: 'NCBI_NETWORK',
+      message: 'An unknown network error occurred while searching PubMed.',
+      retryable: true,
+      context: 'pubmed',
+      cause: error,
+    });
   }
 }
 
@@ -68,10 +116,34 @@ export async function fetchArticleDetails(
   const url = `${PUBMED_BASE}/esummary.fcgi?db=pubmed&retmode=json`;
   const formData = new FormData();
   formData.append('id', pmids.join(','));
-  const response = await fetchWithRetry(url, { method: 'POST', body: formData, signal });
-  if (!response.ok) throw new Error(`PubMed API error: ${response.statusText}`);
+  const response = await pubmedFetch(url, { method: 'POST', body: formData, signal });
+  if (response.status === 429) {
+    throw new AppError({
+      code: 'NCBI_RATE_LIMIT',
+      message: 'PubMed rate limit (429)',
+      retryable: true,
+      context: 'pubmed',
+      status: 429,
+    });
+  }
+  if (!response.ok) {
+    throw new AppError({
+      code: 'NCBI_NETWORK',
+      message: `PubMed API error: ${response.statusText}`,
+      retryable: response.status >= 500,
+      context: 'pubmed',
+      status: response.status,
+    });
+  }
   const data = await response.json();
-  if (!data.result) throw new Error('Invalid response format from PubMed.');
+  if (!data.result) {
+    throw new AppError({
+      code: 'NCBI_NETWORK',
+      message: 'Invalid response format from PubMed.',
+      retryable: false,
+      context: 'pubmed',
+    });
+  }
   const articles: Partial<RankedArticle>[] = [];
   for (const pmid of data.result.uids as string[]) {
     const art = data.result[pmid];
@@ -79,13 +151,15 @@ export async function fetchArticleDetails(
     const pmcEntry = ((art.articleids ?? []) as Array<{ idtype: string; value: string }>).find(
       (x) => x.idtype === 'pmc',
     );
+    const yearRaw = (art.pubdate ?? '').split(' ')[0];
+    const pubYear = /^\d{4}$/.test(yearRaw) ? yearRaw : undefined;
     articles.push({
       pmid,
       pmcId: pmcEntry?.value,
       title: art.title ?? '',
       authors: ((art.authors ?? []) as Array<{ name: string }>).map((a) => a.name).join(', '),
       journal: art.fulljournalname ?? '',
-      pubYear: (art.pubdate ?? '').split(' ')[0],
+      pubYear,
       summary: art.abstract || 'No abstract available.',
       isOpenAccess: !!pmcEntry?.value,
       keywords: [],

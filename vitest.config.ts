@@ -20,12 +20,12 @@ export default defineConfig({
         'src/lib/**/*.ts',
       ],
       exclude: ['node_modules/', 'src/test/', 'dist/', '**/*.{test,spec}.{ts,tsx}'],
-      /** Raised after expanded unit tests (logic-layer ~65% lines aggregate). */
+      /** Phase 0 (2026-07): raised after resilience libs + apiKey/KB/PubMed coverage surge. Target 80% next. */
       thresholds: {
-        lines: 65,
-        statements: 65,
-        branches: 52,
-        functions: 52,
+        lines: 70,
+        statements: 70,
+        branches: 55,
+        functions: 55,
       },
     },
   },

@@ -35,5 +35,8 @@ Workflow: `.github/workflows/deploy.yml` — bei **Push** und **Pull Request** a
 - **CDN-Abhängigkeit zur Laufzeit:** `index.html` nutzt eine Importmap, die React & Co. von `aistudiocdn.com` lädt. Der Browser braucht Egress zu dieser CDN, sonst rendert die App nicht (der Vite-Server selbst liefert nur den Bootstrap).
 - **Gemini-Key ist kein Env-Secret:** Der Key wird zur Laufzeit über die UI (Settings → AI Configuration) eingegeben und AES-GCM-verschlüsselt in IndexedDB abgelegt. Gültiges Format: 39 Zeichen, Präfix `AIza`.
 - **Alle KI-Features brauchen den Key:** Orchestrator-Recherche, Quick Add und der Rapid Research Assistant liefern ohne konfigurierten Key `NO_API_KEY`. Für eine echte End-to-End-KI-Recherche ist daher ein nutzereigener Gemini-Key nötig (nicht im Repo/Env hinterlegen).
-- **Coverage-Gate:** `pnpm run test:coverage` scheitert aktuell knapp an der globalen Zeilen-/Statement-Schwelle (~64.4 % vs. 65 % in `vitest.config.ts`), obwohl alle Unit-Tests grün sind. Zum Verifizieren von Tests `pnpm run test:run` nutzen.
-- **E2E:** Einmalig `pnpm exec playwright install chromium`, dann `pnpm run test:e2e` (Playwright startet den Vite-Server selbst und nutzt einen Fake-Key).
+- **Coverage gate:** `pnpm run test:coverage` enforces logic-layer thresholds in `vitest.config.ts` (Phase 0: **70%** lines/statements). Use `pnpm run test:run` for fast loops.
+- **Resilience:** External calls via `AppError` / circuit breaker (`src/lib/errors.ts`, `circuitBreaker.ts`) — see `.cursor/rules/102-resilience-external-calls.mdc`.
+- **English content:** New docs, comments, commits, and default strings must be English (`.cursor/rules/010-english-content.mdc`). Product UI i18n DE values stay in `translations.ts`.
+- **E2E:** Once: `pnpm exec playwright install chromium`, then `pnpm run test:e2e` (Playwright starts Vite and uses a fake key).
+- **ADRs / Security:** `docs/adr/`, `SECURITY.md`, living backlog in `AUDIT.md`.
