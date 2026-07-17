@@ -38,7 +38,8 @@ type AbortablePromise = { abort: () => void };
 /**
  * Rapid Research Assistant state machine: analysis + optional similar/online fetches
  * via lazy RTK Query endpoints. In-flight triggers are aborted on unmount / clear /
- * a new startResearch call; late results are also ignored via `isMountedRef`.
+ * a new startResearch call. An operation generation ignores superseded workflows so
+ * late results cannot overwrite newer state.
  */
 export const useResearchAssistant = (
   aiSettings: Settings['ai'],
@@ -47,6 +48,7 @@ export const useResearchAssistant = (
   const [state, setState] = useState<ResearchState>(initialState);
   const isMountedRef = useRef(true);
   const inflightRef = useRef<AbortablePromise[]>([]);
+  const operationGenerationRef = useRef(0);
 
   const [triggerAnalysis] = useLazyGenerateAnalysisQuery();
   const [triggerSimilar] = useLazyFindSimilarArticlesQuery();
@@ -63,19 +65,26 @@ export const useResearchAssistant = (
     inflightRef.current = [];
   }, []);
 
+  const bumpGeneration = useCallback(() => {
+    operationGenerationRef.current += 1;
+    return operationGenerationRef.current;
+  }, []);
+
   useEffect(() => {
     isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
+      bumpGeneration();
       abortInflight();
     };
-  }, [abortInflight]);
+  }, [abortInflight, bumpGeneration]);
 
   const startResearch = useCallback(
     async (queryText: string) => {
       if (!queryText.trim()) return;
 
       abortInflight();
+      const generation = bumpGeneration();
 
       setState({
         ...initialState,
@@ -84,12 +93,14 @@ export const useResearchAssistant = (
       });
       setCurrentView('research');
 
+      const isCurrent = () => isMountedRef.current && generation === operationGenerationRef.current;
+
       try {
         const analysisPromise = triggerAnalysis({ query: queryText, aiSettings });
         inflightRef.current.push(analysisPromise);
         const analysisResult = await analysisPromise.unwrap();
 
-        if (!isMountedRef.current) return;
+        if (!isCurrent()) return;
 
         setState((s) => ({
           ...s,
@@ -118,7 +129,7 @@ export const useResearchAssistant = (
           onlinePromise ? onlinePromise.unwrap() : Promise.resolve(null),
         ]);
 
-        if (!isMountedRef.current) return;
+        if (!isCurrent()) return;
 
         setState((s) => ({
           ...s,
@@ -141,9 +152,11 @@ export const useResearchAssistant = (
               onlineResult.status === 'rejected' ? (onlineResult.reason as Error).message : null,
           },
         }));
-        inflightRef.current = [];
+        if (isCurrent()) {
+          inflightRef.current = [];
+        }
       } catch (err) {
-        if (!isMountedRef.current) return;
+        if (!isCurrent()) return;
         // Aborted requests should not surface as user-visible errors
         const message = err instanceof Error ? err.message : 'An unknown error occurred.';
         if (/abort/i.test(message)) return;
@@ -155,13 +168,22 @@ export const useResearchAssistant = (
         }));
       }
     },
-    [aiSettings, setCurrentView, triggerAnalysis, triggerSimilar, triggerOnline, abortInflight],
+    [
+      aiSettings,
+      setCurrentView,
+      triggerAnalysis,
+      triggerSimilar,
+      triggerOnline,
+      abortInflight,
+      bumpGeneration,
+    ],
   );
 
   const clearResearch = useCallback(() => {
+    bumpGeneration();
     abortInflight();
     setState(initialState);
-  }, [abortInflight]);
+  }, [abortInflight, bumpGeneration]);
 
   return {
     ...state,
