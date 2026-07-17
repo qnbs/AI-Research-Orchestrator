@@ -17,6 +17,16 @@ async function skipOnboarding(page: Page) {
   await page.goto('/');
   await page.waitForLoadState('domcontentloaded');
 
+  // Keep KB empty for existing empty-state assertions (demo seed is for real first-run UX).
+  await page.evaluate(() => {
+    try {
+      localStorage.setItem('aro.demoDataDismissed', '1');
+      localStorage.setItem('aro.demoDataSeeded', '1');
+    } catch {
+      /* ignore */
+    }
+  });
+
   const startBtn = page.getByRole('button', { name: /start researching/i });
   const header = page.locator('header');
 
@@ -476,5 +486,37 @@ test.describe('9. Accessibility', () => {
       (e) => !e.includes('ResizeObserver') && !e.includes('non-passive'),
     );
     expect(critical).toHaveLength(0);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 10. HEURISTIC / OFFLINE INFERENCE
+// ═══════════════════════════════════════════════════════════════════════════════
+
+test.describe('10. Heuristic inference (no API key)', () => {
+  test.beforeEach(async ({ page }) => {
+    // Block Gemini so live path cannot succeed; PubMed may still be called when online.
+    await page.route('**/*generativelanguage.googleapis.com/**', (route) => route.abort());
+    await skipOnboarding(page);
+    await navigateToView(page, '#orchestrator');
+  });
+
+  test('inference mode badge is visible', async ({ page }) => {
+    await expect(page.getByRole('status', { name: /heuristic|live|gemini/i }).first()).toBeVisible({
+      timeout: 10_000,
+    });
+  });
+
+  test('orchestrator run without key reaches heuristic phase or report UI', async ({ page }) => {
+    const input = page.locator('#researchTopic');
+    await input.waitFor({ state: 'visible', timeout: 10_000 });
+    await input.fill('aspirin cardiovascular primary prevention');
+    await page.locator('button[type="submit"]').first().click();
+
+    await expect(
+      page
+        .getByText(/heuristic mode|streaming synthesis|finalizing|background|ranked|relevance/i)
+        .first(),
+    ).toBeVisible({ timeout: 45_000 });
   });
 });

@@ -22,6 +22,7 @@ import { DownloadIcon } from '../icons/DownloadIcon';
 import { UploadIcon } from '../icons/UploadIcon';
 import { ARTICLE_TYPES, CSV_EXPORT_COLUMNS } from '../../types';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
+import { InferenceModeSettings, useApiKeyInferenceRefresh } from './InferenceModeSettings';
 
 const personaDescriptions = {
   'Neutral Scientist': 'Adopts a neutral, objective, and strictly scientific tone.',
@@ -361,6 +362,7 @@ export const GeneralSettingsTab: React.FC = () => {
 
 export const AISettingsTab: React.FC = () => {
   const { tempSettings, setTempSettings, errors } = useSettingsView();
+  const onApiKeyChange = useApiKeyInferenceRefresh();
 
   const handleArticleTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { value, checked } = e.target;
@@ -375,7 +377,7 @@ export const AISettingsTab: React.FC = () => {
 
   return (
     <div className="space-y-8">
-      <ApiKeySettings />
+      <ApiKeySettings onKeyChange={onApiKeyChange} />
       <CostEstimateCard />
       <SettingCard
         icon={<SparklesIcon className="w-6 h-6 text-accent-magenta" />}
@@ -545,6 +547,7 @@ export const AISettingsTab: React.FC = () => {
               summary of an abstract. This will make an additional API call.
             </p>
           </div>
+          <InferenceModeSettings />
         </div>
       </SettingCard>
       <SettingCard

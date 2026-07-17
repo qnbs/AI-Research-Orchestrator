@@ -7,7 +7,7 @@ alwaysApply: true
 
 **Zweck:** Lokale PWA für agentische Literaturrecherche: PubMed/NCBI, arXiv, Gemini-Streaming, Knowledge Base, Export — kein eigenes Backend für Nutzerdaten.
 
-**Stack:** React 19, TypeScript strict, Vite 6, Redux Toolkit, TanStack Query/Virtual, Dexie 4 + dexie-react-hooks (IndexedDB), Tailwind CSS v4, `@google/genai`, Marked/DOMPurify, jsPDF, Chart.js/Recharts, Framer Motion, cmdk, Vitest + Testing Library, Playwright E2E.
+**Stack:** React 19, TypeScript strict, Vite 6, Redux Toolkit, TanStack Query/Virtual, Dexie 4 + dexie-react-hooks (IndexedDB), Tailwind CSS v4, `@google/genai`, Marked/DOMPurify, jsPDF, Recharts, Framer Motion, cmdk, Vitest + Testing Library, Playwright E2E. Inference: live Gemini **or** local heuristics (`src/services/heuristics/`, ADR 0007).
 
 **Architektur:** Browser-only → Gemini API + NCBI E-utilities (+ arXiv); AES-GCM über `apiKeyService`; Redux als Single Source of Truth; Context nur für Hydration/Komposition (`SettingsProvider`, KB) — keine parallelen Kopien derselben Settings/UI-Flags.
 

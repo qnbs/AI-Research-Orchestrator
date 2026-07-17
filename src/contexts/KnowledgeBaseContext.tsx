@@ -37,6 +37,8 @@ import {
   selectRecentResearchEntries,
   updateKbEntry,
 } from '../store/slices/knowledgeBaseSlice';
+import { isDemoEntryId, DEMO_DISMISS_STORAGE_KEY } from '../services/heuristics';
+import { markDemoSeedConsumed, useDemoKnowledgeBaseSeed } from '../hooks/useDemoKnowledgeBaseSeed';
 
 interface KnowledgeBaseContextType {
   knowledgeBase: KnowledgeBaseEntry[];
@@ -47,6 +49,7 @@ interface KnowledgeBaseContextType {
   saveAuthorProfile: (input: AuthorProfileInput, profile: AuthorProfile) => Promise<void>;
   saveJournalProfile: (profile: JournalProfile, articles: Article[]) => Promise<void>;
   clearKnowledgeBase: () => Promise<void>;
+  clearDemoData: () => Promise<void>;
   updateEntryTitle: (id: string, newTitle: string) => Promise<void>;
   updateTags: (pmid: string, newTags: string[]) => Promise<void>;
   deleteArticles: (pmids: string[]) => Promise<void>;
@@ -68,6 +71,8 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
   useEffect(() => {
     dispatch(fetchKnowledgeBase());
   }, [dispatch]);
+
+  useDemoKnowledgeBaseSeed(dispatch, isLoading, knowledgeBase.length);
 
   const showNotification = useCallback(
     (message: string, type: 'success' | 'error' = 'success') => {
@@ -127,8 +132,31 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
   );
 
   const clearKnowledgeBase = useCallback(async () => {
-    await dispatch(clearKb());
-  }, [dispatch]);
+    try {
+      await dispatch(clearKb()).unwrap();
+      markDemoSeedConsumed();
+    } catch {
+      showNotification('Failed to clear knowledge base.', 'error');
+      throw new Error('Failed to clear knowledge base');
+    }
+  }, [dispatch, showNotification]);
+
+  const clearDemoData = useCallback(async () => {
+    const demoIds = knowledgeBase.filter((e) => isDemoEntryId(e.id)).map((e) => e.id);
+    if (demoIds.length === 0) return;
+    try {
+      await deleteEntriesFromDb(demoIds);
+      await dispatch(fetchKnowledgeBase()).unwrap();
+      try {
+        localStorage.setItem(DEMO_DISMISS_STORAGE_KEY, '1');
+      } catch {
+        /* ignore quota / private mode */
+      }
+    } catch {
+      showNotification('Failed to remove demo data.', 'error');
+      throw new Error('Failed to remove demo data');
+    }
+  }, [dispatch, knowledgeBase, showNotification]);
 
   const updateEntryTitle = useCallback(
     async (id: string, newTitle: string) => {
@@ -366,6 +394,7 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
       saveAuthorProfile,
       saveJournalProfile,
       clearKnowledgeBase,
+      clearDemoData,
       updateEntryTitle,
       updateTags,
       deleteArticles,
@@ -384,6 +413,7 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
       saveAuthorProfile,
       saveJournalProfile,
       clearKnowledgeBase,
+      clearDemoData,
       updateEntryTitle,
       updateTags,
       deleteArticles,

@@ -37,6 +37,7 @@ const ai: Settings['ai'] = {
   },
   enableTldr: true,
   ncbiApiKey: '',
+  forceHeuristicMode: false,
 };
 
 function makeStore() {

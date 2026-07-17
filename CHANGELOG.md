@@ -7,24 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-07-17
+
 ### Added
 
-- Offline banner when `navigator.onLine` is false (Dexie-backed reports remain readable).
+- **Heuristic inference layer** (`src/services/heuristics/`): offline / no-API-key path for orchestrator, TL;DR, similar articles, research analysis, author disambiguation & profiles, journal profiles, single-article analysis, and report-grounded chat (ADR 0007).
+- `InferenceMode` resolver (`live` | `heuristic`) from API key, `navigator.onLine`, and Settings → **Force Heuristic Mode**.
+- `InferenceModeBadge` in the header; i18n tooltips (EN/DE); cost card shows **$0 · Heuristic mode** when applicable.
+- First-run **demo Knowledge Base** seed (`demo-` entries) + dismissible `DemoDataBanner`.
+- Offline heuristic eval harness (`src/lib/heuristicEval.ts`) and Playwright coverage for no-key orchestrator runs.
+- Hook `useInferenceMode()` for UI consumers.
+- Offline banner when `navigator.onLine` is false (Dexie-backed reports remain readable; heuristic path continues).
 - i18n EN/DE parity unit tests + typed `TranslationKey` on `useTranslation`.
 - External `public/register-sw.js` (CSP-friendly SW registration).
 - Post-build `scripts/patch-csp-hashes.mjs` so CSP SHA-256 hashes match Vite-emitted `dist/index.html`.
 
 ### Changed
 
+- `geminiService` is mode-aware: never throws `NO_API_KEY` when heuristic mode is active; live Gemini remains the high-fidelity path.
+- Offline banner copy reframed positively around heuristic capability.
 - CSP: drop `script-src 'unsafe-inline'`; pin JSON-LD + importmap via SHA-256 hashes; allow `aistudiocdn.com` / Workbox CDN workers.
 - `pnpm run build` runs CSP hash patch after Vite.
 - Service worker lives at `public/sw.js` (Vite → `dist/`); base path derived from worker URL (dev `/` vs GH Pages subpath).
 - Service worker precache expands to PWA icons + register script; required shell URLs fail install on error (ADR 0004).
 - Importmap: remove unused Chart.js CDN entries (Recharts-only).
+- Package version **0.2.1**.
 
 ### Fixed
 
 - Production SW registration no longer 404s (`sw.js` was outside `public/` and missing from `dist/`).
+
+### Docs
+
+- ADR 0007 (heuristic inference); AUDIT / README / AGENTS updates for progressive enhancement.
 
 ## [0.2.0] - 2026-07-16
 
@@ -104,7 +119,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - DevContainer support for GitHub Codespaces
 - Vitest unit tests + Playwright E2E test infrastructure
 
-[Unreleased]: https://github.com/qnbs/AI-Research-Orchestrator/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/qnbs/AI-Research-Orchestrator/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/qnbs/AI-Research-Orchestrator/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/qnbs/AI-Research-Orchestrator/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/qnbs/AI-Research-Orchestrator/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/qnbs/AI-Research-Orchestrator/releases/tag/v0.1.0

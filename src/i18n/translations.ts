@@ -117,7 +117,29 @@ export const translations = {
     'charts.no_topic_data': 'No topic data available.',
     'charts.no_publication_years': 'No publication years available.',
     'offline.banner':
-      'You are offline. Saved reports in the Knowledge Base remain available; live PubMed and Gemini calls will fail until you reconnect.',
+      'You are offline. Heuristic mode keeps research, summaries, and Knowledge Base fully usable with local algorithms; reconnect for live PubMed fetch and Gemini.',
+    'inference.tooltip.live': 'Live Gemini inference — API key present and online.',
+    'inference.tooltip.force': 'Heuristic mode forced in Settings — local algorithms only.',
+    'inference.tooltip.offline':
+      'Heuristic mode — offline; local algorithms keep features working.',
+    'inference.tooltip.no_key':
+      'Heuristic mode — no Gemini API key; local algorithms provide full functionality.',
+    'inference.demo.banner':
+      'Demo data · Heuristic mode — sample reports seed the Knowledge Base on first launch.',
+    'inference.demo.dismiss': 'Clear demo data',
+    'settings.cost.heuristic_zero': '$0 · Heuristic mode',
+    'settings.inference.title': 'Inference mode',
+    'settings.inference.force': 'Force Heuristic Mode',
+    'settings.inference.current': 'Current inference mode',
+    'settings.inference.forced_preview': 'Heuristic · Forced (preview)',
+    'settings.inference.derived': 'Derived from API key + network (Live when both available)',
+    'settings.inference.force_desc':
+      'Run all AI features with local deterministic algorithms — private, free, and fully offline-capable. Live Gemini remains the high-fidelity path when a key and network are available and this toggle is off.',
+    'inference.badge.live': 'Live · Gemini',
+    'inference.badge.force': 'Heuristic · Forced',
+    'inference.badge.offline': 'Heuristic · Offline',
+    'inference.badge.no_key': 'Heuristic · No API key',
+    'inference.badge.heuristic': 'Heuristic mode',
   },
   de: {
     'app.name': 'Research Orchestrator',
@@ -242,7 +264,31 @@ export const translations = {
     'charts.no_topic_data': 'Keine Themendaten verfügbar.',
     'charts.no_publication_years': 'Keine Erscheinungsjahre verfügbar.',
     'offline.banner':
-      'Sie sind offline. Gespeicherte Berichte in der Wissensdatenbank bleiben verfügbar; Live-Aufrufe an PubMed und Gemini schlagen fehl, bis die Verbindung wiederhergestellt ist.',
+      'Sie sind offline. Der Heuristik-Modus hält Recherche, Zusammenfassungen und Wissensdatenbank mit lokalen Algorithmen nutzbar; für Live-PubMed und Gemini bitte erneut verbinden.',
+    'inference.tooltip.live': 'Live-Gemini-Inferenz — API-Schlüssel vorhanden und online.',
+    'inference.tooltip.force':
+      'Heuristik-Modus in den Einstellungen erzwungen — nur lokale Algorithmen.',
+    'inference.tooltip.offline':
+      'Heuristik-Modus — offline; lokale Algorithmen halten Funktionen verfügbar.',
+    'inference.tooltip.no_key':
+      'Heuristik-Modus — kein Gemini-API-Schlüssel; lokale Algorithmen liefern volle Funktionalität.',
+    'inference.demo.banner':
+      'Demo-Daten · Heuristik-Modus — Beispielberichte füllen die Wissensdatenbank beim ersten Start.',
+    'inference.demo.dismiss': 'Demo-Daten löschen',
+    'settings.cost.heuristic_zero': '0 $ · Heuristik-Modus',
+    'settings.inference.title': 'Inferenzmodus',
+    'settings.inference.force': 'Heuristik-Modus erzwingen',
+    'settings.inference.current': 'Aktueller Inferenzmodus',
+    'settings.inference.forced_preview': 'Heuristik · Erzwungen (Vorschau)',
+    'settings.inference.derived':
+      'Abgeleitet aus API-Schlüssel + Netzwerk (Live, wenn beides verfügbar)',
+    'settings.inference.force_desc':
+      'Alle KI-Funktionen mit lokalen, deterministischen Algorithmen — privat, kostenlos und voll offline-fähig. Live-Gemini bleibt der High-Fidelity-Pfad, wenn Schlüssel und Netzwerk verfügbar sind und dieser Schalter aus ist.',
+    'inference.badge.live': 'Live · Gemini',
+    'inference.badge.force': 'Heuristik · Erzwungen',
+    'inference.badge.offline': 'Heuristik · Offline',
+    'inference.badge.no_key': 'Heuristik · Kein API-Schlüssel',
+    'inference.badge.heuristic': 'Heuristik-Modus',
   },
 };
 

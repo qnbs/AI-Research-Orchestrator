@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import type { Chat } from '@google/genai';
 import type { ChatMessage, ResearchReport, Settings } from '../types';
-import { startChatWithReport } from '../services/geminiService';
+import { startChatWithReport, type ReportChatSession } from '../services/geminiService';
 import { useUI } from '../contexts/UIContext';
 
 /**
@@ -21,7 +20,7 @@ export const useChat = (
   const [isChatting, setIsChatting] = useState(false);
   const { setNotification } = useUI();
   const isMounted = useRef(true);
-  const chatSessionRef = useRef<Chat | null>(null);
+  const chatSessionRef = useRef<ReportChatSession | null>(null);
   const sessionGenerationRef = useRef(0);
 
   useEffect(() => {
