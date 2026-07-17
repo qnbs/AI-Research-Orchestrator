@@ -45,3 +45,17 @@
 
 - package **0.2.0**; remaining open: advanced SW cache (P2-2), deeper i18n (P2-3), full CSP nonce (P2-5 rest), GitHub Release after merge.
 - Next: Lighthouse CI, JSDoc pass, chart consolidation, CSP tighten, Release v0.2.0.
+
+---
+
+# 2026-07-17 — v0.2.1 merge + standing merge gate
+
+## Decisions
+
+- Offline heuristic inference layer (PR #29) merged to `main` after CodeRabbit + CodeAnt correction loops cleared (0 unresolved threads, reviewDecision APPROVED).
+- **Standing rule:** When automated review correction loops are complete on a feature PR, squash-merge to `main` and continue — do not wait for an extra merge confirmation.
+- Tag / GitHub Release **v0.2.1** cut from merge tip.
+
+## Impact
+
+- package **0.2.1** on `main`; next work is P3 vision items only (no open P0–P2 audit gaps).
