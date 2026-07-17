@@ -141,6 +141,54 @@ describe('useChat', () => {
     expect(chatMocks.sendMessageStream).not.toHaveBeenCalled();
   });
 
+  it('invalidates prior session while replacement report init is pending', async () => {
+    type Props = {
+      report: ResearchReport | null;
+      status: 'idle' | 'generating' | 'streaming' | 'done' | 'error';
+    };
+    const sessionA = { sendMessageStream: chatMocks.sendMessageStream };
+    let resolveB!: (value: typeof sessionA) => void;
+
+    vi.mocked(geminiService.startChatWithReport)
+      .mockResolvedValueOnce(sessionA as never)
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveB = resolve;
+          }) as never,
+      );
+
+    const reportB: ResearchReport = { ...minimalReport, synthesis: 'report-b' };
+    const { result, rerender } = renderHook(
+      ({ report, status }: Props) => useChat(report, status, ai),
+      {
+        initialProps: {
+          report: minimalReport as ResearchReport | null,
+          status: 'done' as Props['status'],
+        },
+      },
+    );
+
+    await waitFor(() => {
+      expect(vi.mocked(geminiService.startChatWithReport)).toHaveBeenCalledTimes(1);
+    });
+
+    rerender({ report: reportB, status: 'done' });
+
+    await waitFor(() => {
+      expect(vi.mocked(geminiService.startChatWithReport)).toHaveBeenCalledTimes(2);
+    });
+
+    await act(async () => {
+      await result.current.sendMessage('should-not-reach-A');
+    });
+    expect(chatMocks.sendMessageStream).not.toHaveBeenCalled();
+
+    await act(async () => {
+      resolveB(sessionA);
+    });
+  });
+
   it('streams sendMessage into chat history', async () => {
     const { result } = renderHook(() => useChat(minimalReport, 'done', ai));
 

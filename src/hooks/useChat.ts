@@ -36,14 +36,17 @@ export const useChat = (
       return;
     }
     let cancelled = false;
+    // Drop prior session immediately so sendMessage cannot target a stale report
+    chatSessionRef.current = null;
+    setChatSession(null);
+    setChatHistory([]);
+
     const initChat = async () => {
       try {
         const session = await startChatWithReport(report, aiSettings);
         if (isMounted.current && !cancelled) {
           chatSessionRef.current = session;
           setChatSession(session);
-          // Reset chat history when a new report is finalized
-          setChatHistory([]);
         }
       } catch (error) {
         console.error('Failed to initialize chat:', error);
