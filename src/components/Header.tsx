@@ -46,16 +46,16 @@ const NavButton: React.FC<{
     disabled={disabled}
     aria-label={ariaLabel}
     aria-current={isActive ? 'page' : undefined}
-    className={`relative flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent overflow-hidden
+    className={`relative flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent overflow-hidden
         ${
           isActive
-            ? 'text-brand-accent bg-brand-accent/5 border border-brand-accent/20 shadow-[0_0_15px_rgba(56,189,248,0.15)]'
+            ? 'text-brand-accent bg-brand-accent/10 border border-brand-accent/25 shadow-glow'
             : 'text-text-secondary hover:text-text-primary hover:bg-surface-hover border border-transparent'
         } 
         ${disabled ? 'opacity-40 cursor-not-allowed' : ''} ${className}`}
   >
     {isActive && (
-      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-brand-accent/5 to-transparent opacity-50 animate-pulse"></div>
+      <div className="absolute inset-x-0 bottom-0 h-0.5 bg-brand-accent/80" aria-hidden />
     )}
     <div className="relative flex items-center">{children}</div>
   </button>
@@ -118,8 +118,11 @@ const HeaderComponent: React.FC<HeaderProps> = ({
     ) : currentTheme === 'light' ? (
       <MoonIcon className="h-5 w-5 text-brand-accent hover:-rotate-12 transition-transform" />
     ) : (
-      <span className="text-base" title="Matrix Theme">
-        🟩
+      <span
+        className="text-[10px] font-mono font-semibold text-success tracking-wide"
+        title="Matrix Theme"
+      >
+        MX
       </span>
     );
   const themeLabel =
@@ -362,7 +365,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
                       </>
                     ) : (
                       <>
-                        <span>🟩</span> Matrix Mode
+                        <span className="font-mono text-xs text-success">MX</span> Matrix Mode
                       </>
                     )}
                   </button>

@@ -75,7 +75,7 @@ const AgentDebuggerPanel: React.FC = () => {
           transition={{ type: 'spring', stiffness: 320, damping: 30 }}
           className={`${panelCls} flex flex-col glass-elevated rounded-2xl overflow-hidden`}
           style={{
-            boxShadow: '0 0 40px rgba(56,189,248,0.18), 0 24px 64px rgba(0,0,0,0.35)',
+            boxShadow: 'var(--shadow-lg)',
           }}
         >
           <div className="flex items-center justify-between px-4 py-3 border-b border-border flex-shrink-0">

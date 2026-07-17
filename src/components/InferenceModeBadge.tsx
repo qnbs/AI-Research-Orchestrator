@@ -36,14 +36,10 @@ export const InferenceModeBadge: React.FC<{ className?: string }> = ({ className
       role="status"
       aria-label={title}
       title={title}
-      className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-[11px] font-medium tracking-wide ${
-        isLive
-          ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
-          : 'border-amber-500/40 bg-amber-500/10 text-amber-200'
-      } ${className}`}
+      className={`status-chip ${isLive ? 'status-chip--live' : 'status-chip--heuristic'} ${className}`}
     >
       <span
-        className={`h-1.5 w-1.5 rounded-full ${isLive ? 'bg-emerald-400' : 'bg-amber-400'}`}
+        className={`h-1.5 w-1.5 rounded-full ${isLive ? 'bg-success' : 'bg-warning'}`}
         aria-hidden
       />
       {t(badgeKey)}

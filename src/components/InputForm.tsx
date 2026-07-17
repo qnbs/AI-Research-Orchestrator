@@ -32,7 +32,7 @@ const SliderInput: React.FC<{
       <label htmlFor={id} className="block text-sm font-medium text-text-secondary">
         {label}
       </label>
-      <span className="font-mono text-xs font-bold text-brand-accent bg-brand-accent/10 border border-brand-accent/20 rounded-md px-2 py-0.5 shadow-[0_0_10px_rgba(56,189,248,0.2)]">
+      <span className="font-mono text-xs font-bold text-brand-accent bg-brand-accent/10 border border-brand-accent/20 rounded-md px-2 py-0.5 shadow-glow">
         {value}
       </span>
     </div>
@@ -61,7 +61,7 @@ const CustomCheckbox: React.FC<{
 }> = ({ id, value, checked, onChange, label }) => (
   <label
     htmlFor={id}
-    className={`flex items-center cursor-pointer group p-2 rounded-lg border transition-all duration-200 ${checked ? 'bg-brand-accent/10 border-brand-accent/40 shadow-[0_0_10px_rgba(56,189,248,0.1)]' : 'bg-transparent border-transparent hover:bg-surface-hover hover:border-border'}`}
+    className={`flex items-center cursor-pointer group p-2 rounded-lg border transition-all duration-200 ${checked ? 'bg-brand-accent/10 border-brand-accent/40 shadow-glow' : 'bg-transparent border-transparent hover:bg-surface-hover hover:border-border'}`}
   >
     <div className="relative flex-shrink-0">
       <input
@@ -214,7 +214,7 @@ const InputFormComponent: React.FC<InputFormProps> = ({
       <div className="glass-panel rounded-xl p-6 sm:p-8 transition-all duration-300 hover:shadow-lg">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
           <div className="flex items-center">
-            <div className="p-2 bg-brand-accent/10 rounded-lg mr-3 border border-brand-accent/20 shadow-[0_0_10px_rgba(56,189,248,0.1)]">
+            <div className="p-2 bg-brand-accent/10 rounded-lg mr-3 border border-brand-accent/20 shadow-glow">
               <SparklesIcon className="h-6 w-6 text-brand-accent" />
             </div>
             <div>

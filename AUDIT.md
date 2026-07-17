@@ -1,15 +1,15 @@
 # Codebase Audit Report
 
-> **Date**: 2026-07-17 (Heuristic inference / offline completeness — v0.2.1)
-> **Previous**: 2026-07-16 Phase 2 completion pass
-> **Overall Rating**: A+ (9.6/10) — Offline-first heuristic layer closes the last P0 UX gap
-> **Auditor**: Cursor Agent (July 2026 Master Prompt / Offline Heuristic)
+> **Date**: 2026-07-17 (UI/UX Research Instrument modernization — post v0.2.1)
+> **Previous**: 2026-07-17 Heuristic inference / offline completeness — v0.2.1
+> **Overall Rating**: A+ (9.7/10) — Design system token discipline + light-first parity
+> **Auditor**: Cursor Agent (UI/UX modernization)
 
 ---
 
 ## Executive Summary
 
-**v0.2.1** adds a production-grade **Offline / No-API-Key Heuristic Inference Layer**. Every AI surface remains functional without Gemini: progressive enhancement keeps live Gemini as the high-fidelity path while local heuristics are always available, deterministic, and labeled.
+**UI/UX pass** evolves the prior cyber-neon look into a **Research Instrument** system: teal–slate brand, expressive Figtree/Sora type, semantic status tokens, FOUC sync, reduced glow/pill noise, and `prefers-reduced-motion`. Offline heuristic layer from v0.2.1 remains intact.
 
 Phase 2 audit gates (coverage ≥80%, Recharts-only, bundle/LHCI, prompt registry, CSP) remain closed from v0.2.0.
 

@@ -8,12 +8,12 @@ export const defaultSettings: Settings = {
   appLanguage: 'en',
   appearance: {
     density: 'comfortable',
-    fontFamily: 'Inter',
+    fontFamily: 'Figtree',
     customColors: {
       enabled: false,
-      primary: '#2f81f7',
-      secondary: '#388bfd',
-      accent: '#1f6feb',
+      primary: '#14b8a6',
+      secondary: '#38bdf8',
+      accent: '#2dd4bf',
     },
   },
   performance: {

@@ -174,14 +174,24 @@ const AppLayout: React.FC = () => {
       'no-animations',
       !settings.performance.enableAnimations,
     );
+    document.documentElement.style.setProperty(
+      '--space-density',
+      settings.appearance.density === 'compact' ? '0.85' : '1',
+    );
 
     const fontMap: Record<string, string> = {
-      Inter: 'Inter, sans-serif',
-      Lato: 'Lato, sans-serif',
-      Roboto: 'Roboto, sans-serif',
-      'Open Sans': '"Open Sans", sans-serif',
+      Figtree: 'var(--font-sans)',
+      Sora: 'var(--font-display)',
+      'IBM Plex Sans': "'IBM Plex Sans', var(--font-sans)",
+      'JetBrains Mono': 'var(--font-mono)',
+      // Legacy persisted values map onto the new instrument stack
+      Inter: 'var(--font-sans)',
+      Lato: 'var(--font-sans)',
+      Roboto: 'var(--font-sans)',
+      'Open Sans': 'var(--font-sans)',
     };
-    document.body.style.fontFamily = fontMap[settings.appearance.fontFamily] || fontMap['Inter'];
+    document.body.style.fontFamily = fontMap[settings.appearance.fontFamily] || fontMap.Figtree;
+    document.documentElement.style.setProperty('--font-family', document.body.style.fontFamily);
 
     if (settings.appearance.customColors.enabled) {
       document.documentElement.style.setProperty(

@@ -4,21 +4,34 @@ export const Toggle: React.FC<{
   checked: boolean;
   onChange: (checked: boolean) => void;
   children: React.ReactNode;
-}> = ({ checked, onChange, children }) => (
-  <label className="flex items-center cursor-pointer group">
-    <div
-      className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors duration-200 ease-in-out ${checked ? 'bg-brand-accent' : 'bg-border group-hover:bg-border'}`}
+  id?: string;
+}> = ({ checked, onChange, children, id }) => {
+  const switchId = id ?? undefined;
+  return (
+    <label
+      htmlFor={switchId}
+      className="flex items-center cursor-pointer group gap-3 focus-within:outline-none"
     >
-      <span
-        className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform duration-200 ease-in-out ${checked ? 'translate-x-6' : 'translate-x-1'}`}
-      />
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={(e) => onChange(e.target.checked)}
-        className="opacity-0 w-full h-full absolute cursor-pointer"
-      />
-    </div>
-    <span className="ml-3 text-sm font-medium text-text-primary">{children}</span>
-  </label>
-);
+      <button
+        id={switchId}
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        onClick={() => onChange(!checked)}
+        className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+          checked
+            ? 'bg-brand-accent border-brand-accent/40'
+            : 'bg-border border-border group-hover:bg-surface-hover'
+        }`}
+      >
+        <span
+          aria-hidden
+          className={`inline-block h-4 w-4 transform rounded-full bg-brand-text-on-accent shadow-sm transition-transform duration-200 ease-out ${
+            checked ? 'translate-x-6' : 'translate-x-1'
+          }`}
+        />
+      </button>
+      <span className="text-sm font-medium text-text-primary">{children}</span>
+    </label>
+  );
+};

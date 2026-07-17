@@ -261,12 +261,12 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({
               {(article.customTags || []).map((tag) => (
                 <span
                   key={tag}
-                  className="flex items-center bg-purple-500/10 text-purple-300 text-sm font-medium pl-2 pr-1 py-0.5 rounded-full border border-purple-500/20"
+                  className="flex items-center bg-accent-magenta/10 text-accent-magenta text-sm font-medium pl-2 pr-1 py-0.5 rounded-md border border-accent-magenta/25"
                 >
                   {tag}
                   <button
                     onClick={() => handleRemoveTag(tag)}
-                    className="ml-1.5 text-purple-300 hover:text-white focus:outline-none"
+                    className="ml-1.5 text-accent-magenta hover:text-text-primary focus:outline-none"
                     aria-label={`Remove tag ${tag}`}
                   >
                     <XIcon className="h-3 w-3" />

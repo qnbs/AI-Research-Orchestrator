@@ -41,7 +41,9 @@ const NavItem: React.FC<{
       aria-current={isActive ? 'page' : undefined}
     >
       <div
-        className={`p-1.5 rounded-xl transition-all duration-300 ${isActive ? 'bg-brand-accent/10 -translate-y-1 shadow-[0_0_10px_rgba(56,189,248,0.2)]' : ''}`}
+        className={`p-1.5 rounded-xl transition-all duration-200 ${
+          isActive ? 'bg-brand-accent/10 -translate-y-0.5 shadow-glow' : ''
+        }`}
       >
         {isSpecial && (
           <span className="absolute top-2 right-1/2 translate-x-3 flex h-2 w-2">

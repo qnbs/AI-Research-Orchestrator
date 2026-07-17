@@ -109,14 +109,14 @@ export const GeneralSettingsTab: React.FC = () => {
         title={t('settings.appearance')}
         description="Customize the look and feel of the application."
       >
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center flex-wrap gap-2">
           <button
             onClick={() => setTempSettings((s) => ({ ...s, theme: 'light' }))}
             className={`p-2 rounded-lg border-2 ${tempSettings.theme === 'light' ? 'border-brand-accent' : 'border-transparent'}`}
             aria-label="Switch to Light Theme"
           >
-            <div className="w-20 h-12 bg-gray-100 rounded-md flex items-center justify-center">
-              <SunIcon className="h-6 w-6 text-yellow-500" />
+            <div className="w-20 h-12 bg-[#eef3f7] rounded-md flex items-center justify-center border border-border">
+              <SunIcon className="h-6 w-6 text-warning" />
             </div>
             <span className="text-sm mt-1 block text-text-primary">Light</span>
           </button>
@@ -125,10 +125,20 @@ export const GeneralSettingsTab: React.FC = () => {
             className={`p-2 rounded-lg border-2 ${tempSettings.theme === 'dark' ? 'border-brand-accent' : 'border-transparent'}`}
             aria-label="Switch to Dark Theme"
           >
-            <div className="w-20 h-12 bg-gray-800 rounded-md flex items-center justify-center">
-              <MoonIcon className="h-6 w-6 text-blue-300" />
+            <div className="w-20 h-12 bg-[#070b12] rounded-md flex items-center justify-center border border-border">
+              <MoonIcon className="h-6 w-6 text-brand-accent" />
             </div>
             <span className="text-sm mt-1 block text-text-primary">Dark</span>
+          </button>
+          <button
+            onClick={() => setTempSettings((s) => ({ ...s, theme: 'matrix' }))}
+            className={`p-2 rounded-lg border-2 ${tempSettings.theme === 'matrix' ? 'border-brand-accent' : 'border-transparent'}`}
+            aria-label="Switch to Matrix Theme"
+          >
+            <div className="w-20 h-12 bg-[#020805] rounded-md flex items-center justify-center border border-success/40">
+              <span className="text-success font-mono text-xs font-semibold">MATRIX</span>
+            </div>
+            <span className="text-sm mt-1 block text-text-primary">Matrix</span>
           </button>
         </div>
         <div className="pt-4 mt-4 border-t border-border">
@@ -178,10 +188,10 @@ export const GeneralSettingsTab: React.FC = () => {
             }
             className="block w-full max-w-xs bg-input-bg border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent"
           >
-            <option value="Inter">Inter (Default)</option>
-            <option value="Lato">Lato</option>
-            <option value="Roboto">Roboto</option>
-            <option value="Open Sans">Open Sans</option>
+            <option value="Figtree">Figtree (Default)</option>
+            <option value="Sora">Sora (Display)</option>
+            <option value="IBM Plex Sans">IBM Plex Sans</option>
+            <option value="JetBrains Mono">JetBrains Mono</option>
           </select>
         </div>
         <div className="pt-4 mt-4 border-t border-border">

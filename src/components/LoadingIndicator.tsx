@@ -149,7 +149,7 @@ const PipelineTimeline: React.FC<{
               'transition-colors duration-300',
               isDone ? 'border-green-500/30 bg-green-500/10 text-green-400' : '',
               isActive
-                ? 'border-brand-accent/60 bg-brand-accent/10 text-brand-accent shadow-[0_0_12px_rgba(56,189,248,0.18)]'
+                ? 'border-brand-accent/60 bg-brand-accent/10 text-brand-accent shadow-glow'
                 : '',
               isPending ? 'border-border/25 bg-surface/20 text-text-secondary/50' : '',
             ].join(' ')}

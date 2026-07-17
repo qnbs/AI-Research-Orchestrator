@@ -83,7 +83,7 @@ const ShareLinkModal: React.FC<{
         transition={{ type: 'spring', stiffness: 340, damping: 28 }}
         onClick={(e) => e.stopPropagation()}
         className="glass-panel rounded-2xl p-6 w-full max-w-sm"
-        style={{ boxShadow: '0 0 32px rgba(56,189,248,0.15), 0 16px 48px rgba(0,0,0,0.3)' }}
+        style={{ boxShadow: 'var(--shadow-lg)' }}
       >
         <div className="flex items-center gap-3 mb-4">
           <span className="text-3xl">{collection.icon}</span>

@@ -380,7 +380,7 @@ const KBArticleListItem: React.FC<{
           {(article.customTags || []).map((tag) => (
             <span
               key={tag}
-              className="bg-purple-500/10 text-purple-300 text-xs font-medium px-2 py-0.5 rounded-full border border-purple-500/20"
+              className="bg-accent-magenta/10 text-accent-magenta text-xs font-medium px-2 py-0.5 rounded-md border border-accent-magenta/25"
             >
               {tag}
             </span>

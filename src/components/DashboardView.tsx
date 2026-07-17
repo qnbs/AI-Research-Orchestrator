@@ -36,7 +36,7 @@ import { useKnowledgeBase } from '../contexts/KnowledgeBaseContext';
 
 // ── Palette ───────────────────────────────────────────────────────────────────
 const C = [
-  '#38bdf8',
+  '#2dd4bf',
   '#a78bfa',
   '#34d399',
   '#fb923c',
@@ -77,7 +77,7 @@ const CyberTooltip = ({ active, payload, label }: any) => {
     <div
       style={{
         background: 'rgba(13,17,23,0.93)',
-        border: '1px solid rgba(56,189,248,0.22)',
+        border: '1px solid color-mix(in srgb, var(--color-brand-accent) 28%, transparent)',
         borderRadius: 8,
         padding: '8px 12px',
         fontSize: 12,
@@ -303,8 +303,8 @@ const CoAuthorshipNetwork: React.FC<{ articles: AggregatedArticle[] }> = ({ arti
       >
         <defs>
           <radialGradient id="ng" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.3" />
-            <stop offset="100%" stopColor="#38bdf8" stopOpacity="0" />
+            <stop offset="0%" stopColor="#2dd4bf" stopOpacity="0.3" />
+            <stop offset="100%" stopColor="#2dd4bf" stopOpacity="0" />
           </radialGradient>
         </defs>
         {edges.map((e, i) => {
@@ -317,7 +317,7 @@ const CoAuthorshipNetwork: React.FC<{ articles: AggregatedArticle[] }> = ({ arti
               y1={s.y}
               x2={t.x}
               y2={t.y}
-              stroke="#38bdf8"
+              stroke="#2dd4bf"
               strokeOpacity={Math.min(0.6, 0.12 + e.weight * 0.14)}
               strokeWidth={Math.min(e.weight * 0.8 + 0.5, 3)}
             />
@@ -508,7 +508,7 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({ onFilterChange, 
                   dataKey="year"
                   height={18}
                   stroke={C[0]}
-                  fill="rgba(56,189,248,0.08)"
+                  fill="color-mix(in srgb, var(--color-brand-accent) 12%, transparent)"
                   travellerWidth={6}
                 />
               )}
@@ -658,7 +658,7 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({ onFilterChange, 
                 label={({ percent }) => `${((percent ?? 0) * 100).toFixed(1)}%`}
                 labelLine={{ stroke: 'rgba(125,133,144,0.4)' }}
               >
-                <Cell fill="#38bdf8" fillOpacity={0.85} stroke="transparent" />
+                <Cell fill="#2dd4bf" fillOpacity={0.85} stroke="transparent" />
                 <Cell fill="#a78bfa" fillOpacity={0.85} stroke="transparent" />
               </Pie>
               <Tooltip content={<CyberTooltip />} />
