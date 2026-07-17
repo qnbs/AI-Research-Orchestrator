@@ -29,13 +29,18 @@ export function useDemoKnowledgeBaseSeed(
     }
     if (dismissed || alreadySeeded) return;
     const demo = createDemoKnowledgeBaseEntries();
-    void dispatch(importKbEntries(demo)).then(() => {
-      try {
-        localStorage.setItem(DEMO_SEEDED_STORAGE_KEY, '1');
-      } catch {
-        /* ignore quota / private mode */
-      }
-    });
+    void dispatch(importKbEntries(demo))
+      .unwrap()
+      .then(() => {
+        try {
+          localStorage.setItem(DEMO_SEEDED_STORAGE_KEY, '1');
+        } catch {
+          /* ignore quota / private mode */
+        }
+      })
+      .catch(() => {
+        // Leave seeded flag unset so a later mount can retry.
+      });
   }, [dispatch, isLoading, entryCount]);
 }
 

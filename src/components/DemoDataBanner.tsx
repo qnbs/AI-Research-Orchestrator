@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useKnowledgeBase } from '../contexts/KnowledgeBaseContext';
-import { isDemoEntryId, DEMO_DISMISS_STORAGE_KEY } from '../services/heuristics';
+import { isDemoEntryId } from '../services/heuristics';
 import { useTranslation } from '../hooks/useTranslation';
 
 /**
@@ -24,12 +24,9 @@ export const DemoDataBanner: React.FC = () => {
         type="button"
         className="rounded-md border border-amber-500/40 px-2 py-1 text-xs font-medium hover:bg-amber-500/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
         onClick={() => {
-          try {
-            localStorage.setItem(DEMO_DISMISS_STORAGE_KEY, '1');
-          } catch {
-            /* ignore */
-          }
-          void clearDemoData();
+          void clearDemoData().catch(() => {
+            /* errors surfaced via KnowledgeBase notification */
+          });
         }}
       >
         {t('inference.demo.dismiss')}

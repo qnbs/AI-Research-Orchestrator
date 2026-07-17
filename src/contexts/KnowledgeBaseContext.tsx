@@ -37,7 +37,7 @@ import {
   selectRecentResearchEntries,
   updateKbEntry,
 } from '../store/slices/knowledgeBaseSlice';
-import { isDemoEntryId } from '../services/heuristics';
+import { isDemoEntryId, DEMO_DISMISS_STORAGE_KEY } from '../services/heuristics';
 import { markDemoSeedConsumed, useDemoKnowledgeBaseSeed } from '../hooks/useDemoKnowledgeBaseSeed';
 
 interface KnowledgeBaseContextType {
@@ -132,16 +132,31 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
   );
 
   const clearKnowledgeBase = useCallback(async () => {
-    markDemoSeedConsumed();
-    await dispatch(clearKb());
-  }, [dispatch]);
+    try {
+      await dispatch(clearKb()).unwrap();
+      markDemoSeedConsumed();
+    } catch {
+      showNotification('Failed to clear knowledge base.', 'error');
+      throw new Error('Failed to clear knowledge base');
+    }
+  }, [dispatch, showNotification]);
 
   const clearDemoData = useCallback(async () => {
     const demoIds = knowledgeBase.filter((e) => isDemoEntryId(e.id)).map((e) => e.id);
     if (demoIds.length === 0) return;
-    await deleteEntriesFromDb(demoIds);
-    await dispatch(fetchKnowledgeBase());
-  }, [dispatch, knowledgeBase]);
+    try {
+      await deleteEntriesFromDb(demoIds);
+      await dispatch(fetchKnowledgeBase()).unwrap();
+      try {
+        localStorage.setItem(DEMO_DISMISS_STORAGE_KEY, '1');
+      } catch {
+        /* ignore quota / private mode */
+      }
+    } catch {
+      showNotification('Failed to remove demo data.', 'error');
+      throw new Error('Failed to remove demo data');
+    }
+  }, [dispatch, knowledgeBase, showNotification]);
 
   const updateEntryTitle = useCallback(
     async (id: string, newTitle: string) => {
