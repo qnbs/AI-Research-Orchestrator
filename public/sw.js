@@ -1,8 +1,9 @@
 
 importScripts('https://storage.googleapis.com/workbox-cdn/releases/7.0.0/workbox-sw.js');
 
-// Base path for GitHub Pages deployment
-const BASE_PATH = '/AI-Research-Orchestrator';
+// Derive base from this worker's URL so root (dev) and /AI-Research-Orchestrator/ (GH Pages) stay aligned with register-sw.js.
+// e.g. /sw.js → '' ; /AI-Research-Orchestrator/sw.js → '/AI-Research-Orchestrator'
+const BASE_PATH = self.location.pathname.replace(/\/[^/]*$/, '').replace(/\/$/, '') || '';
 
 if (workbox) {
     workbox.setConfig({ debug: false });
@@ -127,9 +128,9 @@ if (workbox) {
     // try to return index.html from cache if available.
     setCatchHandler(async ({ event }) => {
         if (event.request.destination === 'document') {
-            // Try subpath first, then root
-            const cachedResponse = await caches.match(`${BASE_PATH}/index.html`) || 
-                                   await caches.match('/index.html');
+            const cachedResponse =
+                (await caches.match(`${BASE_PATH}/index.html`)) ||
+                (await caches.match('/index.html'));
             if (cachedResponse) return cachedResponse;
         }
         return Response.error();
@@ -137,7 +138,9 @@ if (workbox) {
 
     // --- Precache App Shell + icons (saved reports live in Dexie; shell must boot offline) ---
     self.addEventListener('install', (event) => {
+        // Required: any failure rejects waitUntil → install fails (do not catch).
         const requiredUrls = [`${BASE_PATH}/`, `${BASE_PATH}/index.html`, `${BASE_PATH}/manifest.json`];
+        // Optional: icons / register script may 404 in odd hosts; warn only.
         const optionalUrls = [
             `${BASE_PATH}/register-sw.js`,
             `${BASE_PATH}/icons/icon-192.png`,

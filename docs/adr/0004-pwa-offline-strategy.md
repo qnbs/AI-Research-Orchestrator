@@ -9,7 +9,7 @@ Researchers need access to past reports and collections offline. Live PubMed/Gem
 
 ## Decision
 
-- **Service worker** (`sw.js` / Workbox CDN): app shell + static assets with stale-while-revalidate where safe. Precache includes `index.html`, manifest, SW register script, and PWA icons so the app can boot offline for **previously loaded/cached** views (lazy route chunks are cached on first online visit, not all precached).
+- **Service worker** (`public/sw.js` / Workbox CDN, copied into `dist/` by Vite): app shell + static assets with stale-while-revalidate where safe. Base path is derived from the worker URL (root in dev, `/AI-Research-Orchestrator` on GitHub Pages) so registration scope and precache URLs stay aligned. Precache **requires** `index.html` + manifest (install fails if missing); icons/register script are optional. Lazy route chunks are cached on first online visit.
 - **Domain data:** Dexie/IndexedDB is the offline source of truth for KB, settings, collections, saved reports — **not** mirrored into the Cache API.
 - **Live search / synthesis:** network-first; never treat SW-cached PubMed HTML/JSON as authoritative for new research.
 - **UX:** `OfflineBanner` signals that live Gemini/PubMed calls will fail while Dexie-backed saved reports remain readable.

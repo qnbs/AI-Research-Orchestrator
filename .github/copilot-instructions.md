@@ -29,7 +29,7 @@ You are an expert full-stack React 19 + TypeScript architect specialized in agen
 - **Local-first**: All user data in IndexedDB via Dexie.js — zero backend dependency
 - **API-key-in-browser**: Gemini key encrypted with Web Crypto AES-GCM, stored in IndexedDB (apiKeyService.ts)
 - **Direct API calls**: Browser → Google Gemini API + NCBI PubMed E-utilities (no proxy)
-- **PWA**: Service worker (sw.js) with Workbox caching strategies, offline fallback, GitHub Pages deployment
+- **PWA**: Service worker (`public/sw.js`) with Workbox caching strategies, offline fallback, GitHub Pages deployment
 
 ### State Management
 
