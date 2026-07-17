@@ -7,13 +7,15 @@ import { useUI } from '../contexts/UIContext';
 /**
  * Report-grounded chat session: initializes when a report reaches `done`,
  * streams model replies into `chatHistory`, and resets when the report clears.
+ *
+ * Session lives only in a ref (not React state) so sendMessage never sees a
+ * stale Chat after report replacement, and late inits cannot resurrect one.
  */
 export const useChat = (
   report: ResearchReport | null,
   reportStatus: 'idle' | 'generating' | 'streaming' | 'done' | 'error',
   aiSettings: Settings['ai'],
 ) => {
-  const [chatSession, setChatSession] = useState<Chat | null>(null);
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [isChatting, setIsChatting] = useState(false);
   const { setNotification } = useUI();
@@ -28,17 +30,12 @@ export const useChat = (
   }, []);
 
   useEffect(() => {
-    chatSessionRef.current = chatSession;
-  }, [chatSession]);
-
-  useEffect(() => {
     if (!(report && reportStatus === 'done')) {
       return;
     }
     let cancelled = false;
     // Drop prior session immediately so sendMessage cannot target a stale report
     chatSessionRef.current = null;
-    setChatSession(null);
     setChatHistory([]);
 
     const initChat = async () => {
@@ -46,7 +43,6 @@ export const useChat = (
         const session = await startChatWithReport(report, aiSettings);
         if (isMounted.current && !cancelled) {
           chatSessionRef.current = session;
-          setChatSession(session);
         }
       } catch (error) {
         console.error('Failed to initialize chat:', error);
@@ -62,6 +58,7 @@ export const useChat = (
     void initChat();
     return () => {
       cancelled = true;
+      chatSessionRef.current = null;
     };
   }, [report, reportStatus, aiSettings, setNotification]);
 
@@ -69,7 +66,6 @@ export const useChat = (
   useEffect(() => {
     if (!report) {
       chatSessionRef.current = null;
-      setChatSession(null);
       setChatHistory([]);
     }
   }, [report]);

@@ -33,10 +33,12 @@ const initialState: ResearchState = {
   online: { loading: false, error: null, findings: null },
 };
 
+type AbortablePromise = { abort: () => void };
+
 /**
  * Rapid Research Assistant state machine: analysis + optional similar/online fetches
- * via lazy RTK Query endpoints. Cleanup flips `isMountedRef` so late results are ignored;
- * in-flight RTK Query requests are not aborted.
+ * via lazy RTK Query endpoints. In-flight triggers are aborted on unmount / clear /
+ * a new startResearch call; late results are also ignored via `isMountedRef`.
  */
 export const useResearchAssistant = (
   aiSettings: Settings['ai'],
@@ -44,21 +46,36 @@ export const useResearchAssistant = (
 ) => {
   const [state, setState] = useState<ResearchState>(initialState);
   const isMountedRef = useRef(true);
+  const inflightRef = useRef<AbortablePromise[]>([]);
 
   const [triggerAnalysis] = useLazyGenerateAnalysisQuery();
   const [triggerSimilar] = useLazyFindSimilarArticlesQuery();
   const [triggerOnline] = useLazyFindRelatedOnlineQuery();
 
+  const abortInflight = useCallback(() => {
+    for (const req of inflightRef.current) {
+      try {
+        req.abort();
+      } catch {
+        // ignore abort errors from already-settled requests
+      }
+    }
+    inflightRef.current = [];
+  }, []);
+
   useEffect(() => {
     isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
+      abortInflight();
     };
-  }, []);
+  }, [abortInflight]);
 
   const startResearch = useCallback(
     async (queryText: string) => {
       if (!queryText.trim()) return;
+
+      abortInflight();
 
       setState({
         ...initialState,
@@ -68,7 +85,9 @@ export const useResearchAssistant = (
       setCurrentView('research');
 
       try {
-        const analysisResult = await triggerAnalysis({ query: queryText, aiSettings }).unwrap();
+        const analysisPromise = triggerAnalysis({ query: queryText, aiSettings });
+        inflightRef.current.push(analysisPromise);
+        const analysisResult = await analysisPromise.unwrap();
 
         if (!isMountedRef.current) return;
 
@@ -81,71 +100,68 @@ export const useResearchAssistant = (
           online: { ...s.online, loading: aiSettings.researchAssistant.autoFetchOnline },
         }));
 
-        // Fetch similar articles and online findings in parallel, based on settings
-        const fetchPromises: Promise<SimilarArticle[] | OnlineFindings | null>[] = [];
-
-        if (aiSettings.researchAssistant.autoFetchSimilar) {
-          fetchPromises.push(
-            triggerSimilar({
+        const similarPromise = aiSettings.researchAssistant.autoFetchSimilar
+          ? triggerSimilar({
               article: { title: analysisResult.synthesizedTopic, summary: analysisResult.summary },
               aiSettings,
-            }).unwrap(),
-          );
-        } else {
-          fetchPromises.push(Promise.resolve(null));
-        }
+            })
+          : null;
+        const onlinePromise = aiSettings.researchAssistant.autoFetchOnline
+          ? triggerOnline({ topic: analysisResult.synthesizedTopic, aiSettings })
+          : null;
 
-        if (aiSettings.researchAssistant.autoFetchOnline) {
-          fetchPromises.push(
-            triggerOnline({ topic: analysisResult.synthesizedTopic, aiSettings }).unwrap(),
-          );
-        } else {
-          fetchPromises.push(Promise.resolve(null));
-        }
+        if (similarPromise) inflightRef.current.push(similarPromise);
+        if (onlinePromise) inflightRef.current.push(onlinePromise);
 
-        Promise.allSettled(fetchPromises).then(([similarResult, onlineResult]) => {
-          if (!isMountedRef.current) return;
+        const [similarResult, onlineResult] = await Promise.allSettled([
+          similarPromise ? similarPromise.unwrap() : Promise.resolve(null),
+          onlinePromise ? onlinePromise.unwrap() : Promise.resolve(null),
+        ]);
 
-          setState((s) => ({
-            ...s,
-            similar: {
-              loading: false,
-              articles:
-                similarResult.status === 'fulfilled'
-                  ? (similarResult.value as SimilarArticle[] | null)
-                  : null,
-              error:
-                similarResult.status === 'rejected'
-                  ? (similarResult.reason as Error).message
-                  : null,
-            },
-            online: {
-              loading: false,
-              findings:
-                onlineResult.status === 'fulfilled'
-                  ? (onlineResult.value as OnlineFindings | null)
-                  : null,
-              error:
-                onlineResult.status === 'rejected' ? (onlineResult.reason as Error).message : null,
-            },
-          }));
-        });
+        if (!isMountedRef.current) return;
+
+        setState((s) => ({
+          ...s,
+          similar: {
+            loading: false,
+            articles:
+              similarResult.status === 'fulfilled'
+                ? (similarResult.value as SimilarArticle[] | null)
+                : null,
+            error:
+              similarResult.status === 'rejected' ? (similarResult.reason as Error).message : null,
+          },
+          online: {
+            loading: false,
+            findings:
+              onlineResult.status === 'fulfilled'
+                ? (onlineResult.value as OnlineFindings | null)
+                : null,
+            error:
+              onlineResult.status === 'rejected' ? (onlineResult.reason as Error).message : null,
+          },
+        }));
+        inflightRef.current = [];
       } catch (err) {
         if (!isMountedRef.current) return;
+        // Aborted requests should not surface as user-visible errors
+        const message = err instanceof Error ? err.message : 'An unknown error occurred.';
+        if (/abort/i.test(message)) return;
         setState((s) => ({
           ...s,
           isLoading: false,
           phase: '',
-          error: err instanceof Error ? err.message : 'An unknown error occurred.',
+          error: message,
         }));
       }
     },
-    [aiSettings, setCurrentView, triggerAnalysis, triggerSimilar, triggerOnline],
+    [aiSettings, setCurrentView, triggerAnalysis, triggerSimilar, triggerOnline, abortInflight],
   );
 
   const clearResearch = useCallback(() => {
+    abortInflight();
     setState(initialState);
-  }, []);
+  }, [abortInflight]);
 
   return {
     ...state,

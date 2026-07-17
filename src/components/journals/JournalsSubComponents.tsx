@@ -107,29 +107,35 @@ export const AnalysisCharts: React.FC = () => {
           Recent Topic Landscape
         </h3>
         <div className="h-48">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={analyticsData.topicData}
-                dataKey="value"
-                nameKey="name"
-                innerRadius="70%"
-                outerRadius="95%"
-                paddingAngle={2}
-              >
-                {analyticsData.topicData.map((_, index) => (
-                  <Cell key={`cell-${index}`} fill={TOPIC_COLORS[index % TOPIC_COLORS.length]} />
-                ))}
-              </Pie>
-              <Legend
-                layout="vertical"
-                align="right"
-                verticalAlign="middle"
-                wrapperStyle={{ fontSize: 11, color: tickColor }}
-              />
-              <RechartsTooltip />
-            </PieChart>
-          </ResponsiveContainer>
+          {analyticsData.topicData.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={analyticsData.topicData}
+                  dataKey="value"
+                  nameKey="name"
+                  innerRadius="70%"
+                  outerRadius="95%"
+                  paddingAngle={2}
+                >
+                  {analyticsData.topicData.map((_, index) => (
+                    <Cell key={`cell-${index}`} fill={TOPIC_COLORS[index % TOPIC_COLORS.length]} />
+                  ))}
+                </Pie>
+                <Legend
+                  layout="vertical"
+                  align="right"
+                  verticalAlign="middle"
+                  wrapperStyle={{ fontSize: 11, color: tickColor }}
+                />
+                <RechartsTooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <p className="h-full flex items-center justify-center text-sm text-text-secondary">
+              No topic data available.
+            </p>
+          )}
         </div>
       </div>
       <div className="bg-surface p-5 rounded-lg border border-border">
@@ -137,23 +143,29 @@ export const AnalysisCharts: React.FC = () => {
           Activity Timeline
         </h3>
         <div className="h-32">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={analyticsData.timelineData}
-              margin={{ top: 4, right: 4, left: 0, bottom: 0 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
-              <XAxis dataKey="year" tick={{ fill: tickColor, fontSize: 11 }} axisLine={false} />
-              <YAxis allowDecimals={false} tick={{ fill: tickColor, fontSize: 11 }} width={28} />
-              <RechartsTooltip />
-              <Bar
-                dataKey="count"
-                name="Articles"
-                fill="rgba(31, 111, 235, 0.5)"
-                radius={[4, 4, 0, 0]}
-              />
-            </BarChart>
-          </ResponsiveContainer>
+          {analyticsData.timelineData.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={analyticsData.timelineData}
+                margin={{ top: 4, right: 4, left: 0, bottom: 0 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
+                <XAxis dataKey="year" tick={{ fill: tickColor, fontSize: 11 }} axisLine={false} />
+                <YAxis allowDecimals={false} tick={{ fill: tickColor, fontSize: 11 }} width={28} />
+                <RechartsTooltip />
+                <Bar
+                  dataKey="count"
+                  name="Articles"
+                  fill="rgba(31, 111, 235, 0.5)"
+                  radius={[4, 4, 0, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <p className="h-full flex items-center justify-center text-sm text-text-secondary">
+              No publication years available.
+            </p>
+          )}
         </div>
       </div>
     </div>

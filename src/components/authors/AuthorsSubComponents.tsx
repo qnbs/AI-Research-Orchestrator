@@ -628,32 +628,38 @@ export const AuthorProfileView: React.FC = () => {
             <div>
               <h3 className="text-xl font-bold text-text-primary mb-4">Citation Impact Timeline</h3>
               <div className="h-64 bg-background p-4 rounded-lg border border-border">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={citationTimeline}
-                    margin={{ top: 8, right: 8, left: 0, bottom: 24 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
-                    <XAxis
-                      dataKey="year"
-                      tick={{ fill: textColor, fontSize: 11 }}
-                      angle={-45}
-                      textAnchor="end"
-                      height={50}
-                    />
-                    <YAxis
-                      tick={{ fill: textColor, fontSize: 12 }}
-                      label={{
-                        value: 'Citations',
-                        angle: -90,
-                        position: 'insideLeft',
-                        fill: textColor,
-                      }}
-                    />
-                    <RechartsTooltip />
-                    <Bar dataKey="citations" name="Citations" fill="rgba(31, 111, 235, 0.75)" />
-                  </BarChart>
-                </ResponsiveContainer>
+                {citationTimeline.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={citationTimeline}
+                      margin={{ top: 8, right: 8, left: 0, bottom: 24 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
+                      <XAxis
+                        dataKey="year"
+                        tick={{ fill: textColor, fontSize: 11 }}
+                        angle={-45}
+                        textAnchor="end"
+                        height={50}
+                      />
+                      <YAxis
+                        tick={{ fill: textColor, fontSize: 12 }}
+                        label={{
+                          value: 'Citations',
+                          angle: -90,
+                          position: 'insideLeft',
+                          fill: textColor,
+                        }}
+                      />
+                      <RechartsTooltip />
+                      <Bar dataKey="citations" name="Citations" fill="rgba(31, 111, 235, 0.75)" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <p className="h-full flex items-center justify-center text-sm text-text-secondary">
+                    No citation timeline data available.
+                  </p>
+                )}
               </div>
             </div>
           </div>
