@@ -1,3 +1,4 @@
+import { RemovableTagChip } from './RemovableTagChip';
 import React, { useState, useId, useEffect, useRef, useCallback, useMemo } from 'react';
 import type {
   ResearchReport,
@@ -242,19 +243,13 @@ const ArticleCard: React.FC<{
           <div className="flex flex-wrap gap-2 items-center">
             <TagIcon className="h-4 w-4 text-text-secondary flex-shrink-0" />
             {(article.customTags || []).map((tag) => (
-              <span
+              <RemovableTagChip
                 key={tag}
-                className="flex items-center bg-accent-magenta/10 text-accent-magenta text-xs font-medium pl-2 pr-1 py-0.5 rounded-md border border-accent-magenta/25"
-              >
-                {tag}
-                <button
-                  onClick={() => handleRemoveTag(tag)}
-                  className="ml-1.5 text-accent-magenta hover:text-text-primary focus:outline-none"
-                  aria-label={`Remove tag ${tag}`}
-                >
-                  <XIcon className="h-3 w-3" />
-                </button>
-              </span>
+                label={tag}
+                onRemove={() => handleRemoveTag(tag)}
+                removeLabel={`Remove tag ${tag}`}
+                size="sm"
+              />
             ))}
             <div className="flex-grow min-w-[120px]">
               <input

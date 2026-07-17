@@ -113,32 +113,38 @@ export const GeneralSettingsTab: React.FC = () => {
           <button
             onClick={() => setTempSettings((s) => ({ ...s, theme: 'light' }))}
             className={`p-2 rounded-lg border-2 ${tempSettings.theme === 'light' ? 'border-brand-accent' : 'border-transparent'}`}
-            aria-label="Switch to Light Theme"
+            aria-label={t('settings.theme.light_aria')}
           >
             <div className="w-20 h-12 bg-[#eef3f7] rounded-md flex items-center justify-center border border-border">
               <SunIcon className="h-6 w-6 text-warning" />
             </div>
-            <span className="text-sm mt-1 block text-text-primary">Light</span>
+            <span className="text-sm mt-1 block text-text-primary">
+              {t('settings.theme.light')}
+            </span>
           </button>
           <button
             onClick={() => setTempSettings((s) => ({ ...s, theme: 'dark' }))}
             className={`p-2 rounded-lg border-2 ${tempSettings.theme === 'dark' ? 'border-brand-accent' : 'border-transparent'}`}
-            aria-label="Switch to Dark Theme"
+            aria-label={t('settings.theme.dark_aria')}
           >
             <div className="w-20 h-12 bg-[#070b12] rounded-md flex items-center justify-center border border-border">
               <MoonIcon className="h-6 w-6 text-brand-accent" />
             </div>
-            <span className="text-sm mt-1 block text-text-primary">Dark</span>
+            <span className="text-sm mt-1 block text-text-primary">{t('settings.theme.dark')}</span>
           </button>
           <button
             onClick={() => setTempSettings((s) => ({ ...s, theme: 'matrix' }))}
             className={`p-2 rounded-lg border-2 ${tempSettings.theme === 'matrix' ? 'border-brand-accent' : 'border-transparent'}`}
-            aria-label="Switch to Matrix Theme"
+            aria-label={t('settings.theme.matrix_aria')}
           >
             <div className="w-20 h-12 bg-[#020805] rounded-md flex items-center justify-center border border-success/40">
-              <span className="text-success font-mono text-xs font-semibold">MATRIX</span>
+              <span className="text-success font-mono text-xs font-semibold">
+                {t('settings.theme.matrix').toUpperCase()}
+              </span>
             </div>
-            <span className="text-sm mt-1 block text-text-primary">Matrix</span>
+            <span className="text-sm mt-1 block text-text-primary">
+              {t('settings.theme.matrix')}
+            </span>
           </button>
         </div>
         <div className="pt-4 mt-4 border-t border-border">
@@ -175,7 +181,7 @@ export const GeneralSettingsTab: React.FC = () => {
         </div>
         <div className="pt-4 mt-4 border-t border-border">
           <label htmlFor="font-family" className="block text-sm font-medium text-text-primary mb-2">
-            Application Font
+            {t('settings.font.label')}
           </label>
           <select
             id="font-family"
@@ -188,10 +194,11 @@ export const GeneralSettingsTab: React.FC = () => {
             }
             className="block w-full max-w-xs bg-input-bg border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent"
           >
-            <option value="Figtree">Figtree (Default)</option>
-            <option value="Sora">Sora (Display)</option>
-            <option value="IBM Plex Sans">IBM Plex Sans</option>
-            <option value="JetBrains Mono">JetBrains Mono</option>
+            <option value="Figtree">{t('settings.font.figtree')}</option>
+            <option value="Sora">{t('settings.font.sora')}</option>
+            <option value="IBM Plex Sans">{t('settings.font.ibm_plex')}</option>
+            <option value="JetBrains Mono">{t('settings.font.jetbrains')}</option>
+            <option value="Inter">{t('settings.font.legacy_inter')}</option>
           </select>
         </div>
         <div className="pt-4 mt-4 border-t border-border">
