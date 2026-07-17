@@ -767,9 +767,6 @@ export async function analyzeSingleArticle(
   signal?: AbortSignal,
 ): Promise<RankedArticle> {
   const useHeuristic = await shouldUseHeuristic(aiSettings);
-  if (!useHeuristic) {
-    // live path needs AI client early
-  }
   throwIfAborted(signal);
   const ncbiApiKey = (await getNcbiApiKey()) ?? undefined;
   throwIfAborted(signal);
@@ -808,13 +805,16 @@ export async function analyzeSingleArticle(
         const articleDetails = await fetchArticleDetails([pmid], signal, ncbiApiKey);
         if (articleDetails?.length) {
           articleData = articleDetails[0] as typeof articleData;
-        } else {
+        } else if (!useHeuristic) {
           throw new AppError({
             code: 'NCBI_NETWORK',
             message: 'Could not fetch article details from PubMed. Please check the identifier.',
             retryable: true,
             context: 'article_analysis',
           });
+        } else {
+          const demo = DEMO_CORPUS.find((a) => a.pmid === pmid) ?? DEMO_CORPUS[0];
+          articleData = { ...demo };
         }
       } catch (err) {
         if (isAbortError(err) || (err instanceof AppError && err.code === 'STREAM_ABORTED')) {
@@ -822,18 +822,8 @@ export async function analyzeSingleArticle(
         }
         if (err instanceof AppError) throw err;
         if (useHeuristic) {
-          const demo = DEMO_CORPUS.find((a) => a.pmid === pmid);
-          if (demo) {
-            articleData = { ...demo };
-          } else {
-            throw new AppError({
-              code: 'NCBI_NETWORK',
-              message: 'Could not fetch article details from PubMed. Please check the identifier.',
-              retryable: true,
-              context: 'article_analysis',
-              cause: err,
-            });
-          }
+          const demo = DEMO_CORPUS.find((a) => a.pmid === pmid) ?? DEMO_CORPUS[0];
+          articleData = { ...demo };
         } else {
           throw toAppError(err, 'article_analysis');
         }

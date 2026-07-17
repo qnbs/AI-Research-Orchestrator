@@ -23,6 +23,7 @@ import { UploadIcon } from '../icons/UploadIcon';
 import { ARTICLE_TYPES, CSV_EXPORT_COLUMNS } from '../../types';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { useTranslation } from '../../hooks/useTranslation';
+import { useInferenceMode } from '../../hooks/useInferenceMode';
 
 const personaDescriptions = {
   'Neutral Scientist': 'Adopts a neutral, objective, and strictly scientific tone.',
@@ -363,6 +364,7 @@ export const GeneralSettingsTab: React.FC = () => {
 export const AISettingsTab: React.FC = () => {
   const { tempSettings, setTempSettings, errors } = useSettingsView();
   const { t } = useTranslation();
+  const { refresh: refreshInferenceMode } = useInferenceMode();
 
   const handleArticleTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { value, checked } = e.target;
@@ -377,7 +379,12 @@ export const AISettingsTab: React.FC = () => {
 
   return (
     <div className="space-y-8">
-      <ApiKeySettings />
+      <ApiKeySettings
+        onKeyChange={() => {
+          window.dispatchEvent(new Event('aro-api-key-changed'));
+          void refreshInferenceMode();
+        }}
+      />
       <CostEstimateCard />
       <SettingCard
         icon={<SparklesIcon className="w-6 h-6 text-accent-magenta" />}

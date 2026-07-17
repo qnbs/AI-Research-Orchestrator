@@ -1,6 +1,8 @@
 /**
  * Public façade for the local heuristic inference layer.
- * All exports are pure / deterministic and share types with the live Gemini path.
+ * Pure heuristic primitives (query, rank, synthesize templates, etc.) are deterministic.
+ * `generateHeuristicResearchReportStream` may call PubMed/arXiv when online; offline it
+ * uses the curated demo corpus (ADR 0007).
  */
 
 export type {

@@ -44,10 +44,12 @@ export function useInferenceMode(): InferenceModeSnapshot & {
     };
     window.addEventListener('online', onChange);
     window.addEventListener('offline', onChange);
+    window.addEventListener('aro-api-key-changed', onChange);
     return () => {
       requestIdRef.current += 1;
       window.removeEventListener('online', onChange);
       window.removeEventListener('offline', onChange);
+      window.removeEventListener('aro-api-key-changed', onChange);
     };
   }, [refresh]);
 
