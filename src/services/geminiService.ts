@@ -34,6 +34,7 @@ import {
   generateJournalProfileHeuristic,
   createHeuristicChatSession,
   DEMO_CORPUS,
+  resolveHeuristicArticleByPmid,
   type ReportChatSession,
 } from './heuristics';
 import {
@@ -808,24 +809,23 @@ export async function analyzeSingleArticle(
             context: 'article_analysis',
           });
         } else {
-          const demo = DEMO_CORPUS.find((a) => a.pmid === pmid) ?? DEMO_CORPUS[0];
-          articleData = { ...demo };
+          articleData = resolveHeuristicArticleByPmid(pmid);
         }
       } catch (err) {
         if (isAbortError(err) || (err instanceof AppError && err.code === 'STREAM_ABORTED')) {
           throw err;
         }
-        if (err instanceof AppError) throw err;
+        // In heuristic mode, recover from PubMed/network AppErrors with a local fallback.
         if (useHeuristic) {
-          const demo = DEMO_CORPUS.find((a) => a.pmid === pmid) ?? DEMO_CORPUS[0];
-          articleData = { ...demo };
+          articleData = resolveHeuristicArticleByPmid(pmid);
+        } else if (err instanceof AppError) {
+          throw err;
         } else {
           throw toAppError(err, 'article_analysis');
         }
       }
     } else if (useHeuristic) {
-      const demo = DEMO_CORPUS.find((a) => a.pmid === pmid) ?? DEMO_CORPUS[0];
-      articleData = { ...demo };
+      articleData = resolveHeuristicArticleByPmid(pmid);
     } else {
       throw new AppError({
         code: 'NCBI_NETWORK',

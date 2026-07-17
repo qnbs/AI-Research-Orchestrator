@@ -66,6 +66,8 @@ describe('heuristics core', () => {
     const clusters = disambiguateAuthorHeuristic('Chen L', DEMO_CORPUS.slice(0, 3));
     expect(clusters.length).toBeGreaterThanOrEqual(1);
     expect(clusters[0].publicationCount).toBeGreaterThan(0);
+    // Exact identity matching must keep co-authors (not drop names that merely contain "L")
+    expect(clusters[0].topCoAuthors.some((a) => /Patel|Nguyen|Alvarez/i.test(a))).toBe(true);
   });
 
   it('profiles known journals', () => {
@@ -79,6 +81,14 @@ describe('heuristics core', () => {
     const answer = answerFromReport(report, 'What are the top articles?');
     expect(answer).toMatch(/Heuristic/i);
     expect(answer).toMatch(/pmid|ranked|demo:aspirin/i);
+  });
+
+  it('preserves unknown PMIDs instead of substituting an unrelated demo article', async () => {
+    const { resolveHeuristicArticleByPmid } = await import('./sampleData');
+    const article = resolveHeuristicArticleByPmid('31354136');
+    expect(article.pmid).toBe('31354136');
+    expect(article.title).toMatch(/Unavailable offline/i);
+    expect(article.pmid).not.toBe(DEMO_CORPUS[0].pmid);
   });
 
   it('streams a full heuristic research report offline', async () => {

@@ -49,6 +49,7 @@ export {
   isDemoEntryId,
   isDemoPmid,
   syntheticPmid,
+  resolveHeuristicArticleByPmid,
 } from './sampleData';
 export {
   generateHeuristicResearchReportStream,

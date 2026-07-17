@@ -10,6 +10,30 @@ function parseAuthorList(authors: string | undefined): string[] {
     .filter((a) => a.length > 1 && !/^et\s+al/i.test(a));
 }
 
+function normalizeAuthorKey(name: string): string {
+  return name.trim().toLowerCase().replace(/\./g, '').replace(/\s+/g, ' ');
+}
+
+/**
+ * Exact identity check for excluding the searched author from co-author lists.
+ * Avoids substring `includes` false positives (e.g. initial "L" matching "Alvarez").
+ */
+function isSameAuthorIdentity(candidate: string, targetName: string): boolean {
+  const c = normalizeAuthorKey(candidate);
+  const t = normalizeAuthorKey(targetName);
+  if (!c || !t) return false;
+  if (c === t) return true;
+
+  const cParts = c.split(' ');
+  const tParts = t.split(' ');
+  // PubMed-style "Last I" / "Last First": compare surname (first token) + optional initial
+  const cSurname = cParts[0];
+  const tSurname = tParts[0];
+  if (cSurname !== tSurname) return false;
+  if (tParts.length === 1 || cParts.length === 1) return true;
+  return cParts[1][0] === tParts[1][0];
+}
+
 function affiliationTokens(article: Partial<RankedArticle>): Set<string> {
   // Affiliations are not always present; approximate via journal + title domain words
   return tokenSet(`${article.journal ?? ''} ${article.title ?? ''}`);
@@ -41,7 +65,7 @@ export function disambiguateAuthorHeuristic(
 
   for (const article of articles) {
     const coAuthors = parseAuthorList(article.authors).filter(
-      (a) => !a.toLowerCase().includes(authorName.split(/\s+/).pop()?.toLowerCase() ?? '___'),
+      (a) => !isSameAuthorIdentity(a, authorName),
     );
     const titleGrams = new Set(ngrams(article.title ?? '', 2));
     const aff = affiliationTokens(article);
@@ -70,9 +94,7 @@ export function disambiguateAuthorHeuristic(
     const topicBag = new Map<string, number>();
     for (const a of c.articles) {
       for (const co of parseAuthorList(a.authors)) {
-        if (co.toLowerCase().includes(authorName.split(/\s+/).slice(-1)[0]?.toLowerCase() ?? '')) {
-          continue;
-        }
+        if (isSameAuthorIdentity(co, authorName)) continue;
         coFreq.set(co, (coFreq.get(co) ?? 0) + 1);
       }
       for (const kw of extractKeywords(`${a.title ?? ''} ${a.summary ?? ''}`, 4)) {
@@ -118,7 +140,7 @@ export function generateAuthorProfileHeuristic(
   throwIfAborted(signal);
   const years = articles
     .map((a) => parseInt(a.pubYear ?? '', 10))
-    .filter((y) => Number.isFinite(y))
+    .filter((y) => Number.isFinite(y) && y >= 1000 && y <= 2100)
     .sort((a, b) => a - b);
 
   const conceptFreq = new Map<string, number>();

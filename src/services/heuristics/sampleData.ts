@@ -295,6 +295,31 @@ export function isDemoEntryId(id: string): boolean {
   return id.startsWith(DEMO_ENTRY_PREFIX);
 }
 
+/**
+ * Resolve a heuristic-mode article for Quick Add / single-article analysis.
+ * Never substitutes an unrelated demo paper for an unknown PMID — preserves the
+ * requested identifier with an explicit offline placeholder instead.
+ */
+export function resolveHeuristicArticleByPmid(pmid: string): RankedArticle {
+  const hit = DEMO_CORPUS.find((a) => a.pmid === pmid);
+  if (hit) return { ...hit };
+  return {
+    pmid,
+    title: `Unavailable offline (identifier: ${pmid})`,
+    authors: 'Unknown',
+    journal: 'Local heuristic placeholder',
+    pubYear: '',
+    summary:
+      'Heuristic mode could not load this article from PubMed or the local demo corpus. ' +
+      'Connect online, or use a curated demo:* identifier for educational offline analysis.',
+    isOpenAccess: false,
+    relevanceScore: 0,
+    relevanceExplanation: 'Placeholder — identifier not present in the local demo corpus.',
+    keywords: ['heuristic', 'offline', 'placeholder'],
+    articleType: 'Other',
+  };
+}
+
 /** Deterministic synthetic demo id for topic-derived offline fillers (never a real PMID). */
 export function syntheticPmid(topic: string, index: number): string {
   const h = stableHash(`${topic}:${index}`);
