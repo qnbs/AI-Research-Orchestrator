@@ -23,6 +23,15 @@ export function useDocumentAppearance(settings: Settings): void {
       'no-animations',
       !settings.performance.enableAnimations,
     );
+    const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+    if (themeColorMeta) {
+      const themeColors: Record<string, string> = {
+        dark: '#070b12',
+        light: '#eef3f7',
+        matrix: '#020805',
+      };
+      themeColorMeta.setAttribute('content', themeColors[settings.theme] ?? themeColors.dark);
+    }
     document.documentElement.style.setProperty(
       '--space-density',
       settings.appearance.density === 'compact' ? '0.85' : '1',
