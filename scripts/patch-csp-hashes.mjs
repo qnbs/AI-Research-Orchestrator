@@ -5,16 +5,18 @@
  * and Lighthouse best-practices / CSP audits fail.
  */
 import { createHash } from 'node:crypto';
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const distHtml = resolve(process.cwd(), 'dist/index.html');
-if (!existsSync(distHtml)) {
+
+let html;
+try {
+  html = readFileSync(distHtml, 'utf8');
+} catch (err) {
   console.error('patch-csp-hashes: dist/index.html not found — run build first');
   process.exit(1);
 }
-
-let html = readFileSync(distHtml, 'utf8');
 
 function sha256Base64(body) {
   return `sha256-${createHash('sha256').update(body, 'utf8').digest('base64')}`;
