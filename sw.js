@@ -137,24 +137,23 @@ if (workbox) {
 
     // --- Precache App Shell + icons (saved reports live in Dexie; shell must boot offline) ---
     self.addEventListener('install', (event) => {
-        const urlsToPrecache = [
-            `${BASE_PATH}/`,
-            `${BASE_PATH}/index.html`,
-            `${BASE_PATH}/manifest.json`,
+        const requiredUrls = [`${BASE_PATH}/`, `${BASE_PATH}/index.html`, `${BASE_PATH}/manifest.json`];
+        const optionalUrls = [
             `${BASE_PATH}/register-sw.js`,
             `${BASE_PATH}/icons/icon-192.png`,
             `${BASE_PATH}/icons/icon-512.png`,
         ];
         event.waitUntil(
-            caches.open('pages-cache').then((cache) =>
-                Promise.all(
-                    urlsToPrecache.map((url) =>
+            caches.open('pages-cache').then(async (cache) => {
+                await Promise.all(requiredUrls.map((url) => cache.add(url)));
+                await Promise.all(
+                    optionalUrls.map((url) =>
                         cache.add(url).catch((err) => {
-                            console.warn('Precache skipped:', url, err);
+                            console.warn('Precache skipped (optional):', url, err);
                         }),
                     ),
-                ),
-            ),
+                );
+            }),
         );
     });
 

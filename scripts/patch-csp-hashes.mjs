@@ -47,6 +47,11 @@ csp = csp.replace(/script-src\s+([^;]+)/, (_all, sources) => {
     .replace(/'sha256-[^']+'/g, '')
     .replace(/\s+/g, ' ')
     .trim();
+  if (/\bunsafe-inline\b/.test(cleaned)) {
+    throw new Error(
+      "patch-csp-hashes: script-src must not contain 'unsafe-inline' — refusing to write dist/index.html",
+    );
+  }
   return `script-src ${cleaned} '${hashLd}' '${hashImap}'`;
 });
 

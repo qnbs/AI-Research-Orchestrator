@@ -82,7 +82,7 @@ Multi-LLM adapter, multimodal figures, local vector RAG, collaborative encrypted
 - [x] Agent eval harness (P1-4)
 - [x] Chart consolidation (P2-1)
 - [x] Prompt versioning (P2-4)
-- [x] CSP connect-src tighten (P2-5 partial)
+- [x] CSP script-src hashes + connect-src (P2-5 Closed; residual `style-src 'unsafe-inline'` documented)
 - [x] package.json **0.2.0** + CHANGELOG
 - [x] GitHub Release v0.2.0 (https://github.com/qnbs/AI-Research-Orchestrator/releases/tag/v0.2.0)
 

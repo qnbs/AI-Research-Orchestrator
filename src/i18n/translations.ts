@@ -242,7 +242,7 @@ export const translations = {
     'charts.no_topic_data': 'Keine Themendaten verfügbar.',
     'charts.no_publication_years': 'Keine Erscheinungsjahre verfügbar.',
     'offline.banner':
-      'Sie sind offline. Gespeicherte Berichte in der Wissensdatenbank bleiben verfügbar; Live-Aufrufe an PubMed und Gemini schlagen fehl, bis die Verbindung wiedersteht.',
+      'Sie sind offline. Gespeicherte Berichte in der Wissensdatenbank bleiben verfügbar; Live-Aufrufe an PubMed und Gemini schlagen fehl, bis die Verbindung wiederhergestellt ist.',
   },
 };
 

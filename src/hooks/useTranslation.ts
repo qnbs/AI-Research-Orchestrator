@@ -13,11 +13,14 @@ export const useTranslation = () => {
       const currentLangTranslations = translations[lang];
       const fallbackTranslations = translations['en'];
 
-      if (currentLangTranslations && key in currentLangTranslations) {
+      if (
+        currentLangTranslations &&
+        Object.prototype.hasOwnProperty.call(currentLangTranslations, key)
+      ) {
         return currentLangTranslations[key as TranslationKey];
       }
 
-      if (fallbackTranslations && key in fallbackTranslations) {
+      if (fallbackTranslations && Object.prototype.hasOwnProperty.call(fallbackTranslations, key)) {
         return fallbackTranslations[key as TranslationKey];
       }
 
