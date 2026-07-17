@@ -14,3 +14,6 @@ export type { PipelineStepProps, PipelineStepItem } from './PipelineStep';
 
 export { KnowledgeBaseItem } from './KnowledgeBaseItem';
 export type { KnowledgeBaseItemProps } from './KnowledgeBaseItem';
+
+export { UiButton, UiBadge } from './UiPrimitives';
+export type { UiButtonProps, UiBadgeProps } from './UiPrimitives';

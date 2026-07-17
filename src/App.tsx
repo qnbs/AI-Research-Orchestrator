@@ -26,6 +26,7 @@ import { PresetProvider, usePresets } from './contexts/PresetContext';
 import { Notification } from './components/Notification';
 import { ConfirmationModal } from './components/ConfirmationModal';
 import { useResearchAssistant } from './hooks/useResearchAssistant';
+import { useDocumentAppearance } from './hooks/useDocumentAppearance';
 import { generateResearchReportStream } from './services/geminiService';
 import { handleResearchStreamFailure } from './lib/researchStreamFailure';
 import { estimateResearchRunCostUsd, shouldWarnAboutResearchCost } from './lib/resilience';
@@ -86,6 +87,7 @@ const ContentSpinner: React.FC = () => (
 const AppLayout: React.FC = () => {
   const { isLoading } = useKnowledgeBase();
   const { isSettingsLoading, settings, updateSettings } = useSettings();
+  useDocumentAppearance(settings);
   const { arePresetsLoading } = usePresets();
   const { t } = useTranslation();
 
@@ -167,46 +169,6 @@ const AppLayout: React.FC = () => {
   useEffect(() => {
     dispatch(loadCollections());
   }, [dispatch]);
-
-  useEffect(() => {
-    document.documentElement.className = settings.theme;
-    document.documentElement.classList.toggle(
-      'no-animations',
-      !settings.performance.enableAnimations,
-    );
-
-    const fontMap: Record<string, string> = {
-      Inter: 'Inter, sans-serif',
-      Lato: 'Lato, sans-serif',
-      Roboto: 'Roboto, sans-serif',
-      'Open Sans': '"Open Sans", sans-serif',
-    };
-    document.body.style.fontFamily = fontMap[settings.appearance.fontFamily] || fontMap['Inter'];
-
-    if (settings.appearance.customColors.enabled) {
-      document.documentElement.style.setProperty(
-        '--color-brand-primary',
-        settings.appearance.customColors.primary,
-      );
-      document.documentElement.style.setProperty(
-        '--color-brand-secondary',
-        settings.appearance.customColors.secondary,
-      );
-      document.documentElement.style.setProperty(
-        '--color-brand-accent',
-        settings.appearance.customColors.accent,
-      );
-    } else {
-      document.documentElement.style.removeProperty('--color-brand-primary');
-      document.documentElement.style.removeProperty('--color-brand-secondary');
-      document.documentElement.style.removeProperty('--color-brand-accent');
-    }
-  }, [
-    settings.theme,
-    settings.performance.enableAnimations,
-    settings.appearance.fontFamily,
-    settings.appearance.customColors,
-  ]);
 
   useEffect(() => {
     // Accessibility Best Practice: Update document title on view change

@@ -1,3 +1,4 @@
+import { RemovableTagChip } from './RemovableTagChip';
 import React, { useEffect, useState, useRef } from 'react';
 import type { AggregatedArticle, SimilarArticle, OnlineFindings } from '../types';
 import { useSettings } from '../contexts/SettingsContext';
@@ -259,19 +260,13 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({
             </h4>
             <div className="flex flex-wrap gap-2 items-center">
               {(article.customTags || []).map((tag) => (
-                <span
+                <RemovableTagChip
                   key={tag}
-                  className="flex items-center bg-purple-500/10 text-purple-300 text-sm font-medium pl-2 pr-1 py-0.5 rounded-full border border-purple-500/20"
-                >
-                  {tag}
-                  <button
-                    onClick={() => handleRemoveTag(tag)}
-                    className="ml-1.5 text-purple-300 hover:text-white focus:outline-none"
-                    aria-label={`Remove tag ${tag}`}
-                  >
-                    <XIcon className="h-3 w-3" />
-                  </button>
-                </span>
+                  label={tag}
+                  onRemove={() => handleRemoveTag(tag)}
+                  removeLabel={`Remove tag ${tag}`}
+                  size="md"
+                />
               ))}
               <input
                 type="text"

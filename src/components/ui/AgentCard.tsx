@@ -139,7 +139,7 @@ const AgentCardInner: React.FC<AgentCardProps> = ({
               className="absolute inset-y-0 w-1/3"
               style={{
                 background:
-                  'linear-gradient(90deg, transparent, rgba(56,189,248,0.06), transparent)',
+                  'linear-gradient(90deg, transparent, color-mix(in srgb, var(--color-brand-accent) 12%, transparent), transparent)',
               }}
               animate={{ x: ['-100%', '400%'] }}
               transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}

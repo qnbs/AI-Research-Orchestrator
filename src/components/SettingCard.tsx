@@ -6,17 +6,17 @@ const CardComponent: React.FC<{
   description: string;
   children: React.ReactNode;
 }> = ({ icon, title, description, children }) => (
-  <div className="bg-surface border border-border rounded-lg">
+  <div className="panel-card overflow-hidden">
     <div className="p-4 sm:p-6 border-b border-border">
       <div className="flex items-center gap-3">
         {icon && <div className="flex-shrink-0">{icon}</div>}
         <div>
-          <h3 className="text-lg font-bold text-text-primary">{title}</h3>
-          <p className="mt-1 text-sm text-text-secondary">{description}</p>
+          <h3 className="text-lg font-semibold text-text-primary font-display">{title}</h3>
+          <p className="mt-1 text-sm text-text-secondary text-pretty">{description}</p>
         </div>
       </div>
     </div>
-    <div className="p-4 sm:p-6 bg-background/30">{children}</div>
+    <div className="p-4 sm:p-6 bg-background/25">{children}</div>
   </div>
 );
 

@@ -3,10 +3,9 @@ import type { ResearchInput, Settings, Preset } from '../types';
 import { ARTICLE_TYPES } from '../types';
 import { usePresets } from '../contexts/PresetContext';
 import { SearchIcon } from './icons/SearchIcon';
-import { SparklesIcon } from './icons/SparklesIcon';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 import { CheckIcon } from './icons/CheckIcon';
-import { BookmarkSquareIcon } from './icons/BookmarkSquareIcon';
+import { InputFormHeader } from './InputFormHeader';
 
 interface InputFormProps {
   onSubmit: (data: ResearchInput) => void;
@@ -32,7 +31,7 @@ const SliderInput: React.FC<{
       <label htmlFor={id} className="block text-sm font-medium text-text-secondary">
         {label}
       </label>
-      <span className="font-mono text-xs font-bold text-brand-accent bg-brand-accent/10 border border-brand-accent/20 rounded-md px-2 py-0.5 shadow-[0_0_10px_rgba(56,189,248,0.2)]">
+      <span className="font-mono text-xs font-bold text-brand-accent bg-brand-accent/10 border border-brand-accent/20 rounded-md px-2 py-0.5 shadow-glow">
         {value}
       </span>
     </div>
@@ -61,7 +60,7 @@ const CustomCheckbox: React.FC<{
 }> = ({ id, value, checked, onChange, label }) => (
   <label
     htmlFor={id}
-    className={`flex items-center cursor-pointer group p-2 rounded-lg border transition-all duration-200 ${checked ? 'bg-brand-accent/10 border-brand-accent/40 shadow-[0_0_10px_rgba(56,189,248,0.1)]' : 'bg-transparent border-transparent hover:bg-surface-hover hover:border-border'}`}
+    className={`flex items-center cursor-pointer group p-2 rounded-lg border transition-all duration-200 ${checked ? 'bg-brand-accent/10 border-brand-accent/40 shadow-glow' : 'bg-transparent border-transparent hover:bg-surface-hover hover:border-border'}`}
   >
     <div className="relative flex-shrink-0">
       <input
@@ -212,45 +211,11 @@ const InputFormComponent: React.FC<InputFormProps> = ({
   return (
     <>
       <div className="glass-panel rounded-xl p-6 sm:p-8 transition-all duration-300 hover:shadow-lg">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-          <div className="flex items-center">
-            <div className="p-2 bg-brand-accent/10 rounded-lg mr-3 border border-brand-accent/20 shadow-[0_0_10px_rgba(56,189,248,0.1)]">
-              <SparklesIcon className="h-6 w-6 text-brand-accent" />
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-text-primary tracking-tight">
-                Research Parameters
-              </h2>
-              <p className="text-xs text-text-secondary mt-0.5">
-                Define the scope for the AI agents.
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 w-full sm:w-auto">
-            <select
-              onChange={handleLoadPreset}
-              defaultValue=""
-              className="glass-input block w-full sm:w-40 rounded-lg py-1.5 px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-accent transition-colors"
-            >
-              <option value="" disabled>
-                Load preset...
-              </option>
-              {presets.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-            <button
-              type="button"
-              onClick={() => setIsPresetModalOpen(true)}
-              className="inline-flex flex-shrink-0 items-center px-3 py-1.5 border border-border text-xs font-medium rounded-lg shadow-sm text-text-secondary bg-surface hover:bg-surface-hover hover:text-text-primary transition-colors"
-            >
-              <BookmarkSquareIcon className="h-4 w-4 mr-1.5" />
-              Save
-            </button>
-          </div>
-        </div>
+        <InputFormHeader
+          presets={presets}
+          onLoadPreset={handleLoadPreset}
+          onOpenPresetModal={() => setIsPresetModalOpen(true)}
+        />
         <form onSubmit={handleSubmit} onKeyDown={handleKeyDown} className="space-y-8" role="search">
           <div className="group">
             <label

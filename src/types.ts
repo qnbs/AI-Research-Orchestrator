@@ -140,7 +140,7 @@ export interface Settings {
   appLanguage: AppLanguage;
   appearance: {
     density: 'comfortable' | 'compact';
-    fontFamily: 'Inter' | 'Lato' | 'Roboto' | 'Open Sans';
+    fontFamily: 'Figtree' | 'Sora' | 'IBM Plex Sans' | 'JetBrains Mono' | 'Inter';
     customColors: {
       enabled: boolean;
       primary: string;
