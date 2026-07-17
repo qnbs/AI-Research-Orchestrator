@@ -21,6 +21,7 @@ async function skipOnboarding(page: Page) {
   await page.evaluate(() => {
     try {
       localStorage.setItem('aro.demoDataDismissed', '1');
+      localStorage.setItem('aro.demoDataSeeded', '1');
     } catch {
       /* ignore */
     }

@@ -6,7 +6,7 @@ import { jaccard, tokenSet, throwIfAborted } from './utils';
  * Returns Gemini-compatible `SimilarArticle[]`.
  */
 export function findSimilarArticlesHeuristic(
-  seed: { title: string; summary: string; keywords?: string[] },
+  seed: { title: string; summary: string; keywords?: string[]; pmid?: string },
   candidates: Array<Pick<RankedArticle, 'pmid' | 'title' | 'summary' | 'keywords'>>,
   limit = 5,
   signal?: AbortSignal,
@@ -14,9 +14,16 @@ export function findSimilarArticlesHeuristic(
   throwIfAborted(signal);
   const seedText = `${seed.title} ${seed.summary} ${(seed.keywords ?? []).join(' ')}`;
   const seedSet = tokenSet(seedText);
+  const seedPmid = seed.pmid?.trim();
+  const seedTitle = seed.title.trim().toLowerCase();
 
   const scored = candidates
-    .filter((c) => c.title || c.summary)
+    .filter((c) => {
+      if (!(c.title || c.summary)) return false;
+      if (seedPmid && c.pmid === seedPmid) return false;
+      if (c.title.trim().toLowerCase() === seedTitle) return false;
+      return true;
+    })
     .map((c) => {
       const other = tokenSet(`${c.title} ${c.summary} ${(c.keywords ?? []).join(' ')}`);
       const sim = jaccard(seedSet, other);

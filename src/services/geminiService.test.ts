@@ -259,15 +259,18 @@ describe('geminiService with mocked SDK', () => {
   it('uses heuristic TL;DR when API key is missing (no NO_API_KEY throw)', async () => {
     const { hasApiKey } = await import('./apiKeyService');
     vi.mocked(hasApiKey).mockResolvedValueOnce(false);
+    hoisted.generateContent.mockClear();
     const out = await generateTldrSummary(
       'Background: Aspirin reduces cardiovascular events. Methods: Meta-analysis of RCTs. Results: Benefit outweighed bleeding in high-risk groups. Conclusion: Individualize therapy.',
       mockAi,
     );
     expect(out.length).toBeGreaterThan(10);
     expect(out.toLowerCase()).not.toMatch(/no_api_key/i);
+    expect(hoisted.generateContent).not.toHaveBeenCalled();
   });
 
   it('forceHeuristicMode bypasses Gemini for research analysis', async () => {
+    hoisted.generateContent.mockClear();
     const out = await generateResearchAnalysis(
       'SGLT2 inhibitors reduce heart failure hospitalization in diabetes cohorts with matched controls.',
       {
@@ -277,6 +280,7 @@ describe('geminiService with mocked SDK', () => {
     );
     expect(out.summary).toMatch(/Heuristic/i);
     expect(out.synthesizedTopic.length).toBeGreaterThan(0);
+    expect(hoisted.generateContent).not.toHaveBeenCalled();
   });
 
   it('findRelatedOnline maps grounding chunks when present', async () => {

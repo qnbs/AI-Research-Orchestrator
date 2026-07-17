@@ -76,7 +76,19 @@ export function answerFromReport(report: ResearchReport, question: string): stri
   const synthesisHit = jaccard(qTokens, tokenSet(report.synthesis ?? ''));
   const wantsSummary = /summary|tldr|overview|synthesis|conclude|conclusion/.test(lower);
   const wantsKeywords = /keyword|theme|topic/.test(lower);
-  const wantsList = /list|articles|pmid|papers|top/.test(lower);
+  const requestedPmid = q.match(/\b(?:pmid[:\s#]*)?(\d{5,9}|demo:[a-z0-9:-]+)\b/i)?.[1];
+
+  if (requestedPmid) {
+    const hit = (report.rankedArticles ?? []).find(
+      (a) => a.pmid.toLowerCase() === requestedPmid.toLowerCase(),
+    );
+    if (hit) {
+      return `${HEURISTIC_BADGE}\n\n**${hit.title}** (PMID ${hit.pmid}, score ${hit.relevanceScore}/100)\n\n${(hit.aiSummary || hit.summary || '').slice(0, 700)}`;
+    }
+    return `${HEURISTIC_BADGE}: PMID ${requestedPmid} is not in this report’s ranked articles. Ask for the top list or a PMID shown in the panel.`;
+  }
+
+  const wantsList = /list|articles|papers|top\b/.test(lower) && !/pmid/i.test(lower);
 
   if (wantsKeywords && report.overallKeywords?.length) {
     return `${HEURISTIC_BADGE}\n\nOverall keywords: ${report.overallKeywords

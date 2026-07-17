@@ -6,7 +6,7 @@ Dieses Repository ist eine **React-19-PWA** mit **Gemini** und **PubMed**; Daten
 
 Die Orchestrierung läuft in **`src/services/geminiService.ts`** (AsyncGenerator `generateResearchReportStream`): Phasen wie Query-Generierung, PubMed-/optional arXiv-Fetch, Ranking, Streaming-Synthese. Grobe Zuordnung zu UI/Trace (`App.tsx`, `getAgentForPhase`): PubMed-/Suchphasen → **PubMedFetcher** bzw. Query-Erzeugung → **QueryGenerator**, Ranking → **Ranker**, Synthese/Streaming → **Synthesizer**. Das sind **konzeptionelle Rollen** (Prompts/Phasen), keine separaten SDK-Prozesse.
 
-**InferenceMode:** `live` | `heuristic` — abgeleitet aus API-Key, `navigator.onLine` und optionalem Force-Toggle (`src/services/inferenceMode.ts`, Hook `useInferenceMode`). Heuristik-Implementierungen unter **`src/services/heuristics/`**. Ohne Key / offline wirft der Live-Pfad kein `NO_API_KEY`; es wird lokal inferiert (ADR 0007).
+**InferenceMode:** `live` | `heuristic` — derived from API key presence, `navigator.onLine`, and an optional force toggle (`src/services/inferenceMode.ts`, hook `useInferenceMode`). Heuristic implementations live under **`src/services/heuristics/`**. Without a key / offline, the live path does not throw `NO_API_KEY`; local inference runs instead (ADR 0007).
 
 ## Pflichtlektüre
 

@@ -1,6 +1,6 @@
 import type { JournalProfile, RankedArticle } from '../../types';
 import { extractKeywords } from './keywords';
-import { scoreArticleRelevance, classifyArticleType } from './ranking';
+import { classifyArticleType } from './ranking';
 import { throwIfAborted } from './utils';
 
 /** Curated educational journal knowledge (ISSN + OA policy guesses). */
@@ -69,6 +69,22 @@ function normalizeJournalKey(name: string): string {
   return name.trim().toLowerCase().replace(/\s+/g, ' ');
 }
 
+/** Exact normalized names and aliases → curated KB key. */
+const JOURNAL_ALIASES: Record<string, string> = {
+  nature: 'nature',
+  science: 'science',
+  'the lancet': 'the lancet',
+  lancet: 'the lancet',
+  nejm: 'nejm',
+  'n. engl. j. med.': 'new england journal of medicine',
+  'new england journal of medicine': 'new england journal of medicine',
+  'plos one': 'plos one',
+  plosone: 'plos one',
+  bmj: 'bmj',
+  'british medical journal': 'bmj',
+  cell: 'cell',
+};
+
 /**
  * Rule-based journal profile using static KB + optional local article titles.
  */
@@ -79,9 +95,8 @@ export function generateJournalProfileHeuristic(
 ): JournalProfile {
   throwIfAborted(signal);
   const key = normalizeJournalKey(journalName);
-  const known =
-    JOURNAL_KB[key] ??
-    Object.entries(JOURNAL_KB).find(([k]) => key.includes(k) || k.includes(key))?.[1];
+  const aliasKey = JOURNAL_ALIASES[key];
+  const known = aliasKey ? (JOURNAL_KB[aliasKey] ?? JOURNAL_KB[key]) : JOURNAL_KB[key];
 
   const fromArticles = extractKeywords(articles.map((a) => a.title ?? '').join(' '), 6);
 
@@ -133,11 +148,29 @@ export function analyzeArticleHeuristic(
     ...article,
     isOpenAccess: article.isOpenAccess ?? false,
   };
-  const { score, explanation, keywords } = scoreArticleRelevance(normalized, article.title);
+  const titleSet = new Set(
+    article.title
+      .toLowerCase()
+      .split(/[^a-z0-9]+/i)
+      .filter((t) => t.length > 2),
+  );
+  const abstractSet = new Set(
+    (article.summary || '')
+      .toLowerCase()
+      .split(/[^a-z0-9]+/i)
+      .filter((t) => t.length > 2),
+  );
+  let inter = 0;
+  for (const t of titleSet) if (abstractSet.has(t)) inter += 1;
+  const coherence =
+    titleSet.size === 0
+      ? 50
+      : Math.max(1, Math.min(100, Math.round((inter / titleSet.size) * 100)));
+  const keywords = extractKeywords(`${article.title}. ${article.summary}`, 5);
   return {
     ...normalized,
-    relevanceScore: score,
-    relevanceExplanation: explanation,
+    relevanceScore: coherence,
+    relevanceExplanation: `Heuristic title–abstract coherence ${coherence}/100 (${inter}/${titleSet.size} title tokens appear in the abstract).`,
     keywords,
     articleType: article.articleType ?? classifyArticleType(article.title, article.summary),
     aiSummary: (article.summary || '').slice(0, 400),

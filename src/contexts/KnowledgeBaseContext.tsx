@@ -41,6 +41,7 @@ import {
   createDemoKnowledgeBaseEntries,
   isDemoEntryId,
   DEMO_DISMISS_STORAGE_KEY,
+  DEMO_SEEDED_STORAGE_KEY,
 } from '../services/heuristics';
 
 interface KnowledgeBaseContextType {
@@ -75,19 +76,28 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
     dispatch(fetchKnowledgeBase());
   }, [dispatch]);
 
-  // First-run: seed educational demo content when KB is empty (unless dismissed).
+  // First-run only: seed educational demo content when KB is empty and never seeded/dismissed.
   useEffect(() => {
     if (isLoading) return;
     if (knowledgeBase.length > 0) return;
     let dismissed = false;
+    let alreadySeeded = false;
     try {
       dismissed = localStorage.getItem(DEMO_DISMISS_STORAGE_KEY) === '1';
+      alreadySeeded = localStorage.getItem(DEMO_SEEDED_STORAGE_KEY) === '1';
     } catch {
       dismissed = false;
+      alreadySeeded = false;
     }
-    if (dismissed) return;
+    if (dismissed || alreadySeeded) return;
     const demo = createDemoKnowledgeBaseEntries();
-    void dispatch(importKbEntries(demo));
+    void dispatch(importKbEntries(demo)).then(() => {
+      try {
+        localStorage.setItem(DEMO_SEEDED_STORAGE_KEY, '1');
+      } catch {
+        /* ignore quota / private mode */
+      }
+    });
   }, [dispatch, isLoading, knowledgeBase.length]);
 
   const showNotification = useCallback(
@@ -148,6 +158,12 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
   );
 
   const clearKnowledgeBase = useCallback(async () => {
+    try {
+      localStorage.setItem(DEMO_SEEDED_STORAGE_KEY, '1');
+      localStorage.setItem(DEMO_DISMISS_STORAGE_KEY, '1');
+    } catch {
+      /* ignore */
+    }
     await dispatch(clearKb());
   }, [dispatch]);
 

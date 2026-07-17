@@ -69,7 +69,7 @@ export function resolveInferenceMode(input: ResolveInferenceModeInput): Inferenc
   };
 }
 
-/** Human-readable short label for badges (English; UI wraps with i18n). */
+/** Human-readable short English label for badges (prefer i18n keys in UI). */
 export function inferenceModeBadgeLabel(snapshot: InferenceModeSnapshot): string {
   if (snapshot.mode === 'live') return 'Live · Gemini';
   switch (snapshot.reason) {
@@ -81,6 +81,23 @@ export function inferenceModeBadgeLabel(snapshot: InferenceModeSnapshot): string
       return 'Heuristic · No API key';
     default:
       return 'Heuristic mode';
+  }
+}
+
+/** Translation key suffix for UI badges (`inference.badge.*`). */
+export function inferenceModeBadgeKey(
+  snapshot: InferenceModeSnapshot,
+): 'live' | 'force' | 'offline' | 'no_key' | 'heuristic' {
+  if (snapshot.mode === 'live') return 'live';
+  switch (snapshot.reason) {
+    case 'force':
+      return 'force';
+    case 'offline':
+      return 'offline';
+    case 'no_api_key':
+      return 'no_key';
+    default:
+      return 'heuristic';
   }
 }
 

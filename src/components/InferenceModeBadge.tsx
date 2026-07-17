@@ -1,12 +1,13 @@
 import React from 'react';
 import { useInferenceMode } from '../hooks/useInferenceMode';
 import { useTranslation } from '../hooks/useTranslation';
+import type { TranslationKey } from '../i18n/translations';
 
 /**
  * Persistent, non-intrusive inference-mode indicator for the header / orchestrator.
  */
 export const InferenceModeBadge: React.FC<{ className?: string }> = ({ className = '' }) => {
-  const { mode, reason, badgeLabel } = useInferenceMode();
+  const { mode, reason } = useInferenceMode();
   const { t } = useTranslation();
 
   const isLive = mode === 'live';
@@ -18,6 +19,17 @@ export const InferenceModeBadge: React.FC<{ className?: string }> = ({ className
         : reason === 'offline'
           ? t('inference.tooltip.offline')
           : t('inference.tooltip.no_key');
+
+  const badgeKey: TranslationKey =
+    reason === 'live'
+      ? 'inference.badge.live'
+      : reason === 'force'
+        ? 'inference.badge.force'
+        : reason === 'offline'
+          ? 'inference.badge.offline'
+          : reason === 'no_api_key'
+            ? 'inference.badge.no_key'
+            : 'inference.badge.heuristic';
 
   return (
     <span
@@ -34,7 +46,7 @@ export const InferenceModeBadge: React.FC<{ className?: string }> = ({ className
         className={`h-1.5 w-1.5 rounded-full ${isLive ? 'bg-emerald-400' : 'bg-amber-400'}`}
         aria-hidden
       />
-      {badgeLabel}
+      {t(badgeKey)}
     </span>
   );
 };

@@ -130,6 +130,16 @@ export const translations = {
     'settings.cost.heuristic_zero': '$0 · Heuristic mode',
     'settings.inference.title': 'Inference mode',
     'settings.inference.force': 'Force Heuristic Mode',
+    'settings.inference.current': 'Current inference mode',
+    'settings.inference.forced_preview': 'Heuristic · Forced (preview)',
+    'settings.inference.derived': 'Derived from API key + network (Live when both available)',
+    'settings.inference.force_desc':
+      'Run all AI features with local deterministic algorithms — private, free, and fully offline-capable. Live Gemini remains the high-fidelity path when a key and network are available and this toggle is off.',
+    'inference.badge.live': 'Live · Gemini',
+    'inference.badge.force': 'Heuristic · Forced',
+    'inference.badge.offline': 'Heuristic · Offline',
+    'inference.badge.no_key': 'Heuristic · No API key',
+    'inference.badge.heuristic': 'Heuristic mode',
   },
   de: {
     'app.name': 'Research Orchestrator',
@@ -268,6 +278,17 @@ export const translations = {
     'settings.cost.heuristic_zero': '0 $ · Heuristik-Modus',
     'settings.inference.title': 'Inferenzmodus',
     'settings.inference.force': 'Heuristik-Modus erzwingen',
+    'settings.inference.current': 'Aktueller Inferenzmodus',
+    'settings.inference.forced_preview': 'Heuristik · Erzwungen (Vorschau)',
+    'settings.inference.derived':
+      'Abgeleitet aus API-Schlüssel + Netzwerk (Live, wenn beides verfügbar)',
+    'settings.inference.force_desc':
+      'Alle KI-Funktionen mit lokalen, deterministischen Algorithmen — privat, kostenlos und voll offline-fähig. Live-Gemini bleibt der High-Fidelity-Pfad, wenn Schlüssel und Netzwerk verfügbar sind und dieser Schalter aus ist.',
+    'inference.badge.live': 'Live · Gemini',
+    'inference.badge.force': 'Heuristik · Erzwungen',
+    'inference.badge.offline': 'Heuristik · Offline',
+    'inference.badge.no_key': 'Heuristik · Kein API-Schlüssel',
+    'inference.badge.heuristic': 'Heuristik-Modus',
   },
 };
 

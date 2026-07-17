@@ -18,12 +18,15 @@ export const DEMO_ENTRY_PREFIX = 'demo-';
 /** localStorage flag set when the user clears demo Knowledge Base data. */
 export const DEMO_DISMISS_STORAGE_KEY = 'aro.demoDataDismissed';
 
+/** Persisted once demo content has been seeded (prevents reseed after intentional clear). */
+export const DEMO_SEEDED_STORAGE_KEY = 'aro.demoDataSeeded';
+
 /**
  * Curated educational article corpus used offline / when PubMed returns empty.
  */
 export const DEMO_CORPUS: RankedArticle[] = [
   {
-    pmid: '38123456',
+    pmid: 'demo:aspirin-cv-sr-2023',
     title: 'Aspirin for primary prevention of cardiovascular disease: an updated systematic review',
     authors: 'Chen L, Patel R, Nguyen T, Alvarez M',
     journal: 'The Lancet',
@@ -37,7 +40,7 @@ export const DEMO_CORPUS: RankedArticle[] = [
     articleType: 'Systematic Review',
   },
   {
-    pmid: '37222891',
+    pmid: 'demo:sglt2-hf-t2d-2024',
     title:
       'SGLT2 inhibitors and heart failure outcomes in type 2 diabetes: multicenter cohort study',
     authors: 'Okoye A, Bergman S, Li W, Torres E',
@@ -52,7 +55,7 @@ export const DEMO_CORPUS: RankedArticle[] = [
     articleType: 'Observational Study',
   },
   {
-    pmid: '36890112',
+    pmid: 'demo:microbiome-metsynd-2022',
     title: 'Gut microbiome diversity and inflammatory markers in metabolic syndrome',
     authors: 'Hassan F, Kim J, Rossi P',
     journal: 'PLOS ONE',
@@ -66,7 +69,7 @@ export const DEMO_CORPUS: RankedArticle[] = [
     articleType: 'Observational Study',
   },
   {
-    pmid: '35566789',
+    pmid: 'demo:crispr-pcsk9-2021',
     title: 'CRISPR-Cas9 base editing for familial hypercholesterolemia: preclinical models',
     authors: 'Nakamura Y, Brooks D, Silva C',
     journal: 'Nature',
@@ -80,7 +83,7 @@ export const DEMO_CORPUS: RankedArticle[] = [
     articleType: 'Other',
   },
   {
-    pmid: '34901234',
+    pmid: 'demo:cbt-adol-dep-2020',
     title: 'Cognitive behavioral therapy for adolescent depression: randomized controlled trial',
     authors: 'Müller K, Singh A, Ortega L, Brown H',
     journal: 'JAMA Psychiatry',
@@ -94,7 +97,7 @@ export const DEMO_CORPUS: RankedArticle[] = [
     articleType: 'Randomized Controlled Trial',
   },
   {
-    pmid: '34155678',
+    pmid: 'demo:mrna-variants-2022',
     title: 'mRNA vaccine immunogenicity against SARS-CoV-2 variants: meta-analysis',
     authors: 'Garcia M, Zhao Q, Ibrahim N',
     journal: 'Science',
@@ -108,7 +111,7 @@ export const DEMO_CORPUS: RankedArticle[] = [
     articleType: 'Meta-Analysis',
   },
   {
-    pmid: '33789012',
+    pmid: 'demo:airpoll-asthma-2019',
     title: 'Air pollution exposure and incident asthma in children: systematic review',
     authors: 'Andersen B, Costa R, Yamamoto S',
     journal: 'Environmental Health Perspectives',
@@ -122,7 +125,7 @@ export const DEMO_CORPUS: RankedArticle[] = [
     articleType: 'Systematic Review',
   },
   {
-    pmid: '32987654',
+    pmid: 'demo:parkinson-prodromal-2018',
     title: 'Parkinson disease prodromal markers and conversion risk: longitudinal study',
     authors: 'Petrovic D, Walsh E, Cho H',
     journal: 'Neurology',
@@ -139,10 +142,36 @@ export const DEMO_CORPUS: RankedArticle[] = [
 
 /**
  * Select demo corpus articles most relevant to a topic (for offline research runs).
+ * Optionally applies dateRange / articleTypes filters from the research input.
  */
-export function selectDemoArticlesForTopic(topic: string, max = 12): RankedArticle[] {
-  const ranked = rankArticles(DEMO_CORPUS, topic, max);
-  return ranked;
+export function selectDemoArticlesForTopic(
+  topic: string,
+  max = 12,
+  filters?: Pick<ResearchInput, 'dateRange' | 'articleTypes'>,
+): RankedArticle[] {
+  let corpus = DEMO_CORPUS;
+  if (filters?.articleTypes?.length) {
+    const allowed = new Set(filters.articleTypes.map((t) => t.toLowerCase()));
+    const filtered = corpus.filter((a) => allowed.has((a.articleType ?? '').toLowerCase()));
+    if (filtered.length > 0) corpus = filtered;
+  }
+  if (filters?.dateRange && filters.dateRange !== 'any') {
+    const years = parseInt(filters.dateRange, 10);
+    if (Number.isFinite(years) && years > 0) {
+      const minYear = new Date().getFullYear() - years;
+      const filtered = corpus.filter((a) => {
+        const y = parseInt(a.pubYear, 10);
+        return Number.isFinite(y) ? y >= minYear : true;
+      });
+      if (filtered.length > 0) corpus = filtered;
+    }
+  }
+  return rankArticles(corpus, topic, max);
+}
+
+/** True if a PMID/id uses the educational demo namespace (not a real PubMed ID). */
+export function isDemoPmid(pmid: string): boolean {
+  return pmid.startsWith('demo:');
 }
 
 /**
@@ -227,7 +256,9 @@ export function createDemoKnowledgeBaseEntries(): KnowledgeBaseEntry[] {
     },
   };
 
-  const authorArticles = DEMO_CORPUS.slice(0, 3);
+  const authorArticles = DEMO_CORPUS.filter((article) =>
+    article.authors.split(/,|;/).some((author) => author.trim() === 'Chen L'),
+  );
   const authorEntry: AuthorProfileEntry = {
     id: `${DEMO_ENTRY_PREFIX}author-chen`,
     title: '[Demo] Author profile: Chen L',
@@ -264,8 +295,8 @@ export function isDemoEntryId(id: string): boolean {
   return id.startsWith(DEMO_ENTRY_PREFIX);
 }
 
-/** Deterministic synthetic PMID for topic-derived offline fillers. */
+/** Deterministic synthetic demo id for topic-derived offline fillers (never a real PMID). */
 export function syntheticPmid(topic: string, index: number): string {
   const h = stableHash(`${topic}:${index}`);
-  return String(30_000_000 + (h % 60_000_000));
+  return `demo:synth-${(h % 1_000_000).toString(16)}-${index}`;
 }

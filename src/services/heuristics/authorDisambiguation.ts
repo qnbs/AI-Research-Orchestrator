@@ -68,8 +68,6 @@ export function disambiguateAuthorHeuristic(
   return clusters.map((c, idx) => {
     const coFreq = new Map<string, number>();
     const topicBag = new Map<string, number>();
-    const journals = new Map<string, number>();
-
     for (const a of c.articles) {
       for (const co of parseAuthorList(a.authors)) {
         if (co.toLowerCase().includes(authorName.split(/\s+/).slice(-1)[0]?.toLowerCase() ?? '')) {
@@ -80,7 +78,6 @@ export function disambiguateAuthorHeuristic(
       for (const kw of extractKeywords(`${a.title ?? ''} ${a.summary ?? ''}`, 4)) {
         topicBag.set(kw, (topicBag.get(kw) ?? 0) + 1);
       }
-      if (a.journal) journals.set(a.journal, (journals.get(a.journal) ?? 0) + 1);
     }
 
     const topCoAuthors = [...coFreq.entries()]
@@ -93,9 +90,7 @@ export function disambiguateAuthorHeuristic(
       .slice(0, 5)
       .map(([t]) => t);
 
-    const primaryAffiliation =
-      [...journals.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ??
-      'Affiliation not available in local records';
+    const primaryAffiliation = 'Affiliation not available in local records';
 
     return {
       nameVariant: clusters.length > 1 ? `${authorName} (cluster ${idx + 1})` : authorName,

@@ -205,8 +205,6 @@ export function tokenize(text: string): string[] {
   if (!text) return [];
   return text
     .toLowerCase()
-    .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
     .split(/[^a-z0-9äöüß]+/i)
     .map((t) => t.trim())
     .filter((t) => t.length >= 2);

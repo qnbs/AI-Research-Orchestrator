@@ -22,6 +22,7 @@ import { DownloadIcon } from '../icons/DownloadIcon';
 import { UploadIcon } from '../icons/UploadIcon';
 import { ARTICLE_TYPES, CSV_EXPORT_COLUMNS } from '../../types';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
+import { useTranslation } from '../../hooks/useTranslation';
 
 const personaDescriptions = {
   'Neutral Scientist': 'Adopts a neutral, objective, and strictly scientific tone.',
@@ -361,6 +362,7 @@ export const GeneralSettingsTab: React.FC = () => {
 
 export const AISettingsTab: React.FC = () => {
   const { tempSettings, setTempSettings, errors } = useSettingsView();
+  const { t } = useTranslation();
 
   const handleArticleTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { value, checked } = e.target;
@@ -548,12 +550,12 @@ export const AISettingsTab: React.FC = () => {
           <div className="pt-6 border-t border-border space-y-3">
             <div>
               <p className="text-xs uppercase tracking-wide text-text-secondary">
-                Current inference mode
+                {t('settings.inference.current')}
               </p>
               <p className="mt-1 text-sm text-text-primary">
                 {tempSettings.ai.forceHeuristicMode
-                  ? 'Heuristic · Forced (preview)'
-                  : 'Derived from API key + network (Live when both available)'}
+                  ? t('settings.inference.forced_preview')
+                  : t('settings.inference.derived')}
               </p>
             </div>
             <Toggle
@@ -565,13 +567,9 @@ export const AISettingsTab: React.FC = () => {
                 }))
               }
             >
-              Force Heuristic Mode
+              {t('settings.inference.force')}
             </Toggle>
-            <p className="text-xs text-text-secondary">
-              Run all AI features with local deterministic algorithms — private, free, and fully
-              offline-capable. Live Gemini remains the high-fidelity path when a key and network are
-              available and this toggle is off.
-            </p>
+            <p className="text-xs text-text-secondary">{t('settings.inference.force_desc')}</p>
           </div>
         </div>
       </SettingCard>

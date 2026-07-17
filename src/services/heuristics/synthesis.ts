@@ -89,6 +89,9 @@ export async function* streamSynthesisChunks(
   signal?: AbortSignal,
   chunkSize = 48,
 ): AsyncGenerator<string> {
+  if (!Number.isInteger(chunkSize) || chunkSize <= 0) {
+    throw new RangeError('chunkSize must be a positive integer');
+  }
   for (let i = 0; i < markdown.length; i += chunkSize) {
     if (signal?.aborted) {
       throw new DOMException('Aborted', 'AbortError');

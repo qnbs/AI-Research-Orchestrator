@@ -40,10 +40,12 @@ export {
   DEMO_CORPUS,
   DEMO_ENTRY_PREFIX,
   DEMO_DISMISS_STORAGE_KEY,
+  DEMO_SEEDED_STORAGE_KEY,
   selectDemoArticlesForTopic,
   buildDemoResearchReport,
   createDemoKnowledgeBaseEntries,
   isDemoEntryId,
+  isDemoPmid,
   syntheticPmid,
 } from './sampleData';
 export { generateHeuristicResearchReportStream, type HeuristicStreamEvent } from './researchStream';

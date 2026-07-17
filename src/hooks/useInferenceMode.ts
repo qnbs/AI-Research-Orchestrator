@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAppSelector } from '../store/hooks';
 import {
   resolveActiveInferenceMode,
@@ -24,13 +24,16 @@ export function useInferenceMode(): InferenceModeSnapshot & {
     isOnline: typeof navigator === 'undefined' ? true : navigator.onLine,
     forceHeuristic,
   });
+  const requestIdRef = useRef(0);
 
   const refresh = useCallback(async () => {
+    const requestId = ++requestIdRef.current;
     const next = await resolveActiveInferenceMode({
       forceHeuristic,
       checkApiKey: hasApiKey,
       getOnline: () => (typeof navigator === 'undefined' ? true : navigator.onLine),
     });
+    if (requestId !== requestIdRef.current) return;
     setSnapshot(next);
   }, [forceHeuristic]);
 
@@ -42,6 +45,7 @@ export function useInferenceMode(): InferenceModeSnapshot & {
     window.addEventListener('online', onChange);
     window.addEventListener('offline', onChange);
     return () => {
+      requestIdRef.current += 1;
       window.removeEventListener('online', onChange);
       window.removeEventListener('offline', onChange);
     };

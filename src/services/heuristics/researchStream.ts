@@ -21,7 +21,13 @@ function phase(label: string): string {
 }
 
 /**
- * Full offline/no-key research orchestrator mirroring `generateResearchReportStream` phases.
+ * Heuristic implementation of the literature orchestrator phases.
+ *
+ * Mode switching and the public AsyncGenerator entrypoint remain in
+ * `geminiService.generateResearchReportStream` (live vs heuristic façade).
+ * This module holds only the pure/local phase pipeline so geminiService stays
+ * within architecture size limits (ADR 0007).
+ *
  * Uses PubMed when online; falls back to curated demo corpus when offline or empty.
  */
 export async function* generateHeuristicResearchReportStream(
@@ -70,7 +76,7 @@ export async function* generateHeuristicResearchReportStream(
       yield { phase: phase('PubMed unavailable — using local demo corpus…') };
     }
 
-    if (input.includeArxiv && articleDetails.length > 0) {
+    if (input.includeArxiv) {
       yield { phase: phase('Phase 3b: Fetching arXiv preprints…') };
       try {
         const arxivMax = Math.min(Math.floor(input.maxArticlesToScan / 2), 15);
@@ -100,6 +106,7 @@ export async function* generateHeuristicResearchReportStream(
     articleDetails = selectDemoArticlesForTopic(
       input.researchTopic,
       Math.min(input.maxArticlesToScan, 12),
+      input,
     );
   }
 

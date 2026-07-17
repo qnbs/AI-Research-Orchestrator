@@ -20,7 +20,7 @@ import {
   parseGeminiResponseJson as parseGeminiJsonCore,
   GeminiJsonParseError,
 } from '../lib/parseGeminiJson';
-import { AppError, toAppError } from '../lib/errors';
+import { AppError, toAppError, isAbortError } from '../lib/errors';
 import { PromptId, promptTag, type PromptIdValue } from '../lib/promptRegistry';
 import { resolveActiveInferenceMode } from './resolveActiveInferenceMode';
 import {
@@ -809,15 +809,45 @@ export async function analyzeSingleArticle(
         if (articleDetails?.length) {
           articleData = articleDetails[0] as typeof articleData;
         } else {
-          throw new Error('empty');
+          throw new AppError({
+            code: 'NCBI_NETWORK',
+            message: 'Could not fetch article details from PubMed. Please check the identifier.',
+            retryable: true,
+            context: 'article_analysis',
+          });
         }
-      } catch {
-        const demo = DEMO_CORPUS.find((a) => a.pmid === pmid) ?? DEMO_CORPUS[0];
-        articleData = { ...demo };
+      } catch (err) {
+        if (isAbortError(err) || (err instanceof AppError && err.code === 'STREAM_ABORTED')) {
+          throw err;
+        }
+        if (err instanceof AppError) throw err;
+        if (useHeuristic) {
+          const demo = DEMO_CORPUS.find((a) => a.pmid === pmid);
+          if (demo) {
+            articleData = { ...demo };
+          } else {
+            throw new AppError({
+              code: 'NCBI_NETWORK',
+              message: 'Could not fetch article details from PubMed. Please check the identifier.',
+              retryable: true,
+              context: 'article_analysis',
+              cause: err,
+            });
+          }
+        } else {
+          throw toAppError(err, 'article_analysis');
+        }
       }
-    } else {
+    } else if (useHeuristic) {
       const demo = DEMO_CORPUS.find((a) => a.pmid === pmid) ?? DEMO_CORPUS[0];
       articleData = { ...demo };
+    } else {
+      throw new AppError({
+        code: 'NCBI_NETWORK',
+        message: 'Offline: PubMed article fetch requires a network connection in live mode.',
+        retryable: true,
+        context: 'article_analysis',
+      });
     }
 
     if (useHeuristic) {
