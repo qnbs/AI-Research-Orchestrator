@@ -32,4 +32,10 @@ describe('useTranslation', () => {
     const { result } = renderHook(() => useTranslation(), { wrapper: makeWrapper('de') });
     expect(result.current.t('___missing___')).toBe('___missing___');
   });
+
+  it('does not treat prototype properties as translation keys', () => {
+    const { result } = renderHook(() => useTranslation(), { wrapper: makeWrapper('en') });
+    expect(result.current.t('toString')).toBe('toString');
+    expect(typeof result.current.t('toString')).toBe('string');
+  });
 });
