@@ -9,15 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- (none yet)
+- Offline banner when `navigator.onLine` is false (Dexie-backed reports remain readable).
+- i18n EN/DE parity unit tests + typed `TranslationKey` on `useTranslation`.
+- External `public/register-sw.js` (CSP-friendly SW registration).
+- Post-build `scripts/patch-csp-hashes.mjs` so CSP SHA-256 hashes match Vite-emitted `dist/index.html`.
 
 ### Changed
 
-- (none yet)
+- CSP: drop `script-src 'unsafe-inline'`; pin JSON-LD + importmap via SHA-256 hashes; allow `aistudiocdn.com` / Workbox CDN workers.
+- `pnpm run build` runs CSP hash patch after Vite.
+- Service worker lives at `public/sw.js` (Vite → `dist/`); base path derived from worker URL (dev `/` vs GH Pages subpath).
+- Service worker precache expands to PWA icons + register script; required shell URLs fail install on error (ADR 0004).
+- Importmap: remove unused Chart.js CDN entries (Recharts-only).
 
 ### Fixed
 
-- (none yet)
+- Production SW registration no longer 404s (`sw.js` was outside `public/` and missing from `dist/`).
 
 ## [0.2.0] - 2026-07-16
 

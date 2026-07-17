@@ -16,7 +16,6 @@ export default tseslint.config(
       '*.config.js',
       '*.config.ts',
       'scripts/**',
-      'sw.js',
       'public/**/*.js',
     ],
   },

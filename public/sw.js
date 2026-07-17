@@ -1,8 +1,9 @@
 
 importScripts('https://storage.googleapis.com/workbox-cdn/releases/7.0.0/workbox-sw.js');
 
-// Base path for GitHub Pages deployment
-const BASE_PATH = '/AI-Research-Orchestrator';
+// Derive base from this worker's URL so root (dev) and /AI-Research-Orchestrator/ (GH Pages) stay aligned with register-sw.js.
+// e.g. /sw.js → '' ; /AI-Research-Orchestrator/sw.js → '/AI-Research-Orchestrator'
+const BASE_PATH = self.location.pathname.replace(/\/[^/]*$/, '').replace(/\/$/, '') || '';
 
 if (workbox) {
     workbox.setConfig({ debug: false });
@@ -127,25 +128,40 @@ if (workbox) {
     // try to return index.html from cache if available.
     setCatchHandler(async ({ event }) => {
         if (event.request.destination === 'document') {
-            // Try subpath first, then root
-            const cachedResponse = await caches.match(`${BASE_PATH}/index.html`) || 
-                                   await caches.match('/index.html');
+            const cachedResponse =
+                (await caches.match(`${BASE_PATH}/index.html`)) ||
+                (await caches.match('/index.html'));
             if (cachedResponse) return cachedResponse;
         }
         return Response.error();
     });
 
-    // --- Precache App Shell ---
+    // --- Precache App Shell + icons (saved reports live in Dexie; shell must boot offline) ---
     self.addEventListener('install', (event) => {
-        const urlsToPrecache = [
-            `${BASE_PATH}/`,
-            `${BASE_PATH}/index.html`,
-            `${BASE_PATH}/manifest.json`
+        // Required: any failure rejects waitUntil → install fails (do not catch).
+        const requiredUrls = [`${BASE_PATH}/`, `${BASE_PATH}/index.html`, `${BASE_PATH}/manifest.json`];
+        // Optional: icons / register script may 404 in odd hosts; warn only.
+        const optionalUrls = [
+            `${BASE_PATH}/register-sw.js`,
+            `${BASE_PATH}/icons/icon-192.png`,
+            `${BASE_PATH}/icons/icon-512.png`,
         ];
         event.waitUntil(
-            caches.open('pages-cache').then((cache) => cache.addAll(urlsToPrecache))
+            caches.open('pages-cache').then(async (cache) => {
+                await Promise.all(requiredUrls.map((url) => cache.add(url)));
+                await Promise.all(
+                    optionalUrls.map((url) =>
+                        cache.add(url).catch((err) => {
+                            console.warn('Precache skipped (optional):', url, err);
+                        }),
+                    ),
+                );
+            }),
         );
     });
+
+    // Warm hashed build assets (js/css under assets/ and chunks/) on first fetch via SWR above.
+    // Dexie remains the offline source of truth for saved research reports (ADR 0004).
 
 } else {
     console.error('Workbox failed to load inside Service Worker.');
