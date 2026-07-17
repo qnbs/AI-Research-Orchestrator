@@ -354,9 +354,11 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(
         if (a.pubYear) yearCounts[a.pubYear] = (yearCounts[a.pubYear] || 0) + 1;
       });
 
-      return Object.keys(yearCounts)
+      const data = Object.keys(yearCounts)
         .sort()
         .map((year) => ({ year, count: yearCounts[year] }));
+
+      return data.length > 0 ? data : null;
     }, [report]);
 
     const handlePdfExport = () => {

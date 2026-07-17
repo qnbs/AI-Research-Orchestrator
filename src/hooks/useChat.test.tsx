@@ -101,6 +101,46 @@ describe('useChat', () => {
     });
   });
 
+  it('ignores late init after report is cleared', async () => {
+    type Props = {
+      report: ResearchReport | null;
+      status: 'idle' | 'generating' | 'streaming' | 'done' | 'error';
+    };
+    let resolveSession!: (value: { sendMessageStream: typeof chatMocks.sendMessageStream }) => void;
+    vi.mocked(geminiService.startChatWithReport).mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveSession = resolve;
+        }) as never,
+    );
+
+    const { result, rerender } = renderHook(
+      ({ report, status }: Props) => useChat(report, status, ai),
+      {
+        initialProps: {
+          report: minimalReport as ResearchReport | null,
+          status: 'done' as Props['status'],
+        },
+      },
+    );
+
+    await waitFor(() => {
+      expect(vi.mocked(geminiService.startChatWithReport)).toHaveBeenCalled();
+    });
+
+    rerender({ report: null, status: 'idle' });
+
+    await act(async () => {
+      resolveSession({ sendMessageStream: chatMocks.sendMessageStream });
+    });
+
+    await act(async () => {
+      await result.current.sendMessage('should-not-send');
+    });
+
+    expect(chatMocks.sendMessageStream).not.toHaveBeenCalled();
+  });
+
   it('streams sendMessage into chat history', async () => {
     const { result } = renderHook(() => useChat(minimalReport, 'done', ai));
 
@@ -115,7 +155,7 @@ describe('useChat', () => {
     await waitFor(() => {
       expect(result.current.chatHistory.length).toBeGreaterThanOrEqual(2);
       expect(result.current.chatHistory[0].role).toBe('user');
-      expect(result.current.chatHistory[1].parts[0].text).toContain('Hello');
+      expect(result.current.chatHistory[1].parts[0].text).toBe('Hello world');
     });
     expect(result.current.isChatting).toBe(false);
   });

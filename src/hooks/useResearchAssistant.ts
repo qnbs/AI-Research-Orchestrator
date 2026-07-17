@@ -35,7 +35,8 @@ const initialState: ResearchState = {
 
 /**
  * Rapid Research Assistant state machine: analysis + optional similar/online fetches
- * via lazy RTK Query endpoints, aborted on view change / unmount.
+ * via lazy RTK Query endpoints. Cleanup flips `isMountedRef` so late results are ignored;
+ * in-flight RTK Query requests are not aborted.
  */
 export const useResearchAssistant = (
   aiSettings: Settings['ai'],

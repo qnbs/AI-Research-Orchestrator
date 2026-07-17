@@ -34,6 +34,17 @@ describe('agentEval', () => {
     expect(result.dimensions.find((d) => d.dimension === 'citationGrounding')?.passed).toBe(false);
   });
 
+  it('handles undefined actual without throwing on citation checks', () => {
+    const result = evaluateCase({
+      id: 'undefined-actual',
+      description: 'undefined model output',
+      actual: undefined,
+      expect: { mustCitePmids: ['12345678'] },
+    });
+    expect(result.passed).toBe(false);
+    expect(result.dimensions.find((d) => d.dimension === 'citationGrounding')?.passed).toBe(false);
+  });
+
   it('aggregates suite pass rate', () => {
     const { passRate, results } = runEvalSuite([
       golden,

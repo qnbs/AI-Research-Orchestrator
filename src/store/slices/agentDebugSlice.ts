@@ -61,11 +61,17 @@ export const agentDebugSlice = createSlice({
       if (!state.currentTrace) return;
       const event = state.currentTrace.events.find((e) => e.id === action.payload.id);
       if (event) {
+        const previousTokenUsage = event.tokenUsage;
         Object.assign(event, action.payload.updates);
         if (action.payload.updates.completedAt && event.startedAt) {
           event.durationMs = action.payload.updates.completedAt - event.startedAt;
         }
         if (action.payload.updates.tokenUsage) {
+          // Replace contribution: subtract prior usage so re-updates do not double-count
+          if (previousTokenUsage) {
+            state.currentTrace.totalTokens -= previousTokenUsage.totalTokens;
+            state.currentTrace.totalCostUsd -= previousTokenUsage.estimatedCostUsd;
+          }
           state.currentTrace.totalTokens += action.payload.updates.tokenUsage.totalTokens;
           state.currentTrace.totalCostUsd += action.payload.updates.tokenUsage.estimatedCostUsd;
         }

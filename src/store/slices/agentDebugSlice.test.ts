@@ -48,7 +48,7 @@ describe('agentDebugSlice', () => {
     expect(s.currentTrace).toBeNull();
   });
 
-  it('updateTraceEvent merges duration and tokens', () => {
+  it('updateTraceEvent merges duration and replaces token contribution', () => {
     let s = agentDebugReducer(undefined, startNewTrace({ sessionId: 's', topic: 't' }));
     s = agentDebugReducer(
       s,
@@ -57,8 +57,15 @@ describe('agentDebugSlice', () => {
         status: 'running',
         message: 'm',
         startedAt: 100,
+        tokenUsage: {
+          inputTokens: 1,
+          outputTokens: 1,
+          totalTokens: 2,
+          estimatedCostUsd: 0.01,
+        },
       }),
     );
+    expect(s.currentTrace!.totalTokens).toBe(2);
     const id = s.currentTrace!.events[0].id;
     s = agentDebugReducer(
       s,
@@ -78,6 +85,7 @@ describe('agentDebugSlice', () => {
     );
     expect(s.currentTrace!.events[0].durationMs).toBe(150);
     expect(s.currentTrace!.totalTokens).toBe(10);
+    expect(s.currentTrace!.totalCostUsd).toBeCloseTo(0.02);
   });
 
   it('completeTrace archives', () => {

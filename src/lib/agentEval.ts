@@ -72,7 +72,8 @@ export function evaluateCase(testCase: EvalCase): EvalCaseResult {
   }
 
   if (exp.mustCitePmids?.length) {
-    const blob = JSON.stringify(actual);
+    // JSON.stringify(undefined) === undefined; keep includes() safe
+    const blob = JSON.stringify(actual) ?? '';
     const missing = exp.mustCitePmids.filter((pmid) => !blob.includes(pmid));
     dimensions.push({
       dimension: 'citationGrounding',
