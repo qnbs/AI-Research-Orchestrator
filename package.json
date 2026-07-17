@@ -16,7 +16,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && node scripts/patch-csp-hashes.mjs",
     "preview": "vite preview",
     "test": "vitest",
     "test:run": "vitest run",
@@ -31,8 +31,9 @@
     "icons": "node scripts/generate-pwa-icons.mjs",
     "prepare": "husky",
     "predeploy": "pnpm run build",
-    "analyze": "ANALYZE=1 vite build",
+    "analyze": "ANALYZE=1 vite build && node scripts/patch-csp-hashes.mjs",
     "bundle:budget": "node scripts/check-bundle-budget.mjs",
+    "csp:hashes": "node scripts/patch-csp-hashes.mjs",
     "test:lighthouse": "pnpm run build && pnpm exec lhci autorun"
   },
   "lint-staged": {
