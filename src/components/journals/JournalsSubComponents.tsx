@@ -2,6 +2,7 @@ import React from 'react';
 import { useJournalsView } from './JournalsViewContext';
 import { ChevronRightIcon } from '../icons/ChevronRightIcon';
 import { Article } from '../../types';
+import { useTranslation } from '../../hooks/useTranslation';
 import {
   PieChart,
   Pie,
@@ -94,6 +95,7 @@ const TOPIC_COLORS = [
 
 export const AnalysisCharts: React.FC = () => {
   const { analyticsData, settings } = useJournalsView();
+  const { t } = useTranslation();
   if (!analyticsData) return null;
 
   const isDarkMode = settings.theme === 'dark';
@@ -133,7 +135,7 @@ export const AnalysisCharts: React.FC = () => {
             </ResponsiveContainer>
           ) : (
             <p className="h-full flex items-center justify-center text-sm text-text-secondary">
-              No topic data available.
+              {t('charts.no_topic_data')}
             </p>
           )}
         </div>
@@ -163,7 +165,7 @@ export const AnalysisCharts: React.FC = () => {
             </ResponsiveContainer>
           ) : (
             <p className="h-full flex items-center justify-center text-sm text-text-secondary">
-              No publication years available.
+              {t('charts.no_publication_years')}
             </p>
           )}
         </div>

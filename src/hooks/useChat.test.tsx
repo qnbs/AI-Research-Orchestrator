@@ -173,6 +173,12 @@ describe('useChat', () => {
       expect(vi.mocked(geminiService.startChatWithReport)).toHaveBeenCalledTimes(1);
     });
 
+    await act(async () => {
+      await result.current.sendMessage('prime-session-A');
+    });
+    expect(chatMocks.sendMessageStream).toHaveBeenCalledTimes(1);
+    chatMocks.sendMessageStream.mockClear();
+
     rerender({ report: reportB, status: 'done' });
 
     await waitFor(() => {
@@ -187,6 +193,67 @@ describe('useChat', () => {
     await act(async () => {
       resolveB(sessionA);
     });
+  });
+
+  it('drops in-flight stream chunks after report switch', async () => {
+    type Props = {
+      report: ResearchReport | null;
+      status: 'idle' | 'generating' | 'streaming' | 'done' | 'error';
+    };
+    let releaseChunk!: () => void;
+    const slowStream = vi.fn().mockImplementation(async function* () {
+      yield { text: 'partial' };
+      await new Promise<void>((resolve) => {
+        releaseChunk = resolve;
+      });
+      yield { text: ' stale-tail' };
+    });
+    const sessionA = { sendMessageStream: slowStream };
+    const sessionB = { sendMessageStream: chatMocks.sendMessageStream };
+
+    vi.mocked(geminiService.startChatWithReport)
+      .mockResolvedValueOnce(sessionA as never)
+      .mockResolvedValueOnce(sessionB as never);
+
+    const reportB: ResearchReport = { ...minimalReport, synthesis: 'report-b' };
+    const { result, rerender } = renderHook(
+      ({ report, status }: Props) => useChat(report, status, ai),
+      {
+        initialProps: {
+          report: minimalReport as ResearchReport | null,
+          status: 'done' as Props['status'],
+        },
+      },
+    );
+
+    await waitFor(() => {
+      expect(vi.mocked(geminiService.startChatWithReport)).toHaveBeenCalledTimes(1);
+    });
+
+    let sendPromise: Promise<void>;
+    act(() => {
+      sendPromise = result.current.sendMessage('streaming');
+    });
+
+    await waitFor(() => {
+      expect(result.current.chatHistory.some((m) => m.parts[0].text.includes('partial'))).toBe(
+        true,
+      );
+    });
+
+    rerender({ report: reportB, status: 'done' });
+    await waitFor(() => {
+      expect(vi.mocked(geminiService.startChatWithReport)).toHaveBeenCalledTimes(2);
+    });
+
+    await act(async () => {
+      releaseChunk();
+      await sendPromise!;
+    });
+
+    expect(result.current.chatHistory.some((m) => m.parts[0].text.includes('stale-tail'))).toBe(
+      false,
+    );
   });
 
   it('streams sendMessage into chat history', async () => {

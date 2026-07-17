@@ -24,6 +24,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { useSettings } from '../../contexts/SettingsContext';
+import { useTranslation } from '../../hooks/useTranslation';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 
@@ -459,6 +460,7 @@ const ProfileAccordion: React.FC<{
 export const AuthorProfileView: React.FC = () => {
   const { authorProfile: profile, handleReset: onReset } = useAuthorsView();
   const { settings } = useSettings();
+  const { t } = useTranslation();
 
   // --- Derived State: Top Co-Authors ---
   const topCoAuthors = useMemo(() => {
@@ -645,19 +647,23 @@ export const AuthorProfileView: React.FC = () => {
                       <YAxis
                         tick={{ fill: textColor, fontSize: 12 }}
                         label={{
-                          value: 'Citations',
+                          value: t('charts.citations'),
                           angle: -90,
                           position: 'insideLeft',
                           fill: textColor,
                         }}
                       />
                       <RechartsTooltip />
-                      <Bar dataKey="citations" name="Citations" fill="rgba(31, 111, 235, 0.75)" />
+                      <Bar
+                        dataKey="citations"
+                        name={t('charts.citations')}
+                        fill="rgba(31, 111, 235, 0.75)"
+                      />
                     </BarChart>
                   </ResponsiveContainer>
                 ) : (
                   <p className="h-full flex items-center justify-center text-sm text-text-secondary">
-                    No citation timeline data available.
+                    {t('charts.no_citation_timeline')}
                   </p>
                 )}
               </div>
