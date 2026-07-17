@@ -21,6 +21,7 @@ import {
   GeminiJsonParseError,
 } from '../lib/parseGeminiJson';
 import { AppError, toAppError } from '../lib/errors';
+import { PromptId, promptTag, type PromptIdValue } from '../lib/promptRegistry';
 
 function throwIfAborted(signal?: AbortSignal): void {
   if (signal?.aborted) {
@@ -156,7 +157,10 @@ export const generateAuthorQuery = (fullName: string): string => {
   return `(${Array.from(queryVariations).join(' OR ')})`;
 };
 
-const getPreamble = (aiSettings: Settings['ai']) => {
+const getPreamble = (
+  aiSettings: Settings['ai'],
+  promptId: PromptIdValue = PromptId.ORCHESTRATOR_SYSTEM,
+) => {
   const languagePreamble = `Your response must be in ${aiSettings.aiLanguage}.`;
   const personaPreamble = {
     'Neutral Scientist': 'Adopt a neutral, objective, and strictly scientific tone.',
@@ -168,9 +172,14 @@ const getPreamble = (aiSettings: Settings['ai']) => {
       'Identify and highlight novel connections, cross-disciplinary links, and innovative perspectives found in the literature.',
   }[aiSettings.aiPersona];
 
-  return `${languagePreamble} ${personaPreamble} ${aiSettings.customPreamble || ''}`.trim();
+  return `${promptTag(promptId)} ${languagePreamble} ${personaPreamble} ${aiSettings.customPreamble || ''}`.trim();
 };
 
+/**
+ * Multi-phase PubMed/arXiv literature orchestrator (AsyncGenerator).
+ * Yields progress `phase` strings, optional `synthesisChunk` tokens, and a final `report`.
+ * Abort via `signal` throws `AppError` with code `STREAM_ABORTED`.
+ */
 export async function* generateResearchReportStream(
   input: ResearchInput,
   aiSettings: Settings['ai'],
@@ -183,7 +192,7 @@ export async function* generateResearchReportStream(
   const topicSafe = sanitizePromptFragment(input.researchTopic);
   const focusSafe = sanitizePromptFragment(input.synthesisFocus);
   try {
-    const systemInstruction = `${getPreamble(aiSettings)} You are an expert AI research assistant. Your goal is to conduct a literature review on PubMed${input.includeArxiv ? ' and arXiv' : ''} based on the user's criteria, rank the articles, and synthesize the findings. Article identifiers from arXiv begin with "arxiv:" — treat them exactly like PubMed PMIDs.`;
+    const systemInstruction = `${getPreamble(aiSettings, PromptId.ORCHESTRATOR_SYSTEM)} You are an expert AI research assistant. Your goal is to conduct a literature review on PubMed${input.includeArxiv ? ' and arXiv' : ''} based on the user's criteria, rank the articles, and synthesize the findings. Article identifiers from arXiv begin with "arxiv:" — treat them exactly like PubMed PMIDs.`;
 
     const buildQueryGenPrompt = (input: ResearchInput): string => {
       let filterInstructions = '';
@@ -437,7 +446,7 @@ export async function findSimilarArticles(
             Title: "${article.title}"
             Summary: "${article.summary}"`,
       config: {
-        systemInstruction: getPreamble(aiSettings),
+        systemInstruction: getPreamble(aiSettings, PromptId.SIMILAR_ARTICLES),
         temperature: 0.3,
         responseMimeType: 'application/json',
         responseSchema: {
@@ -474,7 +483,7 @@ export async function findRelatedOnline(
       model: aiSettings.model,
       contents: `Provide a brief summary of the online discussion, news, or recent developments related to "${topicSafe}".`,
       config: {
-        systemInstruction: getPreamble(aiSettings),
+        systemInstruction: getPreamble(aiSettings, PromptId.RELATED_ONLINE),
         tools: [{ googleSearch: {} }],
       },
     });
@@ -501,7 +510,7 @@ export async function generateTldrSummary(
       model: aiSettings.model,
       contents: `Summarize the following abstract in a single, concise sentence (TL;DR format): "${abstractSafe}"`,
       config: {
-        systemInstruction: getPreamble(aiSettings),
+        systemInstruction: getPreamble(aiSettings, PromptId.TLDR),
         temperature: 0,
         thinkingConfig: { thinkingBudget: 0 },
       },
@@ -527,7 +536,7 @@ export async function generateResearchAnalysis(
       contents: `Analyze the following text. Provide a concise summary, a bulleted list of 3-5 key findings, and synthesize a clear, specific research topic suitable for a PubMed search.
             Text: "${querySafe}"`,
       config: {
-        systemInstruction: getPreamble(aiSettings),
+        systemInstruction: getPreamble(aiSettings, PromptId.RESEARCH_ANALYSIS),
         temperature: 0.2,
         responseMimeType: 'application/json',
         responseSchema: {
@@ -563,7 +572,7 @@ export async function disambiguateAuthor(
       contents: `Given the author name "${nameSafe}" and this list of their potential publications, disambiguate them into distinct author profiles. For each profile, provide a likely name variant, their most common primary affiliation, top 3 co-authors, core research topics, total publication count, and a list of their PMIDs.
             Articles: ${JSON.stringify(articles.map((a) => ({ pmid: a.pmid, title: a.title, authors: a.authors, journal: a.journal })))}`,
       config: {
-        systemInstruction: getPreamble(aiSettings),
+        systemInstruction: getPreamble(aiSettings, PromptId.AUTHOR_DISAMBIGUATE),
         temperature: 0.1,
         responseMimeType: 'application/json',
         responseSchema: {
@@ -619,7 +628,7 @@ export async function generateAuthorProfileAnalysis(
             3. An estimation of their h-index and total citations. If the provided data is insufficient for a reasonable estimation, return null for these metric fields.
             Publications: ${JSON.stringify(articles.map((a) => ({ title: a.title, pubYear: a.pubYear, journal: a.journal })))}`,
       config: {
-        systemInstruction: getPreamble(aiSettings),
+        systemInstruction: getPreamble(aiSettings, PromptId.AUTHOR_PROFILE),
         temperature: 0.3,
         responseMimeType: 'application/json',
         responseSchema: {
@@ -667,7 +676,7 @@ export async function suggestAuthors(
       model: aiSettings.model,
       contents: `Suggest 5-10 prominent researchers in the field of "${fieldSafe}". For each, provide their name and a brief (1-sentence) description of their key contribution.`,
       config: {
-        systemInstruction: getPreamble(aiSettings),
+        systemInstruction: getPreamble(aiSettings, PromptId.AUTHOR_SUGGEST),
         temperature: 0.5,
         responseMimeType: 'application/json',
         responseSchema: {
@@ -746,7 +755,7 @@ export async function analyzeSingleArticle(
       model: aiSettings.model,
       contents: prompt,
       config: {
-        systemInstruction: getPreamble(aiSettings),
+        systemInstruction: getPreamble(aiSettings, PromptId.ARTICLE_ANALYZE),
         temperature: 0.1,
         responseMimeType: 'application/json',
         responseSchema: {
@@ -796,7 +805,7 @@ export async function generateJournalProfileAnalysis(
       model: aiSettings.model,
       contents: `Act as an expert academic librarian. Analyze the journal '${journalSafe}'. Provide a JSON object with the following structure: { "name": "...", "issn": "...", "description": "...", "oaPolicy": "...", "focusAreas": ["..."] }. Find the correct ISSN. For oaPolicy, use one of: "Full Open Access", "Hybrid", "Subscription".`,
       config: {
-        systemInstruction: getPreamble(aiSettings),
+        systemInstruction: getPreamble(aiSettings, PromptId.JOURNAL_PROFILE),
         temperature: 0.2,
         responseMimeType: 'application/json',
         responseSchema: {
@@ -828,6 +837,7 @@ export const startChatWithReport = async (
   const ai = await getAI();
   throwIfAborted(signal);
   const context = `
+        ${promptTag(PromptId.REPORT_CHAT)}
         You are a helpful AI assistant that answers questions about a specific research report.
         The user has just generated the following report. Your answers should be based on this context.
 

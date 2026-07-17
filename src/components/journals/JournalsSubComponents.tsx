@@ -2,19 +2,19 @@ import React from 'react';
 import { useJournalsView } from './JournalsViewContext';
 import { ChevronRightIcon } from '../icons/ChevronRightIcon';
 import { Article } from '../../types';
-import { ChartBarIcon } from '../icons/ChartBarIcon';
-import { Doughnut, Bar } from 'react-chartjs-2';
 import {
-  Chart as ChartJS,
-  ArcElement,
-  Tooltip,
+  PieChart,
+  Pie,
+  Cell,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RechartsTooltip,
+  ResponsiveContainer,
   Legend,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-} from 'chart.js';
-
-ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement);
+} from 'recharts';
 
 export const JournalCard: React.FC<{ name: string; description: string; onClick: () => void }> = ({
   name,
@@ -83,35 +83,22 @@ export const FeaturedJournalsGrid: React.FC = () => {
   );
 };
 
+const TOPIC_COLORS = [
+  'rgba(31, 111, 235, 0.7)',
+  'rgba(57, 197, 247, 0.7)',
+  'rgba(232, 83, 165, 0.7)',
+  'rgba(245, 158, 11, 0.7)',
+  'rgba(16, 185, 129, 0.7)',
+  'rgba(99, 102, 241, 0.7)',
+];
+
 export const AnalysisCharts: React.FC = () => {
   const { analyticsData, settings } = useJournalsView();
   if (!analyticsData) return null;
 
   const isDarkMode = settings.theme === 'dark';
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: 'right' as const,
-        labels: { color: isDarkMode ? '#9ca3af' : '#4b5563', boxWidth: 12 },
-      },
-    },
-    cutout: '70%',
-  };
-
-  const barOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: { legend: { display: false } },
-    scales: {
-      x: { grid: { display: false }, ticks: { color: isDarkMode ? '#9ca3af' : '#4b5563' } },
-      y: {
-        grid: { color: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' },
-        ticks: { color: isDarkMode ? '#9ca3af' : '#4b5563', stepSize: 1 },
-      },
-    },
-  };
+  const tickColor = isDarkMode ? '#9ca3af' : '#4b5563';
+  const gridColor = isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
 
   return (
     <div className="lg:col-span-1 space-y-6">
@@ -120,7 +107,29 @@ export const AnalysisCharts: React.FC = () => {
           Recent Topic Landscape
         </h3>
         <div className="h-48">
-          <Doughnut data={analyticsData.topicData} options={chartOptions} />
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={analyticsData.topicData}
+                dataKey="value"
+                nameKey="name"
+                innerRadius="70%"
+                outerRadius="95%"
+                paddingAngle={2}
+              >
+                {analyticsData.topicData.map((_, index) => (
+                  <Cell key={`cell-${index}`} fill={TOPIC_COLORS[index % TOPIC_COLORS.length]} />
+                ))}
+              </Pie>
+              <Legend
+                layout="vertical"
+                align="right"
+                verticalAlign="middle"
+                wrapperStyle={{ fontSize: 11, color: tickColor }}
+              />
+              <RechartsTooltip />
+            </PieChart>
+          </ResponsiveContainer>
         </div>
       </div>
       <div className="bg-surface p-5 rounded-lg border border-border">
@@ -128,7 +137,23 @@ export const AnalysisCharts: React.FC = () => {
           Activity Timeline
         </h3>
         <div className="h-32">
-          <Bar data={analyticsData.timelineData} options={barOptions} />
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              data={analyticsData.timelineData}
+              margin={{ top: 4, right: 4, left: 0, bottom: 0 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
+              <XAxis dataKey="year" tick={{ fill: tickColor, fontSize: 11 }} axisLine={false} />
+              <YAxis allowDecimals={false} tick={{ fill: tickColor, fontSize: 11 }} width={28} />
+              <RechartsTooltip />
+              <Bar
+                dataKey="count"
+                name="Articles"
+                fill="rgba(31, 111, 235, 0.5)"
+                radius={[4, 4, 0, 0]}
+              />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
       </div>
     </div>

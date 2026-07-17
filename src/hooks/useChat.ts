@@ -4,6 +4,10 @@ import type { ChatMessage, ResearchReport, Settings } from '../types';
 import { startChatWithReport } from '../services/geminiService';
 import { useUI } from '../contexts/UIContext';
 
+/**
+ * Report-grounded chat session: initializes when a report reaches `done`,
+ * streams model replies into `chatHistory`, and resets when the report clears.
+ */
 export const useChat = (
   report: ResearchReport | null,
   reportStatus: 'idle' | 'generating' | 'streaming' | 'done' | 'error',
@@ -14,6 +18,7 @@ export const useChat = (
   const [isChatting, setIsChatting] = useState(false);
   const { setNotification } = useUI();
   const isMounted = useRef(true);
+  const chatSessionRef = useRef<Chat | null>(null);
 
   useEffect(() => {
     isMounted.current = true;
@@ -23,11 +28,16 @@ export const useChat = (
   }, []);
 
   useEffect(() => {
+    chatSessionRef.current = chatSession;
+  }, [chatSession]);
+
+  useEffect(() => {
     if (report && reportStatus === 'done') {
       const initChat = async () => {
         try {
           const session = await startChatWithReport(report, aiSettings);
           if (isMounted.current) {
+            chatSessionRef.current = session;
             setChatSession(session);
             // Reset chat history when a new report is finalized
             setChatHistory([]);
@@ -37,8 +47,7 @@ export const useChat = (
           if (isMounted.current) {
             setNotification({
               id: Date.now(),
-              message:
-                error instanceof Error ? error.message : 'Chat konnte nicht initialisiert werden.',
+              message: error instanceof Error ? error.message : 'Chat could not be initialized.',
               type: 'error',
             });
           }
@@ -51,6 +60,7 @@ export const useChat = (
   // Also reset when the report disappears (e.g., new search)
   useEffect(() => {
     if (!report) {
+      chatSessionRef.current = null;
       setChatSession(null);
       setChatHistory([]);
     }
@@ -58,7 +68,8 @@ export const useChat = (
 
   const sendMessage = useCallback(
     async (message: string) => {
-      if (!chatSession) return;
+      const session = chatSessionRef.current;
+      if (!session) return;
 
       setIsChatting(true);
       setChatHistory((prev) => [
@@ -67,7 +78,7 @@ export const useChat = (
       ]);
 
       try {
-        const stream = await chatSession.sendMessageStream({ message });
+        const stream = await session.sendMessageStream({ message });
         let responseText = '';
 
         // Add a placeholder for the model's response
@@ -102,7 +113,7 @@ export const useChat = (
         }
       }
     },
-    [chatSession, setNotification],
+    [setNotification],
   );
 
   return { chatHistory, isChatting, sendMessage };

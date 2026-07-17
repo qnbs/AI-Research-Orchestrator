@@ -14,7 +14,15 @@ import { ChartBarIcon } from '../icons/ChartBarIcon';
 import { SearchIcon } from '../icons/SearchIcon';
 import { DocumentIcon } from '../icons/DocumentIcon';
 import { Tooltip } from '../Tooltip';
-import { Bar } from 'react-chartjs-2';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RechartsTooltip,
+  ResponsiveContainer,
+} from 'recharts';
 import { useSettings } from '../../contexts/SettingsContext';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
@@ -482,47 +490,12 @@ export const AuthorProfileView: React.FC = () => {
   const textColor = isDarkMode ? '#7d8590' : '#57606a';
   const gridColor = isDarkMode ? 'rgba(125, 133, 144, 0.1)' : 'rgba(87, 96, 106, 0.1)';
 
-  const chartData = {
-    labels: Object.keys(profile.metrics.citationsPerYear).sort(),
-    datasets: [
-      {
-        label: 'Citations per Year',
-        data: Object.keys(profile.metrics.citationsPerYear)
-          .sort()
-          .map((year) => profile.metrics.citationsPerYear[year]),
-        backgroundColor: 'rgba(31, 111, 235, 0.6)',
-        borderColor: 'rgba(31, 111, 235, 1)',
-        borderWidth: 1,
-      },
-    ],
-  };
-
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        backgroundColor: isDarkMode ? '#0d1117' : '#ffffff',
-        titleColor: isDarkMode ? '#e6edf3' : '#1f2328',
-        bodyColor: isDarkMode ? '#7d8590' : '#57606a',
-        borderColor: isDarkMode ? '#21262d' : '#d0d7de',
-        borderWidth: 1,
-      },
-    },
-    scales: {
-      x: {
-        type: 'category' as const,
-        ticks: { color: textColor, maxRotation: 45, minRotation: 45 },
-        grid: { color: gridColor },
-      },
-      y: {
-        ticks: { color: textColor },
-        grid: { color: gridColor },
-        title: { display: true, text: 'Citations', color: textColor },
-      },
-    },
-  };
+  const citationTimeline = Object.keys(profile.metrics.citationsPerYear)
+    .sort()
+    .map((year) => ({
+      year,
+      citations: profile.metrics.citationsPerYear[year],
+    }));
 
   return (
     <div className="animate-fadeIn space-y-8 pt-2">
@@ -655,7 +628,32 @@ export const AuthorProfileView: React.FC = () => {
             <div>
               <h3 className="text-xl font-bold text-text-primary mb-4">Citation Impact Timeline</h3>
               <div className="h-64 bg-background p-4 rounded-lg border border-border">
-                <Bar options={chartOptions as any} data={chartData} />
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={citationTimeline}
+                    margin={{ top: 8, right: 8, left: 0, bottom: 24 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
+                    <XAxis
+                      dataKey="year"
+                      tick={{ fill: textColor, fontSize: 11 }}
+                      angle={-45}
+                      textAnchor="end"
+                      height={50}
+                    />
+                    <YAxis
+                      tick={{ fill: textColor, fontSize: 12 }}
+                      label={{
+                        value: 'Citations',
+                        angle: -90,
+                        position: 'insideLeft',
+                        fill: textColor,
+                      }}
+                    />
+                    <RechartsTooltip />
+                    <Bar dataKey="citations" name="Citations" fill="rgba(31, 111, 235, 0.75)" />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             </div>
           </div>

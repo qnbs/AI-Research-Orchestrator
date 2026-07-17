@@ -114,8 +114,14 @@ jobs:
         env:
           NODE_ENV: production
 
+      - name: Bundle budget
+        run: pnpm run bundle:budget
+
       - name: Setup SPA routing
         run: cp dist/index.html dist/404.html
+
+      - name: Lighthouse CI
+        run: pnpm exec lhci autorun
 
       - name: Setup Pages
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'

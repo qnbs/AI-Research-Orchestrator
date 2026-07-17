@@ -9,41 +9,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Soft checkpoint **resume UX** (`CheckpointResumeBanner`): restore partial report, re-run from start, or discard (P0-10).
-- Settings **cost estimator** card (`CostEstimateCard`) with i18n pre-flight toast copy (P0-11).
-- Agent Debugger modular split under `src/components/agentDebugger/`.
-- Optional bundle visualizer: `pnpm run analyze` (`ANALYZE=1`, `rollup-plugin-visualizer` → `dist/stats.html`).
-- Playwright a11y: `@axe-core/playwright` critical/serious check on `#root` in smoke tests (P1-5).
-- Dependabot consolidation: GitHub Actions bumps (checkout@7, setup-node@6, configure-pages@6, upload-pages-artifact@5, deploy-pages@5) across deploy + security workflows; npm bumps from open Dependabot PRs (see `docs/dependabot-disposition.md`).
-- Cursor rule `012-dependabot-pr-gate.mdc`.
-- Resilience layer: typed `AppError` taxonomy (`src/lib/errors.ts`), per-service circuit breaker (`circuitBreaker.ts`), exponential backoff + Gemini cost heuristics (`resilience.ts`).
-- Research checkpoints (Dexie `researchCheckpoints`) for partial save on abort/error; pre-flight cost estimate toast in orchestrator.
-- Optional NCBI API key (encrypted vault via `apiKeyService`, Settings → AI Configuration) passed to PubMed E-utilities.
-- String-aware Gemini JSON parser (`src/lib/parseGeminiJson.ts`) with unit tests.
-- `SECURITY.md` with threat model, disclosure process, and key-handling guidance.
-- Architecture Decision Records: `docs/adr/0001`–`0004` (state, orchestration, security model, PWA offline).
-- GitHub Actions `security.yml`: CodeQL, Dependency Review (PRs), scheduled pnpm audit, gitleaks (`.gitleaks.toml`).
-- `.coderabbit.yaml` (auto-review drafts) + Cursor rules `010-english-content`, `011-coderabbit-pr-gate`.
-- CI coverage artifact upload; quality vs build job split in `deploy.yml`.
-- Expanded unit tests (ErrorBoundary, checkpoints, settings hook, PubMed NCBI key, exports, geminiApiSlice streaming).
-- `FeatureErrorBoundary` on Orchestrator, Research Assistant, and Knowledge Base (absorbed from superseded PR #19).
+- (none yet)
 
 ### Changed
 
-- Vitest coverage thresholds raised to **75%** lines/statements (measured ~78%) and **55%** branches/functions.
-- Dependency hardening via `pnpm audit --fix=update` + workspace overrides (`vite`, `undici`, `ws`, `protobufjs`); `pnpm.overrides` moved to `pnpm-workspace.yaml` (pnpm 11).
-- `parseGeminiResponseJson` in `geminiService` delegates to the new parser and maps failures to `AppError`.
-- Abort in orchestrator throws `AppError` (`STREAM_ABORTED`); missing API key throws `AppError` (`NO_API_KEY`).
-- PubMed fetches use circuit breaker, abort-aware retries, and typed rate-limit / network errors.
-- ErrorBoundary copy no longer claims agents were notified; clarifies local data preservation.
-- ApiKeySettings UI copy in English; July 2026 full re-audit in `AUDIT.md`.
-- Default `AppError` user messages are English (UI i18n remains for localized product copy).
+- (none yet)
 
 ### Fixed
 
-- Knowledge Base Redux: `deleteKbEntries.fulfilled` now removes entities via `removeMany` (previously a no-op).
+- (none yet)
+
+## [0.2.0] - 2026-07-16
+
+### Added
+
+- Soft checkpoint **resume UX** (`CheckpointResumeBanner`): restore partial report, re-run from start, or discard (P0-10).
+- Settings **cost estimator** card (`CostEstimateCard`) with i18n pre-flight toast copy (P0-11).
+- Agent Debugger modular split under `src/components/agentDebugger/`.
+- Bundle visualizer (`pnpm run analyze`) + CI **bundle budget** gate (`pnpm run bundle:budget`).
+- Playwright a11y: `@axe-core/playwright` critical/serious check on `#root` (P1-5).
+- Lighthouse CI (`lighthouserc.json`, `pnpm run test:lighthouse`) — a11y/best-practices/seo ≥95.
+- Prompt versioning registry (`src/lib/promptRegistry.ts`) + offline agent eval harness (`src/lib/agentEval.ts`).
+- ADRs 0005 (Recharts-only charts) and 0006 (prompt versioning).
+- JSDoc on public Dexie helpers, export entrypoints, `useChat`, `useResearchAssistant`, orchestrator stream.
+- Resilience layer, research checkpoints, optional NCBI API key, security workflows, CodeRabbit gate (Phase 0 carry-forward into this release).
+
+### Changed
+
+- Chart stack consolidated to **Recharts only** (removed Chart.js / react-chartjs-2).
+- Vitest coverage thresholds raised to **80%** lines/statements.
+- CSP `connect-src` narrowed to Gemini, NCBI E-utilities, arXiv, and aistudiocdn (plus blob/data).
+- Package version **0.2.0**.
+
+### Fixed
+
+- Knowledge Base Redux: `deleteKbEntries.fulfilled` removes entities via `removeMany`.
 - PubMed `pubYear` only kept when a valid 4-digit year is present.
-- Gitleaks false positive on Gemini-shaped test fixtures (allowlist + constructed fixture string).
+- Gitleaks false positive on Gemini-shaped test fixtures.
 
 ## [0.1.1] - 2026-05-02
 
@@ -95,6 +97,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - DevContainer support for GitHub Codespaces
 - Vitest unit tests + Playwright E2E test infrastructure
 
-[Unreleased]: https://github.com/qnbs/AI-Research-Orchestrator/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/qnbs/AI-Research-Orchestrator/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/qnbs/AI-Research-Orchestrator/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/qnbs/AI-Research-Orchestrator/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/qnbs/AI-Research-Orchestrator/releases/tag/v0.1.0

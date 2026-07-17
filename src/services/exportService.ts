@@ -407,6 +407,7 @@ class PdfExporter {
   }
 }
 
+/** Export a research report as a multi-section PDF (cover/TOC optional). */
 export const exportToPdf = (
   report: ResearchReport,
   input: ResearchInput,
@@ -416,6 +417,7 @@ export const exportToPdf = (
   exporter.exportResearchReport(report, input);
 };
 
+/** Export knowledge-base articles (and related insights) as PDF. */
 export const exportKnowledgeBaseToPdf = (
   articlesToExport: AggregatedArticle[],
   title: string,
@@ -428,6 +430,7 @@ export const exportKnowledgeBaseToPdf = (
   exporter.exportKnowledgeBase(articlesToExport, findRelatedInsights);
 };
 
+/** Download ranked/aggregated articles as CSV with formula-injection sanitization. */
 export const exportToCsv = (
   articlesToExport: AggregatedArticle[],
   topic: string,

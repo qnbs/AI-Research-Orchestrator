@@ -33,6 +33,10 @@ const initialState: ResearchState = {
   online: { loading: false, error: null, findings: null },
 };
 
+/**
+ * Rapid Research Assistant state machine: analysis + optional similar/online fetches
+ * via lazy RTK Query endpoints, aborted on view change / unmount.
+ */
 export const useResearchAssistant = (
   aiSettings: Settings['ai'],
   setCurrentView: (view: View) => void,

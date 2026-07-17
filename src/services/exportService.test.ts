@@ -249,4 +249,116 @@ describe('export helpers', () => {
     expect(csv).toContain('\t=HACK');
     expect(csv).not.toContain(',=HACK,');
   });
+
+  it('exportToPdf with cover, toc, insights, header and footer paths', () => {
+    const pdfSettings: Settings['export']['pdf'] = {
+      includeCoverPage: true,
+      preparedFor: 'Reviewer',
+      includeSynthesis: true,
+      includeInsights: true,
+      includeQueries: true,
+      includeToc: true,
+      includeHeader: true,
+      includeFooter: true,
+    };
+    const report: ResearchReport = {
+      synthesis: '## Synth\nLong synthesis text that may wrap across lines for PDF body rendering.',
+      rankedArticles: [
+        {
+          pmid: '1',
+          title: 'Title with custom tags',
+          authors: 'Author',
+          journal: 'J',
+          pubYear: '2020',
+          summary: 'Abstract',
+          aiSummary: 'AI summary',
+          relevanceScore: 90,
+          relevanceExplanation: 'Because',
+          keywords: ['k'],
+          customTags: ['tag1'],
+          isOpenAccess: true,
+          articleType: 'Trial',
+          pmcId: 'PMC1',
+        },
+      ],
+      generatedQueries: [{ query: 'q', explanation: 'e' }],
+      aiGeneratedInsights: [{ question: 'Q?', answer: 'A.', supportingArticles: ['1'] }],
+      overallKeywords: [{ keyword: 'kw', frequency: 2 }],
+    };
+    const input: ResearchInput = {
+      researchTopic: 'Cancer immunotherapy outcomes review topic',
+      dateRange: '5',
+      articleTypes: ['Randomized Controlled Trial'],
+      synthesisFocus: 'outcomes',
+      maxArticlesToScan: 10,
+      topNToSynthesize: 3,
+    };
+    expect(() => exportToPdf(report, input, pdfSettings)).not.toThrow();
+  });
+
+  it('exportCitations builds ris file with optional fields', () => {
+    const articles: AggregatedArticle[] = [
+      {
+        pmid: '1',
+        title: 'T',
+        authors: 'A1, A2',
+        journal: 'J',
+        pubYear: '2020',
+        summary: 'S',
+        relevanceScore: 1,
+        relevanceExplanation: '',
+        keywords: ['k'],
+        isOpenAccess: false,
+        customTags: ['t'],
+        pmcId: 'PMC9',
+        sourceTitle: 'src',
+        sourceId: 'sid',
+      },
+    ];
+    const cite: Settings['export']['citation'] = {
+      includeAbstract: true,
+      includeKeywords: true,
+      includeTags: true,
+      includePmcid: true,
+    };
+    exportCitations(articles, cite, 'ris');
+    expect(anchorMocks[0].click).toHaveBeenCalled();
+  });
+
+  it('exportKnowledgeBaseToPdf with cover page', () => {
+    const pdfSettings: Settings['export']['pdf'] = {
+      includeCoverPage: true,
+      preparedFor: 'Lab',
+      includeSynthesis: true,
+      includeInsights: true,
+      includeQueries: false,
+      includeToc: false,
+      includeHeader: true,
+      includeFooter: true,
+    };
+    const agg: AggregatedArticle = {
+      pmid: '9',
+      title: 'T',
+      authors: 'A',
+      journal: 'J',
+      pubYear: '2021',
+      summary: 'S',
+      relevanceScore: 1,
+      relevanceExplanation: '',
+      keywords: ['k'],
+      customTags: ['x'],
+      isOpenAccess: false,
+      sourceTitle: 'src',
+      sourceId: 'id',
+      pmcId: 'PMC2',
+    };
+    expect(() =>
+      exportKnowledgeBaseToPdf(
+        [agg],
+        'KB Title',
+        () => [{ question: 'Q', answer: 'A', supportingArticles: ['9'] }],
+        pdfSettings,
+      ),
+    ).not.toThrow();
+  });
 });
