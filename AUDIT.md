@@ -59,13 +59,13 @@ All P0-1…P0-16 **Closed** (see prior audit sections / git history).
 
 ### P2 — Medium
 
-| ID   | Item                                         | Status      | Notes                                                              |
-| ---- | -------------------------------------------- | ----------- | ------------------------------------------------------------------ |
-| P2-1 | Dual chart libs consolidate                  | **Closed**  | Recharts-only (ADR 0005)                                           |
-| P2-2 | Advanced SW caching for saved reports        | Open        |                                                                    |
-| P2-3 | i18n UI foundation beyond EN/DE keys         | Open        |                                                                    |
-| P2-4 | Prompt versioning                            | **Closed**  | ADR 0006 + promptRegistry                                          |
-| P2-5 | CSP tighten (`unsafe-inline`, `connect-src`) | **Partial** | connect-src narrowed; script still needs unsafe-inline for JSON-LD |
+| ID   | Item                                         | Status     | Notes                                                               |
+| ---- | -------------------------------------------- | ---------- | ------------------------------------------------------------------- |
+| P2-1 | Dual chart libs consolidate                  | **Closed** | Recharts-only (ADR 0005)                                            |
+| P2-2 | Advanced SW caching for saved reports        | **Closed** | Shell/icons precache + OfflineBanner; Dexie SoT (ADR 0004)          |
+| P2-3 | i18n UI foundation beyond EN/DE keys         | **Closed** | Typed `TranslationKey`, EN/DE parity tests; view extraction ongoing |
+| P2-4 | Prompt versioning                            | **Closed** | ADR 0006 + promptRegistry                                           |
+| P2-5 | CSP tighten (`unsafe-inline`, `connect-src`) | **Closed** | script-src hashes (no unsafe-inline); style-src residual documented |
 
 ### P3 — Vision
 
@@ -84,7 +84,13 @@ Multi-LLM adapter, multimodal figures, local vector RAG, collaborative encrypted
 - [x] Prompt versioning (P2-4)
 - [x] CSP connect-src tighten (P2-5 partial)
 - [x] package.json **0.2.0** + CHANGELOG
-- [ ] GitHub Release v0.2.0 (create after merge to main)
+- [x] GitHub Release v0.2.0 (https://github.com/qnbs/AI-Research-Orchestrator/releases/tag/v0.2.0)
+
+## Post-v0.2.0 Feinschliff (this pass)
+
+- [x] P2-2 SW shell/icons precache + OfflineBanner
+- [x] P2-3 typed TranslationKey + EN/DE parity gate
+- [x] P2-5 script-src hashes (drop script `unsafe-inline`); residual `style-src 'unsafe-inline'` for React `style={}` / FOUC theme CSS
 
 ---
 

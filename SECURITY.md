@@ -4,6 +4,7 @@
 
 | Version | Supported          |
 | ------- | ------------------ |
+| 0.2.x   | :white_check_mark: |
 | 0.1.x   | :white_check_mark: |
 | < 0.1   | :x:                |
 
@@ -39,6 +40,7 @@ This application is a **local-first, zero-backend PWA**. There is no application
 - Encryption key material lives in the same browser origin as ciphertext — protects casual disk inspection, **not** XSS.
 - Broad `connect-src` needed for PubMed/Gemini/CDN; tighten further when self-hosting with known hosts.
 - Import-map CDN (`aistudiocdn.com`) requires network egress at runtime.
+- CSP `script-src` uses SHA-256 hashes for JSON-LD + importmap (no `unsafe-inline` scripts). Residual `style-src 'unsafe-inline'` remains for React inline `style={}` attributes and the FOUC theme `<style>` block in `index.html`.
 
 ## Reporting a Vulnerability
 

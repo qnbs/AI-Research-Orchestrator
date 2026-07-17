@@ -9,11 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- (none yet)
+- Offline banner when `navigator.onLine` is false (Dexie-backed reports remain readable).
+- i18n EN/DE parity unit tests + typed `TranslationKey` on `useTranslation`.
+- External `public/register-sw.js` (CSP-friendly SW registration).
 
 ### Changed
 
-- (none yet)
+- CSP: drop `script-src 'unsafe-inline'`; pin JSON-LD + importmap via SHA-256 hashes; allow `aistudiocdn.com` / Workbox CDN workers.
+- Service worker precache expands to PWA icons + register script (ADR 0004).
+- Importmap: remove unused Chart.js CDN entries (Recharts-only).
 
 ### Fixed
 

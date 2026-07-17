@@ -9,6 +9,7 @@ import {
   setDebuggerVisible,
 } from './store/slices/agentDebugSlice';
 import { Header } from './components/Header';
+import { OfflineBanner } from './components/OfflineBanner';
 import {
   ResearchInput,
   ResearchReport,
@@ -777,6 +778,7 @@ const AppLayout: React.FC = () => {
         isResearching={isResearching}
         onQuickAdd={() => setIsQuickAddModalOpen(true)}
       />
+      <OfflineBanner />
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 md:pt-36 pt-20 pb-24">
         <Suspense fallback={<ContentSpinner />}>{renderView()}</Suspense>
       </main>

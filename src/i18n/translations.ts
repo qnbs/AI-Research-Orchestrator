@@ -116,6 +116,8 @@ export const translations = {
     'charts.no_citation_timeline': 'No citation timeline data available.',
     'charts.no_topic_data': 'No topic data available.',
     'charts.no_publication_years': 'No publication years available.',
+    'offline.banner':
+      'You are offline. Saved reports in the Knowledge Base remain available; live PubMed and Gemini calls will fail until you reconnect.',
   },
   de: {
     'app.name': 'Research Orchestrator',
@@ -239,6 +241,8 @@ export const translations = {
     'charts.no_citation_timeline': 'Keine Zitations-Zeitreihe verfügbar.',
     'charts.no_topic_data': 'Keine Themendaten verfügbar.',
     'charts.no_publication_years': 'Keine Erscheinungsjahre verfügbar.',
+    'offline.banner':
+      'Sie sind offline. Gespeicherte Berichte in der Wissensdatenbank bleiben verfügbar; Live-Aufrufe an PubMed und Gemini schlagen fehl, bis die Verbindung wiedersteht.',
   },
 };
 

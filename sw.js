@@ -135,17 +135,31 @@ if (workbox) {
         return Response.error();
     });
 
-    // --- Precache App Shell ---
+    // --- Precache App Shell + icons (saved reports live in Dexie; shell must boot offline) ---
     self.addEventListener('install', (event) => {
         const urlsToPrecache = [
             `${BASE_PATH}/`,
             `${BASE_PATH}/index.html`,
-            `${BASE_PATH}/manifest.json`
+            `${BASE_PATH}/manifest.json`,
+            `${BASE_PATH}/register-sw.js`,
+            `${BASE_PATH}/icons/icon-192.png`,
+            `${BASE_PATH}/icons/icon-512.png`,
         ];
         event.waitUntil(
-            caches.open('pages-cache').then((cache) => cache.addAll(urlsToPrecache))
+            caches.open('pages-cache').then((cache) =>
+                Promise.all(
+                    urlsToPrecache.map((url) =>
+                        cache.add(url).catch((err) => {
+                            console.warn('Precache skipped:', url, err);
+                        }),
+                    ),
+                ),
+            ),
         );
     });
+
+    // Warm hashed build assets (js/css under assets/ and chunks/) on first fetch via SWR above.
+    // Dexie remains the offline source of truth for saved research reports (ADR 0004).
 
 } else {
     console.error('Workbox failed to load inside Service Worker.');

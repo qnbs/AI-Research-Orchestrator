@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- CSP: SPA route restore from bundled `src/spaRouteRestore.ts`. connect-src limited to Gemini + NCBI + arXiv + fonts CDN peers. -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https: blob:; connect-src 'self' https://generativelanguage.googleapis.com https://eutils.ncbi.nlm.nih.gov https://export.arxiv.org https://aistudiocdn.com blob: data:; base-uri 'self'; form-action 'self'; object-src 'none';" />
+    <!-- CSP: script-src uses hashes for JSON-LD + importmap (no unsafe-inline). style-src keeps unsafe-inline for React style={} and FOUC theme CSS. -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://aistudiocdn.com 'sha256-JzpkhmlZo831YWqgkuEjfyisgjpPDRXNrXmKSuE1bXk=' 'sha256-kAPgNrCb508gsTMVF1QlyDMG9ZOrvhVzVfwKJB4jDSk='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https: blob:; connect-src 'self' https://generativelanguage.googleapis.com https://eutils.ncbi.nlm.nih.gov https://export.arxiv.org https://aistudiocdn.com blob: data:; worker-src 'self' https://storage.googleapis.com blob:; base-uri 'self'; form-action 'self'; object-src 'none';" />
     <title>AI Research Orchestration Author</title>
 
     <!-- PWA and Mobile Meta Tags -->
@@ -259,8 +259,6 @@
     "dexie-react-hooks": "https://aistudiocdn.com/dexie-react-hooks@^1.1.7",
     "marked": "https://aistudiocdn.com/marked@^13.0.2",
     "dompurify": "https://aistudiocdn.com/dompurify@^3.1.6",
-    "chart.js": "https://aistudiocdn.com/chart.js@^4.4.3",
-    "react-chartjs-2": "https://aistudiocdn.com/react-chartjs-2@^5.2.0",
     "jspdf": "https://aistudiocdn.com/jspdf@^2.5.1",
     "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
     "vitest": "https://aistudiocdn.com/vitest@^3.2.4",
@@ -272,18 +270,6 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
-            .then(registration => {
-              console.log('ServiceWorker registration successful with scope: ', registration.scope);
-            })
-            .catch(error => {
-              console.log('ServiceWorker registration failed: ', error);
-            });
-        });
-      }
-    </script>
+    <script src="/register-sw.js"></script>
   </body>
 </html>
