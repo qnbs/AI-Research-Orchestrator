@@ -22,9 +22,7 @@ import {
 } from '../lib/parseGeminiJson';
 import { AppError, toAppError, isAbortError } from '../lib/errors';
 import { PromptId, promptTag, type PromptIdValue } from '../lib/promptRegistry';
-import { resolveActiveInferenceMode } from './resolveActiveInferenceMode';
 import {
-  generateHeuristicResearchReportStream,
   findSimilarArticlesHeuristic,
   findRelatedOnlineHeuristic,
   generateHeuristicTldr,
@@ -38,6 +36,10 @@ import {
   DEMO_CORPUS,
   type ReportChatSession,
 } from './heuristics';
+import {
+  generateResearchReportStreamWithMode,
+  shouldUseHeuristic,
+} from './researchOrchestratorAdapter';
 
 function throwIfAborted(signal?: AbortSignal): void {
   if (signal?.aborted) {
@@ -48,14 +50,6 @@ function throwIfAborted(signal?: AbortSignal): void {
       cause: new DOMException('Aborted', 'AbortError'),
     });
   }
-}
-
-/** True when the local heuristic path should run instead of live Gemini. */
-async function shouldUseHeuristic(aiSettings: Settings['ai']): Promise<boolean> {
-  const snap = await resolveActiveInferenceMode({
-    forceHeuristic: Boolean(aiSettings.forceHeuristicMode),
-  });
-  return snap.mode === 'heuristic';
 }
 
 // Lazy initialization of the AI client
@@ -203,18 +197,19 @@ const getPreamble = (
  * Multi-phase PubMed/arXiv literature orchestrator (AsyncGenerator).
  * Yields progress `phase` strings, optional `synthesisChunk` tokens, and a final `report`.
  * Abort via `signal` throws `AppError` with code `STREAM_ABORTED`.
- * Uses live Gemini when a key + network are available; otherwise the heuristic layer.
+ * Live vs heuristic switching lives in `researchOrchestratorAdapter` (ADR 0007).
  */
 export async function* generateResearchReportStream(
   input: ResearchInput,
   aiSettings: Settings['ai'],
   signal?: AbortSignal,
 ): AsyncGenerator<{ report?: ResearchReport; synthesisChunk?: string; phase: string }> {
-  if (await shouldUseHeuristic(aiSettings)) {
-    yield* generateHeuristicResearchReportStream(input, aiSettings, signal);
-    return;
-  }
-  yield* generateLiveResearchReportStream(input, aiSettings, signal);
+  yield* generateResearchReportStreamWithMode(
+    input,
+    aiSettings,
+    generateLiveResearchReportStream,
+    signal,
+  );
 }
 
 async function* generateLiveResearchReportStream(

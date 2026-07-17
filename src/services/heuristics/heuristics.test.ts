@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import {
   formulatePubMedQuery,
   rankArticles,
@@ -82,7 +82,6 @@ describe('heuristics core', () => {
   });
 
   it('streams a full heuristic research report offline', async () => {
-    const onlineSpy = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
     const input: ResearchInput = {
       researchTopic: 'aspirin primary prevention',
       dateRange: '5',
@@ -94,21 +93,26 @@ describe('heuristics core', () => {
     let sawRank = false;
     let chunks = 0;
     let reportArticles = 0;
-    for await (const ev of generateHeuristicResearchReportStream(input, {
-      model: 'gemini-2.5-flash',
-      customPreamble: '',
-      temperature: 0.2,
-      aiLanguage: 'English',
-      aiPersona: 'Neutral Scientist',
-      researchAssistant: {
-        autoFetchSimilar: false,
-        autoFetchOnline: false,
-        authorSearchLimit: 50,
+    for await (const ev of generateHeuristicResearchReportStream(
+      input,
+      {
+        model: 'gemini-2.5-flash',
+        customPreamble: '',
+        temperature: 0.2,
+        aiLanguage: 'English',
+        aiPersona: 'Neutral Scientist',
+        researchAssistant: {
+          autoFetchSimilar: false,
+          autoFetchOnline: false,
+          authorSearchLimit: 50,
+        },
+        enableTldr: true,
+        ncbiApiKey: '',
+        forceHeuristicMode: true,
       },
-      enableTldr: true,
-      ncbiApiKey: '',
-      forceHeuristicMode: true,
-    })) {
+      undefined,
+      { getOnline: () => false },
+    )) {
       if (ev.phase.includes('Ranking')) sawRank = true;
       if (ev.synthesisChunk) chunks += 1;
       if (ev.report?.rankedArticles) reportArticles = ev.report.rankedArticles.length;
@@ -116,6 +120,5 @@ describe('heuristics core', () => {
     expect(sawRank).toBe(true);
     expect(chunks).toBeGreaterThan(0);
     expect(reportArticles).toBeGreaterThan(0);
-    onlineSpy.mockRestore();
   });
 });

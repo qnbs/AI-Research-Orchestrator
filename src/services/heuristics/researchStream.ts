@@ -20,13 +20,20 @@ function phase(label: string): string {
   return `Heuristic mode · ${label}`;
 }
 
+export type HeuristicStreamOptions = {
+  /**
+   * Injectable online check for tests. Defaults to `navigator.onLine`
+   * (true when `navigator` is unavailable). Avoids mutating shared globals.
+   */
+  getOnline?: () => boolean;
+};
+
 /**
  * Heuristic implementation of the literature orchestrator phases.
  *
- * Mode switching and the public AsyncGenerator entrypoint remain in
- * `geminiService.generateResearchReportStream` (live vs heuristic façade).
- * This module holds only the pure/local phase pipeline so geminiService stays
- * within architecture size limits (ADR 0007).
+ * Mode switching lives in `researchOrchestratorAdapter`; the public entrypoint
+ * is `geminiService.generateResearchReportStream`. This module holds only the
+ * local phase pipeline (ADR 0007).
  *
  * Uses PubMed when online; falls back to curated demo corpus when offline or empty.
  */
@@ -34,6 +41,7 @@ export async function* generateHeuristicResearchReportStream(
   input: ResearchInput,
   _aiSettings: Settings['ai'],
   signal?: AbortSignal,
+  options: HeuristicStreamOptions = {},
 ): AsyncGenerator<HeuristicStreamEvent> {
   throwIfAborted(signal);
 
@@ -42,7 +50,8 @@ export async function* generateHeuristicResearchReportStream(
   throwIfAborted(signal);
 
   let articleDetails: HeuristicArticleInput[] = [];
-  const isOnline = typeof navigator === 'undefined' ? true : navigator.onLine;
+  const isOnline =
+    options.getOnline?.() ?? (typeof navigator === 'undefined' ? true : navigator.onLine);
 
   if (isOnline) {
     yield { phase: phase('Phase 2: Executing PubMed search…') };

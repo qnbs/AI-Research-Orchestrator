@@ -50,6 +50,10 @@ export {
   isDemoPmid,
   syntheticPmid,
 } from './sampleData';
-export { generateHeuristicResearchReportStream, type HeuristicStreamEvent } from './researchStream';
+export {
+  generateHeuristicResearchReportStream,
+  type HeuristicStreamEvent,
+  type HeuristicStreamOptions,
+} from './researchStream';
 
 export { tokenize, meaningfulTokens, jaccard, cosineBag, tokenSet, splitSentences } from './utils';

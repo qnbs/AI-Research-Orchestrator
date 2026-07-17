@@ -22,8 +22,7 @@ import { DownloadIcon } from '../icons/DownloadIcon';
 import { UploadIcon } from '../icons/UploadIcon';
 import { ARTICLE_TYPES, CSV_EXPORT_COLUMNS } from '../../types';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
-import { useTranslation } from '../../hooks/useTranslation';
-import { useInferenceMode } from '../../hooks/useInferenceMode';
+import { InferenceModeSettings, useApiKeyInferenceRefresh } from './InferenceModeSettings';
 
 const personaDescriptions = {
   'Neutral Scientist': 'Adopts a neutral, objective, and strictly scientific tone.',
@@ -363,8 +362,7 @@ export const GeneralSettingsTab: React.FC = () => {
 
 export const AISettingsTab: React.FC = () => {
   const { tempSettings, setTempSettings, errors } = useSettingsView();
-  const { t } = useTranslation();
-  const { refresh: refreshInferenceMode } = useInferenceMode();
+  const onApiKeyChange = useApiKeyInferenceRefresh();
 
   const handleArticleTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { value, checked } = e.target;
@@ -379,12 +377,7 @@ export const AISettingsTab: React.FC = () => {
 
   return (
     <div className="space-y-8">
-      <ApiKeySettings
-        onKeyChange={() => {
-          window.dispatchEvent(new Event('aro-api-key-changed'));
-          void refreshInferenceMode();
-        }}
-      />
+      <ApiKeySettings onKeyChange={onApiKeyChange} />
       <CostEstimateCard />
       <SettingCard
         icon={<SparklesIcon className="w-6 h-6 text-accent-magenta" />}
@@ -554,30 +547,7 @@ export const AISettingsTab: React.FC = () => {
               summary of an abstract. This will make an additional API call.
             </p>
           </div>
-          <div className="pt-6 border-t border-border space-y-3">
-            <div>
-              <p className="text-xs uppercase tracking-wide text-text-secondary">
-                {t('settings.inference.current')}
-              </p>
-              <p className="mt-1 text-sm text-text-primary">
-                {tempSettings.ai.forceHeuristicMode
-                  ? t('settings.inference.forced_preview')
-                  : t('settings.inference.derived')}
-              </p>
-            </div>
-            <Toggle
-              checked={Boolean(tempSettings.ai.forceHeuristicMode)}
-              onChange={(checked) =>
-                setTempSettings((s) => ({
-                  ...s,
-                  ai: { ...s.ai, forceHeuristicMode: checked },
-                }))
-              }
-            >
-              {t('settings.inference.force')}
-            </Toggle>
-            <p className="text-xs text-text-secondary">{t('settings.inference.force_desc')}</p>
-          </div>
+          <InferenceModeSettings />
         </div>
       </SettingCard>
       <SettingCard
