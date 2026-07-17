@@ -78,7 +78,7 @@ describe('heuristics core', () => {
     const report = buildDemoResearchReport('aspirin cardiovascular');
     const answer = answerFromReport(report, 'What are the top articles?');
     expect(answer).toMatch(/Heuristic/i);
-    expect(answer).toMatch(/pmid|ranked|38123456/i);
+    expect(answer).toMatch(/pmid|ranked|demo:aspirin/i);
   });
 
   it('streams a full heuristic research report offline', async () => {
