@@ -40,6 +40,7 @@ vi.mock('@google/genai', () => ({
 vi.mock('./apiKeyService', () => ({
   getApiKey: vi.fn().mockResolvedValue('test-api-key'),
   getNcbiApiKey: vi.fn().mockResolvedValue('ncbi-vault-key'),
+  hasApiKey: vi.fn().mockResolvedValue(true),
 }));
 
 const mockPubMed = vi.hoisted(() => ({
@@ -69,6 +70,7 @@ const mockAi: Settings['ai'] = {
   },
   enableTldr: true,
   ncbiApiKey: '',
+  forceHeuristicMode: false,
 };
 
 const mockInput: ResearchInput = {
@@ -254,10 +256,27 @@ describe('geminiService with mocked SDK', () => {
     await expect(gen.next()).rejects.toMatchObject({ code: 'STREAM_ABORTED' });
   });
 
-  it('throws NO_API_KEY AppError when key missing', async () => {
-    const { getApiKey } = await import('./apiKeyService');
-    vi.mocked(getApiKey).mockResolvedValueOnce(null);
-    await expect(generateTldrSummary('x', mockAi)).rejects.toMatchObject({ code: 'NO_API_KEY' });
+  it('uses heuristic TL;DR when API key is missing (no NO_API_KEY throw)', async () => {
+    const { hasApiKey } = await import('./apiKeyService');
+    vi.mocked(hasApiKey).mockResolvedValueOnce(false);
+    const out = await generateTldrSummary(
+      'Background: Aspirin reduces cardiovascular events. Methods: Meta-analysis of RCTs. Results: Benefit outweighed bleeding in high-risk groups. Conclusion: Individualize therapy.',
+      mockAi,
+    );
+    expect(out.length).toBeGreaterThan(10);
+    expect(out.toLowerCase()).not.toMatch(/no_api_key/i);
+  });
+
+  it('forceHeuristicMode bypasses Gemini for research analysis', async () => {
+    const out = await generateResearchAnalysis(
+      'SGLT2 inhibitors reduce heart failure hospitalization in diabetes cohorts with matched controls.',
+      {
+        ...mockAi,
+        forceHeuristicMode: true,
+      },
+    );
+    expect(out.summary).toMatch(/Heuristic/i);
+    expect(out.synthesizedTopic.length).toBeGreaterThan(0);
   });
 
   it('findRelatedOnline maps grounding chunks when present', async () => {

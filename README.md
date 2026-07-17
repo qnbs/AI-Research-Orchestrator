@@ -3,7 +3,7 @@
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/qnbs/AI-Research-Orchestrator)
 
 ![Status](https://img.shields.io/badge/Status-Production_Ready-success?style=flat-square)
-![Version](https://img.shields.io/badge/Version-0.1.1-blue?style=flat-square)
+![Version](https://img.shields.io/badge/Version-0.2.1-blue?style=flat-square)
 ![Tech](https://img.shields.io/badge/Stack-React_19_|_TypeScript_|_Gemini_Pro-blueviolet?style=flat-square)
 ![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)
 ![Privacy](https://img.shields.io/badge/Privacy-Local_First-green?style=flat-square)
@@ -25,8 +25,21 @@ Unlike conventional summarization tools, this system employs a **multi-agent orc
 **Core Philosophy:**
 
 - **Local-First Sovereignty:** A zero-knowledge architecture where all data resides within the user's browser (IndexedDB).
+- **Progressive enhancement:** Live Gemini is the high-fidelity path; a first-class **heuristic inference layer** keeps every AI feature fully usable offline or without an API key (deterministic ranking, template synthesis, extractive TL;DR, report-grounded chat).
 - **Agentic Reasoning:** Autonomous query formulation, decision-making, and relevance scoring.
 - **Traceability & Grounding:** Every AI assertion is inextricably linked to a verified PubMed ID (PMID).
+
+### Offline / Heuristic mode
+
+Without a Gemini key (or while offline), the app automatically switches to **Heuristic mode**:
+
+- Orchestrator runs with local Boolean/MeSH-style query building, PubMed fetch when online (demo corpus offline), lexical ranking, and structured markdown synthesis.
+- TL;DR, similar articles, author/journal tools, and report chat use the same TypeScript types as the live path.
+- Header badge shows `Heuristic · Offline/No-Key` (or `Live · Gemini` when a key + network are available).
+- Settings → AI: optional **Force Heuristic Mode**; cost estimator shows `$0 · Heuristic mode`.
+- First launch seeds educational demo Knowledge Base entries (dismissible).
+
+See [ADR 0007](docs/adr/0007-heuristic-inference-layer.md).
 
 ---
 
@@ -224,8 +237,13 @@ Im Gegensatz zu herkömmlichen Zusammenfassungstools verwendet dieses System ein
 **Kernphilosophie:**
 
 - **Local-First-Souveränität:** Eine Zero-Knowledge-Architektur, bei der alle Daten ausschließlich im Browser des Nutzers (IndexedDB) verbleiben.
+- **Progressive Enhancement:** Live-Gemini ist der High-Fidelity-Pfad; eine erstklassige **Heuristik-Inferenzschicht** hält alle KI-Funktionen offline und ohne API-Schlüssel nutzbar.
 - **Agentisches Denken:** Autonome Abfrageformulierung, Entscheidungsfindung und Relevanzbewertung.
 - **Rückverfolgbarkeit & Grounding:** Jede KI-Aussage ist untrennbar mit einer verifizierten PubMed-ID (PMID) verknüpft.
+
+### Offline- / Heuristik-Modus
+
+Ohne Gemini-Schlüssel (oder offline) wechselt die App automatisch in den **Heuristik-Modus**: lokale Query-Formulierung, Ranking, Synthese, TL;DR, Autoren-/Journal-Tools und report-gebundener Chat. Header-Badge und Settings-Toggle machen den Modus transparent. Details: [ADR 0007](docs/adr/0007-heuristic-inference-layer.md).
 
 ---
 

@@ -117,7 +117,19 @@ export const translations = {
     'charts.no_topic_data': 'No topic data available.',
     'charts.no_publication_years': 'No publication years available.',
     'offline.banner':
-      'You are offline. Saved reports in the Knowledge Base remain available; live PubMed and Gemini calls will fail until you reconnect.',
+      'You are offline. Heuristic mode keeps research, summaries, and Knowledge Base fully usable with local algorithms; reconnect for live PubMed fetch and Gemini.',
+    'inference.tooltip.live': 'Live Gemini inference — API key present and online.',
+    'inference.tooltip.force': 'Heuristic mode forced in Settings — local algorithms only.',
+    'inference.tooltip.offline':
+      'Heuristic mode — offline; local algorithms keep features working.',
+    'inference.tooltip.no_key':
+      'Heuristic mode — no Gemini API key; local algorithms provide full functionality.',
+    'inference.demo.banner':
+      'Demo data · Heuristic mode — sample reports seed the Knowledge Base on first launch.',
+    'inference.demo.dismiss': 'Clear demo data',
+    'settings.cost.heuristic_zero': '$0 · Heuristic mode',
+    'settings.inference.title': 'Inference mode',
+    'settings.inference.force': 'Force Heuristic Mode',
   },
   de: {
     'app.name': 'Research Orchestrator',
@@ -242,7 +254,20 @@ export const translations = {
     'charts.no_topic_data': 'Keine Themendaten verfügbar.',
     'charts.no_publication_years': 'Keine Erscheinungsjahre verfügbar.',
     'offline.banner':
-      'Sie sind offline. Gespeicherte Berichte in der Wissensdatenbank bleiben verfügbar; Live-Aufrufe an PubMed und Gemini schlagen fehl, bis die Verbindung wiederhergestellt ist.',
+      'Sie sind offline. Der Heuristik-Modus hält Recherche, Zusammenfassungen und Wissensdatenbank mit lokalen Algorithmen nutzbar; für Live-PubMed und Gemini bitte erneut verbinden.',
+    'inference.tooltip.live': 'Live-Gemini-Inferenz — API-Schlüssel vorhanden und online.',
+    'inference.tooltip.force':
+      'Heuristik-Modus in den Einstellungen erzwungen — nur lokale Algorithmen.',
+    'inference.tooltip.offline':
+      'Heuristik-Modus — offline; lokale Algorithmen halten Funktionen verfügbar.',
+    'inference.tooltip.no_key':
+      'Heuristik-Modus — kein Gemini-API-Schlüssel; lokale Algorithmen liefern volle Funktionalität.',
+    'inference.demo.banner':
+      'Demo-Daten · Heuristik-Modus — Beispielberichte füllen die Wissensdatenbank beim ersten Start.',
+    'inference.demo.dismiss': 'Demo-Daten löschen',
+    'settings.cost.heuristic_zero': '0 $ · Heuristik-Modus',
+    'settings.inference.title': 'Inferenzmodus',
+    'settings.inference.force': 'Heuristik-Modus erzwingen',
   },
 };
 

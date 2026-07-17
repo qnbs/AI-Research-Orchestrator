@@ -37,6 +37,11 @@ import {
   selectRecentResearchEntries,
   updateKbEntry,
 } from '../store/slices/knowledgeBaseSlice';
+import {
+  createDemoKnowledgeBaseEntries,
+  isDemoEntryId,
+  DEMO_DISMISS_STORAGE_KEY,
+} from '../services/heuristics';
 
 interface KnowledgeBaseContextType {
   knowledgeBase: KnowledgeBaseEntry[];
@@ -47,6 +52,7 @@ interface KnowledgeBaseContextType {
   saveAuthorProfile: (input: AuthorProfileInput, profile: AuthorProfile) => Promise<void>;
   saveJournalProfile: (profile: JournalProfile, articles: Article[]) => Promise<void>;
   clearKnowledgeBase: () => Promise<void>;
+  clearDemoData: () => Promise<void>;
   updateEntryTitle: (id: string, newTitle: string) => Promise<void>;
   updateTags: (pmid: string, newTags: string[]) => Promise<void>;
   deleteArticles: (pmids: string[]) => Promise<void>;
@@ -68,6 +74,21 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
   useEffect(() => {
     dispatch(fetchKnowledgeBase());
   }, [dispatch]);
+
+  // First-run: seed educational demo content when KB is empty (unless dismissed).
+  useEffect(() => {
+    if (isLoading) return;
+    if (knowledgeBase.length > 0) return;
+    let dismissed = false;
+    try {
+      dismissed = localStorage.getItem(DEMO_DISMISS_STORAGE_KEY) === '1';
+    } catch {
+      dismissed = false;
+    }
+    if (dismissed) return;
+    const demo = createDemoKnowledgeBaseEntries();
+    void dispatch(importKbEntries(demo));
+  }, [dispatch, isLoading, knowledgeBase.length]);
 
   const showNotification = useCallback(
     (message: string, type: 'success' | 'error' = 'success') => {
@@ -129,6 +150,13 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
   const clearKnowledgeBase = useCallback(async () => {
     await dispatch(clearKb());
   }, [dispatch]);
+
+  const clearDemoData = useCallback(async () => {
+    const demoIds = knowledgeBase.filter((e) => isDemoEntryId(e.id)).map((e) => e.id);
+    if (demoIds.length === 0) return;
+    await deleteEntriesFromDb(demoIds);
+    await dispatch(fetchKnowledgeBase());
+  }, [dispatch, knowledgeBase]);
 
   const updateEntryTitle = useCallback(
     async (id: string, newTitle: string) => {
@@ -366,6 +394,7 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
       saveAuthorProfile,
       saveJournalProfile,
       clearKnowledgeBase,
+      clearDemoData,
       updateEntryTitle,
       updateTags,
       deleteArticles,
@@ -384,6 +413,7 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
       saveAuthorProfile,
       saveJournalProfile,
       clearKnowledgeBase,
+      clearDemoData,
       updateEntryTitle,
       updateTags,
       deleteArticles,

@@ -36,6 +36,7 @@ export const defaultSettings: Settings = {
     },
     enableTldr: true,
     ncbiApiKey: '',
+    forceHeuristicMode: false,
   },
   defaults: {
     maxArticlesToScan: 50,

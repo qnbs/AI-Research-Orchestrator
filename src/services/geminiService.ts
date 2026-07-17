@@ -1,4 +1,4 @@
-import { GoogleGenAI, Type, Chat } from '@google/genai';
+import { GoogleGenAI, Type } from '@google/genai';
 import type {
   ResearchInput,
   ResearchReport,
@@ -22,6 +22,22 @@ import {
 } from '../lib/parseGeminiJson';
 import { AppError, toAppError } from '../lib/errors';
 import { PromptId, promptTag, type PromptIdValue } from '../lib/promptRegistry';
+import { resolveActiveInferenceMode } from './resolveActiveInferenceMode';
+import {
+  generateHeuristicResearchReportStream,
+  findSimilarArticlesHeuristic,
+  findRelatedOnlineHeuristic,
+  generateHeuristicTldr,
+  generateResearchAnalysisHeuristic,
+  disambiguateAuthorHeuristic,
+  generateAuthorProfileHeuristic,
+  suggestAuthorsHeuristic,
+  analyzeArticleHeuristic,
+  generateJournalProfileHeuristic,
+  createHeuristicChatSession,
+  DEMO_CORPUS,
+  type ReportChatSession,
+} from './heuristics';
 
 function throwIfAborted(signal?: AbortSignal): void {
   if (signal?.aborted) {
@@ -32,6 +48,14 @@ function throwIfAborted(signal?: AbortSignal): void {
       cause: new DOMException('Aborted', 'AbortError'),
     });
   }
+}
+
+/** True when the local heuristic path should run instead of live Gemini. */
+async function shouldUseHeuristic(aiSettings: Settings['ai']): Promise<boolean> {
+  const snap = await resolveActiveInferenceMode({
+    forceHeuristic: Boolean(aiSettings.forceHeuristicMode),
+  });
+  return snap.mode === 'heuristic';
 }
 
 // Lazy initialization of the AI client
@@ -179,8 +203,21 @@ const getPreamble = (
  * Multi-phase PubMed/arXiv literature orchestrator (AsyncGenerator).
  * Yields progress `phase` strings, optional `synthesisChunk` tokens, and a final `report`.
  * Abort via `signal` throws `AppError` with code `STREAM_ABORTED`.
+ * Uses live Gemini when a key + network are available; otherwise the heuristic layer.
  */
 export async function* generateResearchReportStream(
+  input: ResearchInput,
+  aiSettings: Settings['ai'],
+  signal?: AbortSignal,
+): AsyncGenerator<{ report?: ResearchReport; synthesisChunk?: string; phase: string }> {
+  if (await shouldUseHeuristic(aiSettings)) {
+    yield* generateHeuristicResearchReportStream(input, aiSettings, signal);
+    return;
+  }
+  yield* generateLiveResearchReportStream(input, aiSettings, signal);
+}
+
+async function* generateLiveResearchReportStream(
   input: ResearchInput,
   aiSettings: Settings['ai'],
   signal?: AbortSignal,
@@ -437,6 +474,10 @@ export async function findSimilarArticles(
   aiSettings: Settings['ai'],
   signal?: AbortSignal,
 ): Promise<SimilarArticle[]> {
+  if (await shouldUseHeuristic(aiSettings)) {
+    throwIfAborted(signal);
+    return findSimilarArticlesHeuristic(article, DEMO_CORPUS, 5, signal);
+  }
   const ai = await getAI();
   throwIfAborted(signal);
   try {
@@ -475,6 +516,10 @@ export async function findRelatedOnline(
   aiSettings: Settings['ai'],
   signal?: AbortSignal,
 ): Promise<OnlineFindings> {
+  if (await shouldUseHeuristic(aiSettings)) {
+    throwIfAborted(signal);
+    return findRelatedOnlineHeuristic(topic);
+  }
   const ai = await getAI();
   throwIfAborted(signal);
   const topicSafe = sanitizePromptFragment(topic);
@@ -502,6 +547,10 @@ export async function generateTldrSummary(
   aiSettings: Settings['ai'],
   signal?: AbortSignal,
 ): Promise<string> {
+  if (await shouldUseHeuristic(aiSettings)) {
+    throwIfAborted(signal);
+    return generateHeuristicTldr(abstract);
+  }
   const ai = await getAI();
   throwIfAborted(signal);
   const abstractSafe = sanitizePromptFragment(abstract, 12000);
@@ -527,6 +576,10 @@ export async function generateResearchAnalysis(
   aiSettings: Settings['ai'],
   signal?: AbortSignal,
 ): Promise<ResearchAnalysis> {
+  if (await shouldUseHeuristic(aiSettings)) {
+    throwIfAborted(signal);
+    return generateResearchAnalysisHeuristic(query);
+  }
   const ai = await getAI();
   throwIfAborted(signal);
   const querySafe = sanitizePromptFragment(query, 12000);
@@ -563,6 +616,9 @@ export async function disambiguateAuthor(
   aiSettings: Settings['ai'],
   signal?: AbortSignal,
 ): Promise<AuthorCluster[]> {
+  if (await shouldUseHeuristic(aiSettings)) {
+    return disambiguateAuthorHeuristic(authorName, articles, signal);
+  }
   const ai = await getAI();
   throwIfAborted(signal);
   const nameSafe = sanitizePromptFragment(authorName, 500);
@@ -616,6 +672,9 @@ export async function generateAuthorProfileAnalysis(
   coreConcepts: { concept: string; frequency: number }[];
   estimatedMetrics: { hIndex: number | null; totalCitations: number | null };
 }> {
+  if (await shouldUseHeuristic(aiSettings)) {
+    return generateAuthorProfileHeuristic(authorName, articles, signal);
+  }
   const ai = await getAI();
   throwIfAborted(signal);
   const nameSafe = sanitizePromptFragment(authorName, 500);
@@ -668,6 +727,9 @@ export async function suggestAuthors(
   aiSettings: Settings['ai'],
   signal?: AbortSignal,
 ): Promise<{ name: string; description: string }[]> {
+  if (await shouldUseHeuristic(aiSettings)) {
+    return suggestAuthorsHeuristic(fieldOfStudy, signal);
+  }
   const ai = await getAI();
   throwIfAborted(signal);
   const fieldSafe = sanitizePromptFragment(fieldOfStudy, 2000);
@@ -704,7 +766,10 @@ export async function analyzeSingleArticle(
   aiSettings: Settings['ai'],
   signal?: AbortSignal,
 ): Promise<RankedArticle> {
-  const ai = await getAI();
+  const useHeuristic = await shouldUseHeuristic(aiSettings);
+  if (!useHeuristic) {
+    // live path needs AI client early
+  }
   throwIfAborted(signal);
   const ncbiApiKey = (await getNcbiApiKey()) ?? undefined;
   throwIfAborted(signal);
@@ -715,7 +780,6 @@ export async function analyzeSingleArticle(
       const match = identifier.match(/(\d+)\/?$/);
       if (match) pmid = match[1];
     } else if (identifier.includes('doi.org/')) {
-      // Can't directly convert DOI to PMID reliably without another API, so we'll just search for the DOI
       const ids = await searchPubMedForIds(identifier, 1, signal, ncbiApiKey);
       if (ids.length > 0) pmid = ids[0];
       else {
@@ -728,19 +792,39 @@ export async function analyzeSingleArticle(
       }
     }
 
-    const articleDetails = await fetchArticleDetails([pmid], signal, ncbiApiKey);
-    if (!articleDetails || articleDetails.length === 0) {
-      throw new Error('Could not fetch article details from PubMed. Please check the identifier.');
-    }
-    const articleData = articleDetails[0] as Partial<RankedArticle> & {
+    let articleData: Partial<RankedArticle> & {
       pmid: string;
       title: string;
       summary: string;
       authors: string;
       journal: string;
       pubYear: string;
+      isOpenAccess?: boolean;
     };
 
+    const isOnline = typeof navigator === 'undefined' ? true : navigator.onLine;
+    if (isOnline) {
+      try {
+        const articleDetails = await fetchArticleDetails([pmid], signal, ncbiApiKey);
+        if (articleDetails?.length) {
+          articleData = articleDetails[0] as typeof articleData;
+        } else {
+          throw new Error('empty');
+        }
+      } catch {
+        const demo = DEMO_CORPUS.find((a) => a.pmid === pmid) ?? DEMO_CORPUS[0];
+        articleData = { ...demo };
+      }
+    } else {
+      const demo = DEMO_CORPUS.find((a) => a.pmid === pmid) ?? DEMO_CORPUS[0];
+      articleData = { ...demo };
+    }
+
+    if (useHeuristic) {
+      return analyzeArticleHeuristic(articleData, signal);
+    }
+
+    const ai = await getAI();
     const prompt = `Analyze the following article abstract and title. Provide a relevance score for how well the abstract matches the title, extract keywords, and classify the article type.
         Title: ${articleData.title}
         Abstract: ${articleData.summary}
@@ -797,6 +881,9 @@ export async function generateJournalProfileAnalysis(
   aiSettings: Settings['ai'],
   signal?: AbortSignal,
 ): Promise<JournalProfile> {
+  if (await shouldUseHeuristic(aiSettings)) {
+    return generateJournalProfileHeuristic(journalName, [], signal);
+  }
   const ai = await getAI();
   throwIfAborted(signal);
   const journalSafe = sanitizePromptFragment(journalName, 500);
@@ -829,11 +916,18 @@ export async function generateJournalProfileAnalysis(
 }
 
 // --- Chat Service ---
+/**
+ * Starts a report-grounded chat session (live Gemini or heuristic adapter).
+ */
 export const startChatWithReport = async (
   report: ResearchReport,
   aiSettings: Settings['ai'],
   signal?: AbortSignal,
-): Promise<Chat> => {
+): Promise<ReportChatSession> => {
+  if (await shouldUseHeuristic(aiSettings)) {
+    throwIfAborted(signal);
+    return createHeuristicChatSession(report);
+  }
   const ai = await getAI();
   throwIfAborted(signal);
   const context = `
@@ -863,5 +957,7 @@ export const startChatWithReport = async (
       temperature: aiSettings.temperature * 0.8, // Slightly lower temperature for more factual chat
     },
   });
-  return chat;
+  return chat as unknown as ReportChatSession;
 };
+
+export type { ReportChatSession };

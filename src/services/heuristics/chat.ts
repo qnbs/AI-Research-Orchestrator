@@ -1,0 +1,130 @@
+import type { OnlineFindings, ResearchAnalysis, ResearchReport } from '../../types';
+import type { ReportChatSession } from './types';
+import { HEURISTIC_BADGE } from './types';
+import { extractKeywords } from './keywords';
+import { generateHeuristicTldr, extractKeySentences } from './summarization';
+import { meaningfulTokens, tokenSet, jaccard } from './utils';
+
+/**
+ * Research-assistant style analysis without Gemini.
+ */
+export function generateResearchAnalysisHeuristic(query: string): ResearchAnalysis {
+  const tldr = generateHeuristicTldr(query);
+  const keys = extractKeySentences(query, 4);
+  const keywords = extractKeywords(query, 6);
+  return {
+    summary: `${HEURISTIC_BADGE}: ${tldr}`,
+    keyFindings: keys.length
+      ? keys.map((s, i) => `${i + 1}. ${s}`)
+      : keywords.map((k) => `Topic signal: ${k}`),
+    synthesizedTopic: keywords.slice(0, 5).join(' ') || query.slice(0, 120),
+  };
+}
+
+/**
+ * Offline “related online” stub — honest about lacking live web search.
+ */
+export function findRelatedOnlineHeuristic(topic: string): OnlineFindings {
+  return {
+    summary: `${HEURISTIC_BADGE}: Live web / news grounding requires Gemini with Google Search. Offline tip: search your Knowledge Base and PubMed (when online) for “${topic.slice(0, 80)}”.`,
+    sources: [],
+  };
+}
+
+/**
+ * Template chat grounded strictly in the supplied report.
+ */
+export function answerFromReport(report: ResearchReport, question: string): string {
+  const q = question.trim();
+  if (!q) {
+    return `${HEURISTIC_BADGE}: Please ask a question about the current report.`;
+  }
+
+  const qTokens = tokenSet(q);
+  const lower = q.toLowerCase();
+
+  if (/^(hi|hello|hey|thanks|thank you)\b/.test(lower)) {
+    return `${HEURISTIC_BADGE}: Hello — I can answer questions using only this report’s synthesis, ranked articles, and insights.`;
+  }
+
+  // Match insights
+  let bestInsight: { score: number; text: string } | null = null;
+  for (const insight of report.aiGeneratedInsights ?? []) {
+    const blob = `${insight.question} ${insight.answer}`;
+    const score = jaccard(qTokens, tokenSet(blob));
+    if (!bestInsight || score > bestInsight.score) {
+      bestInsight = {
+        score,
+        text: `**${insight.question}**\n\n${insight.answer}\n\nSupporting PMIDs: ${(insight.supportingArticles ?? []).join(', ') || 'n/a'}`,
+      };
+    }
+  }
+
+  // Match articles
+  let bestArticle: { score: number; text: string } | null = null;
+  for (const a of report.rankedArticles ?? []) {
+    const blob = `${a.title} ${a.summary} ${a.aiSummary ?? ''} ${(a.keywords ?? []).join(' ')}`;
+    const score = jaccard(qTokens, tokenSet(blob));
+    if (!bestArticle || score > bestArticle.score) {
+      bestArticle = {
+        score,
+        text: `**${a.title}** (PMID ${a.pmid}, score ${a.relevanceScore}/100)\n\n${(a.aiSummary || a.summary || '').slice(0, 500)}`,
+      };
+    }
+  }
+
+  const synthesisHit = jaccard(qTokens, tokenSet(report.synthesis ?? ''));
+  const wantsSummary = /summary|tldr|overview|synthesis|conclude|conclusion/.test(lower);
+  const wantsKeywords = /keyword|theme|topic/.test(lower);
+  const wantsList = /list|articles|pmid|papers|top/.test(lower);
+
+  if (wantsKeywords && report.overallKeywords?.length) {
+    return `${HEURISTIC_BADGE}\n\nOverall keywords: ${report.overallKeywords
+      .map((k) => `${k.keyword} (${k.frequency})`)
+      .join(', ')}.`;
+  }
+
+  if (wantsList && report.rankedArticles?.length) {
+    return `${HEURISTIC_BADGE}\n\nTop ranked articles:\n${report.rankedArticles
+      .slice(0, 8)
+      .map((a, i) => `${i + 1}. ${a.pmid} — ${a.title} (${a.relevanceScore})`)
+      .join('\n')}`;
+  }
+
+  if (wantsSummary || synthesisHit >= 0.08) {
+    const synth = (report.synthesis ?? '').slice(0, 1200);
+    return `${HEURISTIC_BADGE}\n\nFrom the report synthesis:\n\n${synth || 'No synthesis text available.'}`;
+  }
+
+  if (bestInsight && bestInsight.score >= 0.06) {
+    return `${HEURISTIC_BADGE}\n\n${bestInsight.text}`;
+  }
+
+  if (bestArticle && bestArticle.score >= 0.05) {
+    return `${HEURISTIC_BADGE}\n\nClosest article in this report:\n\n${bestArticle.text}`;
+  }
+
+  // Refuse inventing external knowledge
+  const tokens = meaningfulTokens(q);
+  return `${HEURISTIC_BADGE}: I could not ground “${q.slice(0, 120)}” in this report’s synthesis or ranked articles${
+    tokens.length ? ` (tokens: ${tokens.slice(0, 5).join(', ')})` : ''
+  }. Ask about the synthesis, keywords, a PMID, or an insight from the panel — I will not invent external literature.`;
+}
+
+/**
+ * Chat adapter with Gemini-compatible `sendMessageStream` for `useChat`.
+ */
+export function createHeuristicChatSession(report: ResearchReport): ReportChatSession {
+  return {
+    async sendMessageStream({ message }) {
+      const answer = answerFromReport(report, message);
+      return (async function* () {
+        const size = 40;
+        for (let i = 0; i < answer.length; i += size) {
+          yield { text: answer.slice(i, i + size) };
+          await Promise.resolve();
+        }
+      })();
+    },
+  };
+}

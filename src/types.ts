@@ -169,6 +169,11 @@ export interface Settings {
     enableTldr: boolean;
     /** Optional NCBI E-utilities API key for higher PubMed rate limits. */
     ncbiApiKey: string;
+    /**
+     * When true, always use the local heuristic inference layer
+     * even if a Gemini API key and network are available.
+     */
+    forceHeuristicMode: boolean;
   };
   defaults: {
     maxArticlesToScan: number;

@@ -545,6 +545,34 @@ export const AISettingsTab: React.FC = () => {
               summary of an abstract. This will make an additional API call.
             </p>
           </div>
+          <div className="pt-6 border-t border-border space-y-3">
+            <div>
+              <p className="text-xs uppercase tracking-wide text-text-secondary">
+                Current inference mode
+              </p>
+              <p className="mt-1 text-sm text-text-primary">
+                {tempSettings.ai.forceHeuristicMode
+                  ? 'Heuristic · Forced (preview)'
+                  : 'Derived from API key + network (Live when both available)'}
+              </p>
+            </div>
+            <Toggle
+              checked={Boolean(tempSettings.ai.forceHeuristicMode)}
+              onChange={(checked) =>
+                setTempSettings((s) => ({
+                  ...s,
+                  ai: { ...s.ai, forceHeuristicMode: checked },
+                }))
+              }
+            >
+              Force Heuristic Mode
+            </Toggle>
+            <p className="text-xs text-text-secondary">
+              Run all AI features with local deterministic algorithms — private, free, and fully
+              offline-capable. Live Gemini remains the high-fidelity path when a key and network are
+              available and this toggle is off.
+            </p>
+          </div>
         </div>
       </SettingCard>
       <SettingCard

@@ -20,6 +20,7 @@ import { AppLogo } from './AppLogo';
 import { useTranslation } from '../hooks/useTranslation';
 import { GlobeAltIcon } from './icons/GlobeAltIcon';
 import { AgentDebuggerToggle } from './AgentDebugger';
+import { InferenceModeBadge } from './InferenceModeBadge';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { cycleTheme, selectCurrentTheme } from '../store/slices/themeSlice';
 
@@ -153,74 +154,77 @@ const HeaderComponent: React.FC<HeaderProps> = ({
                 Research<span className="text-brand-accent drop-shadow-sm">Orchestrator</span>
               </span>
             </button>
-            <nav
-              className="flex items-center gap-1 p-1.5 rounded-xl border border-white/5 bg-black/5 backdrop-blur-md shadow-inner"
-              aria-label="Main navigation"
-            >
-              <NavButton
-                onClick={() => onViewChange('research')}
-                isActive={currentView === 'research'}
-                className="relative"
+            <div className="flex items-center gap-3">
+              <InferenceModeBadge />
+              <nav
+                className="flex items-center gap-1 p-1.5 rounded-xl border border-white/5 bg-black/5 backdrop-blur-md shadow-inner"
+                aria-label="Main navigation"
               >
-                {isResearching && (
-                  <span className="absolute top-1.5 right-1.5 flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-cyan opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-accent-cyan"></span>
+                <NavButton
+                  onClick={() => onViewChange('research')}
+                  isActive={currentView === 'research'}
+                  className="relative"
+                >
+                  {isResearching && (
+                    <span className="absolute top-1.5 right-1.5 flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-cyan opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-accent-cyan"></span>
+                    </span>
+                  )}
+                  <BeakerIcon className="h-4 w-4 mr-2" />
+                  {t('nav.research')}
+                </NavButton>
+                <NavButton
+                  onClick={() => onViewChange('orchestrator')}
+                  isActive={currentView === 'orchestrator'}
+                >
+                  <DocumentIcon className="h-4 w-4 mr-2" />
+                  {t('nav.orchestrator')}
+                </NavButton>
+                <NavButton
+                  onClick={() => onViewChange('authors')}
+                  isActive={currentView === 'authors'}
+                >
+                  <AuthorIcon className="h-4 w-4 mr-2" />
+                  {t('nav.authors')}
+                </NavButton>
+                <NavButton
+                  onClick={() => onViewChange('journals')}
+                  isActive={currentView === 'journals'}
+                >
+                  <BookOpenIcon className="h-4 w-4 mr-2" />
+                  {t('nav.journals')}
+                </NavButton>
+                <div className="w-px h-5 bg-border mx-1"></div>
+                <NavButton
+                  onClick={() => onViewChange('knowledgeBase')}
+                  isActive={currentView === 'knowledgeBase'}
+                  disabled={!hasReports}
+                >
+                  <DatabaseIcon className="h-4 w-4 mr-2" />
+                  {t('nav.knowledgeBase')}{' '}
+                  <span className="ml-2 bg-background/80 border border-border text-text-primary text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm">
+                    {displayCount}
                   </span>
-                )}
-                <BeakerIcon className="h-4 w-4 mr-2" />
-                {t('nav.research')}
-              </NavButton>
-              <NavButton
-                onClick={() => onViewChange('orchestrator')}
-                isActive={currentView === 'orchestrator'}
-              >
-                <DocumentIcon className="h-4 w-4 mr-2" />
-                {t('nav.orchestrator')}
-              </NavButton>
-              <NavButton
-                onClick={() => onViewChange('authors')}
-                isActive={currentView === 'authors'}
-              >
-                <AuthorIcon className="h-4 w-4 mr-2" />
-                {t('nav.authors')}
-              </NavButton>
-              <NavButton
-                onClick={() => onViewChange('journals')}
-                isActive={currentView === 'journals'}
-              >
-                <BookOpenIcon className="h-4 w-4 mr-2" />
-                {t('nav.journals')}
-              </NavButton>
-              <div className="w-px h-5 bg-border mx-1"></div>
-              <NavButton
-                onClick={() => onViewChange('knowledgeBase')}
-                isActive={currentView === 'knowledgeBase'}
-                disabled={!hasReports}
-              >
-                <DatabaseIcon className="h-4 w-4 mr-2" />
-                {t('nav.knowledgeBase')}{' '}
-                <span className="ml-2 bg-background/80 border border-border text-text-primary text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm">
-                  {displayCount}
-                </span>
-              </NavButton>
-              <NavButton
-                onClick={() => onViewChange('dashboard')}
-                isActive={currentView === 'dashboard'}
-                disabled={!hasReports}
-              >
-                <ChartBarIcon className="h-4 w-4 mr-2" />
-                {t('nav.dashboard')}
-              </NavButton>
-              <NavButton
-                onClick={() => onViewChange('history')}
-                isActive={currentView === 'history'}
-                disabled={!hasReports}
-              >
-                <HistoryIcon className="h-4 w-4 mr-2" />
-                {t('nav.history')}
-              </NavButton>
-            </nav>
+                </NavButton>
+                <NavButton
+                  onClick={() => onViewChange('dashboard')}
+                  isActive={currentView === 'dashboard'}
+                  disabled={!hasReports}
+                >
+                  <ChartBarIcon className="h-4 w-4 mr-2" />
+                  {t('nav.dashboard')}
+                </NavButton>
+                <NavButton
+                  onClick={() => onViewChange('history')}
+                  isActive={currentView === 'history'}
+                  disabled={!hasReports}
+                >
+                  <HistoryIcon className="h-4 w-4 mr-2" />
+                  {t('nav.history')}
+                </NavButton>
+              </nav>
+            </div>
           </div>
 
           {/* Bottom Row: Title & Actions */}
