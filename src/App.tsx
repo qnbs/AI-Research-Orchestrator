@@ -215,6 +215,7 @@ const AppLayout: React.FC = () => {
     settings.theme,
     settings.performance.enableAnimations,
     settings.appearance.fontFamily,
+    settings.appearance.density,
     settings.appearance.customColors,
   ]);
 
