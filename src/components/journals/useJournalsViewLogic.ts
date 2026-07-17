@@ -134,23 +134,7 @@ export const useJournalsViewLogic = () => {
       .sort(([, a], [, b]) => b - a)
       .slice(0, 6);
 
-    const topicData = {
-      labels: topTopics.map(([word]) => word),
-      datasets: [
-        {
-          data: topTopics.map(([, count]) => count),
-          backgroundColor: [
-            'rgba(31, 111, 235, 0.7)',
-            'rgba(57, 197, 247, 0.7)',
-            'rgba(232, 83, 165, 0.7)',
-            'rgba(245, 158, 11, 0.7)',
-            'rgba(16, 185, 129, 0.7)',
-            'rgba(99, 102, 241, 0.7)',
-          ],
-          borderWidth: 0,
-        },
-      ],
-    };
+    const topicData = topTopics.map(([name, value]) => ({ name, value }));
 
     const years: Record<string, number> = {};
     foundArticles.forEach((a) => {
@@ -158,20 +142,9 @@ export const useJournalsViewLogic = () => {
         years[a.pubYear] = (years[a.pubYear] || 0) + 1;
       }
     });
-    const sortedYears = Object.keys(years).sort();
-    const timelineData = {
-      labels: sortedYears,
-      datasets: [
-        {
-          label: 'Articles',
-          data: sortedYears.map((y) => years[y]),
-          backgroundColor: 'rgba(31, 111, 235, 0.5)',
-          borderColor: 'rgba(31, 111, 235, 1)',
-          borderWidth: 1,
-          borderRadius: 4,
-        },
-      ],
-    };
+    const timelineData = Object.keys(years)
+      .sort()
+      .map((year) => ({ year, count: years[year] }));
 
     return { topicData, timelineData };
   }, [foundArticles]);

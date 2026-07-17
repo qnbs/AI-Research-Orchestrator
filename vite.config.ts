@@ -63,7 +63,7 @@ export default defineConfig(({ mode }) => {
             // Vendor chunks
             'vendor-react': ['react', 'react-dom'],
             'vendor-redux': ['react-redux', '@reduxjs/toolkit'],
-            'vendor-charts': ['chart.js', 'react-chartjs-2', 'recharts'],
+            'vendor-charts': ['recharts'],
             'vendor-motion': ['framer-motion'],
             'vendor-ui': ['lucide-react', 'cmdk'],
           },

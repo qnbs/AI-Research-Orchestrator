@@ -4,16 +4,25 @@ import type { ChatMessage, ResearchReport, Settings } from '../types';
 import { startChatWithReport } from '../services/geminiService';
 import { useUI } from '../contexts/UIContext';
 
+/**
+ * Report-grounded chat session: initializes when a report reaches `done`,
+ * streams model replies into `chatHistory`, and resets when the report clears.
+ *
+ * Session lives only in a ref. A monotonic `sessionGenerationRef` invalidates
+ * in-flight streams when the report changes so delayed chunks cannot mutate
+ * the replacement chat.
+ */
 export const useChat = (
   report: ResearchReport | null,
   reportStatus: 'idle' | 'generating' | 'streaming' | 'done' | 'error',
   aiSettings: Settings['ai'],
 ) => {
-  const [chatSession, setChatSession] = useState<Chat | null>(null);
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [isChatting, setIsChatting] = useState(false);
   const { setNotification } = useUI();
   const isMounted = useRef(true);
+  const chatSessionRef = useRef<Chat | null>(null);
+  const sessionGenerationRef = useRef(0);
 
   useEffect(() => {
     isMounted.current = true;
@@ -22,43 +31,57 @@ export const useChat = (
     };
   }, []);
 
+  const invalidateSession = useCallback(() => {
+    sessionGenerationRef.current += 1;
+    chatSessionRef.current = null;
+    setChatHistory([]);
+    setIsChatting(false);
+  }, []);
+
   useEffect(() => {
-    if (report && reportStatus === 'done') {
-      const initChat = async () => {
-        try {
-          const session = await startChatWithReport(report, aiSettings);
-          if (isMounted.current) {
-            setChatSession(session);
-            // Reset chat history when a new report is finalized
-            setChatHistory([]);
-          }
-        } catch (error) {
-          console.error('Failed to initialize chat:', error);
-          if (isMounted.current) {
-            setNotification({
-              id: Date.now(),
-              message:
-                error instanceof Error ? error.message : 'Chat konnte nicht initialisiert werden.',
-              type: 'error',
-            });
-          }
-        }
-      };
-      initChat();
+    if (!(report && reportStatus === 'done')) {
+      return;
     }
-  }, [report, reportStatus, aiSettings, setNotification]);
+    let cancelled = false;
+    invalidateSession();
+
+    const initChat = async () => {
+      try {
+        const session = await startChatWithReport(report, aiSettings);
+        if (isMounted.current && !cancelled) {
+          chatSessionRef.current = session;
+        }
+      } catch (error) {
+        console.error('Failed to initialize chat:', error);
+        if (isMounted.current && !cancelled) {
+          setNotification({
+            id: Date.now(),
+            message: error instanceof Error ? error.message : 'Chat could not be initialized.',
+            type: 'error',
+          });
+        }
+      }
+    };
+    void initChat();
+    return () => {
+      cancelled = true;
+      chatSessionRef.current = null;
+      sessionGenerationRef.current += 1;
+    };
+  }, [report, reportStatus, aiSettings, setNotification, invalidateSession]);
 
   // Also reset when the report disappears (e.g., new search)
   useEffect(() => {
     if (!report) {
-      setChatSession(null);
-      setChatHistory([]);
+      invalidateSession();
     }
-  }, [report]);
+  }, [report, invalidateSession]);
 
   const sendMessage = useCallback(
     async (message: string) => {
-      if (!chatSession) return;
+      const session = chatSessionRef.current;
+      if (!session) return;
+      const generation = sessionGenerationRef.current;
 
       setIsChatting(true);
       setChatHistory((prev) => [
@@ -67,7 +90,9 @@ export const useChat = (
       ]);
 
       try {
-        const stream = await chatSession.sendMessageStream({ message });
+        const stream = await session.sendMessageStream({ message });
+        if (!isMounted.current || generation !== sessionGenerationRef.current) return;
+
         let responseText = '';
 
         // Add a placeholder for the model's response
@@ -77,7 +102,7 @@ export const useChat = (
         ]);
 
         for await (const chunk of stream) {
-          if (!isMounted.current) break;
+          if (!isMounted.current || generation !== sessionGenerationRef.current) break;
           responseText += chunk.text;
           setChatHistory((prev) => {
             const newHistory = [...prev];
@@ -89,7 +114,7 @@ export const useChat = (
           });
         }
       } catch (err) {
-        if (isMounted.current) {
+        if (isMounted.current && generation === sessionGenerationRef.current) {
           setNotification({
             id: Date.now(),
             message: `Chat error: ${err instanceof Error ? err.message : 'Unknown issue'}`,
@@ -97,12 +122,12 @@ export const useChat = (
           });
         }
       } finally {
-        if (isMounted.current) {
+        if (isMounted.current && generation === sessionGenerationRef.current) {
           setIsChatting(false);
         }
       }
     },
-    [chatSession, setNotification],
+    [setNotification],
   );
 
   return { chatHistory, isChatting, sendMessage };

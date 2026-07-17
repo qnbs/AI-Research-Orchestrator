@@ -24,12 +24,12 @@ const initialState: CollectionsState = {
   editingId: null,
 };
 
-// ── Async Thunks ──────────────────────────────────────────────────────────────
-
+/** Load all collections from Dexie. */
 export const loadCollections = createAsyncThunk('collections/load', async () => {
   return await getAllCollections();
 });
 
+/** Persist a new collection and prepend it to state. */
 export const createCollection = createAsyncThunk(
   'collections/create',
   async (collection: ResearchCollection) => {
@@ -38,6 +38,7 @@ export const createCollection = createAsyncThunk(
   },
 );
 
+/** Patch a collection in Dexie and mirror into Redux. */
 export const updateCollection = createAsyncThunk(
   'collections/update',
   async ({ id, changes }: { id: string; changes: Partial<ResearchCollection> }) => {
@@ -46,12 +47,11 @@ export const updateCollection = createAsyncThunk(
   },
 );
 
+/** Delete a collection from Dexie and Redux. */
 export const deleteCollection = createAsyncThunk('collections/delete', async (id: string) => {
   await dbDeleteCollection(id);
   return id;
 });
-
-// ── Slice ─────────────────────────────────────────────────────────────────────
 
 export const collectionsSlice = createSlice({
   name: 'collections',

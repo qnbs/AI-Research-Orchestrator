@@ -20,10 +20,10 @@ export default defineConfig({
         'src/lib/**/*.ts',
       ],
       exclude: ['node_modules/', 'src/test/', 'dist/', '**/*.{test,spec}.{ts,tsx}'],
-      /** Phase 1 (2026-07): measured ~78% lines/statements after geminiApiSlice + checkpoint depth. */
+      /** Phase 2 (2026-07): gate raised to 80% after export/chat/slice depth + eval harness. */
       thresholds: {
-        lines: 75,
-        statements: 75,
+        lines: 80,
+        statements: 80,
         branches: 55,
         functions: 55,
       },

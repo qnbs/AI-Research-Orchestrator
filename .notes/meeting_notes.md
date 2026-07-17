@@ -28,4 +28,20 @@
 ## Impact
 
 - P0-10 / P0-11 / P0-13 closed in AUDIT; P1-5 closed; P1-1/P1-6 partial.
+
+---
+
+# 2026-07-16 — Phase 2 audit completion (v0.2.0)
+
+## Decisions
+
+- Coverage gate → **80%**; deepen export PDF paths + useChat streaming + slice reducers.
+- Consolidate charts on **Recharts** (ADR 0005); drop Chart.js.
+- CI hard gates: `bundle:budget` + Lighthouse CI (a11y/BP/SEO ≥95; performance warn).
+- Prompt catalog versioning (ADR 0006) + offline `agentEval` harness.
+- CSP `connect-src` allowlist for Gemini/NCBI/arXiv/CDN; leave `unsafe-inline` for JSON-LD for now (P2-5 partial).
+
+## Impact
+
+- package **0.2.0**; remaining open: advanced SW cache (P2-2), deeper i18n (P2-3), full CSP nonce (P2-5 rest), GitHub Release after merge.
 - Next: Lighthouse CI, JSDoc pass, chart consolidation, CSP tighten, Release v0.2.0.

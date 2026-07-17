@@ -112,6 +112,10 @@ export const translations = {
       'Estimates use public list-price heuristics and typical prompt sizes. Actual usage varies.',
     'orchestrator.cost_preflight':
       'Estimated Gemini usage ~${usd} (${tier}). This is an approximate pre-flight estimate.',
+    'charts.citations': 'Citations',
+    'charts.no_citation_timeline': 'No citation timeline data available.',
+    'charts.no_topic_data': 'No topic data available.',
+    'charts.no_publication_years': 'No publication years available.',
   },
   de: {
     'app.name': 'Research Orchestrator',
@@ -231,6 +235,10 @@ export const translations = {
       'Schätzungen nutzen öffentliche Listenpreise und typische Prompt-Größen. Der tatsächliche Verbrauch variiert.',
     'orchestrator.cost_preflight':
       'Geschätzter Gemini-Verbrauch ~${usd} (${tier}). Ungefähre Pre-Flight-Schätzung.',
+    'charts.citations': 'Zitationen',
+    'charts.no_citation_timeline': 'Keine Zitations-Zeitreihe verfügbar.',
+    'charts.no_topic_data': 'Keine Themendaten verfügbar.',
+    'charts.no_publication_years': 'Keine Erscheinungsjahre verfügbar.',
   },
 };
 

@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- CSP: SPA route restore runs from bundled `src/spaRouteRestore.ts`; unsafe-inline for JSON-LD + legacy boot. -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https: blob:; connect-src 'self' https: blob: data: wss:; base-uri 'self';" />
+    <!-- CSP: SPA route restore from bundled `src/spaRouteRestore.ts`. connect-src limited to Gemini + NCBI + arXiv + fonts CDN peers. -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https: blob:; connect-src 'self' https://generativelanguage.googleapis.com https://eutils.ncbi.nlm.nih.gov https://export.arxiv.org https://aistudiocdn.com blob: data:; base-uri 'self'; form-action 'self'; object-src 'none';" />
     <title>AI Research Orchestration Author</title>
 
     <!-- PWA and Mobile Meta Tags -->

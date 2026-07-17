@@ -10,12 +10,15 @@ const triggerAnalysis = vi.fn().mockReturnValue({
       keyFindings: ['k'],
       synthesizedTopic: 'topic',
     }),
+  abort: vi.fn(),
 });
 const triggerSimilar = vi.fn().mockReturnValue({
   unwrap: () => Promise.resolve([]),
+  abort: vi.fn(),
 });
 const triggerOnline = vi.fn().mockReturnValue({
   unwrap: () => Promise.resolve({ summary: '', sources: [] }),
+  abort: vi.fn(),
 });
 
 vi.mock('../store/slices/geminiApiSlice', () => ({
@@ -65,5 +68,30 @@ describe('useResearchAssistant', () => {
       result.current.clearResearch();
     });
     expect(result.current.analysis).toBeNull();
+  });
+
+  it('aborts inflight analysis on unmount', async () => {
+    const abort = vi.fn();
+    let resolveAnalysis!: (value: unknown) => void;
+    triggerAnalysis.mockReturnValueOnce({
+      unwrap: () =>
+        new Promise((resolve) => {
+          resolveAnalysis = resolve;
+        }),
+      abort,
+    });
+
+    const { result, unmount } = renderHook(() => useResearchAssistant(ai, vi.fn()));
+    act(() => {
+      void result.current.startResearch('pending');
+    });
+    await waitFor(() => expect(triggerAnalysis).toHaveBeenCalled());
+    unmount();
+    expect(abort).toHaveBeenCalled();
+    resolveAnalysis({
+      summary: 's',
+      keyFindings: ['k'],
+      synthesizedTopic: 'topic',
+    });
   });
 });
