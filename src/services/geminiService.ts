@@ -11,6 +11,7 @@ import type {
   GeneratedQuery,
   AuthorCluster,
   JournalProfile,
+  JournalCandidate,
 } from '../types';
 import { getApiKey, getNcbiApiKey } from './apiKeyService';
 import { searchPubMedForIds, fetchArticleDetails } from './pubmedUtils';
@@ -32,6 +33,8 @@ import {
   suggestAuthorsHeuristic,
   analyzeArticleHeuristic,
   generateJournalProfileHeuristic,
+  disambiguateJournalHeuristic,
+  suggestJournalsHeuristic,
   createHeuristicChatSession,
   DEMO_CORPUS,
   resolveHeuristicArticleByPmid,
@@ -895,17 +898,24 @@ export async function generateJournalProfileAnalysis(
   journalName: string,
   aiSettings: Settings['ai'],
   signal?: AbortSignal,
+  articles: Partial<RankedArticle>[] = [],
 ): Promise<JournalProfile> {
   if (await shouldUseHeuristic(aiSettings)) {
-    return generateJournalProfileHeuristic(journalName, [], signal);
+    return generateJournalProfileHeuristic(journalName, articles, signal);
   }
   const ai = await getAI();
   throwIfAborted(signal);
   const journalSafe = sanitizePromptFragment(journalName, 500);
+  const articleContext =
+    articles.length > 0
+      ? `\nRecent article titles from this journal (for focus-area grounding): ${JSON.stringify(
+          articles.map((a) => a.title).slice(0, 20),
+        )}`
+      : '';
   try {
     const response = await ai.models.generateContent({
       model: aiSettings.model,
-      contents: `Act as an expert academic librarian. Analyze the journal '${journalSafe}'. Provide a JSON object with the following structure: { "name": "...", "issn": "...", "description": "...", "oaPolicy": "...", "focusAreas": ["..."] }. Find the correct ISSN. For oaPolicy, use one of: "Full Open Access", "Hybrid", "Subscription".`,
+      contents: `Act as an expert academic librarian. Analyze the journal '${journalSafe}'. Provide a JSON object with the following structure: { "name": "...", "issn": "...", "description": "...", "oaPolicy": "...", "focusAreas": ["..."], "publisher": "...", "estimatedImpactFactor": <number|null> }. Find the correct ISSN. For oaPolicy, use one of: "Full Open Access", "Hybrid", "Subscription". For estimatedImpactFactor, give your best estimate of the current Journal Impact Factor, or null if you cannot reasonably estimate it.${articleContext}`,
       config: {
         systemInstruction: getPreamble(aiSettings, PromptId.JOURNAL_PROFILE),
         temperature: 0.2,
@@ -918,14 +928,126 @@ export async function generateJournalProfileAnalysis(
             description: { type: Type.STRING },
             oaPolicy: { type: Type.STRING },
             focusAreas: { type: Type.ARRAY, items: { type: Type.STRING } },
+            publisher: { type: Type.STRING },
+            estimatedImpactFactor: { type: Type.NUMBER, nullable: true },
           },
           required: ['name', 'issn', 'description', 'oaPolicy', 'focusAreas'],
         },
       },
     });
-    return parseGeminiResponseJson<JournalProfile>(response.text ?? '');
+    const parsed = parseGeminiResponseJson<
+      JournalProfile & { estimatedImpactFactor?: number | null }
+    >(response.text ?? '');
+    const { estimatedImpactFactor, ...profile } = parsed;
+    return {
+      ...profile,
+      metrics: {
+        impactFactor: estimatedImpactFactor ?? null,
+        analyzedArticleCount: articles.length > 0 ? articles.length : null,
+        openAccessRate:
+          articles.length > 0
+            ? Math.round((articles.filter((a) => a.isOpenAccess).length / articles.length) * 100)
+            : null,
+        source: 'ai-estimated',
+      },
+    };
   } catch (error) {
     console.error('Error generating journal profile analysis:', error);
+    throw new Error(getGeminiError(error));
+  }
+}
+
+/**
+ * Disambiguate a journal name into candidate journals (name variants, abbreviations).
+ * Mirrors {@link disambiguateAuthor} — heuristic fallback uses the curated journal KB.
+ */
+export async function disambiguateJournal(
+  journalName: string,
+  aiSettings: Settings['ai'],
+  signal?: AbortSignal,
+): Promise<JournalCandidate[]> {
+  if (await shouldUseHeuristic(aiSettings)) {
+    return disambiguateJournalHeuristic(journalName, signal);
+  }
+  const ai = await getAI();
+  throwIfAborted(signal);
+  const journalSafe = sanitizePromptFragment(journalName, 500);
+  try {
+    const response = await ai.models.generateContent({
+      model: aiSettings.model,
+      contents: `Act as an expert academic librarian. The user entered the journal name "${journalSafe}". Identify up to 5 distinct journals this could refer to (name variants, abbreviations, or similarly named journals, e.g. "BMJ" vs "BMJ Open"). For each candidate provide: the canonical full name, its ISSN (if known), a brief 1-sentence description, the matchType (one of "exact", "alias", "abbreviation", "partial"), and a confidence score 0-100. Return them sorted by confidence descending.`,
+      config: {
+        systemInstruction: getPreamble(aiSettings, PromptId.JOURNAL_DISAMBIGUATE),
+        temperature: 0.1,
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: Type.ARRAY,
+          items: {
+            type: Type.OBJECT,
+            properties: {
+              name: { type: Type.STRING },
+              issn: { type: Type.STRING },
+              description: { type: Type.STRING },
+              matchType: { type: Type.STRING },
+              confidence: { type: Type.INTEGER },
+            },
+            required: ['name', 'description', 'matchType', 'confidence'],
+          },
+        },
+      },
+    });
+    const parsed = parseGeminiResponseJson<JournalCandidate[]>(response.text ?? '');
+    return parsed.map((c) => ({
+      ...c,
+      matchType: (['exact', 'alias', 'abbreviation', 'partial'].includes(c.matchType)
+        ? c.matchType
+        : 'partial') as JournalCandidate['matchType'],
+    }));
+  } catch (error) {
+    console.error('Error disambiguating journal:', error);
+    throw new Error(getGeminiError(error));
+  }
+}
+
+/**
+ * Suggest prominent journals for a field of study.
+ * Mirrors {@link suggestAuthors} — heuristic fallback uses a curated field map.
+ */
+export async function suggestJournals(
+  fieldOfStudy: string,
+  aiSettings: Settings['ai'],
+  signal?: AbortSignal,
+): Promise<{ name: string; description: string }[]> {
+  if (await shouldUseHeuristic(aiSettings)) {
+    return suggestJournalsHeuristic(fieldOfStudy, signal);
+  }
+  const ai = await getAI();
+  throwIfAborted(signal);
+  const fieldSafe = sanitizePromptFragment(fieldOfStudy, 2000);
+  try {
+    const response = await ai.models.generateContent({
+      model: aiSettings.model,
+      contents: `Act as an expert academic librarian. Suggest 5-10 prominent peer-reviewed journals publishing research in the field of "${fieldSafe}". For each, provide the canonical journal name and a brief (1-sentence) description of its scope and reputation.`,
+      config: {
+        systemInstruction: getPreamble(aiSettings, PromptId.JOURNAL_SUGGEST),
+        temperature: 0.5,
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: Type.ARRAY,
+          items: {
+            type: Type.OBJECT,
+            properties: {
+              name: { type: Type.STRING },
+              description: { type: Type.STRING },
+            },
+            required: ['name', 'description'],
+          },
+        },
+      },
+    });
+    return parseGeminiResponseJson<{ name: string; description: string }[]>(response.text ?? '');
+  } catch (error) {
+    console.error('Error suggesting journals:', error);
     throw new Error(getGeminiError(error));
   }
 }

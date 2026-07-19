@@ -1,47 +1,133 @@
-# Hinweise für KI-Assistenten (Cursor / Copilot)
+# AI Research Orchestrator — Agent Guide
 
-Dieses Repository ist eine **React-19-PWA** mit **Gemini** und **PubMed**; Daten liegen **nur lokal** (IndexedDB/Dexie).
+Guidance for AI coding agents (Kimi, Cursor, Copilot) working in this repository. Assumes no prior project knowledge. Follow it together with the required reading listed below.
 
-## Runtime-Literaturschwarm (App, nicht IDE-Agent)
+## Project Overview
 
-Die Orchestrierung läuft in **`src/services/geminiService.ts`** (AsyncGenerator `generateResearchReportStream`): Phasen wie Query-Generierung, PubMed-/optional arXiv-Fetch, Ranking, Streaming-Synthese. Grobe Zuordnung zu UI/Trace (`App.tsx`, `getAgentForPhase`): PubMed-/Suchphasen → **PubMedFetcher** bzw. Query-Erzeugung → **QueryGenerator**, Ranking → **Ranker**, Synthese/Streaming → **Synthesizer**. Das sind **konzeptionelle Rollen** (Prompts/Phasen), keine separaten SDK-Prozesse.
+**AI Research Orchestration Author** (`ai-research-orchestrator`, v0.2.1, MIT, private package) is a **client-only React 19 PWA** for agentic biomedical literature research. It couples **PubMed (NCBI E-utilities)** and **arXiv** retrieval with **Google Gemini** (2.5 Flash / 3 Pro, via `@google/genai`) to autonomously run literature reviews: query formulation → live fetch → semantic ranking (0–100 relevance) → streaming, cited synthesis.
 
-**InferenceMode:** `live` | `heuristic` — derived from API key presence, `navigator.onLine`, and an optional force toggle (`src/services/inferenceMode.ts`, hook `useInferenceMode`). Heuristic implementations live under **`src/services/heuristics/`**. Without a key / offline, the live path does not throw `NO_API_KEY`; local inference runs instead (ADR 0007).
+- **Local-first / zero backend**: all user data (reports, history, settings, knowledge base, collections) lives in the browser's IndexedDB via Dexie 4. No server stores anything.
+- **Direct-to-API**: the browser talks directly to `generativelanguage.googleapis.com`, `eutils.ncbi.nlm.nih.gov`, and `export.arxiv.org` (see CSP in `index.html`).
+- **Grounding**: every AI assertion is linked to a verifiable PubMed ID (PMID).
+- **Live demo / deployment**: GitHub Pages at `https://qnbs.github.io/AI-Research-Orchestrator/` (base path `/AI-Research-Orchestrator/`).
 
-## Pflichtlektüre
+Main features: Orchestrator pipeline, Knowledge Base (dedup, faceted filtering, charts), Rapid Research Assistant (TL;DR, similar articles, report chat), scientometric Author/Journal hubs, Collections, Agent Debugger (visual traces), Dashboard, History, and export to JSON/CSV/RIS/BibTeX/PDF.
 
-1. **`.github/copilot-instructions.md`** — aktueller Stack, Ordnerstruktur, State-Management, Testing, Safety-Regeln.
-2. **`.cursor/index.mdc`** — Always-On-Projektmanifest (Stack, Architektur, Konventionen).
-3. **`.cursor/rules/*.mdc`** — kontextbezogene Regeln (Security, APIs, UI, Tests, Meta — siehe `000-cursor-rules.mdc`).
+## Required Reading (in order)
 
-## Checks vor Änderungen am Kernfluss
+1. **`.github/copilot-instructions.md`** — current stack, folder structure, state management, testing, safety rules.
+2. **`.cursor/index.mdc`** — always-on project manifest.
+3. **`.cursor/rules/*.mdc`** — contextual rules (Security, APIs, Architecture, UI, QA — numbering scheme in `000-cursor-rules.mdc`).
+4. **`docs/adr/`** — architecture decisions (0001 state management … 0007 heuristic inference layer).
 
-- `pnpm run typecheck`
-- `pnpm run lint`
-- `pnpm run test:coverage` (Schwellen siehe `vitest.config.ts`)
-- Bei End-to-End: `pnpm exec playwright install chromium` (einmalig), dann `pnpm run test:e2e`
+## Technology Stack
 
-## CI
+| Area                 | Technology                                                                                           |
+| -------------------- | ---------------------------------------------------------------------------------------------------- |
+| Framework / Language | React 19 (Suspense, lazy views), TypeScript 5.8 **strict**                                           |
+| Build                | Vite 6 (+ `rollup-plugin-visualizer`, terser)                                                        |
+| State                | Redux Toolkit 2 + RTK Query (`apiSlice` = researchApi, `geminiApiSlice` = geminiApi)                 |
+| Local DB             | Dexie 4 + dexie-react-hooks (IndexedDB), single entry `src/services/databaseService.ts`              |
+| AI                   | `@google/genai` (streaming AsyncGenerators) **or** local heuristic inference layer                   |
+| Styling              | Tailwind CSS v4 (`@tailwindcss/postcss`), "Cybernetic" glassmorphism design system                   |
+| UI extras            | Framer Motion 12, lucide-react, cmdk (`⌘+K` palette), @tanstack/react-virtual                        |
+| Charts               | Recharts (ADR 0005 — Recharts-only; do not re-add Chart.js)                                          |
+| Export / sanitize    | jsPDF + marked, DOMPurify                                                                            |
+| Tests                | Vitest + Testing Library (jsdom), Playwright (Chromium)                                              |
+| Toolchain            | Node **≥22**, pnpm **11** (`packageManager: pnpm@11.13.1`), ESLint 9 + Prettier, husky + lint-staged |
 
-Workflow: `.github/workflows/deploy.yml` — bei **Push** und **Pull Request** auf `main`: `pnpm install --frozen-lockfile`, `pnpm audit --audit-level=high`, Typecheck, ESLint, Vitest mit Coverage (Schwellen siehe `vitest.config.ts`), Production-Build. **GitHub Pages**-Upload und Deploy nur auf `refs/heads/main`, nicht bei PRs.
+## Runtime Architecture
 
-## Dokumentation für Menschen
+- **Agentic pipeline**: implemented in **`src/services/geminiService.ts`** (AsyncGenerator `generateResearchReportStream`): query generation → PubMed/optional arXiv fetch → ranking → streaming synthesis. `App.tsx` `getAgentForPhase()` maps phases to **conceptual agent roles** for the trace/debug UI (QueryGenerator, PubMedFetcher, ArxivFetcher, Ranker, Synthesizer) — these are prompt/phase roles, not separate SDK processes.
+- **InferenceMode** `live | heuristic`: derived from API-key presence, `navigator.onLine`, and an optional Force-Heuristic toggle (`src/services/inferenceMode.ts`, `resolveActiveInferenceMode.ts`, hook `useInferenceMode`). Without a key or offline, the app **never** throws `NO_API_KEY` into an empty UI — the deterministic heuristic layer (`src/services/heuristics/`: query formulation, lexical ranking, template synthesis, extractive TL;DR, report-grounded chat, author/journal tools, demo corpus) keeps every feature usable (ADR 0007).
+- **State**: Redux is the single source of truth (slices: settings, ui, knowledgeBase, collections, theme, agentDebug + RTK Query slices). Contexts only hydrate/compose: `SettingsProvider` hydrates IndexedDB → Redux once; `KnowledgeBaseContext`/`PresetContext` compose Dexie + Redux actions; `UIContext` is a barrel. **Never duplicate** the same flags in Context and Redux.
+- **Resilience**: external calls use typed `AppError`/`toAppError` (`src/lib/errors.ts`), circuit breakers (`src/lib/circuitBreaker.ts` — never retry `AbortError`), exponential backoff honoring `Retry-After` (`src/lib/resilience.ts`, `pubmedUtils.ts`). See `.cursor/rules/102-resilience-external-calls.mdc`.
+- **Security model**: Gemini key (39 chars, prefix `AIza`) and optional NCBI key are entered in Settings → AI Configuration and stored **AES-GCM encrypted** in IndexedDB via `apiKeyService.ts`. Keys are **not** env secrets — `.env.example` is documentation only; never put secrets in `VITE_*` (client-visible). Threat model: `SECURITY.md` + ADR 0003.
+- **PWA**: service worker `public/sw.js`, `public/manifest.json`; production SPA routing via `404.html` fallback. `index.html` carries a CSP meta (hashes for inline JSON-LD/importmap) and an import map loading React & co. from `aistudiocdn.com`; `pnpm run build` runs `scripts/patch-csp-hashes.mjs` to re-hash after bundling.
 
-- `README.md` — Überblick, Setup (EN/DE)
-- `CONTRIBUTING.md` — Beiträge, Branching, Qualitätssicherung
-- `CHANGELOG.md`, `AUDIT.md`
+## Code Organization
 
-## Cursor Cloud specific instructions
+```
+src/
+  App.tsx                # Root: lazy-loaded views, phase→agent trace mapping
+  index.tsx, index.css   # Entry; Tailwind v4 + custom CSS
+  types.ts, types/ui.ts  # Shared TypeScript interfaces
+  components/            # Views + primitives; subfolders: icons/, ui/, settings/,
+                         # knowledge-base/, authors/, journals/, agentDebugger/
+  contexts/              # Settings / KnowledgeBase / Preset / UI providers (hydration & composition only)
+  hooks/                 # useSettings, useUI, useTranslation, useChat, useResearchAssistant,
+                         # useInferenceMode, useUrlSync, useFocusTrap, useHaptic, …
+  i18n/translations.ts   # EN + DE strings (both locales required for new UI text)
+  lib/                   # errors, circuitBreaker, resilience, promptRegistry, promptSanitize,
+                         # parseGeminiJson, researchCheckpoint, agentEval, heuristicEval, …
+  services/              # geminiService, apiKeyService, databaseService, pubmedUtils, arxivUtils,
+                         # exportService, journalService, inferenceMode, researchOrchestratorAdapter,
+                         # heuristics/ (offline inference layer)
+  store/                 # store.ts, hooks.ts, slices/ (one slice per domain + *.test.ts)
+  test/                  # setup.ts (IndexedDB + crypto mocks), e2e/ (agent-flow, smoke specs)
+scripts/                 # patch-csp-hashes, check-bundle-budget, generate-pwa-icons
+docs/adr/                # Architecture Decision Records 0001–0007
+```
 
-- **Single service:** Client-only PWA (no backend/DB/Docker). Vite dev server: `pnpm run dev` (port `3000`, host `0.0.0.0`). Preview: `pnpm run preview` (port `4173` after build). Keep long-running processes in **tmux**.
-- **Package manager:** pnpm 11 (`packageManager` in `package.json`) + Node ≥22 (`.nvmrc`). Prefer `corepack enable` then `pnpm install --frozen-lockfile`. If Corepack/npm TLS to `registry.npmjs.org` fails, a standalone `pnpm-linux-x64` under `~/.local/bin` (GitHub release asset) often still works.
-- **CDN at runtime:** `index.html` import-map loads React & Co. from `aistudiocdn.com` — browser needs egress; Vite only bootstraps.
-- **Gemini key is not an env secret:** Entered in Settings → AI Configuration, AES-GCM encrypted in IndexedDB. Format: 39 chars, prefix `AIza`. Optional NCBI key uses the same vault.
-- **AI without a key:** Orchestrator, Quick Add, Rapid Research Assistant, author/journal tools, and chat fall back to the **heuristic inference layer** (`src/services/heuristics/`) — never leave the user in an empty error-only state. Live Gemini is used automatically when a key and network are available (unless Force Heuristic Mode is on). Never commit real keys.
-- **Coverage gate:** `pnpm run test:coverage` enforces logic-layer thresholds in `vitest.config.ts` (**80%** lines/statements). Use `pnpm run test:run` for fast loops.
-- **Resilience:** External calls via `AppError` / circuit breaker (`src/lib/errors.ts`, `circuitBreaker.ts`) — see `.cursor/rules/102-resilience-external-calls.mdc`.
-- **English content:** New docs, comments, commits, and default strings must be English (`.cursor/rules/010-english-content.mdc`). Product UI i18n DE values stay in `translations.ts`.
-- **Automated review gate:** Resolve **all** PR review bot comments (CodeRabbit, CodeAntai, etc.), including nitpicks and out-of-diff, looping until clear (`.cursor/rules/011-coderabbit-pr-gate.mdc`).
-- **Dependabot gate:** Process every open Dependabot PR (`.cursor/rules/012-dependabot-pr-gate.mdc`); disposition in `docs/dependabot-disposition.md`.
-- **E2E:** Once: `pnpm exec playwright install chromium`, then `pnpm run test:e2e` (Playwright starts Vite and uses a fake key).
-- **ADRs / Security:** `docs/adr/`, `SECURITY.md`, living backlog in `AUDIT.md`.
+## Build, Test & Quality Commands
+
+```bash
+pnpm install --frozen-lockfile   # install (Node ≥22, pnpm 11)
+pnpm run dev                     # Vite dev server — port 3000, host 0.0.0.0
+pnpm run build                   # production build + CSP hash patching → dist/
+pnpm run preview                 # preview built app — port 4173
+pnpm run typecheck               # tsc --noEmit (strict)
+pnpm run lint                    # ESLint 9, warning budget --max-warnings 650
+pnpm run test:run                # Vitest, fast loop
+pnpm run test:coverage           # Vitest + v8 coverage — gated (see below)
+pnpm run test:e2e                # Playwright (one-time: pnpm exec playwright install chromium)
+pnpm run bundle:budget           # gzip budget gate: chunk ≤200 kB, entry ≤400 kB, charts ≤180 kB
+pnpm run analyze                 # bundle visualizer (dist/stats.html)
+pnpm run test:lighthouse         # build + Lighthouse CI
+pnpm run format                  # Prettier write (src + root md/json)
+```
+
+- **Coverage gate** (`vitest.config.ts`): scoped to logic layers (`src/store`, `src/services`, `src/hooks`, `src/lib`) — **80% lines/statements, 55% branches/functions**.
+- **Pre-commit**: husky runs `lint-staged` (eslint --fix + prettier).
+- **Before touching the core flow** (orchestration, KB, services), run: `typecheck`, `lint`, `test:coverage` — same as CI.
+
+## CI / CD
+
+- **`.github/workflows/deploy.yml`** (push + PR to `main`): `pnpm install --frozen-lockfile` → `pnpm audit --audit-level=high` → typecheck → lint → `test:coverage` → build → `bundle:budget` → Lighthouse CI (assertions: a11y/best-practices/SEO ≥ 0.95, performance ≥ 0.85 warn). **GitHub Pages upload/deploy only on `refs/heads/main` (non-PR).** Actions are pinned by SHA.
+- **`.github/workflows/security.yml`**: CodeQL, Dependency Review, `pnpm audit --audit-level=high`, gitleaks secret scan.
+- **Dependabot**: process every open Dependabot PR individually with gates green; document disposition in `docs/dependabot-disposition.md` (rule `012`). Never bulk-close.
+
+## Conventions & Code Style
+
+- **English-only repository content** (rule `010`, since 2026-07-16): all new/edited docs, comments, JSDoc, commit messages, CI text, and default/fallback strings must be English. **Exception**: existing German locale values in `src/i18n/translations.ts` stay; new UI strings need **EN + DE keys** and must render via `t()`.
+- TypeScript strict — no `any` unless unavoidable; functional components + hooks only.
+- **File size**: target 200–400 lines, hard max 700 (rule `200`). Split large views into `FeatureView.tsx` + `FeatureViewContext.tsx` + `useFeatureLogic.ts` (see Authors/Journals/Knowledge-Base patterns).
+- New persistent data → explicit Dexie schema version bump + migration in `databaseService.ts`; defaults documented; breaking changes in `CHANGELOG.md`.
+- All HTML/Markdown sanitized with DOMPurify; no `dangerouslySetInnerHTML` outside reviewed patterns; prompt fragments sanitized (`lib/promptSanitize.ts`); CSV export is formula-injection-safe.
+- Accessibility: WCAG 2.2 AA — ARIA roles, keyboard navigation, focus management, `⌘+K` palette; honor jsx-a11y (no blanket eslint-disables).
+- **New feature checklist**: Redux slice or RTK Query endpoint → Dexie schema (if persisted) → i18n EN+DE → Framer Motion transition → ARIA/keyboard → unit test stub.
+- **PR gates**: resolve **all** automated review-bot comments (CodeRabbit, CodeAntai, …) including nitpicks and out-of-diff items — loop until clear before merging (rule `011`). PRs target `main`, focused changes, English description.
+
+## Testing Strategy
+
+- **Unit/integration (Vitest, jsdom)**: colocated `*.test.ts(x)` next to sources (services, slices, hooks, lib, components). Setup `src/test/setup.ts` mocks IndexedDB and Web Crypto; `fake-indexeddb` available for DB tests. Tests must be **deterministic** — mock Gemini/PubMed/arXiv/network/crypto; never comment out or delete tests to pass CI; specs run in isolation (no shared mutable state).
+- **E2E (Playwright, Chromium only)**: `src/test/e2e/` (`agent-flow.spec.ts`, `smoke.spec.ts`). Config auto-starts the Vite dev server on port 3000 and uses a fake Gemini key; prefers stable `getByRole` selectors; `sleep` only with justification. One-time setup: `pnpm exec playwright install chromium`.
+- Every new external call path needs happy-path + failure + abort coverage (rule `102`).
+
+## Security Considerations
+
+- **Never commit API keys or secrets.** User keys live only in the encrypted IndexedDB vault (`apiKeyService.ts`). Gitleaks + `pnpm audit --audit-level=high` run in CI.
+- No stack traces/IDs in UI; user-facing errors via i18n; no sensitive logging in production.
+- CSP baseline in `index.html`; keep `scripts/patch-csp-hashes.mjs` working when adding inline scripts.
+- PubMed/arXiv: respect NCBI rate limits/backoff in `pubmedUtils.ts`; no scraping workarounds against NCBI ToS.
+
+## Environment Notes (Cursor Cloud / containers)
+
+- Single client-only service — no backend/DB/Docker needed. Keep long-running processes (dev server) in **tmux**.
+- If Corepack/npm TLS to `registry.npmjs.org` fails, a standalone `pnpm-linux-x64` under `~/.local/bin` (GitHub release asset) usually works; `corepack enable` is preferred otherwise.
+- DevContainer: `.devcontainer/` (postCreate installs Playwright Chromium; `SKIP_PLAYWRIGHT=true` to skip).
+- Runtime egress needed: `aistudiocdn.com` (import map), Google Fonts, Gemini/NCBI/arXiv APIs.
+
+## Human Documentation Map
+
+- `README.md` — overview & setup (EN/DE) · `CONTRIBUTING.md` — workflow & PR expectations · `CHANGELOG.md`, `AUDIT.md` (living backlog), `SECURITY.md` (threat model) · `docs/` — audits, ADRs, i18n reviews · `.notes/meeting_notes.md` — dated decision log for later sessions.

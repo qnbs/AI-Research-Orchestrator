@@ -26,6 +26,7 @@ interface KnowledgeBaseViewProps {
   onFilterChange: (newFilter: Partial<KnowledgeBaseFilter>) => void;
   selectedPmids: string[];
   setSelectedPmids: React.Dispatch<React.SetStateAction<string[]>>;
+  onAnalyzeJournal?: (journalName: string) => void;
 }
 
 const KnowledgeBaseViewLayout: React.FC = () => {
@@ -43,6 +44,7 @@ const KnowledgeBaseViewLayout: React.FC = () => {
     setShowExportModal,
     isExporting,
     onViewChange,
+    onAnalyzeJournal,
   } = useKnowledgeBaseView();
 
   if (uniqueArticles.length === 0) {
@@ -77,6 +79,7 @@ const KnowledgeBaseViewLayout: React.FC = () => {
           article={articleInDetail}
           onClose={() => setArticleInDetail(null)}
           findRelatedInsights={findRelatedInsights}
+          onAnalyzeJournal={onAnalyzeJournal}
         />
       )}
       {showDeleteModal && (
@@ -116,6 +119,7 @@ const KnowledgeBaseViewComponent: React.FC<KnowledgeBaseViewProps> = (props) => 
     props.onFilterChange,
     props.selectedPmids,
     props.setSelectedPmids,
+    props.onAnalyzeJournal,
   );
 
   return (

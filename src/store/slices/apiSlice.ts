@@ -102,6 +102,11 @@ export interface FeaturedJournal {
   description: string;
 }
 
+export interface FeaturedJournalCategory {
+  category: string;
+  journals: FeaturedJournal[];
+}
+
 export interface PubMedInfiniteArgs {
   query: string;
   pageSize?: number;
@@ -328,13 +333,13 @@ export const researchApi = createApi({
       keepUnusedDataFor: 86400, // cache for 24 h — static data
     }),
 
-    // ── Static: Featured journals JSON ────────────────────────────────────
-    getFeaturedJournals: builder.query<FeaturedJournal[], void>({
+    // ── Static: Featured journals JSON (categorized) ──────────────────────
+    getFeaturedJournals: builder.query<FeaturedJournalCategory[], void>({
       queryFn: async () => {
         try {
           const response = await fetch('/src/data/featuredJournals.json');
           if (!response.ok) throw new Error(`HTTP ${response.status}`);
-          const data: FeaturedJournal[] = await response.json();
+          const data: FeaturedJournalCategory[] = await response.json();
           return { data };
         } catch (error) {
           return { error: { status: 'CUSTOM_ERROR', error: String(error) } };

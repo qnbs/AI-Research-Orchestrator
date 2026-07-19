@@ -91,6 +91,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
     },
     { view: 'orchestrator', label: 'Agent', icon: <DocumentIcon className="h-5 w-5" /> },
     { view: 'authors', label: 'Authors', icon: <AuthorIcon className="h-5 w-5" /> },
+    { view: 'journals', label: 'Journals', icon: <BookOpenIcon className="h-5 w-5" /> },
     { view: 'collections', label: 'Collections', icon: <span className="text-base">📚</span> },
     {
       view: 'knowledgeBase',

@@ -16,6 +16,7 @@ import { WebIcon } from './icons/WebIcon';
 import { RelevanceScoreDisplay } from './RelevanceScoreDisplay';
 import { AcademicCapIcon } from './icons/AcademicCapIcon';
 import { useKnowledgeBase } from '../contexts/KnowledgeBaseContext';
+import { useTranslation } from '../hooks/useTranslation';
 import { ChevronUpIcon } from './icons/ChevronUpIcon';
 
 interface ArticleDetailPanelProps {
@@ -24,6 +25,7 @@ interface ArticleDetailPanelProps {
   findRelatedInsights: (
     pmid: string,
   ) => { question: string; answer: string; supportingArticles: string[] }[];
+  onAnalyzeJournal?: (journalName: string) => void;
 }
 
 const SkeletonLoader: React.FC<{ lines?: number; className?: string }> = ({
@@ -45,9 +47,11 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({
   article,
   onClose,
   findRelatedInsights,
+  onAnalyzeJournal,
 }) => {
   const { settings } = useSettings();
   const { updateTags } = useKnowledgeBase();
+  const { t } = useTranslation();
   const [tagInput, setTagInput] = useState('');
 
   const [similarArticles, setSimilarArticles] = useState<SimilarArticle[] | null>(null);
@@ -195,7 +199,18 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({
             <div className="flex-1">
               <p className="text-sm text-text-primary font-medium">{article.authors}</p>
               <p className="text-sm text-text-secondary italic mt-1">
-                {article.journal} ({article.pubYear})
+                {onAnalyzeJournal ? (
+                  <button
+                    onClick={() => onAnalyzeJournal(article.journal)}
+                    title={t('kb.analyze_journal')}
+                    className="hover:text-brand-accent hover:underline transition-colors focus:outline-none focus:ring-1 focus:ring-brand-accent rounded-sm"
+                  >
+                    {article.journal}
+                  </button>
+                ) : (
+                  article.journal
+                )}{' '}
+                ({article.pubYear})
               </p>
               <div className="mt-3 text-xs text-text-secondary flex items-center gap-4">
                 <a

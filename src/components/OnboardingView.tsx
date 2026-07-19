@@ -4,6 +4,7 @@ import { PencilIcon } from './icons/PencilIcon';
 import { SparklesIcon } from './icons/SparklesIcon';
 import { DatabaseIcon } from './icons/DatabaseIcon';
 import { AppLogo } from './AppLogo';
+import { useTranslation } from '../hooks/useTranslation';
 
 interface OnboardingViewProps {
   onComplete: () => void;
@@ -24,6 +25,7 @@ const StepCard: React.FC<{ icon: React.ReactNode; title: string; children: React
 );
 
 const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete }) => {
+  const { t } = useTranslation();
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4 sm:p-6 lg:p-8 animate-fadeIn">
       <div
@@ -38,24 +40,22 @@ const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete }) => {
           <AppLogo className="h-16 w-16" idPrefix="onboarding-logo" />
         </div>
         <h1 className="text-4xl sm:text-5xl font-bold text-text-primary mb-3">
-          Welcome to the <span className="brand-gradient-text">Future of Research</span>
+          {t('onboarding.welcome_prefix')}{' '}
+          <span className="brand-gradient-text">{t('onboarding.welcome_highlight')}</span>
         </h1>
         <p className="max-w-2xl mx-auto text-lg text-text-secondary mb-12">
-          Your intelligent assistant for scientific literature reviews.
+          {t('onboarding.subtitle')}
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 my-12">
-          <StepCard icon={<PencilIcon className="h-6 w-6" />} title="Define Your Topic">
-            Enter any research query to have AI agents conduct a comprehensive review of the PubMed
-            database.
+          <StepCard icon={<PencilIcon className="h-6 w-6" />} title={t('onboarding.step1.title')}>
+            {t('onboarding.step1.desc')}
           </StepCard>
-          <StepCard icon={<SparklesIcon className="h-6 w-6" />} title="Receive AI Analysis">
-            The AI researches, filters, and synthesizes the most relevant articles into an
-            actionable report.
+          <StepCard icon={<SparklesIcon className="h-6 w-6" />} title={t('onboarding.step2.title')}>
+            {t('onboarding.step2.desc')}
           </StepCard>
-          <StepCard icon={<DatabaseIcon className="h-6 w-6" />} title="Leverage Your Knowledge">
-            Build a personal, de-duplicated knowledge base and export your findings for any
-            workflow.
+          <StepCard icon={<DatabaseIcon className="h-6 w-6" />} title={t('onboarding.step3.title')}>
+            {t('onboarding.step3.desc')}
           </StepCard>
         </div>
 
@@ -63,11 +63,11 @@ const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete }) => {
           onClick={onComplete}
           className="inline-flex items-center px-8 py-3 border border-transparent text-base font-bold rounded-md shadow-lg text-brand-text-on-accent bg-gradient-to-r from-brand-primary to-accent-cyan hover:shadow-xl hover:shadow-brand-accent/30 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-background focus:ring-brand-accent transform hover:scale-105 transition-all duration-300"
         >
-          Start Researching
+          {t('onboarding.start')}
         </button>
         <div className="mt-8 flex items-center justify-center text-xs text-text-secondary">
           <LockClosedIcon className="h-4 w-4 mr-2" />
-          Your data remains private and is stored only locally in your browser.
+          {t('onboarding.privacy')}
         </div>
       </div>
     </div>

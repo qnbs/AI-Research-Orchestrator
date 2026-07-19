@@ -1,31 +1,77 @@
-import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { useSettings } from '../../contexts/SettingsContext';
 import { useKnowledgeBase } from '../../contexts/KnowledgeBaseContext';
 import { useUI } from '../../contexts/UIContext';
+import { useTranslation } from '../../hooks/useTranslation';
 import {
+  disambiguateJournal,
   findArticlesInJournal,
   generateJournalProfileAnalysis,
+  suggestJournals,
 } from '../../services/journalService';
-import { JournalProfile, Article } from '../../types';
-import { useGetFeaturedJournalsQuery, type FeaturedJournal } from '../../store/slices/apiSlice';
+import { Article, JournalCandidate, JournalProfile } from '../../types';
+import { useGetFeaturedJournalsQuery } from '../../store/slices/apiSlice';
+import type { TranslationKey } from '../../hooks/useTranslation';
 
-export type { FeaturedJournal };
+const journalPhaseKeys = [
+  'journals.phase.disambiguate',
+  'journals.phase.articles',
+  'journals.phase.profile',
+  'journals.phase.finalize',
+] as const;
 
-export const useJournalsViewLogic = () => {
+const journalPhaseDetailKeys: Record<(typeof journalPhaseKeys)[number], TranslationKey[]> = {
+  'journals.phase.disambiguate': ['journals.phase.disambiguate.d1', 'journals.phase.disambiguate.d2'],
+  'journals.phase.articles': ['journals.phase.articles.d1', 'journals.phase.articles.d2'],
+  'journals.phase.profile': ['journals.phase.profile.d1', 'journals.phase.profile.d2'],
+  'journals.phase.finalize': ['journals.phase.finalize.d1'],
+};
+
+export type JournalsViewState = 'landing' | 'disambiguation' | 'profile';
+
+export interface InitialJournalEntry {
+  profile: JournalProfile;
+  articles: Article[];
+}
+
+export interface InitialJournalQuery {
+  initialQuery: string | null;
+  onInitialQueryConsumed: () => void;
+}
+
+export const useJournalsViewLogic = (
+  initialEntry: InitialJournalEntry | null,
+  onViewedInitialEntry: () => void,
+  queryPrefill?: InitialJournalQuery,
+) => {
+  const [view, setView] = useState<JournalsViewState>('landing');
   const [journalName, setJournalName] = useState('');
   const [topic, setTopic] = useState('');
   const [onlyOa, setOnlyOa] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingPhase, setLoadingPhase] = useState('');
   const [journalProfile, setJournalProfile] = useState<JournalProfile | null>(null);
   const [foundArticles, setFoundArticles] = useState<Article[] | null>(null);
+  const [candidates, setCandidates] = useState<JournalCandidate[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const [isSuggesting, setIsSuggesting] = useState(false);
+  const [suggestionError, setSuggestionError] = useState<string | null>(null);
+  const [suggestedJournals, setSuggestedJournals] = useState<
+    { name: string; description: string }[] | null
+  >(null);
 
   const { settings } = useSettings();
   const { saveJournalProfile } = useKnowledgeBase();
   const { setNotification } = useUI();
+  const { t } = useTranslation();
 
-  // RTK Query — replaces manual fetch + useState for featured journals
-  const { data: featuredJournals = [] } = useGetFeaturedJournalsQuery();
+  // RTK Query — categorized featured journals (static JSON)
+  const {
+    data: featuredCategories = [],
+    isLoading: isFeaturedLoading,
+    error: featuredQueryError,
+  } = useGetFeaturedJournalsQuery();
 
   const isMounted = useRef(true);
 
@@ -36,15 +82,77 @@ export const useJournalsViewLogic = () => {
     };
   }, []);
 
-  const handleAnalyzeJournal = useCallback(
-    async (e?: React.FormEvent) => {
-      if (e) e.preventDefault();
-      if (!journalName.trim()) {
-        setNotification({
-          id: Date.now(),
-          message: 'Please provide a journal name.',
-          type: 'error',
-        });
+  // Restore a saved KB journal entry into the profile view.
+  useEffect(() => {
+    if (initialEntry) {
+      setJournalProfile(initialEntry.profile);
+      setFoundArticles(initialEntry.articles);
+      setJournalName(initialEntry.profile.name);
+      setView('profile');
+      onViewedInitialEntry();
+    }
+  }, [initialEntry, onViewedInitialEntry]);
+
+  // Prefill cross-link: a journal name handed over from another view (e.g. KB detail panel).
+  const [prefillQuery, setPrefillQuery] = useState<string | null>(null);
+  useEffect(() => {
+    if (queryPrefill?.initialQuery) {
+      setPrefillQuery(queryPrefill.initialQuery);
+      queryPrefill.onInitialQueryConsumed();
+    }
+  }, [queryPrefill]);
+
+  const journalLoadingPhases = useMemo(
+    () => journalPhaseKeys.map((k) => t(k as TranslationKey)),
+    [t],
+  );
+
+  const journalPhaseDetails = useMemo(() => {
+    const details: Record<string, string[]> = {};
+    journalPhaseKeys.forEach((phaseKey) => {
+      details[t(phaseKey as TranslationKey)] = journalPhaseDetailKeys[phaseKey].map((dk) => t(dk));
+    });
+    return details;
+  }, [t]);
+
+  /**
+   * Core analysis pipeline: fetch recent articles, then generate the profile
+   * grounded on those articles (fixes the previous empty-articles heuristic path).
+   */
+  const runAnalysis = useCallback(
+    async (name: string) => {
+      setLoadingPhase(t('journals.phase.articles'));
+      let articles: Article[] = [];
+      try {
+        articles = await findArticlesInJournal(name, topic, onlyOa);
+      } catch (fetchError) {
+        // PubMed may be unreachable (offline / rate limit) — the profile still
+        // works with curated or AI-estimated data, so degrade gracefully.
+        console.warn('Journal article fetch failed, continuing without articles:', fetchError);
+      }
+
+      if (!isMounted.current) return;
+
+      setLoadingPhase(t('journals.phase.profile'));
+      const profile = await generateJournalProfileAnalysis(name, settings.ai, undefined, articles);
+
+      if (!isMounted.current) return;
+
+      setLoadingPhase(t('journals.phase.finalize'));
+      setJournalProfile(profile);
+      setFoundArticles(articles);
+      setView('profile');
+      await saveJournalProfile(profile, articles);
+    },
+    [topic, onlyOa, settings.ai, saveJournalProfile, t],
+  );
+
+  /** Step 1: disambiguate the entered journal name, then analyze or ask. */
+  const handleSearch = useCallback(
+    async (name: string) => {
+      const trimmed = name.trim();
+      if (!trimmed) {
+        setNotification({ id: Date.now(), message: t('journals.error.no_name'), type: 'error' });
         return;
       }
 
@@ -52,23 +160,29 @@ export const useJournalsViewLogic = () => {
       setError(null);
       setJournalProfile(null);
       setFoundArticles(null);
+      setCandidates(null);
+      setSuggestedJournals(null);
+      setJournalName(trimmed);
 
       try {
-        const [profile, articles] = await Promise.all([
-          generateJournalProfileAnalysis(journalName, settings.ai),
-          findArticlesInJournal(journalName, topic, onlyOa),
-        ]);
+        setLoadingPhase(t('journals.phase.disambiguate'));
+        const found = await disambiguateJournal(trimmed, settings.ai);
 
-        if (isMounted.current) {
-          setJournalProfile(profile);
-          setFoundArticles(articles);
+        if (!isMounted.current) return;
+
+        if (found.length > 1) {
+          setCandidates(found);
+          setView('disambiguation');
+        } else {
+          // Exactly one confident candidate (or none — unknown journal): analyze directly.
+          await runAnalysis(found.length === 1 ? found[0].name : trimmed);
         }
-        await saveJournalProfile(profile, articles);
       } catch (err) {
         if (isMounted.current) {
-          const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
+          const errorMessage = err instanceof Error ? err.message : t('journals.error.generic');
           setError(errorMessage);
           setNotification({ id: Date.now(), message: errorMessage, type: 'error' });
+          setView('landing');
         }
       } finally {
         if (isMounted.current) {
@@ -76,11 +190,81 @@ export const useJournalsViewLogic = () => {
         }
       }
     },
-    [journalName, topic, onlyOa, settings.ai, saveJournalProfile, setNotification],
+    [settings.ai, runAnalysis, setNotification, t],
   );
 
-  const handleFeaturedSelect = useCallback((name: string) => {
-    setJournalName(name);
+  /** Step 2 (after disambiguation): user picked a candidate. */
+  const handleSelectCandidate = useCallback(
+    async (candidate: JournalCandidate) => {
+      setIsLoading(true);
+      setError(null);
+      setCandidates(null);
+      setJournalName(candidate.name);
+      try {
+        await runAnalysis(candidate.name);
+      } catch (err) {
+        if (isMounted.current) {
+          const errorMessage = err instanceof Error ? err.message : t('journals.error.generic');
+          setError(errorMessage);
+          setNotification({ id: Date.now(), message: errorMessage, type: 'error' });
+          setView('landing');
+        }
+      } finally {
+        if (isMounted.current) {
+          setIsLoading(false);
+        }
+      }
+    },
+    [runAnalysis, setNotification, t],
+  );
+
+  /** Featured/suggested card click: run the full pipeline immediately. */
+  const handleFeaturedSelect = useCallback(
+    (name: string) => {
+      void handleSearch(name);
+    },
+    [handleSearch],
+  );
+
+  // Fire a pending cross-link prefill exactly once handleSearch is available.
+  useEffect(() => {
+    if (prefillQuery) {
+      setPrefillQuery(null);
+      void handleSearch(prefillQuery);
+    }
+  }, [prefillQuery, handleSearch]);
+
+  const handleSuggestJournals = useCallback(
+    async (field: string) => {
+      setIsSuggesting(true);
+      setSuggestionError(null);
+      setSuggestedJournals(null);
+      setError(null);
+      try {
+        const result = await suggestJournals(field, settings.ai);
+        if (isMounted.current) {
+          setSuggestedJournals(result);
+        }
+      } catch (err) {
+        if (isMounted.current) {
+          setSuggestionError(err instanceof Error ? err.message : t('journals.error.generic'));
+        }
+      } finally {
+        if (isMounted.current) {
+          setIsSuggesting(false);
+        }
+      }
+    },
+    [settings.ai, t],
+  );
+
+  const handleReset = useCallback(() => {
+    setView('landing');
+    setError(null);
+    setCandidates(null);
+    setJournalProfile(null);
+    setFoundArticles(null);
+    setSuggestedJournals(null);
   }, []);
 
   const analyticsData = useMemo(() => {
@@ -150,6 +334,7 @@ export const useJournalsViewLogic = () => {
   }, [foundArticles]);
 
   return {
+    view,
     journalName,
     setJournalName,
     topic,
@@ -157,13 +342,27 @@ export const useJournalsViewLogic = () => {
     onlyOa,
     setOnlyOa,
     isLoading,
+    loadingPhase,
     journalProfile,
     foundArticles,
+    candidates,
     error,
-    featuredJournals,
+    isSuggesting,
+    suggestionError,
+    suggestedJournals,
+    featuredCategories,
+    isFeaturedLoading,
+    featuredError: featuredQueryError ? t('journals.featured.error') : null,
     analyticsData,
-    handleAnalyzeJournal,
+    handleSearch,
+    handleSelectCandidate,
     handleFeaturedSelect,
+    handleSuggestJournals,
+    handleReset,
+    journalLoadingPhases,
+    journalPhaseDetails,
     settings,
   };
 };
+
+export type JournalsViewLogic = ReturnType<typeof useJournalsViewLogic>;

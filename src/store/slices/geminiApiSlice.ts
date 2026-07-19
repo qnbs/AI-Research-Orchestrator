@@ -18,6 +18,7 @@ import type {
   OnlineFindings,
   RankedArticle,
   AuthorCluster,
+  JournalCandidate,
   Settings,
 } from '../../types';
 import {
@@ -29,6 +30,8 @@ import {
   disambiguateAuthor,
   generateAuthorProfileAnalysis,
   suggestAuthors,
+  disambiguateJournal,
+  suggestJournals,
 } from '../../services/geminiService';
 
 // ── Streaming report state ────────────────────────────────────────────────────
@@ -87,6 +90,16 @@ export interface AuthorProfileResult {
 }
 
 export interface SuggestAuthorsArgs {
+  fieldOfStudy: string;
+  aiSettings: Settings['ai'];
+}
+
+export interface DisambiguateJournalArgs {
+  journalName: string;
+  aiSettings: Settings['ai'];
+}
+
+export interface SuggestJournalsArgs {
   fieldOfStudy: string;
   aiSettings: Settings['ai'];
 }
@@ -244,6 +257,32 @@ export const geminiApi = createApi({
       },
       keepUnusedDataFor: 60,
     }),
+
+    // ── Journal disambiguation ────────────────────────────────────────────
+    disambiguateJournal: builder.query<JournalCandidate[], DisambiguateJournalArgs>({
+      queryFn: async ({ journalName, aiSettings }, { signal }) => {
+        try {
+          const data = await disambiguateJournal(journalName, aiSettings, signal);
+          return { data };
+        } catch (error) {
+          return { error: { status: 'CUSTOM_ERROR', error: String(error) } };
+        }
+      },
+      keepUnusedDataFor: 120,
+    }),
+
+    // ── Journal suggestions ───────────────────────────────────────────────
+    suggestJournals: builder.query<{ name: string; description: string }[], SuggestJournalsArgs>({
+      queryFn: async ({ fieldOfStudy, aiSettings }, { signal }) => {
+        try {
+          const data = await suggestJournals(fieldOfStudy, aiSettings, signal);
+          return { data };
+        } catch (error) {
+          return { error: { status: 'CUSTOM_ERROR', error: String(error) } };
+        }
+      },
+      keepUnusedDataFor: 60,
+    }),
   }),
 });
 
@@ -265,4 +304,8 @@ export const {
   useLazyGenerateAuthorProfileQuery,
   useSuggestAuthorsQuery,
   useLazySuggestAuthorsQuery,
+  useDisambiguateJournalQuery,
+  useLazyDisambiguateJournalQuery,
+  useSuggestJournalsQuery,
+  useLazySuggestJournalsQuery,
 } = geminiApi;

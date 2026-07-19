@@ -21,6 +21,7 @@ import {
   AggregatedArticle,
 } from './types';
 import type { AgentName } from './types';
+import type { InitialJournalEntry } from './components/JournalsView';
 import { SettingsProvider, useSettings } from './contexts/SettingsContext';
 import { PresetProvider, usePresets } from './contexts/PresetContext';
 import { Notification } from './components/Notification';
@@ -101,6 +102,10 @@ const AppLayout: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [currentPhase, setCurrentPhase] = useState<string>('');
   const [selectedAuthorProfile, setSelectedAuthorProfile] = useState<AuthorProfile | null>(null);
+  const [selectedJournalEntry, setSelectedJournalEntry] = useState<InitialJournalEntry | null>(
+    null,
+  );
+  const [pendingJournalQuery, setPendingJournalQuery] = useState<string | null>(null);
 
   // Ref to track the current generation session ID to prevent race conditions
   const generationIdRef = useRef<number>(0);
@@ -530,6 +535,9 @@ const AppLayout: React.FC = () => {
       } else if (entry.sourceType === 'author') {
         setSelectedAuthorProfile(entry.profile);
         setCurrentView('authors');
+      } else if (entry.sourceType === 'journal') {
+        setSelectedJournalEntry({ profile: entry.journalProfile, articles: entry.articles });
+        setCurrentView('journals');
       }
     },
     [setCurrentView],
@@ -537,6 +545,23 @@ const AppLayout: React.FC = () => {
 
   const handleAuthorProfileViewed = useCallback(() => {
     setSelectedAuthorProfile(null);
+  }, []);
+
+  const handleJournalEntryViewed = useCallback(() => {
+    setSelectedJournalEntry(null);
+  }, []);
+
+  /** Cross-link: open the Journal Hub with a prefilled journal name (e.g. from KB detail panel). */
+  const handleAnalyzeJournalByName = useCallback(
+    (journalName: string) => {
+      setPendingJournalQuery(journalName);
+      setCurrentView('journals');
+    },
+    [setCurrentView],
+  );
+
+  const handleJournalQueryConsumed = useCallback(() => {
+    setPendingJournalQuery(null);
   }, []);
 
   const handleTagsUpdate = useCallback(
@@ -701,11 +726,20 @@ const AppLayout: React.FC = () => {
               onFilterChange={handleFilterChange}
               selectedPmids={selectedKbPmids}
               setSelectedPmids={setSelectedKbPmids}
+              onAnalyzeJournal={handleAnalyzeJournalByName}
             />
           </FeatureErrorBoundary>
         );
       case 'journals':
-        return <JournalsView />;
+        return (
+          <JournalsView
+            initialEntry={selectedJournalEntry}
+            onViewedInitialEntry={handleJournalEntryViewed}
+            onStartResearch={handleStartNewReviewFromTopic}
+            initialQuery={pendingJournalQuery}
+            onInitialQueryConsumed={handleJournalQueryConsumed}
+          />
+        );
       case 'collections':
         return <CollectionsView />;
       case 'dashboard':

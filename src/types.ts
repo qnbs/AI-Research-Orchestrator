@@ -80,12 +80,34 @@ export interface AuthorProfileEntry extends BaseEntry {
   profile: AuthorProfile;
 }
 
+export interface JournalMetrics {
+  /** Journal Impact Factor — approximate; provenance flagged via `source`. */
+  impactFactor: number | null;
+  /** Number of recently analyzed articles (from the current PubMed fetch). */
+  analyzedArticleCount: number | null;
+  /** Share of open-access articles among analyzed articles (0–100). */
+  openAccessRate: number | null;
+  /** Honest provenance: curated static data, AI estimation, or computed from fetched articles. */
+  source: 'curated' | 'ai-estimated' | 'computed';
+}
+
 export interface JournalProfile {
   name: string;
   issn: string;
   description: string;
   oaPolicy: string; // e.g., "Full Open Access", "Hybrid", "Subscription"
   focusAreas: string[];
+  publisher?: string;
+  metrics?: JournalMetrics | null;
+}
+
+/** Candidate returned by journal disambiguation (name variants, abbreviations). */
+export interface JournalCandidate {
+  name: string;
+  issn?: string;
+  description: string;
+  matchType: 'exact' | 'alias' | 'abbreviation' | 'partial';
+  confidence: number; // 0–100
 }
 
 export interface JournalEntry extends BaseEntry {
@@ -380,4 +402,10 @@ export interface ChatMessage {
 export interface FeaturedAuthorCategory {
   category: string;
   authors: { name: string; description: string }[];
+}
+
+// --- Featured Journals ---
+export interface FeaturedJournalCategory {
+  category: string;
+  journals: { name: string; description: string }[];
 }
