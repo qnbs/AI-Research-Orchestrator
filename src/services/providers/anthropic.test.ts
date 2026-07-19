@@ -75,4 +75,19 @@ describe('createAnthropicProvider', () => {
     expect(error.code).toBe('PROVIDER_RATE_LIMIT');
     expect(error.retryable).toBe(true);
   });
+
+  it('aborts are not retried by the provider', async () => {
+    const abortError = new DOMException('Aborted', 'AbortError');
+    createMock.mockRejectedValueOnce(abortError);
+    const provider = createAnthropicProvider();
+    const controller = new AbortController();
+    controller.abort();
+    await expect(
+      provider.generateContent({
+        model: 'claude-sonnet-4-5',
+        prompt: 'x',
+        signal: controller.signal,
+      }),
+    ).rejects.toBe(abortError);
+  });
 });
