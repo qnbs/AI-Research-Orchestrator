@@ -43,6 +43,7 @@ describe('createOpenAIProvider', () => {
         model: 'gpt-5',
         response_format: { type: 'json_object' },
       }),
+      expect.objectContaining({ signal: undefined }),
     );
   });
 

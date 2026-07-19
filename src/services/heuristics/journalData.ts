@@ -474,4 +474,23 @@ export const FIELD_JOURNALS: Record<string, { name: string; description: string 
       description: 'Open-access journal for AI theory and applications.',
     },
   ],
+  default: [
+    {
+      name: 'PLOS ONE',
+      description:
+        'Broad open-access journal emphasizing methodological soundness (demo suggestion).',
+    },
+    {
+      name: 'eLife',
+      description: 'Open-access journal for biomedical and life-science research.',
+    },
+    {
+      name: 'Nature Communications',
+      description: 'Broad-scope open-access journal for high-quality research.',
+    },
+    {
+      name: 'Scientific Reports',
+      description: 'Open-access mega journal across natural and clinical sciences.',
+    },
+  ],
 };

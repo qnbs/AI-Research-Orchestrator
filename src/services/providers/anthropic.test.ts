@@ -39,6 +39,7 @@ describe('createAnthropicProvider', () => {
         model: 'claude-sonnet-4-5',
         system: expect.stringContaining('valid JSON only'),
       }),
+      expect.objectContaining({ signal: undefined }),
     );
   });
 
