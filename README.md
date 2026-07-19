@@ -158,7 +158,25 @@ The app stores your API key **securely encrypted** in your browser's IndexedDB u
 3. Enter your Gemini API Key
 4. Click **Save Key**
 
-> ⚠️ **Security Note**: Your API key is encrypted with Web Crypto API and stored locally. It never leaves your browser or gets sent to any external server (except Google's Gemini API for inference).
+> ⚠️ **Security Note**: Your API key is encrypted with Web Crypto API and stored locally. It never leaves your browser or gets sent to any external server (except the selected AI provider's API for inference).
+
+---
+
+### 🤖 Multi-Provider Setup
+
+Besides Google Gemini, the app supports OpenAI, Anthropic, and local Ollama endpoints. Choose the backend in **Settings → AI → AI Provider**.
+
+| Provider      | Key format   | Notes                                                                               |
+| ------------- | ------------ | ----------------------------------------------------------------------------------- |
+| Google Gemini | `AIza...`    | Default; supports live Google Search grounding.                                     |
+| OpenAI        | `sk-...`     | Supports official API and OpenRouter-compatible proxies via the **Base URL** field. |
+| Anthropic     | `sk-ant-...` | Claude models via the Messages API.                                                 |
+| Ollama        | none         | Local inference at `http://localhost:11434` (or a custom Base URL).                 |
+| Heuristic     | none         | Deterministic local fallback; zero cost, no network required.                       |
+
+For OpenRouter, set the Base URL to `https://openrouter.ai/api/v1` and use an OpenRouter API key.
+
+See [ADR 0008](docs/adr/0008-multi-provider-architecture.md) for the architecture rationale.
 
 ---
 

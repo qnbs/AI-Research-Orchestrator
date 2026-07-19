@@ -318,7 +318,41 @@ test.describe('5. Knowledge Base View', () => {
     await skipOnboarding(page);
   });
 
+  test('KB shows demo data on first launch', async ({ page }) => {
+    await navigateToView(page, '#knowledgeBase');
+    // Demo data seeds 5 articles on first launch
+    await expect(page.getByText(/5 Articles Found/i).first()).toBeVisible({ timeout: 10_000 });
+  });
+
   test('KB shows empty-state message when no data saved', async ({ page }) => {
+    // Clear seeded demo entries from IndexedDB and block re-seeding so the KB
+    // renders the true empty state (localStorage flags alone are not enough —
+    // demo entries were already persisted during app bootstrap).
+    await page.evaluate(async () => {
+      try {
+        localStorage.setItem('aro.demoDataSeeded', '1');
+        localStorage.setItem('aro.demoDataDismissed', '1');
+        const db = await new Promise<IDBDatabase | null>((resolve) => {
+          const req = indexedDB.open('AIResearchAppDatabase');
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => resolve(null);
+        });
+        if (db && db.objectStoreNames.contains('knowledgeBaseEntries')) {
+          await new Promise<void>((resolve) => {
+            const tx = db.transaction('knowledgeBaseEntries', 'readwrite');
+            tx.objectStore('knowledgeBaseEntries').clear();
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => resolve();
+          });
+        }
+        db?.close();
+      } catch {
+        /* ignore */
+      }
+    });
+    // Reload so Redux re-hydrates from the now-empty table.
+    await page.reload();
+    await page.locator('header').waitFor({ state: 'visible', timeout: 15_000 });
     await navigateToView(page, '#knowledgeBase');
     await expect(
       page.getByText(/empty|no articles|save reports|start research/i).first(),
@@ -400,9 +434,10 @@ test.describe('7. Settings — API Key', () => {
   test('invalid key format shows error after save', async ({ page }) => {
     const input = page.locator('#api-key-input');
     await input.fill('BAD_KEY');
-    // Click the API key "Speichern" button (NOT the header "Save Changes")
+    // Click the API key save button (exact match avoids the disabled settings-form
+    // "Save Changes" button and the "Save NCBI key" button).
     await page
-      .getByRole('button', { name: /speichern/i })
+      .getByRole('button', { name: /^(save|speichern)$/i })
       .first()
       .click();
     await expect(page.getByText(/ungültig|invalid|format|AIza/i).first()).toBeVisible({

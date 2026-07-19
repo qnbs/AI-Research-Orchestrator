@@ -9,6 +9,12 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.ts'],
     include: ['src/**/*.{test,spec}.{ts,tsx}'],
     exclude: ['node_modules/', 'src/test/e2e/**'],
+    /**
+     * Slow jsdom render tests (ErrorBoundary, CheckpointResumeBanner) take ~3s standalone
+     * and flake past the 5s default under parallel worker load. Assertions are unchanged —
+     * this only adds headroom for loaded dev machines and shared CI runners.
+     */
+    testTimeout: 20000,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'json-summary'],

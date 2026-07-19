@@ -31,7 +31,12 @@ export {
   generateAuthorProfileHeuristic,
   suggestAuthorsHeuristic,
 } from './authorDisambiguation';
-export { generateJournalProfileHeuristic, analyzeArticleHeuristic } from './journalProfiling';
+export {
+  generateJournalProfileHeuristic,
+  analyzeArticleHeuristic,
+  suggestJournalsHeuristic,
+  disambiguateJournalHeuristic,
+} from './journalProfiling';
 export {
   generateResearchAnalysisHeuristic,
   findRelatedOnlineHeuristic,

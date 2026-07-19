@@ -14,6 +14,20 @@ import {
   saveSettings as saveSettingsToDb,
 } from '../services/databaseService';
 import { saveNcbiApiKey } from '../services/apiKeyService';
+import type { AIProviderSelection } from '../services/providers/types';
+import { getProviderMeta } from '../services/providers/provider';
+
+const VALID_PROVIDERS: AIProviderSelection[] = [
+  'gemini',
+  'openai',
+  'anthropic',
+  'ollama',
+  'heuristic',
+];
+
+function isValidProvider(value: unknown): value is AIProviderSelection {
+  return typeof value === 'string' && VALID_PROVIDERS.includes(value as AIProviderSelection);
+}
 
 export interface UseSettingsValue {
   settings: Settings;
@@ -27,18 +41,37 @@ function mergeSettingsWithDefaults(
   baseline: Settings,
 ): Settings {
   const storedAi = storedSettings.ai as Partial<Settings['ai']> | undefined;
+  // Resolve effective provider first; fall back to gemini for invalid values
+  const effectiveProvider = isValidProvider(storedAi?.provider)
+    ? storedAi.provider
+    : (baseline.ai.provider ?? 'gemini');
+  const providerMeta = getProviderMeta(effectiveProvider);
+
+  // Validate model against resolved provider; use provider's default if incompatible
+  const storedModel = storedAi?.model;
+  const isModelValidForProvider =
+    typeof storedModel === 'string' &&
+    (providerMeta.modelSuggestions.includes(storedModel) ||
+      storedModel === providerMeta.defaultModel);
+  const model = isModelValidForProvider
+    ? storedModel
+    : (baseline.ai.model ?? providerMeta.defaultModel);
+
+  const mergedAi: Settings['ai'] = {
+    ...baseline.ai,
+    ...(storedAi ?? {}),
+    provider: effectiveProvider,
+    model,
+    ncbiApiKey: '',
+    researchAssistant: {
+      ...baseline.ai.researchAssistant,
+      ...(storedAi?.researchAssistant ?? {}),
+    },
+  };
   return {
     ...baseline,
     ...storedSettings,
-    ai: {
-      ...baseline.ai,
-      ...(storedAi ?? {}),
-      ncbiApiKey: '',
-      researchAssistant: {
-        ...baseline.ai.researchAssistant,
-        ...(storedAi?.researchAssistant ?? {}),
-      },
-    },
+    ai: mergedAi,
   };
 }
 

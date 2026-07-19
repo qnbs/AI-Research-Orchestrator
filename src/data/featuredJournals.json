@@ -1,26 +1,107 @@
 [
-    {
+  {
+    "category": "Open Access Mega-Journals",
+    "journals": [
+      {
         "name": "PLOS ONE",
         "description": "A peer-reviewed open access scientific journal published by the Public Library of Science. It covers primary research from any discipline within science and medicine."
-    },
-    {
-        "name": "eLife",
-        "description": "A peer-reviewed open access scientific journal for the biomedical and life sciences, backed by leading research institutions."
-    },
-    {
-        "name": "Nature Communications",
-        "description": "An open access journal that publishes high-quality research in biology, health, physics, chemistry, and Earth sciences."
-    },
-    {
-        "name": "Cell Reports",
-        "description": "An open access journal from Cell Press, publishing high-quality research across the entire life sciences spectrum."
-    },
-    {
+      },
+      {
         "name": "Scientific Reports",
         "description": "An online open access scientific mega journal published by Nature Research, covering all areas of natural and clinical sciences."
-    },
-    {
+      },
+      {
         "name": "BMJ Open",
         "description": "An open access medical journal from the BMJ Group, publishing medical research from all disciplines and therapeutic areas."
-    }
+      },
+      {
+        "name": "PeerJ",
+        "description": "An open access mega journal covering the biological, medical, and environmental sciences with an emphasis on sound methodology."
+      }
+    ]
+  },
+  {
+    "category": "Multidisciplinary",
+    "journals": [
+      {
+        "name": "Nature",
+        "description": "The flagship multidisciplinary journal publishing high-impact original research across the natural sciences."
+      },
+      {
+        "name": "Science",
+        "description": "The AAAS flagship journal covering cutting-edge research and policy across all scientific disciplines."
+      },
+      {
+        "name": "PNAS",
+        "description": "Proceedings of the National Academy of Sciences — broad multidisciplinary coverage of biological, physical, and social sciences."
+      },
+      {
+        "name": "Nature Communications",
+        "description": "An open access journal that publishes high-quality research in biology, health, physics, chemistry, and Earth sciences."
+      }
+    ]
+  },
+  {
+    "category": "Life Sciences & Cell Biology",
+    "journals": [
+      {
+        "name": "Cell",
+        "description": "The flagship Cell Press journal for mechanistic and molecular life-science research."
+      },
+      {
+        "name": "eLife",
+        "description": "A peer-reviewed open access scientific journal for the biomedical and life sciences, backed by leading research institutions."
+      },
+      {
+        "name": "Cell Reports",
+        "description": "An open access journal from Cell Press, publishing high-quality research across the entire life sciences spectrum."
+      },
+      {
+        "name": "The EMBO Journal",
+        "description": "A leading journal for molecular and cellular biology published by the European Molecular Biology Organization."
+      }
+    ]
+  },
+  {
+    "category": "Clinical Medicine",
+    "journals": [
+      {
+        "name": "The Lancet",
+        "description": "A leading general medical weekly featuring clinical trials, reviews, and global health content."
+      },
+      {
+        "name": "New England Journal of Medicine",
+        "description": "Premier journal for clinical research, therapeutics, and medical practice updates."
+      },
+      {
+        "name": "BMJ",
+        "description": "British Medical Journal — clinical research, evidence synthesis, and health policy."
+      },
+      {
+        "name": "JAMA",
+        "description": "Journal of the American Medical Association — broad clinical research and medical commentary."
+      }
+    ]
+  },
+  {
+    "category": "Methods & Computational",
+    "journals": [
+      {
+        "name": "Nature Methods",
+        "description": "Leading journal for novel methods and techniques in the life sciences."
+      },
+      {
+        "name": "Bioinformatics",
+        "description": "The core journal for computational biology, algorithms, and biological data analysis."
+      },
+      {
+        "name": "BMC Bioinformatics",
+        "description": "An open access journal covering computational methods for biological and biomedical data."
+      },
+      {
+        "name": "GigaScience",
+        "description": "An open access journal for large-scale biological and biomedical data science."
+      }
+    ]
+  }
 ]

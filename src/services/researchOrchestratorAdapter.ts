@@ -12,10 +12,11 @@ export type ResearchStreamEvent = {
   phase: string;
 };
 
-/** True when the local heuristic path should run instead of live Gemini. */
+/** True when the local heuristic path should run instead of a live provider. */
 export async function shouldUseHeuristic(aiSettings: Settings['ai']): Promise<boolean> {
   const snap = await resolveActiveInferenceMode({
     forceHeuristic: Boolean(aiSettings.forceHeuristicMode),
+    provider: aiSettings.provider ?? 'gemini',
   });
   return snap.mode === 'heuristic';
 }

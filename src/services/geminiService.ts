@@ -1,4 +1,3 @@
-import { GoogleGenAI, Type } from '@google/genai';
 import type {
   ResearchInput,
   ResearchReport,
@@ -11,8 +10,12 @@ import type {
   GeneratedQuery,
   AuthorCluster,
   JournalProfile,
+  JournalCandidate,
 } from '../types';
-import { getApiKey, getNcbiApiKey } from './apiKeyService';
+import { getNcbiApiKey } from './apiKeyService';
+import { defaultGeminiThinkingBudget } from './providers/provider';
+import { getProviderForSettings, resetProviderInstances } from './providers/factory';
+import type { AIContentRequest, AIJsonSchema } from './providers/types';
 import { searchPubMedForIds, fetchArticleDetails } from './pubmedUtils';
 import { searchAndFetchArxiv } from './arxivUtils';
 import { sanitizePromptFragment } from '../lib/promptSanitize';
@@ -32,6 +35,8 @@ import {
   suggestAuthorsHeuristic,
   analyzeArticleHeuristic,
   generateJournalProfileHeuristic,
+  disambiguateJournalHeuristic,
+  suggestJournalsHeuristic,
   createHeuristicChatSession,
   DEMO_CORPUS,
   resolveHeuristicArticleByPmid,
@@ -53,42 +58,34 @@ function throwIfAborted(signal?: AbortSignal): void {
   }
 }
 
-// Lazy initialization of the AI client
-let aiInstance: GoogleGenAI | null = null;
-let currentApiKey: string | null = null;
-
 /**
- * Gets or creates the GoogleGenAI instance.
- * Throws a user-friendly error if no API key is configured.
- */
-async function getAI(): Promise<GoogleGenAI> {
-  const apiKey = await getApiKey();
-
-  if (!apiKey) {
-    throw new AppError({
-      code: 'NO_API_KEY',
-      message:
-        'NO_API_KEY: Please configure your Gemini API key in Settings. ' +
-        'You can get a free key at https://aistudio.google.com.',
-      retryable: false,
-    });
-  }
-
-  // Reinitialize if key changed
-  if (aiInstance === null || currentApiKey !== apiKey) {
-    aiInstance = new GoogleGenAI({ apiKey });
-    currentApiKey = apiKey;
-  }
-
-  return aiInstance;
-}
-
-/**
- * Resets the AI instance (call when API key changes).
+ * Resets cached provider instances (call when API key / provider settings change).
+ * Kept for backward compatibility with existing tests.
  */
 export function resetAIInstance(): void {
-  aiInstance = null;
-  currentApiKey = null;
+  resetProviderInstances();
+}
+
+/** Helper to call a single-shot provider generation with JSON parsing. */
+async function generateJson<T>(
+  aiSettings: Settings['ai'],
+  request: Omit<AIContentRequest, 'json'>,
+  signal?: AbortSignal,
+): Promise<T> {
+  const provider = await getProviderForSettings(aiSettings);
+  throwIfAborted(signal);
+  try {
+    const response = await provider.generateContent({
+      ...request,
+      json: true,
+      baseURL: aiSettings.customBaseUrl,
+      signal,
+    });
+    return parseGeminiResponseJson<T>(response.text);
+  } catch (error) {
+    console.error('Error generating content:', error);
+    throw provider.mapError(error);
+  }
 }
 
 /**
@@ -110,43 +107,6 @@ export function parseGeminiResponseJson<T>(text: string): T {
     }
     throw error;
   }
-}
-
-/**
- * Parses a Gemini API error and returns a user-friendly message.
- */
-function getGeminiError(error: unknown): string {
-  if (error && typeof error === 'object') {
-    // Check for GoogleGenAIError structure specifically
-    if ('response' in error) {
-      const response = (error as any).response;
-      const candidate = response?.candidates?.[0];
-      if (candidate?.finishReason && candidate.finishReason !== 'STOP') {
-        switch (candidate.finishReason) {
-          case 'SAFETY':
-            return "The AI's response was blocked due to safety settings. Please modify your query and try again.";
-          case 'RECITATION':
-            return "The AI's response was blocked because it was too similar to a known source. Please try a different query.";
-          case 'MAX_TOKENS':
-            return 'The request exceeded the token limit. Please try a more focused query or reduce the number of articles to analyze.';
-          default:
-            return `The AI's response was blocked for an unknown reason (${candidate.finishReason}).`;
-        }
-      }
-    }
-
-    if ('status' in error) {
-      const status = (error as any).status;
-      if (status === 429)
-        return 'You have exceeded the API rate limit. Please wait a moment before trying again.';
-      if (status === 503) return 'The AI service is currently overloaded. Please try again later.';
-    }
-
-    if (error instanceof Error) {
-      return error.message;
-    }
-  }
-  return 'An unknown AI error occurred. Please check your network connection.';
 }
 
 export const generateAuthorQuery = (fullName: string): string => {
@@ -218,7 +178,7 @@ async function* generateLiveResearchReportStream(
   aiSettings: Settings['ai'],
   signal?: AbortSignal,
 ): AsyncGenerator<{ report?: ResearchReport; synthesisChunk?: string; phase: string }> {
-  const ai = await getAI();
+  const provider = await getProviderForSettings(aiSettings);
   throwIfAborted(signal);
   const ncbiApiKey = (await getNcbiApiKey()) ?? undefined;
   throwIfAborted(signal);
@@ -249,35 +209,34 @@ Research Topic: "${topicSafe}"
 `;
     };
 
+    const queryGenSchema: AIJsonSchema = {
+      type: 'object',
+      properties: {
+        generatedQueries: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: { query: { type: 'string' }, explanation: { type: 'string' } },
+            required: ['query', 'explanation'],
+          },
+        },
+      },
+      required: ['generatedQueries'],
+    };
+
     // STEP 1: Generate Search Queries
     yield { phase: 'Phase 1: AI Generating PubMed Queries...' };
     throwIfAborted(signal);
-    const queryGenResponse = await ai.models.generateContent({
-      model: aiSettings.model,
-      config: {
-        systemInstruction,
+    const { generatedQueries } = await generateJson<{ generatedQueries: GeneratedQuery[] }>(
+      aiSettings,
+      {
+        model: aiSettings.model,
+        system: systemInstruction,
         temperature: 0.1,
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            generatedQueries: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: { query: { type: Type.STRING }, explanation: { type: Type.STRING } },
-                required: ['query', 'explanation'],
-              },
-            },
-          },
-          required: ['generatedQueries'],
-        },
+        jsonSchema: queryGenSchema,
+        prompt: buildQueryGenPrompt(input),
       },
-      contents: buildQueryGenPrompt(input),
-    });
-
-    const { generatedQueries } = parseGeminiResponseJson<{ generatedQueries: GeneratedQuery[] }>(
-      queryGenResponse.text ?? '',
+      signal,
     );
     if (!generatedQueries || generatedQueries.length === 0 || !generatedQueries[0].query) {
       throw new Error('The AI failed to generate any search queries.');
@@ -321,77 +280,69 @@ Research Topic: "${topicSafe}"
     // STEP 4: AI Analyzes and Ranks Real Data
     yield { phase: 'Phase 4: AI Ranking & Analysis of Real Articles...' };
 
-    // Use Thinking Config for better reasoning on complex analysis if using gemini-2.5 or gemini-3
-    const rankingConfig: any = {
-      systemInstruction,
-      temperature: aiSettings.temperature,
-      responseMimeType: 'application/json',
-      responseSchema: {
-        type: Type.OBJECT,
-        properties: {
-          rankedArticles: {
-            type: Type.ARRAY,
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                pmid: { type: Type.STRING },
-                relevanceScore: { type: Type.INTEGER },
-                relevanceExplanation: { type: Type.STRING },
-                keywords: { type: Type.ARRAY, items: { type: Type.STRING } },
-                articleType: { type: Type.STRING },
-                aiSummary: {
-                  type: Type.STRING,
-                  description:
-                    "A concise summary of the article's methodology, key findings, and limitations.",
-                },
+    const rankingSchema: AIJsonSchema = {
+      type: 'object',
+      properties: {
+        rankedArticles: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              pmid: { type: 'string' },
+              relevanceScore: { type: 'integer' },
+              relevanceExplanation: { type: 'string' },
+              keywords: { type: 'array', items: { type: 'string' } },
+              articleType: { type: 'string' },
+              aiSummary: {
+                type: 'string',
+                description:
+                  "A concise summary of the article's methodology, key findings, and limitations.",
               },
-              required: [
-                'pmid',
-                'relevanceScore',
-                'relevanceExplanation',
-                'keywords',
-                'articleType',
-                'aiSummary',
-              ],
             },
-          },
-          aiGeneratedInsights: {
-            type: Type.ARRAY,
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                question: { type: Type.STRING },
-                answer: { type: Type.STRING },
-                supportingArticles: { type: Type.ARRAY, items: { type: Type.STRING } },
-              },
-              required: ['question', 'answer', 'supportingArticles'],
-            },
-          },
-          overallKeywords: {
-            type: Type.ARRAY,
-            items: {
-              type: Type.OBJECT,
-              properties: { keyword: { type: Type.STRING }, frequency: { type: Type.INTEGER } },
-              required: ['keyword', 'frequency'],
-            },
+            required: [
+              'pmid',
+              'relevanceScore',
+              'relevanceExplanation',
+              'keywords',
+              'articleType',
+              'aiSummary',
+            ],
           },
         },
-        required: ['rankedArticles', 'aiGeneratedInsights', 'overallKeywords'],
+        aiGeneratedInsights: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              question: { type: 'string' },
+              answer: { type: 'string' },
+              supportingArticles: { type: 'array', items: { type: 'string' } },
+            },
+            required: ['question', 'answer', 'supportingArticles'],
+          },
+        },
+        overallKeywords: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: { keyword: { type: 'string' }, frequency: { type: 'integer' } },
+            required: ['keyword', 'frequency'],
+          },
+        },
       },
+      required: ['rankedArticles', 'aiGeneratedInsights', 'overallKeywords'],
     };
 
-    // Enable thinking if supported and likely beneficial
-    if (aiSettings.model.includes('gemini-3')) {
-      rankingConfig.thinkingConfig = { thinkingBudget: 8192 };
-    } else if (aiSettings.model.includes('gemini-2.5')) {
-      rankingConfig.thinkingConfig = { thinkingBudget: 2048 };
-    }
-
     throwIfAborted(signal);
-    const analysisResponse = await ai.models.generateContent({
-      model: aiSettings.model,
-      config: rankingConfig,
-      contents: `From the provided list of articles, please perform the following analysis based on the original research topic: "${topicSafe}".
+    const analysisData = await generateJson<any>(
+      aiSettings,
+      {
+        model: aiSettings.model,
+        system: systemInstruction,
+        temperature: aiSettings.temperature,
+        jsonSchema: rankingSchema,
+        thinkingBudget: defaultGeminiThinkingBudget(aiSettings.model),
+        prompt: `From the provided list of articles, please perform the following analysis based on the original research topic: "${topicSafe}".
             1.  Rank the top ${input.topNToSynthesize} articles based on their relevance to the topic. For each, provide its PMID, a relevance score (1-100), a brief explanation for the score, 3-5 keywords from its summary, classify its article type, and write a new, concise summary (as 'aiSummary') that extracts the core methodology, key findings, and limitations of the study. Ensure you ONLY use PMIDs from the provided list.
             2.  Generate 3-5 AI-powered insights based on the provided articles. Each insight should be a question/answer pair. List the PMIDs from the provided list that support each insight.
             3.  Analyze the keywords from all ranked articles to identify overall themes. List the top 5-10 keywords and their frequency.
@@ -399,9 +350,9 @@ Research Topic: "${topicSafe}"
             Article List (JSON format):
             ${JSON.stringify(articleDetails.map((a) => ({ pmid: a.pmid, title: a.title, summary: a.summary })))}
             `,
-    });
-
-    const analysisData = parseGeminiResponseJson<any>(analysisResponse.text ?? '');
+      },
+      signal,
+    );
 
     const detailedRankedArticles = analysisData.rankedArticles
       .map((ranked: any) => {
@@ -439,19 +390,14 @@ Research Topic: "${topicSafe}"
           .join('\n')}
         `;
 
-    // Thinking config helps with better synthesis structure
-    const synthesisConfig: any = { systemInstruction, temperature: aiSettings.temperature };
-    if (aiSettings.model.includes('gemini-3')) {
-      synthesisConfig.thinkingConfig = { thinkingBudget: 8192 };
-    } else if (aiSettings.model.includes('gemini-2.5')) {
-      synthesisConfig.thinkingConfig = { thinkingBudget: 2048 };
-    }
-
     throwIfAborted(signal);
-    const stream = await ai.models.generateContentStream({
+    const stream = await provider.generateContentStream({
       model: aiSettings.model,
-      config: synthesisConfig,
-      contents: synthesisPrompt,
+      system: systemInstruction,
+      temperature: aiSettings.temperature,
+      thinkingBudget: defaultGeminiThinkingBudget(aiSettings.model),
+      prompt: synthesisPrompt,
+      baseURL: aiSettings.customBaseUrl,
     });
 
     for await (const chunk of stream) {
@@ -461,7 +407,7 @@ Research Topic: "${topicSafe}"
     yield { phase: 'Finalizing Report...' };
   } catch (error) {
     console.error('Error generating research report:', error);
-    throw new Error(getGeminiError(error));
+    throw provider.mapError(error);
   }
 }
 
@@ -474,36 +420,37 @@ export async function findSimilarArticles(
     throwIfAborted(signal);
     return findSimilarArticlesHeuristic(article, DEMO_CORPUS, 5, signal);
   }
-  const ai = await getAI();
+  const provider = await getProviderForSettings(aiSettings);
   throwIfAborted(signal);
   try {
-    const response = await ai.models.generateContent({
-      model: aiSettings.model,
-      contents: `Based on the following article, find 3-5 similar articles on PubMed. For each, provide the PMID, title, and a brief reason for its relevance.
+    const similarSchema: AIJsonSchema = {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          pmid: { type: 'string' },
+          title: { type: 'string' },
+          reason: { type: 'string' },
+        },
+        required: ['pmid', 'title', 'reason'],
+      },
+    };
+    return await generateJson<SimilarArticle[]>(
+      aiSettings,
+      {
+        model: aiSettings.model,
+        system: getPreamble(aiSettings, PromptId.SIMILAR_ARTICLES),
+        temperature: 0.3,
+        jsonSchema: similarSchema,
+        prompt: `Based on the following article, find 3-5 similar articles on PubMed. For each, provide the PMID, title, and a brief reason for its relevance.
             Title: "${article.title}"
             Summary: "${article.summary}"`,
-      config: {
-        systemInstruction: getPreamble(aiSettings, PromptId.SIMILAR_ARTICLES),
-        temperature: 0.3,
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: Type.ARRAY,
-          items: {
-            type: Type.OBJECT,
-            properties: {
-              pmid: { type: Type.STRING },
-              title: { type: Type.STRING },
-              reason: { type: Type.STRING },
-            },
-            required: ['pmid', 'title', 'reason'],
-          },
-        },
       },
-    });
-    return parseGeminiResponseJson<SimilarArticle[]>(response.text ?? '');
+      signal,
+    );
   } catch (error) {
     console.error('Error finding similar articles:', error);
-    throw new Error(getGeminiError(error));
+    throw provider.mapError(error);
   }
 }
 
@@ -516,25 +463,28 @@ export async function findRelatedOnline(
     throwIfAborted(signal);
     return findRelatedOnlineHeuristic(topic);
   }
-  const ai = await getAI();
+  const provider = await getProviderForSettings(aiSettings);
   throwIfAborted(signal);
   const topicSafe = sanitizePromptFragment(topic);
   try {
-    const response = await ai.models.generateContent({
+    if (!provider.capabilities.webGrounding) {
+      return findRelatedOnlineHeuristic(topic);
+    }
+    const response = await provider.generateContent({
       model: aiSettings.model,
-      contents: `Provide a brief summary of the online discussion, news, or recent developments related to "${topicSafe}".`,
-      config: {
-        systemInstruction: getPreamble(aiSettings, PromptId.RELATED_ONLINE),
-        tools: [{ googleSearch: {} }],
-      },
+      system: getPreamble(aiSettings, PromptId.RELATED_ONLINE),
+      prompt: `Provide a brief summary of the online discussion, news, or recent developments related to "${topicSafe}".`,
+      webGrounding: true,
+      baseURL: aiSettings.customBaseUrl,
     });
-    const sources: WebContent[] = (
-      response.candidates?.[0]?.groundingMetadata?.groundingChunks || []
-    ).map((chunk: any) => chunk.web);
-    return { summary: response.text ?? '', sources: sources };
+    const sources: WebContent[] = (response.sources ?? []).map((s) => ({
+      uri: s.uri,
+      title: s.title ?? '',
+    }));
+    return { summary: response.text ?? '', sources };
   } catch (error) {
     console.error('Error finding related online content:', error);
-    throw new Error(getGeminiError(error));
+    throw provider.mapError(error);
   }
 }
 
@@ -547,23 +497,21 @@ export async function generateTldrSummary(
     throwIfAborted(signal);
     return generateHeuristicTldr(abstract);
   }
-  const ai = await getAI();
+  const provider = await getProviderForSettings(aiSettings);
   throwIfAborted(signal);
   const abstractSafe = sanitizePromptFragment(abstract, 12000);
   try {
-    const response = await ai.models.generateContent({
+    const response = await provider.generateContent({
       model: aiSettings.model,
-      contents: `Summarize the following abstract in a single, concise sentence (TL;DR format): "${abstractSafe}"`,
-      config: {
-        systemInstruction: getPreamble(aiSettings, PromptId.TLDR),
-        temperature: 0,
-        thinkingConfig: { thinkingBudget: 0 },
-      },
+      system: getPreamble(aiSettings, PromptId.TLDR),
+      temperature: 0,
+      prompt: `Summarize the following abstract in a single, concise sentence (TL;DR format): "${abstractSafe}"`,
+      baseURL: aiSettings.customBaseUrl,
     });
     return response.text ?? '';
   } catch (error) {
     console.error('Error generating TL;DR summary:', error);
-    throw new Error(getGeminiError(error));
+    throw provider.mapError(error);
   }
 }
 
@@ -576,33 +524,34 @@ export async function generateResearchAnalysis(
     throwIfAborted(signal);
     return generateResearchAnalysisHeuristic(query);
   }
-  const ai = await getAI();
+  const provider = await getProviderForSettings(aiSettings);
   throwIfAborted(signal);
   const querySafe = sanitizePromptFragment(query, 12000);
   try {
-    const response = await ai.models.generateContent({
-      model: aiSettings.model,
-      contents: `Analyze the following text. Provide a concise summary, a bulleted list of 3-5 key findings, and synthesize a clear, specific research topic suitable for a PubMed search.
-            Text: "${querySafe}"`,
-      config: {
-        systemInstruction: getPreamble(aiSettings, PromptId.RESEARCH_ANALYSIS),
-        temperature: 0.2,
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            summary: { type: Type.STRING },
-            keyFindings: { type: Type.ARRAY, items: { type: Type.STRING } },
-            synthesizedTopic: { type: Type.STRING },
-          },
-          required: ['summary', 'keyFindings', 'synthesizedTopic'],
-        },
+    const analysisSchema: AIJsonSchema = {
+      type: 'object',
+      properties: {
+        summary: { type: 'string' },
+        keyFindings: { type: 'array', items: { type: 'string' } },
+        synthesizedTopic: { type: 'string' },
       },
-    });
-    return parseGeminiResponseJson<ResearchAnalysis>(response.text ?? '');
+      required: ['summary', 'keyFindings', 'synthesizedTopic'],
+    };
+    return await generateJson<ResearchAnalysis>(
+      aiSettings,
+      {
+        model: aiSettings.model,
+        system: getPreamble(aiSettings, PromptId.RESEARCH_ANALYSIS),
+        temperature: 0.2,
+        jsonSchema: analysisSchema,
+        prompt: `Analyze the following text. Provide a concise summary, a bulleted list of 3-5 key findings, and synthesize a clear, specific research topic suitable for a PubMed search.
+            Text: "${querySafe}"`,
+      },
+      signal,
+    );
   } catch (error) {
     console.error('Error generating research analysis:', error);
-    throw new Error(getGeminiError(error));
+    throw provider.mapError(error);
   }
 }
 
@@ -615,46 +564,47 @@ export async function disambiguateAuthor(
   if (await shouldUseHeuristic(aiSettings)) {
     return disambiguateAuthorHeuristic(authorName, articles, signal);
   }
-  const ai = await getAI();
+  const provider = await getProviderForSettings(aiSettings);
   throwIfAborted(signal);
   const nameSafe = sanitizePromptFragment(authorName, 500);
   try {
-    const response = await ai.models.generateContent({
-      model: aiSettings.model,
-      contents: `Given the author name "${nameSafe}" and this list of their potential publications, disambiguate them into distinct author profiles. For each profile, provide a likely name variant, their most common primary affiliation, top 3 co-authors, core research topics, total publication count, and a list of their PMIDs.
-            Articles: ${JSON.stringify(articles.map((a) => ({ pmid: a.pmid, title: a.title, authors: a.authors, journal: a.journal })))}`,
-      config: {
-        systemInstruction: getPreamble(aiSettings, PromptId.AUTHOR_DISAMBIGUATE),
-        temperature: 0.1,
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: Type.ARRAY,
-          items: {
-            type: Type.OBJECT,
-            properties: {
-              nameVariant: { type: Type.STRING },
-              primaryAffiliation: { type: Type.STRING },
-              topCoAuthors: { type: Type.ARRAY, items: { type: Type.STRING } },
-              coreTopics: { type: Type.ARRAY, items: { type: Type.STRING } },
-              publicationCount: { type: Type.INTEGER },
-              pmids: { type: Type.ARRAY, items: { type: Type.STRING } },
-            },
-            required: [
-              'nameVariant',
-              'primaryAffiliation',
-              'topCoAuthors',
-              'coreTopics',
-              'publicationCount',
-              'pmids',
-            ],
-          },
+    const authorSchema: AIJsonSchema = {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          nameVariant: { type: 'string' },
+          primaryAffiliation: { type: 'string' },
+          topCoAuthors: { type: 'array', items: { type: 'string' } },
+          coreTopics: { type: 'array', items: { type: 'string' } },
+          publicationCount: { type: 'integer' },
+          pmids: { type: 'array', items: { type: 'string' } },
         },
+        required: [
+          'nameVariant',
+          'primaryAffiliation',
+          'topCoAuthors',
+          'coreTopics',
+          'publicationCount',
+          'pmids',
+        ],
       },
-    });
-    return parseGeminiResponseJson<AuthorCluster[]>(response.text ?? '');
+    };
+    return await generateJson<AuthorCluster[]>(
+      aiSettings,
+      {
+        model: aiSettings.model,
+        system: getPreamble(aiSettings, PromptId.AUTHOR_DISAMBIGUATE),
+        temperature: 0.1,
+        jsonSchema: authorSchema,
+        prompt: `Given the author name "${nameSafe}" and this list of their potential publications, disambiguate them into distinct author profiles. For each profile, provide a likely name variant, their most common primary affiliation, top 3 co-authors, core research topics, total publication count, and a list of their PMIDs.
+            Articles: ${JSON.stringify(articles.map((a) => ({ pmid: a.pmid, title: a.title, authors: a.authors, journal: a.journal })))}`,
+      },
+      signal,
+    );
   } catch (error) {
     console.error('Error disambiguating author:', error);
-    throw new Error(getGeminiError(error));
+    throw provider.mapError(error);
   }
 }
 
@@ -671,50 +621,51 @@ export async function generateAuthorProfileAnalysis(
   if (await shouldUseHeuristic(aiSettings)) {
     return generateAuthorProfileHeuristic(authorName, articles, signal);
   }
-  const ai = await getAI();
+  const provider = await getProviderForSettings(aiSettings);
   throwIfAborted(signal);
   const nameSafe = sanitizePromptFragment(authorName, 500);
   try {
-    const response = await ai.models.generateContent({
-      model: aiSettings.model,
-      contents: `Analyze the following publication list for author "${nameSafe}". Based strictly on this list, provide:
+    const profileSchema: AIJsonSchema = {
+      type: 'object',
+      properties: {
+        careerSummary: { type: 'string' },
+        coreConcepts: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: { concept: { type: 'string' }, frequency: { type: 'integer' } },
+            required: ['concept', 'frequency'],
+          },
+        },
+        estimatedMetrics: {
+          type: 'object',
+          properties: {
+            hIndex: { type: 'integer', nullable: true },
+            totalCitations: { type: 'integer', nullable: true },
+          },
+          required: ['hIndex', 'totalCitations'],
+        },
+      },
+      required: ['careerSummary', 'coreConcepts', 'estimatedMetrics'],
+    };
+    return await generateJson<any>(
+      aiSettings,
+      {
+        model: aiSettings.model,
+        system: getPreamble(aiSettings, PromptId.AUTHOR_PROFILE),
+        temperature: 0.3,
+        jsonSchema: profileSchema,
+        prompt: `Analyze the following publication list for author "${nameSafe}". Based strictly on this list, provide:
             1. A narrative career summary (in markdown format).
             2. A list of their core research concepts with frequency.
             3. An estimation of their h-index and total citations. If the provided data is insufficient for a reasonable estimation, return null for these metric fields.
             Publications: ${JSON.stringify(articles.map((a) => ({ title: a.title, pubYear: a.pubYear, journal: a.journal })))}`,
-      config: {
-        systemInstruction: getPreamble(aiSettings, PromptId.AUTHOR_PROFILE),
-        temperature: 0.3,
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            careerSummary: { type: Type.STRING },
-            coreConcepts: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: { concept: { type: Type.STRING }, frequency: { type: Type.INTEGER } },
-                required: ['concept', 'frequency'],
-              },
-            },
-            estimatedMetrics: {
-              type: Type.OBJECT,
-              properties: {
-                hIndex: { type: Type.INTEGER, nullable: true },
-                totalCitations: { type: Type.INTEGER, nullable: true },
-              },
-              required: ['hIndex', 'totalCitations'],
-            },
-          },
-          required: ['careerSummary', 'coreConcepts', 'estimatedMetrics'],
-        },
       },
-    });
-    return parseGeminiResponseJson<any>(response.text ?? '');
+      signal,
+    );
   } catch (error) {
     console.error('Error generating author profile:', error);
-    throw new Error(getGeminiError(error));
+    throw provider.mapError(error);
   }
 }
 
@@ -726,34 +677,35 @@ export async function suggestAuthors(
   if (await shouldUseHeuristic(aiSettings)) {
     return suggestAuthorsHeuristic(fieldOfStudy, signal);
   }
-  const ai = await getAI();
+  const provider = await getProviderForSettings(aiSettings);
   throwIfAborted(signal);
   const fieldSafe = sanitizePromptFragment(fieldOfStudy, 2000);
   try {
-    const response = await ai.models.generateContent({
-      model: aiSettings.model,
-      contents: `Suggest 5-10 prominent researchers in the field of "${fieldSafe}". For each, provide their name and a brief (1-sentence) description of their key contribution.`,
-      config: {
-        systemInstruction: getPreamble(aiSettings, PromptId.AUTHOR_SUGGEST),
-        temperature: 0.5,
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: Type.ARRAY,
-          items: {
-            type: Type.OBJECT,
-            properties: {
-              name: { type: Type.STRING },
-              description: { type: Type.STRING },
-            },
-            required: ['name', 'description'],
-          },
+    const suggestSchema: AIJsonSchema = {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          description: { type: 'string' },
         },
+        required: ['name', 'description'],
       },
-    });
-    return parseGeminiResponseJson<{ name: string; description: string }[]>(response.text ?? '');
+    };
+    return await generateJson<{ name: string; description: string }[]>(
+      aiSettings,
+      {
+        model: aiSettings.model,
+        system: getPreamble(aiSettings, PromptId.AUTHOR_SUGGEST),
+        temperature: 0.5,
+        jsonSchema: suggestSchema,
+        prompt: `Suggest 5-10 prominent researchers in the field of "${fieldSafe}". For each, provide their name and a brief (1-sentence) description of their key contribution.`,
+      },
+      signal,
+    );
   } catch (error) {
     console.error('Error suggesting authors:', error);
-    throw new Error(getGeminiError(error));
+    throw provider.mapError(error);
   }
 }
 
@@ -839,7 +791,7 @@ export async function analyzeSingleArticle(
       return analyzeArticleHeuristic(articleData, signal);
     }
 
-    const ai = await getAI();
+    const provider = await getProviderForSettings(aiSettings);
     const prompt = `Analyze the following article abstract and title. Provide a relevance score for how well the abstract matches the title, extract keywords, and classify the article type.
         Title: ${articleData.title}
         Abstract: ${articleData.summary}
@@ -850,41 +802,46 @@ export async function analyzeSingleArticle(
         3. keywords: An array of 3-5 relevant keywords from the text.
         4. articleType: Classify the article into one of: 'Randomized Controlled Trial', 'Meta-Analysis', 'Systematic Review', 'Observational Study', or 'Other'.`;
 
-    const response = await ai.models.generateContent({
-      model: aiSettings.model,
-      contents: prompt,
-      config: {
-        systemInstruction: getPreamble(aiSettings, PromptId.ARTICLE_ANALYZE),
-        temperature: 0.1,
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            relevanceScore: { type: Type.INTEGER, description: 'Score from 1 to 100.' },
-            relevanceExplanation: {
-              type: Type.STRING,
-              description: 'Brief explanation for the score.',
-            },
-            keywords: { type: Type.ARRAY, items: { type: Type.STRING } },
-            articleType: { type: Type.STRING, description: 'Type of the article.' },
+    try {
+      const analysisSchema: AIJsonSchema = {
+        type: 'object',
+        properties: {
+          relevanceScore: { type: 'integer', description: 'Score from 1 to 100.' },
+          relevanceExplanation: {
+            type: 'string',
+            description: 'Brief explanation for the score.',
           },
-          required: ['relevanceScore', 'relevanceExplanation', 'keywords', 'articleType'],
+          keywords: { type: 'array', items: { type: 'string' } },
+          articleType: { type: 'string', description: 'Type of the article.' },
         },
-      },
-    });
+        required: ['relevanceScore', 'relevanceExplanation', 'keywords', 'articleType'],
+      };
+      const analysis = await generateJson<{
+        relevanceScore: number;
+        relevanceExplanation: string;
+        keywords: string[];
+        articleType: string;
+      }>(
+        aiSettings,
+        {
+          model: aiSettings.model,
+          system: getPreamble(aiSettings, PromptId.ARTICLE_ANALYZE),
+          temperature: 0.1,
+          jsonSchema: analysisSchema,
+          prompt,
+        },
+        signal,
+      );
 
-    const analysis = parseGeminiResponseJson<{
-      relevanceScore: number;
-      relevanceExplanation: string;
-      keywords: string[];
-      articleType: string;
-    }>(response.text ?? '');
-
-    return {
-      ...articleData,
-      ...analysis,
-      isOpenAccess: articleData.isOpenAccess ?? false,
-    };
+      return {
+        ...articleData,
+        ...analysis,
+        isOpenAccess: articleData.isOpenAccess ?? false,
+      };
+    } catch (error) {
+      console.error('Error analyzing single article:', error);
+      throw provider.mapError(error);
+    }
   } catch (error) {
     console.error('Error analyzing single article:', error);
     throw toAppError(error, 'article_analysis');
@@ -895,38 +852,158 @@ export async function generateJournalProfileAnalysis(
   journalName: string,
   aiSettings: Settings['ai'],
   signal?: AbortSignal,
+  articles: Partial<RankedArticle>[] = [],
 ): Promise<JournalProfile> {
   if (await shouldUseHeuristic(aiSettings)) {
-    return generateJournalProfileHeuristic(journalName, [], signal);
+    return generateJournalProfileHeuristic(journalName, articles, signal);
   }
-  const ai = await getAI();
+  const provider = await getProviderForSettings(aiSettings);
+  throwIfAborted(signal);
+  const journalSafe = sanitizePromptFragment(journalName, 500);
+  const articleContext =
+    articles.length > 0
+      ? `\nRecent article titles from this journal (for focus-area grounding): ${JSON.stringify(
+          articles.map((a) => a.title).slice(0, 20),
+        )}`
+      : '';
+  try {
+    const journalSchema: AIJsonSchema = {
+      type: 'object',
+      properties: {
+        name: { type: 'string' },
+        issn: { type: 'string' },
+        description: { type: 'string' },
+        oaPolicy: { type: 'string' },
+        focusAreas: { type: 'array', items: { type: 'string' } },
+        publisher: { type: 'string' },
+        estimatedImpactFactor: { type: 'number', nullable: true },
+      },
+      required: ['name', 'issn', 'description', 'oaPolicy', 'focusAreas'],
+    };
+    const parsed = await generateJson<JournalProfile & { estimatedImpactFactor?: number | null }>(
+      aiSettings,
+      {
+        model: aiSettings.model,
+        system: getPreamble(aiSettings, PromptId.JOURNAL_PROFILE),
+        temperature: 0.2,
+        jsonSchema: journalSchema,
+        prompt: `Act as an expert academic librarian. Analyze the journal '${journalSafe}'. Provide a JSON object with the following structure: { "name": "...", "issn": "...", "description": "...", "oaPolicy": "...", "focusAreas": ["..."], "publisher": "...", "estimatedImpactFactor": <number|null> }. Find the correct ISSN. For oaPolicy, use one of: "Full Open Access", "Hybrid", "Subscription". For estimatedImpactFactor, give your best estimate of the current Journal Impact Factor, or null if you cannot reasonably estimate it.${articleContext}`,
+      },
+      signal,
+    );
+    const { estimatedImpactFactor, ...profile } = parsed;
+    return {
+      ...profile,
+      metrics: {
+        impactFactor: estimatedImpactFactor ?? null,
+        analyzedArticleCount: articles.length > 0 ? articles.length : null,
+        openAccessRate:
+          articles.length > 0
+            ? Math.round((articles.filter((a) => a.isOpenAccess).length / articles.length) * 100)
+            : null,
+        source: 'ai-estimated',
+      },
+    };
+  } catch (error) {
+    console.error('Error generating journal profile analysis:', error);
+    throw provider.mapError(error);
+  }
+}
+
+/**
+ * Disambiguate a journal name into candidate journals (name variants, abbreviations).
+ * Mirrors {@link disambiguateAuthor} — heuristic fallback uses the curated journal KB.
+ */
+export async function disambiguateJournal(
+  journalName: string,
+  aiSettings: Settings['ai'],
+  signal?: AbortSignal,
+): Promise<JournalCandidate[]> {
+  if (await shouldUseHeuristic(aiSettings)) {
+    return disambiguateJournalHeuristic(journalName, signal);
+  }
+  const provider = await getProviderForSettings(aiSettings);
   throwIfAborted(signal);
   const journalSafe = sanitizePromptFragment(journalName, 500);
   try {
-    const response = await ai.models.generateContent({
-      model: aiSettings.model,
-      contents: `Act as an expert academic librarian. Analyze the journal '${journalSafe}'. Provide a JSON object with the following structure: { "name": "...", "issn": "...", "description": "...", "oaPolicy": "...", "focusAreas": ["..."] }. Find the correct ISSN. For oaPolicy, use one of: "Full Open Access", "Hybrid", "Subscription".`,
-      config: {
-        systemInstruction: getPreamble(aiSettings, PromptId.JOURNAL_PROFILE),
-        temperature: 0.2,
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            name: { type: Type.STRING },
-            issn: { type: Type.STRING },
-            description: { type: Type.STRING },
-            oaPolicy: { type: Type.STRING },
-            focusAreas: { type: Type.ARRAY, items: { type: Type.STRING } },
-          },
-          required: ['name', 'issn', 'description', 'oaPolicy', 'focusAreas'],
+    const disambiguateSchema: AIJsonSchema = {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          issn: { type: 'string' },
+          description: { type: 'string' },
+          matchType: { type: 'string' },
+          confidence: { type: 'integer' },
         },
+        required: ['name', 'description', 'matchType', 'confidence'],
       },
-    });
-    return parseGeminiResponseJson<JournalProfile>(response.text ?? '');
+    };
+    const parsed = await generateJson<JournalCandidate[]>(
+      aiSettings,
+      {
+        model: aiSettings.model,
+        system: getPreamble(aiSettings, PromptId.JOURNAL_DISAMBIGUATE),
+        temperature: 0.1,
+        jsonSchema: disambiguateSchema,
+        prompt: `Act as an expert academic librarian. The user entered the journal name "${journalSafe}". Identify up to 5 distinct journals this could refer to (name variants, abbreviations, or similarly named journals, e.g. "BMJ" vs "BMJ Open"). For each candidate provide: the canonical full name, its ISSN (if known), a brief 1-sentence description, the matchType (one of "exact", "alias", "abbreviation", "partial"), and a confidence score 0-100. Return them sorted by confidence descending.`,
+      },
+      signal,
+    );
+    return parsed.map((c) => ({
+      ...c,
+      matchType: (['exact', 'alias', 'abbreviation', 'partial'].includes(c.matchType)
+        ? c.matchType
+        : 'partial') as JournalCandidate['matchType'],
+    }));
   } catch (error) {
-    console.error('Error generating journal profile analysis:', error);
-    throw new Error(getGeminiError(error));
+    console.error('Error disambiguating journal:', error);
+    throw provider.mapError(error);
+  }
+}
+
+/**
+ * Suggest prominent journals for a field of study.
+ * Mirrors {@link suggestAuthors} — heuristic fallback uses a curated field map.
+ */
+export async function suggestJournals(
+  fieldOfStudy: string,
+  aiSettings: Settings['ai'],
+  signal?: AbortSignal,
+): Promise<{ name: string; description: string }[]> {
+  if (await shouldUseHeuristic(aiSettings)) {
+    return suggestJournalsHeuristic(fieldOfStudy, signal);
+  }
+  const provider = await getProviderForSettings(aiSettings);
+  throwIfAborted(signal);
+  const fieldSafe = sanitizePromptFragment(fieldOfStudy, 2000);
+  try {
+    const suggestSchema: AIJsonSchema = {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          description: { type: 'string' },
+        },
+        required: ['name', 'description'],
+      },
+    };
+    return await generateJson<{ name: string; description: string }[]>(
+      aiSettings,
+      {
+        model: aiSettings.model,
+        system: getPreamble(aiSettings, PromptId.JOURNAL_SUGGEST),
+        temperature: 0.5,
+        jsonSchema: suggestSchema,
+        prompt: `Act as an expert academic librarian. Suggest 5-10 prominent peer-reviewed journals publishing research in the field of "${fieldSafe}". For each, provide the canonical journal name and a brief (1-sentence) description of its scope and reputation.`,
+      },
+      signal,
+    );
+  } catch (error) {
+    console.error('Error suggesting journals:', error);
+    throw provider.mapError(error);
   }
 }
 
@@ -943,7 +1020,7 @@ export const startChatWithReport = async (
     throwIfAborted(signal);
     return createHeuristicChatSession(report);
   }
-  const ai = await getAI();
+  const provider = await getProviderForSettings(aiSettings);
   throwIfAborted(signal);
   const context = `
         ${promptTag(PromptId.REPORT_CHAT)}
@@ -965,14 +1042,11 @@ export const startChatWithReport = async (
           .join('\n')}
     `;
 
-  const chat = ai.chats.create({
+  return provider.createChatSession({
     model: aiSettings.model,
-    config: {
-      systemInstruction: context,
-      temperature: aiSettings.temperature * 0.8, // Slightly lower temperature for more factual chat
-    },
+    system: context,
+    temperature: aiSettings.temperature * 0.8, // Slightly lower temperature for more factual chat
   });
-  return chat as unknown as ReportChatSession;
 };
 
 export type { ReportChatSession };

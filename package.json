@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.2.1",
   "type": "module",
-  "packageManager": "pnpm@11.0.0",
+  "packageManager": "pnpm@11.13.1",
   "engines": {
     "node": ">=22"
   },
@@ -46,6 +46,7 @@
     ]
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
     "@google/genai": "^1.52.0",
     "@reduxjs/toolkit": "^2.2.5",
     "@tanstack/react-virtual": "^3.13.21",
@@ -57,6 +58,7 @@
     "jspdf": "^4.2.0",
     "lucide-react": "^1.14.0",
     "marked": "^13.0.2",
+    "openai": "^4.104.0",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "react-redux": "^9.1.2",

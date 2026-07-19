@@ -1,5 +1,9 @@
-import { Article, JournalProfile } from '../types';
-import { generateJournalProfileAnalysis as generateProfileWithGemini } from './geminiService';
+import { Article, JournalCandidate, JournalProfile } from '../types';
+import {
+  disambiguateJournal as disambiguateJournalWithAI,
+  generateJournalProfileAnalysis as generateProfileWithGemini,
+  suggestJournals as suggestJournalsWithAI,
+} from './geminiService';
 import { searchPubMedForIds, fetchArticleDetails } from './pubmedUtils';
 import type { Settings } from '../types';
 
@@ -56,17 +60,52 @@ export const findArticlesInJournal = async (
  * Generates an AI-powered analysis for a journal.
  * @param journalName - The name of the journal.
  * @param aiSettings - The AI settings from context.
+ * @param signal - Optional abort signal.
+ * @param articles - Recently fetched articles used to ground focus areas and metrics.
  * @returns A promise that resolves to a `JournalProfile` object.
  */
 export const generateJournalProfileAnalysis = async (
   journalName: string,
   aiSettings: Settings['ai'],
   signal?: AbortSignal,
+  articles: Partial<Article>[] = [],
 ): Promise<JournalProfile> => {
   try {
-    return await generateProfileWithGemini(journalName, aiSettings, signal);
+    return await generateProfileWithGemini(journalName, aiSettings, signal, articles);
   } catch (error) {
     console.error('Error in journal profile generation service call:', error);
+    throw error;
+  }
+};
+
+/**
+ * Disambiguates a journal name into candidate journals (name variants, abbreviations).
+ */
+export const disambiguateJournal = async (
+  journalName: string,
+  aiSettings: Settings['ai'],
+  signal?: AbortSignal,
+): Promise<JournalCandidate[]> => {
+  try {
+    return await disambiguateJournalWithAI(journalName, aiSettings, signal);
+  } catch (error) {
+    console.error('Error in journal disambiguation service call:', error);
+    throw error;
+  }
+};
+
+/**
+ * Suggests prominent journals for a field of study.
+ */
+export const suggestJournals = async (
+  fieldOfStudy: string,
+  aiSettings: Settings['ai'],
+  signal?: AbortSignal,
+): Promise<{ name: string; description: string }[]> => {
+  try {
+    return await suggestJournalsWithAI(fieldOfStudy, aiSettings, signal);
+  } catch (error) {
+    console.error('Error in journal suggestion service call:', error);
     throw error;
   }
 };

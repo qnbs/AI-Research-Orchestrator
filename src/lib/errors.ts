@@ -5,9 +5,17 @@
 
 export type AppErrorCode =
   | 'NO_API_KEY'
+  // Legacy Gemini-specific codes — kept for backward compatibility with
+  // message-based error classification in `toAppError`.
   | 'GEMINI_QUOTA'
   | 'GEMINI_RATE_LIMIT'
   | 'GEMINI_PARSE_FAILURE'
+  // Provider-agnostic AI backend codes (preferred for new provider code).
+  | 'PROVIDER_QUOTA'
+  | 'PROVIDER_RATE_LIMIT'
+  | 'PROVIDER_PARSE_FAILURE'
+  | 'PROVIDER_UNAVAILABLE'
+  | 'PROVIDER_AUTH'
   | 'NCBI_RATE_LIMIT'
   | 'NCBI_NETWORK'
   | 'ARXIV_NETWORK'
@@ -50,13 +58,20 @@ export class AppError extends Error {
   toUserMessage(): string {
     switch (this.code) {
       case 'NO_API_KEY':
-        return 'Please configure your Gemini API key in Settings.';
+        return this.message || 'Please configure your API key in Settings.';
       case 'GEMINI_QUOTA':
-        return 'Gemini quota exhausted. Try again later or check your usage.';
+      case 'PROVIDER_QUOTA':
+        return 'AI provider quota exhausted. Try again later or check your usage.';
       case 'GEMINI_RATE_LIMIT':
-        return 'Gemini rate limit reached. Wait briefly and try again.';
+      case 'PROVIDER_RATE_LIMIT':
+        return 'AI provider rate limit reached. Wait briefly and try again.';
       case 'GEMINI_PARSE_FAILURE':
+      case 'PROVIDER_PARSE_FAILURE':
         return 'The AI response could not be processed. Please restart the research run.';
+      case 'PROVIDER_UNAVAILABLE':
+        return 'The AI service is temporarily unavailable. Please try again later.';
+      case 'PROVIDER_AUTH':
+        return 'AI provider authentication failed. Check your API key in Settings.';
       case 'NCBI_RATE_LIMIT':
         return 'PubMed/NCBI rate limit. Optionally add an NCBI API key in Settings.';
       case 'NCBI_NETWORK':

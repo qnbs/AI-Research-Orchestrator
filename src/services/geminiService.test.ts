@@ -39,8 +39,10 @@ vi.mock('@google/genai', () => ({
 
 vi.mock('./apiKeyService', () => ({
   getApiKey: vi.fn().mockResolvedValue('test-api-key'),
-  getNcbiApiKey: vi.fn().mockResolvedValue('ncbi-vault-key'),
+  getProviderApiKey: vi.fn().mockResolvedValue('test-api-key'),
   hasApiKey: vi.fn().mockResolvedValue(true),
+  hasProviderApiKey: vi.fn().mockResolvedValue(true),
+  getNcbiApiKey: vi.fn().mockResolvedValue('ncbi-vault-key'),
 }));
 
 const mockPubMed = vi.hoisted(() => ({
@@ -257,8 +259,8 @@ describe('geminiService with mocked SDK', () => {
   });
 
   it('uses heuristic TL;DR when API key is missing (no NO_API_KEY throw)', async () => {
-    const { hasApiKey } = await import('./apiKeyService');
-    vi.mocked(hasApiKey).mockResolvedValueOnce(false);
+    const { hasProviderApiKey } = await import('./apiKeyService');
+    vi.mocked(hasProviderApiKey).mockResolvedValueOnce(false);
     hoisted.generateContent.mockClear();
     const out = await generateTldrSummary(
       'Background: Aspirin reduces cardiovascular events. Methods: Meta-analysis of RCTs. Results: Benefit outweighed bleeding in high-risk groups. Conclusion: Individualize therapy.',

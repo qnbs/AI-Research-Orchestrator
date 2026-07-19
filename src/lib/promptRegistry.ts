@@ -18,6 +18,8 @@ export const PromptId = {
   AUTHOR_SUGGEST: 'authors.suggest',
   ARTICLE_ANALYZE: 'articles.analyze',
   JOURNAL_PROFILE: 'journals.profile',
+  JOURNAL_DISAMBIGUATE: 'journals.disambiguate',
+  JOURNAL_SUGGEST: 'journals.suggest',
   REPORT_CHAT: 'chat.report',
 } as const;
 

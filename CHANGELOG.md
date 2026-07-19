@@ -7,8 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Multi-provider AI architecture** (`src/services/providers/`): pluggable adapters for Google Gemini, OpenAI, Anthropic, local Ollama, and the deterministic heuristic layer (ADR 0008).
+- `Settings.ai.provider` + `customBaseUrl` with migration defaulting to Gemini.
+- Per-provider encrypted API key storage in `apiKeyService.ts` (legacy Gemini key migrates automatically).
+- Provider-aware `InferenceMode` resolver and badge label.
+- OpenAI-compatible `baseURL` supports OpenRouter endpoints.
+- Generalized `PROVIDER_*` error codes in `src/lib/errors.ts` (`GEMINI_*` retained as aliases).
+- Unit tests for provider factory and all transport adapters.
+
 ### Changed
 
+- `geminiService.ts` is now a feature façade over `getProviderForSettings()`; all exported symbols preserved.
+- SDK-backed providers are lazy-loaded via dynamic `import()` to keep the initial bundle size unchanged.
+- CSP `connect-src` widened for OpenAI, OpenRouter, Anthropic, and `localhost:11434`.
 - **UI/UX modernization (Research Instrument):** teal–slate design tokens for dark/light/matrix; status colors (`danger`/`success`/`warning`/`info`); Figtree + Sora + JetBrains Mono typography; FOUC theme sync; reduced neon/purple glow; `prefers-reduced-motion`; shared `UiButton`/`UiBadge`; accessible `Toggle`; theme-aware banners/badges; Matrix in Settings; softer elevation and restrained motion.
 
 ## [0.2.1] - 2026-07-17

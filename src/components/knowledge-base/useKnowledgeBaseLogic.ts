@@ -17,6 +17,7 @@ export const useKnowledgeBaseLogic = (
   onFilterChange: (newFilter: Partial<KnowledgeBaseFilter>) => void,
   selectedPmids: string[],
   setSelectedPmids: React.Dispatch<React.SetStateAction<string[]>>,
+  onAnalyzeJournal?: (journalName: string) => void,
 ) => {
   const { settings } = useSettings();
   const { knowledgeBase, uniqueArticles, deleteArticles, getArticles } = useKnowledgeBase();
@@ -201,5 +202,6 @@ export const useKnowledgeBaseLogic = (
     selectedPmids,
     setSelectedPmids,
     onViewChange,
+    onAnalyzeJournal,
   };
 };

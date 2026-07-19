@@ -119,7 +119,8 @@ describe('apiKeyService', () => {
       });
       await new Promise<void>((resolve, reject) => {
         const tx = db.transaction('keys', 'readwrite');
-        tx.objectStore('keys').put(new Uint8Array([1, 2, 3, 4]), 'encrypted-api-key');
+        // Corrupt the per-provider slot so decryption fails.
+        tx.objectStore('keys').put(new Uint8Array([1, 2, 3, 4]), 'encrypted-api-key-gemini');
         tx.oncomplete = () => resolve();
         tx.onerror = () => reject(tx.error);
       });
