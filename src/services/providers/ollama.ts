@@ -195,9 +195,9 @@ export function createOllamaProvider(): AIProvider {
 
     mapError: mapOllamaError,
 
-    async testConnection(): Promise<boolean> {
-      const baseURL = getBaseUrl();
-      const response = await fetch(`${baseURL}/api/tags`);
+    async testConnection(baseURL?: string): Promise<boolean> {
+      const resolvedBaseURL = getBaseUrl(baseURL);
+      const response = await fetch(`${resolvedBaseURL}/api/tags`);
       return response.ok;
     },
 

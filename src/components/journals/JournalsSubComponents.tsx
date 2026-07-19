@@ -95,10 +95,12 @@ export const JournalLandingView: React.FC = () => {
   const { t } = useTranslation();
   const [mode, setMode] = useState<'search' | 'suggest'>('search');
   const [query, setQuery] = useState('');
+  const [submittedQuery, setSubmittedQuery] = useState<string | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!query.trim()) return;
+    setSubmittedQuery(query.trim());
     if (mode === 'search') {
       onSearch(query.trim());
     } else {
@@ -110,6 +112,7 @@ export const JournalLandingView: React.FC = () => {
     if (mode !== newMode) {
       setMode(newMode);
       setQuery('');
+      setSubmittedQuery(null);
     }
   };
 
@@ -160,7 +163,7 @@ export const JournalLandingView: React.FC = () => {
               />
               <button
                 type="submit"
-                disabled={!query.trim() || isSuggesting}
+                disabled={!query.trim() || (isSuggesting && mode === 'suggest')}
                 className="px-4 py-2 bg-brand-accent text-brand-text-on-accent rounded-md font-semibold disabled:opacity-50 flex items-center"
               >
                 {mode === 'search' ? (
@@ -214,7 +217,7 @@ export const JournalLandingView: React.FC = () => {
         {suggestedJournals && (
           <div className="animate-fadeIn">
             <h2 className="text-2xl font-bold text-text-primary text-center mb-6">
-              {t('journals.suggest.heading')} "{query}"
+              {t('journals.suggest.heading')} "{submittedQuery ?? query}"
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {suggestedJournals.map((journal) => (

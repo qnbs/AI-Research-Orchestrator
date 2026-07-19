@@ -14,6 +14,19 @@ import {
   saveSettings as saveSettingsToDb,
 } from '../services/databaseService';
 import { saveNcbiApiKey } from '../services/apiKeyService';
+import type { AIProviderSelection } from '../services/providers/types';
+
+const VALID_PROVIDERS: AIProviderSelection[] = [
+  'gemini',
+  'openai',
+  'anthropic',
+  'ollama',
+  'heuristic',
+];
+
+function isValidProvider(value: unknown): value is AIProviderSelection {
+  return typeof value === 'string' && VALID_PROVIDERS.includes(value as AIProviderSelection);
+}
 
 export interface UseSettingsValue {
   settings: Settings;
@@ -31,7 +44,10 @@ function mergeSettingsWithDefaults(
     ...baseline.ai,
     ...(storedAi ?? {}),
     // Migration: legacy persisted settings have no provider/model type.
-    provider: storedAi?.provider ?? baseline.ai.provider ?? 'gemini',
+    // Validate provider against known ids; fall back to gemini for invalid values.
+    provider: isValidProvider(storedAi?.provider)
+      ? storedAi.provider
+      : (baseline.ai.provider ?? 'gemini'),
     model: storedAi?.model ?? baseline.ai.model ?? 'gemini-2.5-flash',
     ncbiApiKey: '',
     researchAssistant: {

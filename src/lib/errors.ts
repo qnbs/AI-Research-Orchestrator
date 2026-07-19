@@ -58,7 +58,7 @@ export class AppError extends Error {
   toUserMessage(): string {
     switch (this.code) {
       case 'NO_API_KEY':
-        return 'Please configure your Gemini API key in Settings.';
+        return this.message || 'Please configure your API key in Settings.';
       case 'GEMINI_QUOTA':
       case 'PROVIDER_QUOTA':
         return 'AI provider quota exhausted. Try again later or check your usage.';

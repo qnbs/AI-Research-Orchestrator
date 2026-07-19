@@ -35,7 +35,7 @@ export interface AIProvider {
   mapError(error: unknown): AppError;
 
   /** Optional connectivity check used by the settings UI. */
-  testConnection?(): Promise<boolean>;
+  testConnection?(baseURL?: string): Promise<boolean>;
 
   /** Optional reset hook to clear cached clients/keys (useful in tests). */
   reset?(): void;

@@ -17,7 +17,12 @@ describe('AppError', () => {
   });
 
   it('maps codes to user messages', () => {
-    expect(new AppError({ code: 'NO_API_KEY', message: 'x' }).toUserMessage()).toMatch(/API key/i);
+    expect(
+      new AppError({
+        code: 'NO_API_KEY',
+        message: 'Please configure your API key in Settings.',
+      }).toUserMessage(),
+    ).toMatch(/API key/i);
     expect(new AppError({ code: 'STREAM_ABORTED', message: 'x' }).toUserMessage()).toMatch(
       /cancelled/i,
     );

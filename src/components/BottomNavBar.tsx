@@ -1,6 +1,7 @@
 import React from 'react';
 import type { View } from '../contexts/UIContext';
 import { useHaptic } from '../hooks/useHaptic';
+import { useTranslation } from '../hooks/useTranslation';
 import { HomeIcon } from './icons/HomeIcon';
 import { DocumentIcon } from './icons/DocumentIcon';
 import { DatabaseIcon } from './icons/DatabaseIcon';
@@ -74,6 +75,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
   hasReports,
   isResearching,
 }) => {
+  const { t } = useTranslation();
   const navItems: {
     view: View;
     label: string;
@@ -82,20 +84,28 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
     isSpecial?: boolean;
     badge?: number;
   }[] = [
-    { view: 'home', label: 'Home', icon: <HomeIcon className="h-5 w-5" /> },
+    { view: 'home', label: t('nav.home'), icon: <HomeIcon className="h-5 w-5" /> },
     {
       view: 'research',
-      label: 'Research',
+      label: t('nav.research'),
       icon: <BeakerIcon className="h-5 w-5" />,
       isSpecial: isResearching,
     },
-    { view: 'orchestrator', label: 'Agent', icon: <DocumentIcon className="h-5 w-5" /> },
-    { view: 'authors', label: 'Authors', icon: <AuthorIcon className="h-5 w-5" /> },
-    { view: 'journals', label: 'Journals', icon: <BookOpenIcon className="h-5 w-5" /> },
-    { view: 'collections', label: 'Collections', icon: <span className="text-base">📚</span> },
+    {
+      view: 'orchestrator',
+      label: t('nav.orchestrator'),
+      icon: <DocumentIcon className="h-5 w-5" />,
+    },
+    { view: 'authors', label: t('nav.authors'), icon: <AuthorIcon className="h-5 w-5" /> },
+    { view: 'journals', label: t('nav.journals'), icon: <BookOpenIcon className="h-5 w-5" /> },
+    {
+      view: 'collections',
+      label: t('nav.collections'),
+      icon: <span className="text-base">📚</span>,
+    },
     {
       view: 'knowledgeBase',
-      label: 'Data',
+      label: t('nav.knowledgeBase'),
       icon: <DatabaseIcon className="h-5 w-5" />,
       isDisabled: !hasReports,
       badge: knowledgeBaseArticleCount,

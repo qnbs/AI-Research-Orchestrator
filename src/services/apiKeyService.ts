@@ -5,6 +5,8 @@
  */
 
 import type { AIProviderId } from './providers/types';
+import { toAppError } from '../lib/errors';
+import { getProviderMeta } from './providers/provider';
 
 const ENCRYPTION_KEY_NAME = 'ai-research-encryption-key';
 const LEGACY_GEMINI_STORAGE_KEY = 'encrypted-api-key';
@@ -141,8 +143,13 @@ async function saveEncryptedSecret(storageKey: string, value: string): Promise<v
 
 /**
  * Retrieves and decrypts a secret from IndexedDB.
+ * Throws AppError on failure for proper error propagation.
  */
-async function getEncryptedSecret(storageKey: string, label: string): Promise<string | null> {
+async function getEncryptedSecret(
+  storageKey: string,
+  label: string,
+  throwOnError: boolean = false,
+): Promise<string | null> {
   try {
     const db = await openKeyDatabase();
     const combined = await getFromKeyStore(db, storageKey);
@@ -156,6 +163,9 @@ async function getEncryptedSecret(storageKey: string, label: string): Promise<st
 
     return await decryptApiKey(iv, encrypted);
   } catch (error) {
+    if (throwOnError) {
+      throw toAppError(error, 'storage');
+    }
     console.error(`Failed to retrieve ${label}:`, error);
     return null;
   }
@@ -182,7 +192,7 @@ export async function getProviderApiKey(provider: AIProviderId): Promise<string 
       const db = await openKeyDatabase();
       await deleteFromKeyStore(db, LEGACY_GEMINI_STORAGE_KEY);
     } catch (error) {
-      console.error('Failed to migrate legacy Gemini API key:', error);
+      throw toAppError(error, 'storage');
     }
   }
   return legacy;
@@ -190,6 +200,11 @@ export async function getProviderApiKey(provider: AIProviderId): Promise<string 
 
 /** Checks whether a provider API key is stored. */
 export async function hasProviderApiKey(provider: AIProviderId): Promise<boolean> {
+  // Providers that don't require API keys (ollama, heuristic) always return true.
+  const meta = getProviderMeta(provider);
+  if (!meta.capabilities.requiresApiKey) {
+    return true;
+  }
   const key = await getProviderApiKey(provider);
   return key !== null && key.length > 0;
 }

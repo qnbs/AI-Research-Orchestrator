@@ -31,10 +31,12 @@ export function useInferenceMode(): InferenceModeSnapshot & {
 
   const refresh = useCallback(async () => {
     const requestId = ++requestIdRef.current;
+    // Heuristic mode does not require an API key; skip key check for it.
+    const keyCheckProvider = provider === 'heuristic' ? null : provider;
     const next = await resolveActiveInferenceMode({
       forceHeuristic,
       provider,
-      checkApiKey: () => hasProviderApiKey(provider === 'heuristic' ? 'gemini' : provider),
+      checkApiKey: keyCheckProvider ? () => hasProviderApiKey(keyCheckProvider) : async () => false,
       getOnline: () => (typeof navigator === 'undefined' ? true : navigator.onLine),
     });
     if (requestId !== requestIdRef.current) return;

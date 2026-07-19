@@ -21,7 +21,10 @@ const journalPhaseKeys = [
 ] as const;
 
 const journalPhaseDetailKeys: Record<(typeof journalPhaseKeys)[number], TranslationKey[]> = {
-  'journals.phase.disambiguate': ['journals.phase.disambiguate.d1', 'journals.phase.disambiguate.d2'],
+  'journals.phase.disambiguate': [
+    'journals.phase.disambiguate.d1',
+    'journals.phase.disambiguate.d2',
+  ],
   'journals.phase.articles': ['journals.phase.articles.d1', 'journals.phase.articles.d2'],
   'journals.phase.profile': ['journals.phase.profile.d1', 'journals.phase.profile.d2'],
   'journals.phase.finalize': ['journals.phase.finalize.d1'],
@@ -158,6 +161,7 @@ export const useJournalsViewLogic = (
 
       setIsLoading(true);
       setError(null);
+      setSuggestionError(null);
       setJournalProfile(null);
       setFoundArticles(null);
       setCandidates(null);
@@ -179,7 +183,7 @@ export const useJournalsViewLogic = (
         }
       } catch (err) {
         if (isMounted.current) {
-          const errorMessage = err instanceof Error ? err.message : t('journals.error.generic');
+          const errorMessage = t('journals.error.generic');
           setError(errorMessage);
           setNotification({ id: Date.now(), message: errorMessage, type: 'error' });
           setView('landing');
@@ -204,7 +208,7 @@ export const useJournalsViewLogic = (
         await runAnalysis(candidate.name);
       } catch (err) {
         if (isMounted.current) {
-          const errorMessage = err instanceof Error ? err.message : t('journals.error.generic');
+          const errorMessage = t('journals.error.generic');
           setError(errorMessage);
           setNotification({ id: Date.now(), message: errorMessage, type: 'error' });
           setView('landing');
@@ -247,7 +251,7 @@ export const useJournalsViewLogic = (
         }
       } catch (err) {
         if (isMounted.current) {
-          setSuggestionError(err instanceof Error ? err.message : t('journals.error.generic'));
+          setSuggestionError(t('journals.error.generic'));
         }
       } finally {
         if (isMounted.current) {
@@ -265,6 +269,8 @@ export const useJournalsViewLogic = (
     setJournalProfile(null);
     setFoundArticles(null);
     setSuggestedJournals(null);
+    setSuggestionError(null);
+    setIsSuggesting(false);
   }, []);
 
   const analyticsData = useMemo(() => {

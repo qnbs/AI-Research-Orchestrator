@@ -147,10 +147,10 @@ export function createOpenAIProvider(): AIProvider {
 
     async createChatSession(request: AIChatSessionRequest): Promise<ProviderChatSession> {
       const openai = await getClient(request.baseURL);
-      const messages: Array<{ role: 'system' | 'user'; content: string }> = [];
+      const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [];
       if (request.system) messages.push({ role: 'system', content: request.system });
       for (const m of request.history ?? []) {
-        messages.push({ role: m.role === 'model' ? 'system' : 'user', content: m.text });
+        messages.push({ role: m.role === 'model' ? 'assistant' : 'user', content: m.text });
       }
 
       return {

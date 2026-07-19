@@ -54,6 +54,8 @@ export const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({ onKeyChange }) =
   }, [provider]);
 
   const checkStoredKey = async () => {
+    const requestId = ++(checkStoredKey as any).requestId;
+    (checkStoredKey as any).requestId = requestId;
     setIsLoading(true);
     try {
       const needsKey = providerMeta.capabilities.requiresApiKey;
@@ -61,16 +63,24 @@ export const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({ onKeyChange }) =
         needsKey && provider !== 'heuristic' ? hasProviderApiKey(provider) : Promise.resolve(false),
         getNcbiApiKey(),
       ]);
+      // Guard against stale responses from previous provider selections
+      if ((checkStoredKey as any).requestId !== requestId) return;
       setHasStoredKey(stored);
       setHasStoredNcbiKey(!!storedNcbiKey);
       setNcbiApiKey(storedNcbiKey ?? '');
       onKeyChange?.(stored);
     } catch (err) {
-      console.error('Error checking API key:', err);
+      // Guard against stale responses from previous provider selections
+      if ((checkStoredKey as any).requestId === requestId) {
+        console.error('Error checking API key:', err);
+      }
     } finally {
-      setIsLoading(false);
+      if ((checkStoredKey as any).requestId === requestId) {
+        setIsLoading(false);
+      }
     }
   };
+  (checkStoredKey as any).requestId = 0;
 
   const handleSave = async () => {
     if (provider === 'heuristic' || !providerMeta.capabilities.requiresApiKey) return;
@@ -213,10 +223,9 @@ export const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({ onKeyChange }) =
           <div>
             <p className="font-medium text-text-primary">{providerMeta.label}</p>
             <p className="text-sm text-text-secondary">
-              No API key required.{' '}
               {provider === 'heuristic'
-                ? 'All AI features run locally with deterministic heuristics.'
-                : 'Runs against your local or self-hosted endpoint.'}
+                ? t('apikey.provider.heuristic_desc')
+                : t('apikey.provider.local_desc')}
             </p>
           </div>
         </div>
@@ -227,7 +236,9 @@ export const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({ onKeyChange }) =
               <>
                 <ShieldCheckIcon className="h-6 w-6 text-green-500" />
                 <div className="flex-1">
-                  <p className="font-medium text-text-primary">{t('apikey.status.configured')}</p>
+                  <p className="font-medium text-text-primary">
+                    {t('apikey.status.provider_configured', { provider: providerMeta.label })}
+                  </p>
                   <p className="text-sm text-text-secondary">{t('apikey.status.ready')}</p>
                 </div>
                 <button
@@ -242,19 +253,19 @@ export const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({ onKeyChange }) =
                 <KeyIcon className="h-6 w-6 text-text-secondary" />
                 <div className="flex-1">
                   <p className="font-medium text-text-primary">
-                    {t('apikey.status.not_configured')}
+                    {t('apikey.status.provider_not_configured', { provider: providerMeta.label })}
                   </p>
                   <p className="text-sm text-text-secondary">
-                    {t('apikey.status.prompt_start')}{' '}
+                    {t('apikey.status.provider_prompt_start')}{' '}
                     <a
                       href={keyDocsUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-brand-accent hover:underline"
                     >
-                      {providerMeta.label} key
+                      {t('apikey.status.provider_prompt_link', { provider: providerMeta.label })}
                     </a>{' '}
-                    {t('apikey.status.prompt_end')}
+                    {t('apikey.status.provider_prompt_end')}
                   </p>
                 </div>
               </>
@@ -263,7 +274,9 @@ export const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({ onKeyChange }) =
 
           <div className="space-y-3">
             <label htmlFor="api-key-input" className="block font-medium text-text-primary">
-              {hasStoredKey ? t('apikey.label.update') : t('apikey.label.enter')}
+              {hasStoredKey
+                ? t('apikey.label.provider_update', { provider: providerMeta.label })
+                : t('apikey.label.provider_enter', { provider: providerMeta.label })}
             </label>
             <div className="relative">
               <input
