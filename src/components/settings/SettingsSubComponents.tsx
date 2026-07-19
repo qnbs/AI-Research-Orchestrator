@@ -23,6 +23,8 @@ import { UploadIcon } from '../icons/UploadIcon';
 import { ARTICLE_TYPES, CSV_EXPORT_COLUMNS } from '../../types';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { InferenceModeSettings, useApiKeyInferenceRefresh } from './InferenceModeSettings';
+import { AI_PROVIDERS, getProviderMeta } from '../../services/providers/provider';
+import type { AIProviderSelection } from '../../services/providers/types';
 
 const personaDescriptions = {
   'Neutral Scientist': 'Adopts a neutral, objective, and strictly scientific tone.',
@@ -380,6 +382,26 @@ export const GeneralSettingsTab: React.FC = () => {
 export const AISettingsTab: React.FC = () => {
   const { tempSettings, setTempSettings, errors } = useSettingsView();
   const onApiKeyChange = useApiKeyInferenceRefresh();
+  const currentProvider = tempSettings.ai.provider ?? 'gemini';
+  const providerMeta = getProviderMeta(currentProvider);
+
+  const handleProviderChange = (provider: AIProviderSelection) => {
+    const meta = getProviderMeta(provider);
+    setTempSettings((s) => ({
+      ...s,
+      ai: {
+        ...s.ai,
+        provider,
+        model: meta.defaultModel,
+        customBaseUrl:
+          provider === 'ollama'
+            ? (meta.defaultBaseUrl ?? '')
+            : provider === 'openai' || provider === 'anthropic'
+              ? (meta.defaultBaseUrl ?? '')
+              : '',
+      },
+    }));
+  };
 
   const handleArticleTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { value, checked } = e.target;
@@ -403,25 +425,77 @@ export const AISettingsTab: React.FC = () => {
       >
         <div className="space-y-6">
           <div>
+            <label htmlFor="ai-provider" className="font-medium text-text-primary">
+              AI Provider
+            </label>
+            <select
+              id="ai-provider"
+              value={currentProvider}
+              onChange={(e) => handleProviderChange(e.target.value as AIProviderSelection)}
+              className="mt-1 block w-full bg-input-bg border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent"
+            >
+              {Object.values(AI_PROVIDERS).map((meta) => (
+                <option key={meta.id} value={meta.id}>
+                  {meta.label}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-text-secondary mt-1">
+              Choose the AI backend. Gemini is the default; other providers require their own API
+              key or a local endpoint.
+            </p>
+          </div>
+
+          <div>
             <label htmlFor="ai-model" className="font-medium text-text-primary">
               AI Model
             </label>
-            <select
+            <input
               id="ai-model"
+              type="text"
+              list="ai-model-suggestions"
               value={tempSettings.ai.model}
               onChange={(e) =>
-                setTempSettings((s) => ({ ...s, ai: { ...s.ai, model: e.target.value as any } }))
+                setTempSettings((s) => ({ ...s, ai: { ...s.ai, model: e.target.value } }))
               }
+              placeholder={providerMeta.defaultModel}
               className="mt-1 block w-full bg-input-bg border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent"
-            >
-              <option value="gemini-2.5-flash">gemini-2.5-flash (Recommended for Speed)</option>
-              <option value="gemini-3-pro-preview">gemini-3-pro-preview (High Reasoning)</option>
-            </select>
+            />
+            <datalist id="ai-model-suggestions">
+              {providerMeta.modelSuggestions.map((model) => (
+                <option key={model} value={model} />
+              ))}
+            </datalist>
             <p className="text-xs text-text-secondary mt-1">
-              Use Gemini 2.5 Flash for speed and efficiency, or Gemini 3 Pro for complex reasoning
-              tasks.
+              Enter any model identifier supported by {providerMeta.label}. Suggestions are shown
+              for convenience.
             </p>
           </div>
+
+          {providerMeta.supportsBaseUrl && (
+            <div>
+              <label htmlFor="ai-base-url" className="font-medium text-text-primary">
+                Base URL
+              </label>
+              <input
+                id="ai-base-url"
+                type="url"
+                value={tempSettings.ai.customBaseUrl ?? ''}
+                onChange={(e) =>
+                  setTempSettings((s) => ({
+                    ...s,
+                    ai: { ...s.ai, customBaseUrl: e.target.value },
+                  }))
+                }
+                placeholder={providerMeta.defaultBaseUrl}
+                className="mt-1 block w-full bg-input-bg border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent"
+              />
+              <p className="text-xs text-text-secondary mt-1">
+                Optional. Change this to use a proxy, OpenRouter-compatible endpoint, or a different
+                Ollama host.
+              </p>
+            </div>
+          )}
 
           <div>
             <label className="font-medium text-text-primary block">AI Persona</label>

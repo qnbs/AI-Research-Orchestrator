@@ -8,6 +8,7 @@
 ## 🔴 P0 - Immediate Actions (Do First)
 
 ### Fix Failing E2E Tests
+
 ```bash
 # Check current failures
 cat test-results/.last-run.json
@@ -19,16 +20,25 @@ cat test-results/.last-run.json
 ```
 
 ### Expand Journal Heuristic KB
+
 **File:** `src/services/heuristics/journalProfiling.ts`
+
 - Add: eLife, Nature Communications, Cell Reports, Scientific Reports, BMJ Open
 - Current KB has only 7 journals, featuredJournals.json has 6 different ones
 
 ### Add Missing Heuristic Functions
+
 **File:** `src/services/heuristics/journalProfiling.ts`
+
 ```typescript
 // Add these functions:
-export function suggestJournalsHeuristic(fieldOfStudy: string): { name: string; description: string }[];
-export function disambiguateJournalHeuristic(journalName: string, articles: Partial<RankedArticle>[]): JournalCluster[];
+export function suggestJournalsHeuristic(
+  fieldOfStudy: string,
+): { name: string; description: string }[];
+export function disambiguateJournalHeuristic(
+  journalName: string,
+  articles: Partial<RankedArticle>[],
+): JournalCluster[];
 ```
 
 ---
@@ -36,17 +46,23 @@ export function disambiguateJournalHeuristic(journalName: string, articles: Part
 ## 🟠 P1 - Journal Hub Restoration (3-4 days)
 
 ### 1. Featured Journals Categorization
+
 **Files:**
+
 - `src/data/featuredJournals.json` - Add categories
 - `src/components/journals/JournalsSubComponents.tsx` - Create `FeaturedJournalsView`
 
 ### 2. Suggest Journals UI
+
 **Files:**
+
 - `src/components/journals/JournalsSubComponents.tsx` - Add `SuggestJournalsView`
 - `src/components/journals/useJournalsViewLogic.ts` - Add suggestion state
 
 ### 3. Journal Disambiguation
+
 **Files:**
+
 - `src/services/heuristics/journalProfiling.ts` - Add disambiguation logic
 - `src/components/journals/JournalsSubComponents.tsx` - Add `DisambiguationView`
 
@@ -55,19 +71,27 @@ export function disambiguateJournalHeuristic(journalName: string, articles: Part
 ## 🟡 P2 - Provider Abstraction (4-5 days)
 
 ### Create Provider Interface
+
 **File:** `src/services/providers/provider.ts`
+
 ```typescript
 export type AIProvider = 'gemini' | 'openai' | 'anthropic' | 'ollama' | 'heuristic';
-export interface Provider { /* ... */ }
+export interface Provider {
+  /* ... */
+}
 ```
 
 ### Refactor Gemini
+
 **Files:**
+
 - `src/services/providers/gemini.ts` - Extract current logic
 - `src/services/geminiService.ts` - Keep as facade
 
 ### Update Settings
+
 **File:** `src/types.ts`
+
 ```typescript
 // Change from:
 model: 'gemini-2.5-flash';
@@ -81,17 +105,23 @@ model: string;
 ## 🟢 P3 - Additional Providers (5-7 days)
 
 ### OpenAI Provider
+
 **File:** `src/services/providers/openai.ts`
+
 - Use `openai` npm package
 - Handle streaming: `chunk.choices[0]?.delta?.content`
 
 ### Anthropic Provider
+
 **File:** `src/services/providers/anthropic.ts`
+
 - Use `@anthropic-ai/sdk`
 - Handle tool use for grounding
 
 ### Ollama Provider
+
 **File:** `src/services/providers/ollama.ts`
+
 - Direct fetch to `/api/generate`
 - No API key required
 
@@ -115,12 +145,12 @@ pnpm run bundle:budget    # Check bundle sizes
 
 ## Coverage Targets
 
-| File | Current | Target | Priority |
-|------|---------|--------|----------|
-| `heuristics/chat.ts` | 31% branches | 80% | 🔴 |
-| `heuristics/journalProfiling.ts` | 25% branches | 80% | 🔴 |
-| `geminiService.ts` | 48% branches | 75% | 🟠 |
-| `researchStream.ts` | 56% lines | 80% | 🟠 |
+| File                             | Current      | Target | Priority |
+| -------------------------------- | ------------ | ------ | -------- |
+| `heuristics/chat.ts`             | 31% branches | 80%    | 🔴       |
+| `heuristics/journalProfiling.ts` | 25% branches | 80%    | 🔴       |
+| `geminiService.ts`               | 48% branches | 75%    | 🟠       |
+| `researchStream.ts`              | 56% lines    | 80%    | 🟠       |
 
 ---
 
@@ -136,11 +166,13 @@ pnpm run bundle:budget    # Check bundle sizes
 ## Testing Strategy
 
 ### Unit Tests First
+
 - Provider adapters with mocked responses
 - Heuristic edge cases
 - Error mapping paths
 
 ### E2E Tests Second
+
 - Provider switching in UI
 - Heuristic mode functionality
 - Journal hub full flow

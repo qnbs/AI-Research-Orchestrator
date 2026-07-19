@@ -25,6 +25,7 @@ This document tracks hardcoded strings that still need extraction to the i18n sy
 ```
 
 **Translation Keys Needed:**
+
 - `apikey.security.title` — "Security notice"
 - `apikey.security.text` — Main security paragraph
 - `apikey.security.recommendation` — Recommendation text
@@ -39,6 +40,7 @@ This document tracks hardcoded strings that still need extraction to the i18n sy
 ```
 
 **Translation Keys Needed:**
+
 - `apikey.status.configured` — "Gemini API key configured"
 - `apikey.status.ready` — "Your key is stored securely..."
 
@@ -50,6 +52,7 @@ This document tracks hardcoded strings that still need extraction to the i18n sy
 ```
 
 **Translation Keys Needed:**
+
 - `apikey.status.not_configured` — "No Gemini API key configured"
 - `apikey.status.prompt` — "Enter your ... to enable AI research features"
 
@@ -60,13 +63,17 @@ This document tracks hardcoded strings that still need extraction to the i18n sy
 ```
 
 **Translation Key Needed:**
+
 - `apikey.reveal` — Already added ✅
 
 ```tsx
-{isNcbiSaving ? 'Saving...' : 'Save NCBI key'}
+{
+  isNcbiSaving ? 'Saving...' : 'Save NCBI key';
+}
 ```
 
 **Translation Key Needed:**
+
 - `apikey.ncbi.save` — "Save NCBI key"
 
 ### Instructions Section (Lines 340-360)
@@ -87,6 +94,7 @@ This document tracks hardcoded strings that still need extraction to the i18n sy
 ```
 
 **Translation Keys Needed:**
+
 - `apikey.instructions.title` — "How to get a Gemini API key:"
 - `apikey.instructions.step1` — "Open Google AI Studio"
 - `apikey.instructions.step2` — "Sign in with your Google account"
@@ -101,6 +109,7 @@ This document tracks hardcoded strings that still need extraction to the i18n sy
 ### Guide Topics (Lines 120-200)
 
 All guide topics are hardcoded in `useMemo`:
+
 - "Understanding the Core Workflows"
 - "Using the Orchestrator"
 - "Using the Research Tab"
@@ -112,6 +121,7 @@ All guide topics are hardcoded in `useMemo`:
 ### FAQ Items (Lines 200-250)
 
 All FAQ items are hardcoded:
+
 - "Do I need an API key?"
 - "Is my data private?"
 - "How does the AI work?"
@@ -120,6 +130,7 @@ All FAQ items are hardcoded:
 ### Glossary Items (Lines 250-280)
 
 All glossary terms are hardcoded:
+
 - "Orchestrator"
 - "Knowledge Base"
 - "Author Hub"
@@ -151,16 +162,19 @@ All glossary terms are hardcoded:
 ## Implementation Priority
 
 ### High Priority (Blocking E2E Tests)
+
 1. None — E2E test fixes are independent of i18n
 
 ### Medium Priority (User Experience)
+
 1. ApiKeySettings status messages — User-facing feedback
 2. ApiKeySettings instructions — Onboarding help
 
 ### Low Priority (Nice to Have)
+
 1. HelpView content — Documentation
 2. OnboardingView content — First-run experience
 
 ---
 
-*Document created: 2026-07-18*
+_Document created: 2026-07-18_

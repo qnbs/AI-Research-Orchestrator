@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import {
-  saveApiKey,
-  getApiKey,
-  removeApiKey,
-  hasApiKey,
+  saveProviderApiKey,
+  getProviderApiKey,
+  removeProviderApiKey,
+  hasProviderApiKey,
   validateApiKeyFormat,
   saveNcbiApiKey,
   getNcbiApiKey,
   removeNcbiApiKey,
+  hasNcbiApiKey,
 } from '../../services/apiKeyService';
 import { ShieldCheckIcon } from '../icons/ShieldCheckIcon';
 import { ExclamationTriangleIcon } from '../icons/ExclamationTriangleIcon';
@@ -15,6 +16,9 @@ import { EyeIcon } from '../icons/EyeIcon';
 import { EyeSlashIcon } from '../icons/EyeSlashIcon';
 import { KeyIcon } from '../icons/KeyIcon';
 import { useTranslation } from '../../hooks/useTranslation';
+import { useSettingsView } from './SettingsViewContext';
+import { getProviderMeta } from '../../services/providers/provider';
+import type { AIProviderSelection } from '../../services/providers/types';
 
 interface ApiKeySettingsProps {
   onKeyChange?: (hasKey: boolean) => void;
@@ -22,6 +26,10 @@ interface ApiKeySettingsProps {
 
 export const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({ onKeyChange }) => {
   const { t } = useTranslation();
+  const { tempSettings } = useSettingsView();
+  const provider = tempSettings.ai.provider ?? 'gemini';
+  const providerMeta = getProviderMeta(provider);
+
   const [apiKey, setApiKey] = useState('');
   const [ncbiApiKey, setNcbiApiKey] = useState('');
   const [hasStoredKey, setHasStoredKey] = useState(false);
@@ -38,12 +46,21 @@ export const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({ onKeyChange }) =
 
   useEffect(() => {
     void checkStoredKey();
-  }, []);
+    // Clear transient UI state when the provider changes.
+    setApiKey('');
+    setShowKey(false);
+    setError(null);
+    setSuccess(null);
+  }, [provider]);
 
   const checkStoredKey = async () => {
     setIsLoading(true);
     try {
-      const [stored, storedNcbiKey] = await Promise.all([hasApiKey(), getNcbiApiKey()]);
+      const needsKey = providerMeta.capabilities.requiresApiKey;
+      const [stored, storedNcbiKey] = await Promise.all([
+        needsKey && provider !== 'heuristic' ? hasProviderApiKey(provider) : Promise.resolve(false),
+        getNcbiApiKey(),
+      ]);
       setHasStoredKey(stored);
       setHasStoredNcbiKey(!!storedNcbiKey);
       setNcbiApiKey(storedNcbiKey ?? '');
@@ -56,6 +73,7 @@ export const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({ onKeyChange }) =
   };
 
   const handleSave = async () => {
+    if (provider === 'heuristic' || !providerMeta.capabilities.requiresApiKey) return;
     setError(null);
     setSuccess(null);
 
@@ -64,14 +82,14 @@ export const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({ onKeyChange }) =
       return;
     }
 
-    if (!validateApiKeyFormat(apiKey.trim())) {
+    if (!validateApiKeyFormat(apiKey.trim(), provider)) {
       setError(t('apikey.invalid'));
       return;
     }
 
     setIsSaving(true);
     try {
-      await saveApiKey(apiKey.trim());
+      await saveProviderApiKey(provider, apiKey.trim());
       setHasStoredKey(true);
       setApiKey('');
       setSuccess(t('apikey.saved'));
@@ -85,10 +103,12 @@ export const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({ onKeyChange }) =
   };
 
   const handleRemove = async () => {
+    if (provider === 'heuristic' || !providerMeta.capabilities.requiresApiKey) return;
     setIsSaving(true);
     try {
-      await removeApiKey();
+      await removeProviderApiKey(provider);
       setHasStoredKey(false);
+      setApiKey('');
       setSuccess(t('apikey.removed'));
       onKeyChange?.(false);
     } catch (err) {
@@ -96,6 +116,19 @@ export const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({ onKeyChange }) =
       console.error(err);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleShowCurrentKey = async () => {
+    if (provider === 'heuristic' || !providerMeta.capabilities.requiresApiKey) return;
+    try {
+      const key = await getProviderApiKey(provider);
+      if (key) {
+        setApiKey(key);
+        setShowKey(true);
+      }
+    } catch (err) {
+      setError(t('apikey.get_failed'));
     }
   };
 
@@ -108,11 +141,7 @@ export const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({ onKeyChange }) =
       await saveNcbiApiKey(trimmed);
       setNcbiApiKey(trimmed);
       setHasStoredNcbiKey(trimmed.length > 0);
-      setNcbiSuccess(
-        trimmed.length > 0
-          ? t('apikey.ncbi.saved')
-          : t('apikey.ncbi.removed'),
-      );
+      setNcbiSuccess(trimmed.length > 0 ? t('apikey.ncbi.saved') : t('apikey.ncbi.removed'));
     } catch (err) {
       setNcbiError(t('apikey.ncbi.save_failed'));
       console.error(err);
@@ -138,18 +167,6 @@ export const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({ onKeyChange }) =
     }
   };
 
-  const handleShowCurrentKey = async () => {
-    try {
-      const key = await getApiKey();
-      if (key) {
-        setApiKey(key);
-        setShowKey(true);
-      }
-    } catch (err) {
-      setError(t('apikey.get_failed'));
-    }
-  };
-
   if (isLoading) {
     return (
       <div className="animate-pulse space-y-4">
@@ -158,6 +175,9 @@ export const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({ onKeyChange }) =
       </div>
     );
   }
+
+  const keyDocsUrl = providerMeta.keyDocsUrl ?? 'https://aistudio.google.com/apikey';
+  const keyHint = providerMeta.keyHint ?? 'AIza...';
 
   return (
     <div className="space-y-6">
@@ -174,12 +194,12 @@ export const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({ onKeyChange }) =
               <strong>{t('apikey.security.recommendation_label')}</strong>{' '}
               {t('apikey.security.recommendation_text')}{' '}
               <a
-                href="https://aistudio.google.com/apikey"
+                href={keyDocsUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-brand-accent hover:underline"
               >
-                {t('apikey.security.console_link')}
+                {providerMeta.label} key
               </a>{' '}
               {t('apikey.security.recommendation_end')}
             </p>
@@ -187,104 +207,123 @@ export const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({ onKeyChange }) =
         </div>
       </div>
 
-      <div className="flex items-center gap-3 p-4 rounded-lg border border-border bg-surface-hover/30">
-        {hasStoredKey ? (
-          <>
-            <ShieldCheckIcon className="h-6 w-6 text-green-500" />
-            <div className="flex-1">
-              <p className="font-medium text-text-primary">{t('apikey.status.configured')}</p>
-              <p className="text-sm text-text-secondary">{t('apikey.status.ready')}</p>
-            </div>
-            <button
-              onClick={handleShowCurrentKey}
-              className="text-sm text-brand-accent hover:underline"
-            >
-              {t('apikey.reveal')}
-            </button>
-          </>
-        ) : (
-          <>
-            <KeyIcon className="h-6 w-6 text-text-secondary" />
-            <div className="flex-1">
-              <p className="font-medium text-text-primary">{t('apikey.status.not_configured')}</p>
-              <p className="text-sm text-text-secondary">
-                {t('apikey.status.prompt_start')}{' '}
-                <a
-                  href="https://aistudio.google.com/apikey"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-brand-accent hover:underline"
+      {provider === 'heuristic' || !providerMeta.capabilities.requiresApiKey ? (
+        <div className="flex items-center gap-3 p-4 rounded-lg border border-border bg-surface-hover/30">
+          <ShieldCheckIcon className="h-6 w-6 text-green-500" />
+          <div>
+            <p className="font-medium text-text-primary">{providerMeta.label}</p>
+            <p className="text-sm text-text-secondary">
+              No API key required.{' '}
+              {provider === 'heuristic'
+                ? 'All AI features run locally with deterministic heuristics.'
+                : 'Runs against your local or self-hosted endpoint.'}
+            </p>
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className="flex items-center gap-3 p-4 rounded-lg border border-border bg-surface-hover/30">
+            {hasStoredKey ? (
+              <>
+                <ShieldCheckIcon className="h-6 w-6 text-green-500" />
+                <div className="flex-1">
+                  <p className="font-medium text-text-primary">{t('apikey.status.configured')}</p>
+                  <p className="text-sm text-text-secondary">{t('apikey.status.ready')}</p>
+                </div>
+                <button
+                  onClick={handleShowCurrentKey}
+                  className="text-sm text-brand-accent hover:underline"
                 >
-                  {t('apikey.status.prompt_link')}
-                </a>{' '}
-                {t('apikey.status.prompt_end')}
-              </p>
+                  {t('apikey.reveal')}
+                </button>
+              </>
+            ) : (
+              <>
+                <KeyIcon className="h-6 w-6 text-text-secondary" />
+                <div className="flex-1">
+                  <p className="font-medium text-text-primary">
+                    {t('apikey.status.not_configured')}
+                  </p>
+                  <p className="text-sm text-text-secondary">
+                    {t('apikey.status.prompt_start')}{' '}
+                    <a
+                      href={keyDocsUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-brand-accent hover:underline"
+                    >
+                      {providerMeta.label} key
+                    </a>{' '}
+                    {t('apikey.status.prompt_end')}
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
+
+          <div className="space-y-3">
+            <label htmlFor="api-key-input" className="block font-medium text-text-primary">
+              {hasStoredKey ? t('apikey.label.update') : t('apikey.label.enter')}
+            </label>
+            <div className="relative">
+              <input
+                id="api-key-input"
+                type={showKey ? 'text' : 'password'}
+                value={apiKey}
+                onChange={(e) => {
+                  setApiKey(e.target.value);
+                  setError(null);
+                  setSuccess(null);
+                }}
+                placeholder={keyHint}
+                className="w-full bg-input-bg border border-border rounded-lg px-4 py-3 pr-20 text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-transparent font-mono"
+                autoComplete="off"
+                spellCheck={false}
+              />
+              <button
+                type="button"
+                onClick={() => setShowKey(!showKey)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-text-secondary hover:text-text-primary transition-colors"
+                aria-label={showKey ? t('apikey.hide') : t('apikey.show')}
+              >
+                {showKey ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
+              </button>
             </div>
-          </>
-        )}
-      </div>
 
-      <div className="space-y-3">
-        <label htmlFor="api-key-input" className="block font-medium text-text-primary">
-          {hasStoredKey ? t('apikey.label.update') : t('apikey.label.enter')}
-        </label>
-        <div className="relative">
-          <input
-            id="api-key-input"
-            type={showKey ? 'text' : 'password'}
-            value={apiKey}
-            onChange={(e) => {
-              setApiKey(e.target.value);
-              setError(null);
-              setSuccess(null);
-            }}
-            placeholder="AIza..."
-            className="w-full bg-input-bg border border-border rounded-lg px-4 py-3 pr-20 text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-transparent font-mono"
-            autoComplete="off"
-            spellCheck={false}
-          />
-          <button
-            type="button"
-            onClick={() => setShowKey(!showKey)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-text-secondary hover:text-text-primary transition-colors"
-            aria-label={showKey ? t('apikey.hide') : t('apikey.show')}
-          >
-            {showKey ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
-          </button>
-        </div>
+            {error && (
+              <p className="text-sm text-red-400 flex items-center gap-2">
+                <ExclamationTriangleIcon className="h-4 w-4" />
+                {error}
+              </p>
+            )}
+            {success && (
+              <p className="text-sm text-green-400 flex items-center gap-2">
+                <ShieldCheckIcon className="h-4 w-4" />
+                {success}
+              </p>
+            )}
 
-        {error && (
-          <p className="text-sm text-red-400 flex items-center gap-2">
-            <ExclamationTriangleIcon className="h-4 w-4" />
-            {error}
-          </p>
-        )}
-        {success && (
-          <p className="text-sm text-green-400 flex items-center gap-2">
-            <ShieldCheckIcon className="h-4 w-4" />
-            {success}
-          </p>
-        )}
-
-        <div className="flex gap-3">
-          <button
-            onClick={handleSave}
-            disabled={isSaving || !apiKey.trim()}
-            className="flex-1 px-4 py-2.5 bg-brand-accent text-brand-text-on-accent font-medium rounded-lg hover:bg-brand-accent/90 focus:outline-none focus:ring-2 focus:ring-brand-accent focus:ring-offset-2 focus:ring-offset-background disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-          >
-            {isSaving ? t('apikey.saving') : t('apikey.save')}
-          </button>
-          {hasStoredKey && (
-            <button
-              onClick={handleRemove}
-              disabled={isSaving}
-              className="px-4 py-2.5 bg-red-500/10 text-red-400 border border-red-500/30 font-medium rounded-lg hover:bg-red-500/20 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-background disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-            >
-              {t('apikey.remove')}
-            </button>
-          )}
-        </div>
-      </div>
+            <div className="flex gap-3">
+              <button
+                onClick={handleSave}
+                disabled={isSaving || !apiKey.trim()}
+                className="flex-1 px-4 py-2.5 bg-brand-accent text-brand-text-on-accent font-medium rounded-lg hover:bg-brand-accent/90 focus:outline-none focus:ring-2 focus:ring-brand-accent focus:ring-offset-2 focus:ring-offset-background disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              >
+                {isSaving ? t('apikey.saving') : t('apikey.save')}
+              </button>
+              {hasStoredKey && (
+                <button
+                  onClick={handleRemove}
+                  disabled={isSaving}
+                  className="px-4 py-2.5 bg-red-500/10 text-red-400 border border-red-500/30 font-medium rounded-lg hover:bg-red-500/20 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-background disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                >
+                  {t('apikey.remove')}
+                </button>
+              )}
+            </div>
+          </div>
+        </>
+      )}
 
       <div className="space-y-3 border-t border-border pt-4">
         <label htmlFor="ncbi-api-key" className="block font-medium text-text-primary">
@@ -376,12 +415,12 @@ export const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({ onKeyChange }) =
           <li>
             {t('apikey.instructions.step1')}{' '}
             <a
-              href="https://aistudio.google.com"
+              href={keyDocsUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="text-brand-accent hover:underline"
             >
-              {t('apikey.instructions.step1_link')}
+              {providerMeta.label}
             </a>
           </li>
           <li>{t('apikey.instructions.step2')}</li>

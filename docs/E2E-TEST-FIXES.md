@@ -30,8 +30,10 @@ The `skipOnboarding` function sets `aro.demoDataSeeded = '1'` which seeds demo d
 await page.evaluate(() => {
   try {
     localStorage.setItem('aro.demoDataDismissed', '1');
-    localStorage.setItem('aro.demoDataSeeded', '1');  // ← This seeds 5 demo articles
-  } catch { /* ignore */ }
+    localStorage.setItem('aro.demoDataSeeded', '1'); // ← This seeds 5 demo articles
+  } catch {
+    /* ignore */
+  }
 });
 ```
 
@@ -43,15 +45,17 @@ Remove the demo seeding before KB test:
 test('KB shows empty-state message when no data saved', async ({ page }) => {
   await page.goto('/');
   await page.waitForLoadState('domcontentloaded');
-  
+
   // Skip onboarding WITHOUT seeding demo data
   await page.evaluate(() => {
     try {
       localStorage.setItem('aro.demoDataDismissed', '1');
       // Do NOT set aro.demoDataSeeded to test true empty state
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   });
-  
+
   const startBtn = page.getByRole('button', { name: /start researching/i });
   const header = page.locator('header');
   await Promise.race([
@@ -91,7 +95,7 @@ test('invalid key format shows error after save', async ({ page }) => {
   const input = page.locator('#api-key-input');
   await input.fill('BAD_KEY');
   await page
-    .getByRole('button', { name: /speichern/i })  // ← German text
+    .getByRole('button', { name: /speichern/i }) // ← German text
     .first()
     .click();
   await expect(page.getByText(/ungültig|invalid|format|AIza/i).first()).toBeVisible({
@@ -103,6 +107,7 @@ test('invalid key format shows error after save', async ({ page }) => {
 ### Root Cause
 
 The test looks for German button text "Speichern" but the UI shows English "Save" because:
+
 1. The app defaults to English
 2. The button text is now using `t('apikey.save')` which returns "Save" in English
 
@@ -112,11 +117,13 @@ The test looks for German button text "Speichern" but the UI shows English "Save
 test('invalid key format shows error after save', async ({ page }) => {
   const input = page.locator('#api-key-input');
   await input.fill('BAD_KEY');
-  
+
   // Click the save button by its accessible action, not text
-  const saveBtn = page.locator('#api-key-input').locator('xpath=following::button[contains(@class, "bg-brand-accent")][1]');
+  const saveBtn = page
+    .locator('#api-key-input')
+    .locator('xpath=following::button[contains(@class, "bg-brand-accent")][1]');
   await saveBtn.click();
-  
+
   // Check for error message (works in both languages)
   await expect(page.getByText(/invalid|ungültig/i).first()).toBeVisible({
     timeout: 5_000,
@@ -130,10 +137,13 @@ test('invalid key format shows error after save', async ({ page }) => {
 test('invalid key format shows error after save', async ({ page }) => {
   const input = page.locator('#api-key-input');
   await input.fill('BAD_KEY');
-  
+
   // Match both "Save" and "Speichern"
-  await page.getByRole('button', { name: /save|speichern/i }).first().click();
-  
+  await page
+    .getByRole('button', { name: /save|speichern/i })
+    .first()
+    .click();
+
   await expect(page.getByText(/invalid|ungültig/i).first()).toBeVisible({
     timeout: 5_000,
   });
@@ -144,11 +154,11 @@ test('invalid key format shows error after save', async ({ page }) => {
 
 ## Summary of Required Changes
 
-| File | Line | Change |
-|------|------|--------|
-| `src/test/e2e/agent-flow.spec.ts` | 268-275 | Fix KB empty state test |
+| File                              | Line    | Change                      |
+| --------------------------------- | ------- | --------------------------- |
+| `src/test/e2e/agent-flow.spec.ts` | 268-275 | Fix KB empty state test     |
 | `src/test/e2e/agent-flow.spec.ts` | 406-412 | Fix API key button selector |
 
 ---
 
-*Document created: 2026-07-18*
+_Document created: 2026-07-18_

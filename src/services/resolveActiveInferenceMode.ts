@@ -1,7 +1,7 @@
 /**
  * Async helpers that combine settings + API key vault + network into InferenceMode.
  */
-import { hasApiKey } from './apiKeyService';
+import { hasProviderApiKey } from './apiKeyService';
 import {
   resolveInferenceMode,
   type InferenceModeSnapshot,
@@ -13,6 +13,8 @@ export { resolveInferenceMode, inferenceModeBadgeLabel, isZeroCostMode } from '.
 
 export interface ResolveActiveModeOptions {
   forceHeuristic: boolean;
+  /** Currently selected provider or heuristic mode. */
+  provider?: import('./providers/types').AIProviderSelection;
   /** Injectable for tests. */
   getOnline?: () => boolean;
   /** Injectable for tests. */
@@ -27,11 +29,15 @@ export async function resolveActiveInferenceMode(
 ): Promise<InferenceModeSnapshot> {
   const getOnline =
     options.getOnline ?? (() => (typeof navigator === 'undefined' ? true : navigator.onLine));
-  const checkApiKey = options.checkApiKey ?? hasApiKey;
+  const provider = options.provider ?? 'gemini';
+  const checkApiKey =
+    options.checkApiKey ??
+    (provider === 'heuristic' ? () => Promise.resolve(false) : () => hasProviderApiKey(provider));
   const input: ResolveInferenceModeInput = {
     forceHeuristic: options.forceHeuristic,
     hasApiKey: await checkApiKey(),
     isOnline: getOnline(),
+    provider,
   };
   return resolveInferenceMode(input);
 }

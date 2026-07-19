@@ -24,6 +24,7 @@ export const defaultSettings: Settings = {
     duration: 5000,
   },
   ai: {
+    provider: 'gemini',
     model: 'gemini-2.5-flash',
     customPreamble: '',
     temperature: 0.2,
@@ -37,6 +38,7 @@ export const defaultSettings: Settings = {
     enableTldr: true,
     ncbiApiKey: '',
     forceHeuristicMode: false,
+    customBaseUrl: '',
   },
   defaults: {
     maxArticlesToScan: 50,

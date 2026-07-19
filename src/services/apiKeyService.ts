@@ -4,9 +4,19 @@
  * Uses Web Crypto API for AES-GCM encryption and IndexedDB for storage.
  */
 
+import type { AIProviderId } from './providers/types';
+
 const ENCRYPTION_KEY_NAME = 'ai-research-encryption-key';
-const STORAGE_KEY = 'encrypted-api-key';
+const LEGACY_GEMINI_STORAGE_KEY = 'encrypted-api-key';
 const STORAGE_KEY_NCBI = 'encrypted-ncbi-api-key';
+
+const PROVIDER_STORAGE_KEYS: Record<AIProviderId, string> = {
+  gemini: 'encrypted-api-key-gemini',
+  openai: 'encrypted-api-key-openai',
+  anthropic: 'encrypted-api-key-anthropic',
+  ollama: 'encrypted-api-key-ollama',
+  heuristic: 'encrypted-api-key-heuristic',
+};
 
 /**
  * Generates or retrieves the encryption key from IndexedDB.
@@ -151,34 +161,63 @@ async function getEncryptedSecret(storageKey: string, label: string): Promise<st
   }
 }
 
-/**
- * Saves the Gemini API key securely to IndexedDB.
- */
-export async function saveApiKey(apiKey: string): Promise<void> {
-  await saveEncryptedSecret(STORAGE_KEY, apiKey);
+/** Saves a provider API key securely to IndexedDB. */
+export async function saveProviderApiKey(provider: AIProviderId, apiKey: string): Promise<void> {
+  await saveEncryptedSecret(PROVIDER_STORAGE_KEYS[provider], apiKey);
 }
 
 /**
- * Retrieves and decrypts the Gemini API key from IndexedDB.
+ * Retrieves and decrypts a provider API key from IndexedDB.
+ * For Gemini, lazily migrates a key stored under the legacy slot.
  */
-export async function getApiKey(): Promise<string | null> {
-  return getEncryptedSecret(STORAGE_KEY, 'API key');
+export async function getProviderApiKey(provider: AIProviderId): Promise<string | null> {
+  const value = await getEncryptedSecret(PROVIDER_STORAGE_KEYS[provider], `${provider} API key`);
+  if (value || provider !== 'gemini') return value;
+
+  // Lazy migration from the legacy single-key storage.
+  const legacy = await getEncryptedSecret(LEGACY_GEMINI_STORAGE_KEY, 'API key');
+  if (legacy) {
+    try {
+      await saveProviderApiKey('gemini', legacy);
+      const db = await openKeyDatabase();
+      await deleteFromKeyStore(db, LEGACY_GEMINI_STORAGE_KEY);
+    } catch (error) {
+      console.error('Failed to migrate legacy Gemini API key:', error);
+    }
+  }
+  return legacy;
 }
 
-/**
- * Checks if a Gemini API key is stored.
- */
-export async function hasApiKey(): Promise<boolean> {
-  const key = await getApiKey();
+/** Checks whether a provider API key is stored. */
+export async function hasProviderApiKey(provider: AIProviderId): Promise<boolean> {
+  const key = await getProviderApiKey(provider);
   return key !== null && key.length > 0;
 }
 
-/**
- * Removes the stored Gemini API key.
- */
-export async function removeApiKey(): Promise<void> {
+/** Removes a stored provider API key. */
+export async function removeProviderApiKey(provider: AIProviderId): Promise<void> {
   const db = await openKeyDatabase();
-  await deleteFromKeyStore(db, STORAGE_KEY);
+  await deleteFromKeyStore(db, PROVIDER_STORAGE_KEYS[provider]);
+}
+
+/**
+ * Legacy Gemini API key helpers (backward-compatible wrappers around the
+ * per-provider vault). New code should prefer `getProviderApiKey('gemini')`.
+ */
+export async function saveApiKey(apiKey: string): Promise<void> {
+  await saveProviderApiKey('gemini', apiKey);
+}
+
+export async function getApiKey(): Promise<string | null> {
+  return getProviderApiKey('gemini');
+}
+
+export async function hasApiKey(): Promise<boolean> {
+  return hasProviderApiKey('gemini');
+}
+
+export async function removeApiKey(): Promise<void> {
+  await removeProviderApiKey('gemini');
 }
 
 /**
@@ -218,9 +257,21 @@ export async function removeNcbiApiKey(): Promise<void> {
 }
 
 /**
- * Validates an API key format (basic check).
+ * Validates an API key format.
+ * `provider` defaults to 'gemini' for backward compatibility.
  */
-export function validateApiKeyFormat(apiKey: string): boolean {
-  // Gemini API keys typically start with 'AIza' and are 39 characters
-  return /^AIza[a-zA-Z0-9_-]{35}$/.test(apiKey);
+export function validateApiKeyFormat(apiKey: string, provider: AIProviderId = 'gemini'): boolean {
+  switch (provider) {
+    case 'gemini':
+      // Gemini API keys typically start with 'AIza' and are 39 characters
+      return /^AIza[a-zA-Z0-9_-]{35}$/.test(apiKey);
+    case 'openai':
+      return /^sk-[a-zA-Z0-9_-]{20,}$/.test(apiKey);
+    case 'anthropic':
+      return /^sk-ant-[a-zA-Z0-9_-]{20,}$/.test(apiKey);
+    case 'ollama':
+      return true;
+    default:
+      return false;
+  }
 }

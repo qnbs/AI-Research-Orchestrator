@@ -8,14 +8,14 @@
 
 ## Executive Summary
 
-| Aspect | Score | Notes |
-|--------|-------|-------|
-| Translation Coverage | 7/10 | Good core coverage, some hardcoded strings |
-| Architecture | 8/10 | Clean hook-based approach with fallback |
-| Type Safety | 9/10 | Strong typing with `TranslationKey` |
-| German Parity | 6/10 | Incomplete German translations |
-| Hardcoded Strings | 4/10 | Significant hardcoded English in HelpView |
-| Test Coverage | 6/10 | Basic hook tests only |
+| Aspect               | Score | Notes                                      |
+| -------------------- | ----- | ------------------------------------------ |
+| Translation Coverage | 7/10  | Good core coverage, some hardcoded strings |
+| Architecture         | 8/10  | Clean hook-based approach with fallback    |
+| Type Safety          | 9/10  | Strong typing with `TranslationKey`        |
+| German Parity        | 6/10  | Incomplete German translations             |
+| Hardcoded Strings    | 4/10  | Significant hardcoded English in HelpView  |
+| Test Coverage        | 6/10  | Basic hook tests only                      |
 
 **Overall i18n Health Score: 6.6/10**
 
@@ -55,7 +55,10 @@ export const useTranslation = () => {
       const currentLangTranslations = translations[lang];
       const fallbackTranslations = translations['en'];
 
-      if (currentLangTranslations && Object.prototype.hasOwnProperty.call(currentLangTranslations, key)) {
+      if (
+        currentLangTranslations &&
+        Object.prototype.hasOwnProperty.call(currentLangTranslations, key)
+      ) {
         return currentLangTranslations[key as TranslationKey];
       }
 
@@ -73,11 +76,13 @@ export const useTranslation = () => {
 ```
 
 **Strengths:**
+
 - ✅ Automatic fallback to English
 - ✅ Memoized for performance
 - ✅ Type-safe with `TranslationKey`
 
 **Weaknesses:**
+
 - ❌ No warning for missing translations
 - ❌ No pluralization support
 - ❌ No interpolation beyond simple `${}` in some strings
@@ -88,26 +93,26 @@ export const useTranslation = () => {
 
 ### 2.1 Total Translation Keys
 
-| Language | Keys Count | Coverage |
-|----------|----------|----------|
-| English | ~120 keys | 100% (source) |
-| German | ~120 keys | ~60% (incomplete) |
+| Language | Keys Count | Coverage          |
+| -------- | ---------- | ----------------- |
+| English  | ~120 keys  | 100% (source)     |
+| German   | ~120 keys  | ~60% (incomplete) |
 
 ### 2.2 Key Categories
 
-| Category | EN Keys | DE Keys | Status |
-|----------|---------|---------|--------|
-| Navigation | 12 | 12 | ✅ Complete |
-| Home View | 6 | 6 | ✅ Complete |
-| Settings | 25 | 25 | ✅ Complete |
-| Orchestrator | 10 | 10 | ✅ Complete |
-| Scientometrics | 5 | 5 | ✅ Complete |
-| Checkpoints | 12 | 12 | ✅ Complete |
-| Cost Estimator | 10 | 10 | ✅ Complete |
-| Charts | 4 | 4 | ✅ Complete |
-| Offline/Heuristic | 10 | 10 | ✅ Complete |
-| **Help View** | **0** | **0** | 🔴 **Hardcoded** |
-| **Onboarding** | **0** | **0** | 🔴 **Hardcoded** |
+| Category          | EN Keys | DE Keys | Status           |
+| ----------------- | ------- | ------- | ---------------- |
+| Navigation        | 12      | 12      | ✅ Complete      |
+| Home View         | 6       | 6       | ✅ Complete      |
+| Settings          | 25      | 25      | ✅ Complete      |
+| Orchestrator      | 10      | 10      | ✅ Complete      |
+| Scientometrics    | 5       | 5       | ✅ Complete      |
+| Checkpoints       | 12      | 12      | ✅ Complete      |
+| Cost Estimator    | 10      | 10      | ✅ Complete      |
+| Charts            | 4       | 4       | ✅ Complete      |
+| Offline/Heuristic | 10      | 10      | ✅ Complete      |
+| **Help View**     | **0**   | **0**   | 🔴 **Hardcoded** |
+| **Onboarding**    | **0**   | **0**   | 🔴 **Hardcoded** |
 
 ---
 
@@ -117,17 +122,17 @@ export const useTranslation = () => {
 
 **File:** `src/components/OnboardingView.tsx`
 
-| Location | String | Should Be Translated |
-|----------|--------|---------------------|
-| Line 24 | "Welcome to the Future of Research" | ✅ |
-| Line 25 | "Your intelligent assistant for scientific literature reviews." | ✅ |
-| Line 31 | "Define Your Topic" | ✅ |
-| Line 32 | "Enter any research query..." | ✅ |
-| Line 33 | "The AI researches, filters..." | ✅ |
-| Line 34 | "Leverage Your Knowledge" | ✅ |
-| Line 35 | "Build a personal, de-duplicated..." | ✅ |
-| Line 39 | "Start Researching" | ✅ |
-| Line 40 | "Your data remains private..." | ✅ |
+| Location | String                                                          | Should Be Translated |
+| -------- | --------------------------------------------------------------- | -------------------- |
+| Line 24  | "Welcome to the Future of Research"                             | ✅                   |
+| Line 25  | "Your intelligent assistant for scientific literature reviews." | ✅                   |
+| Line 31  | "Define Your Topic"                                             | ✅                   |
+| Line 32  | "Enter any research query..."                                   | ✅                   |
+| Line 33  | "The AI researches, filters..."                                 | ✅                   |
+| Line 34  | "Leverage Your Knowledge"                                       | ✅                   |
+| Line 35  | "Build a personal, de-duplicated..."                            | ✅                   |
+| Line 39  | "Start Researching"                                             | ✅                   |
+| Line 40  | "Your data remains private..."                                  | ✅                   |
 
 **Total hardcoded strings: ~15**
 
@@ -135,26 +140,26 @@ export const useTranslation = () => {
 
 **File:** `src/components/HelpView.tsx`
 
-| Section | Hardcoded Strings |
-|---------|-------------------|
-| Guide Topics | ~50 strings |
-| FAQ Items | ~20 strings |
-| Glossary Items | ~15 strings |
-| About Section | ~10 strings |
+| Section        | Hardcoded Strings |
+| -------------- | ----------------- |
+| Guide Topics   | ~50 strings       |
+| FAQ Items      | ~20 strings       |
+| Glossary Items | ~15 strings       |
+| About Section  | ~10 strings       |
 
 **Total hardcoded strings: ~95**
 
 ### 3.3 Other Components
 
-| File | Hardcoded Strings |
-|------|-------------------|
-| `CheckpointResumeBanner.tsx` | 0 (uses t()) |
-| `Header.tsx` | 0 (uses t()) |
-| `HomeView.tsx` | 0 (uses t()) |
-| `InferenceModeBadge.tsx` | 0 (uses t()) |
-| `OrchestratorView.tsx` | 0 (uses t()) |
-| `SettingsView.tsx` | 0 (uses t()) |
-| `JournalsSubComponents.tsx` | 0 (uses t()) |
+| File                         | Hardcoded Strings |
+| ---------------------------- | ----------------- |
+| `CheckpointResumeBanner.tsx` | 0 (uses t())      |
+| `Header.tsx`                 | 0 (uses t())      |
+| `HomeView.tsx`               | 0 (uses t())      |
+| `InferenceModeBadge.tsx`     | 0 (uses t())      |
+| `OrchestratorView.tsx`       | 0 (uses t())      |
+| `SettingsView.tsx`           | 0 (uses t())      |
+| `JournalsSubComponents.tsx`  | 0 (uses t())      |
 
 ---
 
@@ -172,12 +177,12 @@ export const useTranslation = () => {
 
 Many German translations are missing or incomplete:
 
-| Key | English | German | Issue |
-|-----|---------|--------|-------|
-| `home.card.research.desc` | "Perform a quick..." | "Führen Sie eine schnelle..." | ✅ Good |
-| `settings.cost.title` | "Estimated run cost" | "Geschätzte Laufkosten" | ✅ Good |
-| `inference.badge.live` | "Live · Gemini" | "Live · Gemini" | ⚠️ Same as English |
-| `inference.badge.force` | "Heuristic · Forced" | "Heuristik · Erzwungen" | ✅ Good |
+| Key                       | English              | German                        | Issue              |
+| ------------------------- | -------------------- | ----------------------------- | ------------------ |
+| `home.card.research.desc` | "Perform a quick..." | "Führen Sie eine schnelle..." | ✅ Good            |
+| `settings.cost.title`     | "Estimated run cost" | "Geschätzte Laufkosten"       | ✅ Good            |
+| `inference.badge.live`    | "Live · Gemini"      | "Live · Gemini"               | ⚠️ Same as English |
+| `inference.badge.force`   | "Heuristic · Forced" | "Heuristik · Erzwungen"       | ✅ Good            |
 
 ### 4.3 German Translation Issues
 
@@ -191,33 +196,33 @@ Many German translations are missing or incomplete:
 
 ### 5.1 Journal Hub Specific
 
-| Missing Key | Context |
-|-------------|---------|
-| `journals.search_placeholder` | Search input placeholder |
-| `journals.analyze` | Analyze button text |
-| `journals.no_articles` | No articles found message |
-| `journals.focus_areas` | Focus areas label |
-| `journals.open_access` | Open access label |
+| Missing Key                   | Context                   |
+| ----------------------------- | ------------------------- |
+| `journals.search_placeholder` | Search input placeholder  |
+| `journals.analyze`            | Analyze button text       |
+| `journals.no_articles`        | No articles found message |
+| `journals.focus_areas`        | Focus areas label         |
+| `journals.open_access`        | Open access label         |
 
 ### 5.2 Author Hub Specific
 
-| Missing Key | Context |
-|-------------|---------|
-| `authors.search_placeholder` | Search input placeholder |
-| `authors.suggest_placeholder` | Suggest field placeholder |
-| `authors.analyze` | Analyze button text |
-| `authors.suggest` | Suggest button text |
-| `authors.disambiguation_title` | Disambiguation heading |
+| Missing Key                    | Context                   |
+| ------------------------------ | ------------------------- |
+| `authors.search_placeholder`   | Search input placeholder  |
+| `authors.suggest_placeholder`  | Suggest field placeholder |
+| `authors.analyze`              | Analyze button text       |
+| `authors.suggest`              | Suggest button text       |
+| `authors.disambiguation_title` | Disambiguation heading    |
 
 ### 5.3 General Missing Keys
 
-| Missing Key | Context |
-|-------------|---------|
+| Missing Key      | Context        |
+| ---------------- | -------------- |
 | `common.loading` | Loading states |
-| `common.error` | Error messages |
-| `common.retry` | Retry button |
-| `common.cancel` | Cancel button |
-| `common.save` | Save button |
+| `common.error`   | Error messages |
+| `common.retry`   | Retry button   |
+| `common.cancel`  | Cancel button  |
+| `common.save`    | Save button    |
 
 ---
 
@@ -315,25 +320,25 @@ en: {
 
 ## 9. Key Files to Modify
 
-| File | Changes |
-|------|---------|
-| `src/i18n/translations.ts` | Add ~120 new keys, complete German |
-| `src/components/OnboardingView.tsx` | Replace hardcoded strings with t() |
-| `src/components/HelpView.tsx` | Replace hardcoded strings with t() |
-| `src/components/journals/JournalsSubComponents.tsx` | Add missing keys |
-| `src/components/authors/AuthorsSubComponents.tsx` | Add missing keys |
-| `src/hooks/useTranslation.test.tsx` | Add comprehensive tests |
+| File                                                | Changes                            |
+| --------------------------------------------------- | ---------------------------------- |
+| `src/i18n/translations.ts`                          | Add ~120 new keys, complete German |
+| `src/components/OnboardingView.tsx`                 | Replace hardcoded strings with t() |
+| `src/components/HelpView.tsx`                       | Replace hardcoded strings with t() |
+| `src/components/journals/JournalsSubComponents.tsx` | Add missing keys                   |
+| `src/components/authors/AuthorsSubComponents.tsx`   | Add missing keys                   |
+| `src/hooks/useTranslation.test.tsx`                 | Add comprehensive tests            |
 
 ---
 
 ## 10. Risk Assessment
 
-| Risk | Level | Mitigation |
-|------|-------|------------|
-| Breaking existing translations | Low | Keep existing keys unchanged |
-| German translation quality | Medium | Professional review recommended |
-| Bundle size increase | Low | ~5KB additional strings |
-| Test coverage gaps | Medium | Add tests before merge |
+| Risk                           | Level  | Mitigation                      |
+| ------------------------------ | ------ | ------------------------------- |
+| Breaking existing translations | Low    | Keep existing keys unchanged    |
+| German translation quality     | Medium | Professional review recommended |
+| Bundle size increase           | Low    | ~5KB additional strings         |
+| Test coverage gaps             | Medium | Add tests before merge          |
 
 ---
 
@@ -415,4 +420,4 @@ common.loading, common.error, common.retry, common.cancel, common.save
 
 ---
 
-*End of i18n Audit Document*
+_End of i18n Audit Document_

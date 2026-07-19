@@ -4,10 +4,10 @@ Guidance for AI coding agents (Kimi, Cursor, Copilot) working in this repository
 
 ## Project Overview
 
-**AI Research Orchestration Author** (`ai-research-orchestrator`, v0.2.1, MIT, private package) is a **client-only React 19 PWA** for agentic biomedical literature research. It couples **PubMed (NCBI E-utilities)** and **arXiv** retrieval with **Google Gemini** (2.5 Flash / 3 Pro, via `@google/genai`) to autonomously run literature reviews: query formulation → live fetch → semantic ranking (0–100 relevance) → streaming, cited synthesis.
+**AI Research Orchestration Author** (`ai-research-orchestrator`, v0.2.1, MIT, private package) is a **client-only React 19 PWA** for agentic biomedical literature research. It couples **PubMed (NCBI E-utilities)** and **arXiv** retrieval with a **pluggable AI provider layer** (Google Gemini, OpenAI, Anthropic, local Ollama, or the deterministic heuristic fallback) to autonomously run literature reviews: query formulation → live fetch → semantic ranking (0–100 relevance) → streaming, cited synthesis.
 
 - **Local-first / zero backend**: all user data (reports, history, settings, knowledge base, collections) lives in the browser's IndexedDB via Dexie 4. No server stores anything.
-- **Direct-to-API**: the browser talks directly to `generativelanguage.googleapis.com`, `eutils.ncbi.nlm.nih.gov`, and `export.arxiv.org` (see CSP in `index.html`).
+- **Direct-to-API**: the browser talks directly to the selected AI provider, `eutils.ncbi.nlm.nih.gov`, and `export.arxiv.org` (see CSP in `index.html`).
 - **Grounding**: every AI assertion is linked to a verifiable PubMed ID (PMID).
 - **Live demo / deployment**: GitHub Pages at `https://qnbs.github.io/AI-Research-Orchestrator/` (base path `/AI-Research-Orchestrator/`).
 
@@ -18,31 +18,32 @@ Main features: Orchestrator pipeline, Knowledge Base (dedup, faceted filtering, 
 1. **`.github/copilot-instructions.md`** — current stack, folder structure, state management, testing, safety rules.
 2. **`.cursor/index.mdc`** — always-on project manifest.
 3. **`.cursor/rules/*.mdc`** — contextual rules (Security, APIs, Architecture, UI, QA — numbering scheme in `000-cursor-rules.mdc`).
-4. **`docs/adr/`** — architecture decisions (0001 state management … 0007 heuristic inference layer).
+4. **`docs/adr/`** — architecture decisions (0001 state management … 0008 multi-provider architecture).
 
 ## Technology Stack
 
-| Area                 | Technology                                                                                           |
-| -------------------- | ---------------------------------------------------------------------------------------------------- |
-| Framework / Language | React 19 (Suspense, lazy views), TypeScript 5.8 **strict**                                           |
-| Build                | Vite 6 (+ `rollup-plugin-visualizer`, terser)                                                        |
-| State                | Redux Toolkit 2 + RTK Query (`apiSlice` = researchApi, `geminiApiSlice` = geminiApi)                 |
-| Local DB             | Dexie 4 + dexie-react-hooks (IndexedDB), single entry `src/services/databaseService.ts`              |
-| AI                   | `@google/genai` (streaming AsyncGenerators) **or** local heuristic inference layer                   |
-| Styling              | Tailwind CSS v4 (`@tailwindcss/postcss`), "Cybernetic" glassmorphism design system                   |
-| UI extras            | Framer Motion 12, lucide-react, cmdk (`⌘+K` palette), @tanstack/react-virtual                        |
-| Charts               | Recharts (ADR 0005 — Recharts-only; do not re-add Chart.js)                                          |
-| Export / sanitize    | jsPDF + marked, DOMPurify                                                                            |
-| Tests                | Vitest + Testing Library (jsdom), Playwright (Chromium)                                              |
-| Toolchain            | Node **≥22**, pnpm **11** (`packageManager: pnpm@11.13.1`), ESLint 9 + Prettier, husky + lint-staged |
+| Area                 | Technology                                                                                                           |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| Framework / Language | React 19 (Suspense, lazy views), TypeScript 5.8 **strict**                                                           |
+| Build                | Vite 6 (+ `rollup-plugin-visualizer`, terser)                                                                        |
+| State                | Redux Toolkit 2 + RTK Query (`apiSlice` = researchApi, `geminiApiSlice` = geminiApi)                                 |
+| Local DB             | Dexie 4 + dexie-react-hooks (IndexedDB), single entry `src/services/databaseService.ts`                              |
+| AI                   | `@google/genai`, `openai`, `@anthropic-ai/sdk` (lazy-loaded), Ollama `fetch`, **or** local heuristic inference layer |
+| Styling              | Tailwind CSS v4 (`@tailwindcss/postcss`), "Cybernetic" glassmorphism design system                                   |
+| UI extras            | Framer Motion 12, lucide-react, cmdk (`⌘+K` palette), @tanstack/react-virtual                                        |
+| Charts               | Recharts (ADR 0005 — Recharts-only; do not re-add Chart.js)                                                          |
+| Export / sanitize    | jsPDF + marked, DOMPurify                                                                                            |
+| Tests                | Vitest + Testing Library (jsdom), Playwright (Chromium)                                                              |
+| Toolchain            | Node **≥22**, pnpm **11** (`packageManager: pnpm@11.13.1`), ESLint 9 + Prettier, husky + lint-staged                 |
 
 ## Runtime Architecture
 
 - **Agentic pipeline**: implemented in **`src/services/geminiService.ts`** (AsyncGenerator `generateResearchReportStream`): query generation → PubMed/optional arXiv fetch → ranking → streaming synthesis. `App.tsx` `getAgentForPhase()` maps phases to **conceptual agent roles** for the trace/debug UI (QueryGenerator, PubMedFetcher, ArxivFetcher, Ranker, Synthesizer) — these are prompt/phase roles, not separate SDK processes.
+- **AI provider layer**: transport adapters live in `src/services/providers/` (`gemini.ts`, `openai.ts`, `anthropic.ts`, `ollama.ts`, `heuristic.ts`) and are loaded lazily via `getProviderForSettings()` so SDKs do not inflate the initial bundle. `geminiService.ts` remains the feature façade and routes AI calls through the selected provider.
 - **InferenceMode** `live | heuristic`: derived from API-key presence, `navigator.onLine`, and an optional Force-Heuristic toggle (`src/services/inferenceMode.ts`, `resolveActiveInferenceMode.ts`, hook `useInferenceMode`). Without a key or offline, the app **never** throws `NO_API_KEY` into an empty UI — the deterministic heuristic layer (`src/services/heuristics/`: query formulation, lexical ranking, template synthesis, extractive TL;DR, report-grounded chat, author/journal tools, demo corpus) keeps every feature usable (ADR 0007).
 - **State**: Redux is the single source of truth (slices: settings, ui, knowledgeBase, collections, theme, agentDebug + RTK Query slices). Contexts only hydrate/compose: `SettingsProvider` hydrates IndexedDB → Redux once; `KnowledgeBaseContext`/`PresetContext` compose Dexie + Redux actions; `UIContext` is a barrel. **Never duplicate** the same flags in Context and Redux.
 - **Resilience**: external calls use typed `AppError`/`toAppError` (`src/lib/errors.ts`), circuit breakers (`src/lib/circuitBreaker.ts` — never retry `AbortError`), exponential backoff honoring `Retry-After` (`src/lib/resilience.ts`, `pubmedUtils.ts`). See `.cursor/rules/102-resilience-external-calls.mdc`.
-- **Security model**: Gemini key (39 chars, prefix `AIza`) and optional NCBI key are entered in Settings → AI Configuration and stored **AES-GCM encrypted** in IndexedDB via `apiKeyService.ts`. Keys are **not** env secrets — `.env.example` is documentation only; never put secrets in `VITE_*` (client-visible). Threat model: `SECURITY.md` + ADR 0003.
+- **Security model**: provider API keys (Gemini `AIza…`, OpenAI `sk-…`, Anthropic `sk-ant-…`) and the optional NCBI key are entered in Settings → AI Configuration and stored **AES-GCM encrypted** in IndexedDB via `apiKeyService.ts` (per-provider storage slot, legacy key migrates to Gemini slot). Keys are **not** env secrets — `.env.example` is documentation only; never put secrets in `VITE_*` (client-visible). Threat model: `SECURITY.md` + ADR 0003.
 - **PWA**: service worker `public/sw.js`, `public/manifest.json`; production SPA routing via `404.html` fallback. `index.html` carries a CSP meta (hashes for inline JSON-LD/importmap) and an import map loading React & co. from `aistudiocdn.com`; `pnpm run build` runs `scripts/patch-csp-hashes.mjs` to re-hash after bundling.
 
 ## Code Organization
@@ -60,13 +61,14 @@ src/
   i18n/translations.ts   # EN + DE strings (both locales required for new UI text)
   lib/                   # errors, circuitBreaker, resilience, promptRegistry, promptSanitize,
                          # parseGeminiJson, researchCheckpoint, agentEval, heuristicEval, …
-  services/              # geminiService, apiKeyService, databaseService, pubmedUtils, arxivUtils,
-                         # exportService, journalService, inferenceMode, researchOrchestratorAdapter,
+  services/              # geminiService (feature façade), apiKeyService, databaseService, pubmedUtils,
+                         # arxivUtils, exportService, journalService, inferenceMode,
+                         # researchOrchestratorAdapter, providers/ (transport adapters),
                          # heuristics/ (offline inference layer)
   store/                 # store.ts, hooks.ts, slices/ (one slice per domain + *.test.ts)
   test/                  # setup.ts (IndexedDB + crypto mocks), e2e/ (agent-flow, smoke specs)
 scripts/                 # patch-csp-hashes, check-bundle-budget, generate-pwa-icons
-docs/adr/                # Architecture Decision Records 0001–0007
+docs/adr/                # Architecture Decision Records 0001–0008
 ```
 
 ## Build, Test & Quality Commands

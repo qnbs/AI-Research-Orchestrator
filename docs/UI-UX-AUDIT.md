@@ -12,13 +12,14 @@ The AI Research Orchestrator implements a sophisticated "Cybernetic Glassmorphis
 
 **Three distinct themes implemented:**
 
-| Theme | Purpose | Key Characteristics |
-|-------|---------|-------------------|
-| **Ink Dark** (default) | Primary dark mode | Teal/slate palette, deep backgrounds (`#070b12`), glass panels with `backdrop-filter: blur(24px)` |
-| **Paper Light** | Light mode alternative | Light backgrounds (`#eef3f7`), higher contrast text (`#0f172a`), softer shadows |
-| **Matrix Green** | Cyberpunk aesthetic | Matrix-green accents (`#34d399`), scanline effects, terminal-inspired visuals |
+| Theme                  | Purpose                | Key Characteristics                                                                               |
+| ---------------------- | ---------------------- | ------------------------------------------------------------------------------------------------- |
+| **Ink Dark** (default) | Primary dark mode      | Teal/slate palette, deep backgrounds (`#070b12`), glass panels with `backdrop-filter: blur(24px)` |
+| **Paper Light**        | Light mode alternative | Light backgrounds (`#eef3f7`), higher contrast text (`#0f172a`), softer shadows                   |
+| **Matrix Green**       | Cyberpunk aesthetic    | Matrix-green accents (`#34d399`), scanline effects, terminal-inspired visuals                     |
 
 **CSS Custom Properties:**
+
 - Consistent token system: `--color-background`, `--color-surface`, `--color-border`, `--color-text-primary/secondary`
 - Semantic color tokens: `--color-danger`, `--color-success`, `--color-warning`, `--color-info`
 - Shadow system: `--shadow-sm`, `--shadow-md`, `--shadow-lg`, `--shadow-glow`
@@ -28,12 +29,14 @@ The AI Research Orchestrator implements a sophisticated "Cybernetic Glassmorphis
 ### 1.2 Glassmorphism Implementation
 
 **Depth Levels (`.glass-1` through `.glass-4`):**
+
 - `glass-1`: 4px blur (subtle elevation)
 - `glass-2`: 12px blur (standard panels)
 - `glass-3`: 24px blur (deep panels)
 - `glass-4`: 40px blur (modal/overlay surfaces)
 
 **Component Applications:**
+
 - `.agent-card`: 24px blur with left accent border, status-based coloring
 - `.kb-item`: 20px blur with relevance indicator bar
 - `.glass-elevated`: 40px blur for deep elevation
@@ -42,6 +45,7 @@ The AI Research Orchestrator implements a sophisticated "Cybernetic Glassmorphis
 ### 1.3 Animation System
 
 **Key Animations:**
+
 - `neonFlicker`: Subtle opacity flicker for live indicators
 - `pulseGlow`: Expanding glow effect for focus states
 - `pipelineFlow`: Horizontal progress bar animation
@@ -50,6 +54,7 @@ The AI Research Orchestrator implements a sophisticated "Cybernetic Glassmorphis
 - `fadeIn/slideIn*`: View transition animations
 
 **Reduced Motion Support:**
+
 - `.no-animations *` utility class disables all animations
 - Respects `prefers-reduced-motion` media query
 
@@ -60,6 +65,7 @@ The AI Research Orchestrator implements a sophisticated "Cybernetic Glassmorphis
 ### 2.1 ARIA Implementation
 
 **Proper ARIA patterns observed:**
+
 - `role="list"` and `role="listitem"` for pipeline steps
 - `aria-label` for navigation regions
 - `aria-expanded` and `aria-controls` for accordion components
@@ -70,6 +76,7 @@ The AI Research Orchestrator implements a sophisticated "Cybernetic Glassmorphis
 ### 2.2 Keyboard Navigation
 
 **Implemented patterns:**
+
 - Focus trap for modals (`useFocusTrap` hook)
 - Tab navigation through settings tabs
 - Keyboard shortcuts: `Ctrl+K` for command palette
@@ -89,6 +96,7 @@ The AI Research Orchestrator implements a sophisticated "Cybernetic Glassmorphis
 ### 3.1 Breakpoint Strategy
 
 **Mobile-first approach:**
+
 - Mobile: Bottom navigation bar (`BottomNavBar.tsx`)
 - Desktop (≥768px): Sidebar filters in Knowledge Base
 - Desktop (≥1024px): Full header navigation
@@ -96,11 +104,13 @@ The AI Research Orchestrator implements a sophisticated "Cybernetic Glassmorphis
 ### 3.2 Component Responsiveness
 
 **Knowledge Base View:**
+
 - Sidebar hidden on mobile (`hidden md:block`)
 - Flexible article list with `flex-1 min-w-0`
 - Responsive grid for filters and charts
 
 **Settings View:**
+
 - Tab list on left (`md:col-span-1`)
 - Tab panels on right (`md:col-span-3`)
 - Stacked layout on mobile
@@ -112,6 +122,7 @@ The AI Research Orchestrator implements a sophisticated "Cybernetic Glassmorphis
 ### 4.1 Context + SubComponents Pattern
 
 **AuthorsView:**
+
 ```
 AuthorsView.tsx
 ├── AuthorsViewContext.tsx (context provider)
@@ -124,6 +135,7 @@ AuthorsView.tsx
 ```
 
 **JournalsView:**
+
 ```
 JournalsView.tsx
 ├── JournalsViewContext.tsx
@@ -135,6 +147,7 @@ JournalsView.tsx
 ```
 
 **KnowledgeBaseView:**
+
 ```
 KnowledgeBaseView.tsx
 ├── KnowledgeBaseViewContext.tsx
@@ -150,6 +163,7 @@ KnowledgeBaseView.tsx
 ### 4.2 Reusable UI Primitives
 
 Located in `src/components/ui/` and `src/components/`:
+
 - `EmptyState.tsx`: Consistent empty state with icon, title, message, action
 - `LoadingIndicator.tsx`: Multi-phase loading with progress visualization
 - `ConfirmationModal.tsx`: Reusable modal with focus trap
@@ -162,28 +176,28 @@ Located in `src/components/ui/` and `src/components/`:
 
 ### 5.1 Authors Hub (Complete)
 
-| Feature | Status | Implementation |
-|---------|--------|----------------|
-| Search by author name | ✅ | `handleSearch` in `useAuthorsViewLogic.ts` |
-| Author disambiguation | ✅ | `disambiguateAuthor` → `DisambiguationView` |
-| Featured authors | ✅ | RTK Query `useGetFeaturedAuthorsQuery` |
-| Author suggestions | ✅ | `suggestAuthors` in `geminiService.ts` |
-| Profile analysis | ✅ | `generateAuthorProfileAnalysis` |
-| Career timeline | ✅ | Computed from article publication years |
-| Citation metrics | ✅ | Estimated from publication age |
+| Feature               | Status | Implementation                              |
+| --------------------- | ------ | ------------------------------------------- |
+| Search by author name | ✅     | `handleSearch` in `useAuthorsViewLogic.ts`  |
+| Author disambiguation | ✅     | `disambiguateAuthor` → `DisambiguationView` |
+| Featured authors      | ✅     | RTK Query `useGetFeaturedAuthorsQuery`      |
+| Author suggestions    | ✅     | `suggestAuthors` in `geminiService.ts`      |
+| Profile analysis      | ✅     | `generateAuthorProfileAnalysis`             |
+| Career timeline       | ✅     | Computed from article publication years     |
+| Citation metrics      | ✅     | Estimated from publication age              |
 
 ### 5.2 Journals Hub (Incomplete)
 
-| Feature | Status | Implementation |
-|---------|--------|----------------|
-| Search by journal name | ✅ | `handleAnalyzeJournal` in `useJournalsViewLogic.ts` |
-| Journal profile analysis | ✅ | `generateJournalProfileAnalysis` (Gemini + heuristic fallback) |
-| Featured journals grid | ✅ | RTK Query `useGetFeaturedJournalsQuery` |
-| **Suggest journals** | ❌ | Missing — no `suggestJournals` function |
-| **Journal disambiguation** | ❌ | Missing — no `disambiguateJournal` function |
-| **Rich profile view** | ⚠️ | Basic profile only, no detailed metrics |
-| **Impact factor display** | ❌ | Not implemented |
-| **Open access timeline** | ❌ | Not implemented |
+| Feature                    | Status | Implementation                                                 |
+| -------------------------- | ------ | -------------------------------------------------------------- |
+| Search by journal name     | ✅     | `handleAnalyzeJournal` in `useJournalsViewLogic.ts`            |
+| Journal profile analysis   | ✅     | `generateJournalProfileAnalysis` (Gemini + heuristic fallback) |
+| Featured journals grid     | ✅     | RTK Query `useGetFeaturedJournalsQuery`                        |
+| **Suggest journals**       | ❌     | Missing — no `suggestJournals` function                        |
+| **Journal disambiguation** | ❌     | Missing — no `disambiguateJournal` function                    |
+| **Rich profile view**      | ⚠️     | Basic profile only, no detailed metrics                        |
+| **Impact factor display**  | ❌     | Not implemented                                                |
+| **Open access timeline**   | ❌     | Not implemented                                                |
 
 ---
 
@@ -192,6 +206,7 @@ Located in `src/components/ui/` and `src/components/`:
 ### 6.1 Translation Coverage
 
 **Current State:**
+
 - ~120 translation keys in `src/i18n/translations.ts`
 - English: 100% complete
 - German: ~60% complete (partial coverage)
@@ -199,14 +214,17 @@ Located in `src/components/ui/` and `src/components/`:
 ### 6.2 Hardcoded Strings (Critical Issues)
 
 **HelpView.tsx:**
+
 - All guide topics, FAQ items, and glossary entries are hardcoded
 - ~60+ strings need extraction to translations
 
 **OnboardingView.tsx:**
+
 - All step card content is hardcoded
 - ~15 strings need extraction
 
 **SettingsView.tsx:**
+
 - "About & Features" and "FAQ & Shortcuts" button labels hardcoded
 - Tab names partially hardcoded (should use `t()`)
 
@@ -219,11 +237,13 @@ Located in `src/components/ui/` and `src/components/`:
 **Root Cause:** The test expects an empty state message but demo data is seeded on first launch.
 
 **Evidence from error-context.md:**
+
 - Page shows "5 Articles Found" heading
 - Demo data banner is present: "Demo data · Heuristic mode..."
 - Knowledge Base has 5 articles from demo seed
 
 **Fix Required:**
+
 - Either clear demo data before test, or
 - Update test assertion to account for demo-seeded state
 
@@ -232,11 +252,13 @@ Located in `src/components/ui/` and `src/components/`:
 **Root Cause:** Button text mismatch between test expectation and actual UI.
 
 **Evidence:**
+
 - Test looks for "Speichern" (German) button
 - UI shows "Save" (English) button
 - Error message appears but button text assertion fails
 
 **Fix Required:**
+
 - Use i18n-aware selector or
 - Use English button text in test
 
@@ -277,6 +299,7 @@ Located in `src/components/ui/` and `src/components/`:
 ### 9.2 Color Contrast
 
 All themes maintain WCAG AA contrast ratios:
+
 - Text on surface: ≥4.5:1
 - Accent on surface: ≥3:1
 - Focus indicators: Visible with `--focus-ring`
@@ -284,6 +307,7 @@ All themes maintain WCAG AA contrast ratios:
 ### 9.3 Spacing System
 
 Consistent use of Tailwind spacing:
+
 - Container padding: `px-4 sm:px-6 lg:px-8`
 - Section gaps: `space-y-6` to `space-y-12`
 - Component padding: `p-4` to `p-8`
@@ -308,4 +332,4 @@ Consistent use of Tailwind spacing:
 
 ---
 
-*Audit completed: Comprehensive analysis of design system, accessibility, component architecture, and identified gaps.*
+_Audit completed: Comprehensive analysis of design system, accessibility, component architecture, and identified gaps._

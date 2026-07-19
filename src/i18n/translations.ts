@@ -206,6 +206,26 @@ export const translations = {
     'apikey.instructions.step4': 'Paste the key here and save',
     'apikey.instructions.cost_note':
       'Gemini API usage may incur costs. Monitor usage in Google Cloud / AI Studio.',
+    'apikey.provider.no_key_required': 'No API key required.',
+    'apikey.provider.heuristic_desc': 'All AI features run locally with deterministic heuristics.',
+    'apikey.provider.local_desc': 'Runs against your local or self-hosted endpoint.',
+    'apikey.status.provider_configured': '{provider} API key configured',
+    'apikey.status.provider_not_configured': 'No {provider} API key configured',
+    'apikey.status.provider_prompt_start': 'Enter your',
+    'apikey.status.provider_prompt_end': 'to enable AI research features.',
+    'apikey.label.provider_update': 'Update {provider} API key',
+    'apikey.label.provider_enter': 'Enter {provider} API key',
+    'apikey.instructions.provider_title': 'How to get a {provider} API key:',
+    'apikey.instructions.provider_cost_note':
+      '{provider} API usage may incur costs. Monitor usage in your provider dashboard.',
+    'settings.ai.provider': 'AI Provider',
+    'settings.ai.provider_desc':
+      'Choose the AI backend. Gemini is the default; other providers require their own API key or a local endpoint.',
+    'settings.ai.model': 'AI Model',
+    'settings.ai.model_desc': 'Enter any model identifier supported by {provider}.',
+    'settings.ai.base_url': 'Base URL',
+    'settings.ai.base_url_desc':
+      'Optional. Change this to use a proxy, OpenRouter-compatible endpoint, or a different Ollama host.',
     'onboarding.welcome_prefix': 'Welcome to the',
     'onboarding.welcome_highlight': 'Future of Research',
     'onboarding.subtitle': 'Your intelligent assistant for scientific literature reviews.',
@@ -494,6 +514,28 @@ export const translations = {
     'apikey.instructions.step4': 'Fügen Sie den Schlüssel hier ein und speichern Sie',
     'apikey.instructions.cost_note':
       'Die Nutzung der Gemini-API kann Kosten verursachen. Überwachen Sie die Nutzung in Google Cloud / AI Studio.',
+    'apikey.provider.no_key_required': 'Kein API-Key erforderlich.',
+    'apikey.provider.heuristic_desc':
+      'Alle KI-Funktionen laufen lokal mit deterministischen Heuristiken.',
+    'apikey.provider.local_desc': 'Läuft gegen Ihren lokalen oder selbst gehosteten Endpunkt.',
+    'apikey.status.provider_configured': '{provider}-API-Key konfiguriert',
+    'apikey.status.provider_not_configured': 'Kein {provider}-API-Key konfiguriert',
+    'apikey.status.provider_prompt_start': 'Geben Sie Ihren',
+    'apikey.status.provider_prompt_end': 'ein, um KI-Forschungsfunktionen zu aktivieren.',
+    'apikey.label.provider_update': '{provider}-API-Key aktualisieren',
+    'apikey.label.provider_enter': '{provider}-API-Key eingeben',
+    'apikey.instructions.provider_title': 'So erhalten Sie einen {provider}-API-Key:',
+    'apikey.instructions.provider_cost_note':
+      'Die Nutzung der {provider}-API kann Kosten verursachen. Überwachen Sie die Nutzung im Dashboard Ihres Anbieters.',
+    'settings.ai.provider': 'KI-Anbieter',
+    'settings.ai.provider_desc':
+      'Wählen Sie das KI-Backend. Gemini ist der Standard; andere Anbieter erfordern einen eigenen API-Key oder einen lokalen Endpunkt.',
+    'settings.ai.model': 'KI-Modell',
+    'settings.ai.model_desc':
+      'Geben Sie eine beliebige Modellkennung ein, die {provider} unterstützt.',
+    'settings.ai.base_url': 'Basis-URL',
+    'settings.ai.base_url_desc':
+      'Optional. Ändern Sie dies, um einen Proxy, einen OpenRouter-kompatiblen Endpunkt oder einen anderen Ollama-Host zu verwenden.',
     'onboarding.welcome_prefix': 'Willkommen in der',
     'onboarding.welcome_highlight': 'Zukunft der Recherche',
     'onboarding.subtitle': 'Ihr intelligenter Assistent für wissenschaftliche Literaturrecherchen.',

@@ -58,4 +58,23 @@
 
 ## Impact
 
-- package **0.2.1** on `main`; next work is P3 vision items only (no open P0–P2 audit gaps).
+- Heuristic inference available in production build; ADR 0007 accepted.
+
+---
+
+# 2026-07-19 — Multi-provider AI architecture
+
+## Decisions
+
+- Implement provider-agnostic transport layer under `src/services/providers/` with lazy-loaded adapters for Gemini, OpenAI, Anthropic, Ollama, and heuristic.
+- Keep `geminiService.ts` as the feature façade; route AI calls through `getProviderForSettings()`.
+- Extend `Settings.ai` with `provider` and `customBaseUrl`; default missing values to Gemini.
+- Move `apiKeyService.ts` to per-provider encrypted storage slots; migrate legacy `encrypted-api-key` to Gemini slot.
+- Generalize errors to `PROVIDER_*` codes while keeping `GEMINI_*` aliases for backward compatibility.
+- Widen CSP `connect-src` for OpenAI, OpenRouter, Anthropic, and `localhost:11434`.
+- **Deferred:** E2E specs for provider-flow and journal-hub; coverage hotspots (`heuristics/chat.ts`, `heuristics/journalProfiling.ts`, `researchStream.ts`); settings export/import round-trip test. Documented in ADR 0008 and AUDIT for follow-up.
+
+## Impact
+
+- ADR 0008 accepted; README, AGENTS, CHANGELOG, AUDIT updated.
+- User-facing: Settings → AI Provider selects backend; OpenRouter/Ollama supported; heuristic remains zero-cost fallback.

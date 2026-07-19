@@ -178,7 +178,10 @@ export interface Settings {
     duration: number; // in ms
   };
   ai: {
-    model: 'gemini-2.5-flash';
+    /** Active AI provider selection. Defaults to 'gemini' when absent (migration). */
+    provider?: import('./services/providers/types').AIProviderSelection;
+    /** Provider-specific model identifier. */
+    model: string;
     customPreamble: string;
     temperature: number;
     aiLanguage: 'English' | 'German' | 'French' | 'Spanish';
@@ -193,9 +196,11 @@ export interface Settings {
     ncbiApiKey: string;
     /**
      * When true, always use the local heuristic inference layer
-     * even if a Gemini API key and network are available.
+     * even if an API key and network are available.
      */
     forceHeuristicMode: boolean;
+    /** Optional custom base URL for OpenAI-compatible or Ollama backends. */
+    customBaseUrl?: string;
   };
   defaults: {
     maxArticlesToScan: number;

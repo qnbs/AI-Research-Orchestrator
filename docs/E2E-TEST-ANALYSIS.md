@@ -14,9 +14,11 @@ Three E2E tests are failing due to mismatches between test expectations and actu
 ## Failure 1: Page Title Mismatch
 
 ### Test Location
+
 `src/test/e2e/agent-flow.spec.ts:117-120`
 
 ### Current Test Code
+
 ```typescript
 test('page has correct title', async ({ page }) => {
   await page.goto('/');
@@ -26,10 +28,12 @@ test('page has correct title', async ({ page }) => {
 ```
 
 ### Actual Behavior
+
 - **Expected Pattern:** `/AI Research Orchestration Author/i`
 - **Actual Title:** `"Home | Research Orchestrator"`
 
 ### Root Cause Analysis
+
 1. **HTML Title Tag** (`index.html:14`): `<title>AI Research Orchestration Author</title>`
 2. **Runtime Title Update** (`src/App.tsx:188`): `document.title = \`${viewTitles[currentView] || t('nav.research')} | ${t('app.name')}\``
 3. **Translation Key** (`src/i18n/translations.ts:3`): `'app.name': 'Research Orchestrator'`
@@ -38,6 +42,7 @@ test('page has correct title', async ({ page }) => {
 The test expects the static HTML title, but the application dynamically updates the title to include the current view name and app name.
 
 ### Evidence
+
 ```
 Error: expect(page).toHaveTitle(expected) failed
 
@@ -48,6 +53,7 @@ Received string:  "Home | Research Orchestrator"
 ### Fix Options
 
 **Option A: Update Test to Match Dynamic Title**
+
 ```typescript
 test('page has correct title', async ({ page }) => {
   await page.goto('/');
@@ -57,6 +63,7 @@ test('page has correct title', async ({ page }) => {
 ```
 
 **Option B: Test Static Title Before App Hydration**
+
 ```typescript
 test('page has correct title', async ({ page }) => {
   await page.goto('/');
@@ -71,9 +78,11 @@ test('page has correct title', async ({ page }) => {
 ## Failure 2: Knowledge Base Empty State Not Detected
 
 ### Test Location
+
 `src/test/e2e/agent-flow.spec.ts:327-338`
 
 ### Current Test Code
+
 ```typescript
 test('KB shows empty-state message when no data saved', async ({ page }) => {
   // Clear any existing data to test true empty state
@@ -81,7 +90,9 @@ test('KB shows empty-state message when no data saved', async ({ page }) => {
     try {
       localStorage.removeItem('aro.demoDataSeeded');
       localStorage.removeItem('aro.demoDataDismissed');
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   });
   await navigateToView(page, '#knowledgeBase');
   await expect(
@@ -91,10 +102,12 @@ test('KB shows empty-state message when no data saved', async ({ page }) => {
 ```
 
 ### Actual Behavior
+
 - **Error:** `Locator: getByText(/empty|no articles|save reports|start research/i).first()` - Element not found
 - **Timeout:** 10 seconds exceeded
 
 ### Root Cause Analysis
+
 1. **skipOnboarding Function** (`src/test/e2e/agent-flow.spec.ts:27-32`): Sets `aro.demoDataSeeded = '1'` which seeds demo data
 2. **KnowledgeBaseView Component** (`src/components/KnowledgeBaseView.tsx:51-54`): Shows hardcoded English strings
 3. **EmptyState Component** (`src/components/EmptyState.tsx:25`): Renders title and message as plain text
@@ -102,6 +115,7 @@ test('KB shows empty-state message when no data saved', async ({ page }) => {
 The test attempts to clear localStorage, but the `navigateToView` helper may not properly handle the state transition, or the demo data seeding happens at a different layer.
 
 ### Evidence
+
 ```
 Error: expect(locator).toBeVisible() failed
 
@@ -112,6 +126,7 @@ Error: element(s) not found
 ```
 
 ### Component Strings (Hardcoded - Not i18n)
+
 ```tsx
 // src/components/KnowledgeBaseView.tsx:51-54
 <EmptyState
@@ -128,15 +143,18 @@ Error: element(s) not found
 ### Fix Options
 
 **Option A: Match Hardcoded Strings**
+
 ```typescript
 test('KB shows empty-state message when no data saved', async ({ page }) => {
   await page.evaluate(() => {
     try {
       localStorage.setItem('aro.demoDataDismissed', '1');
       // Do NOT set aro.demoDataSeeded to test true empty state
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   });
-  
+
   const startBtn = page.getByRole('button', { name: /start researching/i });
   const header = page.locator('header');
   await Promise.race([
@@ -152,6 +170,7 @@ test('KB shows empty-state message when no data saved', async ({ page }) => {
 ```
 
 **Option B: Add i18n Keys and Update Test**
+
 ```typescript
 // Add to translations.ts:
 'knowledgebase.empty.title': 'Your Knowledge Base is Empty',
@@ -164,9 +183,11 @@ test('KB shows empty-state message when no data saved', async ({ page }) => {
 ## Failure 3: Invalid API Key Format Error Not Displayed
 
 ### Test Location
+
 `src/test/e2e/agent-flow.spec.ts:413-420`
 
 ### Current Test Code
+
 ```typescript
 test('invalid key format shows error after save', async ({ page }) => {
   const input = page.locator('#api-key-input');
@@ -183,15 +204,19 @@ test('invalid key format shows error after save', async ({ page }) => {
 ```
 
 ### Actual Behavior
+
 - **Error:** Test timeout or element not found (incomplete in log)
 
 ### Root Cause Analysis
+
 1. **Button Text** (`src/components/settings/ApiKeySettings.tsx:267`): Hardcoded `'Save'` and `'Save NCBI key'` - NOT using i18n
 2. **Error Message** (`src/components/settings/ApiKeySettings.tsx:73`): Uses `t('apikey.invalid')` but key doesn't exist in translations
 3. **Validation Function** (`src/services/apiKeyService.ts`): Validates format with `validateApiKeyFormat()`
 
 ### Evidence
+
 The `apikey.*` translation keys referenced in `ApiKeySettings.tsx` do not exist in `src/i18n/translations.ts`. The component calls:
+
 - `t('apikey.required')` - line 68
 - `t('apikey.invalid')` - line 72
 - `t('apikey.saved')` - line 80
@@ -207,6 +232,7 @@ The `apikey.*` translation keys referenced in `ApiKeySettings.tsx` do not exist 
 None of these keys exist in the translations file.
 
 ### Missing Translation Keys
+
 ```typescript
 // Required additions to src/i18n/translations.ts:
 'apikey.required': 'API key is required.',
@@ -228,14 +254,15 @@ None of these keys exist in the translations file.
 Add the missing `apikey.*` keys to both `en` and `de` sections in `src/i18n/translations.ts`.
 
 **Option B: Update Test to Match Hardcoded Strings**
+
 ```typescript
 test('invalid key format shows error after save', async ({ page }) => {
   const input = page.locator('#api-key-input');
   await input.fill('BAD_KEY');
-  
+
   // Button has hardcoded "Save" text
   await page.getByRole('button', { name: /save/i }).first().click();
-  
+
   // Error message appears in red text below input
   await expect(page.locator('.text-red-400').first()).toBeVisible({ timeout: 5_000 });
 });
@@ -245,25 +272,28 @@ test('invalid key format shows error after save', async ({ page }) => {
 
 ## Test Results Summary
 
-| Test # | Suite | Test Name | Status | Issue |
-|--------|-------|-----------|--------|-------|
-| 1 | Application Bootstrap | page has correct title | ❌ FAIL | Title pattern mismatch |
-| 2-38 | Various | All other tests | ✅ PASS | - |
-| 19 | Knowledge Base View | KB shows empty-state message when no data saved | ❌ FAIL | Element not found |
-| 25 | Settings — API Key | invalid key format shows error after save | ❌ FAIL | Missing i18n keys |
+| Test # | Suite                 | Test Name                                       | Status  | Issue                  |
+| ------ | --------------------- | ----------------------------------------------- | ------- | ---------------------- |
+| 1      | Application Bootstrap | page has correct title                          | ❌ FAIL | Title pattern mismatch |
+| 2-38   | Various               | All other tests                                 | ✅ PASS | -                      |
+| 19     | Knowledge Base View   | KB shows empty-state message when no data saved | ❌ FAIL | Element not found      |
+| 25     | Settings — API Key    | invalid key format shows error after save       | ❌ FAIL | Missing i18n keys      |
 
 ---
 
 ## Additional Observations
 
 ### Hardcoded Strings in Settings Component
+
 The `ApiKeySettings.tsx` component has multiple hardcoded English strings that should use i18n:
+
 - Line 267: `'Save'` / `'Saving...'`
 - Line 271: `'Remove'`
 - Line 277: `'Save NCBI key'`
 - Line 281: `'Remove'`
 
 ### Missing i18n Integration
+
 The component imports `useTranslation` but the `apikey.*` keys are not defined, causing `t()` calls to return `undefined` or fallback values.
 
 ---
@@ -277,4 +307,4 @@ The component imports `useTranslation` but the `apikey.*` keys are not defined, 
 
 ---
 
-*Document created: 2026-07-19*
+_Document created: 2026-07-19_

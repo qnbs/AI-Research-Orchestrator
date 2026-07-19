@@ -15,15 +15,19 @@ export interface InferenceModeSnapshot {
   hasApiKey: boolean;
   isOnline: boolean;
   forceHeuristic: boolean;
+  /** Currently selected provider (or 'heuristic'). */
+  provider: import('./providers/types').AIProviderSelection;
 }
 
 export interface ResolveInferenceModeInput {
   /** User toggle from Settings → AI. */
   forceHeuristic: boolean;
-  /** Whether a Gemini key is stored and decryptable. */
+  /** Whether the active provider's key is stored and decryptable. */
   hasApiKey: boolean;
   /** `navigator.onLine` (or injectable equivalent). */
   isOnline: boolean;
+  /** Currently selected provider or heuristic mode. */
+  provider?: import('./providers/types').AIProviderSelection;
 }
 
 /**
@@ -32,14 +36,16 @@ export interface ResolveInferenceModeInput {
  */
 export function resolveInferenceMode(input: ResolveInferenceModeInput): InferenceModeSnapshot {
   const { forceHeuristic, hasApiKey, isOnline } = input;
+  const provider = input.provider ?? 'gemini';
 
-  if (forceHeuristic) {
+  if (forceHeuristic || provider === 'heuristic') {
     return {
       mode: 'heuristic',
       reason: 'force',
       hasApiKey,
       isOnline,
       forceHeuristic,
+      provider,
     };
   }
   if (!hasApiKey) {
@@ -49,6 +55,7 @@ export function resolveInferenceMode(input: ResolveInferenceModeInput): Inferenc
       hasApiKey,
       isOnline,
       forceHeuristic,
+      provider,
     };
   }
   if (!isOnline) {
@@ -58,6 +65,7 @@ export function resolveInferenceMode(input: ResolveInferenceModeInput): Inferenc
       hasApiKey,
       isOnline,
       forceHeuristic,
+      provider,
     };
   }
   return {
@@ -66,12 +74,16 @@ export function resolveInferenceMode(input: ResolveInferenceModeInput): Inferenc
     hasApiKey,
     isOnline,
     forceHeuristic,
+    provider,
   };
 }
 
 /** Human-readable short English label for badges (prefer i18n keys in UI). */
 export function inferenceModeBadgeLabel(snapshot: InferenceModeSnapshot): string {
-  if (snapshot.mode === 'live') return 'Live · Gemini';
+  if (snapshot.mode === 'live') {
+    const label = snapshot.provider === 'gemini' ? 'Gemini' : snapshot.provider;
+    return `Live · ${label.charAt(0).toUpperCase() + label.slice(1)}`;
+  }
   switch (snapshot.reason) {
     case 'force':
       return 'Heuristic · Forced';

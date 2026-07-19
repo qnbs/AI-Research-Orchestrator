@@ -6,7 +6,7 @@ import {
   isZeroCostMode,
   type InferenceModeSnapshot,
 } from '../services/resolveActiveInferenceMode';
-import { hasApiKey } from '../services/apiKeyService';
+import { hasProviderApiKey } from '../services/apiKeyService';
 
 /**
  * Subscribes to online/offline events and settings to expose the active inference mode.
@@ -16,13 +16,16 @@ export function useInferenceMode(): InferenceModeSnapshot & {
   isZeroCost: boolean;
   refresh: () => Promise<void>;
 } {
-  const forceHeuristic = useAppSelector((s) => s.settings.data.ai.forceHeuristicMode ?? false);
+  const ai = useAppSelector((s) => s.settings.data.ai);
+  const forceHeuristic = ai.forceHeuristicMode ?? false;
+  const provider = ai.provider ?? 'gemini';
   const [snapshot, setSnapshot] = useState<InferenceModeSnapshot>({
     mode: 'heuristic',
     reason: 'no_api_key',
     hasApiKey: false,
     isOnline: typeof navigator === 'undefined' ? true : navigator.onLine,
     forceHeuristic,
+    provider,
   });
   const requestIdRef = useRef(0);
 
@@ -30,12 +33,13 @@ export function useInferenceMode(): InferenceModeSnapshot & {
     const requestId = ++requestIdRef.current;
     const next = await resolveActiveInferenceMode({
       forceHeuristic,
-      checkApiKey: hasApiKey,
+      provider,
+      checkApiKey: () => hasProviderApiKey(provider === 'heuristic' ? 'gemini' : provider),
       getOnline: () => (typeof navigator === 'undefined' ? true : navigator.onLine),
     });
     if (requestId !== requestIdRef.current) return;
     setSnapshot(next);
-  }, [forceHeuristic]);
+  }, [forceHeuristic, provider]);
 
   useEffect(() => {
     void refresh();

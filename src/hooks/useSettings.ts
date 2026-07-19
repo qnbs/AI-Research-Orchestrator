@@ -27,18 +27,22 @@ function mergeSettingsWithDefaults(
   baseline: Settings,
 ): Settings {
   const storedAi = storedSettings.ai as Partial<Settings['ai']> | undefined;
+  const mergedAi: Settings['ai'] = {
+    ...baseline.ai,
+    ...(storedAi ?? {}),
+    // Migration: legacy persisted settings have no provider/model type.
+    provider: storedAi?.provider ?? baseline.ai.provider ?? 'gemini',
+    model: storedAi?.model ?? baseline.ai.model ?? 'gemini-2.5-flash',
+    ncbiApiKey: '',
+    researchAssistant: {
+      ...baseline.ai.researchAssistant,
+      ...(storedAi?.researchAssistant ?? {}),
+    },
+  };
   return {
     ...baseline,
     ...storedSettings,
-    ai: {
-      ...baseline.ai,
-      ...(storedAi ?? {}),
-      ncbiApiKey: '',
-      researchAssistant: {
-        ...baseline.ai.researchAssistant,
-        ...(storedAi?.researchAssistant ?? {}),
-      },
-    },
+    ai: mergedAi,
   };
 }
 

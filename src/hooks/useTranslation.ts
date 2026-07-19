@@ -9,22 +9,34 @@ export const useTranslation = () => {
   const lang = settings.appLanguage;
 
   const t = useCallback(
-    (key: TranslationKey | (string & {})): string => {
+    (key: TranslationKey | (string & {}), values?: Record<string, string | number>): string => {
       const currentLangTranslations = translations[lang];
       const fallbackTranslations = translations['en'];
 
+      let text: string | undefined;
       if (
         currentLangTranslations &&
         Object.prototype.hasOwnProperty.call(currentLangTranslations, key)
       ) {
-        return currentLangTranslations[key as TranslationKey];
+        text = currentLangTranslations[key as TranslationKey];
+      } else if (
+        fallbackTranslations &&
+        Object.prototype.hasOwnProperty.call(fallbackTranslations, key)
+      ) {
+        text = fallbackTranslations[key as TranslationKey];
       }
 
-      if (fallbackTranslations && Object.prototype.hasOwnProperty.call(fallbackTranslations, key)) {
-        return fallbackTranslations[key as TranslationKey];
+      if (text === undefined) {
+        return key;
       }
 
-      return key;
+      if (!values) {
+        return text;
+      }
+
+      return Object.entries(values).reduce((acc, [k, v]) => {
+        return acc.replace(new RegExp(`\\{${k}\\}`, 'g'), String(v));
+      }, text);
     },
     [lang],
   );
