@@ -89,6 +89,8 @@ export interface AIChatSessionRequest {
   temperature?: number;
   /** Optional custom base URL for OpenAI-compatible or Ollama backends. */
   baseURL?: string;
+  /** Abort signal. */
+  signal?: AbortSignal;
 }
 
 /**

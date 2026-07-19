@@ -201,6 +201,7 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({
               <p className="text-sm text-text-secondary italic mt-1">
                 {onAnalyzeJournal ? (
                   <button
+                    type="button"
                     onClick={() => onAnalyzeJournal(article.journal)}
                     title={t('kb.analyze_journal')}
                     className="hover:text-brand-accent hover:underline transition-colors focus:outline-none focus:ring-1 focus:ring-brand-accent rounded-sm"

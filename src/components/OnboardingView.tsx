@@ -60,6 +60,7 @@ const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete }) => {
         </div>
 
         <button
+          type="button"
           onClick={onComplete}
           className="inline-flex items-center px-8 py-3 border border-transparent text-base font-bold rounded-md shadow-lg text-brand-text-on-accent bg-gradient-to-r from-brand-primary to-accent-cyan hover:shadow-xl hover:shadow-brand-accent/30 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-background focus:ring-brand-accent transform hover:scale-105 transition-all duration-300"
         >

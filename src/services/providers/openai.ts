@@ -49,6 +49,24 @@ function resetClient(): void {
 function mapOpenAIError(error: unknown): AppError {
   if (error instanceof AppError) return error;
 
+  // AbortError must never be retried - user explicitly cancelled
+  if (error instanceof DOMException && error.name === 'AbortError') {
+    return new AppError({
+      code: 'PROVIDER_UNAVAILABLE',
+      message: error.message,
+      retryable: false,
+      cause: error,
+    });
+  }
+  if (error instanceof Error && error.name === 'AbortError') {
+    return new AppError({
+      code: 'PROVIDER_UNAVAILABLE',
+      message: error.message,
+      retryable: false,
+      cause: error,
+    });
+  }
+
   let message = 'An OpenAI API error occurred.';
   let status: number | undefined;
   let code:
@@ -103,13 +121,16 @@ export function createOpenAIProvider(): AIProvider {
       if (request.system) messages.push({ role: 'system', content: request.system });
       messages.push({ role: 'user', content: request.prompt });
 
-      const completion = await openai.chat.completions.create({
-        model: request.model,
-        messages,
-        temperature: request.temperature ?? 0.7,
-        max_tokens: request.maxOutputTokens,
-        response_format: request.json ? { type: 'json_object' } : undefined,
-      });
+      const completion = await openai.chat.completions.create(
+        {
+          model: request.model,
+          messages,
+          temperature: request.temperature ?? 0.7,
+          max_tokens: request.maxOutputTokens,
+          response_format: request.json ? { type: 'json_object' } : undefined,
+        },
+        { signal: request.signal },
+      );
 
       const text = completion.choices[0]?.message?.content ?? '';
       return {
@@ -130,13 +151,16 @@ export function createOpenAIProvider(): AIProvider {
       if (request.system) messages.push({ role: 'system', content: request.system });
       messages.push({ role: 'user', content: request.prompt });
 
-      const stream = await openai.chat.completions.create({
-        model: request.model,
-        messages,
-        temperature: request.temperature ?? 0.7,
-        max_tokens: request.maxOutputTokens,
-        stream: true,
-      });
+      const stream = await openai.chat.completions.create(
+        {
+          model: request.model,
+          messages,
+          temperature: request.temperature ?? 0.7,
+          max_tokens: request.maxOutputTokens,
+          stream: true,
+        },
+        { signal: request.signal },
+      );
 
       for await (const chunk of stream) {
         const text = chunk.choices[0]?.delta?.content;
@@ -156,12 +180,15 @@ export function createOpenAIProvider(): AIProvider {
       return {
         async sendMessageStream({ message }) {
           const userMessages = [...messages, { role: 'user' as const, content: message }];
-          const stream = await openai.chat.completions.create({
-            model: request.model,
-            messages: userMessages,
-            temperature: request.temperature ?? 0.7,
-            stream: true,
-          });
+          const stream = await openai.chat.completions.create(
+            {
+              model: request.model,
+              messages: userMessages,
+              temperature: request.temperature ?? 0.7,
+              stream: true,
+            },
+            { signal: request.signal },
+          );
           return (async function* () {
             for await (const chunk of stream) {
               const text = chunk.choices[0]?.delta?.content;

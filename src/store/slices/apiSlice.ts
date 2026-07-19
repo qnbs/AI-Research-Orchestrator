@@ -5,7 +5,12 @@
  *           deduplication via serializeQueryArgs
  */
 import { createApi, fetchBaseQuery, retry } from '@reduxjs/toolkit/query/react';
-import type { RankedArticle, ArxivArticle, FeaturedAuthorCategory } from '../../types';
+import type {
+  RankedArticle,
+  ArxivArticle,
+  FeaturedAuthorCategory,
+  FeaturedJournalCategory,
+} from '../../types';
 import { combineAbortSignals } from '../../lib/abortUtils';
 
 // ── PubMed E-utilities base URLs ──────────────────────────────────────────────
@@ -95,16 +100,6 @@ export interface SearchPubMedIdsArgs {
 
 export interface GetArticleDetailsFullArgs {
   pmids: string[];
-}
-
-export interface FeaturedJournal {
-  name: string;
-  description: string;
-}
-
-export interface FeaturedJournalCategory {
-  category: string;
-  journals: FeaturedJournal[];
 }
 
 export interface PubMedInfiniteArgs {

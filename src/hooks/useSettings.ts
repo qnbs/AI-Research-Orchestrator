@@ -15,6 +15,7 @@ import {
 } from '../services/databaseService';
 import { saveNcbiApiKey } from '../services/apiKeyService';
 import type { AIProviderSelection } from '../services/providers/types';
+import { getProviderMeta } from '../services/providers/provider';
 
 const VALID_PROVIDERS: AIProviderSelection[] = [
   'gemini',
@@ -40,15 +41,27 @@ function mergeSettingsWithDefaults(
   baseline: Settings,
 ): Settings {
   const storedAi = storedSettings.ai as Partial<Settings['ai']> | undefined;
+  // Resolve effective provider first; fall back to gemini for invalid values
+  const effectiveProvider = isValidProvider(storedAi?.provider)
+    ? storedAi.provider
+    : (baseline.ai.provider ?? 'gemini');
+  const providerMeta = getProviderMeta(effectiveProvider);
+
+  // Validate model against resolved provider; use provider's default if incompatible
+  const storedModel = storedAi?.model;
+  const isModelValidForProvider =
+    typeof storedModel === 'string' &&
+    (providerMeta.modelSuggestions.includes(storedModel) ||
+      storedModel === providerMeta.defaultModel);
+  const model = isModelValidForProvider
+    ? storedModel
+    : (baseline.ai.model ?? providerMeta.defaultModel);
+
   const mergedAi: Settings['ai'] = {
     ...baseline.ai,
     ...(storedAi ?? {}),
-    // Migration: legacy persisted settings have no provider/model type.
-    // Validate provider against known ids; fall back to gemini for invalid values.
-    provider: isValidProvider(storedAi?.provider)
-      ? storedAi.provider
-      : (baseline.ai.provider ?? 'gemini'),
-    model: storedAi?.model ?? baseline.ai.model ?? 'gemini-2.5-flash',
+    provider: effectiveProvider,
+    model,
     ncbiApiKey: '',
     researchAssistant: {
       ...baseline.ai.researchAssistant,

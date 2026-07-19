@@ -40,6 +40,7 @@ export const JournalCard: React.FC<{ name: string; description: string; onClick:
   const { t } = useTranslation();
   return (
     <button
+      type="button"
       onClick={onClick}
       className="group relative w-full h-full p-5 bg-surface border border-border rounded-lg text-left transition-all duration-300 hover:shadow-xl hover:border-brand-accent/50 hover:-translate-y-1.5 focus:outline-none focus:ring-2 focus:ring-brand-accent ring-offset-2 ring-offset-background"
     >
@@ -294,6 +295,7 @@ export const FeaturedJournalsView: React.FC = () => {
           const isActive = activeCategory === category.category;
           return (
             <button
+              type="button"
               key={category.category}
               role="tab"
               aria-selected={isActive}
@@ -347,6 +349,7 @@ export const JournalDisambiguationView: React.FC = () => {
       <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
         {candidates.map((candidate: JournalCandidate) => (
           <button
+            type="button"
             key={candidate.name}
             onClick={() => handleSelectCandidate(candidate)}
             className="group w-full h-full p-5 bg-surface border border-border rounded-lg text-left transition-all duration-300 hover:shadow-xl hover:border-brand-accent/50 hover:-translate-y-1.5 focus:outline-none focus:ring-2 focus:ring-brand-accent ring-offset-2 ring-offset-background"

@@ -147,6 +147,24 @@ function getGeminiErrorMessage(error: unknown): string {
 function mapGeminiError(error: unknown): AppError {
   if (error instanceof AppError) return error;
 
+  // AbortError must never be retried - user explicitly cancelled
+  if (error instanceof DOMException && error.name === 'AbortError') {
+    return new AppError({
+      code: 'PROVIDER_UNAVAILABLE',
+      message: error.message,
+      retryable: false,
+      cause: error,
+    });
+  }
+  if (error instanceof Error && error.name === 'AbortError') {
+    return new AppError({
+      code: 'PROVIDER_UNAVAILABLE',
+      message: error.message,
+      retryable: false,
+      cause: error,
+    });
+  }
+
   const message = getGeminiErrorMessage(error);
   let code:
     | 'PROVIDER_RATE_LIMIT'
@@ -202,7 +220,10 @@ export function createGeminiProvider(): AIProvider {
       const response = await ai.models.generateContent({
         model: request.model,
         contents: request.prompt,
-        config: buildConfig(request),
+        config: {
+          ...buildConfig(request),
+          abortSignal: request.signal,
+        },
       });
       return {
         text: response.text ?? '',
@@ -215,7 +236,10 @@ export function createGeminiProvider(): AIProvider {
       const stream = await ai.models.generateContentStream({
         model: request.model,
         contents: request.prompt,
-        config: buildConfig(request),
+        config: {
+          ...buildConfig(request),
+          abortSignal: request.signal,
+        },
       });
       for await (const chunk of stream) {
         yield { text: chunk.text };
@@ -239,7 +263,10 @@ export function createGeminiProvider(): AIProvider {
 
       return {
         async sendMessageStream({ message }) {
-          const stream = await chat.sendMessageStream({ message });
+          const stream = await chat.sendMessageStream({
+            message,
+            config: { abortSignal: request.signal },
+          });
           return (async function* () {
             for await (const chunk of stream) {
               yield { text: chunk.text };

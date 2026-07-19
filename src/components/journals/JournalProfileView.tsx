@@ -21,6 +21,7 @@ const ProfileAccordion: React.FC<{
   return (
     <div className="border border-border rounded-lg bg-surface overflow-hidden">
       <button
+        type="button"
         id={buttonId}
         onClick={() => setIsOpen(!isOpen)}
         aria-expanded={isOpen}
@@ -99,6 +100,7 @@ export const JournalProfileView: React.FC<JournalProfileViewProps> = ({ onStartR
   return (
     <div className="space-y-6 animate-fadeIn pt-2">
       <button
+        type="button"
         onClick={handleReset}
         className="inline-flex items-center text-sm font-medium text-text-secondary hover:text-brand-accent transition-colors"
       >
@@ -139,6 +141,7 @@ export const JournalProfileView: React.FC<JournalProfileViewProps> = ({ onStartR
             <div className="flex flex-wrap gap-2">
               {profile.focusAreas.map((area) => (
                 <button
+                  type="button"
                   key={area}
                   onClick={() => onStartResearch(`${area} ${profile.name}`)}
                   title={t('journals.profile.start_research')}

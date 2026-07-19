@@ -82,7 +82,10 @@ export function resolveInferenceMode(input: ResolveInferenceModeInput): Inferenc
 export function inferenceModeBadgeLabel(snapshot: InferenceModeSnapshot): string {
   if (snapshot.mode === 'live') {
     const label = snapshot.provider === 'gemini' ? 'Gemini' : snapshot.provider;
-    return `Live · ${label.charAt(0).toUpperCase() + label.slice(1)}`;
+    // Proper capitalization for known providers
+    const displayLabel =
+      label === 'openai' ? 'OpenAI' : label.charAt(0).toUpperCase() + label.slice(1);
+    return `Live · ${displayLabel}`;
   }
   switch (snapshot.reason) {
     case 'force':

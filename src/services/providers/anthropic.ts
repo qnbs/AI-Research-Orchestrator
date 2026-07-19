@@ -50,6 +50,24 @@ function resetClient(): void {
 function mapAnthropicError(error: unknown): AppError {
   if (error instanceof AppError) return error;
 
+  // AbortError must never be retried - user explicitly cancelled
+  if (error instanceof DOMException && error.name === 'AbortError') {
+    return new AppError({
+      code: 'PROVIDER_UNAVAILABLE',
+      message: error.message,
+      retryable: false,
+      cause: error,
+    });
+  }
+  if (error instanceof Error && error.name === 'AbortError') {
+    return new AppError({
+      code: 'PROVIDER_UNAVAILABLE',
+      message: error.message,
+      retryable: false,
+      cause: error,
+    });
+  }
+
   let message = 'An Anthropic API error occurred.';
   let status: number | undefined;
   let code:
@@ -105,13 +123,16 @@ export function createAnthropicProvider(): AIProvider {
 
     async generateContent(request: AIContentRequest): Promise<AIContentResponse> {
       const anthropic = await getClient(request.baseURL);
-      const response = await anthropic.messages.create({
-        model: request.model,
-        max_tokens: request.maxOutputTokens ?? 4096,
-        temperature: request.temperature ?? 0.7,
-        system: buildSystemPrompt(request) || undefined,
-        messages: [{ role: 'user', content: request.prompt }],
-      });
+      const response = await anthropic.messages.create(
+        {
+          model: request.model,
+          max_tokens: request.maxOutputTokens ?? 4096,
+          temperature: request.temperature ?? 0.7,
+          system: buildSystemPrompt(request) || undefined,
+          messages: [{ role: 'user', content: request.prompt }],
+        },
+        { signal: request.signal },
+      );
 
       const text = extractText(response.content);
       return { text };
@@ -119,14 +140,17 @@ export function createAnthropicProvider(): AIProvider {
 
     async *generateContentStream(request: AIContentRequest): AsyncGenerator<AIStreamChunk> {
       const anthropic = await getClient(request.baseURL);
-      const stream = await anthropic.messages.create({
-        model: request.model,
-        max_tokens: request.maxOutputTokens ?? 4096,
-        temperature: request.temperature ?? 0.7,
-        system: buildSystemPrompt(request) || undefined,
-        messages: [{ role: 'user', content: request.prompt }],
-        stream: true,
-      });
+      const stream = await anthropic.messages.create(
+        {
+          model: request.model,
+          max_tokens: request.maxOutputTokens ?? 4096,
+          temperature: request.temperature ?? 0.7,
+          system: buildSystemPrompt(request) || undefined,
+          messages: [{ role: 'user', content: request.prompt }],
+          stream: true,
+        },
+        { signal: request.signal },
+      );
 
       for await (const event of stream) {
         if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
@@ -147,14 +171,17 @@ export function createAnthropicProvider(): AIProvider {
       return {
         async sendMessageStream({ message }) {
           const messages = [...history, { role: 'user' as const, content: message }];
-          const stream = await anthropic.messages.create({
-            model: request.model,
-            max_tokens: 4096,
-            temperature: request.temperature ?? 0.7,
-            system,
-            messages,
-            stream: true,
-          });
+          const stream = await anthropic.messages.create(
+            {
+              model: request.model,
+              max_tokens: 4096,
+              temperature: request.temperature ?? 0.7,
+              system,
+              messages,
+              stream: true,
+            },
+            { signal: request.signal },
+          );
           return (async function* () {
             for await (const event of stream) {
               if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {

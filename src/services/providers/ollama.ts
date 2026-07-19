@@ -172,6 +172,7 @@ export function createOllamaProvider(): AIProvider {
               stream: true,
               options: { temperature: request.temperature ?? 0.7 },
             }),
+            signal: request.signal,
           });
 
           if (!response.ok) {

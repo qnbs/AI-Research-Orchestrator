@@ -31,7 +31,6 @@
 - **Category:** custom_rule
 - **Suggested action:** see full comment in PR #32 or below snippet.
 
-
 ### src/components/journals/JournalProfileView.tsx
 
 - **Comment ID:** 3610987202
@@ -41,7 +40,6 @@
 - **Severity:** Major
 - **Category:** custom_rule
 - **Suggested action:** see full comment in PR #32 or below snippet.
-
 
 ### src/components/journals/JournalsSubComponents.tsx
 
@@ -58,7 +56,6 @@
 - **Summary:** The suggestions header is bound to the live input value instead of the submitted query, so editing/clearing the input after results arrive makes the heading no longer match the shown results. Persist and render the last submitted suggestion term.
 - **Category:** logic error
 - **Suggested action:** see full comment in PR #32 or below snippet.
-
 
 ### src/components/journals/useJournalsViewLogic.ts
 
@@ -100,7 +97,6 @@
 - **Category:** incomplete implementation
 - **Suggested action:** see full comment in PR #32 or below snippet.
 
-
 ### src/components/settings/ApiKeySettings.tsx
 
 - **Comment ID:** 3610993597
@@ -117,7 +113,6 @@
 - **Category:** race condition
 - **Suggested action:** see full comment in PR #32 or below snippet.
 
-
 ### src/hooks/useInferenceMode.ts
 
 - **Comment ID:** 3610993599
@@ -127,7 +122,6 @@
 - **Category:** logic error
 - **Suggested action:** see full comment in PR #32 or below snippet.
 
-
 ### src/hooks/useSettings.ts
 
 - **Comment ID:** 3610993601
@@ -136,7 +130,6 @@
 - **Summary:** This migration line accepts any persisted `storedAi.provider` value without validation. Settings import/hydration can therefore persist an invalid provider string and later trigger runtime provider-resolution failures; validate against known provider ids and fall back to `gemini` when invalid.
 - **Category:** api mismatch
 - **Suggested action:** see full comment in PR #32 or below snippet.
-
 
 ### src/i18n/translations.ts
 
@@ -161,7 +154,6 @@
 - **Category:** typo
 - **Suggested action:** see full comment in PR #32 or below snippet.
 
-
 ### src/lib/errors.ts
 
 - **Comment ID:** 3610997213
@@ -171,10 +163,9 @@
 - **Suggested action:** see full comment in PR #32 or below snippet.
 
   ```
-case 'NO_API_KEY':
+  case 'NO_API_KEY':
         return this.message || 'Please configure your API key in Settings.';
   ```
-
 
 ### src/services/apiKeyService.ts
 
@@ -193,7 +184,6 @@ case 'NO_API_KEY':
 - **Category:** logic error
 - **Suggested action:** see full comment in PR #32 or below snippet.
 
-
 ### src/services/providers/ollama.ts
 
 - **Comment ID:** 3610997197
@@ -203,13 +193,12 @@ case 'NO_API_KEY':
 - **Suggested action:** see full comment in PR #32 or below snippet.
 
   ```
-async testConnection(baseURL?: string): Promise<boolean> {
+  async testConnection(baseURL?: string): Promise<boolean> {
       const resolvedBaseURL = getBaseUrl(baseURL);
       const response = await fetch(`${resolvedBaseURL}/api/tags`);
       return response.ok;
     },
   ```
-
 
 ### src/services/providers/openai.ts
 
@@ -220,7 +209,7 @@ async testConnection(baseURL?: string): Promise<boolean> {
 - **Suggested action:** see full comment in PR #32 or below snippet.
 
   ```
-async createChatSession(request: AIChatSessionRequest): Promise<ProviderChatSession> {
+  async createChatSession(request: AIChatSessionRequest): Promise<ProviderChatSession> {
       const openai = await getClient(request.baseURL);
       const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [];
       if (request.system) messages.push({ role: 'system', content: request.system });
@@ -229,33 +218,32 @@ async createChatSession(request: AIChatSessionRequest): Promise<ProviderChatSess
       }
   ```
 
-
 ---
 
 ## Recommended fix order
 
-1. **Critical logic fixes first**
+1. **Critical logic fixes first** ✅
    - `src/hooks/useSettings.ts:34` — validate persisted provider id.
    - `src/services/apiKeyService.ts:194` — make `hasProviderApiKey` capability-aware.
    - `src/hooks/useInferenceMode.ts:37` — heuristic mode must not depend on Gemini key.
-2. **Provider correctness**
+2. **Provider correctness** ✅
    - `src/services/providers/openai.ts:154` — map model role to `assistant`, not `system`.
    - `src/services/providers/ollama.ts:202` — `testConnection` must use configured base URL.
    - `src/lib/errors.ts:61` — `NO_API_KEY` user message must respect provider context.
-3. **i18n / hardcoded strings**
+3. **i18n / hardcoded strings** ✅
    - `src/i18n/translations.ts` — provider-parameterized keys for status/validation/labels.
    - `src/components/settings/ApiKeySettings.tsx:266` — use templated translation keys.
    - `src/components/BottomNavBar.tsx:94` — route new nav label through `t()`.
    - `src/components/journals/useJournalsViewLogic.ts` — map errors to translation keys, not `err.message`.
-4. **Journal Hub polish**
+4. **Journal Hub polish** ✅
    - `src/components/journals/JournalProfileView.tsx:28` — restore visible focus style.
    - `src/components/journals/JournalsSubComponents.tsx` — fix disabled button gating, persist suggestion term.
    - `src/components/journals/useJournalsViewLogic.ts` — clear stale suggestion errors on mode switch/reset.
-5. **Storage error handling**
+5. **Storage error handling** ✅
    - `src/services/apiKeyService.ts:186` — propagate storage errors as `AppError` instead of console-only.
-6. **Race condition / UI robustness**
+6. **Race condition / UI robustness** ✅
    - `src/components/settings/ApiKeySettings.tsx:60` — guard async key lookup against stale provider switches.
-7. **Typo**
+7. **Typo** ✅
    - `src/i18n/translations.ts:602` — fix German misspelling `kuratierem` → `kuratiertem`.
 
 ---
