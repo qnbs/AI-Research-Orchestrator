@@ -12,6 +12,8 @@ export interface CuratedArticle extends RankedArticle {
   isDuplicate?: boolean;
   /** Original PMID if deduplicated. */
   originalPmid?: string;
+  /** Computed word count. */
+  wordCount?: number;
 }
 
 /**
@@ -28,15 +30,15 @@ export function deduplicateArticles(articles: RankedArticle[]): CuratedArticle[]
       continue;
     }
 
-    // Check normalized title
+    // Check normalized title (only for non-empty titles)
     const normalizedTitle = normalizeText(article.title);
-    if (seenTitles.has(normalizedTitle)) {
+    if (normalizedTitle && seenTitles.has(normalizedTitle)) {
       continue;
     }
 
     // Mark as seen
     if (article.pmid) seenPmids.add(article.pmid);
-    seenTitles.add(normalizedTitle);
+    if (normalizedTitle) seenTitles.add(normalizedTitle);
 
     curated.push({ ...article });
   }
