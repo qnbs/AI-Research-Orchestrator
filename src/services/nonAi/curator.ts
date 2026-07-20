@@ -48,7 +48,7 @@ export function deduplicateArticles(articles: RankedArticle[]): CuratedArticle[]
 
 /**
  * Clean and normalize article metadata.
- * Note: Title is preserved for display; normalized title used only for deduplication.
+ * Note: Title and journal are preserved for display; normalized values used only for deduplication.
  */
 export function cleanArticleMetadata(article: RankedArticle): CuratedArticle {
   return {
@@ -60,7 +60,7 @@ export function cleanArticleMetadata(article: RankedArticle): CuratedArticle {
         .map((a) => a.trim())
         .filter((a) => a.length > 0)
         .join(', ') ?? '',
-    journal: normalizeText(article.journal),
+    journal: article.journal.trim(),
     summary: article.summary ? article.summary.replace(/\s+/g, ' ').trim() : '',
   };
 }
