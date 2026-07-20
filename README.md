@@ -89,7 +89,7 @@ This application is a **Progressive Web App (PWA)** built on a modern, performan
 - **AI Integration**: [`@google/genai`](https://www.npmjs.com/package/@google/genai) SDK connecting to Gemini 2.5 Flash (for speed) and Gemini 3 Pro (for reasoning).
 - **State/Storage**: [Dexie.js](https://dexie.org/) (IndexedDB wrapper) for high-performance, offline-capable structured local storage.
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/) with a custom "Cybernetic" design system featuring glassmorphism and ambient animations.
-- **Visualization**: [Chart.js](https://www.chartjs.org/) for reactive data analytics.
+- **Visualization**: [Recharts](https://recharts.org/) for reactive data analytics.
 - **Export**: [jsPDF](https://github.com/parallax/jsPDF) for client-side PDF report compilation.
 
 #### Design Patterns
@@ -311,7 +311,7 @@ Diese Anwendung ist eine **Progressive Web App (PWA)**, die auf einem modernen, 
 - **KI-Integration**: [`@google/genai`](https://www.npmjs.com/package/@google/genai) SDK zur Verbindung mit Gemini 2.5 Flash (für Geschwindigkeit) und Gemini 3 Pro (für Reasoning).
 - **Status/Speicher**: [Dexie.js](https://dexie.org/) (IndexedDB-Wrapper) für hochperformante, offline-fähige strukturierte lokale Speicherung.
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/) mit einem benutzerdefinierten "Cybernetic"-Designsystem mit Glassmorphismus und ambienten Animationen.
-- **Visualisierung**: [Chart.js](https://www.chartjs.org/) für reaktive Datenanalysen.
+- **Visualisierung**: [Recharts](https://recharts.org/) für reaktive Datenanalysen.
 - **Export**: [jsPDF](https://github.com/parallax/jsPDF) für clientseitige PDF-Berichterstellung.
 
 ---
