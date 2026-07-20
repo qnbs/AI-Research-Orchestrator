@@ -136,7 +136,7 @@ export function clusterAuthorArticles(
  * Get author profile summary.
  */
 export function getAuthorProfileSummary(
-  authorName: string,
+  _authorName: string,
   articles: RankedArticle[],
 ): {
   totalPapers: number;
@@ -144,7 +144,6 @@ export function getAuthorProfileSummary(
   topVenue: string;
   recentActivity: number;
 } {
-  void clusterAuthorArticles(authorName, articles); // clustering available for future use
   const totalPapers = articles.length;
   const avgRelevance =
     articles.reduce((sum, a) => sum + (a.relevanceScore ?? 0), 0) / totalPapers || 0;

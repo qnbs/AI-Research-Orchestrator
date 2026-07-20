@@ -9,6 +9,7 @@ import { searchPubMedForIds, fetchArticleDetails } from '../pubmedUtils';
 import { searchAndFetchArxiv } from '../arxivUtils';
 import { getNcbiApiKey } from '../apiKeyService';
 import { AppError, toAppError } from '../../lib/errors';
+import { withCircuitBreaker } from '../../lib/circuitBreaker';
 
 /** Retrieval options. */
 export interface RetrievalOptions {
@@ -54,11 +55,8 @@ export async function retrieveArticles(
     }
 
     try {
-      const pmidBatch = await searchPubMedForIds(
-        builtQuery.query,
-        maxPubmed,
-        options.signal,
-        ncbiApiKey ?? undefined,
+      const pmidBatch = await withCircuitBreaker('pubmed-search', () =>
+        searchPubMedForIds(builtQuery.query, maxPubmed, options.signal, ncbiApiKey ?? undefined),
       );
       apiCalls++;
 
@@ -77,10 +75,8 @@ export async function retrieveArticles(
   const pmidArray = [...allPmids].slice(0, maxPubmed);
   if (pmidArray.length > 0) {
     try {
-      const articles = await fetchArticleDetails(
-        pmidArray,
-        options.signal,
-        ncbiApiKey ?? undefined,
+      const articles = await withCircuitBreaker('pubmed-fetch', () =>
+        fetchArticleDetails(pmidArray, options.signal, ncbiApiKey ?? undefined),
       );
       apiCalls++;
       // Convert Partial<RankedArticle> to RankedArticle with defaults
@@ -109,10 +105,8 @@ export async function retrieveArticles(
   let arxivArticles: RankedArticle[] = [];
   if (maxArxiv > 0 && !options.signal?.aborted) {
     try {
-      const arxivResults = await searchAndFetchArxiv(
-        queries[0]?.query ?? '',
-        maxArxiv,
-        options.signal,
+      const arxivResults = await withCircuitBreaker('arxiv', () =>
+        searchAndFetchArxiv(queries[0]?.query ?? '', maxArxiv, options.signal),
       );
       apiCalls++;
       // Convert Partial<RankedArticle> to RankedArticle with defaults

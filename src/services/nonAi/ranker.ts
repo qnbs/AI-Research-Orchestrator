@@ -33,9 +33,21 @@ export function rankArticles(
   const queryTokens = tokenize(query, 'en');
   const queryMeshTerms = findMeshTermsInQuery(query);
 
-  // Calculate document frequencies for IDF
+  // Calculate document frequencies for IDF (corpus-wide, not per-document)
   const docLengths = articles.map((a) => tokenize(`${a.title} ${a.summary}`, 'en').length);
   const avgDocLength = docLengths.reduce((sum, len) => sum + len, 0) / articles.length || 150;
+  const docFreq = new Map<string, number>();
+  for (const token of queryTokens) {
+    const stemmed = stem(token.toLowerCase());
+    let df = 0;
+    for (const article of articles) {
+      const docTokens = tokenize(`${article.title} ${article.summary}`, 'en');
+      if (docTokens.some((t) => stem(t) === stemmed)) {
+        df++;
+      }
+    }
+    docFreq.set(stemmed, df);
+  }
 
   // Calculate scores
   const scoredArticles = articles.map((article, index) => {
@@ -52,9 +64,10 @@ export function rankArticles(
       termCounts.set(stemmed, count);
     }
 
-    for (const [_term, count] of termCounts) {
-      const idf = Math.log(articles.length / (1 + count));
-      bm25Total += bm25Score(count / docLength, docLength, avgDocLength, idf);
+    for (const [term, count] of termCounts) {
+      const df = docFreq.get(term) ?? 1;
+      const idf = Math.log(articles.length / (1 + df));
+      bm25Total += bm25Score(count, docLength, avgDocLength, idf);
     }
 
     // Feature scores
@@ -97,11 +110,11 @@ export function rankArticles(
 
 /** Calculate MeSH overlap score. */
 function calculateMeshOverlap(article: RankedArticle, queryMeshTerms: string[]): number {
-  if (queryMeshTerms.length === 0) return 0.5;
+  if (queryMeshTerms.length === 0) return 0;
 
   // Check if article has MeSH headings
   const articleMesh = (article as { meshHeadings?: string[] }).meshHeadings ?? [];
-  if (articleMesh.length === 0) return 0.3;
+  if (articleMesh.length === 0) return 0;
 
   const overlap = queryMeshTerms.filter((qm) =>
     articleMesh.some((am) => am.toLowerCase().includes(qm.toLowerCase())),

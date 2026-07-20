@@ -46,11 +46,12 @@ export function deduplicateArticles(articles: RankedArticle[]): CuratedArticle[]
 
 /**
  * Clean and normalize article metadata.
+ * Note: Title is preserved for display; normalized title used only for deduplication.
  */
 export function cleanArticleMetadata(article: RankedArticle): CuratedArticle {
   return {
     ...article,
-    title: normalizeText(article.title),
+    title: article.title.trim(),
     authors:
       article.authors
         ?.split(/[,;]/)

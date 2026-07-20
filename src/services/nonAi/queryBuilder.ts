@@ -46,7 +46,7 @@ export function buildQuery(topic: string, options: QueryBuildOptions = {}): Buil
   // If no MeSH terms found, use title/abstract search
   if (queryParts.length === 0) {
     const phrase = normalizedTopic.replace(/\s+/g, ' ');
-    queryParts.push(`("${phrase}"[Title/Abstract] OR "${phrase}"[Title/Abstract])`);
+    queryParts.push(`"${phrase}"[Title/Abstract]`);
   }
 
   // Add synonym expansion for non-MeSH terms

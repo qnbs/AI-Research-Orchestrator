@@ -126,7 +126,7 @@ export function isHighQualityPubType(pubTypes: string[]): boolean {
 /** Extract publication year from date string. */
 export function extractYear(dateStr: string): number | null {
   const match = dateStr.match(/\d{4}/);
-  return match ? parseInt(match[1], 10) : null;
+  return match ? parseInt(match[0], 10) : null;
 }
 
 /** Simple Jaccard similarity between two sets of tokens. */

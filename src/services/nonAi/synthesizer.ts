@@ -198,9 +198,11 @@ function generateInsights(
 
   // Insight 2: Open access availability
   const oaArticles = articles.filter((a) => a.isOpenAccess);
+  const oaPercentage =
+    articles.length > 0 ? Math.round((oaArticles.length / articles.length) * 100) : 0;
   insights.push({
     question: 'What proportion of articles are open access?',
-    answer: `${oaArticles.length} of ${articles.length} articles (${Math.round((oaArticles.length / articles.length) * 100)}%) are open access.`,
+    answer: `${oaArticles.length} of ${articles.length} articles (${oaPercentage}%) are open access.`,
     supportingArticles: oaArticles.slice(0, 5).map((a) => a.pmid),
   });
 

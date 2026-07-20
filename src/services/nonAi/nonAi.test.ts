@@ -62,11 +62,11 @@ describe('Non-AI Engine - Utils', () => {
   });
 
   it('calculates recency decay factor', () => {
-    const currentYear = new Date().getFullYear();
-    const currentScore = recencyDecayFactor(String(currentYear));
+    const fixedYear = 2024;
+    const currentScore = recencyDecayFactor(String(fixedYear), fixedYear);
     expect(currentScore).toBeCloseTo(1, 1);
 
-    const oldScore = recencyDecayFactor('2000');
+    const oldScore = recencyDecayFactor('2000', fixedYear);
     expect(oldScore).toBeLessThan(0.5);
   });
 
@@ -150,7 +150,7 @@ describe('Non-AI Engine - Curator', () => {
 
   it('cleans article metadata', () => {
     const cleaned = cleanArticleMetadata(mockArticles[0]);
-    expect(cleaned.title).toBe('article one');
+    expect(cleaned.title).toBe('Article One'); // Title preserved for display
     expect(cleaned.authors).toBe('Author A');
   });
 
