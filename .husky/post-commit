@@ -1,0 +1,3 @@
+codegraph sync -q . || echo "codegraph sync had an issue — run 'codegraph index .' manually if queries look stale"
+graphify update . >/dev/null 2>&1 || echo "graphify update had an issue — run '/graphify . --update' manually if the graph looks stale"
+exit 0
