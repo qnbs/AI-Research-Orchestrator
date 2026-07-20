@@ -6,6 +6,7 @@
 import type { RankedArticle, ResearchReport } from '../../types';
 import type { ExtractiveSynthesis, NarrativeSection } from './types';
 import { tokenize, jaccardSimilarity } from './utils';
+import { HEURISTIC_BADGE } from './index';
 
 /**
  * Generate extractive TL;DR from top articles.

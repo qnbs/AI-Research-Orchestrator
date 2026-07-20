@@ -12,6 +12,9 @@ import { mergeAndCurate, enrichArticles } from './curator';
 import { generateResearchReport } from './synthesizer';
 import { AppError } from '../../lib/errors';
 
+/** Badge string for heuristic mode outputs. */
+export const HEURISTIC_BADGE = 'Heuristic mode';
+
 /**
  * Execute a full Non-AI research pipeline.
  * Returns a complete ResearchReport with deterministic, extractive synthesis.
@@ -24,7 +27,7 @@ export async function* generateNonAiResearchReportStream(
   phase: string;
 }> {
   // Phase 1: Query building
-  yield { phase: 'Building Boolean query with MeSH terms...' };
+  yield { phase: `${HEURISTIC_BADGE} · Phase 1: Building Boolean query with MeSH terms...` };
   if (signal?.aborted) {
     throw new AppError({
       code: 'STREAM_ABORTED',
@@ -37,27 +40,48 @@ export async function* generateNonAiResearchReportStream(
   const primaryQuery = queries[0];
 
   // Phase 2: Retrieval
-  yield { phase: 'Retrieving articles from PubMed and arXiv...' };
+  yield { phase: `${HEURISTIC_BADGE} · Phase 2: Retrieving articles from PubMed and arXiv...` };
   const retrieval = await retrieveArticles([primaryQuery], {
-    maxPubmed: 20,
-    maxArxiv: 10,
+    maxPubmed: input.maxArticlesToScan,
+    maxArxiv: input.includeArxiv ? 10 : 0,
     signal,
   });
 
   // Phase 3: Curation
-  yield { phase: 'Curating and deduplicating results...' };
+  if (signal?.aborted) {
+    throw new AppError({
+      code: 'STREAM_ABORTED',
+      message: 'Aborted',
+      retryable: false,
+    });
+  }
+  yield { phase: `${HEURISTIC_BADGE} · Phase 3: Curating and deduplicating results...` };
   const curated = enrichArticles(mergeAndCurate(retrieval.pubmedArticles, retrieval.arxivArticles));
 
   // Phase 4: Ranking
-  yield { phase: 'Ranking with BM25/TF-IDF hybrid...' };
+  if (signal?.aborted) {
+    throw new AppError({
+      code: 'STREAM_ABORTED',
+      message: 'Aborted',
+      retryable: false,
+    });
+  }
+  yield { phase: `${HEURISTIC_BADGE} · Phase 4: Ranking with BM25/TF-IDF hybrid...` };
   const ranked = rankArticles(curated, input.researchTopic);
 
   // Phase 5: Synthesis
-  yield { phase: 'Generating extractive synthesis...' };
+  if (signal?.aborted) {
+    throw new AppError({
+      code: 'STREAM_ABORTED',
+      message: 'Aborted',
+      retryable: false,
+    });
+  }
+  yield { phase: `${HEURISTIC_BADGE} · Phase 5: Generating extractive synthesis...` };
   const report = generateResearchReport(ranked, input.researchTopic);
 
   // Phase 6: Finalize
-  yield { phase: 'Finalizing report...', report };
+  yield { phase: `${HEURISTIC_BADGE} · Phase 6: Finalizing report...`, report };
 }
 
 /**

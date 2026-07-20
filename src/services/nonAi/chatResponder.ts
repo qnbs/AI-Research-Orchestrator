@@ -5,6 +5,7 @@
 
 import type { ResearchReport, ResearchAnalysis, OnlineFindings } from '../../types';
 import { tokenize, jaccardSimilarity } from './utils';
+import { HEURISTIC_BADGE } from './index';
 
 /**
  * Generate research analysis without AI.
@@ -17,7 +18,7 @@ export function generateResearchAnalysis(
   const keywords = extractKeywordsFromArticles(articles, 6);
 
   return {
-    summary: `Non-AI Analysis: ${tldr}`,
+    summary: `${HEURISTIC_BADGE}: ${tldr}`,
     keyFindings: keywords.map((k) => `Topic signal: ${k}`),
     synthesizedTopic: keywords.slice(0, 5).join(' ') || query.slice(0, 120),
   };
@@ -84,7 +85,7 @@ function extractKeywordsFromArticles(
  */
 export function findRelatedOnline(topic: string): OnlineFindings {
   return {
-    summary: `Non-AI mode: Live web / news grounding requires Gemini with Google Search. Offline tip: search your Knowledge Base and PubMed (when online) for "${topic.slice(0, 80)}".`,
+    summary: `${HEURISTIC_BADGE}: Live web / news grounding requires Gemini with Google Search. Offline tip: search your Knowledge Base and PubMed (when online) for "${topic.slice(0, 80)}".`,
     sources: [],
   };
 }
@@ -95,14 +96,14 @@ export function findRelatedOnline(topic: string): OnlineFindings {
 export function answerFromReport(report: ResearchReport, question: string): string {
   const q = question.trim();
   if (!q) {
-    return 'Non-AI mode: Please ask a question about the current report.';
+    return `${HEURISTIC_BADGE}: Please ask a question about the current report.`;
   }
 
   const qTokens = tokenize(q, 'en');
   const lower = q.toLowerCase();
 
   if (/^(hi|hello|hey|thanks|thank you)\b/.test(lower)) {
-    return "Non-AI mode: Hello — I can answer questions using only this report's synthesis, ranked articles, and insights.";
+    return `${HEURISTIC_BADGE}: Hello — I can answer questions using only this report's synthesis, ranked articles, and insights.`;
   }
 
   // Match insights
@@ -142,7 +143,7 @@ export function answerFromReport(report: ResearchReport, question: string): stri
     if (hit) {
       return `**${hit.title}** (PMID ${hit.pmid}, score ${hit.relevanceScore}/100)\n\n${(hit.aiSummary || hit.summary || '').slice(0, 700)}`;
     }
-    return `Non-AI mode: PMID ${requestedPmid} is not in this report's ranked articles. Ask for the top list or a PMID shown in the panel.`;
+    return `${HEURISTIC_BADGE}: PMID ${requestedPmid} is not in this report's ranked articles. Ask for the top list or a PMID shown in the panel.`;
   }
 
   const wantsList = /list|articles|papers|top\b/.test(lower) && !/pmid/i.test(lower);
@@ -172,5 +173,5 @@ export function answerFromReport(report: ResearchReport, question: string): stri
     return bestArticle.text;
   }
 
-  return 'Non-AI mode: I could not find a confident match in this report. Try asking about the top articles, keywords, or a specific PMID.';
+  return `${HEURISTIC_BADGE}: I could not find a confident match in this report. Try asking about the top articles, keywords, or a specific PMID.`;
 }
