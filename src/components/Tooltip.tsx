@@ -59,7 +59,9 @@ export const Tooltip: React.FC<TooltipProps> = ({ content, children, detailedCon
   // when an accessible name is actually derivable (the child's own aria-label, or the tooltip's
   // own string content as a fallback) — forcing focus onto something with no name at all would
   // trade "unreachable" for "a silent, unlabeled keyboard stop," which is worse.
-  const existingLabel = children.props['aria-label'];
+  const rawExistingLabel = children.props['aria-label'];
+  const existingLabel =
+    rawExistingLabel && rawExistingLabel.trim() !== '' ? rawExistingLabel : undefined;
   const fallbackLabel = typeof content === 'string' && content.trim() !== '' ? content : undefined;
   const resolvedLabel = existingLabel ?? fallbackLabel;
   const existingDescribedBy = children.props['aria-describedby'];
