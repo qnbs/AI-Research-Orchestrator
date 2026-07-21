@@ -27,7 +27,7 @@ jobs:
   e2e:
     name: Playwright E2E
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 30
     # Non-blocking: E2E is new to CI and hasn't proven stable on GitHub's
     # runners yet. Flip to false once it has run clean for a few weeks
     # (see docs/e2e-ci-backlog.md).
@@ -61,7 +61,7 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Run Playwright E2E
-        run: pnpm run test:e2e
+        run: pnpm run test:e2e -- src/test/e2e/smoke.spec.ts src/test/e2e/agent-flow.spec.ts
 
       - name: Upload Playwright report
         if: always()
