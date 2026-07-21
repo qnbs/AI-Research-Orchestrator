@@ -163,86 +163,89 @@ const CollectionCard: React.FC<{
       exit={{ opacity: 0, scale: 0.9 }}
       whileHover={{ y: -3 }}
       transition={{ duration: 0.25 }}
-      onClick={() => onSelect(collection)}
-      className={`neon-card rounded-xl overflow-hidden cursor-pointer select-none pt-0
+      className={`neon-card rounded-xl overflow-hidden select-none pt-0 relative
         ${isSelected ? 'border-brand-accent shadow-glow' : ''}`}
-      role="button"
-      aria-pressed={isSelected}
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          onSelect(collection);
-        }
-      }}
     >
-      {/* Cover gradient */}
-      <CollectionCover color={collection.color} icon={collection.icon} />
+      {/*
+        Selection is a real <button> stretched over the whole card (not an ancestor of the
+        action buttons below) so assistive tech never sees one interactive control nested
+        inside another. The visible content is layered on top with pointer-events disabled,
+        except for the actions row, which re-enables them for its own three real buttons.
+      */}
+      <button
+        type="button"
+        onClick={() => onSelect(collection)}
+        aria-pressed={isSelected}
+        aria-label={`Select collection: ${collection.name}`}
+        className="absolute inset-0 z-0 cursor-pointer rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent"
+      />
 
-      <div className="px-4 pb-4">
-        {/* Title row */}
-        <div className="flex items-start justify-between gap-2 mb-2">
-          <div className="min-w-0">
-            <h3 className="text-sm font-semibold text-text-primary truncate">{collection.name}</h3>
-            {collection.description && (
-              <p className="text-xs text-text-secondary line-clamp-2 mt-0.5">
-                {collection.description}
-              </p>
+      <div className="relative z-10 pointer-events-none">
+        {/* Cover gradient */}
+        <CollectionCover color={collection.color} icon={collection.icon} />
+
+        <div className="px-4 pb-4">
+          {/* Title row */}
+          <div className="flex items-start justify-between gap-2 mb-2">
+            <div className="min-w-0">
+              <h3 className="text-sm font-semibold text-text-primary truncate">
+                {collection.name}
+              </h3>
+              {collection.description && (
+                <p className="text-xs text-text-secondary line-clamp-2 mt-0.5">
+                  {collection.description}
+                </p>
+              )}
+            </div>
+            <div className="flex gap-1 flex-shrink-0 pointer-events-auto">
+              <button
+                onClick={() => onShare(collection)}
+                title="Share collection"
+                className="p-1.5 rounded-md text-text-secondary hover:text-brand-accent transition-colors text-xs"
+                aria-label="Share collection"
+              >
+                🔗
+              </button>
+              <button
+                onClick={() => onEdit(collection)}
+                className="p-1.5 rounded-md text-text-secondary hover:text-text-primary transition-colors text-xs"
+                aria-label="Edit collection"
+              >
+                ✏️
+              </button>
+              <button
+                onClick={() => onDelete(collection.id)}
+                className="p-1.5 rounded-md text-text-secondary hover:text-red-400 transition-colors text-xs"
+                aria-label="Delete collection"
+              >
+                🗑️
+              </button>
+            </div>
+          </div>
+
+          {/* Stats */}
+          <div className="flex gap-3 text-xs text-text-secondary">
+            <span className="flex items-center gap-1">
+              <span
+                className="w-1.5 h-1.5 rounded-full"
+                style={{ backgroundColor: collection.color }}
+              />
+              {entryCount} report{entryCount !== 1 ? 's' : ''}
+            </span>
+            <span>
+              {articleCount} article{articleCount !== 1 ? 's' : ''}
+            </span>
+            {collection.tags.length > 0 && (
+              <span className="text-accent-cyan truncate">
+                {collection.tags.slice(0, 2).join(', ')}
+              </span>
+            )}
+            {collection.shareToken && (
+              <span className="ml-auto text-accent-green text-[10px] flex items-center gap-0.5">
+                🔒 Shared
+              </span>
             )}
           </div>
-          {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions -- only stops click/keydown bubbling to the card's own onClick/onKeyDown; the real interactive elements are the buttons inside, each with its own accessible label/focus/keyboard support. */}
-          <div
-            className="flex gap-1 flex-shrink-0"
-            onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => e.stopPropagation()}
-          >
-            <button
-              onClick={() => onShare(collection)}
-              title="Share collection"
-              className="p-1.5 rounded-md text-text-secondary hover:text-brand-accent transition-colors text-xs"
-              aria-label="Share collection"
-            >
-              🔗
-            </button>
-            <button
-              onClick={() => onEdit(collection)}
-              className="p-1.5 rounded-md text-text-secondary hover:text-text-primary transition-colors text-xs"
-              aria-label="Edit collection"
-            >
-              ✏️
-            </button>
-            <button
-              onClick={() => onDelete(collection.id)}
-              className="p-1.5 rounded-md text-text-secondary hover:text-red-400 transition-colors text-xs"
-              aria-label="Delete collection"
-            >
-              🗑️
-            </button>
-          </div>
-        </div>
-
-        {/* Stats */}
-        <div className="flex gap-3 text-xs text-text-secondary">
-          <span className="flex items-center gap-1">
-            <span
-              className="w-1.5 h-1.5 rounded-full"
-              style={{ backgroundColor: collection.color }}
-            />
-            {entryCount} report{entryCount !== 1 ? 's' : ''}
-          </span>
-          <span>
-            {articleCount} article{articleCount !== 1 ? 's' : ''}
-          </span>
-          {collection.tags.length > 0 && (
-            <span className="text-accent-cyan truncate">
-              {collection.tags.slice(0, 2).join(', ')}
-            </span>
-          )}
-          {collection.shareToken && (
-            <span className="ml-auto text-accent-green text-[10px] flex items-center gap-0.5">
-              🔒 Shared
-            </span>
-          )}
         </div>
       </div>
     </motion.div>
