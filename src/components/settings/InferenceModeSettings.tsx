@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Toggle } from '../Toggle';
 import { useSettingsView } from './SettingsViewContext';
 import { useTranslation } from '../../hooks/useTranslation';
@@ -50,5 +50,5 @@ export function notifyApiKeyChanged(refreshInferenceMode?: () => Promise<void> |
 /** Hook wiring for AI settings key-change → inference mode refresh. */
 export function useApiKeyInferenceRefresh(): () => void {
   const { refresh } = useInferenceMode();
-  return () => notifyApiKeyChanged(refresh);
+  return useCallback(() => notifyApiKeyChanged(refresh), [refresh]);
 }
