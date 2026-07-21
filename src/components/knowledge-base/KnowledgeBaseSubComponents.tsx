@@ -417,6 +417,7 @@ export const ArticleList: React.FC = () => {
 
   const shouldVirtualize = viewMode === 'list' && filteredArticles.length >= VIRTUAL_THRESHOLD;
 
+  // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Virtual's useVirtualizer() returns functions that can't be safely memoized, and this project doesn't run the React Compiler yet.
   const virtualizer = useVirtualizer({
     count: shouldVirtualize ? filteredArticles.length : 0,
     getScrollElement: () => listScrollRef.current,
