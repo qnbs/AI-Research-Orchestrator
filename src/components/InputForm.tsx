@@ -6,6 +6,7 @@ import { SearchIcon } from './icons/SearchIcon';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 import { CheckIcon } from './icons/CheckIcon';
 import { InputFormHeader } from './InputFormHeader';
+import { useTranslation } from '../hooks/useTranslation';
 
 interface InputFormProps {
   onSubmit: (data: ResearchInput) => void;
@@ -114,10 +115,11 @@ const InputFormComponent: React.FC<InputFormProps> = ({
       includeArxiv: false,
     };
   });
+  const { t } = useTranslation();
   // Purely derived from form data - no need for its own state/effect.
   const errors: { topN?: string } =
     formData.topNToSynthesize > formData.maxArticlesToScan
-      ? { topN: 'Cannot synthesize more articles than are scanned.' }
+      ? { topN: t('orchestrator.error.topn_exceeds_max') }
       : {};
   const { presets, addPreset } = usePresets();
   const [isPresetModalOpen, setIsPresetModalOpen] = useState(false);

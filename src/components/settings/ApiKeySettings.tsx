@@ -78,13 +78,14 @@ export const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({ onKeyChange }) =
   };
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- resets transient UI state (input value, visibility, messages) when the provider selection changes; not a value derivable from render.
+    /* eslint-disable react-hooks/set-state-in-effect -- resets transient UI state (input value, visibility, messages) and re-checks the stored key when the provider selection changes; none of this is derivable from render. */
     void checkStoredKey();
     // Clear transient UI state when the provider changes.
     setApiKey('');
     setShowKey(false);
     setError(null);
     setSuccess(null);
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, [provider]);
 
   const handleSave = async () => {

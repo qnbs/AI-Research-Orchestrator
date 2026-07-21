@@ -144,8 +144,8 @@ export const useSettingsViewLogic = (
   const errors: { formDefaults?: string } = (() => {
     const maxScan = tempSettings.defaults.maxArticlesToScan;
     const topN = tempSettings.defaults.topNToSynthesize;
-    if (!isNaN(topN) && !isNaN(maxScan) && topN > maxScan) {
-      return { formDefaults: 'Default synthesize count cannot exceed scan count.' };
+    if (!Number.isFinite(maxScan) || !Number.isFinite(topN) || topN > maxScan) {
+      return { formDefaults: t('settings.error.form_defaults') };
     }
     return {};
   })();

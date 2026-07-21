@@ -46,6 +46,8 @@ export const translations = {
     'settings.font.legacy_inter': 'Inter (Legacy)',
     'settings.save': 'Save Changes',
     'settings.cancel': 'Cancel',
+    'settings.error.form_defaults': 'Default synthesize count cannot exceed scan count.',
+    'orchestrator.error.topn_exceeds_max': 'Cannot synthesize more articles than are scanned.',
     'orchestrator.title': 'Orchestrator AI',
     'orchestrator.start': 'Start Research',
     'orchestrator.initializing': 'Initializing Agents...',
@@ -349,6 +351,10 @@ export const translations = {
     'settings.font.legacy_inter': 'Inter (Legacy)',
     'settings.save': 'Änderungen speichern',
     'settings.cancel': 'Abbrechen',
+    'settings.error.form_defaults':
+      'Die Standardanzahl der Synthesen darf die Scananzahl nicht überschreiten.',
+    'orchestrator.error.topn_exceeds_max':
+      'Es können nicht mehr Artikel synthetisiert werden, als gescannt wurden.',
     'orchestrator.title': 'Orchestrator KI',
     'orchestrator.start': 'Suche starten',
     'orchestrator.initializing': 'Initialisiere Agenten...',
