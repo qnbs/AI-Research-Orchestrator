@@ -70,7 +70,7 @@ OFF-1…OFF-7, P0-9…P0-13, P1-1…P1-6, P2-1…P2-5, MP-1…MP-9 — see git h
 - Anthropic SDK requires `dangerouslyAllowBrowser: true` in a client-only PWA; this is documented in ADR 0008 and README.
 - Ollama relies on a local server and CORS configuration; the default `http://localhost:11434` is the common setup.
 - Residual CSP `style-src 'unsafe-inline'` for React `style={}` / theme FOUC CSS.
-- ESLint warning budget remains elevated from legacy `any` usage (0 errors, 183 warnings, budget 650).
+- ESLint warning budget remains elevated from legacy `any` usage (0 errors, 176 warnings, budget 650) — a dedicated no-`any`/zero-warnings policy pass is planned as a follow-up.
 - `src/services/nonAi/` exists in the tree, isolated from the provider registry, Settings, UI, and orchestration integration paths (it does import shared types/`AppError` from outside its own directory, which is normal and expected) - a future contributor grepping for AI provider options won't find it in Settings/UI; this document and the CHANGELOG are the intended discovery path.
 
 ### P3 — Vision
