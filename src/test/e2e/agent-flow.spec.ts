@@ -325,6 +325,9 @@ test.describe('5. Knowledge Base View', () => {
   });
 
   test('KB shows empty-state message when no data saved', async ({ page }) => {
+    // Full reload + IndexedDB re-hydration is slower than this suite's other
+    // tests; the default 30s budget is too tight for that plus the waits below.
+    test.setTimeout(60_000);
     // Clear seeded demo entries from IndexedDB and block re-seeding so the KB
     // renders the true empty state (localStorage flags alone are not enough —
     // demo entries were already persisted during app bootstrap).
@@ -466,10 +469,10 @@ test.describe('8. Mobile UX — Bottom Nav & Pipeline', () => {
     expect(count).toBeGreaterThanOrEqual(4);
   });
 
-  test('tapping Agent navigates to orchestrator form', async ({ page }) => {
+  test('tapping Orchestrator navigates to orchestrator form', async ({ page }) => {
     await skipOnboarding(page);
-    // Bottom nav "Agent" button maps to orchestrator view
-    const agentBtn = page.getByRole('button', { name: /^agent$/i }).last();
+    // Bottom nav "Orchestrator" button maps to the orchestrator view
+    const agentBtn = page.getByRole('button', { name: /^orchestrator$/i }).last();
     await agentBtn.waitFor({ state: 'visible', timeout: 5_000 });
     await agentBtn.click();
     // Wait for OrchestratorView lazy load — the form should appear
