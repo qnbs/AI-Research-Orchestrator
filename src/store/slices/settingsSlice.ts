@@ -100,25 +100,21 @@ export const settingsSlice = createSlice({
     updateSettings: (state, action: PayloadAction<Partial<Settings>>) => {
       // Deep merge could be handled here, but for simple partial updates, we rely on the payload being correct or use a deep merge utility if needed.
       // For Redux, usually granular actions are better, but we'll support the existing pattern.
-      const deepMerge = (target: any, source: any): any => {
-        const output = { ...target };
-        if (
-          target &&
-          typeof target === 'object' &&
-          !Array.isArray(target) &&
-          source &&
-          typeof source === 'object' &&
-          !Array.isArray(source)
-        ) {
+      const isMergeableObject = (value: unknown): value is Record<string, unknown> =>
+        typeof value === 'object' && value !== null && !Array.isArray(value);
+
+      const deepMerge = <T>(target: T, source: unknown): T => {
+        const output: Record<string, unknown> = { ...(target as Record<string, unknown>) };
+        if (isMergeableObject(target) && isMergeableObject(source)) {
           Object.keys(source).forEach((key) => {
-            if (typeof source[key] === 'object' && source[key] !== null && key in target) {
+            if (isMergeableObject(source[key]) && key in target) {
               output[key] = deepMerge(target[key], source[key]);
             } else {
               output[key] = source[key];
             }
           });
         }
-        return output;
+        return output as T;
       };
       state.data = deepMerge(state.data, action.payload);
     },

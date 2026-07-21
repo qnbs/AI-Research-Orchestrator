@@ -192,7 +192,7 @@ export const HeaderControls: React.FC = () => {
       <div className="flex items-center gap-2">
         <select
           value={sortOrder}
-          onChange={(e) => setSortOrder(e.target.value as any)}
+          onChange={(e) => setSortOrder(e.target.value as 'relevance' | 'newest')}
           className="bg-input-bg border border-border rounded-md p-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-accent"
         >
           <option value="relevance">Sort by Relevance</option>

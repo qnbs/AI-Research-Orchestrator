@@ -214,10 +214,9 @@ const AppLayout: React.FC = () => {
       setIsPwaInstalled(true);
     };
 
-    if (
-      window.matchMedia('(display-mode: standalone)').matches ||
-      (window.navigator as any).standalone
-    ) {
+    // iOS Safari exposes a non-standard `navigator.standalone` flag not in lib.dom.d.ts.
+    const nav = window.navigator as Navigator & { standalone?: boolean };
+    if (window.matchMedia('(display-mode: standalone)').matches || nav.standalone) {
       setIsPwaInstalled(true);
     }
 

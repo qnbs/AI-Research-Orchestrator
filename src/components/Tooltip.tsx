@@ -4,7 +4,7 @@ import { XIcon } from './icons/XIcon';
 
 interface TooltipProps {
   content: React.ReactNode;
-  children: React.ReactElement<any>;
+  children: React.ReactElement<{ 'aria-describedby'?: string }>;
   detailedContent?: React.ReactNode;
 }
 

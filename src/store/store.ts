@@ -1,4 +1,6 @@
 import { configureStore, createListenerMiddleware, isAnyOf } from '@reduxjs/toolkit';
+import type { Middleware, UnknownAction } from '@reduxjs/toolkit';
+import type { Settings } from '../types';
 import settingsReducer, { setSettings, updateSettings } from './slices/settingsSlice';
 import uiReducer, { setNotification } from './slices/uiSlice';
 import knowledgeBaseReducer, {
@@ -73,20 +75,35 @@ listenerMiddleware.startListening({
 
 // --- Persistence Middleware ---
 // Manually handling settings persistence to IndexedDB on change
-const persistenceMiddleware = (store: any) => (next: any) => (action: any) => {
-  const result = next(action);
-  // Exclude setLoading: it's dispatched before IndexedDB hydration completes (still
-  // holding default state), so persisting on it clobbers the real saved row with
-  // defaults right before the hydration read reads it back — silently resetting
-  // every persisted setting (including hasCompletedOnboarding) on every app boot.
-  if (action.type.startsWith('settings/') && action.type !== 'settings/setLoading') {
-    const state = store.getState();
-    saveSettings(state.settings.data).catch((err) =>
-      console.error('Failed to persist settings:', err),
-    );
-  }
-  return result;
-};
+interface PersistedSettingsState {
+  settings: { data: Settings };
+}
+
+const isSettingsAction = (action: unknown): action is UnknownAction =>
+  typeof action === 'object' &&
+  action !== null &&
+  'type' in action &&
+  typeof (action as UnknownAction).type === 'string';
+
+const persistenceMiddleware: Middleware<object, PersistedSettingsState> =
+  (store) => (next) => (action) => {
+    const result = next(action);
+    // Exclude setLoading: it's dispatched before IndexedDB hydration completes (still
+    // holding default state), so persisting on it clobbers the real saved row with
+    // defaults right before the hydration read reads it back — silently resetting
+    // every persisted setting (including hasCompletedOnboarding) on every app boot.
+    if (
+      isSettingsAction(action) &&
+      action.type.startsWith('settings/') &&
+      action.type !== 'settings/setLoading'
+    ) {
+      const state = store.getState();
+      saveSettings(state.settings.data).catch((err) =>
+        console.error('Failed to persist settings:', err),
+      );
+    }
+    return result;
+  };
 
 export const store = configureStore({
   reducer: {

@@ -21,6 +21,7 @@ import { ShieldCheckIcon } from '../icons/ShieldCheckIcon';
 import { DownloadIcon } from '../icons/DownloadIcon';
 import { UploadIcon } from '../icons/UploadIcon';
 import { ARTICLE_TYPES, CSV_EXPORT_COLUMNS } from '../../types';
+import type { Settings } from '../../types';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { InferenceModeSettings, useApiKeyInferenceRefresh } from './InferenceModeSettings';
 import { AI_PROVIDERS, getProviderMeta } from '../../services/providers/provider';
@@ -191,7 +192,10 @@ export const GeneralSettingsTab: React.FC = () => {
             onChange={(e) =>
               setTempSettings((s) => ({
                 ...s,
-                appearance: { ...s.appearance, fontFamily: e.target.value as any },
+                appearance: {
+                  ...s.appearance,
+                  fontFamily: e.target.value as Settings['appearance']['fontFamily'],
+                },
               }))
             }
             className="block w-full max-w-xs bg-input-bg border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent"
@@ -326,7 +330,10 @@ export const GeneralSettingsTab: React.FC = () => {
               onChange={(e) =>
                 setTempSettings((s) => ({
                   ...s,
-                  notifications: { ...s.notifications, position: e.target.value as any },
+                  notifications: {
+                    ...s.notifications,
+                    position: e.target.value as Settings['notifications']['position'],
+                  },
                 }))
               }
               className="block w-full bg-input-bg border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent"
@@ -515,7 +522,7 @@ export const AISettingsTab: React.FC = () => {
                       onChange={(e) =>
                         setTempSettings((s) => ({
                           ...s,
-                          ai: { ...s.ai, aiPersona: e.target.value as any },
+                          ai: { ...s.ai, aiPersona: e.target.value as Settings['ai']['aiPersona'] },
                         }))
                       }
                       className="h-4 w-4 mt-0.5 text-brand-accent focus:ring-brand-accent border-border bg-input-bg"
@@ -589,7 +596,7 @@ export const AISettingsTab: React.FC = () => {
               onChange={(e) =>
                 setTempSettings((s) => ({
                   ...s,
-                  ai: { ...s.ai, aiLanguage: e.target.value as any },
+                  ai: { ...s.ai, aiLanguage: e.target.value as Settings['ai']['aiLanguage'] },
                 }))
               }
               className="mt-1 block w-full bg-input-bg border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent"
@@ -880,7 +887,10 @@ export const KnowledgeBaseSettingsTab: React.FC = () => {
               onChange={(e) =>
                 setTempSettings((s) => ({
                   ...s,
-                  knowledgeBase: { ...s.knowledgeBase, defaultView: e.target.value as any },
+                  knowledgeBase: {
+                    ...s.knowledgeBase,
+                    defaultView: e.target.value as Settings['knowledgeBase']['defaultView'],
+                  },
                 }))
               }
               className="block w-full bg-input-bg border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent"
@@ -899,7 +909,10 @@ export const KnowledgeBaseSettingsTab: React.FC = () => {
               onChange={(e) =>
                 setTempSettings((s) => ({
                   ...s,
-                  knowledgeBase: { ...s.knowledgeBase, defaultSort: e.target.value as any },
+                  knowledgeBase: {
+                    ...s.knowledgeBase,
+                    defaultSort: e.target.value as Settings['knowledgeBase']['defaultSort'],
+                  },
                 }))
               }
               className="block w-full bg-input-bg border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent"
@@ -920,7 +933,10 @@ export const KnowledgeBaseSettingsTab: React.FC = () => {
                   ...s,
                   knowledgeBase: {
                     ...s.knowledgeBase,
-                    articlesPerPage: parseInt(e.target.value, 10) as any,
+                    articlesPerPage: parseInt(
+                      e.target.value,
+                      10,
+                    ) as Settings['knowledgeBase']['articlesPerPage'],
                   },
                 }))
               }
@@ -1131,7 +1147,10 @@ export const ExportSettingsTab: React.FC = () => {
                   ...s,
                   export: {
                     ...s.export,
-                    csv: { ...s.export.csv, delimiter: e.target.value as any },
+                    csv: {
+                      ...s.export.csv,
+                      delimiter: e.target.value as Settings['export']['csv']['delimiter'],
+                    },
                   },
                 }))
               }
