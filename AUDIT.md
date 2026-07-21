@@ -9,7 +9,7 @@
 
 ## Executive Summary
 
-PR #33 landed the **Non-AI Programmatic Research Engine foundation** (`src/services/nonAi/`) — a fully offline, no-API-key research pipeline (query building, PubMed/arXiv retrieval, ranking, curation, synthesis) — but it merged undocumented and unwired: zero imports from anywhere outside the module, no CHANGELOG/AUDIT entry, no ADR. This pass closes that ambiguity by explicitly **shelving** it (not integrating), and separately fixes the one gate that was actually failing on `main`: `pnpm audit --audit-level=high` (5 vulnerabilities → 0). It also clears the accumulated branch and Dependabot backlog. E2E-in-CI and the coverage-hotspot pass are tracked as deferred work below, not yet done.
+PR #33 landed the **Non-AI Programmatic Research Engine foundation** (`src/services/nonAi/`) — a no-API-key research pipeline (query building, PubMed/arXiv retrieval, ranking, curation, synthesis; literature retrieval still requires network access, no AI vendor call is made) — but it merged undocumented and unwired: isolated from the provider registry, Settings, UI, and orchestration integration paths, with no CHANGELOG/AUDIT entry, no ADR. This pass closes that ambiguity by explicitly **shelving** it (not integrating), and separately fixes the one gate that was actually failing on `main`: `pnpm audit --audit-level=high` (5 vulnerabilities → 0). It also clears the accumulated branch and Dependabot backlog. E2E-in-CI and the coverage-hotspot pass are tracked as deferred work below, not yet done.
 
 Phase 2 audit gates (coverage ≥80%, Recharts-only, bundle/LHCI, prompt registry, CSP) remain closed from v0.2.0; the multi-provider architecture gates from the 2026-07-19 pass remain closed.
 
@@ -69,7 +69,7 @@ OFF-1…OFF-7, P0-9…P0-13, P1-1…P1-6, P2-1…P2-5, MP-1…MP-9 — see git h
 - Ollama relies on a local server and CORS configuration; the default `http://localhost:11434` is the common setup.
 - Residual CSP `style-src 'unsafe-inline'` for React `style={}` / theme FOUC CSS.
 - ESLint warning budget remains elevated from legacy `any` usage (0 errors, 183 warnings, budget 650).
-- `src/services/nonAi/` exists in the tree, fully isolated (zero external imports) - a future contributor grepping for AI provider options won't find it in Settings/UI; this document and the CHANGELOG are the intended discovery path.
+- `src/services/nonAi/` exists in the tree, isolated from the provider registry, Settings, UI, and orchestration integration paths (it does import shared types/`AppError` from outside its own directory, which is normal and expected) - a future contributor grepping for AI provider options won't find it in Settings/UI; this document and the CHANGELOG are the intended discovery path.
 
 ### P3 — Vision
 
