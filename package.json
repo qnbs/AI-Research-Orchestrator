@@ -88,7 +88,7 @@
     "fake-indexeddb": "^6.0.0",
     "globals": "^17.6.0",
     "husky": "^9.1.7",
-    "jsdom": "^28.1.0",
+    "jsdom": "^29.1.1",
     "lint-staged": "^15.4.3",
     "prettier": "^3.4.2",
     "rollup-plugin-visualizer": "^6.0.11",
