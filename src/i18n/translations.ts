@@ -563,7 +563,7 @@ export const translations = {
     'onboarding.start': 'Recherche starten',
     'onboarding.privacy':
       'Ihre Daten bleiben privat und werden nur lokal in Ihrem Browser gespeichert.',
-    // ── Autoren-Hub ──
+    // ── Author Hub (German locale) ──
     'authors.subtitle':
       'Analysieren Sie die Wirkung eines Forschers oder entdecken Sie Schlüsselfiguren in jedem wissenschaftlichen Bereich.',
     'authors.suggest.heading': 'Wichtige Forscher zu',
