@@ -56,11 +56,6 @@ function entryToRankedArticle(entry: Element): Partial<RankedArticle> {
     .map((c) => c.getAttribute('term') ?? '')
     .filter(Boolean);
 
-  const pdfLinkEl = Array.from(entry.getElementsByTagName('link')).find(
-    (l) => l.getAttribute('type') === 'application/pdf',
-  );
-  const pdfUrl = pdfLinkEl?.getAttribute('href') ?? `https://arxiv.org/pdf/${arxivId}`;
-
   // arXiv uses a namespace for journal_ref and doi — try both with and without NS
   const journalRef =
     entry
@@ -82,7 +77,7 @@ function entryToRankedArticle(entry: Element): Partial<RankedArticle> {
     relevanceScore: 0,
     relevanceExplanation: '',
     articleType: 'Preprint',
-    // arxivId/categories/pdfUrl are UnifiedArticle fields, not RankedArticle.
+    // arxivId is a UnifiedArticle field, not RankedArticle.
     // pmid prefix 'arxiv:' is used downstream to identify arXiv origin.
   } satisfies Partial<RankedArticle>;
 }

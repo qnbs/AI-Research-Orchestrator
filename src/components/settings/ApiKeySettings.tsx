@@ -8,7 +8,6 @@ import {
   saveNcbiApiKey,
   getNcbiApiKey,
   removeNcbiApiKey,
-  hasNcbiApiKey,
 } from '../../services/apiKeyService';
 import { ShieldCheckIcon } from '../icons/ShieldCheckIcon';
 import { ExclamationTriangleIcon } from '../icons/ExclamationTriangleIcon';
@@ -18,7 +17,6 @@ import { KeyIcon } from '../icons/KeyIcon';
 import { useTranslation } from '../../hooks/useTranslation';
 import { useSettingsView } from './SettingsViewContext';
 import { getProviderMeta } from '../../services/providers/provider';
-import type { AIProviderSelection } from '../../services/providers/types';
 
 interface ApiKeySettingsProps {
   onKeyChange?: (hasKey: boolean) => void;

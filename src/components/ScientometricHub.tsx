@@ -300,7 +300,7 @@ const ScientometricHub: React.FC<Props> = ({ articles, keywords = [], title }) =
                   outerRadius={110}
                   dataKey="value"
                   nameKey="name"
-                  label={({ name, value }) => `${value}`}
+                  label={({ value }) => `${value}`}
                   labelLine={false}
                 >
                   {journalData.map((entry, index) => (

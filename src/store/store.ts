@@ -5,8 +5,6 @@ import knowledgeBaseReducer, {
   addKbEntry,
   importKbEntries,
   deleteKbEntries,
-  clearKb,
-  updateKbEntry,
 } from './slices/knowledgeBaseSlice';
 import agentDebugReducer from './slices/agentDebugSlice';
 import collectionsReducer from './slices/collectionsSlice';

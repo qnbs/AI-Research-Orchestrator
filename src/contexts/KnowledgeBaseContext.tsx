@@ -20,11 +20,7 @@ import {
   JournalEntry,
   Article,
 } from '../types';
-import {
-  updateEntry,
-  deleteEntries as deleteEntriesFromDb,
-  bulkAddEntries,
-} from '../services/databaseService';
+import { deleteEntries as deleteEntriesFromDb } from '../services/databaseService';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { setNotification } from '../store/slices/uiSlice';
 import {
@@ -34,7 +30,6 @@ import {
   clearKb,
   selectUniqueArticles,
   selectAllEntries,
-  selectRecentResearchEntries,
   updateKbEntry,
 } from '../store/slices/knowledgeBaseSlice';
 import { isDemoEntryId, DEMO_DISMISS_STORAGE_KEY } from '../services/heuristics';

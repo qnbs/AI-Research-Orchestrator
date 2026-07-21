@@ -1,5 +1,5 @@
 import React, { useState, useEffect, memo } from 'react';
-import type { ResearchInput, Settings, Preset } from '../types';
+import type { ResearchInput, Settings } from '../types';
 import { ARTICLE_TYPES } from '../types';
 import { usePresets } from '../contexts/PresetContext';
 import { SearchIcon } from './icons/SearchIcon';

@@ -10,7 +10,7 @@
  *  6. Keyword Clusters       — Recharts Treemap + SVG export
  *  7. Co-authorship Network  — Custom SVG force-directed graph + export
  */
-import React, { useMemo, useRef, useCallback, useId } from 'react';
+import React, { useMemo, useRef, useCallback } from 'react';
 import {
   BarChart,
   Bar,
@@ -392,7 +392,6 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({ onFilterChange, 
   const refOA = useRef<HTMLDivElement>(null);
   const refSource = useRef<HTMLDivElement>(null);
   const refKeywords = useRef<HTMLDivElement>(null);
-  const id = { y: useId(), j: useId(), t: useId(), o: useId(), s: useId(), k: useId() };
 
   const data = useMemo(() => {
     if (!articles.length) return null;

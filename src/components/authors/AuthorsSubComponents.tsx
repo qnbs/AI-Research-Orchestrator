@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo, useId } from 'react';
 import { useAuthorsView } from './AuthorsViewContext';
-import { AuthorCluster, AuthorProfile } from '../../types';
 import { ChevronLeftIcon } from '../icons/ChevronLeftIcon';
 import { ChevronRightIcon } from '../icons/ChevronRightIcon';
 import { ChevronDownIcon } from '../icons/ChevronDownIcon';
