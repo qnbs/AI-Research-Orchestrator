@@ -1,0 +1,7 @@
+if command -v codegraph >/dev/null 2>&1; then
+  nohup codegraph sync -q . >/dev/null 2>&1 &
+fi
+if command -v graphify >/dev/null 2>&1; then
+  nohup graphify update . >/dev/null 2>&1 &
+fi
+exit 0
