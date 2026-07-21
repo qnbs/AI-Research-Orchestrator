@@ -8,6 +8,7 @@ interface TooltipProps {
     'aria-describedby'?: string;
     'aria-label'?: string;
     tabIndex?: number;
+    children?: React.ReactNode;
   }>;
   detailedContent?: React.ReactNode;
 }
@@ -55,22 +56,33 @@ export const Tooltip: React.FC<TooltipProps> = ({ content, children, detailedCon
   // merging with (not overwriting) any describedby the caller already set. Also enforce a
   // focusable trigger (tabIndex 0 unless the child already sets one) since the wrapper's
   // onFocus/onBlur can only fire once the trigger itself can receive keyboard focus — callers
-  // frequently pass non-focusable elements (an InfoIcon, a plain div) as children. Only do this
-  // when an accessible name is actually derivable (the child's own aria-label, or the tooltip's
-  // own string content as a fallback) — forcing focus onto something with no name at all would
-  // trade "unreachable" for "a silent, unlabeled keyboard stop," which is worse.
+  // frequently pass non-focusable elements (an InfoIcon, a plain div) as children.
+  //
+  // The tooltip's own content is only ever used as a SYNTHESIZED aria-label for children with
+  // no accessible name of their own (a bare icon, an empty div) — never for a child that already
+  // computes a native name from its own visible content (a labeled button, text). Overwriting a
+  // naturally-named element's aria-label with the tooltip description would make a screen reader
+  // announce something that disagrees with what's on screen.
+  const hasOwnAccessibleContent = Boolean(children.props.children);
   const rawExistingLabel = children.props['aria-label'];
   const existingLabel =
     rawExistingLabel && rawExistingLabel.trim() !== '' ? rawExistingLabel : undefined;
-  const fallbackLabel = typeof content === 'string' && content.trim() !== '' ? content : undefined;
+  const fallbackLabel =
+    !hasOwnAccessibleContent && typeof content === 'string' && content.trim() !== ''
+      ? content
+      : undefined;
   const resolvedLabel = existingLabel ?? fallbackLabel;
+  // A trigger can end up with SOME accessible name once rendered either because we're giving it
+  // one directly, or because it computes its own from visible children — either way it's safe
+  // (and necessary, for the keyboard-access fix above) to make it focusable.
+  const canHaveAccessibleName = resolvedLabel !== undefined || hasOwnAccessibleContent;
   const existingDescribedBy = children.props['aria-describedby'];
   const describedBy = isVisible
     ? [existingDescribedBy, id].filter(Boolean).join(' ')
     : existingDescribedBy;
   const triggerWithAria = React.cloneElement(children, {
     'aria-describedby': describedBy || undefined,
-    tabIndex: children.props.tabIndex ?? (resolvedLabel !== undefined ? 0 : undefined),
+    tabIndex: children.props.tabIndex ?? (canHaveAccessibleName ? 0 : undefined),
     'aria-label': resolvedLabel,
   });
 
