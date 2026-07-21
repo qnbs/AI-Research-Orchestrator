@@ -7,10 +7,29 @@ interface TooltipProps {
   children: React.ReactElement<{
     'aria-describedby'?: string;
     'aria-label'?: string;
+    'aria-labelledby'?: string;
     tabIndex?: number;
     children?: React.ReactNode;
   }>;
   detailedContent?: React.ReactNode;
+}
+
+// True if at least one immediate child contributes to the accessible-name computation on its
+// own (non-empty text, or an element that isn't aria-hidden) — i.e. the trigger doesn't need a
+// synthesized aria-label to avoid being an unlabeled focus stop. Only looks one level deep: a
+// deeply-nested all-aria-hidden subtree won't be detected, but no current caller does that, and
+// fully replicating DOM accessible-name computation here isn't proportionate for this helper.
+function hasAccessibleChildContent(node: React.ReactNode): boolean {
+  return React.Children.toArray(node).some((child) => {
+    if (typeof child === 'string' || typeof child === 'number') {
+      return child.toString().trim() !== '';
+    }
+    if (React.isValidElement(child)) {
+      const hidden = (child.props as { 'aria-hidden'?: boolean | 'true' | 'false' })['aria-hidden'];
+      return hidden !== true && hidden !== 'true';
+    }
+    return false;
+  });
 }
 
 export const Tooltip: React.FC<TooltipProps> = ({ content, children, detailedContent }) => {
@@ -60,22 +79,27 @@ export const Tooltip: React.FC<TooltipProps> = ({ content, children, detailedCon
   //
   // The tooltip's own content is only ever used as a SYNTHESIZED aria-label for children with
   // no accessible name of their own (a bare icon, an empty div) — never for a child that already
-  // computes a native name from its own visible content (a labeled button, text). Overwriting a
-  // naturally-named element's aria-label with the tooltip description would make a screen reader
-  // announce something that disagrees with what's on screen.
-  const hasOwnAccessibleContent = Boolean(children.props.children);
+  // has one, whether via aria-labelledby, its own aria-label, or its own visible (non-hidden)
+  // content (a labeled button, text). Overwriting a naturally-named element's name with the
+  // tooltip description would make a screen reader announce something that disagrees with
+  // what's on screen; aria-labelledby additionally takes precedence over aria-label in the
+  // accessible-name computation regardless, so setting one alongside it would just be noise.
+  const hasOwnAccessibleContent = hasAccessibleChildContent(children.props.children);
+  const hasLabelledBy = Boolean(children.props['aria-labelledby']);
   const rawExistingLabel = children.props['aria-label'];
   const existingLabel =
     rawExistingLabel && rawExistingLabel.trim() !== '' ? rawExistingLabel : undefined;
+  const hasExistingAccessibleName =
+    hasLabelledBy || existingLabel !== undefined || hasOwnAccessibleContent;
   const fallbackLabel =
-    !hasOwnAccessibleContent && typeof content === 'string' && content.trim() !== ''
+    !hasExistingAccessibleName && typeof content === 'string' && content.trim() !== ''
       ? content
       : undefined;
   const resolvedLabel = existingLabel ?? fallbackLabel;
-  // A trigger can end up with SOME accessible name once rendered either because we're giving it
-  // one directly, or because it computes its own from visible children — either way it's safe
-  // (and necessary, for the keyboard-access fix above) to make it focusable.
-  const canHaveAccessibleName = resolvedLabel !== undefined || hasOwnAccessibleContent;
+  // A trigger can end up with SOME accessible name once rendered either because it already has
+  // one, or because we're synthesizing one — either way it's safe (and necessary, for the
+  // keyboard-access fix above) to make it focusable.
+  const canHaveAccessibleName = hasExistingAccessibleName || resolvedLabel !== undefined;
   const existingDescribedBy = children.props['aria-describedby'];
   const describedBy = isVisible
     ? [existingDescribedBy, id].filter(Boolean).join(' ')
