@@ -32,6 +32,7 @@ const AgentDebuggerPanel: React.FC = () => {
   }, [isVisible, isPinned, handleClose]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- auto-switches to the trace tab when a new run starts; activeTab remains independently user-controlled afterward, so this can't be a pure render derivation.
     if (currentTrace?.status === 'running') setActiveTab('trace');
   }, [currentTrace?.sessionId, currentTrace?.status]);
 

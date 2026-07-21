@@ -63,7 +63,6 @@ export const useSettingsViewLogic = (
     data?: any;
   } | null>(null);
   const [pruneScore, setPruneScore] = useState(20);
-  const [errors, setErrors] = useState<{ formDefaults?: string }>({});
   const [storageUsage, setStorageUsage] = useState({ totalMB: '0.00', percentage: '0' });
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -108,6 +107,7 @@ export const useSettingsViewLogic = (
   }, [pruneScore, uniqueArticles]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- syncs the locally-editable draft when the canonical settings change externally.
     setTempSettings(settings);
   }, [settings]);
 
@@ -122,6 +122,7 @@ export const useSettingsViewLogic = (
 
   useEffect(() => {
     if (resetToken > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- re-applies the canonical settings when the user explicitly clicks reset (resetToken bump).
       setTempSettings(settings);
     }
   }, [resetToken, settings]);
@@ -139,30 +140,15 @@ export const useSettingsViewLogic = (
     };
   }, [isDirty]);
 
-  useEffect(() => {
+  // Purely derived from tempSettings - no need for its own state/effect.
+  const errors: { formDefaults?: string } = (() => {
     const maxScan = tempSettings.defaults.maxArticlesToScan;
     const topN = tempSettings.defaults.topNToSynthesize;
-
-    if (isNaN(topN) || isNaN(maxScan)) {
-      setErrors((e) => {
-        const { formDefaults, ...rest } = e;
-        return rest;
-      });
-      return;
+    if (!Number.isFinite(maxScan) || !Number.isFinite(topN) || topN > maxScan) {
+      return { formDefaults: t('settings.error.form_defaults') };
     }
-
-    if (topN > maxScan) {
-      setErrors((e) => ({
-        ...e,
-        formDefaults: 'Default synthesize count cannot exceed scan count.',
-      }));
-    } else {
-      setErrors((e) => {
-        const { formDefaults, ...rest } = e;
-        return rest;
-      });
-    }
-  }, [tempSettings.defaults.topNToSynthesize, tempSettings.defaults.maxArticlesToScan]);
+    return {};
+  })();
 
   const hasErrors = useMemo(() => Object.keys(errors).length > 0, [errors]);
 

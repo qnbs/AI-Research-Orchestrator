@@ -42,6 +42,7 @@ export const useChat = (
       return;
     }
     let cancelled = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- resets chat session state before starting a new async chat init; bundled with the network call and cleanup below, which must be an effect.
     invalidateSession();
 
     const initChat = async () => {
@@ -72,6 +73,7 @@ export const useChat = (
   // Also reset when the report disappears (e.g., new search)
   useEffect(() => {
     if (!report) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- clears session state in reaction to the report going away; not derivable from render.
       invalidateSession();
     }
   }, [report, invalidateSession]);

@@ -184,6 +184,7 @@ export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
 
   useEffect(() => {
     const index = phases.findIndex((p) => p === phase);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- bundled with interval setup/teardown below, which must be an effect; keeps the last-known-good index rather than resetting when phase isn't found.
     if (index !== -1) setCurrentPhaseIndex(index);
 
     if (subPhaseIntervalRef.current) clearInterval(subPhaseIntervalRef.current);

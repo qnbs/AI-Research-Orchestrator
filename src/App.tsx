@@ -235,6 +235,7 @@ const AppLayout: React.FC = () => {
   useEffect(() => {
     // Clear selection when navigating away from the knowledge base
     if (currentView !== 'knowledgeBase' && selectedKbPmids.length > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- clears persisted selection state in reaction to navigation, not derivable from render.
       setSelectedKbPmids([]);
     }
   }, [currentView, selectedKbPmids.length]);
