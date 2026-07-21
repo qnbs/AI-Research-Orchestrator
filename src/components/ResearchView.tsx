@@ -114,6 +114,7 @@ const ResearchView: React.FC<ResearchViewProps> = ({
   };
 
   // Memoize summary HTML to avoid re-parsing on every render
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization -- this project doesn't run the React Compiler yet; the static check can't verify this boundary without it.
   const summaryHtml = useMemo(() => {
     return analysis?.summary ? secureMarkdownToHtml(analysis.summary) : '';
   }, [analysis?.summary]);

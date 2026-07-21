@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   saveProviderApiKey,
   getProviderApiKey,
@@ -43,19 +43,15 @@ export const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({ onKeyChange }) =
   const [success, setSuccess] = useState<string | null>(null);
   const [ncbiError, setNcbiError] = useState<string | null>(null);
   const [ncbiSuccess, setNcbiSuccess] = useState<string | null>(null);
-
-  useEffect(() => {
-    void checkStoredKey();
-    // Clear transient UI state when the provider changes.
-    setApiKey('');
-    setShowKey(false);
-    setError(null);
-    setSuccess(null);
-  }, [provider]);
+  // Monotonic request counter guarding against stale async responses when the
+  // provider changes rapidly. A useRef (not a property on checkStoredKey
+  // itself) is required here: checkStoredKey is recreated on every render, so
+  // a counter attached to the function would reset each time and never
+  // actually detect staleness across renders.
+  const requestIdRef = useRef(0);
 
   const checkStoredKey = async () => {
-    const requestId = ++(checkStoredKey as any).requestId;
-    (checkStoredKey as any).requestId = requestId;
+    const requestId = ++requestIdRef.current;
     setIsLoading(true);
     try {
       const needsKey = providerMeta.capabilities.requiresApiKey;
@@ -64,23 +60,32 @@ export const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({ onKeyChange }) =
         getNcbiApiKey(),
       ]);
       // Guard against stale responses from previous provider selections
-      if ((checkStoredKey as any).requestId !== requestId) return;
+      if (requestIdRef.current !== requestId) return;
       setHasStoredKey(stored);
       setHasStoredNcbiKey(!!storedNcbiKey);
       setNcbiApiKey(storedNcbiKey ?? '');
       onKeyChange?.(stored);
     } catch (err) {
       // Guard against stale responses from previous provider selections
-      if ((checkStoredKey as any).requestId === requestId) {
+      if (requestIdRef.current === requestId) {
         console.error('Error checking API key:', err);
       }
     } finally {
-      if ((checkStoredKey as any).requestId === requestId) {
+      if (requestIdRef.current === requestId) {
         setIsLoading(false);
       }
     }
   };
-  (checkStoredKey as any).requestId = 0;
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- resets transient UI state (input value, visibility, messages) when the provider selection changes; not a value derivable from render.
+    void checkStoredKey();
+    // Clear transient UI state when the provider changes.
+    setApiKey('');
+    setShowKey(false);
+    setError(null);
+    setSuccess(null);
+  }, [provider]);
 
   const handleSave = async () => {
     if (provider === 'heuristic' || !providerMeta.capabilities.requiresApiKey) return;

@@ -63,6 +63,7 @@ const AccordionItem: React.FC<AccordionItemProps> = ({ title, children, defaultO
   const buttonId = `button-${id}`;
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- resets on prop change (React docs pattern); not derivable from render since isOpen is also toggled independently by the user.
     setIsOpen(defaultOpen);
   }, [defaultOpen]);
 
@@ -655,6 +656,7 @@ const HelpView: React.FC<HelpViewProps> = ({ initialTab, onTabConsumed }) => {
     return '';
   };
 
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization -- this project doesn't run the React Compiler yet; the static check can't verify this boundary without it.
   const filteredGuideTopics = useMemo(() => {
     if (!searchTerm) return guideTopics;
     const lowercasedTerm = searchTerm.toLowerCase();

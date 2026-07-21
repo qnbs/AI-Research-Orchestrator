@@ -92,6 +92,7 @@ export const useAuthorsViewLogic = (
 
   useEffect(() => {
     if (initialProfile) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- consumes an external one-shot "restore this profile" signal, acknowledging via onViewedInitialProfile.
       setAuthorProfile(initialProfile);
       setView('profile');
       onViewedInitialProfile();

@@ -88,6 +88,7 @@ export const useJournalsViewLogic = (
   // Restore a saved KB journal entry into the profile view.
   useEffect(() => {
     if (initialEntry) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- consumes an external one-shot "restore this entry" signal, acknowledging via onViewedInitialEntry.
       setJournalProfile(initialEntry.profile);
       setFoundArticles(initialEntry.articles);
       setJournalName(initialEntry.profile.name);
@@ -100,6 +101,7 @@ export const useJournalsViewLogic = (
   const [prefillQuery, setPrefillQuery] = useState<string | null>(null);
   useEffect(() => {
     if (queryPrefill?.initialQuery) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- consumes an external one-shot prefill signal, acknowledging via onInitialQueryConsumed.
       setPrefillQuery(queryPrefill.initialQuery);
       queryPrefill.onInitialQueryConsumed();
     }
@@ -233,6 +235,7 @@ export const useJournalsViewLogic = (
   // Fire a pending cross-link prefill exactly once handleSearch is available.
   useEffect(() => {
     if (prefillQuery) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- clears the consumed-once prefill guard before firing the async search it triggers.
       setPrefillQuery(null);
       void handleSearch(prefillQuery);
     }

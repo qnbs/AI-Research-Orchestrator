@@ -63,6 +63,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
   useEffect(() => {
     if (isCommandPaletteOpen) {
       inputRef.current?.focus();
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- resets selection when the palette opens; bundled with the focus() side effect above that must run here.
       setSelectedIndex(0);
     }
   }, [isCommandPaletteOpen]);
@@ -279,6 +280,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
 
   useEffect(() => {
     if (selectedIndex >= filteredCommands.length) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- clamps a user-driven index when the filtered list shrinks out from under it.
       setSelectedIndex(0);
     }
   }, [filteredCommands, selectedIndex]);

@@ -115,11 +115,13 @@ export const FeaturedAuthorsView: React.FC = () => {
 
   useEffect(() => {
     if (categories && categories.length > 0 && !activeCategory) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- defaults the selection once data arrives; activeCategory remains user-selectable after.
       setActiveCategory(categories[0].category);
     }
   }, [categories, activeCategory]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- resets pagination when the filter changes; currentPage is otherwise user-driven.
     setCurrentPage(0);
   }, [activeCategory]);
 

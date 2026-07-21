@@ -114,7 +114,11 @@ const InputFormComponent: React.FC<InputFormProps> = ({
       includeArxiv: false,
     };
   });
-  const [errors, setErrors] = useState<{ topN?: string }>({});
+  // Purely derived from form data - no need for its own state/effect.
+  const errors: { topN?: string } =
+    formData.topNToSynthesize > formData.maxArticlesToScan
+      ? { topN: 'Cannot synthesize more articles than are scanned.' }
+      : {};
   const { presets, addPreset } = usePresets();
   const [isPresetModalOpen, setIsPresetModalOpen] = useState(false);
   const [newPresetName, setNewPresetName] = useState('');
@@ -130,19 +134,11 @@ const InputFormComponent: React.FC<InputFormProps> = ({
 
   useEffect(() => {
     if (prefilledTopic) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- consumes an external one-shot prefill signal, acknowledging it via onPrefillConsumed.
       setFormData((prev) => ({ ...prev, researchTopic: prefilledTopic }));
       onPrefillConsumed();
     }
   }, [prefilledTopic, onPrefillConsumed]);
-
-  useEffect(() => {
-    // Validation effect whenever relevant form data changes
-    if (formData.topNToSynthesize > formData.maxArticlesToScan) {
-      setErrors({ topN: 'Cannot synthesize more articles than are scanned.' });
-    } else {
-      setErrors({});
-    }
-  }, [formData.topNToSynthesize, formData.maxArticlesToScan]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
