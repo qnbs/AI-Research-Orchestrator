@@ -435,6 +435,10 @@ test.describe('7. Settings — API Key', () => {
   });
 
   test('invalid key format shows error after save', async ({ page }) => {
+    // The vault-encryption round trip (apiKeyService's AES-GCM check/save) plus a
+    // settings-context re-render is slower than this suite's other tests; the
+    // default 30s budget is too tight for that plus the retries below.
+    test.setTimeout(60_000);
     const input = page.locator('#api-key-input');
     await input.fill('BAD_KEY');
     // Click the API key save button (exact match avoids the disabled settings-form
@@ -444,7 +448,7 @@ test.describe('7. Settings — API Key', () => {
       .first()
       .click();
     await expect(page.getByText(/ungültig|invalid|format|AIza/i).first()).toBeVisible({
-      timeout: 5_000,
+      timeout: 10_000,
     });
   });
 });

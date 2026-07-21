@@ -683,7 +683,7 @@ export const AuthorProfileView: React.FC = () => {
             }
           >
             <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2 scrollbar-thin">
-              {profile.publications
+              {[...profile.publications]
                 .sort((a, b) => parseInt(b.pubYear) - parseInt(a.pubYear))
                 .map((pub) => (
                   <a
