@@ -282,7 +282,7 @@ const KBArticleCard: React.FC<{
   isSelected: boolean;
   onSelect: (pmid: string) => void;
   onView: (article: AggregatedArticle) => void;
-}> = React.memo(({ article, isSelected, onSelect, onView }) => {
+}> = React.memo(function KBArticleCard({ article, isSelected, onSelect, onView }) {
   const { settings } = useSettings();
   const densityClasses =
     settings.appearance.density === 'compact'
@@ -350,7 +350,7 @@ const KBArticleListItem: React.FC<{
   isSelected: boolean;
   onSelect: (pmid: string) => void;
   onView: (article: AggregatedArticle) => void;
-}> = React.memo(({ article, isSelected, onSelect, onView }) => {
+}> = React.memo(function KBArticleListItem({ article, isSelected, onSelect, onView }) {
   return (
     <div
       className={`flex items-start gap-4 p-4 border-b border-border last:border-b-0 group transition-colors ${isSelected ? 'bg-brand-accent/5' : 'hover:bg-surface-hover'}`}
