@@ -387,7 +387,7 @@ export const GeneralSettingsTab: React.FC = () => {
 };
 
 export const AISettingsTab: React.FC = () => {
-  const { tempSettings, setTempSettings, errors } = useSettingsView();
+  const { tempSettings, setTempSettings, errors, t } = useSettingsView();
   const onApiKeyChange = useApiKeyInferenceRefresh();
   const currentProvider = tempSettings.ai.provider ?? 'gemini';
   const providerMeta = getProviderMeta(currentProvider);
@@ -638,7 +638,7 @@ export const AISettingsTab: React.FC = () => {
                 setTempSettings((s) => ({ ...s, ai: { ...s.ai, enableTldr: checked } }))
               }
             >
-              Enable AI “TL;DR” Summaries
+              {t('settings.ai.enable_tldr')}
             </Toggle>
             <p className="text-xs text-text-secondary mt-2">
               Adds a button in the article detail view to generate an ultra-short (1-2 sentence)

@@ -7,6 +7,7 @@ import { Settings, Preset, KnowledgeBaseEntry, CSV_EXPORT_COLUMNS } from '../../
 import { db } from '../../services/databaseService';
 import { useTranslation } from '../../hooks/useTranslation';
 import { exportHistoryToJson, exportKnowledgeBaseToJson } from '../../services/exportService';
+import { isKnowledgeBaseEntry } from '../../lib/knowledgeBaseValidation';
 
 const isObject = (item: unknown): item is Record<string, unknown> => {
   return item !== null && typeof item === 'object' && !Array.isArray(item);
@@ -219,7 +220,7 @@ export const useSettingsViewLogic = (
           const importedData = JSON.parse(event.target?.result as string);
           const dataToImport = importedData.data ? importedData.data : importedData;
 
-          if (Array.isArray(dataToImport) && dataToImport.every((item) => 'sourceType' in item)) {
+          if (Array.isArray(dataToImport) && dataToImport.every(isKnowledgeBaseEntry)) {
             setModalState({ type: 'import', data: dataToImport });
           } else {
             throw new Error(

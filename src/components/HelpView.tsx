@@ -286,8 +286,8 @@ const HelpView: React.FC<HelpViewProps> = ({ initialTab, onTabConsumed }) => {
                 looking for gaps in the research?
               </li>
               <li>
-                <strong>AI Agent Configuration:</strong> The sliders control the scope. ’Max
-                Articles to Scan’ is the initial pool of papers the AI will consider. ’Top Articles
+                <strong>AI Agent Configuration:</strong> The sliders control the scope. ‘Max
+                Articles to Scan’ is the initial pool of papers the AI will consider. ‘Top Articles
                 to Synthesize’ is the number of highest-ranked papers that will be used for the
                 detailed report.
               </li>
@@ -304,8 +304,8 @@ const HelpView: React.FC<HelpViewProps> = ({ initialTab, onTabConsumed }) => {
               </p>
             </Note>
             <p>
-              After you click ’Start Research’, a detailed report will appear. If you like the
-              results, click ’Save’ to permanently store the articles in your Knowledge Base. You
+              After you click ‘Start Research’, a detailed report will appear. If you like the
+              results, click ‘Save’ to permanently store the articles in your Knowledge Base. You
               can also edit the report title before saving.
             </p>
           </>
@@ -325,12 +325,12 @@ const HelpView: React.FC<HelpViewProps> = ({ initialTab, onTabConsumed }) => {
               <li>Exploring a new topic to see if it’s worth a full literature review.</li>
             </ul>
             <p>
-              Simply paste your text or question into the box and click ’Analyze’. The AI provides a
+              Simply paste your text or question into the box and click ‘Analyze’. The AI provides a
               summary, extracts key findings, and, based on your settings, can automatically search
               for related PubMed articles and online news/discussions.
             </p>
             <p>
-              If the results are promising, use the ’Start Full Review on This Topic’ button to
+              If the results are promising, use the ‘Start Full Review on This Topic’ button to
               seamlessly transfer the AI-synthesized topic to the Orchestrator for a deeper dive.
             </p>
           </>
@@ -392,7 +392,7 @@ const HelpView: React.FC<HelpViewProps> = ({ initialTab, onTabConsumed }) => {
               </li>
               <li>
                 <strong>Article Details:</strong> Click on any article’s title to open a side panel.
-                Here, you can add custom tags, read the full summary, and use the ’Discovery Tools’
+                Here, you can add custom tags, read the full summary, and use the ‘Discovery Tools’
                 to find even more related articles or online discussions.
               </li>
             </ul>
@@ -554,12 +554,12 @@ const HelpView: React.FC<HelpViewProps> = ({ initialTab, onTabConsumed }) => {
               </li>
               <li>
                 The article’s abstract may not have contained enough relevant keywords for the AI to
-                rank it highly, causing it to fall below your chosen ’Top N’ articles for synthesis.
+                rank it highly, causing it to fall below your chosen ‘Top N’ articles for synthesis.
               </li>
             </ul>
             <p>
               Try broadening your research topic or adjusting the filters. You can also review the
-              ’Generated PubMed Queries’ in a report to see how the AI searched.
+              ‘Generated PubMed Queries’ in a report to see how the AI searched.
             </p>
           </>
         ),
@@ -592,8 +592,8 @@ const HelpView: React.FC<HelpViewProps> = ({ initialTab, onTabConsumed }) => {
         title: 'AI Persona',
         content: (
           <p>
-            A setting that guides the AI’s tone and style. For example, ’Concise Expert’ will
-            produce shorter, more direct text than ’Detailed Analyst’. This is configured in the AI
+            A setting that guides the AI’s tone and style. For example, ‘Concise Expert’ will
+            produce shorter, more direct text than ‘Detailed Analyst’. This is configured in the AI
             settings.
           </p>
         ),
@@ -652,8 +652,8 @@ const HelpView: React.FC<HelpViewProps> = ({ initialTab, onTabConsumed }) => {
         content: (
           <p>
             A setting in the Orchestrator form that directs the AI on what aspect of the research to
-            focus on when writing its summary. For example, focusing on ’Clinical Implications’ will
-            yield a different synthesis than ’Gaps in Research’.
+            focus on when writing its summary. For example, focusing on ‘Clinical Implications’ will
+            yield a different synthesis than ‘Gaps in Research’.
           </p>
         ),
       },
