@@ -165,11 +165,11 @@ const AboutSection: React.FC = () => (
         ever sent to a server.
       </li>
       <li>
-        <strong>AI as an Assistant:</strong> The AI is a powerful tool, but it's meant to augment,
+        <strong>AI as an Assistant:</strong> The AI is a powerful tool, but it’s meant to augment,
         not replace, human intelligence. Always critically evaluate its output.
       </li>
       <li>
-        <strong>Traceability:</strong> The AI's sources are provided where possible to allow for
+        <strong>Traceability:</strong> The AI’s sources are provided where possible to allow for
         verification of its findings.
       </li>
     </ul>
@@ -224,7 +224,7 @@ const HelpView: React.FC<HelpViewProps> = ({ initialTab, onTabConsumed }) => {
             <ol>
               <li>
                 <strong>Research Tab:</strong> For quick, focused analysis of a specific question,
-                abstract, or piece of text. It's perfect for exploring a single idea before
+                abstract, or piece of text. It’s perfect for exploring a single idea before
                 committing to a full review.
               </li>
               <li>
@@ -271,9 +271,9 @@ const HelpView: React.FC<HelpViewProps> = ({ initialTab, onTabConsumed }) => {
                 looking for gaps in the research?
               </li>
               <li>
-                <strong>AI Agent Configuration:</strong> The sliders control the scope. 'Max
-                Articles to Scan' is the initial pool of papers the AI will consider. 'Top Articles
-                to Synthesize' is the number of highest-ranked papers that will be used for the
+                <strong>AI Agent Configuration:</strong> The sliders control the scope. ’Max
+                Articles to Scan’ is the initial pool of papers the AI will consider. ’Top Articles
+                to Synthesize’ is the number of highest-ranked papers that will be used for the
                 detailed report.
               </li>
             </ul>
@@ -289,8 +289,8 @@ const HelpView: React.FC<HelpViewProps> = ({ initialTab, onTabConsumed }) => {
               </p>
             </Note>
             <p>
-              After you click 'Start Research', a detailed report will appear. If you like the
-              results, click 'Save' to permanently store the articles in your Knowledge Base. You
+              After you click ’Start Research’, a detailed report will appear. If you like the
+              results, click ’Save’ to permanently store the articles in your Knowledge Base. You
               can also edit the report title before saving.
             </p>
           </>
@@ -305,17 +305,17 @@ const HelpView: React.FC<HelpViewProps> = ({ initialTab, onTabConsumed }) => {
               The <strong>Research</strong> tab is for quick analysis. This tool is ideal for:
             </p>
             <ul>
-              <li>Getting a quick summary of a paper's abstract before you read it.</li>
+              <li>Getting a quick summary of a paper’s abstract before you read it.</li>
               <li>Asking a specific scientific question.</li>
-              <li>Exploring a new topic to see if it's worth a full literature review.</li>
+              <li>Exploring a new topic to see if it’s worth a full literature review.</li>
             </ul>
             <p>
-              Simply paste your text or question into the box and click 'Analyze'. The AI provides a
+              Simply paste your text or question into the box and click ’Analyze’. The AI provides a
               summary, extracts key findings, and, based on your settings, can automatically search
               for related PubMed articles and online news/discussions.
             </p>
             <p>
-              If the results are promising, use the 'Start Full Review on This Topic' button to
+              If the results are promising, use the ’Start Full Review on This Topic’ button to
               seamlessly transfer the AI-synthesized topic to the Orchestrator for a deeper dive.
             </p>
           </>
@@ -327,13 +327,13 @@ const HelpView: React.FC<HelpViewProps> = ({ initialTab, onTabConsumed }) => {
         content: (
           <>
             <p>
-              The <strong>Authors</strong> tab lets you analyze a researcher's body of work.
+              The <strong>Authors</strong> tab lets you analyze a researcher’s body of work.
             </p>
             <ol>
               <li>
                 <strong>Search or Suggest:</strong> You can either directly search for an author by
-                name or ask the AI to suggest prominent researchers in a field of study (e.g., "mRNA
-                vaccine technology").
+                name or ask the AI to suggest prominent researchers in a field of study (e.g., “mRNA
+                vaccine technology”).
               </li>
               <li>
                 <strong>Disambiguate:</strong> The AI will search PubMed and may find multiple
@@ -376,8 +376,8 @@ const HelpView: React.FC<HelpViewProps> = ({ initialTab, onTabConsumed }) => {
                 reference manager.
               </li>
               <li>
-                <strong>Article Details:</strong> Click on any article's title to open a side panel.
-                Here, you can add custom tags, read the full summary, and use the 'Discovery Tools'
+                <strong>Article Details:</strong> Click on any article’s title to open a side panel.
+                Here, you can add custom tags, read the full summary, and use the ’Discovery Tools’
                 to find even more related articles or online discussions.
               </li>
             </ul>
@@ -439,14 +439,14 @@ const HelpView: React.FC<HelpViewProps> = ({ initialTab, onTabConsumed }) => {
                 section, change the theme, or perform context-aware actions like saving a report.
               </li>
               <li>
-                <strong>Quick Add:</strong> Use the "Quick Add" button in the header to add a single
+                <strong>Quick Add:</strong> Use the “Quick Add” button in the header to add a single
                 article to your Knowledge Base using its PMID, DOI, or PubMed URL. The AI will
                 analyze it and create a single-article report.
               </li>
               <li>
                 <strong>Header Navigation:</strong> The main header provides quick access to all
-                core workflows. The "More" dropdown contains secondary views like the Dashboard and
-                History, which become active once you've saved your first report.
+                core workflows. The “More” dropdown contains secondary views like the Dashboard and
+                History, which become active once you’ve saved your first report.
               </li>
             </ul>
           </>
@@ -464,12 +464,12 @@ const HelpView: React.FC<HelpViewProps> = ({ initialTab, onTabConsumed }) => {
           <>
             <p>
               <strong>Yes.</strong> All data, including your research history, saved articles, and
-              settings, is stored exclusively in your browser's <code>localStorage</code>. No
+              settings, is stored exclusively in your browser’s <code>localStorage</code>. No
               information is ever uploaded to a server or shared. Your research is completely
               private to the browser you are using.
             </p>
             <Note type="warning" title="Back Up Your Data">
-              Because the data is stored locally, it can be lost if you clear your browser's data.
+              Because the data is stored locally, it can be lost if you clear your browser’s data.
               Use the export features in <code>Settings → Data Management &amp; Privacy</code>{' '}
               regularly to create JSON backups.
             </Note>
@@ -482,7 +482,7 @@ const HelpView: React.FC<HelpViewProps> = ({ initialTab, onTabConsumed }) => {
           <>
             <p>
               <strong>No.</strong> The AI is a powerful assistant, but it is not infallible. It can
-              make mistakes, misinterpret data, or "hallucinate" information that sounds plausible
+              make mistakes, misinterpret data, or “hallucinate” information that sounds plausible
               but is incorrect. The content generated by the AI is for informational and discovery
               purposes only.
             </p>
@@ -514,7 +514,7 @@ const HelpView: React.FC<HelpViewProps> = ({ initialTab, onTabConsumed }) => {
           <>
             <p>
               The application itself is free, but it requires a Google Gemini API key to function.
-              Usage of the Gemini API may incur costs depending on your usage and Google's pricing
+              Usage of the Gemini API may incur costs depending on your usage and Google’s pricing
               plans. Performing actions like generating reports, analyzing text, or building author
               profiles consumes API credits.
             </p>
@@ -532,19 +532,19 @@ const HelpView: React.FC<HelpViewProps> = ({ initialTab, onTabConsumed }) => {
             <p>There could be several reasons:</p>
             <ul>
               <li>
-                The AI's search queries may not have been broad or specific enough to capture it.
+                The AI’s search queries may not have been broad or specific enough to capture it.
               </li>
               <li>
                 The article might fall outside the specified date range or article type filters.
               </li>
               <li>
-                The article's abstract may not have contained enough relevant keywords for the AI to
-                rank it highly, causing it to fall below your chosen 'Top N' articles for synthesis.
+                The article’s abstract may not have contained enough relevant keywords for the AI to
+                rank it highly, causing it to fall below your chosen ’Top N’ articles for synthesis.
               </li>
             </ul>
             <p>
               Try broadening your research topic or adjusting the filters. You can also review the
-              'Generated PubMed Queries' in a report to see how the AI searched.
+              ’Generated PubMed Queries’ in a report to see how the AI searched.
             </p>
           </>
         ),
@@ -577,8 +577,8 @@ const HelpView: React.FC<HelpViewProps> = ({ initialTab, onTabConsumed }) => {
         title: 'AI Persona',
         content: (
           <p>
-            A setting that guides the AI's tone and style. For example, 'Concise Expert' will
-            produce shorter, more direct text than 'Detailed Analyst'. This is configured in the AI
+            A setting that guides the AI’s tone and style. For example, ’Concise Expert’ will
+            produce shorter, more direct text than ’Detailed Analyst’. This is configured in the AI
             settings.
           </p>
         ),
@@ -617,7 +617,7 @@ const HelpView: React.FC<HelpViewProps> = ({ initialTab, onTabConsumed }) => {
         title: 'PMID (PubMed ID)',
         content: (
           <p>
-            A unique numerical identifier assigned to each article in the PubMed database. It's the
+            A unique numerical identifier assigned to each article in the PubMed database. It’s the
             most reliable way to reference a specific paper.
           </p>
         ),
@@ -626,7 +626,7 @@ const HelpView: React.FC<HelpViewProps> = ({ initialTab, onTabConsumed }) => {
         title: 'Relevance Score',
         content: (
           <p>
-            A score from 1-100 generated by the AI, indicating how relevant an article's title and
+            A score from 1-100 generated by the AI, indicating how relevant an article’s title and
             abstract are to your original research query. It serves as an initial filter to
             prioritize the most promising articles.
           </p>
@@ -637,8 +637,8 @@ const HelpView: React.FC<HelpViewProps> = ({ initialTab, onTabConsumed }) => {
         content: (
           <p>
             A setting in the Orchestrator form that directs the AI on what aspect of the research to
-            focus on when writing its summary. For example, focusing on 'Clinical Implications' will
-            yield a different synthesis than 'Gaps in Research'.
+            focus on when writing its summary. For example, focusing on ’Clinical Implications’ will
+            yield a different synthesis than ’Gaps in Research’.
           </p>
         ),
       },

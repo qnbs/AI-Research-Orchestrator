@@ -195,7 +195,7 @@ export const JournalProfileView: React.FC<JournalProfileViewProps> = ({ onStartR
                   {t('journals.profile.articles.title')}{' '}
                   {topic.trim() && (
                     <span className="font-normal text-text-secondary">
-                      {t('journals.profile.articles.on_topic')} "{topic}"
+                      {t('journals.profile.articles.on_topic')} “{topic}”
                     </span>
                   )}
                 </h3>

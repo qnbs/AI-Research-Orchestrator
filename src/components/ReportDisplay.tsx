@@ -695,7 +695,7 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(
                 <div className="space-y-2">
                   <p className="text-xs text-text-secondary mb-3">
                     The following web pages were consulted by the AI to generate this report. This
-                    provides traceability for the AI's findings.
+                    provides traceability for the AI’s findings.
                   </p>
                   {report.sources.map((source, index) => (
                     <div

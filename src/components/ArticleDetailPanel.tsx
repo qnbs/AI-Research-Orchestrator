@@ -335,7 +335,7 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({
                     <div className="h-4 w-3/4 rounded bg-border animate-pulse"></div>
                   )}
                   {tldrError && <p className="text-xs text-red-400">{tldrError}</p>}
-                  {tldr && <p className="text-sm text-text-secondary italic">"{tldr}"</p>}
+                  {tldr && <p className="text-sm text-text-secondary italic">“{tldr}”</p>}
                 </div>
               )}
 

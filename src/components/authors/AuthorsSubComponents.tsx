@@ -291,7 +291,7 @@ export const LandingView: React.FC = () => {
         <div className="text-center">
           <h1 className="text-4xl font-bold brand-gradient-text">Author Hub</h1>
           <p className="mt-2 text-lg text-text-secondary max-w-3xl mx-auto">
-            Analyze a researcher's impact or discover key figures in any scientific field.
+            Analyze a researcher’s impact or discover key figures in any scientific field.
           </p>
         </div>
         <div className="max-w-2xl mx-auto">
@@ -362,7 +362,7 @@ export const LandingView: React.FC = () => {
         {suggestedAuthors && (
           <div className="animate-fadeIn">
             <h2 className="text-2xl font-bold text-text-primary text-center mb-6">
-              Key Researchers in "{query}"
+              Key Researchers in “{query}”
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {suggestedAuthors.map((author) => (
@@ -389,7 +389,7 @@ export const DisambiguationView: React.FC = () => {
     <div className="mt-8 animate-fadeIn pt-2">
       <h2 className="text-2xl font-bold text-text-primary text-center">Disambiguation Required</h2>
       <p className="text-center text-text-secondary mt-2">
-        Multiple potential author profiles were found for "{authorQuery}". Please select the correct
+        Multiple potential author profiles were found for “{authorQuery}”. Please select the correct
         one.
       </p>
       <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">

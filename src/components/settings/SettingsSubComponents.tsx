@@ -631,7 +631,7 @@ export const AISettingsTab: React.FC = () => {
                 setTempSettings((s) => ({ ...s, ai: { ...s.ai, enableTldr: checked } }))
               }
             >
-              Enable AI "TL;DR" Summaries
+              Enable AI “TL;DR” Summaries
             </Toggle>
             <p className="text-xs text-text-secondary mt-2">
               Adds a button in the article detail view to generate an ultra-short (1-2 sentence)
@@ -1054,7 +1054,7 @@ export const ExportSettingsTab: React.FC = () => {
               htmlFor="pdf-preparedFor"
               className="block text-sm font-medium text-text-primary mb-1"
             >
-              "Prepared For" Name (Optional)
+              “Prepared For” Name (Optional)
             </label>
             <input
               id="pdf-preparedFor"
