@@ -25,8 +25,10 @@ pnpm exec vitest run src/services/pubmedUtils.test.ts   # single file
 pnpm exec vitest run -t "retries on 429"                # single test by name
 
 pnpm exec playwright install chromium   # one-time browser install
-pnpm run test:e2e                       # Playwright, Chromium only
 pnpm exec playwright test src/test/e2e/smoke.spec.ts -g "loads home"   # single e2e test
+pnpm exec playwright test src/test/e2e/agent-flow.spec.ts              # one spec file
+# Do NOT run `pnpm run test:e2e` (the full suite, both spec files) locally - see
+# Testing notes below. Use GitHub Actions' "Playwright E2E" job output instead.
 
 pnpm run bundle:budget   # gzip gate: chunk <=200kB, entry <=400kB, charts <=180kB
 pnpm run analyze         # bundle visualizer -> dist/stats.html
@@ -80,3 +82,4 @@ This repo has both `codegraph` (`.codegraph/` — fast deterministic symbol/call
 
 - Unit/integration specs are colocated `*.test.ts(x)` next to their source. `src/test/setup.ts` mocks IndexedDB and Web Crypto; `fake-indexeddb` is available for DB-heavy tests. Keep specs deterministic (mock network/AI/crypto calls) and isolated (no shared mutable state across files) — never comment out or delete a failing test to get CI green.
 - E2E specs live in `src/test/e2e/` (`agent-flow.spec.ts`, `smoke.spec.ts`); Playwright auto-starts the Vite dev server and uses a fake Gemini key. Prefer `getByRole` selectors; justify any `sleep`.
+- **Full E2E suite runs belong in CI, not on the local dev machine.** This project runs on a resource-constrained (~3.7 GB RAM) local box; the full 38-test suite (both spec files together) reliably exhausts it or gets killed outright, independent of whether the code change under test is correct. Locally, only run a single spec file or a scoped `-g "<pattern>"` subset. For a genuine full-suite result (e.g. before merging a PR that touches E2E-covered code), read it from the `.github/workflows/e2e.yml` "Playwright E2E" check on the PR (`gh run view <run-id> --log` or the workflow's own summary/artifact) rather than reproducing it locally — that job already runs on every push/PR. Remember the job is `continue-on-error: true` (non-blocking): a green check badge does **not** by itself prove 0 failed tests — read the actual step output/artifact for the true pass/fail count, per `docs/e2e-ci-backlog.md`'s promotion-trigger note.

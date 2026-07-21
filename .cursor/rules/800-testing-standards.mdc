@@ -10,6 +10,7 @@ alwaysApply: false
 - **Verboten:** Tests auskommentieren/löschen, um CI grün zu tricksen — Ursachen beheben oder Assertions präzisieren.
 - **Isolation:** Specs unabhängig lauffähig; kein geteilter mutable Global-State zwischen Files.
 - **E2E:** `src/test/e2e/` — stabile Selektoren (`getByRole` bevorzugt); `sleep` nur mit Begründung.
+- **E2E-Vollständigkeitslauf (`pnpm run test:e2e`, beide Spec-Dateien zusammen) gehört ausschließlich in CI**, nicht auf die lokale Entwicklermaschine (~3.7 GB RAM) — dort wird er zuverlässig durch OOM abgebrochen, unabhängig davon ob der getestete Code korrekt ist. Lokal immer nur eine einzelne Spec-Datei oder eine mit `-g "<pattern>"` eingegrenzte Teilmenge laufen lassen. Für ein echtes Vollständigkeits-Ergebnis den `.github/workflows/e2e.yml`-Check ("Playwright E2E") des jeweiligen PRs auslesen — der läuft bei jedem Push. Der Job ist `continue-on-error: true`, ein grüner Badge allein beweist also nicht 0 Fehlschläge; die tatsächliche Test-Ausgabe/das Artefakt prüfen.
 
 Coverage-Schwellen für Logik-Layer: `@vitest.config.ts`. CI nutzt `pnpm run test:coverage`.
 
