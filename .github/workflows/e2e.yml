@@ -1,0 +1,73 @@
+# ==============================================================================
+# Playwright E2E Workflow
+#
+# Runs on every push/PR to main. Non-blocking (continue-on-error) while the
+# suite proves out in CI — see docs/e2e-ci-backlog.md for the promotion trigger.
+# ==============================================================================
+
+name: E2E Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "${{ github.workflow }}-${{ github.ref }}"
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    name: Playwright E2E
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    # Non-blocking: E2E is new to CI and hasn't proven stable on GitHub's
+    # runners yet. Flip to false once it has run clean for a few weeks
+    # (see docs/e2e-ci-backlog.md).
+    continue-on-error: true
+    steps:
+      - name: Checkout repository
+        # actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup pnpm
+        # pnpm/action-setup@v6
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271
+        with:
+          run_install: false
+
+      - name: Setup Node.js
+        # actions/setup-node@v7
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: "22"
+          cache: "pnpm"
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run Playwright E2E
+        run: pnpm run test:e2e -- src/test/e2e/smoke.spec.ts src/test/e2e/agent-flow.spec.ts
+
+      - name: Upload Playwright report
+        if: always()
+        # actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14
