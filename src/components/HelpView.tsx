@@ -197,6 +197,17 @@ const AboutSection: React.FC = () => (
   </div>
 );
 
+/** Pure text extraction from a React node tree, used to search rendered help content. */
+const getTextFromReactNode = (node: React.ReactNode): string => {
+  if (typeof node === 'string') return node;
+  if (typeof node === 'number') return String(node);
+  if (Array.isArray(node)) return node.map(getTextFromReactNode).join('');
+  if (React.isValidElement<{ children?: React.ReactNode }>(node) && node.props.children) {
+    return getTextFromReactNode(node.props.children);
+  }
+  return '';
+};
+
 const HelpView: React.FC<HelpViewProps> = ({ initialTab, onTabConsumed }) => {
   const [activeTab, setActiveTab] = useState<HelpSection>(
     initialTab === 'about' || initialTab === 'faq' ? initialTab : 'guide',
@@ -661,17 +672,6 @@ const HelpView: React.FC<HelpViewProps> = ({ initialTab, onTabConsumed }) => {
     [],
   );
 
-  const getTextFromReactNode = (node: React.ReactNode): string => {
-    if (typeof node === 'string') return node;
-    if (typeof node === 'number') return String(node);
-    if (Array.isArray(node)) return node.map(getTextFromReactNode).join('');
-    if (React.isValidElement<{ children?: React.ReactNode }>(node) && node.props.children) {
-      return getTextFromReactNode(node.props.children);
-    }
-    return '';
-  };
-
-  // eslint-disable-next-line react-hooks/preserve-manual-memoization -- this project doesn't run the React Compiler yet; the static check can't verify this boundary without it.
   const filteredGuideTopics = useMemo(() => {
     if (!searchTerm) return guideTopics;
     const lowercasedTerm = searchTerm.toLowerCase();

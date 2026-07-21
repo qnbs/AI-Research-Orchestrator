@@ -193,7 +193,7 @@ export const useAuthorsViewLogic = (
         }
       }
     },
-    [settings.ai, saveAuthorProfile],
+    [settings.ai, saveAuthorProfile, triggerGetDetails],
   );
 
   const handleSearch = useCallback(
