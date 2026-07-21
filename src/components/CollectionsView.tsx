@@ -152,6 +152,7 @@ const CollectionCard: React.FC<{
   onSelect: (c: ResearchCollection) => void;
   isSelected: boolean;
 }> = ({ collection, onEdit, onDelete, onShare, onSelect, isSelected }) => {
+  const { t } = useTranslation();
   const entryCount = collection.entryIds.length;
   const articleCount = collection.articlePmids.length;
 
@@ -176,7 +177,7 @@ const CollectionCard: React.FC<{
         type="button"
         onClick={() => onSelect(collection)}
         aria-pressed={isSelected}
-        aria-label={`Select collection: ${collection.name}`}
+        aria-label={`${t('collections.selectCard')}: ${collection.name}`}
         className="absolute inset-0 z-0 cursor-pointer rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent"
       />
 
