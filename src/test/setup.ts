@@ -27,6 +27,7 @@ const indexedDBMock = {
 Object.defineProperty(window, 'indexedDB', {
   value: indexedDBMock,
   writable: true,
+  configurable: true,
 });
 
 // Mock crypto.subtle for API key encryption tests
