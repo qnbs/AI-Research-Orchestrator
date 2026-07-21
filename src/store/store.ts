@@ -77,7 +77,11 @@ listenerMiddleware.startListening({
 // Manually handling settings persistence to IndexedDB on change
 const persistenceMiddleware = (store: any) => (next: any) => (action: any) => {
   const result = next(action);
-  if (action.type.startsWith('settings/')) {
+  // Exclude setLoading: it's dispatched before IndexedDB hydration completes (still
+  // holding default state), so persisting on it clobbers the real saved row with
+  // defaults right before the hydration read reads it back — silently resetting
+  // every persisted setting (including hasCompletedOnboarding) on every app boot.
+  if (action.type.startsWith('settings/') && action.type !== 'settings/setLoading') {
     const state = store.getState();
     saveSettings(state.settings.data).catch((err) =>
       console.error('Failed to persist settings:', err),
