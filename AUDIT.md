@@ -1,65 +1,64 @@
 # Codebase Audit Report
 
-> **Date**: 2026-07-19 (Multi-provider AI architecture — post v0.2.1)
-> **Previous**: 2026-07-17 UI/UX Research Instrument modernization — v0.2.1
-> **Overall Rating**: A+ (9.7/10) — Pluggable AI backends without bundle regression
-> **Auditor**: Kimi Code CLI
+> **Date**: 2026-07-21 (Post-PR#33 hardening & remediation sprint — v0.3.0)
+> **Previous**: 2026-07-19 Multi-provider AI architecture — post v0.2.1
+> **Overall Rating**: A (9.4/10) — Security gate closed, branch/dependency backlog cleared, one module explicitly shelved rather than left ambiguous
+> **Auditor**: Claude Code CLI
 
 ---
 
 ## Executive Summary
 
-This pass introduces a **provider-agnostic AI transport layer** while preserving the existing `geminiService.ts` façade and all public exports. Users can now select Google Gemini, OpenAI, Anthropic, local Ollama, or the deterministic heuristic backend in Settings. SDK-backed providers are lazy-loaded, so the initial bundle is unchanged. The heuristic/offline path from v0.2.1 remains fully intact.
+PR #33 landed the **Non-AI Programmatic Research Engine foundation** (`src/services/nonAi/`) — a no-API-key research pipeline (query building, PubMed/arXiv retrieval, ranking, curation, synthesis; literature retrieval still requires network access, no AI vendor call is made) — but it merged undocumented and unwired: isolated from the provider registry, Settings, UI, and orchestration integration paths, with no CHANGELOG/AUDIT entry, no ADR. This pass closes that ambiguity by explicitly **shelving** it (not integrating), and separately fixes the one gate that was actually failing on `main`: `pnpm audit --audit-level=high` (5 vulnerabilities → 0). It also triages the accumulated branch and Dependabot backlog (all 9 stale branches resolved; 10 of 18 Dependabot PRs merged, 5 explicitly deferred - see below). E2E-in-CI and the coverage-hotspot pass are tracked as deferred work below, not yet done.
 
-Phase 2 audit gates (coverage ≥80%, Recharts-only, bundle/LHCI, prompt registry, CSP) remain closed from v0.2.0.
+Phase 2 audit gates (coverage ≥80%, Recharts-only, bundle/LHCI, prompt registry, CSP) remain closed from v0.2.0; the multi-provider architecture gates from the 2026-07-19 pass remain closed.
 
 ---
 
-## Scorecard (2026-07-19)
+## Scorecard (2026-07-21)
 
-| Dimension     | Rating | Notes                                                        |
-| ------------- | ------ | ------------------------------------------------------------ |
-| Architecture  | 5/5    | ADRs 0001–0008; provider factory + lazy adapters             |
-| TypeScript    | 5/5    | Strict mode; provider-agnostic request/response types        |
-| Security      | 4.5/5  | Per-provider encrypted key vault; legacy migration tested    |
-| Resilience    | 5/5    | Provider-agnostic `PROVIDER_*` errors; abort preserved       |
-| Tests         | 4.5/5  | Unit tests for all providers; E2E/coverage hotspots deferred |
-| CI/CD         | 5/5    | Bundle budget + LHCI on build job                            |
-| Documentation | 5/5    | ADR 0008, README Multi-Provider Setup, AGENTS, CHANGELOG     |
-| PWA/Offline   | 5/5    | Heuristic provider selectable; no API key needed             |
-| SEO           | 4.5/5  | LHCI SEO ≥95                                                 |
-| Accessibility | 5/5    | axe smoke + LHCI a11y ≥95                                    |
+| Dimension     | Rating | Notes                                                                    |
+| ------------- | ------ | ------------------------------------------------------------------------ |
+| Architecture  | 5/5    | ADRs 0001–0008; nonAi kept isolated, not partially wired                 |
+| TypeScript    | 5/5    | Strict mode; no changes this pass                                        |
+| Security      | 5/5    | `pnpm audit --audit-level=high` clean (was failing: 5 vulns)             |
+| Resilience    | 5/5    | Unchanged from 2026-07-19                                                |
+| Tests         | 4.5/5  | 338/338 unchanged; coverage hotspots identified, not yet closed          |
+| CI/CD         | 4.5/5  | `codeql-action` version-lock bug found + fixed; E2E-in-CI still deferred |
+| Documentation | 5/5    | CHANGELOG/AUDIT/version parity restored; nonAi status unambiguous        |
+| PWA/Offline   | 5/5    | Unchanged                                                                |
+| SEO           | —      | Not re-measured this pass                                                |
+| Accessibility | —      | Not re-measured this pass                                                |
 
 ---
 
 ## Closed in this pass
 
-| ID   | Item                                                 | Status     |
-| ---- | ---------------------------------------------------- | ---------- |
-| MP-1 | Provider transport layer (`src/services/providers/`) | **Closed** |
-| MP-2 | Gemini / OpenAI / Anthropic / Ollama adapters        | **Closed** |
-| MP-3 | Heuristic provider adapter                           | **Closed** |
-| MP-4 | Settings `provider` + `customBaseUrl` + migration    | **Closed** |
-| MP-5 | Per-provider encrypted key vault + legacy migration  | **Closed** |
-| MP-6 | Provider-aware `InferenceMode` + badge               | **Closed** |
-| MP-7 | `PROVIDER_*` error taxonomy                          | **Closed** |
-| MP-8 | CSP `connect-src` update                             | **Closed** |
-| MP-9 | ADR 0008 + README + AGENTS + CHANGELOG updates       | **Closed** |
+| ID   | Item                                                                                                  | Status     |
+| ---- | ----------------------------------------------------------------------------------------------------- | ---------- |
+| RS-1 | `pnpm audit --audit-level=high`: 5 vulnerabilities to 0 (protobufjs, two brace-expansion lines, uuid) | **Closed** |
+| RS-2 | nonAi engine disposition: explicitly shelved and documented (not integrated this pass)                | **Closed** |
+| RS-3 | CHANGELOG/AUDIT/package.json/git-tag version parity restored (0.3.0)                                  | **Closed** |
+| RS-4 | README tech-stack Chart.js to Recharts correction (EN + DE)                                           | **Closed** |
+| RS-5 | 9 stale branches removed, each individually re-verified via two-dot tree-diff                         | **Closed** |
+| RS-6 | Dependabot backlog: 18 branches triaged, 10 merged                                                    | **Closed** |
+| RS-7 | github/codeql-action init/autobuild/analyze version-lock bug found and fixed                          | **Closed** |
 
 ### Prior phases (still closed)
 
-OFF-1…OFF-7, P0-9…P0-13, P1-1…P1-6, P2-1…P2-5 — see git history / v0.2.1 notes.
+OFF-1…OFF-7, P0-9…P0-13, P1-1…P1-6, P2-1…P2-5, MP-1…MP-9 — see git history / prior audit notes.
 
 ---
 
 ## Deferred work (documented for follow-up)
 
-The following items are intentionally left for a later iteration so the multi-provider foundation can be reviewed and merged promptly:
-
-- **E2E specs**: `src/test/e2e/provider-flow.spec.ts` and `src/test/e2e/journal-hub.spec.ts`.
-- **Coverage hotspots**: `heuristics/chat.ts` and `heuristics/journalProfiling.ts` branches ≥80%, `researchStream.ts` lines ≥70%.
+- **nonAi engine integration** (RS-2's flip side): a future integration pass needs coverage raised on `retriever.ts` (4.72% lines), `keywordExtractor.ts` (9.75%), and `index.ts` (26.38%) first, plus an ADR (0009) following the ADR-0008 provider-registry pattern. Until then the low coverage is a known, intentional gap.
+- **5 Dependabot PRs left open, each with a documented reason** (see `docs/dependabot-disposition.md`'s 2026-07-21 section): 3 stop-and-ask major/large-range bumps (`vite`, `eslint-plugin-react-hooks`, `@anthropic-ai/sdk`) needing explicit human sign-off; 2 have real breaking changes needing code fixes, not just a version bump (`fake-indexeddb` conflicts with the `src/test/setup.ts` IndexedDB mock; `@vitejs/plugin-react` 6.x requires Vite 7+, same root cause as the `vite` bump).
+- **Coverage hotspots** (unchanged from 2026-07-19): `src/services/providers/gemini.ts` (49.39% lines), `ollama.ts` (57.98%), `openai.ts` (62.64%), `src/store/slices/apiSlice.ts` (63.39% lines / 35.08% branches), `src/services/heuristics/researchStream.ts` (56.14%).
+- **E2E specs**: `src/test/e2e/provider-flow.spec.ts` and `src/test/e2e/journal-hub.spec.ts` remain unwritten; wiring the two existing specs into CI is tracked separately, not yet done.
 - **Settings export/import round-trip test** including provider fields and migration.
-- **Journal Hub elevation completion**: any remaining UI hardening beyond the current baseline.
+- **Bundle headroom**: main entry chunk was 285.5 kB gzip / 400 kB budget as of 2026-07-20; not re-measured after this pass's dependency bumps.
+- **API key non-extractable hardening**: `apiKeyService.ts`'s `crypto.subtle.generateKey` call is still `extractable: true` - a proposed hardening, not a fix for an active vulnerability.
 
 ---
 
@@ -69,7 +68,8 @@ The following items are intentionally left for a later iteration so the multi-pr
 - Anthropic SDK requires `dangerouslyAllowBrowser: true` in a client-only PWA; this is documented in ADR 0008 and README.
 - Ollama relies on a local server and CORS configuration; the default `http://localhost:11434` is the common setup.
 - Residual CSP `style-src 'unsafe-inline'` for React `style={}` / theme FOUC CSS.
-- ESLint warning budget remains elevated from legacy `any` usage (0 errors).
+- ESLint warning budget remains elevated from legacy `any` usage (0 errors, 183 warnings, budget 650).
+- `src/services/nonAi/` exists in the tree, isolated from the provider registry, Settings, UI, and orchestration integration paths (it does import shared types/`AppError` from outside its own directory, which is normal and expected) - a future contributor grepping for AI provider options won't find it in Settings/UI; this document and the CHANGELOG are the intended discovery path.
 
 ### P3 — Vision
 

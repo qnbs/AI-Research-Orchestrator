@@ -3,7 +3,7 @@
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/qnbs/AI-Research-Orchestrator)
 
 ![Status](https://img.shields.io/badge/Status-Production_Ready-success?style=flat-square)
-![Version](https://img.shields.io/badge/Version-0.2.1-blue?style=flat-square)
+![Version](https://img.shields.io/badge/Version-0.3.0-blue?style=flat-square)
 ![Tech](https://img.shields.io/badge/Stack-React_19_|_TypeScript_|_Gemini_Pro-blueviolet?style=flat-square)
 ![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)
 ![Privacy](https://img.shields.io/badge/Privacy-Local_First-green?style=flat-square)
