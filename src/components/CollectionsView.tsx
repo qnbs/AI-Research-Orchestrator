@@ -26,6 +26,18 @@ const COLLECTION_COLORS = [
   '#e879f9',
 ];
 const COLLECTION_ICONS = ['📚', '🔬', '🧠', '⚡', '🌟', '🔭', '🧬', '💡', '🎯', '📊'];
+const COLLECTION_ICON_NAMES: Record<string, string> = {
+  '📚': 'Books',
+  '🔬': 'Microscope',
+  '🧠': 'Brain',
+  '⚡': 'Lightning',
+  '🌟': 'Star',
+  '🔭': 'Telescope',
+  '🧬': 'DNA',
+  '💡': 'Idea',
+  '🎯': 'Target',
+  '📊': 'Chart',
+};
 
 function generateId() {
   return `col_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
@@ -173,8 +185,12 @@ const CollectionCard: React.FC<{
               </p>
             )}
           </div>
-          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- only stops click bubbling to the card's own onClick; the real interactive elements are the buttons inside, each with its own accessible label/focus/keyboard support. */}
-          <div className="flex gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+          {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions -- only stops click/keydown bubbling to the card's own onClick/onKeyDown; the real interactive elements are the buttons inside, each with its own accessible label/focus/keyboard support. */}
+          <div
+            className="flex gap-1 flex-shrink-0"
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+          >
             <button
               onClick={() => onShare(collection)}
               title="Share collection"
@@ -292,6 +308,8 @@ const CollectionModal: React.FC<{
                   key={ic}
                   type="button"
                   onClick={() => setIcon(ic)}
+                  aria-pressed={icon === ic}
+                  aria-label={COLLECTION_ICON_NAMES[ic] ?? ic}
                   className={`w-9 h-9 rounded-lg text-lg transition-all
                     ${icon === ic ? 'ring-2 ring-brand-accent bg-brand-accent/10' : 'glass-panel hover:bg-surface-hover'}`}
                 >
@@ -342,6 +360,7 @@ const CollectionModal: React.FC<{
                   key={c}
                   type="button"
                   onClick={() => setColor(c)}
+                  aria-pressed={color === c}
                   className={`w-7 h-7 rounded-full transition-all ${color === c ? 'ring-2 ring-white scale-110' : ''}`}
                   style={{ backgroundColor: c }}
                   aria-label={`Color ${c}`}

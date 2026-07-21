@@ -171,6 +171,7 @@ export const GeneralSettingsTab: React.FC = () => {
                   appearance: { ...s.appearance, density: 'comfortable' },
                 }))
               }
+              aria-pressed={tempSettings.appearance.density === 'comfortable'}
               className={`w-1/2 p-1.5 rounded-md text-sm font-medium transition-colors ${tempSettings.appearance.density === 'comfortable' ? 'bg-brand-accent text-brand-text-on-accent' : 'text-text-secondary hover:bg-surface-hover'}`}
             >
               Comfortable
@@ -182,6 +183,7 @@ export const GeneralSettingsTab: React.FC = () => {
                   appearance: { ...s.appearance, density: 'compact' },
                 }))
               }
+              aria-pressed={tempSettings.appearance.density === 'compact'}
               className={`w-1/2 p-1.5 rounded-md text-sm font-medium transition-colors ${tempSettings.appearance.density === 'compact' ? 'bg-brand-accent text-brand-text-on-accent' : 'text-text-secondary hover:bg-surface-hover'}`}
             >
               Compact

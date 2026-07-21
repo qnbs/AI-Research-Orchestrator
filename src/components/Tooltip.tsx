@@ -4,7 +4,7 @@ import { XIcon } from './icons/XIcon';
 
 interface TooltipProps {
   content: React.ReactNode;
-  children: React.ReactElement<{ 'aria-describedby'?: string }>;
+  children: React.ReactElement<{ 'aria-describedby'?: string; tabIndex?: number }>;
   detailedContent?: React.ReactNode;
 }
 
@@ -38,9 +38,13 @@ export const Tooltip: React.FC<TooltipProps> = ({ content, children, detailedCon
 
   const isVisible = isHoverVisible || isDetailVisible;
 
-  // Clone the child element to add aria-describedby directly to it for better accessibility
+  // Clone the child element to add aria-describedby directly to it for better accessibility.
+  // Also enforce a focusable trigger (tabIndex 0 unless the child already sets one) since the
+  // wrapper's onFocus/onBlur can only fire once the trigger itself can receive keyboard focus —
+  // callers frequently pass non-focusable elements (an InfoIcon, a plain div) as children.
   const triggerWithAria = React.cloneElement(children, {
     'aria-describedby': isVisible ? id : undefined,
+    tabIndex: children.props.tabIndex ?? 0,
   });
 
   return (

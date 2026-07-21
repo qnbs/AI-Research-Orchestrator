@@ -124,8 +124,8 @@ const SettingsViewLayout: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
         <aside className="md:col-span-1">
-          <div className="space-y-1 sticky top-24" role="tablist" aria-label="Settings categories">
-            <div className="relative">
+          <div className="space-y-1 sticky top-24">
+            <div className="relative" role="tablist" aria-label="Settings categories">
               {tabs.map((tab, index) => (
                 <button
                   key={tab.id}
