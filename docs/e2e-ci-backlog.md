@@ -1,10 +1,19 @@
 # E2E-in-CI backlog (2026-07-21)
 
-`.github/workflows/e2e.yml` runs the two existing Playwright specs (`src/test/e2e/smoke.spec.ts`, `src/test/e2e/agent-flow.spec.ts`) on every push/PR to `main`. It is **non-blocking** (`continue-on-error: true`) because this is its first time running against GitHub's actual hosted runners rather than a local machine — local passes don't guarantee runner-environment stability (headless Chromium sandboxing, timing under shared CPU, etc.).
+`.github/workflows/e2e.yml` runs the two existing Playwright specs (`src/test/e2e/smoke.spec.ts`, `src/test/e2e/agent-flow.spec.ts`) on every push/PR to `main`. It is **non-blocking** (`continue-on-error: true`).
+
+## Known failing tests (found on the very first CI run, PR #59)
+
+Two tests in `agent-flow.spec.ts` fail **consistently** — all 3 attempts (initial + 2 retries), both locally and on GitHub's hosted runner, not intermittently:
+
+- `5. Knowledge Base View › KB shows empty-state message when no data saved` (`agent-flow.spec.ts:327`) — times out waiting for `header` to become visible after `page.reload()`, following a manual IndexedDB clear that bypasses Dexie's normal lifecycle. Needs investigation into whether the app's Redux re-hydration hangs/errors when the `knowledgeBaseEntries` table is cleared outside Dexie, or whether the test's manual-clear approach itself is the problem (see the test's own comment: "localStorage flags alone are not enough — demo entries were already persisted during app bootstrap").
+- `8. Mobile UX — Bottom Nav & Pipeline › tapping Agent navigates to orchestrator form` (`agent-flow.spec.ts:469`) — times out waiting for the "Agent" bottom-nav button, then for `#researchTopic` to appear after clicking it.
+
+These are real, reproducible failures to fix, not flakiness from a slow/shared machine — that was an initial hypothesis from a local run on a resource-constrained dev VM, disproven by the same 2 tests failing deterministically on GitHub's own runner in PR #59. No root-cause fix attempted yet; tracked here since the job is non-blocking and the sprint that added E2E-to-CI didn't scope debugging existing spec failures.
 
 ## Promotion trigger
 
-Flip `continue-on-error` to `false` once the job has run clean (no flakes, no runner-specific failures) for **2 consecutive weeks** of normal PR activity, or after **10 consecutive green runs**, whichever comes first. Whoever does the flip should also remove this backlog note's promotion section and fold a one-line mention into `AUDIT.md`'s next dated entry.
+Flip `continue-on-error` to `false` once the two known failures above are fixed **and** the job has run clean for **2 consecutive weeks** of normal PR activity, or **10 consecutive green runs**, whichever comes first. Whoever does the flip should also remove this backlog note's promotion section and fold a one-line mention into `AUDIT.md`'s next dated entry.
 
 ## Deferred specs
 
