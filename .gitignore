@@ -53,3 +53,9 @@ coverage/
 Thumbs.db
 ehthumbs.db
 Desktop.ini
+
+# ── codegraph (local code index — machine-specific, rebuild with `codegraph init`) ──
+.codegraph/
+
+# ── graphify (knowledge graph — solo-dev project, kept local; not the team-shared setup) ──
+graphify-out/
