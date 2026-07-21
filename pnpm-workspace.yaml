@@ -43,6 +43,15 @@ overrides:
   vite: 6.4.3
   undici: 7.28.0
   ws: 8.21.1
-  protobufjs: 7.6.1
+  # GHSA-f38q-mgvj-vph7 (<=7.6.2) + GHSA-j3f2-48v5-ccww (<=7.6.4); @google/genai's own
+  # range is ^7.5.4, satisfied by 7.6.5
+  protobufjs: 7.6.5
+  # GHSA-3jxr-9vmj-r5cp: two independent major lines in the tree need separate pins —
+  # minimatch@3.1.5 (eslint/@lhci/cli chain) wants ^1.1.7, minimatch@9.0.9
+  # (@google/genai/@vitest/coverage-v8 chain) wants ^2.0.2
+  "brace-expansion@^1.1.7": 1.1.16
+  "brace-expansion@^2.0.2": 2.1.2
+  # GHSA-w5hq-g745-h8pq: @lhci/cli pins uuid@8.3.2 directly
+  uuid: 11.1.1
   # @lhci/cli pulls tmp@0.0.33 / 0.1.0 (GHSA-ph9p-34f9-6g65); pin patched release
   tmp: 0.2.7
