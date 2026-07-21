@@ -155,135 +155,131 @@ interface HistoryListItemProps {
   onEditKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
 }
 
-const HistoryListItem = memo<HistoryListItemProps>(
-  ({
-    entry,
-    onViewEntry,
-    onQuickView,
-    onStartEdit,
-    isEditing,
-    editingTitle,
-    onTitleChange,
-    onSaveTitle,
-    onCancelEdit,
-    onEditKeyDown,
-  }) => {
-    const { sourceType, title, timestamp, articles } = entry;
-    const Icon =
-      sourceType === 'author' ? AuthorIcon : sourceType === 'journal' ? BookOpenIcon : DocumentIcon;
-    const iconColor =
-      sourceType === 'author'
-        ? 'text-accent-magenta'
-        : sourceType === 'journal'
-          ? 'text-green-400'
-          : 'text-brand-accent';
+const HistoryListItem = memo<HistoryListItemProps>(function HistoryListItem({
+  entry,
+  onViewEntry,
+  onQuickView,
+  onStartEdit,
+  isEditing,
+  editingTitle,
+  onTitleChange,
+  onSaveTitle,
+  onCancelEdit,
+  onEditKeyDown,
+}) {
+  const { sourceType, title, timestamp, articles } = entry;
+  const Icon =
+    sourceType === 'author' ? AuthorIcon : sourceType === 'journal' ? BookOpenIcon : DocumentIcon;
+  const iconColor =
+    sourceType === 'author'
+      ? 'text-accent-magenta'
+      : sourceType === 'journal'
+        ? 'text-green-400'
+        : 'text-brand-accent';
 
-    return (
-      <li className="p-4 sm:p-6 hover:bg-surface-hover transition-colors duration-150 group focus-within:ring-2 focus-within:ring-brand-accent focus-within:ring-offset-2 focus-within:ring-offset-surface rounded-md">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-start gap-4 flex-grow min-w-0">
-            <Icon className={`h-8 w-8 mt-1 flex-shrink-0 ${iconColor}`} />
-            <div className="flex-grow min-w-0">
-              {isEditing ? (
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={editingTitle}
-                    onChange={(e) => onTitleChange(e.target.value)}
-                    onKeyDown={onEditKeyDown}
-                    className="w-full bg-input-bg border border-brand-accent rounded-md py-1 px-2 text-base font-semibold focus:outline-none focus:ring-2 focus:ring-brand-accent"
-                    autoFocus
-                  />
-                  <button
-                    onClick={onSaveTitle}
-                    className="p-1.5 rounded-full text-green-400 hover:bg-green-500/10"
-                  >
-                    <CheckCircleIcon className="h-5 w-5" />
-                  </button>
-                  <button
-                    onClick={onCancelEdit}
-                    className="p-1.5 rounded-full text-red-400 hover:bg-red-500/10"
-                  >
-                    <XCircleIcon className="h-5 w-5" />
-                  </button>
-                </div>
-              ) : (
-                <h3 className="text-lg font-semibold text-text-primary truncate" title={title}>
-                  {title}
-                </h3>
-              )}
-              <p className="text-xs text-text-secondary mt-1">
-                Created on {new Date(timestamp).toLocaleString()}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 flex-shrink-0 self-start sm:self-center">
-            <button
-              onClick={() => onStartEdit({ id: entry.id, title: title })}
-              className="p-2 rounded-md text-text-secondary hover:bg-surface-hover hover:text-brand-accent transition-colors"
-              aria-label="Edit title"
-            >
-              <PencilIcon className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => onQuickView(entry)}
-              className="p-2 rounded-md text-text-secondary hover:bg-surface-hover hover:text-brand-accent transition-colors"
-              aria-label="Quick view"
-            >
-              <EyeIcon className="h-5 w-5" />
-            </button>
-            <button
-              onClick={() => onViewEntry(entry)}
-              className="inline-flex items-center px-3 py-1.5 border border-border text-xs font-medium rounded-md shadow-sm text-text-primary bg-surface hover:bg-surface-hover hover:border-brand-accent transition-colors"
-            >
-              {sourceType === 'author'
-                ? 'View Profile'
-                : sourceType === 'journal'
-                  ? 'View Details'
-                  : 'View Report'}
-            </button>
+  return (
+    <li className="p-4 sm:p-6 hover:bg-surface-hover transition-colors duration-150 group focus-within:ring-2 focus-within:ring-brand-accent focus-within:ring-offset-2 focus-within:ring-offset-surface rounded-md">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-start gap-4 flex-grow min-w-0">
+          <Icon className={`h-8 w-8 mt-1 flex-shrink-0 ${iconColor}`} />
+          <div className="flex-grow min-w-0">
+            {isEditing ? (
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={editingTitle}
+                  onChange={(e) => onTitleChange(e.target.value)}
+                  onKeyDown={onEditKeyDown}
+                  className="w-full bg-input-bg border border-brand-accent rounded-md py-1 px-2 text-base font-semibold focus:outline-none focus:ring-2 focus:ring-brand-accent"
+                  autoFocus
+                />
+                <button
+                  onClick={onSaveTitle}
+                  className="p-1.5 rounded-full text-green-400 hover:bg-green-500/10"
+                >
+                  <CheckCircleIcon className="h-5 w-5" />
+                </button>
+                <button
+                  onClick={onCancelEdit}
+                  className="p-1.5 rounded-full text-red-400 hover:bg-red-500/10"
+                >
+                  <XCircleIcon className="h-5 w-5" />
+                </button>
+              </div>
+            ) : (
+              <h3 className="text-lg font-semibold text-text-primary truncate" title={title}>
+                {title}
+              </h3>
+            )}
+            <p className="text-xs text-text-secondary mt-1">
+              Created on {new Date(timestamp).toLocaleString()}
+            </p>
           </div>
         </div>
-        <div className="mt-4 pt-4 border-t border-border/50 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-text-secondary">
-          {entry.sourceType === 'research' && (
-            <>
-              <div>
-                <strong>{articles.length}</strong> articles
-              </div>
-              <div>
-                <strong>Focus:</strong> {synthesisFocusText[entry.input.synthesisFocus]}
-              </div>
-              <div>
-                <strong>Date Range:</strong>{' '}
-                {entry.input.dateRange === 'any'
-                  ? 'Any time'
-                  : `Last ${entry.input.dateRange} years`}
-              </div>
-            </>
-          )}
-          {entry.sourceType === 'author' && (
+        <div className="flex items-center gap-2 flex-shrink-0 self-start sm:self-center">
+          <button
+            onClick={() => onStartEdit({ id: entry.id, title: title })}
+            className="p-2 rounded-md text-text-secondary hover:bg-surface-hover hover:text-brand-accent transition-colors"
+            aria-label="Edit title"
+          >
+            <PencilIcon className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => onQuickView(entry)}
+            className="p-2 rounded-md text-text-secondary hover:bg-surface-hover hover:text-brand-accent transition-colors"
+            aria-label="Quick view"
+          >
+            <EyeIcon className="h-5 w-5" />
+          </button>
+          <button
+            onClick={() => onViewEntry(entry)}
+            className="inline-flex items-center px-3 py-1.5 border border-border text-xs font-medium rounded-md shadow-sm text-text-primary bg-surface hover:bg-surface-hover hover:border-brand-accent transition-colors"
+          >
+            {sourceType === 'author'
+              ? 'View Profile'
+              : sourceType === 'journal'
+                ? 'View Details'
+                : 'View Report'}
+          </button>
+        </div>
+      </div>
+      <div className="mt-4 pt-4 border-t border-border/50 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-text-secondary">
+        {entry.sourceType === 'research' && (
+          <>
             <div>
-              <strong>{articles.length}</strong> publications
+              <strong>{articles.length}</strong> articles
             </div>
-          )}
-          {entry.sourceType === 'journal' && (
-            <>
-              <div>
-                <strong>{articles.length}</strong> articles
-              </div>
-              <div>
-                <strong>ISSN:</strong> {entry.journalProfile.issn}
-              </div>
-              <div>
-                <strong>OA Policy:</strong> {entry.journalProfile.oaPolicy}
-              </div>
-            </>
-          )}
-        </div>
-      </li>
-    );
-  },
-);
+            <div>
+              <strong>Focus:</strong> {synthesisFocusText[entry.input.synthesisFocus]}
+            </div>
+            <div>
+              <strong>Date Range:</strong>{' '}
+              {entry.input.dateRange === 'any' ? 'Any time' : `Last ${entry.input.dateRange} years`}
+            </div>
+          </>
+        )}
+        {entry.sourceType === 'author' && (
+          <div>
+            <strong>{articles.length}</strong> publications
+          </div>
+        )}
+        {entry.sourceType === 'journal' && (
+          <>
+            <div>
+              <strong>{articles.length}</strong> articles
+            </div>
+            <div>
+              <strong>ISSN:</strong> {entry.journalProfile.issn}
+            </div>
+            <div>
+              <strong>OA Policy:</strong> {entry.journalProfile.oaPolicy}
+            </div>
+          </>
+        )}
+      </div>
+    </li>
+  );
+});
 
 const HistoryView: React.FC<HistoryViewProps> = ({ onViewEntry }) => {
   const { knowledgeBase, updateEntryTitle } = useKnowledgeBase();

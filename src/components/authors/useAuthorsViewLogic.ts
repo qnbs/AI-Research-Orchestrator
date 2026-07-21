@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { AuthorCluster, AuthorProfile, RankedArticle, FeaturedAuthorCategory } from '../../types';
+import { AuthorCluster, AuthorProfile, RankedArticle } from '../../types';
 import { useSettings } from '../../contexts/SettingsContext';
 import { useKnowledgeBase } from '../../contexts/KnowledgeBaseContext';
 import {

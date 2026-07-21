@@ -241,6 +241,13 @@ export const translations = {
       'Build a personal, de-duplicated knowledge base and export your findings for any workflow.',
     'onboarding.start': 'Start Researching',
     'onboarding.privacy': 'Your data remains private and is stored only locally in your browser.',
+    // ── Author Hub ──
+    'authors.subtitle':
+      "Analyze a researcher's impact or discover key figures in any scientific field.",
+    'authors.suggest.heading': 'Key Researchers in',
+    'authors.disambiguation.prefix': 'Multiple potential author profiles were found for',
+    'authors.disambiguation.suffix': 'Please select the correct one.',
+    'settings.ai.enable_tldr': 'Enable AI “TL;DR” Summaries',
     'journals.title': 'Journal Hub',
     'journals.subtitle': 'Discover, analyze, and track scientific journals.',
     'journals.mode.analyze': 'Analyze Journal',
@@ -556,6 +563,13 @@ export const translations = {
     'onboarding.start': 'Recherche starten',
     'onboarding.privacy':
       'Ihre Daten bleiben privat und werden nur lokal in Ihrem Browser gespeichert.',
+    // ── Author Hub (German locale) ──
+    'authors.subtitle':
+      'Analysieren Sie die Wirkung eines Forschers oder entdecken Sie Schlüsselfiguren in jedem wissenschaftlichen Bereich.',
+    'authors.suggest.heading': 'Wichtige Forscher zu',
+    'authors.disambiguation.prefix': 'Mehrere mögliche Autorenprofile wurden gefunden für',
+    'authors.disambiguation.suffix': 'Bitte wählen Sie das richtige aus.',
+    'settings.ai.enable_tldr': 'KI-„TL;DR“-Zusammenfassungen aktivieren',
     'journals.title': 'Journal-Hub',
     'journals.subtitle': 'Entdecken, analysieren und verfolgen Sie wissenschaftliche Journals.',
     'journals.mode.analyze': 'Journal analysieren',

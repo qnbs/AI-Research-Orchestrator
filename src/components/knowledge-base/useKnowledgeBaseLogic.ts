@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useSettings } from '../../contexts/SettingsContext';
 import { useKnowledgeBase } from '../../contexts/KnowledgeBaseContext';
 import { useUI } from '../../contexts/UIContext';
@@ -20,7 +20,7 @@ export const useKnowledgeBaseLogic = (
   onAnalyzeJournal?: (journalName: string) => void,
 ) => {
   const { settings } = useSettings();
-  const { knowledgeBase, uniqueArticles, deleteArticles, getArticles } = useKnowledgeBase();
+  const { knowledgeBase, uniqueArticles, deleteArticles } = useKnowledgeBase();
   const { setNotification } = useUI();
 
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(settings.knowledgeBase.defaultView);

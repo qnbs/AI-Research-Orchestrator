@@ -333,8 +333,22 @@ Research Topic: "${topicSafe}"
       required: ['rankedArticles', 'aiGeneratedInsights', 'overallKeywords'],
     };
 
+    interface RankingAnalysisResponse {
+      rankedArticles: Pick<
+        RankedArticle,
+        | 'pmid'
+        | 'relevanceScore'
+        | 'relevanceExplanation'
+        | 'keywords'
+        | 'articleType'
+        | 'aiSummary'
+      >[];
+      aiGeneratedInsights: ResearchReport['aiGeneratedInsights'];
+      overallKeywords: ResearchReport['overallKeywords'];
+    }
+
     throwIfAborted(signal);
-    const analysisData = await generateJson<any>(
+    const analysisData = await generateJson<RankingAnalysisResponse>(
       aiSettings,
       {
         model: aiSettings.model,
@@ -355,11 +369,15 @@ Research Topic: "${topicSafe}"
     );
 
     const detailedRankedArticles = analysisData.rankedArticles
-      .map((ranked: any) => {
+      .map((ranked) => {
         const details = articleDetails.find((d) => d.pmid === ranked.pmid);
-        return { ...details, ...ranked };
+        // Despite the prompt instructing the AI to only use provided PMIDs, guard against
+        // a hallucinated one producing an article missing title/authors/journal/etc.
+        if (!details) return null;
+        return { ...details, ...ranked } as RankedArticle;
       })
-      .sort((a: RankedArticle, b: RankedArticle) => b.relevanceScore - a.relevanceScore);
+      .filter((a): a is RankedArticle => a !== null)
+      .sort((a, b) => b.relevanceScore - a.relevanceScore);
 
     const partialReport: ResearchReport = {
       generatedQueries,
@@ -648,7 +666,11 @@ export async function generateAuthorProfileAnalysis(
       },
       required: ['careerSummary', 'coreConcepts', 'estimatedMetrics'],
     };
-    return await generateJson<any>(
+    return await generateJson<{
+      careerSummary: string;
+      coreConcepts: { concept: string; frequency: number }[];
+      estimatedMetrics: { hIndex: number | null; totalCitations: number | null };
+    }>(
       aiSettings,
       {
         model: aiSettings.model,

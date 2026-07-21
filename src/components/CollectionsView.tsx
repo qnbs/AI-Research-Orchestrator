@@ -10,11 +10,8 @@ import {
   deleteCollection,
   updateCollection,
   generateShareToken,
-  addEntryToCollection,
-  removeEntryFromCollection,
 } from '../store/slices/collectionsSlice';
 import type { ResearchCollection } from '../types';
-import { useTranslation } from '../hooks/useTranslation';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const COLLECTION_COLORS = [
@@ -382,7 +379,6 @@ const CollectionModal: React.FC<{
 // ── Main View ─────────────────────────────────────────────────────────────────
 const CollectionsView: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { t } = useTranslation();
   const collections = useAppSelector((s) => s.collections.items);
   const isLoading = useAppSelector((s) => s.collections.isLoading);
 
@@ -439,8 +435,6 @@ const CollectionsView: React.FC = () => {
     },
     [dispatch],
   );
-
-  const selected = collections.find((c) => c.id === selectedId) ?? null;
 
   return (
     <div className="flex flex-col h-full gap-6 px-4 py-6 max-w-6xl mx-auto">

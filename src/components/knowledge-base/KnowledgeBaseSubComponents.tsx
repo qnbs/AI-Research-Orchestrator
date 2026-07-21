@@ -192,7 +192,7 @@ export const HeaderControls: React.FC = () => {
       <div className="flex items-center gap-2">
         <select
           value={sortOrder}
-          onChange={(e) => setSortOrder(e.target.value as any)}
+          onChange={(e) => setSortOrder(e.target.value as 'relevance' | 'newest')}
           className="bg-input-bg border border-border rounded-md p-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-accent"
         >
           <option value="relevance">Sort by Relevance</option>
@@ -282,7 +282,7 @@ const KBArticleCard: React.FC<{
   isSelected: boolean;
   onSelect: (pmid: string) => void;
   onView: (article: AggregatedArticle) => void;
-}> = React.memo(({ article, isSelected, onSelect, onView }) => {
+}> = React.memo(function KBArticleCard({ article, isSelected, onSelect, onView }) {
   const { settings } = useSettings();
   const densityClasses =
     settings.appearance.density === 'compact'
@@ -350,7 +350,7 @@ const KBArticleListItem: React.FC<{
   isSelected: boolean;
   onSelect: (pmid: string) => void;
   onView: (article: AggregatedArticle) => void;
-}> = React.memo(({ article, isSelected, onSelect, onView }) => {
+}> = React.memo(function KBArticleListItem({ article, isSelected, onSelect, onView }) {
   return (
     <div
       className={`flex items-start gap-4 p-4 border-b border-border last:border-b-0 group transition-colors ${isSelected ? 'bg-brand-accent/5' : 'hover:bg-surface-hover'}`}
@@ -417,6 +417,7 @@ export const ArticleList: React.FC = () => {
 
   const shouldVirtualize = viewMode === 'list' && filteredArticles.length >= VIRTUAL_THRESHOLD;
 
+  // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Virtual's useVirtualizer() returns functions that can't be safely memoized, and this project doesn't run the React Compiler yet.
   const virtualizer = useVirtualizer({
     count: shouldVirtualize ? filteredArticles.length : 0,
     getScrollElement: () => listScrollRef.current,

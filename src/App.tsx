@@ -15,7 +15,6 @@ import {
   ResearchInput,
   ResearchReport,
   KnowledgeBaseEntry,
-  ChatMessage,
   AuthorProfile,
   KnowledgeBaseFilter,
   AggregatedArticle,
@@ -93,7 +92,6 @@ const AppLayout: React.FC = () => {
   const { t } = useTranslation();
 
   // Orchestrator State
-  const [researchInput, setResearchInput] = useState<ResearchInput | null>(null);
   const [localResearchInput, setLocalResearchInput] = useState<ResearchInput | null>(null); // For editable title
   const [report, setReport] = useState<ResearchReport | null>(null);
   const [reportStatus, setReportStatus] = useState<
@@ -216,10 +214,9 @@ const AppLayout: React.FC = () => {
       setIsPwaInstalled(true);
     };
 
-    if (
-      window.matchMedia('(display-mode: standalone)').matches ||
-      (window.navigator as any).standalone
-    ) {
+    // iOS Safari exposes a non-standard `navigator.standalone` flag not in lib.dom.d.ts.
+    const nav = window.navigator as Navigator & { standalone?: boolean };
+    if (window.matchMedia('(display-mode: standalone)').matches || nav.standalone) {
       setIsPwaInstalled(true);
     }
 
@@ -286,7 +283,6 @@ const AppLayout: React.FC = () => {
       if (!restored) return;
       generationIdRef.current += 1;
       streamAbortRef.current?.abort();
-      setResearchInput(ckpt.input);
       setLocalResearchInput(ckpt.input);
       setReport(restored);
       setReportStatus('done');
@@ -314,7 +310,6 @@ const AppLayout: React.FC = () => {
       setReportStatus('generating');
       setError(null);
       setReport(null);
-      setResearchInput(data);
       setLocalResearchInput(data); // Set local copy for editing
       setCurrentView('orchestrator');
       setIsCurrentReportSaved(false);
@@ -469,7 +464,6 @@ const AppLayout: React.FC = () => {
     generationIdRef.current += 1; // Invalidate any ongoing generation
     streamAbortRef.current?.abort();
     setReport(null);
-    setResearchInput(null);
     setLocalResearchInput(null);
     setReportStatus('idle');
     setError(null);
@@ -526,7 +520,6 @@ const AppLayout: React.FC = () => {
       if (entry.sourceType === 'research') {
         // Stop any ongoing generation when viewing an old report
         generationIdRef.current += 1;
-        setResearchInput(entry.input);
         setLocalResearchInput(entry.input);
         setReport(entry.report);
         setReportStatus('done');

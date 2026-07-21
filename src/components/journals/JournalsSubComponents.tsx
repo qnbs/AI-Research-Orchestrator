@@ -218,7 +218,7 @@ export const JournalLandingView: React.FC = () => {
         {suggestedJournals && (
           <div className="animate-fadeIn">
             <h2 className="text-2xl font-bold text-text-primary text-center mb-6">
-              {t('journals.suggest.heading')} "{submittedQuery ?? query}"
+              {t('journals.suggest.heading')} “{submittedQuery ?? query}”
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {suggestedJournals.map((journal) => (

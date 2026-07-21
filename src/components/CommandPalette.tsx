@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 import { useUI } from '../contexts/UIContext';
-import type { View } from '../contexts/UIContext';
 import { useSettings } from '../contexts/SettingsContext';
 import { useKnowledgeBase } from '../contexts/KnowledgeBaseContext';
 import { DocumentIcon } from './icons/DocumentIcon';
@@ -47,7 +46,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
   onExportSelection,
 }) => {
   const { isCommandPaletteOpen, setIsCommandPaletteOpen, setCurrentView, currentView } = useUI();
-  const { settings, updateSettings } = useSettings();
+  const { updateSettings } = useSettings();
   const { knowledgeBase } = useKnowledgeBase();
   const [search, setSearch] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);

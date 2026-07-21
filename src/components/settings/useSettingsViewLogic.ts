@@ -3,10 +3,11 @@ import { useSettings } from '../../contexts/SettingsContext';
 import { usePresets } from '../../contexts/PresetContext';
 import { useKnowledgeBase } from '../../contexts/KnowledgeBaseContext';
 import { useUI } from '../../contexts/UIContext';
-import { Settings, Preset, CSV_EXPORT_COLUMNS } from '../../types';
+import { Settings, Preset, KnowledgeBaseEntry, CSV_EXPORT_COLUMNS } from '../../types';
 import { db } from '../../services/databaseService';
 import { useTranslation } from '../../hooks/useTranslation';
 import { exportHistoryToJson, exportKnowledgeBaseToJson } from '../../services/exportService';
+import { isKnowledgeBaseEntry } from '../../lib/knowledgeBaseValidation';
 
 const isObject = (item: unknown): item is Record<string, unknown> => {
   return item !== null && typeof item === 'object' && !Array.isArray(item);
@@ -58,10 +59,11 @@ export const useSettingsViewLogic = (
 
   const [tempSettings, setTempSettings] = useState(settings);
   const [activeTab, setActiveTab] = useState<SettingsTab>('general');
-  const [modalState, setModalState] = useState<{
-    type: 'clear' | 'reset' | 'import' | 'prune' | 'merge' | 'confirmModelChange' | 'deletePreset';
-    data?: any;
-  } | null>(null);
+  type ModalState =
+    | { type: 'clear' | 'reset' | 'prune' | 'merge' | 'confirmModelChange' }
+    | { type: 'import'; data: KnowledgeBaseEntry[] }
+    | { type: 'deletePreset'; data: Preset };
+  const [modalState, setModalState] = useState<ModalState | null>(null);
   const [pruneScore, setPruneScore] = useState(20);
   const [storageUsage, setStorageUsage] = useState({ totalMB: '0.00', percentage: '0' });
   const [isProcessing, setIsProcessing] = useState(false);
@@ -218,7 +220,7 @@ export const useSettingsViewLogic = (
           const importedData = JSON.parse(event.target?.result as string);
           const dataToImport = importedData.data ? importedData.data : importedData;
 
-          if (Array.isArray(dataToImport) && dataToImport.every((item) => 'sourceType' in item)) {
+          if (Array.isArray(dataToImport) && dataToImport.every(isKnowledgeBaseEntry)) {
             setModalState({ type: 'import', data: dataToImport });
           } else {
             throw new Error(

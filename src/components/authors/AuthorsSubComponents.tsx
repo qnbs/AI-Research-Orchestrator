@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo, useId } from 'react';
 import { useAuthorsView } from './AuthorsViewContext';
-import { AuthorCluster, AuthorProfile } from '../../types';
 import { ChevronLeftIcon } from '../icons/ChevronLeftIcon';
 import { ChevronRightIcon } from '../icons/ChevronRightIcon';
 import { ChevronDownIcon } from '../icons/ChevronDownIcon';
@@ -211,7 +210,7 @@ export const FeaturedAuthorsView: React.FC = () => {
 
       <div>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {paginatedAuthors.map((author: any, index: number) => (
+          {paginatedAuthors.map((author, index) => (
             <div
               key={author.name}
               className="animate-fadeIn"
@@ -265,6 +264,7 @@ export const LandingView: React.FC = () => {
     error: searchError,
     suggestedAuthors,
   } = useAuthorsView();
+  const { t } = useTranslation();
   const [mode, setMode] = useState<'search' | 'suggest'>('search');
   const [query, setQuery] = useState('');
 
@@ -291,7 +291,7 @@ export const LandingView: React.FC = () => {
         <div className="text-center">
           <h1 className="text-4xl font-bold brand-gradient-text">Author Hub</h1>
           <p className="mt-2 text-lg text-text-secondary max-w-3xl mx-auto">
-            Analyze a researcher's impact or discover key figures in any scientific field.
+            {t('authors.subtitle')}
           </p>
         </div>
         <div className="max-w-2xl mx-auto">
@@ -362,7 +362,7 @@ export const LandingView: React.FC = () => {
         {suggestedAuthors && (
           <div className="animate-fadeIn">
             <h2 className="text-2xl font-bold text-text-primary text-center mb-6">
-              Key Researchers in "{query}"
+              {t('authors.suggest.heading')} “{query}”
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {suggestedAuthors.map((author) => (
@@ -383,14 +383,14 @@ export const LandingView: React.FC = () => {
 
 export const DisambiguationView: React.FC = () => {
   const { authorClusters: clusters, handleSelectCluster: onSelect, authorQuery } = useAuthorsView();
+  const { t } = useTranslation();
   if (!clusters) return null;
 
   return (
     <div className="mt-8 animate-fadeIn pt-2">
       <h2 className="text-2xl font-bold text-text-primary text-center">Disambiguation Required</h2>
       <p className="text-center text-text-secondary mt-2">
-        Multiple potential author profiles were found for "{authorQuery}". Please select the correct
-        one.
+        {t('authors.disambiguation.prefix')} “{authorQuery}”. {t('authors.disambiguation.suffix')}
       </p>
       <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
         {clusters.map((cluster, index) => (

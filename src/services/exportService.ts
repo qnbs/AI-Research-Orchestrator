@@ -436,7 +436,7 @@ export const exportToCsv = (
   topic: string,
   settings: Settings['export']['csv'],
 ): void => {
-  const escapeCsvField = (field: any): string => {
+  const escapeCsvField = (field: unknown): string => {
     if (field === null || field === undefined) return '';
     let str = sanitizeCsvFormulaInjection(String(field));
     if (str.includes(settings.delimiter) || str.includes('"') || str.includes('\n'))
@@ -451,7 +451,7 @@ export const exportToCsv = (
       ? `https://www.ncbi.nlm.nih.gov/pmc/articles/${article.pmcId}/`
       : '';
 
-    const rowData: Record<(typeof CSV_EXPORT_COLUMNS)[number], any> = {
+    const rowData: Record<(typeof CSV_EXPORT_COLUMNS)[number], string | number | boolean> = {
       pmid: article.pmid,
       pmcId: article.pmcId ?? '',
       title: article.title,
@@ -487,7 +487,7 @@ export const exportInsightsToCsv = (
   insights: ResearchReport['aiGeneratedInsights'],
   topic: string,
 ): void => {
-  const escapeCsvField = (field: any): string => {
+  const escapeCsvField = (field: unknown): string => {
     if (field === null || field === undefined) return '';
     let str = sanitizeCsvFormulaInjection(String(field));
     if (str.includes(',') || str.includes('"') || str.includes('\n')) {
@@ -514,7 +514,7 @@ export const exportInsightsToCsv = (
 
 // --- JSON Export with Metadata ---
 
-const createJsonExport = (data: any, type: string, count: number) => {
+const createJsonExport = <T>(data: T, type: string, count: number) => {
   const exportObject = {
     meta: {
       appName: APP_NAME,

@@ -20,11 +20,7 @@ import {
   JournalEntry,
   Article,
 } from '../types';
-import {
-  updateEntry,
-  deleteEntries as deleteEntriesFromDb,
-  bulkAddEntries,
-} from '../services/databaseService';
+import { deleteEntries as deleteEntriesFromDb } from '../services/databaseService';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { setNotification } from '../store/slices/uiSlice';
 import {
@@ -34,7 +30,6 @@ import {
   clearKb,
   selectUniqueArticles,
   selectAllEntries,
-  selectRecentResearchEntries,
   updateKbEntry,
 } from '../store/slices/knowledgeBaseSlice';
 import { isDemoEntryId, DEMO_DISMISS_STORAGE_KEY } from '../services/heuristics';
@@ -59,6 +54,19 @@ interface KnowledgeBaseContextType {
   addSingleArticleReport: (article: RankedArticle) => Promise<void>;
   isLoading: boolean;
 }
+
+/**
+ * `Partial<KnowledgeBaseEntry>` only exposes fields common to every variant
+ * of the ResearchEntry | AuthorProfileEntry | JournalEntry union. Entry
+ * updates need to set variant-specific fields (report/profile/journalProfile)
+ * depending on sourceType, so this widens the shape to allow them too.
+ */
+type KnowledgeBaseEntryChanges = Partial<KnowledgeBaseEntry> & {
+  input?: ResearchInput | AuthorProfileInput;
+  report?: ResearchReport;
+  profile?: AuthorProfile;
+  journalProfile?: JournalProfile;
+};
 
 const KnowledgeBaseContext = createContext<KnowledgeBaseContextType | undefined>(undefined);
 
@@ -163,7 +171,7 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
       const entryToUpdate = knowledgeBase.find((e) => e.id === id);
       if (!entryToUpdate) return;
 
-      const changesForDb: any = { title: newTitle };
+      const changesForDb: KnowledgeBaseEntryChanges = { title: newTitle };
       if (entryToUpdate.sourceType === 'research')
         changesForDb.input = { ...entryToUpdate.input, researchTopic: newTitle };
       else if (entryToUpdate.sourceType === 'author')
@@ -194,11 +202,11 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
         const newArticles = (entry.articles || []).map(updateArticle);
         if (!hasChanged) return;
 
-        const changes: Partial<KnowledgeBaseEntry> = { articles: newArticles };
+        const changes: KnowledgeBaseEntryChanges = { articles: newArticles };
         if (entry.sourceType === 'research')
-          (changes as any).report = { ...entry.report, rankedArticles: newArticles };
+          changes.report = { ...entry.report, rankedArticles: newArticles };
         else if (entry.sourceType === 'author')
-          (changes as any).profile = { ...entry.profile, publications: newArticles };
+          changes.profile = { ...entry.profile, publications: newArticles };
 
         updatedEntries.push({ id: entry.id, changes });
       });
@@ -224,11 +232,11 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
           if (keptArticles.length === 0) {
             toDeleteIds.push(entry.id);
           } else {
-            const changes: Partial<KnowledgeBaseEntry> = { articles: keptArticles };
+            const changes: KnowledgeBaseEntryChanges = { articles: keptArticles };
             if (entry.sourceType === 'research')
-              (changes as any).report = { ...entry.report, rankedArticles: keptArticles };
+              changes.report = { ...entry.report, rankedArticles: keptArticles };
             else if (entry.sourceType === 'author')
-              (changes as any).profile = { ...entry.profile, publications: keptArticles };
+              changes.profile = { ...entry.profile, publications: keptArticles };
             updates.push({ id: entry.id, changes });
           }
         }
@@ -307,11 +315,11 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
           if (keptArticles.length === 0) {
             entriesToDelete.add(entry.id);
           } else {
-            const changes: Partial<KnowledgeBaseEntry> = { articles: keptArticles };
+            const changes: KnowledgeBaseEntryChanges = { articles: keptArticles };
             if (entry.sourceType === 'research')
-              (changes as any).report = { ...entry.report, rankedArticles: keptArticles };
+              changes.report = { ...entry.report, rankedArticles: keptArticles };
             else if (entry.sourceType === 'author')
-              (changes as any).profile = { ...entry.profile, publications: keptArticles };
+              changes.profile = { ...entry.profile, publications: keptArticles };
             updates.push({ id: entry.id, changes });
           }
         }
