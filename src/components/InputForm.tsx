@@ -173,6 +173,7 @@ const InputFormComponent: React.FC<InputFormProps> = ({
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
       if (Object.keys(errors).length === 0 && !isLoading) {
         onSubmit(formData);
       }

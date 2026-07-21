@@ -152,7 +152,9 @@ export const GeneralSettingsTab: React.FC = () => {
         </div>
         <div className="pt-4 mt-4 border-t border-border">
           <div className="flex items-center gap-2 mb-2">
-            <span className="block text-sm font-medium text-text-primary">UI Density</span>
+            <span className="block text-sm font-medium text-text-primary">
+              {t('settings.appearance.density')}
+            </span>
             <Tooltip content="Adjust the spacing and size of UI elements. 'Compact' is useful for smaller screens or fitting more information.">
               <InfoIcon className="h-4 w-4 text-text-secondary cursor-help" />
             </Tooltip>
@@ -160,7 +162,7 @@ export const GeneralSettingsTab: React.FC = () => {
           <div
             className="flex w-full max-w-xs bg-surface p-1 rounded-lg border border-border"
             role="group"
-            aria-label="UI Density"
+            aria-label={t('settings.appearance.density')}
           >
             <button
               onClick={() =>

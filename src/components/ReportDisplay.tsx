@@ -89,6 +89,7 @@ const AccordionSection: React.FC<{
     <div className="border-b border-border last:border-b-0">
       <div className="group relative flex items-center">
         <button
+          type="button"
           id={buttonId}
           onClick={() => setIsOpen(!isOpen)}
           aria-expanded={isOpen}
@@ -519,8 +520,9 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(function R
             title={<span>Executive Synthesis</span>}
             actions={
               <button
+                type="button"
                 onClick={handleCopySynthesis}
-                className="p-1.5 rounded-md text-text-secondary hover:bg-background hover:text-brand-accent opacity-0 group-hover:opacity-100 transition-opacity"
+                className="p-1.5 rounded-md text-text-secondary hover:bg-background hover:text-brand-accent opacity-0 group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent transition-opacity"
                 aria-label="Copy synthesis to clipboard"
               >
                 <ClipboardIcon className="h-4 w-4" />

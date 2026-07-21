@@ -12,6 +12,7 @@ import {
   generateShareToken,
 } from '../store/slices/collectionsSlice';
 import type { ResearchCollection } from '../types';
+import { useTranslation } from '../hooks/useTranslation';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const COLLECTION_COLORS = [
@@ -233,6 +234,7 @@ const CollectionModal: React.FC<{
   onSave: (data: Partial<ResearchCollection>) => void;
   onClose: () => void;
 }> = ({ initial, onSave, onClose }) => {
+  const { t } = useTranslation();
   const [name, setName] = useState(initial?.name ?? '');
   const [description, setDescription] = useState(initial?.description ?? '');
   const [color, setColor] = useState(initial?.color ?? COLLECTION_COLORS[0]);
@@ -277,8 +279,14 @@ const CollectionModal: React.FC<{
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Icon picker */}
           <div>
-            <span className="text-xs text-text-secondary mb-1 block">Icon</span>
-            <div className="flex flex-wrap gap-2" role="group" aria-label="Icon">
+            <span className="text-xs text-text-secondary mb-1 block">
+              {t('collections.form.icon')}
+            </span>
+            <div
+              className="flex flex-wrap gap-2"
+              role="group"
+              aria-label={t('collections.form.icon')}
+            >
               {COLLECTION_ICONS.map((ic) => (
                 <button
                   key={ic}
@@ -325,8 +333,10 @@ const CollectionModal: React.FC<{
 
           {/* Color */}
           <div>
-            <span className="text-xs text-text-secondary mb-1 block">Color</span>
-            <div className="flex gap-2" role="group" aria-label="Color">
+            <span className="text-xs text-text-secondary mb-1 block">
+              {t('collections.form.color')}
+            </span>
+            <div className="flex gap-2" role="group" aria-label={t('collections.form.color')}>
               {COLLECTION_COLORS.map((c) => (
                 <button
                   key={c}

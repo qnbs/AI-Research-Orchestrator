@@ -28,6 +28,7 @@ export const translations = {
     'settings.general': 'General',
     'settings.ai': 'AI Configuration',
     'settings.appearance': 'Appearance',
+    'settings.appearance.density': 'UI Density',
     'settings.language': 'Language',
     'settings.language.desc': 'Select the language for the application interface.',
     'settings.theme': 'Theme',
@@ -74,6 +75,8 @@ export const translations = {
     'collections.delete.confirm': 'Delete this collection?',
     'collections.share': 'Generate share link',
     'collections.copied': 'Link copied to clipboard!',
+    'collections.form.icon': 'Icon',
+    'collections.form.color': 'Color',
     // ── Agent Debugger ──
     'debugger.title': 'Agent Debugger',
     'debugger.live': 'Live',
@@ -340,6 +343,7 @@ export const translations = {
     'settings.general': 'Allgemein',
     'settings.ai': 'KI-Konfiguration',
     'settings.appearance': 'Erscheinungsbild',
+    'settings.appearance.density': 'UI-Dichte',
     'settings.language': 'Sprache',
     'settings.language.desc': 'Wählen Sie die Sprache für die Benutzeroberfläche.',
     'settings.theme': 'Design',
@@ -388,6 +392,8 @@ export const translations = {
     'collections.delete.confirm': 'Diese Sammlung löschen?',
     'collections.share': 'Freigabelink erstellen',
     'collections.copied': 'Link in Zwischenablage kopiert!',
+    'collections.form.icon': 'Symbol',
+    'collections.form.color': 'Farbe',
     // ── Agent Debugger ──
     'debugger.title': 'Agenten-Debugger',
     'debugger.live': 'Live',
