@@ -26,17 +26,17 @@ const COLLECTION_COLORS = [
   '#e879f9',
 ];
 const COLLECTION_ICONS = ['📚', '🔬', '🧠', '⚡', '🌟', '🔭', '🧬', '💡', '🎯', '📊'];
-const COLLECTION_ICON_NAMES: Record<string, string> = {
-  '📚': 'Books',
-  '🔬': 'Microscope',
-  '🧠': 'Brain',
-  '⚡': 'Lightning',
-  '🌟': 'Star',
-  '🔭': 'Telescope',
-  '🧬': 'DNA',
-  '💡': 'Idea',
-  '🎯': 'Target',
-  '📊': 'Chart',
+const COLLECTION_ICON_KEYS: Record<string, string> = {
+  '📚': 'collections.icon.books',
+  '🔬': 'collections.icon.microscope',
+  '🧠': 'collections.icon.brain',
+  '⚡': 'collections.icon.lightning',
+  '🌟': 'collections.icon.star',
+  '🔭': 'collections.icon.telescope',
+  '🧬': 'collections.icon.dna',
+  '💡': 'collections.icon.idea',
+  '🎯': 'collections.icon.target',
+  '📊': 'collections.icon.chart',
 };
 
 function generateId() {
@@ -169,7 +169,12 @@ const CollectionCard: React.FC<{
       role="button"
       aria-pressed={isSelected}
       tabIndex={0}
-      onKeyDown={(e) => e.key === 'Enter' && onSelect(collection)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onSelect(collection);
+        }
+      }}
     >
       {/* Cover gradient */}
       <CollectionCover color={collection.color} icon={collection.icon} />
@@ -309,7 +314,7 @@ const CollectionModal: React.FC<{
                   type="button"
                   onClick={() => setIcon(ic)}
                   aria-pressed={icon === ic}
-                  aria-label={COLLECTION_ICON_NAMES[ic] ?? ic}
+                  aria-label={COLLECTION_ICON_KEYS[ic] ? t(COLLECTION_ICON_KEYS[ic]) : ic}
                   className={`w-9 h-9 rounded-lg text-lg transition-all
                     ${icon === ic ? 'ring-2 ring-brand-accent bg-brand-accent/10' : 'glass-panel hover:bg-surface-hover'}`}
                 >

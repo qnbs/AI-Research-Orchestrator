@@ -4,7 +4,11 @@ import { XIcon } from './icons/XIcon';
 
 interface TooltipProps {
   content: React.ReactNode;
-  children: React.ReactElement<{ 'aria-describedby'?: string; tabIndex?: number }>;
+  children: React.ReactElement<{
+    'aria-describedby'?: string;
+    'aria-label'?: string;
+    tabIndex?: number;
+  }>;
   detailedContent?: React.ReactNode;
 }
 
@@ -20,6 +24,15 @@ export const Tooltip: React.FC<TooltipProps> = ({ content, children, detailedCon
     if (!isDetailVisible) {
       setIsHoverVisible(false);
     }
+  };
+
+  const handleWrapperBlur = (e: React.FocusEvent<HTMLDivElement>) => {
+    // Only hide when focus leaves the whole wrapper (trigger + bubble). Without this check,
+    // tabbing from the trigger into the "Show details"/"Hide details" buttons inside the bubble
+    // itself blurs the trigger and immediately hides the bubble those buttons live in, making
+    // them permanently unreachable via keyboard.
+    if (e.currentTarget.contains(e.relatedTarget)) return;
+    hide();
   };
 
   const handleDetailToggle = (e: React.MouseEvent) => {
@@ -41,10 +54,14 @@ export const Tooltip: React.FC<TooltipProps> = ({ content, children, detailedCon
   // Clone the child element to add aria-describedby directly to it for better accessibility.
   // Also enforce a focusable trigger (tabIndex 0 unless the child already sets one) since the
   // wrapper's onFocus/onBlur can only fire once the trigger itself can receive keyboard focus —
-  // callers frequently pass non-focusable elements (an InfoIcon, a plain div) as children.
+  // callers frequently pass non-focusable elements (an InfoIcon, a plain div) as children. A
+  // focusable-but-unlabeled trigger (e.g. a bare icon) would be a silent keyboard stop, so fall
+  // back to the tooltip's own (string) content as the accessible name when the child has none.
+  const fallbackLabel = typeof content === 'string' ? content : undefined;
   const triggerWithAria = React.cloneElement(children, {
     'aria-describedby': isVisible ? id : undefined,
     tabIndex: children.props.tabIndex ?? 0,
+    'aria-label': children.props['aria-label'] ?? fallbackLabel,
   });
 
   return (
@@ -54,7 +71,7 @@ export const Tooltip: React.FC<TooltipProps> = ({ content, children, detailedCon
       onMouseEnter={show}
       onMouseLeave={hide}
       onFocus={show}
-      onBlur={hide}
+      onBlur={handleWrapperBlur}
     >
       {triggerWithAria}
       {isVisible && (
