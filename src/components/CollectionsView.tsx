@@ -172,6 +172,7 @@ const CollectionCard: React.FC<{
               </p>
             )}
           </div>
+          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- only stops click bubbling to the card's own onClick; the real interactive elements are the buttons inside, each with its own accessible label/focus/keyboard support. */}
           <div className="flex gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
             <button
               onClick={() => onShare(collection)}
@@ -276,8 +277,8 @@ const CollectionModal: React.FC<{
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Icon picker */}
           <div>
-            <label className="text-xs text-text-secondary mb-1 block">Icon</label>
-            <div className="flex flex-wrap gap-2">
+            <span className="text-xs text-text-secondary mb-1 block">Icon</span>
+            <div className="flex flex-wrap gap-2" role="group" aria-label="Icon">
               {COLLECTION_ICONS.map((ic) => (
                 <button
                   key={ic}
@@ -324,8 +325,8 @@ const CollectionModal: React.FC<{
 
           {/* Color */}
           <div>
-            <label className="text-xs text-text-secondary mb-1 block">Color</label>
-            <div className="flex gap-2">
+            <span className="text-xs text-text-secondary mb-1 block">Color</span>
+            <div className="flex gap-2" role="group" aria-label="Color">
               {COLLECTION_COLORS.map((c) => (
                 <button
                   key={c}

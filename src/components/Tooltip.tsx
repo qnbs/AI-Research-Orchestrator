@@ -44,6 +44,7 @@ export const Tooltip: React.FC<TooltipProps> = ({ content, children, detailedCon
   });
 
   return (
+    // eslint-disable-next-line jsx-a11y/no-static-element-interactions -- pure hover/focus positioning wrapper around the real trigger element (children); onFocus/onBlur already make this keyboard-accessible, and it's not itself a widget that should be in the tab order.
     <div
       className="relative flex items-center"
       onMouseEnter={show}
@@ -53,6 +54,7 @@ export const Tooltip: React.FC<TooltipProps> = ({ content, children, detailedCon
     >
       {triggerWithAria}
       {isVisible && (
+        // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- keeps the tooltip open while the mouse is over the bubble itself; the trigger element (not this bubble) is the keyboard-accessible widget, matching the standard tooltip pattern.
         <div
           id={id}
           role="tooltip"

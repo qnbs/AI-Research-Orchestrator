@@ -96,8 +96,10 @@ const MultiSelectFilter: React.FC<{
               className="w-full px-2 py-1 bg-input-bg border border-border rounded-md text-sm mb-1"
             />
           </div>
+          {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-to-interactive-role -- ul role="listbox" + li role="option" is the WAI-ARIA APG's own recommended pattern for building an accessible custom listbox from list markup. */}
           <ul role="listbox" className="py-1">
             {filteredOptions.map((option) => (
+              // eslint-disable-next-line jsx-a11y/no-noninteractive-element-to-interactive-role -- see listbox justification above.
               <li key={option} role="option" aria-selected={selected.includes(option)}>
                 <label className="flex items-center px-3 py-2 text-sm text-text-primary hover:bg-surface-hover cursor-pointer">
                   <input

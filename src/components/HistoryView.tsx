@@ -58,11 +58,13 @@ const QuickViewModal: React.FC<{
         : (entry.journalProfile.focusAreas || []).slice(0, 3);
 
   return (
+    // eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events -- standard modal backdrop click-to-dismiss; keyboard users dismiss via the Escape key handler above, not by activating the backdrop itself.
     <div
       className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center backdrop-blur-sm animate-fadeIn"
       style={{ animationDuration: '150ms' }}
       onClick={onClose}
     >
+      {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/click-events-have-key-events -- only stops the backdrop's dismiss-on-click from firing when clicking inside the panel; not itself an interactive widget. */}
       <div
         ref={modalRef}
         className="bg-surface rounded-lg border border-border shadow-2xl p-6 w-full max-w-lg m-4"
@@ -191,6 +193,7 @@ const HistoryListItem = memo<HistoryListItemProps>(function HistoryListItem({
                   onChange={(e) => onTitleChange(e.target.value)}
                   onKeyDown={onEditKeyDown}
                   className="w-full bg-input-bg border border-brand-accent rounded-md py-1 px-2 text-base font-semibold focus:outline-none focus:ring-2 focus:ring-brand-accent"
+                  // eslint-disable-next-line jsx-a11y/no-autofocus -- this input only renders after the user explicitly clicks "rename"; focusing it is the expected result of that action, not page-load autofocus.
                   autoFocus
                 />
                 <button
