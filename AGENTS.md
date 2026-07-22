@@ -82,7 +82,7 @@ pnpm run typecheck               # tsc --noEmit (strict)
 pnpm run lint                    # ESLint 9, warning budget --max-warnings 650
 pnpm run test:run                # Vitest, fast loop
 pnpm run test:coverage           # Vitest + v8 coverage — gated (see below)
-pnpm run test:e2e                # Playwright (one-time: pnpm exec playwright install chromium)
+pnpm run test:e2e                # Playwright, full suite — CI only, do NOT run locally (see below)
 pnpm run bundle:budget           # gzip budget gate: chunk ≤200 kB, entry ≤400 kB, charts ≤180 kB
 pnpm run analyze                 # bundle visualizer (dist/stats.html)
 pnpm run test:lighthouse         # build + Lighthouse CI
@@ -114,6 +114,7 @@ pnpm run format                  # Prettier write (src + root md/json)
 
 - **Unit/integration (Vitest, jsdom)**: colocated `*.test.ts(x)` next to sources (services, slices, hooks, lib, components). Setup `src/test/setup.ts` mocks IndexedDB and Web Crypto; `fake-indexeddb` available for DB tests. Tests must be **deterministic** — mock Gemini/PubMed/arXiv/network/crypto; never comment out or delete tests to pass CI; specs run in isolation (no shared mutable state).
 - **E2E (Playwright, Chromium only)**: `src/test/e2e/` (`agent-flow.spec.ts`, `smoke.spec.ts`). Config auto-starts the Vite dev server on port 3000 and uses a fake Gemini key; prefers stable `getByRole` selectors; `sleep` only with justification. One-time setup: `pnpm exec playwright install chromium`.
+  - **Run the full suite (`pnpm run test:e2e`, both spec files) only in CI, never on the local dev machine** — on constrained hardware (~3.7 GB RAM) it reliably gets OOM-killed regardless of whether the code under test is correct. Locally, scope to one spec file or a `-g "<pattern>"` subset. To confirm a genuine full-suite result, read the `.github/workflows/e2e.yml` "Playwright E2E" check's own log/artifact on the PR — it already runs on every push. That job is `continue-on-error: true`, so its green badge alone doesn't prove 0 failures; check the actual test output count.
 - Every new external call path needs happy-path + failure + abort coverage (rule `102`).
 
 ## Security Considerations

@@ -12,6 +12,7 @@ import {
   generateShareToken,
 } from '../store/slices/collectionsSlice';
 import type { ResearchCollection } from '../types';
+import { useTranslation } from '../hooks/useTranslation';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const COLLECTION_COLORS = [
@@ -25,6 +26,18 @@ const COLLECTION_COLORS = [
   '#e879f9',
 ];
 const COLLECTION_ICONS = ['📚', '🔬', '🧠', '⚡', '🌟', '🔭', '🧬', '💡', '🎯', '📊'];
+const COLLECTION_ICON_KEYS: Record<string, string> = {
+  '📚': 'collections.icon.books',
+  '🔬': 'collections.icon.microscope',
+  '🧠': 'collections.icon.brain',
+  '⚡': 'collections.icon.lightning',
+  '🌟': 'collections.icon.star',
+  '🔭': 'collections.icon.telescope',
+  '🧬': 'collections.icon.dna',
+  '💡': 'collections.icon.idea',
+  '🎯': 'collections.icon.target',
+  '📊': 'collections.icon.chart',
+};
 
 function generateId() {
   return `col_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
@@ -139,6 +152,7 @@ const CollectionCard: React.FC<{
   onSelect: (c: ResearchCollection) => void;
   isSelected: boolean;
 }> = ({ collection, onEdit, onDelete, onShare, onSelect, isSelected }) => {
+  const { t } = useTranslation();
   const entryCount = collection.entryIds.length;
   const articleCount = collection.articlePmids.length;
 
@@ -150,76 +164,89 @@ const CollectionCard: React.FC<{
       exit={{ opacity: 0, scale: 0.9 }}
       whileHover={{ y: -3 }}
       transition={{ duration: 0.25 }}
-      onClick={() => onSelect(collection)}
-      className={`neon-card rounded-xl overflow-hidden cursor-pointer select-none pt-0
+      className={`neon-card rounded-xl overflow-hidden select-none pt-0 relative
         ${isSelected ? 'border-brand-accent shadow-glow' : ''}`}
-      role="button"
-      aria-pressed={isSelected}
-      tabIndex={0}
-      onKeyDown={(e) => e.key === 'Enter' && onSelect(collection)}
     >
-      {/* Cover gradient */}
-      <CollectionCover color={collection.color} icon={collection.icon} />
+      {/*
+        Selection is a real <button> stretched over the whole card (not an ancestor of the
+        action buttons below) so assistive tech never sees one interactive control nested
+        inside another. The visible content is layered on top with pointer-events disabled,
+        except for the actions row, which re-enables them for its own three real buttons.
+      */}
+      <button
+        type="button"
+        onClick={() => onSelect(collection)}
+        aria-pressed={isSelected}
+        aria-label={`${t('collections.selectCard')}: ${collection.name}`}
+        className="absolute inset-0 z-0 cursor-pointer rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent"
+      />
 
-      <div className="px-4 pb-4">
-        {/* Title row */}
-        <div className="flex items-start justify-between gap-2 mb-2">
-          <div className="min-w-0">
-            <h3 className="text-sm font-semibold text-text-primary truncate">{collection.name}</h3>
-            {collection.description && (
-              <p className="text-xs text-text-secondary line-clamp-2 mt-0.5">
-                {collection.description}
-              </p>
+      <div className="relative z-10 pointer-events-none">
+        {/* Cover gradient */}
+        <CollectionCover color={collection.color} icon={collection.icon} />
+
+        <div className="px-4 pb-4">
+          {/* Title row */}
+          <div className="flex items-start justify-between gap-2 mb-2">
+            <div className="min-w-0">
+              <h3 className="text-sm font-semibold text-text-primary truncate">
+                {collection.name}
+              </h3>
+              {collection.description && (
+                <p className="text-xs text-text-secondary line-clamp-2 mt-0.5">
+                  {collection.description}
+                </p>
+              )}
+            </div>
+            <div className="flex gap-1 flex-shrink-0 pointer-events-auto">
+              <button
+                onClick={() => onShare(collection)}
+                title="Share collection"
+                className="p-1.5 rounded-md text-text-secondary hover:text-brand-accent transition-colors text-xs"
+                aria-label="Share collection"
+              >
+                🔗
+              </button>
+              <button
+                onClick={() => onEdit(collection)}
+                className="p-1.5 rounded-md text-text-secondary hover:text-text-primary transition-colors text-xs"
+                aria-label="Edit collection"
+              >
+                ✏️
+              </button>
+              <button
+                onClick={() => onDelete(collection.id)}
+                className="p-1.5 rounded-md text-text-secondary hover:text-red-400 transition-colors text-xs"
+                aria-label="Delete collection"
+              >
+                🗑️
+              </button>
+            </div>
+          </div>
+
+          {/* Stats */}
+          <div className="flex gap-3 text-xs text-text-secondary">
+            <span className="flex items-center gap-1">
+              <span
+                className="w-1.5 h-1.5 rounded-full"
+                style={{ backgroundColor: collection.color }}
+              />
+              {entryCount} report{entryCount !== 1 ? 's' : ''}
+            </span>
+            <span>
+              {articleCount} article{articleCount !== 1 ? 's' : ''}
+            </span>
+            {collection.tags.length > 0 && (
+              <span className="text-accent-cyan truncate">
+                {collection.tags.slice(0, 2).join(', ')}
+              </span>
+            )}
+            {collection.shareToken && (
+              <span className="ml-auto text-accent-green text-[10px] flex items-center gap-0.5">
+                🔒 Shared
+              </span>
             )}
           </div>
-          <div className="flex gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-            <button
-              onClick={() => onShare(collection)}
-              title="Share collection"
-              className="p-1.5 rounded-md text-text-secondary hover:text-brand-accent transition-colors text-xs"
-              aria-label="Share collection"
-            >
-              🔗
-            </button>
-            <button
-              onClick={() => onEdit(collection)}
-              className="p-1.5 rounded-md text-text-secondary hover:text-text-primary transition-colors text-xs"
-              aria-label="Edit collection"
-            >
-              ✏️
-            </button>
-            <button
-              onClick={() => onDelete(collection.id)}
-              className="p-1.5 rounded-md text-text-secondary hover:text-red-400 transition-colors text-xs"
-              aria-label="Delete collection"
-            >
-              🗑️
-            </button>
-          </div>
-        </div>
-
-        {/* Stats */}
-        <div className="flex gap-3 text-xs text-text-secondary">
-          <span className="flex items-center gap-1">
-            <span
-              className="w-1.5 h-1.5 rounded-full"
-              style={{ backgroundColor: collection.color }}
-            />
-            {entryCount} report{entryCount !== 1 ? 's' : ''}
-          </span>
-          <span>
-            {articleCount} article{articleCount !== 1 ? 's' : ''}
-          </span>
-          {collection.tags.length > 0 && (
-            <span className="text-accent-cyan truncate">
-              {collection.tags.slice(0, 2).join(', ')}
-            </span>
-          )}
-          {collection.shareToken && (
-            <span className="ml-auto text-accent-green text-[10px] flex items-center gap-0.5">
-              🔒 Shared
-            </span>
-          )}
         </div>
       </div>
     </motion.div>
@@ -232,6 +259,7 @@ const CollectionModal: React.FC<{
   onSave: (data: Partial<ResearchCollection>) => void;
   onClose: () => void;
 }> = ({ initial, onSave, onClose }) => {
+  const { t } = useTranslation();
   const [name, setName] = useState(initial?.name ?? '');
   const [description, setDescription] = useState(initial?.description ?? '');
   const [color, setColor] = useState(initial?.color ?? COLLECTION_COLORS[0]);
@@ -276,13 +304,21 @@ const CollectionModal: React.FC<{
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Icon picker */}
           <div>
-            <label className="text-xs text-text-secondary mb-1 block">Icon</label>
-            <div className="flex flex-wrap gap-2">
+            <span className="text-xs text-text-secondary mb-1 block">
+              {t('collections.form.icon')}
+            </span>
+            <div
+              className="flex flex-wrap gap-2"
+              role="group"
+              aria-label={t('collections.form.icon')}
+            >
               {COLLECTION_ICONS.map((ic) => (
                 <button
                   key={ic}
                   type="button"
                   onClick={() => setIcon(ic)}
+                  aria-pressed={icon === ic}
+                  aria-label={COLLECTION_ICON_KEYS[ic] ? t(COLLECTION_ICON_KEYS[ic]) : ic}
                   className={`w-9 h-9 rounded-lg text-lg transition-all
                     ${icon === ic ? 'ring-2 ring-brand-accent bg-brand-accent/10' : 'glass-panel hover:bg-surface-hover'}`}
                 >
@@ -324,13 +360,16 @@ const CollectionModal: React.FC<{
 
           {/* Color */}
           <div>
-            <label className="text-xs text-text-secondary mb-1 block">Color</label>
-            <div className="flex gap-2">
+            <span className="text-xs text-text-secondary mb-1 block">
+              {t('collections.form.color')}
+            </span>
+            <div className="flex gap-2" role="group" aria-label={t('collections.form.color')}>
               {COLLECTION_COLORS.map((c) => (
                 <button
                   key={c}
                   type="button"
                   onClick={() => setColor(c)}
+                  aria-pressed={color === c}
                   className={`w-7 h-7 rounded-full transition-all ${color === c ? 'ring-2 ring-white scale-110' : ''}`}
                   style={{ backgroundColor: c }}
                   aria-label={`Color ${c}`}

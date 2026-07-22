@@ -182,7 +182,7 @@ const VPipelineStep: React.FC<PipelineStepProps> = ({
   onStepClick,
   className = '',
 }) => (
-  <ol role="list" className={`space-y-0 ${className}`} aria-label="Pipeline steps">
+  <ol className={`space-y-0 ${className}`} aria-label="Pipeline steps">
     {steps.map((step, i) => {
       const stepStatus = resolveStepStatus(i, currentStep, status, step.status);
       const isCurrent = i === currentStep;

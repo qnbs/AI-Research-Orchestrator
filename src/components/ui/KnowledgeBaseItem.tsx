@@ -6,7 +6,10 @@
  *  • Left accent bar coloured by relevance score (0–1 → grey → cyan)
  *  • Neon-cyan hover glow, selected state ring
  *  • Staggered Framer Motion entry when rendered in a list
- *  • Accessible: keyboard navigable, aria-selected, role="article"
+ *  • Accessible: keyboard navigable, aria-selected, role="option"
+ *    (aria-selected is only valid on option/row/tab/etc. roles per the ARIA
+ *    spec, not "article" - the parent container should carry role="listbox"
+ *    or role="grid" for this to be a fully correct selection widget)
  */
 import React, { memo } from 'react';
 import { motion } from 'framer-motion';
@@ -137,7 +140,7 @@ const KnowledgeBaseItemInner: React.FC<KnowledgeBaseItemProps> = ({
         ['--relevance-color' as string]: relevanceColor(relevanceScore),
       }}
       onClick={onSelect}
-      role="article"
+      role="option"
       aria-selected={isSelected}
       tabIndex={0}
       onKeyDown={(e) => {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   saveProviderApiKey,
   getProviderApiKey,
@@ -48,7 +48,7 @@ export const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({ onKeyChange }) =
   // actually detect staleness across renders.
   const requestIdRef = useRef(0);
 
-  const checkStoredKey = async () => {
+  const checkStoredKey = useCallback(async () => {
     const requestId = ++requestIdRef.current;
     setIsLoading(true);
     try {
@@ -73,7 +73,7 @@ export const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({ onKeyChange }) =
         setIsLoading(false);
       }
     }
-  };
+  }, [provider, providerMeta, onKeyChange]);
 
   useEffect(() => {
     /* eslint-disable react-hooks/set-state-in-effect -- resets transient UI state (input value, visibility, messages) and re-checks the stored key when the provider selection changes; none of this is derivable from render. */
@@ -84,7 +84,7 @@ export const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({ onKeyChange }) =
     setError(null);
     setSuccess(null);
     /* eslint-enable react-hooks/set-state-in-effect */
-  }, [provider]);
+  }, [provider, checkStoredKey]);
 
   const handleSave = async () => {
     if (provider === 'heuristic' || !providerMeta.capabilities.requiresApiKey) return;

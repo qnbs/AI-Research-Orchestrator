@@ -173,6 +173,7 @@ const InputFormComponent: React.FC<InputFormProps> = ({
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
       if (Object.keys(errors).length === 0 && !isLoading) {
         onSubmit(formData);
       }
@@ -214,6 +215,7 @@ const InputFormComponent: React.FC<InputFormProps> = ({
           onLoadPreset={handleLoadPreset}
           onOpenPresetModal={() => setIsPresetModalOpen(true)}
         />
+        {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- Ctrl/Cmd+Enter form-wide submit shortcut; the form already contains real interactive child controls (inputs, buttons). */}
         <form onSubmit={handleSubmit} onKeyDown={handleKeyDown} className="space-y-8" role="search">
           <div className="group">
             <label
@@ -450,6 +452,7 @@ const InputFormComponent: React.FC<InputFormProps> = ({
                 onChange={(e) => setNewPresetName(e.target.value)}
                 className="glass-input block w-full rounded-lg shadow-sm py-2 px-3 text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-accent sm:text-sm"
                 placeholder="e.g., Clinical Trials (Last 5 Years)"
+                // eslint-disable-next-line jsx-a11y/no-autofocus -- this is the sole input of a focus-trapped modal (useFocusTrap above); focusing it on open is expected, not page-load autofocus.
                 autoFocus
               />
             </div>

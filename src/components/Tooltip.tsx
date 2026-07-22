@@ -4,8 +4,32 @@ import { XIcon } from './icons/XIcon';
 
 interface TooltipProps {
   content: React.ReactNode;
-  children: React.ReactElement<{ 'aria-describedby'?: string }>;
+  children: React.ReactElement<{
+    'aria-describedby'?: string;
+    'aria-label'?: string;
+    'aria-labelledby'?: string;
+    tabIndex?: number;
+    children?: React.ReactNode;
+  }>;
   detailedContent?: React.ReactNode;
+}
+
+// True if at least one immediate child contributes to the accessible-name computation on its
+// own (non-empty text, or an element that isn't aria-hidden) — i.e. the trigger doesn't need a
+// synthesized aria-label to avoid being an unlabeled focus stop. Only looks one level deep: a
+// deeply-nested all-aria-hidden subtree won't be detected, but no current caller does that, and
+// fully replicating DOM accessible-name computation here isn't proportionate for this helper.
+function hasAccessibleChildContent(node: React.ReactNode): boolean {
+  return React.Children.toArray(node).some((child) => {
+    if (typeof child === 'string' || typeof child === 'number') {
+      return child.toString().trim() !== '';
+    }
+    if (React.isValidElement(child)) {
+      const hidden = (child.props as { 'aria-hidden'?: boolean | 'true' | 'false' })['aria-hidden'];
+      return hidden !== true && hidden !== 'true';
+    }
+    return false;
+  });
 }
 
 export const Tooltip: React.FC<TooltipProps> = ({ content, children, detailedContent }) => {
@@ -20,6 +44,15 @@ export const Tooltip: React.FC<TooltipProps> = ({ content, children, detailedCon
     if (!isDetailVisible) {
       setIsHoverVisible(false);
     }
+  };
+
+  const handleWrapperBlur = (e: React.FocusEvent<HTMLDivElement>) => {
+    // Only hide when focus leaves the whole wrapper (trigger + bubble). Without this check,
+    // tabbing from the trigger into the "Show details"/"Hide details" buttons inside the bubble
+    // itself blurs the trigger and immediately hides the bubble those buttons live in, making
+    // them permanently unreachable via keyboard.
+    if (e.currentTarget.contains(e.relatedTarget)) return;
+    hide();
   };
 
   const handleDetailToggle = (e: React.MouseEvent) => {
@@ -38,24 +71,58 @@ export const Tooltip: React.FC<TooltipProps> = ({ content, children, detailedCon
 
   const isVisible = isHoverVisible || isDetailVisible;
 
-  // Clone the child element to add aria-describedby directly to it for better accessibility
+  // Clone the child element to add aria-describedby directly to it for better accessibility,
+  // merging with (not overwriting) any describedby the caller already set. Also enforce a
+  // focusable trigger (tabIndex 0 unless the child already sets one) since the wrapper's
+  // onFocus/onBlur can only fire once the trigger itself can receive keyboard focus — callers
+  // frequently pass non-focusable elements (an InfoIcon, a plain div) as children.
+  //
+  // The tooltip's own content is only ever used as a SYNTHESIZED aria-label for children with
+  // no accessible name of their own (a bare icon, an empty div) — never for a child that already
+  // has one, whether via aria-labelledby, its own aria-label, or its own visible (non-hidden)
+  // content (a labeled button, text). Overwriting a naturally-named element's name with the
+  // tooltip description would make a screen reader announce something that disagrees with
+  // what's on screen; aria-labelledby additionally takes precedence over aria-label in the
+  // accessible-name computation regardless, so setting one alongside it would just be noise.
+  const hasOwnAccessibleContent = hasAccessibleChildContent(children.props.children);
+  const hasLabelledBy = Boolean(children.props['aria-labelledby']);
+  const rawExistingLabel = children.props['aria-label'];
+  const existingLabel =
+    rawExistingLabel && rawExistingLabel.trim() !== '' ? rawExistingLabel : undefined;
+  const hasExistingAccessibleName =
+    hasLabelledBy || existingLabel !== undefined || hasOwnAccessibleContent;
+  const fallbackLabel =
+    !hasExistingAccessibleName && typeof content === 'string' && content.trim() !== ''
+      ? content
+      : undefined;
+  const resolvedLabel = existingLabel ?? fallbackLabel;
+  // A trigger can end up with SOME accessible name once rendered either because it already has
+  // one, or because we're synthesizing one — either way it's safe (and necessary, for the
+  // keyboard-access fix above) to make it focusable.
+  const canHaveAccessibleName = hasExistingAccessibleName || resolvedLabel !== undefined;
+  const existingDescribedBy = children.props['aria-describedby'];
+  const describedBy = isVisible
+    ? [existingDescribedBy, id].filter(Boolean).join(' ')
+    : existingDescribedBy;
   const triggerWithAria = React.cloneElement(children, {
-    'aria-describedby': isVisible ? id : undefined,
+    'aria-describedby': describedBy || undefined,
+    tabIndex: children.props.tabIndex ?? (canHaveAccessibleName ? 0 : undefined),
+    'aria-label': resolvedLabel,
   });
 
   return (
+    // eslint-disable-next-line jsx-a11y/no-static-element-interactions -- pure hover/focus positioning wrapper around the real trigger element (children); onFocus/onBlur already make this keyboard-accessible, and it's not itself a widget that should be in the tab order.
     <div
       className="relative flex items-center"
       onMouseEnter={show}
       onMouseLeave={hide}
       onFocus={show}
-      onBlur={hide}
+      onBlur={handleWrapperBlur}
     >
       {triggerWithAria}
       {isVisible && (
+        // eslint-disable-next-line jsx-a11y/no-static-element-interactions -- keeps the tooltip open while the mouse is over the bubble itself; the trigger element (not this bubble) is the keyboard-accessible widget, matching the standard tooltip pattern. Deliberately not role="tooltip" here: that role must stay purely descriptive, and this bubble also hosts the interactive "Show details"/"Hide details" controls below.
         <div
-          id={id}
-          role="tooltip"
           // Keep it open when mouse is over the tooltip itself
           onMouseEnter={show}
           onMouseLeave={hide}
@@ -63,7 +130,9 @@ export const Tooltip: React.FC<TooltipProps> = ({ content, children, detailedCon
           style={{ animationDuration: '150ms' }}
         >
           <div className="flex justify-between items-start gap-2">
-            <div className="flex-grow">{content}</div>
+            <div id={id} role="tooltip" className="flex-grow">
+              {content}
+            </div>
             <div className="flex-shrink-0 flex items-center">
               {detailedContent && !isDetailVisible && (
                 <button

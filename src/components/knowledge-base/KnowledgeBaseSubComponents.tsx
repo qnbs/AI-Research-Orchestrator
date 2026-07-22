@@ -67,7 +67,6 @@ const MultiSelectFilter: React.FC<{
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        aria-haspopup="listbox"
         aria-expanded={isOpen}
         className="w-full flex justify-between items-center p-2 bg-input-bg border border-border rounded-md text-sm font-medium text-text-primary hover:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-accent"
       >
@@ -96,9 +95,9 @@ const MultiSelectFilter: React.FC<{
               className="w-full px-2 py-1 bg-input-bg border border-border rounded-md text-sm mb-1"
             />
           </div>
-          <ul role="listbox" className="py-1">
+          <ul role="group" aria-label={title} className="py-1">
             {filteredOptions.map((option) => (
-              <li key={option} role="option" aria-selected={selected.includes(option)}>
+              <li key={option}>
                 <label className="flex items-center px-3 py-2 text-sm text-text-primary hover:bg-surface-hover cursor-pointer">
                   <input
                     type="checkbox"

@@ -152,12 +152,18 @@ export const GeneralSettingsTab: React.FC = () => {
         </div>
         <div className="pt-4 mt-4 border-t border-border">
           <div className="flex items-center gap-2 mb-2">
-            <label className="block text-sm font-medium text-text-primary">UI Density</label>
+            <span className="block text-sm font-medium text-text-primary">
+              {t('settings.appearance.density')}
+            </span>
             <Tooltip content="Adjust the spacing and size of UI elements. 'Compact' is useful for smaller screens or fitting more information.">
               <InfoIcon className="h-4 w-4 text-text-secondary cursor-help" />
             </Tooltip>
           </div>
-          <div className="flex w-full max-w-xs bg-surface p-1 rounded-lg border border-border">
+          <div
+            className="flex w-full max-w-xs bg-surface p-1 rounded-lg border border-border"
+            role="group"
+            aria-label={t('settings.appearance.density')}
+          >
             <button
               onClick={() =>
                 setTempSettings((s) => ({
@@ -165,6 +171,7 @@ export const GeneralSettingsTab: React.FC = () => {
                   appearance: { ...s.appearance, density: 'comfortable' },
                 }))
               }
+              aria-pressed={tempSettings.appearance.density === 'comfortable'}
               className={`w-1/2 p-1.5 rounded-md text-sm font-medium transition-colors ${tempSettings.appearance.density === 'comfortable' ? 'bg-brand-accent text-brand-text-on-accent' : 'text-text-secondary hover:bg-surface-hover'}`}
             >
               Comfortable
@@ -176,6 +183,7 @@ export const GeneralSettingsTab: React.FC = () => {
                   appearance: { ...s.appearance, density: 'compact' },
                 }))
               }
+              aria-pressed={tempSettings.appearance.density === 'compact'}
               className={`w-1/2 p-1.5 rounded-md text-sm font-medium transition-colors ${tempSettings.appearance.density === 'compact' ? 'bg-brand-accent text-brand-text-on-accent' : 'text-text-secondary hover:bg-surface-hover'}`}
             >
               Compact
@@ -505,11 +513,12 @@ export const AISettingsTab: React.FC = () => {
           )}
 
           <div>
-            <label className="font-medium text-text-primary block">AI Persona</label>
+            <span className="font-medium text-text-primary block">AI Persona</span>
             <fieldset className="mt-2">
               <legend className="sr-only">AI Persona</legend>
               <div className="space-y-2">
                 {Object.entries(personaDescriptions).map(([key, description]) => (
+                  // eslint-disable-next-line jsx-a11y/label-has-associated-control -- wraps its radio input and always renders real visible text ({key}); the rule can't statically verify text from a dynamic JSX expression.
                   <label
                     key={key}
                     className="flex items-start p-3 rounded-md border has-[:checked]:border-brand-accent has-[:checked]:bg-brand-accent/10 transition-colors cursor-pointer dark:border-border dark:has-[:checked]:border-brand-accent"

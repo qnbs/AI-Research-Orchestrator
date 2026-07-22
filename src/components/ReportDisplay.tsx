@@ -75,7 +75,11 @@ const AccordionSection: React.FC<{
   children: React.ReactNode;
   defaultOpen?: boolean;
   count?: number;
-}> = ({ title, children, defaultOpen = false, count }) => {
+  /** Interactive controls (e.g. a copy button) rendered in the header but
+   * outside the toggle <button>, since nesting a button inside a button
+   * is invalid HTML and breaks click/keyboard semantics for both. */
+  actions?: React.ReactNode;
+}> = ({ title, children, defaultOpen = false, count, actions }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const id = useId();
   const panelId = `accordion-panel-${id}`;
@@ -83,25 +87,29 @@ const AccordionSection: React.FC<{
 
   return (
     <div className="border-b border-border last:border-b-0">
-      <button
-        id={buttonId}
-        onClick={() => setIsOpen(!isOpen)}
-        aria-expanded={isOpen}
-        aria-controls={panelId}
-        className="w-full flex justify-between items-center p-4 text-left text-lg font-semibold text-text-primary hover:bg-surface-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent transition-colors group"
-      >
-        <div className="flex items-center gap-3">
-          {title}
-          {count !== undefined && (
-            <span className="text-sm font-medium bg-border text-text-secondary px-2 py-0.5 rounded-full">
-              {count}
-            </span>
-          )}
-        </div>
-        <ChevronDownIcon
-          className={`h-6 w-6 transform transition-transform duration-300 text-text-secondary ${isOpen ? 'rotate-180' : ''}`}
-        />
-      </button>
+      <div className="group relative flex items-center">
+        <button
+          type="button"
+          id={buttonId}
+          onClick={() => setIsOpen(!isOpen)}
+          aria-expanded={isOpen}
+          aria-controls={panelId}
+          className="w-full flex justify-between items-center p-4 text-left text-lg font-semibold text-text-primary hover:bg-surface-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            {title}
+            {count !== undefined && (
+              <span className="text-sm font-medium bg-border text-text-secondary px-2 py-0.5 rounded-full">
+                {count}
+              </span>
+            )}
+          </div>
+          <ChevronDownIcon
+            className={`h-6 w-6 transform transition-transform duration-300 text-text-secondary mr-10 ${isOpen ? 'rotate-180' : ''}`}
+          />
+        </button>
+        {actions && <div className="absolute right-4">{actions}</div>}
+      </div>
       <div
         id={panelId}
         role="region"
@@ -509,20 +517,16 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(function R
 
         <div className="flex-grow">
           <AccordionSection
-            title={
-              <div className="flex items-center gap-3">
-                <span>Executive Synthesis</span>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleCopySynthesis();
-                  }}
-                  className="p-1.5 rounded-md text-text-secondary hover:bg-background hover:text-brand-accent opacity-0 group-hover:opacity-100 transition-opacity"
-                  aria-label="Copy synthesis to clipboard"
-                >
-                  <ClipboardIcon className="h-4 w-4" />
-                </button>
-              </div>
+            title={<span>Executive Synthesis</span>}
+            actions={
+              <button
+                type="button"
+                onClick={handleCopySynthesis}
+                className="p-1.5 rounded-md text-text-secondary hover:bg-background hover:text-brand-accent opacity-0 group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent transition-opacity"
+                aria-label="Copy synthesis to clipboard"
+              >
+                <ClipboardIcon className="h-4 w-4" />
+              </button>
             }
             defaultOpen
           >
@@ -607,7 +611,7 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(function R
           <AccordionSection title="Overall Keywords & Themes" count={report.overallKeywords.length}>
             <div className="space-y-3 p-2">
               {report.overallKeywords && report.overallKeywords.length > 0 ? (
-                report.overallKeywords
+                [...report.overallKeywords]
                   .sort((a, b) => b.frequency - a.frequency)
                   .map((kw, index) => (
                     <div
