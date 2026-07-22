@@ -120,6 +120,9 @@ jobs:
       - name: Bundle budget
         run: pnpm run bundle:budget
 
+      - name: No disallowed CDN scripts (ADR 0011)
+        run: pnpm run check:no-cdn-scripts
+
       - name: Setup SPA routing
         run: cp dist/index.html dist/404.html
 

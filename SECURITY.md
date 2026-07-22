@@ -40,9 +40,8 @@ This application is a **local-first, zero-backend PWA**. There is no application
 - Encryption key material lives in the same browser origin as ciphertext. The master key is non-extractable, so a compromised script cannot exfiltrate raw key bytes for offline reuse — but a **live, in-session** XSS payload can still call this app's own encrypt/decrypt functions while it runs, since it shares the same JS execution context. This closes offline key theft, not active in-session abuse.
 - Persisting the master key as a `CryptoKey` object relies on the browser's structured-clone algorithm supporting it (solid in evergreen Chrome/Firefox, Safari since v14) — a narrower compatibility surface than the old raw-bytes storage, with no fallback if an unsupported engine ever rejects the write.
 - The master-key resolution cache serializes concurrent callers only within one browser tab. Two tabs of this PWA open simultaneously against a fresh or pre-hardening vault can still race to independently generate/save a different key, the same failure mode the in-tab fix closes, just narrowed to a cross-tab scenario. Not currently closed (would need a cross-tab lock).
-- Broad `connect-src` needed for PubMed/Gemini/CDN; tighten further when self-hosting with known hosts.
-- Import-map CDN (`aistudiocdn.com`) requires network egress at runtime.
-- CSP `script-src` uses SHA-256 hashes for JSON-LD + importmap (no `unsafe-inline` scripts). Residual `style-src 'unsafe-inline'` remains for React inline `style={}` attributes and the FOUC theme `<style>` block in `index.html`.
+- Broad `connect-src` needed for PubMed/Gemini/other AI providers; tighten further when self-hosting with known hosts.
+- CSP `script-src` uses a SHA-256 hash for the inline JSON-LD block only (no `unsafe-inline` scripts, no CDN import map — removed in ADR 0011, guarded by `scripts/check-no-cdn-scripts.mjs`). Residual `style-src 'unsafe-inline'` remains for React inline `style={}` attributes and the FOUC theme `<style>` block in `index.html`.
 
 ## Reporting a Vulnerability
 

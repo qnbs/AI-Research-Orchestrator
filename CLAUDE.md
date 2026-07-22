@@ -65,7 +65,7 @@ Provider API keys (Gemini `AIza…`, OpenAI `sk-…`, Anthropic `sk-ant-…`) an
 
 ### PWA & CSP
 
-Service worker at `public/sw.js`; `404.html` handles SPA routing on GitHub Pages. `index.html` carries a CSP meta tag (hashes for inline JSON-LD/importmap) plus an import map loading React et al. from `aistudiocdn.com`. `pnpm run build` re-hashes the CSP via `scripts/patch-csp-hashes.mjs` — this must keep working whenever a new inline script is added.
+Service worker at `public/sw.js`; `404.html` handles SPA routing on GitHub Pages. `index.html` carries a CSP meta tag (a hash for the inline JSON-LD block only — no CDN import map, removed in ADR 0011; every JS dependency is bundled by Vite). `pnpm run build` re-hashes the CSP via `scripts/patch-csp-hashes.mjs` — this must keep working whenever a new inline script is added; `pnpm run check:no-cdn-scripts` (wired into CI) fails loudly if a CDN `<script>` or import map ever reappears.
 
 ## Conventions
 
