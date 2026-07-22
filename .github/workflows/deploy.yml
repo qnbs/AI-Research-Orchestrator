@@ -67,6 +67,9 @@ jobs:
       - name: ESLint
         run: pnpm run lint
 
+      - name: I18n ratchet
+        run: pnpm run i18n:ratchet
+
       - name: Tests with coverage
         run: pnpm run test:coverage
 
