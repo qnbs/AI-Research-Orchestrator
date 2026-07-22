@@ -23,32 +23,37 @@ const PROVIDER_STORAGE_KEYS: Record<AIProviderId, string> = {
 /**
  * Generates or retrieves the encryption key from IndexedDB.
  * The key is generated once and reused for all encryption/decryption operations.
+ *
+ * The key is non-extractable: it is generated with `extractable: false` and the
+ * `CryptoKey` object itself (never its raw bytes) is persisted via IndexedDB's
+ * structured-clone support. Raw key material is never readable by JavaScript,
+ * including this app's own — only `crypto.subtle` can use it, so an XSS payload
+ * or a compromised third-party script can no longer read the master key that
+ * protects every stored provider secret.
  */
 async function getOrCreateEncryptionKey(): Promise<CryptoKey> {
   const db = await openKeyDatabase();
 
-  // Try to retrieve existing key
-  const existingKeyData = await getFromKeyStore(db, ENCRYPTION_KEY_NAME);
+  const existingKeyData = await getFromKeyStore<CryptoKey | Uint8Array>(db, ENCRYPTION_KEY_NAME);
   if (existingKeyData) {
-    return crypto.subtle.importKey(
-      'raw',
-      existingKeyData.buffer as ArrayBuffer,
-      { name: 'AES-GCM', length: 256 },
-      false,
-      ['encrypt', 'decrypt'],
+    if (existingKeyData instanceof CryptoKey) {
+      return existingKeyData;
+    }
+    // Pre-hardening vault format (raw exported key bytes from an older build).
+    // This app has no production users yet, so there is nothing to migrate:
+    // reset the whole vault and let the user re-enter their provider keys,
+    // rather than attempt to recover or convert the old format.
+    console.warn(
+      'API key vault used an outdated, extractable key format; resetting the local vault.',
     );
+    await clearKeyStore(db);
   }
 
-  // Generate new key
-  const key = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, [
+  const key = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, false, [
     'encrypt',
     'decrypt',
   ]);
-
-  // Export and store
-  const exportedKey = await crypto.subtle.exportKey('raw', key);
-  await saveToKeyStore(db, ENCRYPTION_KEY_NAME, new Uint8Array(exportedKey));
-
+  await saveToKeyStore(db, ENCRYPTION_KEY_NAME, key);
   return key;
 }
 
@@ -66,17 +71,17 @@ function openKeyDatabase(): Promise<IDBDatabase> {
   });
 }
 
-function getFromKeyStore(db: IDBDatabase, key: string): Promise<Uint8Array | null> {
+function getFromKeyStore<T = Uint8Array>(db: IDBDatabase, key: string): Promise<T | null> {
   return new Promise((resolve, reject) => {
     const tx = db.transaction('keys', 'readonly');
     const store = tx.objectStore('keys');
     const request = store.get(key);
     request.onerror = () => reject(request.error);
-    request.onsuccess = () => resolve(request.result || null);
+    request.onsuccess = () => resolve((request.result as T | undefined) ?? null);
   });
 }
 
-function saveToKeyStore(db: IDBDatabase, key: string, value: Uint8Array): Promise<void> {
+function saveToKeyStore<T>(db: IDBDatabase, key: string, value: T): Promise<void> {
   return new Promise((resolve, reject) => {
     const tx = db.transaction('keys', 'readwrite');
     const store = tx.objectStore('keys');
@@ -91,6 +96,16 @@ function deleteFromKeyStore(db: IDBDatabase, key: string): Promise<void> {
     const tx = db.transaction('keys', 'readwrite');
     const store = tx.objectStore('keys');
     const request = store.delete(key);
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => resolve();
+  });
+}
+
+function clearKeyStore(db: IDBDatabase): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('keys', 'readwrite');
+    const store = tx.objectStore('keys');
+    const request = store.clear();
     request.onerror = () => reject(request.error);
     request.onsuccess = () => resolve();
   });

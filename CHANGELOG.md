@@ -30,6 +30,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Several real correctness bugs surfaced during the nonAi/heuristics consolidation review loop (#67): a keyword-stemming bug that displayed stemmed fragments ("hyperten", "diabet") as user-facing keyword chips instead of real words; a silently-inert publication-type ranking boost (curation never classified `articleType` for real articles, so `ranker.ts`'s own quality boost never fired); short MeSH/journal-suggestion abbreviations (`ai`, `mi`, `ad`, `pd`, `rct`, ...) matched via plain substring instead of whole-word, so e.g. "pain management" incorrectly triggered AI-journal suggestions and "gut microbiome" incorrectly added the Myocardial Infarction MeSH term; a chat-response priority bug where a weak synthesis-text overlap could outrank a much stronger, more specific grounded answer; missing abort-propagation in two of the engine's retrieval stages (a cancelled run could continue processing instead of stopping immediately); dropped user-selected date-range/article-type query filters and an ignored synthesis article-count limit in the engine's research-report stream.
 - `AppError.toUserMessage()` now routes through the new i18n `translateSync()` path instead of a hardcoded English switch (#69) — no visible behavior change yet (the app is still English-only pending the broader migration), but removes the last hardcoded-string blocker on that shared error-display funnel.
 
+### Security
+
+- **API-key vault master key is now non-extractable** (`src/services/apiKeyService.ts`): the AES-GCM master key is generated with `extractable: false` and the `CryptoKey` object itself — never raw exported bytes — is persisted via IndexedDB's structured-clone support. `crypto.subtle.exportKey` is no longer called anywhere in the file, so no JavaScript (including this app's own) can read the raw key material; only `crypto.subtle` can use it. Closes the `extractable: true` gap tracked since 0.3.0. No migration path from the pre-hardening format: if a stored value isn't a `CryptoKey`, the whole vault resets and regenerates on next use (zero production users; a user upgrading from an older build re-enters their provider keys once). See ADR 0003 (amended) and `SECURITY.md`.
+
 ### Docs
 
 - ADR 0009 (Consolidated Non-AI Programmatic Research Engine) accepted; ADR 0010 (First-Class OpenRouter Provider with Free-Model Primacy) proposed (#67).
@@ -38,7 +42,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Known gaps (tracked, not yet closed — see `AUDIT.md`)
 
 - Version/tag/CHANGELOG drift: `package.json` says `0.3.0`, no matching `v0.3.0` git tag exists. A real version bump, tag, and GitHub release are tracked as separate follow-up work, done only once this `[Unreleased]` section is itself accurate.
-- API-key `extractable: true` hardening (proposed since 0.3.0, still not implemented).
 - `jsx-a11y` severity downgrade and the 650-warning lint budget in `eslint.config.js` (predate the zero-warnings policy pass, not yet tightened to match it).
 
 ## [0.3.0] - 2026-07-21

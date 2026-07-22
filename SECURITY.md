@@ -27,7 +27,7 @@ This application is a **local-first, zero-backend PWA**. There is no application
 
 ### Mitigations
 
-- API keys encrypted with AES-GCM via Web Crypto before IndexedDB persistence (`apiKeyService`).
+- API keys encrypted with AES-GCM via Web Crypto before IndexedDB persistence (`apiKeyService`). The master encryption key is generated **non-extractable** and persisted as a `CryptoKey` object (never raw exported bytes) — `crypto.subtle.exportKey` is never called, so no JavaScript, including this app's own, can read the raw key material.
 - Keys never committed; `.env` is documentation-only (see `.env.example`).
 - DOMPurify for rendered Markdown/HTML; prompt fragment sanitization.
 - CSP baseline in `index.html`.
@@ -37,7 +37,7 @@ This application is a **local-first, zero-backend PWA**. There is no application
 
 ### Residual Risks
 
-- Encryption key material lives in the same browser origin as ciphertext — protects casual disk inspection, **not** XSS.
+- Encryption key material lives in the same browser origin as ciphertext. The master key is non-extractable, so a compromised script cannot exfiltrate raw key bytes for offline reuse — but a **live, in-session** XSS payload can still call this app's own encrypt/decrypt functions while it runs, since it shares the same JS execution context. This closes offline key theft, not active in-session abuse.
 - Broad `connect-src` needed for PubMed/Gemini/CDN; tighten further when self-hosting with known hosts.
 - Import-map CDN (`aistudiocdn.com`) requires network egress at runtime.
 - CSP `script-src` uses SHA-256 hashes for JSON-LD + importmap (no `unsafe-inline` scripts). Residual `style-src 'unsafe-inline'` remains for React inline `style={}` attributes and the FOUC theme `<style>` block in `index.html`.

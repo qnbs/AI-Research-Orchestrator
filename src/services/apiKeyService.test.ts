@@ -1,4 +1,6 @@
 import 'fake-indexeddb/auto';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   validateApiKeyFormat,
@@ -11,6 +13,34 @@ import {
   hasNcbiApiKey,
   removeNcbiApiKey,
 } from './apiKeyService';
+
+const ENCRYPTION_KEY_NAME = 'ai-research-encryption-key';
+
+function openVaultDatabase(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open('APIKeyVault', 1);
+    req.onerror = () => reject(req.error);
+    req.onsuccess = () => resolve(req.result);
+  });
+}
+
+function getVaultEntry(db: IDBDatabase, key: string): Promise<unknown> {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('keys', 'readonly');
+    const req = tx.objectStore('keys').get(key);
+    req.onerror = () => reject(req.error);
+    req.onsuccess = () => resolve(req.result);
+  });
+}
+
+function putVaultEntry(db: IDBDatabase, key: string, value: unknown): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('keys', 'readwrite');
+    tx.objectStore('keys').put(value, key);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
 
 const VALID_KEY = `AIza${'1234567890123456789012345678901234a'}`; // test fixture — not a real secret
 
@@ -149,6 +179,49 @@ describe('apiKeyService', () => {
       await saveNcbiApiKey('   ');
       await expect(getNcbiApiKey()).resolves.toBeNull();
       await expect(hasNcbiApiKey()).resolves.toBe(false);
+    });
+  });
+
+  describe('master key hardening (non-extractable CryptoKey)', () => {
+    it('persists the master key as a non-extractable CryptoKey', async () => {
+      await saveApiKey(VALID_KEY);
+      const db = await openVaultDatabase();
+      const stored = await getVaultEntry(db, ENCRYPTION_KEY_NAME);
+      db.close();
+      expect(stored).toBeInstanceOf(CryptoKey);
+      expect((stored as CryptoKey).extractable).toBe(false);
+    });
+
+    it('rejects exporting the stored master key', async () => {
+      await saveApiKey(VALID_KEY);
+      const db = await openVaultDatabase();
+      const stored = await getVaultEntry(db, ENCRYPTION_KEY_NAME);
+      db.close();
+      await expect(crypto.subtle.exportKey('raw', stored as CryptoKey)).rejects.toThrow();
+    });
+
+    it('never calls crypto.subtle.exportKey anywhere in the source file', () => {
+      const source = readFileSync(join(process.cwd(), 'src/services/apiKeyService.ts'), 'utf-8');
+      expect(source).not.toMatch(/exportKey/);
+    });
+
+    it('resets the vault and generates a fresh non-extractable key if a pre-hardening raw key is found', async () => {
+      const db = await openVaultDatabase();
+      // Simulate a pre-hardening vault: the master key stored as raw exported bytes.
+      await putVaultEntry(db, ENCRYPTION_KEY_NAME, new Uint8Array(32));
+      db.close();
+
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      await saveApiKey(VALID_KEY);
+      warnSpy.mockRestore();
+
+      await expect(getApiKey()).resolves.toBe(VALID_KEY);
+
+      const db2 = await openVaultDatabase();
+      const stored = await getVaultEntry(db2, ENCRYPTION_KEY_NAME);
+      db2.close();
+      expect(stored).toBeInstanceOf(CryptoKey);
+      expect((stored as CryptoKey).extractable).toBe(false);
     });
   });
 });
