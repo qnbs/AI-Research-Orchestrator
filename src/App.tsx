@@ -59,7 +59,7 @@ const CommandPalette = lazy(() => import('./components/CommandPalette'));
 const QuickAddModal = lazy(() => import('./components/QuickAddModal'));
 const JournalsView = lazy(() => import('./components/JournalsView'));
 const CollectionsView = lazy(() => import('./components/CollectionsView'));
-const AgentDebugger = lazy(() => import('./components/AgentDebugger'));
+const AgentDebugger = lazy(() => import('./components/agentDebugger/AgentDebuggerPanel'));
 
 // ── Phase → Agent mapping for trace events ────────────────────────────────────
 function getAgentForPhase(phase: string): AgentName {

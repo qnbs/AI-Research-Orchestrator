@@ -19,7 +19,7 @@ import { BookOpenIcon } from './icons/BookOpenIcon';
 import { AppLogo } from './AppLogo';
 import { useTranslation } from '../hooks/useTranslation';
 import { GlobeAltIcon } from './icons/GlobeAltIcon';
-import { AgentDebuggerToggle } from './AgentDebugger';
+import { AgentDebuggerToggle } from './agentDebugger/AgentDebuggerToggle';
 import { InferenceModeBadge } from './InferenceModeBadge';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { cycleTheme, selectCurrentTheme } from '../store/slices/themeSlice';
