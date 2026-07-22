@@ -345,6 +345,8 @@ export const translations = {
     'errors.code.unknown': 'An unexpected error occurred.',
     'common.cancel': 'Cancel',
     'common.close': 'Close',
+    'settings.apiKeyVaultReset.message':
+      'Your saved API keys were reset during a security upgrade and need to be re-entered.',
   },
   de: {
     'app.name': 'Research Orchestrator',
@@ -710,6 +712,8 @@ export const translations = {
     'errors.code.unknown': 'Ein unerwarteter Fehler ist aufgetreten.',
     'common.cancel': 'Abbrechen',
     'common.close': 'Schließen',
+    'settings.apiKeyVaultReset.message':
+      'Ihre gespeicherten API-Schlüssel wurden im Rahmen eines Sicherheitsupdates zurückgesetzt und müssen erneut eingegeben werden.',
   },
 };
 

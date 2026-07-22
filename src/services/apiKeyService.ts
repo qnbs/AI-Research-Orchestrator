@@ -11,6 +11,7 @@ import { getProviderMeta } from './providers/provider';
 const ENCRYPTION_KEY_NAME = 'ai-research-encryption-key';
 const LEGACY_GEMINI_STORAGE_KEY = 'encrypted-api-key';
 const STORAGE_KEY_NCBI = 'encrypted-ncbi-api-key';
+const PENDING_RESET_NOTIFICATION_KEY = 'ai-research-vault-reset-pending-notification';
 
 const PROVIDER_STORAGE_KEYS: Record<AIProviderId, string> = {
   gemini: 'encrypted-api-key-gemini',
@@ -20,42 +21,152 @@ const PROVIDER_STORAGE_KEYS: Record<AIProviderId, string> = {
   heuristic: 'encrypted-api-key-heuristic',
 };
 
+// Memoizes the single in-flight/resolved key so concurrent callers (e.g.
+// ApiKeySettings.tsx's Promise.all([hasProviderApiKey(...), getNcbiApiKey()])
+// on mount) converge on the same key instead of each independently reading
+// IndexedDB, each detecting a legacy vault, and each generating and saving a
+// different replacement key - the last write wins and silently orphans
+// whatever was just encrypted with the key that lost the race.
+let encryptionKeyPromise: Promise<CryptoKey> | null = null;
+
+/** Test-only: clears the in-memory cache so the next call re-reads IndexedDB. */
+export function __resetEncryptionKeyCacheForTests(): void {
+  encryptionKeyPromise = null;
+  pendingVaultReset = false;
+}
+
+// This service has no dependency on the Redux store or React - it's called
+// from provider adapters and Settings alike, with no single call site that
+// naturally has `dispatch` on hand. A pre-hardening vault reset is notified
+// via this registered callback (set once at app bootstrap, where dispatch/t
+// are already available) instead of importing the store singleton directly,
+// which would close an import cycle back through geminiService.ts (which
+// imports this file for getNcbiApiKey) to store.ts.
+//
+// The reset can happen before App.tsx's own effect has registered a
+// listener: React fires child effects before parent effects on mount, and a
+// descendant of AppLayout (Header -> InferenceModeBadge -> useInferenceMode's
+// mount effect) already calls hasProviderApiKey, which can reach the reset
+// path first. pendingVaultReset buffers exactly one such reset so it still
+// reaches the listener once one is registered, instead of depending on
+// component mount order for correctness.
+let vaultResetListener: (() => void) | null = null;
+let pendingVaultReset = false;
+
+/** Registers a callback invoked when a pre-hardening vault is reset. Pass null to unregister. */
+export function setVaultResetListener(listener: (() => void) | null): void {
+  vaultResetListener = listener;
+  if (listener && pendingVaultReset) {
+    pendingVaultReset = false;
+    listener();
+  }
+}
+
+function notifyVaultReset(): void {
+  if (vaultResetListener) {
+    vaultResetListener();
+  } else {
+    pendingVaultReset = true;
+  }
+}
+
 /**
  * Generates or retrieves the encryption key from IndexedDB.
  * The key is generated once and reused for all encryption/decryption operations.
+ *
+ * The key is non-extractable: it is generated with `extractable: false` and the
+ * `CryptoKey` object itself (never its raw bytes) is persisted via IndexedDB's
+ * structured-clone support. Raw key material is never readable by JavaScript,
+ * including this app's own — only `crypto.subtle` can use it, so an XSS payload
+ * or a compromised third-party script can no longer read the master key that
+ * protects every stored provider secret.
  */
 async function getOrCreateEncryptionKey(): Promise<CryptoKey> {
+  encryptionKeyPromise ??= resolveEncryptionKey().catch((error: unknown) => {
+    encryptionKeyPromise = null;
+    throw error;
+  });
+  return encryptionKeyPromise;
+}
+
+async function resolveEncryptionKey(): Promise<CryptoKey> {
   const db = await openKeyDatabase();
 
-  // Try to retrieve existing key
-  const existingKeyData = await getFromKeyStore(db, ENCRYPTION_KEY_NAME);
-  if (existingKeyData) {
-    return crypto.subtle.importKey(
-      'raw',
-      existingKeyData.buffer as ArrayBuffer,
-      { name: 'AES-GCM', length: 256 },
-      false,
-      ['encrypt', 'decrypt'],
-    );
+  const existingKeyData = await getFromKeyStore<CryptoKey | Uint8Array>(db, ENCRYPTION_KEY_NAME);
+
+  if (existingKeyData instanceof CryptoKey) {
+    // A pending marker surviving here means an earlier reset cleared the
+    // vault and generated/saved this very key, but the app was interrupted
+    // (crash, tab close) before the marker could be deleted and the
+    // notification delivered. Deliver it now rather than losing it.
+    await deliverPendingResetNotification(db);
+    return existingKeyData;
   }
 
-  // Generate new key
-  const key = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, [
+  if (existingKeyData) {
+    // Pre-hardening vault format (raw exported key bytes from an older build).
+    // This app has no production users yet, so there is nothing to migrate:
+    // reset the whole vault and let the user re-enter their provider keys,
+    // rather than attempt to recover or convert the old format.
+    //
+    // The pending marker is written in the SAME transaction as the clear, so
+    // it durably survives even if generateKey/saveToKeyStore below then
+    // fails, or the tab closes before they run. Without it, a later call
+    // would find an already-empty store - indistinguishable from a fresh
+    // install - and silently skip the notification even though this call's
+    // clear already discarded the user's keys.
+    console.warn(
+      'API key vault used an outdated, extractable key format; resetting the local vault.',
+    );
+    await clearKeyStoreAndMarkPendingReset(db);
+  }
+
+  const key = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, false, [
     'encrypt',
     'decrypt',
   ]);
-
-  // Export and store
-  const exportedKey = await crypto.subtle.exportKey('raw', key);
-  await saveToKeyStore(db, ENCRYPTION_KEY_NAME, new Uint8Array(exportedKey));
-
+  await saveToKeyStore(db, ENCRYPTION_KEY_NAME, key);
+  // Notify only once the replacement key is durably saved - not right after
+  // the clear - so a user is never told "re-enter your keys" while the vault
+  // is actually stuck unable to save any new key at all (e.g. an engine that
+  // rejects CryptoKey structured-clone; see SECURITY.md's residual risk).
+  // Also fires for the "no key at all" branch above when a pending marker
+  // survives from an interrupted earlier attempt (retry, or a fresh
+  // resolveEncryptionKey() call after the one that only cleared the store).
+  await deliverPendingResetNotification(db);
   return key;
+}
+
+async function deliverPendingResetNotification(db: IDBDatabase): Promise<void> {
+  const pending = await getFromKeyStore<boolean>(db, PENDING_RESET_NOTIFICATION_KEY);
+  if (!pending) return;
+  await deleteFromKeyStore(db, PENDING_RESET_NOTIFICATION_KEY);
+  notifyVaultReset();
+}
+
+export function toRejectionError(error: DOMException | null): Error {
+  if (error instanceof Error) return error;
+  // Some environments' DOMException (e.g. fake-indexeddb in tests) is not
+  // instanceof Error, unlike Node's/browsers' native DOMException. Preserve
+  // .name/.message rather than flattening to a generic message: isAbortError()
+  // in lib/errors.ts and toAppError()'s message-based classification both
+  // depend on the real name/message surviving this rejection.
+  //
+  // The cast below works around a real tsc quirk: since lib.dom.d.ts declares
+  // DOMException extends Error, this branch narrows to exactly `null`, and
+  // `null?.message` then fails to typecheck (NonNullable<null> is `never`,
+  // even though the expression is only ever evaluated on an actual object at
+  // runtime - `error` was never reassigned, only its static type changed).
+  const domError = error as DOMException | null;
+  const wrapped = new Error(domError?.message ?? 'IndexedDB request failed');
+  if (domError?.name) wrapped.name = domError.name;
+  return wrapped;
 }
 
 function openKeyDatabase(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open('APIKeyVault', 1);
-    request.onerror = () => reject(request.error);
+    request.onerror = () => reject(toRejectionError(request.error));
     request.onsuccess = () => resolve(request.result);
     request.onupgradeneeded = (event) => {
       const db = (event.target as IDBOpenDBRequest).result;
@@ -66,23 +177,33 @@ function openKeyDatabase(): Promise<IDBDatabase> {
   });
 }
 
-function getFromKeyStore(db: IDBDatabase, key: string): Promise<Uint8Array | null> {
+// Every helper below resolves on tx.oncomplete (the transaction's durable
+// commit), not the individual request's onsuccess: a request can succeed and
+// still have its transaction abort afterward, which would otherwise let
+// calling code proceed as if a write/clear had landed when it hadn't.
+function getFromKeyStore<T = Uint8Array>(db: IDBDatabase, key: string): Promise<T | null> {
   return new Promise((resolve, reject) => {
     const tx = db.transaction('keys', 'readonly');
     const store = tx.objectStore('keys');
     const request = store.get(key);
-    request.onerror = () => reject(request.error);
-    request.onsuccess = () => resolve(request.result || null);
+    let result: T | null = null;
+    request.onerror = () => reject(toRejectionError(request.error));
+    request.onsuccess = () => {
+      result = (request.result as T | undefined) ?? null;
+    };
+    tx.oncomplete = () => resolve(result);
+    tx.onabort = () => reject(toRejectionError(tx.error));
   });
 }
 
-function saveToKeyStore(db: IDBDatabase, key: string, value: Uint8Array): Promise<void> {
+function saveToKeyStore<T>(db: IDBDatabase, key: string, value: T): Promise<void> {
   return new Promise((resolve, reject) => {
     const tx = db.transaction('keys', 'readwrite');
     const store = tx.objectStore('keys');
     const request = store.put(value, key);
-    request.onerror = () => reject(request.error);
-    request.onsuccess = () => resolve();
+    request.onerror = () => reject(toRejectionError(request.error));
+    tx.oncomplete = () => resolve();
+    tx.onabort = () => reject(toRejectionError(tx.error));
   });
 }
 
@@ -91,8 +212,28 @@ function deleteFromKeyStore(db: IDBDatabase, key: string): Promise<void> {
     const tx = db.transaction('keys', 'readwrite');
     const store = tx.objectStore('keys');
     const request = store.delete(key);
-    request.onerror = () => reject(request.error);
-    request.onsuccess = () => resolve();
+    request.onerror = () => reject(toRejectionError(request.error));
+    tx.oncomplete = () => resolve();
+    tx.onabort = () => reject(toRejectionError(tx.error));
+  });
+}
+
+// Clears the store and writes the pending-reset marker in the SAME
+// transaction, so the two commit atomically: a later call always sees
+// either both (a legacy vault it hasn't reset yet) or neither (reset already
+// fully delivered), never a cleared vault with no record that it happened.
+function clearKeyStoreAndMarkPendingReset(db: IDBDatabase): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('keys', 'readwrite');
+    const store = tx.objectStore('keys');
+    const clearRequest = store.clear();
+    clearRequest.onerror = () => reject(toRejectionError(clearRequest.error));
+    clearRequest.onsuccess = () => {
+      const putRequest = store.put(true, PENDING_RESET_NOTIFICATION_KEY);
+      putRequest.onerror = () => reject(toRejectionError(putRequest.error));
+    };
+    tx.oncomplete = () => resolve();
+    tx.onabort = () => reject(toRejectionError(tx.error));
   });
 }
 
