@@ -68,6 +68,9 @@ describe('apiKeyService', () => {
   });
 
   afterEach(async () => {
+    // Guarantees spy cleanup even if a test's own await/assertion throws
+    // before reaching an explicit .mockRestore() call.
+    vi.restoreAllMocks();
     try {
       await removeApiKey();
       await removeNcbiApiKey();
@@ -216,9 +219,8 @@ describe('apiKeyService', () => {
       await putVaultEntry(db, ENCRYPTION_KEY_NAME, new Uint8Array(32));
       db.close();
 
-      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      vi.spyOn(console, 'warn').mockImplementation(() => {});
       await saveApiKey(VALID_KEY);
-      warnSpy.mockRestore();
 
       await expect(getApiKey()).resolves.toBe(VALID_KEY);
 
@@ -237,9 +239,8 @@ describe('apiKeyService', () => {
       const listener = vi.fn();
       setVaultResetListener(listener);
 
-      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      vi.spyOn(console, 'warn').mockImplementation(() => {});
       await saveApiKey(VALID_KEY);
-      warnSpy.mockRestore();
 
       expect(listener).toHaveBeenCalledTimes(1);
     });
@@ -271,7 +272,6 @@ describe('apiKeyService', () => {
       const generateKeySpy = vi.spyOn(crypto.subtle, 'generateKey');
       await Promise.all([saveApiKey(VALID_KEY), saveNcbiApiKey('ncbi-test-key')]);
       expect(generateKeySpy).toHaveBeenCalledTimes(1);
-      generateKeySpy.mockRestore();
 
       await expect(getApiKey()).resolves.toBe(VALID_KEY);
       await expect(getNcbiApiKey()).resolves.toBe('ncbi-test-key');
@@ -283,11 +283,9 @@ describe('apiKeyService', () => {
       db.close();
 
       const generateKeySpy = vi.spyOn(crypto.subtle, 'generateKey');
-      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      vi.spyOn(console, 'warn').mockImplementation(() => {});
       await Promise.all([saveApiKey(VALID_KEY), saveNcbiApiKey('ncbi-test-key')]);
-      warnSpy.mockRestore();
       expect(generateKeySpy).toHaveBeenCalledTimes(1);
-      generateKeySpy.mockRestore();
 
       await expect(getApiKey()).resolves.toBe(VALID_KEY);
       await expect(getNcbiApiKey()).resolves.toBe('ncbi-test-key');
@@ -305,18 +303,46 @@ describe('apiKeyService', () => {
       expect(toRejectionError(original as unknown as DOMException)).toBe(original);
     });
 
-    it('preserves name and message from a DOMException that is not instanceof Error', () => {
-      // fake-indexeddb's DOMException (like some browsers') is not
-      // instanceof Error - confirmed the wrapper doesn't flatten it into a
-      // generic message, which would break isAbortError()/toAppError()'s
-      // message-based classification downstream.
-      const domException = new DOMException('Quota exceeded', 'QuotaExceededError');
-      expect(domException instanceof Error).toBe(false);
+    it('preserves name and message from a non-Error DOMException-shaped value', () => {
+      // A plain object is never instanceof Error in any host, unlike
+      // `new DOMException(...)` (instanceof Error in plain Node, but not in
+      // this project's actual jsdom+fake-indexeddb test environment - see
+      // the real-fake-indexeddb-error test below, which isn't host-dependent
+      // either way since it exercises the genuine error path directly).
+      const domExceptionLike = {
+        name: 'QuotaExceededError',
+        message: 'Quota exceeded',
+      } as DOMException;
+      expect(domExceptionLike instanceof Error).toBe(false);
 
-      const wrapped = toRejectionError(domException);
+      const wrapped = toRejectionError(domExceptionLike);
       expect(wrapped).toBeInstanceOf(Error);
       expect(wrapped.name).toBe('QuotaExceededError');
       expect(wrapped.message).toBe('Quota exceeded');
+    });
+
+    it('preserves name and message from a real fake-indexeddb error', async () => {
+      const dbName = '___toRejectionError_probe___';
+      const opened = indexedDB.open(dbName, 2);
+      await new Promise<void>((resolve, reject) => {
+        opened.onsuccess = () => resolve();
+        opened.onerror = () => reject(opened.error);
+      });
+      opened.result.close();
+
+      // Re-opening with a lower version triggers a genuine VersionError.
+      const reopened = indexedDB.open(dbName, 1);
+      const realError = await new Promise<DOMException | null>((resolve) => {
+        reopened.onerror = () => resolve(reopened.error);
+        reopened.onsuccess = () => resolve(null);
+      });
+      expect(realError).not.toBeNull();
+      expect(realError instanceof Error).toBe(false);
+
+      const wrapped = toRejectionError(realError);
+      expect(wrapped).toBeInstanceOf(Error);
+      expect(wrapped.name).toBe('VersionError');
+      expect(wrapped.message).toContain('lower version');
     });
 
     it('falls back to a generic message when error is null', () => {
