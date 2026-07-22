@@ -1,4 +1,5 @@
 import jsPDF from 'jspdf';
+import DOMPurify from 'dompurify';
 import {
   RankedArticle,
   ResearchInput,
@@ -35,10 +36,18 @@ const PDF_CONSTANTS = {
   },
 };
 
+// Strips tags via a real HTML parser (DOMPurify) rather than a naive `<[^>]*>` regex,
+// which can be bypassed by nested/malformed markup that reconstructs a tag once stripped.
+const stripHtmlTags = (text: string): string => {
+  const sanitized = DOMPurify.sanitize(text, { ALLOWED_TAGS: [], ALLOWED_ATTR: [] });
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = sanitized;
+  return tempDiv.textContent || tempDiv.innerText || '';
+};
+
 const cleanText = (text: string) =>
   text
-    ? text
-        .replace(/<[^>]*>/g, '')
+    ? stripHtmlTags(text)
         .replace(/[\u2018\u2019]/g, "'")
         .replace(/[\u201C\u201D]/g, '"')
     : '';
@@ -547,14 +556,26 @@ export const exportCitations = (
 ): void => {
   let content = '';
 
+  // Single-pass escaping: chaining sequential `.replace()` calls (backslash first, then
+  // braces) lets a later step re-match characters an earlier step just inserted (e.g. the
+  // `{}` in `\textbackslash{}` getting re-escaped by the brace step). One regex + callback
+  // resolves each *original* character exactly once, so no substitution can compound.
+  const BIBTEX_ESCAPES: Record<string, string> = {
+    '\\': '\\textbackslash{}',
+    '&': '\\&',
+    '%': '\\%',
+    $: '\\$',
+    '#': '\\#',
+    _: '\\_',
+    '{': '\\{',
+    '}': '\\}',
+    '~': '\\textasciitilde{}',
+    '^': '\\textasciicircum{}',
+  };
   const cleanForBibtex = (text: string) => {
     if (!text) return '{}';
-    // More comprehensive BibTeX escaping
-    let s = text.replace(/\\/g, '\\textbackslash{}');
-    s = s.replace(/([&%$#_{}])/g, '\\$1');
-    s = s.replace(/~/g, '\\textasciitilde{}');
-    s = s.replace(/\^/g, '\\textasciicircum{}');
-    return `{${s}}`;
+    const escaped = text.replace(/[\\&%$#_{}~^]/g, (char) => BIBTEX_ESCAPES[char] ?? char);
+    return `{${escaped}}`;
   };
 
   const cleanForRis = (text: string) => {

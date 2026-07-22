@@ -296,6 +296,73 @@ describe('export helpers', () => {
     expect(() => exportToPdf(report, input, pdfSettings)).not.toThrow();
   });
 
+  it('exportCitations bib escapes backslash and special chars in a single pass', () => {
+    const articles: AggregatedArticle[] = [
+      {
+        pmid: '1',
+        title: 'Path C:\\data & 50% {reserved} test',
+        authors: 'A1',
+        journal: 'J',
+        pubYear: '2020',
+        summary: 'S',
+        relevanceScore: 1,
+        relevanceExplanation: '',
+        keywords: [],
+        isOpenAccess: false,
+        sourceTitle: 'src',
+        sourceId: 'sid',
+      },
+    ];
+    const cite: Settings['export']['citation'] = {
+      includeAbstract: false,
+      includeKeywords: false,
+      includeTags: false,
+      includePmcid: false,
+    };
+    exportCitations(articles, cite, 'bib');
+    const blob = vi.mocked(URL.createObjectURL).mock.calls.at(-1)?.[0] as Blob;
+    return blob.text().then((content) => {
+      // Backslash is escaped to a LaTeX command, and that command's own `{}` are not
+      // re-escaped by the later brace-escaping step (single-pass, not chained replaces).
+      expect(content).toContain('\\textbackslash{}data');
+      expect(content).not.toContain('\\textbackslash\\{\\}data');
+      expect(content).toContain('\\&');
+      expect(content).toContain('\\%');
+      expect(content).toContain('\\{reserved\\}');
+    });
+  });
+
+  it('exportCitations ris strips malformed nested tags without reconstructing them', () => {
+    const articles: AggregatedArticle[] = [
+      {
+        pmid: '1',
+        title: '<scr<script>ipt>alert(1)</scr</script>ipt>Safe Title',
+        authors: 'A1',
+        journal: 'J',
+        pubYear: '2020',
+        summary: 'S',
+        relevanceScore: 1,
+        relevanceExplanation: '',
+        keywords: [],
+        isOpenAccess: false,
+        sourceTitle: 'src',
+        sourceId: 'sid',
+      },
+    ];
+    const cite: Settings['export']['citation'] = {
+      includeAbstract: false,
+      includeKeywords: false,
+      includeTags: false,
+      includePmcid: false,
+    };
+    exportCitations(articles, cite, 'ris');
+    const blob = vi.mocked(URL.createObjectURL).mock.calls.at(-1)?.[0] as Blob;
+    return blob.text().then((content) => {
+      expect(content.toLowerCase()).not.toContain('<script');
+      expect(content).toContain('Safe Title');
+    });
+  });
+
   it('exportCitations builds ris file with optional fields', () => {
     const articles: AggregatedArticle[] = [
       {

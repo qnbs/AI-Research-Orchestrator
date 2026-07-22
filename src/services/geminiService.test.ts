@@ -353,6 +353,65 @@ describe('geminiService with mocked SDK', () => {
     expect(article.relevanceScore).toBe(70);
   });
 
+  it('analyzeSingleArticle extracts the PMID from a real pubmed.ncbi.nlm.nih.gov URL', async () => {
+    mockPubMed.fetchArticleDetails.mockResolvedValueOnce([
+      {
+        pmid: '987654',
+        title: 'T',
+        summary: 'S',
+        authors: 'A',
+        journal: 'J',
+        pubYear: '2020',
+        keywords: [],
+        relevanceScore: 0,
+        relevanceExplanation: '',
+      },
+    ]);
+    hoisted.generateContent.mockResolvedValue({
+      text: JSON.stringify({
+        relevanceScore: 50,
+        relevanceExplanation: 'ok',
+        keywords: [],
+        articleType: 'Other',
+      }),
+    });
+    const article = await analyzeSingleArticle('https://pubmed.ncbi.nlm.nih.gov/987654/', mockAi);
+    expect(mockPubMed.fetchArticleDetails).toHaveBeenCalledWith(
+      ['987654'],
+      undefined,
+      expect.anything(),
+    );
+    expect(article.pmid).toBe('987654');
+  });
+
+  it('analyzeSingleArticle does not misclassify a host that merely contains "doi.org/"', async () => {
+    mockPubMed.fetchArticleDetails.mockResolvedValueOnce([
+      {
+        pmid: 'not-a-doi.org/lookup',
+        title: 'T',
+        summary: 'S',
+        authors: 'A',
+        journal: 'J',
+        pubYear: '2020',
+        keywords: [],
+        relevanceScore: 0,
+        relevanceExplanation: '',
+      },
+    ]);
+    hoisted.generateContent.mockResolvedValue({
+      text: JSON.stringify({
+        relevanceScore: 50,
+        relevanceExplanation: 'ok',
+        keywords: [],
+        articleType: 'Other',
+      }),
+    });
+    // Not a URL at all (no scheme), so it must be treated as a raw identifier rather than
+    // routed to the DOI-resolution branch just because it contains the substring "doi.org/".
+    await analyzeSingleArticle('not-a-doi.org/lookup', mockAi);
+    expect(mockPubMed.searchPubMedForIds).not.toHaveBeenCalled();
+  });
+
   it('generateJournalProfileAnalysis returns profile', async () => {
     hoisted.generateContent.mockResolvedValue({
       text: JSON.stringify({

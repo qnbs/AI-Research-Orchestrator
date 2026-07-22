@@ -731,6 +731,15 @@ export async function suggestAuthors(
   }
 }
 
+/** Hostname of `value` if it parses as an absolute URL, else null (bare PMIDs/DOIs are not URLs). */
+function tryGetHostname(value: string): string | null {
+  try {
+    return new URL(value).hostname;
+  } catch {
+    return null;
+  }
+}
+
 export async function analyzeSingleArticle(
   identifier: string,
   aiSettings: Settings['ai'],
@@ -742,11 +751,13 @@ export async function analyzeSingleArticle(
   throwIfAborted(signal);
   try {
     let pmid = identifier.trim();
-    // Basic identifier extraction
-    if (identifier.includes('pubmed.ncbi.nlm.nih.gov/')) {
-      const match = identifier.match(/(\d+)\/?$/);
+    // Basic identifier extraction — hostname is checked exactly (not via substring
+    // matching) so e.g. `evil.example/doi.org/` can't be misclassified as a DOI link.
+    const identifierHost = tryGetHostname(pmid);
+    if (identifierHost === 'pubmed.ncbi.nlm.nih.gov') {
+      const match = pmid.match(/(\d+)\/?$/);
       if (match) pmid = match[1];
-    } else if (identifier.includes('doi.org/')) {
+    } else if (identifierHost === 'doi.org' || identifierHost === 'dx.doi.org') {
       const ids = await searchPubMedForIds(identifier, 1, signal, ncbiApiKey);
       if (ids.length > 0) pmid = ids[0];
       else {
