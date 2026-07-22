@@ -295,6 +295,32 @@ describe('apiKeyService', () => {
       expect(listener).not.toHaveBeenCalled();
     });
 
+    it('still notifies on a later successful retry after an interrupted reset', async () => {
+      // The vault is now cleared but has no master key (the failure above
+      // left it that way) - indistinguishable from a fresh install unless a
+      // durable pending-reset marker survives the interruption. A later call
+      // must still deliver the notification once it successfully
+      // establishes a key, not silently skip it.
+      const db = await openVaultDatabase();
+      await putVaultEntry(db, ENCRYPTION_KEY_NAME, new Uint8Array(32));
+      db.close();
+
+      const listener = vi.fn();
+      setVaultResetListener(listener);
+
+      vi.spyOn(console, 'warn').mockImplementation(() => {});
+      vi.spyOn(crypto.subtle, 'generateKey').mockRejectedValueOnce(
+        new Error('simulated engine failure'),
+      );
+      await expect(saveApiKey(VALID_KEY)).rejects.toThrow('simulated engine failure');
+      expect(listener).not.toHaveBeenCalled();
+
+      await saveApiKey(VALID_KEY);
+
+      expect(listener).toHaveBeenCalledTimes(1);
+      await expect(getApiKey()).resolves.toBe(VALID_KEY);
+    });
+
     it('converges concurrent callers on one master key instead of racing to different ones', async () => {
       // Concurrent Promise.all-style calls (mirroring ApiKeySettings.tsx's
       // mount-time Promise.all([hasProviderApiKey(...), getNcbiApiKey()]))

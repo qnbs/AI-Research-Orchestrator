@@ -11,6 +11,7 @@ import { getProviderMeta } from './providers/provider';
 const ENCRYPTION_KEY_NAME = 'ai-research-encryption-key';
 const LEGACY_GEMINI_STORAGE_KEY = 'encrypted-api-key';
 const STORAGE_KEY_NCBI = 'encrypted-ncbi-api-key';
+const PENDING_RESET_NOTIFICATION_KEY = 'ai-research-vault-reset-pending-notification';
 
 const PROVIDER_STORAGE_KEYS: Record<AIProviderId, string> = {
   gemini: 'encrypted-api-key-gemini',
@@ -92,20 +93,32 @@ async function resolveEncryptionKey(): Promise<CryptoKey> {
   const db = await openKeyDatabase();
 
   const existingKeyData = await getFromKeyStore<CryptoKey | Uint8Array>(db, ENCRYPTION_KEY_NAME);
-  let wasReset = false;
+
+  if (existingKeyData instanceof CryptoKey) {
+    // A pending marker surviving here means an earlier reset cleared the
+    // vault and generated/saved this very key, but the app was interrupted
+    // (crash, tab close) before the marker could be deleted and the
+    // notification delivered. Deliver it now rather than losing it.
+    await deliverPendingResetNotification(db);
+    return existingKeyData;
+  }
+
   if (existingKeyData) {
-    if (existingKeyData instanceof CryptoKey) {
-      return existingKeyData;
-    }
     // Pre-hardening vault format (raw exported key bytes from an older build).
     // This app has no production users yet, so there is nothing to migrate:
     // reset the whole vault and let the user re-enter their provider keys,
     // rather than attempt to recover or convert the old format.
+    //
+    // The pending marker is written in the SAME transaction as the clear, so
+    // it durably survives even if generateKey/saveToKeyStore below then
+    // fails, or the tab closes before they run. Without it, a later call
+    // would find an already-empty store - indistinguishable from a fresh
+    // install - and silently skip the notification even though this call's
+    // clear already discarded the user's keys.
     console.warn(
       'API key vault used an outdated, extractable key format; resetting the local vault.',
     );
-    await clearKeyStore(db);
-    wasReset = true;
+    await clearKeyStoreAndMarkPendingReset(db);
   }
 
   const key = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, false, [
@@ -117,10 +130,18 @@ async function resolveEncryptionKey(): Promise<CryptoKey> {
   // the clear - so a user is never told "re-enter your keys" while the vault
   // is actually stuck unable to save any new key at all (e.g. an engine that
   // rejects CryptoKey structured-clone; see SECURITY.md's residual risk).
-  if (wasReset) {
-    notifyVaultReset();
-  }
+  // Also fires for the "no key at all" branch above when a pending marker
+  // survives from an interrupted earlier attempt (retry, or a fresh
+  // resolveEncryptionKey() call after the one that only cleared the store).
+  await deliverPendingResetNotification(db);
   return key;
+}
+
+async function deliverPendingResetNotification(db: IDBDatabase): Promise<void> {
+  const pending = await getFromKeyStore<boolean>(db, PENDING_RESET_NOTIFICATION_KEY);
+  if (!pending) return;
+  await deleteFromKeyStore(db, PENDING_RESET_NOTIFICATION_KEY);
+  notifyVaultReset();
 }
 
 export function toRejectionError(error: DOMException | null): Error {
@@ -197,12 +218,20 @@ function deleteFromKeyStore(db: IDBDatabase, key: string): Promise<void> {
   });
 }
 
-function clearKeyStore(db: IDBDatabase): Promise<void> {
+// Clears the store and writes the pending-reset marker in the SAME
+// transaction, so the two commit atomically: a later call always sees
+// either both (a legacy vault it hasn't reset yet) or neither (reset already
+// fully delivered), never a cleared vault with no record that it happened.
+function clearKeyStoreAndMarkPendingReset(db: IDBDatabase): Promise<void> {
   return new Promise((resolve, reject) => {
     const tx = db.transaction('keys', 'readwrite');
     const store = tx.objectStore('keys');
-    const request = store.clear();
-    request.onerror = () => reject(toRejectionError(request.error));
+    const clearRequest = store.clear();
+    clearRequest.onerror = () => reject(toRejectionError(clearRequest.error));
+    clearRequest.onsuccess = () => {
+      const putRequest = store.put(true, PENDING_RESET_NOTIFICATION_KEY);
+      putRequest.onerror = () => reject(toRejectionError(putRequest.error));
+    };
     tx.oncomplete = () => resolve();
     tx.onabort = () => reject(toRejectionError(tx.error));
   });
