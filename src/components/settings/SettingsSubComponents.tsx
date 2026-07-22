@@ -26,6 +26,7 @@ import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { InferenceModeSettings, useApiKeyInferenceRefresh } from './InferenceModeSettings';
 import { AI_PROVIDERS, getProviderMeta } from '../../services/providers/provider';
 import type { AIProviderSelection } from '../../services/providers/types';
+import { isNonAiAvailable } from '../../services/nonAi';
 
 const personaDescriptions = {
   'Neutral Scientist': 'Adopts a neutral, objective, and strictly scientific tone.',
@@ -459,6 +460,13 @@ export const AISettingsTab: React.FC = () => {
               Choose the AI backend. Gemini is the default; other providers require their own API
               key or a local endpoint.
             </p>
+            {currentProvider === 'heuristic' && (
+              <p className="text-xs text-text-secondary mt-1">
+                {isNonAiAvailable()
+                  ? t('settings.ai.nonai_available_desc')
+                  : t('settings.ai.nonai_unavailable_desc')}
+              </p>
+            )}
           </div>
 
           <div>

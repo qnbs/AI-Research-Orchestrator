@@ -241,6 +241,10 @@ export const translations = {
     'settings.ai.base_url': 'Base URL',
     'settings.ai.base_url_desc':
       'Optional. Change this to use a proxy, OpenRouter-compatible endpoint, or a different Ollama host.',
+    'settings.ai.nonai_available_desc':
+      'Powered by the Non-AI Programmatic Research Engine — deterministic, works fully offline, and costs nothing.',
+    'settings.ai.nonai_unavailable_desc':
+      'The Non-AI Programmatic Research Engine is currently unavailable in this environment.',
     'onboarding.welcome_prefix': 'Welcome to the',
     'onboarding.welcome_highlight': 'Future of Research',
     'onboarding.subtitle': 'Your intelligent assistant for scientific literature reviews.',
@@ -576,6 +580,10 @@ export const translations = {
     'settings.ai.base_url': 'Basis-URL',
     'settings.ai.base_url_desc':
       'Optional. Ändern Sie dies, um einen Proxy, einen OpenRouter-kompatiblen Endpunkt oder einen anderen Ollama-Host zu verwenden.',
+    'settings.ai.nonai_available_desc':
+      'Angetrieben von der Non-AI Programmatic Research Engine — deterministisch, funktioniert vollständig offline und kostenlos.',
+    'settings.ai.nonai_unavailable_desc':
+      'Die Non-AI Programmatic Research Engine ist in dieser Umgebung derzeit nicht verfügbar.',
     'onboarding.welcome_prefix': 'Willkommen in der',
     'onboarding.welcome_highlight': 'Zukunft der Recherche',
     'onboarding.subtitle': 'Ihr intelligenter Assistent für wissenschaftliche Literaturrecherchen.',
