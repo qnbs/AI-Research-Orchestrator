@@ -31,6 +31,7 @@ let encryptionKeyPromise: Promise<CryptoKey> | null = null;
 /** Test-only: clears the in-memory cache so the next call re-reads IndexedDB. */
 export function __resetEncryptionKeyCacheForTests(): void {
   encryptionKeyPromise = null;
+  pendingVaultReset = false;
 }
 
 // This service has no dependency on the Redux store or React - it's called
@@ -40,11 +41,32 @@ export function __resetEncryptionKeyCacheForTests(): void {
 // are already available) instead of importing the store singleton directly,
 // which would close an import cycle back through geminiService.ts (which
 // imports this file for getNcbiApiKey) to store.ts.
+//
+// The reset can happen before App.tsx's own effect has registered a
+// listener: React fires child effects before parent effects on mount, and a
+// descendant of AppLayout (Header -> InferenceModeBadge -> useInferenceMode's
+// mount effect) already calls hasProviderApiKey, which can reach the reset
+// path first. pendingVaultReset buffers exactly one such reset so it still
+// reaches the listener once one is registered, instead of depending on
+// component mount order for correctness.
 let vaultResetListener: (() => void) | null = null;
+let pendingVaultReset = false;
 
 /** Registers a callback invoked when a pre-hardening vault is reset. Pass null to unregister. */
 export function setVaultResetListener(listener: (() => void) | null): void {
   vaultResetListener = listener;
+  if (listener && pendingVaultReset) {
+    pendingVaultReset = false;
+    listener();
+  }
+}
+
+function notifyVaultReset(): void {
+  if (vaultResetListener) {
+    vaultResetListener();
+  } else {
+    pendingVaultReset = true;
+  }
 }
 
 /**
@@ -82,7 +104,7 @@ async function resolveEncryptionKey(): Promise<CryptoKey> {
       'API key vault used an outdated, extractable key format; resetting the local vault.',
     );
     await clearKeyStore(db);
-    vaultResetListener?.();
+    notifyVaultReset();
   }
 
   const key = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, false, [

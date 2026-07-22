@@ -255,6 +255,24 @@ describe('apiKeyService', () => {
       expect(listener).not.toHaveBeenCalled();
     });
 
+    it('buffers a reset that happens before any listener is registered, delivering it once one is', async () => {
+      // Mirrors the real app: a descendant effect (Header -> InferenceModeBadge
+      // -> useInferenceMode) can reach getOrCreateEncryptionKey before
+      // App.tsx's own effect has called setVaultResetListener, since React
+      // fires child effects before parent effects on mount.
+      const db = await openVaultDatabase();
+      await putVaultEntry(db, ENCRYPTION_KEY_NAME, new Uint8Array(32));
+      db.close();
+
+      vi.spyOn(console, 'warn').mockImplementation(() => {});
+      await saveApiKey(VALID_KEY); // no listener registered yet - reset fires without one
+
+      const listener = vi.fn();
+      setVaultResetListener(listener); // registered afterward, as App.tsx's effect would
+
+      expect(listener).toHaveBeenCalledTimes(1);
+    });
+
     it('converges concurrent callers on one master key instead of racing to different ones', async () => {
       // Concurrent Promise.all-style calls (mirroring ApiKeySettings.tsx's
       // mount-time Promise.all([hasProviderApiKey(...), getNcbiApiKey()]))
