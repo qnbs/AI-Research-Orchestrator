@@ -1,5 +1,12 @@
 # UI/UX Audit — AI Research Orchestrator
 
+> **Re-validated 2026-07-22** against `main` (post PR #64–#67). Sections 1–4 and 9–10
+> (design system, accessibility, responsive design, component architecture, visual
+> hierarchy, security/privacy UI) are living documentation and remain accurate — kept
+> as-is. Sections 5–8 described gaps and failures that have since been closed; they are
+> updated in place below rather than left stale, with a short "already done" record kept
+> for historical context instead of silently deleting the section.
+
 ## Executive Summary
 
 The AI Research Orchestrator implements a sophisticated "Cybernetic Glassmorphism" design system with excellent attention to accessibility, responsive design, and visual hierarchy. The codebase demonstrates mature UI architecture with proper separation of concerns, consistent theming, and WCAG 2.2 AA compliance.
@@ -186,100 +193,89 @@ Located in `src/components/ui/` and `src/components/`:
 | Career timeline       | ✅     | Computed from article publication years     |
 | Citation metrics      | ✅     | Estimated from publication age              |
 
-### 5.2 Journals Hub (Incomplete)
+### 5.2 Journals Hub (Complete, one gap remains)
 
-| Feature                    | Status | Implementation                                                 |
-| -------------------------- | ------ | -------------------------------------------------------------- |
-| Search by journal name     | ✅     | `handleAnalyzeJournal` in `useJournalsViewLogic.ts`            |
-| Journal profile analysis   | ✅     | `generateJournalProfileAnalysis` (Gemini + heuristic fallback) |
-| Featured journals grid     | ✅     | RTK Query `useGetFeaturedJournalsQuery`                        |
-| **Suggest journals**       | ❌     | Missing — no `suggestJournals` function                        |
-| **Journal disambiguation** | ❌     | Missing — no `disambiguateJournal` function                    |
-| **Rich profile view**      | ⚠️     | Basic profile only, no detailed metrics                        |
-| **Impact factor display**  | ❌     | Not implemented                                                |
-| **Open access timeline**   | ❌     | Not implemented                                                |
+**2026-07-22 update:** the four items originally flagged here as missing/incomplete
+are done — re-verified directly against current `geminiService.ts`/`journalProfiler.ts`.
+
+| Feature                  | Status | Implementation                                                                                                                    |
+| ------------------------ | ------ | --------------------------------------------------------------------------------------------------------------------------------- |
+| Search by journal name   | ✅     | `handleAnalyzeJournal` in `useJournalsViewLogic.ts`                                                                               |
+| Journal profile analysis | ✅     | `generateJournalProfileAnalysis` (Gemini + heuristic fallback)                                                                    |
+| Featured journals grid   | ✅     | RTK Query `useGetFeaturedJournalsQuery`                                                                                           |
+| Suggest journals         | ✅     | `suggestJournalsHeuristic` (`geminiService.ts:39,1011`), curated `FIELD_JOURNALS` KB                                              |
+| Journal disambiguation   | ✅     | `disambiguateJournalHeuristic` (`geminiService.ts:38,958`) → `JournalDisambiguationView`                                          |
+| Rich profile view        | ✅     | `JournalProfileView.tsx` with metrics grid                                                                                        |
+| Impact factor display    | ✅     | `JournalProfileView.tsx:71`, sourced from `journalData.ts`'s curated KB                                                           |
+| **Open access timeline** | ❌     | Still not implemented — only a generic "Activity Timeline" chart and a static OA-policy label exist, no OA-history-over-time view |
 
 ---
 
 ## 6. Internationalization (i18n) Audit
 
-### 6.1 Translation Coverage
+**2026-07-22 update:** this section originally scored coverage as a point-in-time
+percentage. That framing is now partly obsolete: `src/i18n/translations.test.ts`
+**hard-gates structural EN/DE key-set parity** (every `en` key has a non-empty `de`
+counterpart and vice versa), as a normal part of the test suite — that specific
+question is no longer worth periodically auditing, it's a CI invariant. What that test
+does **not** cover — and what §6.1 below still tracks — is _translation coverage_
+(whether a given user-facing string is routed through `t()` at all) and _translation
+quality_ (whether an existing `{en, de}` pair is semantically accurate). Those remain
+real, open, manually-tracked concerns; see `docs/HARDCODED-STRINGS-REMAINING.md` and the
+in-progress i18n migration plan for the current inventory.
 
-**Current State:**
+### 6.1 Hardcoded strings (still real, re-verified)
 
-- ~120 translation keys in `src/i18n/translations.ts`
-- English: 100% complete
-- German: ~60% complete (partial coverage)
+**`HelpView.tsx`** — still fully hardcoded, zero `t()` calls, confirmed directly against
+current source. All guide topics, FAQ items, glossary entries, and the About section are
+plain English strings. Tracked in `docs/HARDCODED-STRINGS-REMAINING.md` and scoped as its
+own dedicated migration PR (the i18n migration plan's Wave 8) given its size (~800 lines).
 
-### 6.2 Hardcoded Strings (Critical Issues)
+**`OnboardingView.tsx`** — **done**. Every string this section originally flagged here now
+goes through `t()` (12 call sites confirmed).
 
-**HelpView.tsx:**
-
-- All guide topics, FAQ items, and glossary entries are hardcoded
-- ~60+ strings need extraction to translations
-
-**OnboardingView.tsx:**
-
-- All step card content is hardcoded
-- ~15 strings need extraction
-
-**SettingsView.tsx:**
-
-- "About & Features" and "FAQ & Shortcuts" button labels hardcoded
-- Tab names partially hardcoded (should use `t()`)
+**`SettingsView.tsx`** — the "About & Features" / "FAQ & Shortcuts" button labels are
+**still hardcoded** (confirmed at their current line numbers). Folded into the i18n
+migration plan's broader UI-chrome sweep rather than tracked here individually.
 
 ---
 
 ## 7. E2E Test Failures Analysis
 
-### 7.1 Test: "KB shows empty-state message when no data saved"
-
-**Root Cause:** The test expects an empty state message but demo data is seeded on first launch.
-
-**Evidence from error-context.md:**
-
-- Page shows "5 Articles Found" heading
-- Demo data banner is present: "Demo data · Heuristic mode..."
-- Knowledge Base has 5 articles from demo seed
-
-**Fix Required:**
-
-- Either clear demo data before test, or
-- Update test assertion to account for demo-seeded state
-
-### 7.2 Test: "invalid key format shows error after save"
-
-**Root Cause:** Button text mismatch between test expectation and actual UI.
-
-**Evidence:**
-
-- Test looks for "Speichern" (German) button
-- UI shows "Save" (English) button
-- Error message appears but button text assertion fails
-
-**Fix Required:**
-
-- Use i18n-aware selector or
-- Use English button text in test
+**2026-07-22 update:** both failures this section described are **resolved**. They were
+fixed in PR #63 (2026-07-21, "fix: settings persistence corruption on boot + 2 known-failing
+E2E tests") — the current `src/test/e2e/agent-flow.spec.ts` explicitly clears IndexedDB and
+reloads before asserting the Knowledge Base empty state, and uses a `/^(save|speichern)$/i`
+regex for the API-key save button, so it passes in either language. Removed the original
+root-cause/fix-required writeup below since it no longer describes anything actionable —
+see `docs/e2e-ci-backlog.md` for the current, live E2E tracking document instead.
 
 ---
 
 ## 8. Recommendations
 
-### 8.1 High Priority
+**2026-07-22 update:** re-scored against current `main`. Items already shipped since this
+audit was written are struck from the list; only genuinely open items remain.
 
-1. **Fix E2E tests** - Address demo data seeding and button text issues
-2. **Extract hardcoded strings** - Move HelpView and OnboardingView content to translations
-3. **Add Journal Hub features** - Implement `suggestJournals` and `disambiguateJournal`
-4. **Improve heuristic coverage** - Add tests for `chat.ts` and `journalProfiling.ts`
+### 8.1 Open
 
-### 8.2 Medium Priority
+1. **Extract `HelpView.tsx`'s hardcoded strings** — scoped as the i18n migration plan's
+   Wave 8 (own PR, given size).
+2. **Add an open-access-over-time journal timeline** — the one remaining Journals Hub gap
+   from §5.2.
+3. **Broader hardcoded-string sweep** — `SettingsSubComponents.tsx`, modal titles, and
+   ~220 aria-label/title/placeholder/JSX-text instances across the rest of the app,
+   scoped in the i18n migration plan's later waves.
 
-1. **Complete German translations** - Expand DE coverage to match EN
-2. **Add impact factor data** - Integrate journal metrics API
-3. **Enhance journal profile view** - Add charts and metrics similar to author profile
+### 8.2 Already done (kept for historical context, not actionable)
 
-### 8.3 Low Priority
+- ~~Fix E2E tests~~ — done in PR #63.
+- ~~Extract OnboardingView.tsx strings~~ — done.
+- ~~Add Journal Hub features (`suggestJournals`, `disambiguateJournal`, impact factor,
+  rich profile view)~~ — all done, see §5.2.
+- ~~Complete German translations~~ — done, now CI-enforced (§6).
+
+### 8.3 Low Priority (unchanged, still just nice-to-have)
 
 1. **Add theme transition animations** - Smooth theme switching
 2. **Implement reduced motion toggle** - User preference for animations
@@ -332,4 +328,4 @@ Consistent use of Tailwind spacing:
 
 ---
 
-_Audit completed: Comprehensive analysis of design system, accessibility, component architecture, and identified gaps._
+_Audit completed 2026-07-18: Comprehensive analysis of design system, accessibility, component architecture, and identified gaps. Re-validated and corrected 2026-07-22._
