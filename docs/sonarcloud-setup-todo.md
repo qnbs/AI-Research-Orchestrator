@@ -4,8 +4,8 @@
 > **free tier**. Custom Quality Gates are **not available** on Free (Team/Enterprise
 > only). Everything is aligned to the built-in read-only **Sonar way** gate.
 >
-> **This pass fixed two bugs in the initial CI-analysis setup, verified against live
-> state (not assumed):**
+> **This pass fixed two bugs in the initial CI-analysis setup and verified the
+> result end-to-end against a live PR run — not assumed:**
 >
 > - `security.yml`'s `sonarcloud` job used `if: ${{ secrets.SONAR_TOKEN != '' }}` at
 >   job level — `secrets.*` is not a valid context there (only `github`/`inputs`/
@@ -17,13 +17,18 @@
 > - `sonar.organization=qnbs` was wrong — confirmed via
 >   `sonarcloud.io/api/components/show?component=qnbs_AI-Research-Orchestrator`
 >   that the real bound organization key is **`qnbs-1`**, not `qnbs`. Would have
->   made every scan fail with "project/organization not found" once the job above
->   actually ran. Fixed.
-> - **Automatic Analysis is still enabled** as of this check (confirmed: a scan
->   timestamped within seconds of the first bad commit's push, independent of the
->   broken CI job, which never even started) — see step B below. The CI job stays
->   `continue-on-error: true` until this is turned off in the dashboard, so it can't
->   block anything even while it's fighting Automatic Analysis for the same project.
+>   made every scan fail with "project/organization not found". Fixed.
+> - **CI-based analysis is confirmed working end-to-end**, verified live on the PR
+>   that shipped both fixes: `SonarQube Cloud Scan` step logged `ANALYSIS
+SUCCESSFUL` / `EXECUTION SUCCESS`, the `SonarCloud Code Analysis` GitHub check
+>   posted a real result tied to that commit, and `sonarqubecloud[bot]` commented
+>   "Quality Gate passed" on the PR — no "Automatic Analysis is enabled" conflict
+>   appeared anywhere in the scan log. A stale `components/show` timestamp earlier
+>   in this same pass had suggested Automatic Analysis might still be on; this
+>   later, more direct evidence (an actual successful CI-submitted analysis)
+>   supersedes it — Automatic Analysis is evidently already off, or SonarCloud
+>   accepted the CI submission regardless. Re-check Project → Administration →
+>   Analysis Method only if a future scan ever does hit that conflict.
 
 ## Free-tier constraint (important)
 
@@ -57,17 +62,14 @@ On SonarQube Cloud **Free**:
 1. [sonarcloud.io](https://sonarcloud.io) → My Account → Security → Generate token
 2. GitHub → Repo → Settings → Secrets → Actions → `SONAR_TOKEN`
 
-### B. Disable Automatic Analysis (still outstanding — the one real blocker)
+### B. Disable Automatic Analysis (only if a future scan hits a conflict)
 
 Project → Administration → Analysis Method → **Automatic Analysis = Off**
 
-Confirmed still **On** as of this pass (see status note above) — this can only be
-toggled in the SonarCloud dashboard, not from a repo file or the `gh`/GitHub API, so
-it's a manual step. Until it's off, expect the CI job's Sonar scan step to fail with
-an error like _"You are running CI-based analysis while Automatic Analysis is
-enabled"_ — harmless right now (`continue-on-error: true`), but the job won't
-produce a real result, and coverage/exclusion tuning won't take effect, until this
-is switched off.
+Not currently needed — a real, PR-scoped CI-based scan completed successfully with
+no "Automatic Analysis is enabled" conflict (see status note above). Keep this step
+as a reference in case a future scan ever does report that conflict; it can only be
+toggled in the SonarCloud dashboard, not from a repo file or the `gh`/GitHub API.
 
 ### C. Work with Sonar way (no custom gate on Free)
 
