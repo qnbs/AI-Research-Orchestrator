@@ -13,6 +13,7 @@ import {
   hasNcbiApiKey,
   removeNcbiApiKey,
   setVaultResetListener,
+  toRejectionError,
   __resetEncryptionKeyCacheForTests,
 } from './apiKeyService';
 
@@ -295,6 +296,32 @@ describe('apiKeyService', () => {
       const stored = await getVaultEntry(db2, ENCRYPTION_KEY_NAME);
       db2.close();
       expect(stored).toBeInstanceOf(CryptoKey);
+    });
+  });
+
+  describe('toRejectionError', () => {
+    it('returns a real Error unchanged', () => {
+      const original = new Error('boom');
+      expect(toRejectionError(original as unknown as DOMException)).toBe(original);
+    });
+
+    it('preserves name and message from a DOMException that is not instanceof Error', () => {
+      // fake-indexeddb's DOMException (like some browsers') is not
+      // instanceof Error - confirmed the wrapper doesn't flatten it into a
+      // generic message, which would break isAbortError()/toAppError()'s
+      // message-based classification downstream.
+      const domException = new DOMException('Quota exceeded', 'QuotaExceededError');
+      expect(domException instanceof Error).toBe(false);
+
+      const wrapped = toRejectionError(domException);
+      expect(wrapped).toBeInstanceOf(Error);
+      expect(wrapped.name).toBe('QuotaExceededError');
+      expect(wrapped.message).toBe('Quota exceeded');
+    });
+
+    it('falls back to a generic message when error is null', () => {
+      const wrapped = toRejectionError(null);
+      expect(wrapped.message).toBe('IndexedDB request failed');
     });
   });
 });

@@ -93,8 +93,23 @@ async function resolveEncryptionKey(): Promise<CryptoKey> {
   return key;
 }
 
-function toRejectionError(error: DOMException | null): Error {
-  return error instanceof Error ? error : new Error('IndexedDB request failed');
+export function toRejectionError(error: DOMException | null): Error {
+  if (error instanceof Error) return error;
+  // Some environments' DOMException (e.g. fake-indexeddb in tests) is not
+  // instanceof Error, unlike Node's/browsers' native DOMException. Preserve
+  // .name/.message rather than flattening to a generic message: isAbortError()
+  // in lib/errors.ts and toAppError()'s message-based classification both
+  // depend on the real name/message surviving this rejection.
+  //
+  // The cast below works around a real tsc quirk: since lib.dom.d.ts declares
+  // DOMException extends Error, this branch narrows to exactly `null`, and
+  // `null?.message` then fails to typecheck (NonNullable<null> is `never`,
+  // even though the expression is only ever evaluated on an actual object at
+  // runtime - `error` was never reassigned, only its static type changed).
+  const domError = error as DOMException | null;
+  const wrapped = new Error(domError?.message ?? 'IndexedDB request failed');
+  if (domError?.name) wrapped.name = domError.name;
+  return wrapped;
 }
 
 function openKeyDatabase(): Promise<IDBDatabase> {
