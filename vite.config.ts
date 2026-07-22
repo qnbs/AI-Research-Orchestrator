@@ -6,6 +6,30 @@ import { visualizer } from 'rollup-plugin-visualizer';
 // Repository name for GitHub Pages deployment
 const REPO_NAME = 'AI-Research-Orchestrator';
 
+// Vendor chunk assignment by package name. Rolldown (Vite 8's default bundler) only
+// supports the function form of rollupOptions.output.manualChunks, not the object-shorthand
+// form Rollup itself accepts - this replicates the same package -> chunk mapping.
+const VENDOR_CHUNKS: Record<string, string> = {
+  react: 'vendor-react',
+  'react-dom': 'vendor-react',
+  'react-redux': 'vendor-redux',
+  '@reduxjs/toolkit': 'vendor-redux',
+  recharts: 'vendor-charts',
+  'framer-motion': 'vendor-motion',
+  'lucide-react': 'vendor-ui',
+  cmdk: 'vendor-ui',
+};
+
+function manualChunks(id: string): string | undefined {
+  const marker = 'node_modules/';
+  const idx = id.lastIndexOf(marker);
+  if (idx === -1) return undefined;
+  const rest = id.slice(idx + marker.length);
+  const segments = rest.split('/');
+  const pkg = segments[0].startsWith('@') ? `${segments[0]}/${segments[1]}` : segments[0];
+  return VENDOR_CHUNKS[pkg];
+}
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
   const isProduction = mode === 'production';
@@ -59,14 +83,7 @@ export default defineConfig(({ mode }) => {
       // Code splitting for better caching
       rollupOptions: {
         output: {
-          manualChunks: {
-            // Vendor chunks
-            'vendor-react': ['react', 'react-dom'],
-            'vendor-redux': ['react-redux', '@reduxjs/toolkit'],
-            'vendor-charts': ['recharts'],
-            'vendor-motion': ['framer-motion'],
-            'vendor-ui': ['lucide-react', 'cmdk'],
-          },
+          manualChunks,
           // Asset hashing for cache busting
           assetFileNames: 'assets/[name]-[hash][extname]',
           chunkFileNames: 'chunks/[name]-[hash].js',

@@ -13,7 +13,6 @@ minimumReleaseAgeExclude:
   - ws@8.20.1
   - protobufjs@7.5.8
   - brace-expansion@5.0.6
-  - vite@6.4.3
   - dompurify@3.4.7
   - dompurify@3.4.6
   - dompurify@3.4.9
@@ -40,7 +39,7 @@ peerDependencyRules:
 strictPeerDependencies: true
 
 overrides:
-  vite: 6.4.3
+  vite: 8.1.5
   undici: 7.28.0
   ws: 8.21.1
   # GHSA-f38q-mgvj-vph7 (<=7.6.2) + GHSA-j3f2-48v5-ccww (<=7.6.4); @google/genai's own
