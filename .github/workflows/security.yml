@@ -129,25 +129,42 @@ jobs:
   # ---------------------------------------------------------------------------
   # SonarQube Cloud — CI-based analysis (replaces Automatic Analysis)
   #
-  # Prerequisites (manual, cannot be automated):
-  #   1. SONAR_TOKEN repository secret (SonarQube Cloud → My Account → Security)
-  #   2. Automatic Analysis disabled in the Sonar project Administration
-  #   3. Custom Quality Gate assigned (see docs/sonarcloud-setup-todo.md)
+  # Prerequisite: SONAR_TOKEN repository secret (SonarQube Cloud → My Account →
+  # Security). Verified live (docs/sonarcloud-setup-todo.md): Automatic Analysis
+  # does not need to be manually disabled - a CI-submitted scan already
+  # completes successfully alongside it - and a custom Quality Gate is not
+  # available on the free tier this repo is on regardless, so this job targets
+  # the built-in read-only "Sonar way" gate rather than a custom one.
   #
   # Starts non-blocking (continue-on-error). Promote to blocking once the gate
   # has run clean across several real PRs — same pattern as e2e.yml.
   # ---------------------------------------------------------------------------
   sonarcloud:
     name: SonarQube Cloud
-    # Skip entirely until the secret exists so the job does not fail red on
-    # every run before the admin has added SONAR_TOKEN.
-    if: ${{ secrets.SONAR_TOKEN != '' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     # Advisory phase: do not fail the Security workflow on gate/scanner issues.
     continue-on-error: true
     steps:
+      # secrets.* is not a valid job-level `if:` context (only github/inputs/
+      # needs/vars are) - so the presence check has to happen in a step, via
+      # env:, and be consumed by later steps' `if: steps.*.outputs.*`. Runs
+      # first (before checkout) so the whole job - including the full-history
+      # checkout below - stays a true no-op without the secret, e.g. on a
+      # fork PR that never receives repo secrets in the first place.
+      - name: Check SONAR_TOKEN is configured
+        id: check_token
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          if [ -n "$SONAR_TOKEN" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Checkout
+        if: steps.check_token.outputs.present == 'true'
         # actions/checkout@v7 — full history for blame / new-code detection
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -155,12 +172,14 @@ jobs:
           persist-credentials: false
 
       - name: Setup pnpm
+        if: steps.check_token.outputs.present == 'true'
         # pnpm/action-setup@v6
         uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271
         with:
           run_install: false
 
       - name: Setup Node.js
+        if: steps.check_token.outputs.present == 'true'
         # actions/setup-node@v6
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         with:
@@ -169,18 +188,21 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
+        if: steps.check_token.outputs.present == 'true'
         run: pnpm install --frozen-lockfile
 
       - name: Unit tests with coverage (lcov for Sonar)
+        if: steps.check_token.outputs.present == 'true'
         run: pnpm run test:coverage
 
       - name: SonarQube Cloud Scan
+        if: steps.check_token.outputs.present == 'true'
         # SonarSource/sonarqube-scan-action@v8.2.1
         uses: SonarSource/sonarqube-scan-action@22918119ff8e1ca75a623e15c8296b6ea4fbe28f
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         # qualitygate.wait deliberately omitted during the advisory phase.
-        # After the custom gate is stable, add:
+        # After the gate is proven stable, add:
         #   args: >-
         #     -Dsonar.qualitygate.wait=true
         #     -Dsonar.qualitygate.timeout=300
