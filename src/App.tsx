@@ -29,6 +29,7 @@ import { useResearchAssistant } from './hooks/useResearchAssistant';
 import { useDocumentAppearance } from './hooks/useDocumentAppearance';
 import { generateResearchReportStream } from './services/geminiService';
 import { setVaultResetListener } from './services/apiKeyService';
+import { setNotification as setNotificationAction } from './store/slices/uiSlice';
 import { handleResearchStreamFailure } from './lib/researchStreamFailure';
 import { estimateResearchRunCostUsd, shouldWarnAboutResearchCost } from './lib/resilience';
 import { reportFromCheckpoint, type ResearchCheckpoint } from './lib/researchCheckpoint';
@@ -177,17 +178,25 @@ const AppLayout: React.FC = () => {
   // apiKeyService.ts has no dependency on the Redux store (avoids an import
   // cycle back through geminiService.ts, which imports it for getNcbiApiKey).
   // It notifies of a rare pre-hardening vault reset via this registered
-  // callback instead, set up once here where dispatch/t are already available.
+  // callback instead, set up once here where dispatch/t are already
+  // available. Dispatches via dispatch(setNotificationAction(...)) directly
+  // rather than useUI()'s setNotification wrapper: that wrapper's identity
+  // changes on every unrelated ui-slice update (nav, command palette, PWA
+  // install state, ...), which would re-run this effect far more than "once"
+  // - dispatch itself is Redux's stable reference, so this only re-registers
+  // when the translation function changes (i.e. on language change).
   useEffect(() => {
     setVaultResetListener(() =>
-      setNotification({
-        id: Date.now(),
-        message: t('settings.apiKeyVaultReset.message'),
-        type: 'error',
-      }),
+      dispatch(
+        setNotificationAction({
+          id: Date.now(),
+          message: t('settings.apiKeyVaultReset.message'),
+          type: 'error',
+        }),
+      ),
     );
     return () => setVaultResetListener(null);
-  }, [setNotification, t]);
+  }, [dispatch, t]);
 
   useEffect(() => {
     // Accessibility Best Practice: Update document title on view change
