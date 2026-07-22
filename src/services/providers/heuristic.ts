@@ -18,7 +18,7 @@ import {
   generateResearchAnalysisHeuristic,
   findRelatedOnlineHeuristic,
   streamSynthesisChunks,
-} from '../heuristics';
+} from '../nonAi';
 import type { AIProvider } from './provider';
 import type {
   AIChatSessionRequest,

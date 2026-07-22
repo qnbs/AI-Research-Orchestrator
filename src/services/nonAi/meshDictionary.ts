@@ -143,6 +143,86 @@ export const MESH_DICTIONARY: Record<string, MeshEntry> = {
     synonyms: ['prevention', 'preventive', 'primary prevention', 'secondary prevention'],
     publicationTypes: ['review'],
   },
+  // Merged from services/heuristics/queryFormulation.ts during the nonAi/heuristics
+  // consolidation (ADR 0009) - these 13 topics had no entry here at all.
+  aspirin: {
+    heading: 'Aspirin',
+    ui: 'D001241',
+    synonyms: ['aspirin', 'acetylsalicylic acid', 'asa'],
+    publicationTypes: ['review', 'randomized controlled trial'],
+  },
+  vaccine: {
+    heading: 'Vaccines',
+    ui: 'D014612',
+    synonyms: ['vaccine', 'vaccination', 'vaccines', 'immunization'],
+    publicationTypes: ['review', 'clinical trial'],
+  },
+  antibiotic: {
+    heading: 'Anti-Bacterial Agents',
+    ui: 'D000900',
+    synonyms: ['antibiotic', 'antibiotics', 'antibacterial'],
+    publicationTypes: ['review', 'randomized controlled trial'],
+  },
+  asthma: {
+    heading: 'Asthma',
+    ui: 'D001249',
+    synonyms: ['asthma', 'asthmatic'],
+    publicationTypes: ['review', 'systematic review'],
+  },
+  obesity: {
+    heading: 'Obesity',
+    ui: 'D009765',
+    synonyms: ['obesity', 'obese', 'overweight'],
+    publicationTypes: ['review', 'systematic review'],
+  },
+  inflammation: {
+    heading: 'Inflammation',
+    ui: 'D007249',
+    synonyms: ['inflammation', 'inflammatory'],
+    publicationTypes: ['review'],
+  },
+  immunity: {
+    heading: 'Immune System',
+    ui: 'D007107',
+    synonyms: ['immunity', 'immune system', 'immune'],
+    publicationTypes: ['review'],
+  },
+  heart: {
+    heading: 'Heart',
+    ui: 'D006321',
+    synonyms: ['heart', 'cardiac'],
+    publicationTypes: ['review'],
+  },
+  'myocardial infarction': {
+    heading: 'Myocardial Infarction',
+    ui: 'D009203',
+    synonyms: ['myocardial infarction', 'heart attack', 'mi'],
+    publicationTypes: ['review', 'clinical trial'],
+  },
+  'parkinson disease': {
+    heading: 'Parkinson Disease',
+    ui: 'D010300',
+    synonyms: ['parkinson', "parkinson's disease", 'parkinsons disease', 'pd'],
+    publicationTypes: ['review', 'clinical trial'],
+  },
+  epilepsy: {
+    heading: 'Epilepsy',
+    ui: 'D004827',
+    synonyms: ['epilepsy', 'seizure', 'seizures'],
+    publicationTypes: ['review', 'clinical trial'],
+  },
+  microbiome: {
+    heading: 'Microbiota',
+    ui: 'D064307',
+    synonyms: ['microbiome', 'microbiota', 'gut microbiome'],
+    publicationTypes: ['review', 'systematic review'],
+  },
+  crispr: {
+    heading: 'CRISPR-Cas Systems',
+    ui: 'D000076675',
+    synonyms: ['crispr', 'gene editing', 'crispr-cas9'],
+    publicationTypes: ['review'],
+  },
 };
 
 /** Get MeSH entry by normalized term. */

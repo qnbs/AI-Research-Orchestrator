@@ -4,23 +4,19 @@
 import { evaluateCase, type EvalCase } from './agentEval';
 import {
   buildDemoResearchReport,
-  formulatePubMedQuery,
+  buildQuery,
   rankArticles,
+  getTopArticles,
   DEMO_CORPUS,
-} from '../services/heuristics';
+} from '../services/nonAi';
 
 /** Golden cases for heuristic outputs — run without network. */
 export function heuristicEvalFixtures(): EvalCase[] {
   const report = buildDemoResearchReport('aspirin cardiovascular primary prevention');
-  const query = formulatePubMedQuery({
-    researchTopic: 'aspirin cardiovascular primary prevention',
-    dateRange: '5',
-    articleTypes: ['Systematic Review'],
-    synthesisFocus: 'overview',
-    maxArticlesToScan: 20,
-    topNToSynthesize: 5,
+  const query = buildQuery('aspirin cardiovascular primary prevention', {
+    publicationTypes: ['Systematic Review'],
   });
-  const ranked = rankArticles(DEMO_CORPUS, 'aspirin cardiovascular', 5);
+  const ranked = getTopArticles(rankArticles(DEMO_CORPUS, 'aspirin cardiovascular'), 5);
 
   return [
     {

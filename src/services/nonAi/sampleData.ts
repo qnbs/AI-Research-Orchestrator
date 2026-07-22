@@ -1,3 +1,11 @@
+/**
+ * Curated demo corpus and offline/empty-result fallback data for the
+ * Non-AI Programmatic Research Engine. Relocated from `services/heuristics/`
+ * during the nonAi/heuristics consolidation (ADR 0009) - real consumers:
+ * `useDemoKnowledgeBaseSeed.ts`, `KnowledgeBaseContext.tsx` (storage-key
+ * constants), and `geminiService.ts`'s `analyzeSingleArticle` heuristic
+ * branch (`resolveHeuristicArticleByPmid`).
+ */
 import type {
   KnowledgeBaseEntry,
   RankedArticle,
@@ -7,15 +15,13 @@ import type {
   JournalEntry,
   AuthorProfileEntry,
 } from '../../types';
-import { formulateQueries } from './queryFormulation';
-import { rankArticles, aggregateKeywords, generateInsights } from './ranking';
-import { synthesizeReportMarkdown } from './synthesis';
-import { stableHash } from './utils';
+import { rankArticles, getTopArticles } from './ranker';
+import { generateResearchReport } from './synthesizer';
 
 /** Prefix for seeded demo entry ids (clearable as a batch). */
 export const DEMO_ENTRY_PREFIX = 'demo-';
 
-/** localStorage flag set when the user clears demo Knowledge Base data. */
+/** IndexedDB flag set when the user clears demo Knowledge Base data. */
 export const DEMO_DISMISS_STORAGE_KEY = 'aro.demoDataDismissed';
 
 /** Persisted once demo content has been seeded (prevents reseed after intentional clear). */
@@ -166,7 +172,7 @@ export function selectDemoArticlesForTopic(
       if (filtered.length > 0) corpus = filtered;
     }
   }
-  return rankArticles(corpus, topic, max);
+  return getTopArticles(rankArticles(corpus, topic), max);
 }
 
 /** True if a PMID/id uses the educational demo namespace (not a real PubMed ID). */
@@ -175,26 +181,11 @@ export function isDemoPmid(pmid: string): boolean {
 }
 
 /**
- * Build a complete heuristic research report from a topic using the demo corpus.
+ * Build a complete Non-AI research report from a topic using the demo corpus.
  */
-export function buildDemoResearchReport(topic: string, focus = 'overview'): ResearchReport {
-  const input: ResearchInput = {
-    researchTopic: topic,
-    dateRange: '5',
-    articleTypes: [],
-    synthesisFocus: focus,
-    maxArticlesToScan: 20,
-    topNToSynthesize: 5,
-  };
-  const generatedQueries = formulateQueries(input);
-  const rankedArticles = rankArticles(DEMO_CORPUS, topic, 5);
-  return {
-    generatedQueries,
-    rankedArticles,
-    synthesis: synthesizeReportMarkdown(topic, focus, rankedArticles),
-    aiGeneratedInsights: generateInsights(rankedArticles, topic),
-    overallKeywords: aggregateKeywords(rankedArticles),
-  };
+export function buildDemoResearchReport(topic: string): ResearchReport {
+  const topArticles = getTopArticles(rankArticles(DEMO_CORPUS, topic), 5);
+  return generateResearchReport(topArticles, topic);
 }
 
 /**
@@ -202,7 +193,7 @@ export function buildDemoResearchReport(topic: string, focus = 'overview'): Rese
  */
 export function createDemoKnowledgeBaseEntries(): KnowledgeBaseEntry[] {
   const topic = 'aspirin cardiovascular primary prevention';
-  const report = buildDemoResearchReport(topic, 'clinical implications');
+  const report = buildDemoResearchReport(topic);
   const input: ResearchInput = {
     researchTopic: topic,
     dateRange: '5',
@@ -222,10 +213,8 @@ export function createDemoKnowledgeBaseEntries(): KnowledgeBaseEntry[] {
     report,
   };
 
-  const diabetesReport = buildDemoResearchReport(
-    'SGLT2 inhibitors heart failure type 2 diabetes',
-    'outcomes',
-  );
+  const diabetesTopic = 'SGLT2 inhibitors heart failure type 2 diabetes';
+  const diabetesReport = buildDemoResearchReport(diabetesTopic);
   const researchEntry2: ResearchEntry = {
     id: `${DEMO_ENTRY_PREFIX}research-sglt2`,
     title: '[Demo] SGLT2 inhibitors and heart failure in type 2 diabetes',
@@ -234,7 +223,7 @@ export function createDemoKnowledgeBaseEntries(): KnowledgeBaseEntry[] {
     sourceType: 'research',
     input: {
       ...input,
-      researchTopic: 'SGLT2 inhibitors heart failure type 2 diabetes',
+      researchTopic: diabetesTopic,
       synthesisFocus: 'outcomes',
     },
     report: diabetesReport,
@@ -250,7 +239,7 @@ export function createDemoKnowledgeBaseEntries(): KnowledgeBaseEntry[] {
       name: 'The Lancet',
       issn: '0140-6736',
       description:
-        'Demo journal profile — leading general medical weekly (Heuristic mode educational fixture).',
+        'Demo journal profile — leading general medical weekly (Non-AI mode educational fixture).',
       oaPolicy: 'Hybrid',
       focusAreas: ['clinical medicine', 'global health', 'public health'],
     },
@@ -278,7 +267,7 @@ export function createDemoKnowledgeBaseEntries(): KnowledgeBaseEntry[] {
         publicationsAsLastAuthor: 0,
       },
       careerSummary:
-        '## Demo author profile (Heuristic mode)\n\nEducational fixture illustrating local author analytics without a Gemini API key.',
+        '## Demo author profile (Non-AI mode)\n\nEducational fixture illustrating local author analytics without a Gemini API key.',
       coreConcepts: [
         { concept: 'aspirin', frequency: 2 },
         { concept: 'prevention', frequency: 2 },
@@ -296,7 +285,7 @@ export function isDemoEntryId(id: string): boolean {
 }
 
 /**
- * Resolve a heuristic-mode article for Quick Add / single-article analysis.
+ * Resolve a Non-AI-mode article for Quick Add / single-article analysis.
  * Never substitutes an unrelated demo paper for an unknown PMID — preserves the
  * requested identifier with an explicit offline placeholder instead.
  */
@@ -307,10 +296,10 @@ export function resolveHeuristicArticleByPmid(pmid: string): RankedArticle {
     pmid,
     title: `Unavailable offline (identifier: ${pmid})`,
     authors: 'Unknown',
-    journal: 'Local heuristic placeholder',
+    journal: 'Local Non-AI placeholder',
     pubYear: '',
     summary:
-      'Heuristic mode could not load this article from PubMed or the local demo corpus. ' +
+      'Non-AI mode could not load this article from PubMed or the local demo corpus. ' +
       'Connect online, or use a curated demo:* identifier for educational offline analysis.',
     isOpenAccess: false,
     relevanceScore: 0,
@@ -318,10 +307,4 @@ export function resolveHeuristicArticleByPmid(pmid: string): RankedArticle {
     keywords: ['heuristic', 'offline', 'placeholder'],
     articleType: 'Other',
   };
-}
-
-/** Deterministic synthetic demo id for topic-derived offline fillers (never a real PMID). */
-export function syntheticPmid(topic: string, index: number): string {
-  const h = stableHash(`${topic}:${index}`);
-  return `demo:synth-${(h % 1_000_000).toString(16)}-${index}`;
 }

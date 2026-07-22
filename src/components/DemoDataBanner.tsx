@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useKnowledgeBase } from '../contexts/KnowledgeBaseContext';
-import { isDemoEntryId } from '../services/heuristics';
+import { isDemoEntryId } from '../services/nonAi';
 import { useTranslation } from '../hooks/useTranslation';
 
 /**

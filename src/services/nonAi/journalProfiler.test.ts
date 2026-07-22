@@ -4,7 +4,8 @@ import {
   analyzeArticleHeuristic,
   suggestJournalsHeuristic,
   disambiguateJournalHeuristic,
-} from './journalProfiling';
+  analyzeJournalMetrics,
+} from './journalProfiler';
 import type { RankedArticle } from '../../types';
 
 const makeArticle = (overrides: Partial<RankedArticle> = {}): Partial<RankedArticle> => ({
@@ -176,5 +177,25 @@ describe('analyzeArticleHeuristic', () => {
   it('handles empty titles gracefully', () => {
     const article = analyzeArticleHeuristic(makeArticle({ title: '' }) as RankedArticle);
     expect(article.relevanceScore).toBe(50);
+  });
+});
+
+describe('analyzeJournalMetrics', () => {
+  it('aggregates article/open-access counts and average relevance per journal', () => {
+    const articles: RankedArticle[] = [
+      { ...makeArticle({ journal: 'Nature', relevanceScore: 80 }) } as RankedArticle,
+      {
+        ...makeArticle({ journal: 'Nature', relevanceScore: 60, isOpenAccess: true }),
+      } as RankedArticle,
+    ];
+    const stats = analyzeJournalMetrics(articles);
+    expect(stats[0].journal).toBe('Nature');
+    expect(stats[0].articleCount).toBe(2);
+    expect(stats[0].openAccessCount).toBe(1);
+    expect(stats[0].avgRelevance).toBe(70);
+  });
+
+  it('returns an empty array for no articles', () => {
+    expect(analyzeJournalMetrics([])).toEqual([]);
   });
 });

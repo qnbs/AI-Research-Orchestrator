@@ -5,7 +5,95 @@
 
 import type { RankedArticle, ResearchReport } from '../../types';
 import type { ExtractiveSynthesis, NarrativeSection } from './types';
-import { tokenize, jaccardSimilarity } from './utils';
+import { tokenize, jaccardSimilarity, splitSentences, stemmedTokens, cosineBag } from './utils';
+
+/**
+ * Extractive TL;DR for a single abstract: picks the sentence most central to the
+ * abstract (cosine similarity to the whole text), preferring a first+last blend
+ * when centrality is weak. Targets ~30 words. Distinct from
+ * `generateExtractiveTldr` above, which synthesizes across multiple articles.
+ */
+export function generateHeuristicTldr(abstract: string): string {
+  const text = abstract?.trim() ?? '';
+  if (!text) {
+    return 'Heuristic mode: no abstract available for summarization.';
+  }
+
+  const sentences = splitSentences(text);
+  if (sentences.length === 0) {
+    return clipWords(text, 30);
+  }
+
+  if (sentences.length === 1) {
+    return clipWords(sentences[0], 30);
+  }
+
+  const allTokens = stemmedTokens(text);
+  let bestIdx = 0;
+  let bestScore = -1;
+  for (let i = 0; i < sentences.length; i++) {
+    const score = cosineBag(stemmedTokens(sentences[i]), allTokens);
+    // Slight preference for earlier informative sentences
+    const adjusted = score + (i === 0 ? 0.05 : 0) + (i === sentences.length - 1 ? 0.02 : 0);
+    if (adjusted > bestScore) {
+      bestScore = adjusted;
+      bestIdx = i;
+    }
+  }
+
+  let tldr = sentences[bestIdx];
+  if (bestScore < 0.15) {
+    tldr = `${sentences[0]} ${sentences[sentences.length - 1]}`;
+  }
+
+  return clipWords(tldr, 30);
+}
+
+function clipWords(text: string, maxWords: number): string {
+  const words = text.replace(/\s+/g, ' ').trim().split(' ');
+  if (words.length <= maxWords) return words.join(' ');
+  return `${words.slice(0, maxWords).join(' ')}…`;
+}
+
+/**
+ * Key-sentence extraction for longer narratives (up to `count` sentences).
+ */
+export function extractKeySentences(text: string, count = 3): string[] {
+  const sentences = splitSentences(text);
+  if (sentences.length <= count) return sentences;
+  const allTokens = stemmedTokens(text);
+  const scored = sentences.map((s, i) => ({
+    s,
+    i,
+    score: cosineBag(stemmedTokens(s), allTokens),
+  }));
+  scored.sort((a, b) => b.score - a.score || a.i - b.i);
+  return scored
+    .slice(0, count)
+    .sort((a, b) => a.i - b.i)
+    .map((x) => x.s);
+}
+
+/**
+ * Stream synthesis markdown in small chunks for UI parity with live-provider streaming.
+ */
+export async function* streamSynthesisChunks(
+  markdown: string,
+  signal?: AbortSignal,
+  chunkSize = 48,
+): AsyncGenerator<string> {
+  if (!Number.isInteger(chunkSize) || chunkSize <= 0) {
+    throw new RangeError('chunkSize must be a positive integer');
+  }
+  for (let i = 0; i < markdown.length; i += chunkSize) {
+    if (signal?.aborted) {
+      throw new DOMException('Aborted', 'AbortError');
+    }
+    yield markdown.slice(i, i + chunkSize);
+    // Yield to event loop without real delay (deterministic tests)
+    await Promise.resolve();
+  }
+}
 
 /**
  * Generate extractive TL;DR from top articles.

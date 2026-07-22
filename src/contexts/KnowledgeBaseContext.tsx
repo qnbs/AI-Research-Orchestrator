@@ -32,7 +32,7 @@ import {
   selectAllEntries,
   updateKbEntry,
 } from '../store/slices/knowledgeBaseSlice';
-import { isDemoEntryId, DEMO_DISMISS_STORAGE_KEY } from '../services/heuristics';
+import { isDemoEntryId, DEMO_DISMISS_STORAGE_KEY } from '../services/nonAi';
 import { markDemoSeedConsumed, useDemoKnowledgeBaseSeed } from '../hooks/useDemoKnowledgeBaseSeed';
 
 interface KnowledgeBaseContextType {

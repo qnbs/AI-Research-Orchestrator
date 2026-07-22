@@ -41,7 +41,7 @@ import {
   DEMO_CORPUS,
   resolveHeuristicArticleByPmid,
   type ReportChatSession,
-} from './heuristics';
+} from './nonAi';
 import {
   generateResearchReportStreamWithMode,
   shouldUseHeuristic,
