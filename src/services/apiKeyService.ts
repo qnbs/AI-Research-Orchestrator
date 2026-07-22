@@ -126,13 +126,22 @@ function openKeyDatabase(): Promise<IDBDatabase> {
   });
 }
 
+// Every helper below resolves on tx.oncomplete (the transaction's durable
+// commit), not the individual request's onsuccess: a request can succeed and
+// still have its transaction abort afterward, which would otherwise let
+// calling code proceed as if a write/clear had landed when it hadn't.
 function getFromKeyStore<T = Uint8Array>(db: IDBDatabase, key: string): Promise<T | null> {
   return new Promise((resolve, reject) => {
     const tx = db.transaction('keys', 'readonly');
     const store = tx.objectStore('keys');
     const request = store.get(key);
+    let result: T | null = null;
     request.onerror = () => reject(toRejectionError(request.error));
-    request.onsuccess = () => resolve((request.result as T | undefined) ?? null);
+    request.onsuccess = () => {
+      result = (request.result as T | undefined) ?? null;
+    };
+    tx.oncomplete = () => resolve(result);
+    tx.onabort = () => reject(toRejectionError(tx.error));
   });
 }
 
@@ -142,7 +151,8 @@ function saveToKeyStore<T>(db: IDBDatabase, key: string, value: T): Promise<void
     const store = tx.objectStore('keys');
     const request = store.put(value, key);
     request.onerror = () => reject(toRejectionError(request.error));
-    request.onsuccess = () => resolve();
+    tx.oncomplete = () => resolve();
+    tx.onabort = () => reject(toRejectionError(tx.error));
   });
 }
 
@@ -152,7 +162,8 @@ function deleteFromKeyStore(db: IDBDatabase, key: string): Promise<void> {
     const store = tx.objectStore('keys');
     const request = store.delete(key);
     request.onerror = () => reject(toRejectionError(request.error));
-    request.onsuccess = () => resolve();
+    tx.oncomplete = () => resolve();
+    tx.onabort = () => reject(toRejectionError(tx.error));
   });
 }
 
@@ -162,7 +173,8 @@ function clearKeyStore(db: IDBDatabase): Promise<void> {
     const store = tx.objectStore('keys');
     const request = store.clear();
     request.onerror = () => reject(toRejectionError(request.error));
-    request.onsuccess = () => resolve();
+    tx.oncomplete = () => resolve();
+    tx.onabort = () => reject(toRejectionError(tx.error));
   });
 }
 
