@@ -6,9 +6,13 @@ import { visualizer } from 'rollup-plugin-visualizer';
 // Repository name for GitHub Pages deployment
 const REPO_NAME = 'AI-Research-Orchestrator';
 
-// Vendor chunk assignment by package name. Rolldown (Vite 8's default bundler) only
-// supports the function form of rollupOptions.output.manualChunks, not the object-shorthand
-// form Rollup itself accepts - this replicates the same package -> chunk mapping.
+// Vendor chunk assignment by package name. Rolldown (Vite 8's default bundler) only supports
+// the function form of manualChunks, not the object-shorthand form Rollup itself accepts -
+// this replicates the same package -> chunk mapping. Kept as a manualChunks function (still
+// the pattern Vite's own scaffolding templates ship) rather than rewritten against Rolldown's
+// newer declarative build.rolldownOptions.output.codeSplitting.groups API, which uses a
+// different test-pattern-matching model - not needed just to stay off the deprecated
+// rollupOptions alias, which is the only part of this that was actually deprecated.
 const VENDOR_CHUNKS: Record<string, string> = {
   react: 'vendor-react',
   'react-dom': 'vendor-react',
@@ -22,9 +26,12 @@ const VENDOR_CHUNKS: Record<string, string> = {
 
 function manualChunks(id: string): string | undefined {
   const marker = 'node_modules/';
-  const idx = id.lastIndexOf(marker);
+  // Rolldown may hand back native Windows paths (backslashes) on that platform; normalize
+  // before matching or every id fails the lookup and vendor chunking silently no-ops there.
+  const normalizedId = id.replaceAll('\\', '/');
+  const idx = normalizedId.lastIndexOf(marker);
   if (idx === -1) return undefined;
-  const rest = id.slice(idx + marker.length);
+  const rest = normalizedId.slice(idx + marker.length);
   const segments = rest.split('/');
   const pkg = segments[0].startsWith('@') ? `${segments[0]}/${segments[1]}` : segments[0];
   return VENDOR_CHUNKS[pkg];
@@ -80,8 +87,9 @@ export default defineConfig(({ mode }) => {
         },
       },
 
-      // Code splitting for better caching
-      rollupOptions: {
+      // Code splitting for better caching. rolldownOptions (not the deprecated rollupOptions
+      // alias) is Vite 8's native key for this - see the manualChunks comment above.
+      rolldownOptions: {
         output: {
           manualChunks,
           // Asset hashing for cache busting
