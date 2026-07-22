@@ -2,6 +2,9 @@ import 'fake-indexeddb/auto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { store } from '../store/store';
+import { setNotification } from '../store/slices/uiSlice';
+import { translateSync } from '../i18n/translate';
 import {
   validateApiKeyFormat,
   saveApiKey,
@@ -12,6 +15,7 @@ import {
   getNcbiApiKey,
   hasNcbiApiKey,
   removeNcbiApiKey,
+  __resetEncryptionKeyCacheForTests,
 } from './apiKeyService';
 
 const ENCRYPTION_KEY_NAME = 'ai-research-encryption-key';
@@ -54,6 +58,7 @@ describe('apiKeyService', () => {
       configurable: true,
       writable: true,
     });
+    __resetEncryptionKeyCacheForTests();
     try {
       await removeApiKey();
       await removeNcbiApiKey();
@@ -222,6 +227,59 @@ describe('apiKeyService', () => {
       db2.close();
       expect(stored).toBeInstanceOf(CryptoKey);
       expect((stored as CryptoKey).extractable).toBe(false);
+    });
+
+    it('notifies the user when a pre-hardening vault is reset', async () => {
+      const db = await openVaultDatabase();
+      await putVaultEntry(db, ENCRYPTION_KEY_NAME, new Uint8Array(32));
+      db.close();
+
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      await saveApiKey(VALID_KEY);
+      warnSpy.mockRestore();
+
+      expect(store.getState().ui.notification).toEqual({
+        id: expect.any(Number),
+        message: translateSync('settings.apiKeyVaultReset.message'),
+        type: 'error',
+      });
+    });
+
+    it('does not notify when the vault already holds a hardened key', async () => {
+      await saveApiKey(VALID_KEY);
+      store.dispatch(setNotification(null));
+
+      await saveApiKey(VALID_KEY);
+
+      expect(store.getState().ui.notification).toBeNull();
+    });
+
+    it('converges concurrent callers on one master key instead of racing to different ones', async () => {
+      // Concurrent Promise.all-style calls (mirroring ApiKeySettings.tsx's
+      // mount-time Promise.all([hasProviderApiKey(...), getNcbiApiKey()]))
+      // must not each independently regenerate the master key.
+      await Promise.all([saveApiKey(VALID_KEY), saveNcbiApiKey('ncbi-test-key')]);
+
+      await expect(getApiKey()).resolves.toBe(VALID_KEY);
+      await expect(getNcbiApiKey()).resolves.toBe('ncbi-test-key');
+    });
+
+    it('converges concurrent callers on one key even when racing a pre-hardening vault reset', async () => {
+      const db = await openVaultDatabase();
+      await putVaultEntry(db, ENCRYPTION_KEY_NAME, new Uint8Array(32));
+      db.close();
+
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      await Promise.all([saveApiKey(VALID_KEY), saveNcbiApiKey('ncbi-test-key')]);
+      warnSpy.mockRestore();
+
+      await expect(getApiKey()).resolves.toBe(VALID_KEY);
+      await expect(getNcbiApiKey()).resolves.toBe('ncbi-test-key');
+
+      const db2 = await openVaultDatabase();
+      const stored = await getVaultEntry(db2, ENCRYPTION_KEY_NAME);
+      db2.close();
+      expect(stored).toBeInstanceOf(CryptoKey);
     });
   });
 });

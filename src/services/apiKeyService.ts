@@ -7,6 +7,9 @@
 import type { AIProviderId } from './providers/types';
 import { toAppError } from '../lib/errors';
 import { getProviderMeta } from './providers/provider';
+import { store } from '../store/store';
+import { setNotification } from '../store/slices/uiSlice';
+import { translateSync } from '../i18n/translate';
 
 const ENCRYPTION_KEY_NAME = 'ai-research-encryption-key';
 const LEGACY_GEMINI_STORAGE_KEY = 'encrypted-api-key';
@@ -20,6 +23,19 @@ const PROVIDER_STORAGE_KEYS: Record<AIProviderId, string> = {
   heuristic: 'encrypted-api-key-heuristic',
 };
 
+// Memoizes the single in-flight/resolved key so concurrent callers (e.g.
+// ApiKeySettings.tsx's Promise.all([hasProviderApiKey(...), getNcbiApiKey()])
+// on mount) converge on the same key instead of each independently reading
+// IndexedDB, each detecting a legacy vault, and each generating and saving a
+// different replacement key - the last write wins and silently orphans
+// whatever was just encrypted with the key that lost the race.
+let encryptionKeyPromise: Promise<CryptoKey> | null = null;
+
+/** Test-only: clears the in-memory cache so the next call re-reads IndexedDB. */
+export function __resetEncryptionKeyCacheForTests(): void {
+  encryptionKeyPromise = null;
+}
+
 /**
  * Generates or retrieves the encryption key from IndexedDB.
  * The key is generated once and reused for all encryption/decryption operations.
@@ -32,6 +48,14 @@ const PROVIDER_STORAGE_KEYS: Record<AIProviderId, string> = {
  * protects every stored provider secret.
  */
 async function getOrCreateEncryptionKey(): Promise<CryptoKey> {
+  encryptionKeyPromise ??= resolveEncryptionKey().catch((error: unknown) => {
+    encryptionKeyPromise = null;
+    throw error;
+  });
+  return encryptionKeyPromise;
+}
+
+async function resolveEncryptionKey(): Promise<CryptoKey> {
   const db = await openKeyDatabase();
 
   const existingKeyData = await getFromKeyStore<CryptoKey | Uint8Array>(db, ENCRYPTION_KEY_NAME);
@@ -47,6 +71,13 @@ async function getOrCreateEncryptionKey(): Promise<CryptoKey> {
       'API key vault used an outdated, extractable key format; resetting the local vault.',
     );
     await clearKeyStore(db);
+    store.dispatch(
+      setNotification({
+        id: Date.now(),
+        message: translateSync('settings.apiKeyVaultReset.message'),
+        type: 'error',
+      }),
+    );
   }
 
   const key = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, false, [
