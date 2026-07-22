@@ -161,14 +161,14 @@ export function cosineSimilarity(
   return dotProduct / (Math.sqrt(magnitude1) * Math.sqrt(magnitude2));
 }
 
-/** Split text into sentences (simple punctuation heuristic), keeping substantial ones. */
-export function splitSentences(text: string): string[] {
+/** Split text into sentences (simple punctuation heuristic), keeping those over `minLength`. */
+export function splitSentences(text: string, minLength: number = 20): string[] {
   if (!text?.trim()) return [];
   return text
     .replace(/\s+/g, ' ')
     .split(/(?<=[.!?])\s+/)
     .map((s) => s.trim())
-    .filter((s) => s.length > 20);
+    .filter((s) => s.length > minLength);
 }
 
 /** Stemmed tokens for a text, used for sentence-centrality/similarity scoring. */
@@ -176,24 +176,16 @@ export function stemmedTokens(text: string): string[] {
   return tokenize(text, 'en').map(stem);
 }
 
+function toFreqRecord(tokens: string[]): Record<string, number> {
+  const freq: Record<string, number> = {};
+  for (const t of tokens) freq[t] = (freq[t] ?? 0) + 1;
+  return freq;
+}
+
 /** Cosine similarity between two raw token lists (bag-of-words term frequency). */
 export function cosineBag(a: string[], b: string[]): number {
   if (a.length === 0 || b.length === 0) return 0;
-  const fa = new Map<string, number>();
-  const fb = new Map<string, number>();
-  for (const t of a) fa.set(t, (fa.get(t) ?? 0) + 1);
-  for (const t of b) fb.set(t, (fb.get(t) ?? 0) + 1);
-  let dot = 0;
-  let na = 0;
-  let nb = 0;
-  for (const [, v] of fa) na += v * v;
-  for (const [, v] of fb) nb += v * v;
-  for (const [k, va] of fa) {
-    const vb = fb.get(k);
-    if (vb) dot += va * vb;
-  }
-  if (na === 0 || nb === 0) return 0;
-  return dot / (Math.sqrt(na) * Math.sqrt(nb));
+  return cosineSimilarity(toFreqRecord(a), toFreqRecord(b));
 }
 
 /** Extract contiguous n-grams from tokenized text (no minimum length filter). */

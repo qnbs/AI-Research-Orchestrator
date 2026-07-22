@@ -9,7 +9,7 @@
 
 import type { JournalCandidate, JournalProfile, RankedArticle } from '../../types';
 import { extractKeywordsFromText } from './keywordExtractor';
-import { classifyArticleType } from './curator';
+import { classifyArticleType, buildExtractiveSummary } from './curator';
 import { tokenize, throwIfAborted } from './utils';
 import { JOURNAL_KB, JOURNAL_ALIASES, JOURNAL_ABBREVIATIONS, FIELD_JOURNALS } from './journalData';
 
@@ -31,9 +31,14 @@ export function suggestJournalsHeuristic(
   for (const [key, journals] of Object.entries(FIELD_JOURNALS)) {
     if (key === 'default') continue;
     const keyTokens = key.split(' ');
+    // Short keys (e.g. "ai") need a whole-word match — substring matching would also
+    // hit unrelated words that merely contain the letters, like "pain"/"domain"/"maintain".
+    // (tokenize() drops tokens of length <=2 entirely, so those can never reach `tokens`.)
     const matched =
-      phrase.includes(key) ||
-      keyTokens.some((kt) => tokens.some((t) => t.includes(kt) || kt.includes(t)));
+      key.length <= 3
+        ? new RegExp(`\\b${key}\\b`, 'i').test(phrase)
+        : phrase.includes(key) ||
+          keyTokens.some((kt) => tokens.some((t) => t.includes(kt) || kt.includes(t)));
     if (matched) hits.push(...journals);
   }
   const unique = [...new Map(hits.map((h) => [h.name, h])).values()];
@@ -218,18 +223,8 @@ export function analyzeArticleHeuristic(
     ...article,
     isOpenAccess: article.isOpenAccess ?? false,
   };
-  const titleSet = new Set(
-    article.title
-      .toLowerCase()
-      .split(/[^a-z0-9]+/i)
-      .filter((t) => t.length > 2),
-  );
-  const abstractSet = new Set(
-    (article.summary || '')
-      .toLowerCase()
-      .split(/[^a-z0-9]+/i)
-      .filter((t) => t.length > 2),
-  );
+  const titleSet = new Set(tokenize(article.title, 'en'));
+  const abstractSet = new Set(tokenize(article.summary || '', 'en'));
   let inter = 0;
   for (const t of titleSet) if (abstractSet.has(t)) inter += 1;
   const coherence =
@@ -243,7 +238,7 @@ export function analyzeArticleHeuristic(
     relevanceExplanation: `Heuristic title-abstract coherence ${coherence}/100 (${inter}/${titleSet.size} title tokens appear in the abstract).`,
     keywords,
     articleType: article.articleType ?? classifyArticleType(article.title, article.summary),
-    aiSummary: (article.summary || '').slice(0, 400),
+    aiSummary: buildExtractiveSummary(article.summary || '', article.title),
     isOpenAccess: normalized.isOpenAccess,
   };
 }

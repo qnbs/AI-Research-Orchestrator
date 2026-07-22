@@ -4,7 +4,7 @@
  */
 
 import type { RankedArticle } from '../../types';
-import { normalizeText, tokenize } from './utils';
+import { normalizeText, tokenize, splitSentences } from './utils';
 
 /** Simple publication-type classifier from title/abstract cues. */
 export function classifyArticleType(title: string, summary: string): string {
@@ -19,12 +19,10 @@ export function classifyArticleType(title: string, summary: string): string {
 }
 
 /** Build a short extractive summary (first/middle/last sentence) from an abstract. */
-function buildExtractiveSummary(abstract: string, title: string): string {
-  const sentences = abstract
-    .replace(/\s+/g, ' ')
-    .split(/(?<=[.!?])\s+/)
-    .map((s) => s.trim())
-    .filter(Boolean);
+export function buildExtractiveSummary(abstract: string, title: string): string {
+  // minLength 0: any non-empty sentence counts here (unlike splitSentences' usual
+  // TL;DR-extraction callers, this just needs a representative snippet).
+  const sentences = splitSentences(abstract, 0);
   if (sentences.length === 0) {
     return `Summary of "${title}": abstract unavailable; relevance based on title tokens only.`;
   }

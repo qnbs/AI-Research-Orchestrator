@@ -63,6 +63,21 @@ describe('findMeshTermsInQuery', () => {
   it('returns an empty array when nothing matches', () => {
     expect(findMeshTermsInQuery('xyzzy plugh')).toEqual([]);
   });
+
+  it('does not match short abbreviations inside unrelated words', () => {
+    // "mi" (myocardial infarction) must not fire on "microbiome"; "ad" (Alzheimer
+    // disease) must not fire on "advanced".
+    expect(findMeshTermsInQuery('gut microbiome diversity')).not.toContain('Myocardial Infarction');
+    expect(findMeshTermsInQuery('an advanced statistical model')).not.toContain(
+      'Alzheimer Disease',
+    );
+  });
+
+  it('matches short abbreviations as whole words', () => {
+    expect(findMeshTermsInQuery('acute MI in the emergency department')).toContain(
+      'Myocardial Infarction',
+    );
+  });
 });
 
 describe('getMeshSynonyms', () => {

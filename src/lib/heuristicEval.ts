@@ -12,11 +12,12 @@ import {
 
 /** Golden cases for heuristic outputs — run without network. */
 export function heuristicEvalFixtures(): EvalCase[] {
-  const report = buildDemoResearchReport('aspirin cardiovascular primary prevention');
-  const query = buildQuery('aspirin cardiovascular primary prevention', {
+  const topic = 'aspirin cardiovascular primary prevention';
+  const report = buildDemoResearchReport(topic);
+  const query = buildQuery(topic, {
     publicationTypes: ['Systematic Review'],
   });
-  const ranked = getTopArticles(rankArticles(DEMO_CORPUS, 'aspirin cardiovascular'), 5);
+  const ranked = getTopArticles(rankArticles(DEMO_CORPUS, topic), 5);
 
   return [
     {

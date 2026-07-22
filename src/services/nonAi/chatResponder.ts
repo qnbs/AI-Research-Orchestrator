@@ -113,16 +113,31 @@ export function answerFromReport(report: ResearchReport, question: string): stri
       .join('\n')}`;
   }
 
-  if (wantsSummary || synthesisHit >= 0.08) {
+  if (wantsSummary) {
     const synth = (report.synthesis ?? '').slice(0, 1200);
     return `${HEURISTIC_BADGE}\n\nFrom the report synthesis:\n\n${synth || 'No synthesis text available.'}`;
   }
 
-  if (bestInsight && bestInsight.score >= 0.06) {
+  // Ambient (non-explicit) matches: a weak synthesis overlap must not outrank a much
+  // stronger, more specific insight/article match just because it's checked first —
+  // compare qualifying candidates and return the highest-scoring one.
+  const candidates: { kind: 'synthesis' | 'insight' | 'article'; score: number }[] = [
+    { kind: 'synthesis', score: synthesisHit >= 0.08 ? synthesisHit : -1 },
+    { kind: 'insight', score: bestInsight && bestInsight.score >= 0.06 ? bestInsight.score : -1 },
+    { kind: 'article', score: bestArticle && bestArticle.score >= 0.05 ? bestArticle.score : -1 },
+  ];
+  const best = candidates.reduce((a, b) => (b.score > a.score ? b : a));
+
+  if (best.score >= 0 && best.kind === 'synthesis') {
+    const synth = (report.synthesis ?? '').slice(0, 1200);
+    return `${HEURISTIC_BADGE}\n\nFrom the report synthesis:\n\n${synth || 'No synthesis text available.'}`;
+  }
+
+  if (best.score >= 0 && best.kind === 'insight' && bestInsight) {
     return `${HEURISTIC_BADGE}\n\n${bestInsight.text}`;
   }
 
-  if (bestArticle && bestArticle.score >= 0.05) {
+  if (best.score >= 0 && best.kind === 'article' && bestArticle) {
     return `${HEURISTIC_BADGE}\n\nClosest article in this report:\n\n${bestArticle.text}`;
   }
 

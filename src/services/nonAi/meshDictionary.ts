@@ -241,18 +241,27 @@ export function getMeshEntry(term: string): MeshEntry | undefined {
   return undefined;
 }
 
+// Short abbreviations (ad, asa, cva, dm, htn, mdd, mi, pd, rct, slr, ...) need a whole-word
+// match — plain substring matching also hits unrelated words that merely contain the
+// letters, e.g. "mi" inside "microbiome" or "pd" inside "expand".
+function matchesMeshTerm(lowerQuery: string, term: string): boolean {
+  return term.length <= 3
+    ? new RegExp(`\\b${term}\\b`, 'i').test(lowerQuery)
+    : lowerQuery.includes(term);
+}
+
 /** Find MeSH terms in a query string. */
 export function findMeshTermsInQuery(query: string): string[] {
   const terms: string[] = [];
   const lowerQuery = query.toLowerCase();
 
   for (const [key, entry] of Object.entries(MESH_DICTIONARY)) {
-    if (lowerQuery.includes(key)) {
+    if (matchesMeshTerm(lowerQuery, key)) {
       terms.push(entry.heading);
       continue;
     }
     for (const synonym of entry.synonyms) {
-      if (lowerQuery.includes(synonym.toLowerCase())) {
+      if (matchesMeshTerm(lowerQuery, synonym.toLowerCase())) {
         terms.push(entry.heading);
         break;
       }

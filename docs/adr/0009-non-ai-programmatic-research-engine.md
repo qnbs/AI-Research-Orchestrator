@@ -57,6 +57,6 @@ The product is pre-1.0 with **no existing users**, so consolidation carried no m
 ## Deferred work
 
 - Broadening retrieval sources beyond PubMed/arXiv.
-- The end-to-end no-key path is validated in `src/test/e2e/provider-flow.spec.ts` alongside the other providers (not yet written — tracked in PROMPT-ARO-01 WS-3).
+- Validating the end-to-end no-key path in `src/test/e2e/provider-flow.spec.ts` alongside the other providers — this spec does not exist yet; tracked in PROMPT-ARO-01 WS-3.
 - Any ranking/curation-quality tuning beyond parity with the previous heuristic output.
 - Building out real German-language support (currently dormant data only, per Decision §7) if ever prioritized.

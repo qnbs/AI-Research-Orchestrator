@@ -573,8 +573,12 @@ export const exportCitations = (
     '^': '\\textasciicircum{}',
   };
   const cleanForBibtex = (text: string) => {
-    if (!text) return '{}';
-    const escaped = text.replace(/[\\&%$#_{}~^]/g, (char) => BIBTEX_ESCAPES[char] ?? char);
+    // BibTeX escaping alone doesn't strip HTML markup — a downstream renderer that
+    // treats the .bib file as HTML could still interpret it. Sanitize first, like
+    // every other export path, then escape the plain text for BibTeX.
+    const plainText = stripHtmlTags(text);
+    if (!plainText) return '{}';
+    const escaped = plainText.replace(/[\\&%$#_{}~^]/g, (char) => BIBTEX_ESCAPES[char] ?? char);
     return `{${escaped}}`;
   };
 

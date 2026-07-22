@@ -332,6 +332,38 @@ describe('export helpers', () => {
     });
   });
 
+  it('exportCitations bib strips HTML markup before BibTeX-escaping', () => {
+    const articles: AggregatedArticle[] = [
+      {
+        pmid: '1',
+        title: '<b>Bold</b> title with <script>alert(1)</script> markup',
+        authors: 'A1',
+        journal: 'J',
+        pubYear: '2020',
+        summary: 'S',
+        relevanceScore: 1,
+        relevanceExplanation: '',
+        keywords: [],
+        isOpenAccess: false,
+        sourceTitle: 'src',
+        sourceId: 'sid',
+      },
+    ];
+    const cite: Settings['export']['citation'] = {
+      includeAbstract: false,
+      includeKeywords: false,
+      includeTags: false,
+      includePmcid: false,
+    };
+    exportCitations(articles, cite, 'bib');
+    const blob = vi.mocked(URL.createObjectURL).mock.calls.at(-1)?.[0] as Blob;
+    return blob.text().then((content) => {
+      expect(content.toLowerCase()).not.toContain('<script');
+      expect(content).not.toContain('<b>');
+      expect(content).toContain('Bold title with');
+    });
+  });
+
   it('exportCitations ris strips malformed nested tags without reconstructing them', () => {
     const articles: AggregatedArticle[] = [
       {

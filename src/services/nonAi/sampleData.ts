@@ -304,7 +304,7 @@ export function resolveHeuristicArticleByPmid(pmid: string): RankedArticle {
     isOpenAccess: false,
     relevanceScore: 0,
     relevanceExplanation: 'Placeholder — identifier not present in the local demo corpus.',
-    keywords: ['heuristic', 'offline', 'placeholder'],
+    keywords: ['non-ai', 'offline', 'placeholder'],
     articleType: 'Other',
   };
 }

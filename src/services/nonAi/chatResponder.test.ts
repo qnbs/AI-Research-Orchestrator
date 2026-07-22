@@ -99,6 +99,15 @@ describe('answerFromReport', () => {
     expect(answer).toMatch(/bleeding risk/i);
   });
 
+  it('prefers a strong insight match over a weaker synthesis overlap on the same question', () => {
+    // Overlaps "aspirin" with both the synthesis and the insight, but shares far more
+    // tokens ("risks"/"bleeding") with the insight — the insight must win, not the
+    // synthesis branch just because it's checked first.
+    const answer = answerFromReport(makeReport(), 'What are the risks of aspirin and bleeding?');
+    expect(answer).toMatch(/bleeding risk in low-risk populations/i);
+    expect(answer).not.toContain('TL;DR');
+  });
+
   it('refuses to invent external knowledge when nothing matches', () => {
     const answer = answerFromReport(makeReport(), 'Tell me about quantum computing');
     expect(answer).toMatch(/could not ground/i);
