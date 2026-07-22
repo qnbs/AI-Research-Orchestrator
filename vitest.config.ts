@@ -17,7 +17,8 @@ export default defineConfig({
     testTimeout: 20000,
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'json', 'html', 'json-summary'],
+      // lcov is required for SonarQube Cloud coverage import (sonar.javascript.lcov.reportPaths).
+      reporter: ['text', 'json', 'html', 'json-summary', 'lcov'],
       /** Focus coverage on logic layers (store, services, hooks, lib). UI views are mostly covered by E2E. */
       include: [
         'src/store/**/*.{ts,tsx}',
