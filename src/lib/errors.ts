@@ -3,6 +3,9 @@
  * Prefer throwing `AppError` (or subclasses) from services instead of bare `Error`.
  */
 
+import { translateSync } from '../i18n/translate';
+import type { TranslationKey } from '../i18n/translations';
+
 export type AppErrorCode =
   | 'NO_API_KEY'
   // Legacy Gemini-specific codes — kept for backward compatibility with
@@ -56,41 +59,29 @@ export class AppError extends Error {
 
   /** User-facing short message (no stack / internal details). */
   toUserMessage(): string {
-    switch (this.code) {
-      case 'NO_API_KEY':
-        return this.message || 'Please configure your API key in Settings.';
-      case 'GEMINI_QUOTA':
-      case 'PROVIDER_QUOTA':
-        return 'AI provider quota exhausted. Try again later or check your usage.';
-      case 'GEMINI_RATE_LIMIT':
-      case 'PROVIDER_RATE_LIMIT':
-        return 'AI provider rate limit reached. Wait briefly and try again.';
-      case 'GEMINI_PARSE_FAILURE':
-      case 'PROVIDER_PARSE_FAILURE':
-        return 'The AI response could not be processed. Please restart the research run.';
-      case 'PROVIDER_UNAVAILABLE':
-        return 'The AI service is temporarily unavailable. Please try again later.';
-      case 'PROVIDER_AUTH':
-        return 'AI provider authentication failed. Check your API key in Settings.';
-      case 'NCBI_RATE_LIMIT':
-        return 'PubMed/NCBI rate limit. Optionally add an NCBI API key in Settings.';
-      case 'NCBI_NETWORK':
-        return 'PubMed is temporarily unavailable. Please try again.';
-      case 'ARXIV_NETWORK':
-        return 'arXiv is temporarily unavailable. Please try again.';
-      case 'STREAM_ABORTED':
-        return 'Research cancelled.';
-      case 'CIRCUIT_OPEN':
-        return 'External service temporarily blocked (circuit breaker). Try again later.';
-      case 'VALIDATION':
-        return this.message;
-      case 'STORAGE':
-        return 'Local storage error. Check browser storage and try again.';
-      default:
-        return 'An unexpected error occurred.';
-    }
+    if (this.code === 'NO_API_KEY') return this.message || translateSync('errors.code.noApiKey');
+    if (this.code === 'VALIDATION') return this.message;
+    const key = ERROR_CODE_KEYS[this.code] ?? 'errors.code.unknown';
+    return translateSync(key);
   }
 }
+
+const ERROR_CODE_KEYS: Partial<Record<AppErrorCode, TranslationKey>> = {
+  GEMINI_QUOTA: 'errors.code.quota',
+  PROVIDER_QUOTA: 'errors.code.quota',
+  GEMINI_RATE_LIMIT: 'errors.code.rateLimit',
+  PROVIDER_RATE_LIMIT: 'errors.code.rateLimit',
+  GEMINI_PARSE_FAILURE: 'errors.code.parseFailure',
+  PROVIDER_PARSE_FAILURE: 'errors.code.parseFailure',
+  PROVIDER_UNAVAILABLE: 'errors.code.providerUnavailable',
+  PROVIDER_AUTH: 'errors.code.providerAuth',
+  NCBI_RATE_LIMIT: 'errors.code.ncbiRateLimit',
+  NCBI_NETWORK: 'errors.code.ncbiNetwork',
+  ARXIV_NETWORK: 'errors.code.arxivNetwork',
+  STREAM_ABORTED: 'errors.code.streamAborted',
+  CIRCUIT_OPEN: 'errors.code.circuitOpen',
+  STORAGE: 'errors.code.storage',
+};
 
 export function isAppError(error: unknown): error is AppError {
   return error instanceof AppError;

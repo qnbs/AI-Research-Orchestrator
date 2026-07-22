@@ -325,6 +325,26 @@ export const translations = {
       'The analysis combines live PubMed data with AI profiling and may take a moment.',
     'journals.select': 'Select',
     'kb.analyze_journal': 'Analyze journal in Journal Hub',
+    'errors.code.noApiKey': 'Please configure your API key in Settings.',
+    'errors.code.quota': 'AI provider quota exhausted. Try again later or check your usage.',
+    'errors.code.rateLimit': 'AI provider rate limit reached. Wait briefly and try again.',
+    'errors.code.parseFailure':
+      'The AI response could not be processed. Please restart the research run.',
+    'errors.code.providerUnavailable':
+      'The AI service is temporarily unavailable. Please try again later.',
+    'errors.code.providerAuth':
+      'AI provider authentication failed. Check your API key in Settings.',
+    'errors.code.ncbiRateLimit':
+      'PubMed/NCBI rate limit. Optionally add an NCBI API key in Settings.',
+    'errors.code.ncbiNetwork': 'PubMed is temporarily unavailable. Please try again.',
+    'errors.code.arxivNetwork': 'arXiv is temporarily unavailable. Please try again.',
+    'errors.code.streamAborted': 'Research cancelled.',
+    'errors.code.circuitOpen':
+      'External service temporarily blocked (circuit breaker). Try again later.',
+    'errors.code.storage': 'Local storage error. Check browser storage and try again.',
+    'errors.code.unknown': 'An unexpected error occurred.',
+    'common.cancel': 'Cancel',
+    'common.close': 'Close',
   },
   de: {
     'app.name': 'Research Orchestrator',
@@ -665,6 +685,31 @@ export const translations = {
       'Die Analyse kombiniert Live-PubMed-Daten mit KI-Profiling und kann einen Moment dauern.',
     'journals.select': 'Auswählen',
     'kb.analyze_journal': 'Journal im Journal-Hub analysieren',
+    'errors.code.noApiKey': 'Bitte konfigurieren Sie Ihren API-Schlüssel in den Einstellungen.',
+    'errors.code.quota':
+      'KI-Anbieter-Kontingent erschöpft. Versuchen Sie es später erneut oder überprüfen Sie Ihre Nutzung.',
+    'errors.code.rateLimit':
+      'KI-Anbieter-Ratenlimit erreicht. Bitte kurz warten und erneut versuchen.',
+    'errors.code.parseFailure':
+      'Die KI-Antwort konnte nicht verarbeitet werden. Bitte starten Sie den Recherchelauf neu.',
+    'errors.code.providerUnavailable':
+      'Der KI-Dienst ist vorübergehend nicht verfügbar. Bitte versuchen Sie es später erneut.',
+    'errors.code.providerAuth':
+      'KI-Anbieter-Authentifizierung fehlgeschlagen. Überprüfen Sie Ihren API-Schlüssel in den Einstellungen.',
+    'errors.code.ncbiRateLimit':
+      'PubMed/NCBI-Ratenlimit. Optional einen NCBI-API-Schlüssel in den Einstellungen hinzufügen.',
+    'errors.code.ncbiNetwork':
+      'PubMed ist vorübergehend nicht verfügbar. Bitte versuchen Sie es erneut.',
+    'errors.code.arxivNetwork':
+      'arXiv ist vorübergehend nicht verfügbar. Bitte versuchen Sie es erneut.',
+    'errors.code.streamAborted': 'Recherche abgebrochen.',
+    'errors.code.circuitOpen':
+      'Externer Dienst vorübergehend blockiert (Circuit Breaker). Später erneut versuchen.',
+    'errors.code.storage':
+      'Lokaler Speicherfehler. Überprüfen Sie den Browser-Speicher und versuchen Sie es erneut.',
+    'errors.code.unknown': 'Ein unerwarteter Fehler ist aufgetreten.',
+    'common.cancel': 'Abbrechen',
+    'common.close': 'Schließen',
   },
 };
 
