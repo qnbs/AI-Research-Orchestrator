@@ -1,130 +1,78 @@
-# SonarQube Cloud Setup
+# SonarQube Cloud Setup (Free Tier)
 
-> **Status (2026-07-22):** Repo-side CI-based analysis is wired. Remaining work is
-> dashboard-only (secret, disable Automatic Analysis, custom Quality Gate).
+> **Status (2026-07-22):** Repo-side CI analysis is configured and optimized for the
+> **free tier**. Custom Quality Gates are **not available** on Free (Team/Enterprise
+> only). Everything is aligned to the built-in read-only **Sonar way** gate.
 
-## What landed in the repo
+## Free-tier constraint (important)
 
-| File | Purpose |
-| ---- | ------- |
-| `sonar-project.properties` | Project key, sources/tests, lcov path, CPD exclusions for intentional i18n/script parallelism |
-| `vitest.config.ts` | `lcov` reporter added so `coverage/lcov.info` is produced |
-| `.github/workflows/security.yml` → `sonarcloud` job | Install → `test:coverage` → SHA-pinned scan action; non-blocking; skipped until `SONAR_TOKEN` exists |
+On SonarQube Cloud **Free**:
 
-The scan action is pinned to `SonarSource/sonarqube-scan-action@22918119…` (v8.2.1).
+- Only built-in gates: **Sonar way** (default, read-only) and **Sonar way for agentic AI**
+- **Custom quality gates require Team or Enterprise** — do not plan around them
+- Optimize **analysis scope** (`sonar-project.properties`) so Sonar way stays passable
 
-## Manual steps (you must do these)
+### Sonar way conditions (new code / PRs)
 
-### 1. Create and store `SONAR_TOKEN`
+1. No new bugs (Reliability rating A)
+2. No new vulnerabilities (Security rating A)
+3. Maintainability rating A on new code
+4. All new Security Hotspots **reviewed** (manual step in the Sonar UI)
+5. Coverage on new code **≥ 80%**
+6. Duplicated lines on new code **≤ 3%**
 
-1. Open [SonarQube Cloud](https://sonarcloud.io) → **My Account** → **Security**.
-2. Generate a token (name e.g. `github-actions-ai-research-orchestrator`).
-3. GitHub repo → **Settings** → **Secrets and variables** → **Actions** → **New repository secret**:
-   - Name: `SONAR_TOKEN`
-   - Value: the token
+## What is already in the repo
 
-Until this secret exists, the `sonarcloud` job is skipped (`if: secrets.SONAR_TOKEN != ''`).
+| File | Free-tier optimization |
+| ---- | ---------------------- |
+| `sonar-project.properties` | Coverage limited to Vitest logic layers (store/services/hooks/lib) so UI-only PRs are not scored as 0% coverage; CPD exclusions for translations, static/demo data, icons, scripts |
+| `vitest.config.ts` | `lcov` reporter → `coverage/lcov.info` |
+| `security.yml` job `sonarcloud` | CI scan, **non-blocking**, runs only if `SONAR_TOKEN` is set; no `qualitygate.wait` yet |
 
-### 2. Verify `sonar.organization` / `sonar.projectKey`
+## What you still do in the UI (required)
 
-Open the project in SonarQube Cloud → **Project Information** (or the URL
-`…/project/overview?id=…`). Confirm:
+### A. `SONAR_TOKEN` secret
 
-- Organization key matches `sonar.organization=qnbs` in `sonar-project.properties`
-- Project key matches `sonar.projectKey=qnbs_AI-Research-Orchestrator`
+1. [sonarcloud.io](https://sonarcloud.io) → My Account → Security → Generate token
+2. GitHub → Repo → Settings → Secrets → Actions → `SONAR_TOKEN`
 
-If the bound GitHub-App project uses different keys, edit `sonar-project.properties`
-before the first real scan.
+### B. Disable Automatic Analysis
 
-### 3. Disable Automatic Analysis
+Project → Administration → Analysis Method → **Automatic Analysis = Off**  
+(CI job would otherwise fight zero-config scans.)
 
-Automatic Analysis and CI-based analysis must not run in parallel (duplicate/conflicting
-results).
+### C. Work with Sonar way (no custom gate on Free)
 
-1. SonarQube Cloud → this project → **Administration** → **Analysis Method** (or **Background Tasks** / project settings, depending on current UI).
-2. Turn **Automatic Analysis** **off**.
-3. Confirm analysis is expected from CI only.
+- You **cannot** create a custom gate on Free.
+- After each analysis, open **Security Hotspots** and mark new ones as **Safe** / **Fixed** (Sonar way requires 100% reviewed).
+- Prefer changes inside `src/store`, `src/services`, `src/hooks`, `src/lib` (covered + included in coverage metric).
+- Avoid large copy-paste outside CPD exclusions; keep new-code duplication ≤ 3%.
 
-### 4. Configure a custom Quality Gate
+Optional: try built-in **Sonar way for agentic AI** if it fits this agentic app better — still read-only, but conditions may differ. Compare both on the dashboard; Free still does not allow editing.
 
-Do **not** leave the default “Sonar way” gate as the only gate — it failed this project
-on **7.2% Duplication on New Code (required ≤ 3%)** because of intentional patterns:
+### D. Optional: make the CI job enforce the gate (still Free-compatible)
 
-- Parallel `en`/`de` blocks in `src/i18n/translations.ts`
-- Mirrored structure of `scripts/check-*.mjs`
+After scans look correct and hotspots are reviewed on main:
 
-Repo-side mitigations already in place: `sonar.cpd.exclusions` for those paths. Still
-tune the gate so residual structural similarity does not block real work.
+In `.github/workflows/security.yml` Sonar step:
 
-**Recommended custom gate** (name e.g. `AI-Research-Orchestrator`):
+```yaml
+with:
+  args: >-
+    -Dsonar.qualitygate.wait=true
+    -Dsonar.qualitygate.timeout=300
+```
 
-| Condition | On | Operator | Value | Rationale |
-| --------- | -- | -------- | ----- | --------- |
-| Bugs | New Code | is | 0 | Keep strict |
-| Vulnerabilities | New Code | is | 0 | Keep strict |
-| Security Hotspots Reviewed | New Code | is | 100% | Human review required |
-| Reliability Rating | New Code | is better than | A | Keep strict |
-| Security Rating | New Code | is better than | A | Keep strict |
-| Maintainability Rating | New Code | is better than | A | Keep strict |
-| Coverage on New Code | New Code | is greater than | 50% | Logic-layer coverage is gated at 80% by Vitest; Sonar only sees reported lcov scope |
-| Duplicated Lines (%) on New Code | New Code | is less than | 10% | Raised from Sonar way’s 3% after CPD exclusions; still catches careless copy-paste |
-
-**How to create and assign:**
-
-1. SonarQube Cloud → **Quality Gates** → **Create**.
-2. Add the conditions above (adjust labels to match current UI wording).
-3. Open this project → **Project Settings** → **Quality Gate** → select the custom gate.
-4. Optionally set it as default for the organization only if every other project should share it.
-
-Keep **bug / vulnerability / hotspot** conditions strict. Only loosen duplication (and
-optionally coverage threshold) for this codebase’s known conventions.
-
-### 5. First successful CI run
-
-1. Push any commit to `main` or open a PR after the secret exists and Automatic Analysis is off.
-2. Open the **Security** workflow run → job **SonarQube Cloud**.
-3. Confirm the scanner uploaded results and the project dashboard shows a fresh analysis
-   with coverage numbers (not blank).
-4. Open the PR decoration / Quality Gate status and confirm it matches the custom gate.
-
-### 6. Promotion to blocking (later)
-
-Same pattern as `docs/e2e-ci-backlog.md`:
-
-1. Leave `continue-on-error: true` and **no** `sonar.qualitygate.wait` until the gate has
-   been clean on several real PRs (recommend: **2 weeks** of normal activity or
-   **10 consecutive green scans**, whichever comes first).
-2. Then in `.github/workflows/security.yml`:
-   - Set `continue-on-error: false` on the `sonarcloud` job
-   - Add to the scan step:
-     ```yaml
-     with:
-       args: >-
-         -Dsonar.qualitygate.wait=true
-         -Dsonar.qualitygate.timeout=300
-     ```
-3. Optionally add **SonarQube Cloud** as a required status check in branch protection.
-4. Replace this document with a short “configured; see security.yml + sonar-project.properties”
-   note, or delete it.
-
-## Value vs CodeAnt / CodeQL
-
-This repo already runs CodeAnt Quality Gates/SAST/SCA/SCR/Coverage, CodeQL
-(security-extended), CodeRabbit, and Greptile. SonarQube Cloud is kept for:
-
-- Long-term quality / technical-debt trends
-- Security Hotspots workflow (human accept/fix)
-- Cognitive complexity and maintainability ratings per file
-
-If after a few weeks the dashboard adds little beyond CodeAnt, disable the job and the
-GitHub App rather than maintaining both.
+And set `continue-on-error: false` on the job.  
+No paid plan required — this only waits for the built-in Sonar way result.
 
 ## Troubleshooting
 
-| Symptom | Check |
-| ------- | ----- |
-| Job skipped | `SONAR_TOKEN` secret missing |
-| “Project not found” | `sonar.organization` / `sonar.projectKey` vs dashboard |
-| Coverage always 0% | `coverage/lcov.info` exists after `pnpm run test:coverage`; path matches `sonar.javascript.lcov.reportPaths` |
-| Duplication still fails gate | Custom gate threshold; `sonar.cpd.exclusions`; Automatic Analysis still on |
-| Duplicate analyses | Automatic Analysis not fully disabled |
+| Symptom | What to do |
+| ------- | ---------- |
+| Job skipped | Add `SONAR_TOKEN` repository secret |
+| Project not found | Fix `sonar.organization` / `sonar.projectKey` to match the dashboard |
+| Coverage 0% on new code | Ensure `pnpm run test:coverage` writes `coverage/lcov.info`; keep new logic in store/services/hooks/lib |
+| Duplication > 3% | Rely on `sonar.cpd.exclusions`; avoid duplicating UI patterns outside exclusions |
+| Gate fails on Hotspots | Review new hotspots in the Sonar UI (required by Sonar way on Free) |
+| Double analysis | Disable Automatic Analysis |
