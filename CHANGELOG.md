@@ -10,6 +10,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - E2E tests (`smoke.spec.ts`, `agent-flow.spec.ts`) now run in CI on every push/PR to `main` via `.github/workflows/e2e.yml`. Non-blocking (`continue-on-error: true`) until proven stable on GitHub's runners — see `docs/e2e-ci-backlog.md` for the promotion trigger and the two specs still deferred (`provider-flow.spec.ts`, `journal-hub.spec.ts`).
+- **Non-AI Programmatic Research Engine consolidation** (#67): `src/services/nonAi/` and `src/services/heuristics/` merged into one canonical deterministic engine (ADR 0009), wired into Settings as a first-class no-API-key path — previously shelved/unwired (see the 0.3.0 entry below). Ported in every capability `heuristics/` had that `nonAi/` lacked or did worse: a curated journal knowledge base, 13 missing curated MeSH query-expansion terms, the offline/empty-result demo-corpus fallback, incremental synthesis-chunk streaming, a single-abstract TL;DR function, the report chat-session factory (a hard compile-time dependency `nonAi` had no equivalent for at all), and a more precise bigram author-title fingerprint. `src/services/heuristics/**` deleted in full afterward.
+- i18n: new non-React `translateSync()` / `resolveTranslation()` path (`src/i18n/translate.ts`) so plain service modules with no React/hook access (`src/services/nonAi/*`, `src/lib/errors.ts`) can produce localized strings — foundation for an in-progress, full app-wide i18n migration (#69).
+- `scripts/check-i18n-ratchet.mjs` + `pnpm run i18n:ratchet` CI step (#69): a regression guard that fails CI if a hardcoded string creeps back into a file already migrated to `t()`/`translateSync()`.
+- `docs/sonarcloud-setup-todo.md`: analysis and a step-by-step plan for properly configuring the newly-connected SonarCloud GitHub App integration (currently unconfigured Automatic Analysis) in a dedicated future session.
+
+### Changed
+
+- `eslint-plugin-react-hooks` upgraded to v7.1.1 (#62).
+- **No-`any` / zero-warnings ESLint policy completed** across two PRs (#64, #65): eliminated all `no-explicit-any`, `no-unused-vars`, `no-unescaped-entities`, and `display-name` findings, all `react-hooks/exhaustive-deps` warnings, and all `jsx-a11y` warnings. Lint is now **0 errors / 0 warnings**, down from 176 warnings against the existing 650-warning budget (the budget itself and the `jsx-a11y` severity downgrade block in `eslint.config.js` are not yet tightened to match — tracked as a residual gap in `AUDIT.md`).
+- **Migrated to Vite 8 + `@vitejs/plugin-react` 6** (#66) — a bundler-architecture change (esbuild/Rollup → Rolldown/Oxc), handled as a dedicated migration rather than a routine version bump.
+- `useTranslation.ts` refactored to delegate its lookup/interpolation logic to the new framework-free `resolveTranslation()` core shared with `translateSync()` (#69) — pure extraction, no behavior or signature change.
+
+### Fixed
+
+- Settings persistence corruption on boot, plus 2 previously-failing E2E tests (demo-seeded Knowledge Base empty-state assertion; a German/English button-text selector mismatch) (#63).
+- **All 11 open GitHub CodeQL code-scanning alerts** (#67): unanchored host/URL substring checks in `public/sw.js`, `geminiService.ts`, and a test mock (e.g. `.includes('ncbi.nlm.nih.gov')` also matching a malicious host containing that substring anywhere); incomplete HTML-tag-stripping and BibTeX-escaping in `exportService.ts`. Confirmed 0 results on the final scan.
+- Several real correctness bugs surfaced during the nonAi/heuristics consolidation review loop (#67): a keyword-stemming bug that displayed stemmed fragments ("hyperten", "diabet") as user-facing keyword chips instead of real words; a silently-inert publication-type ranking boost (curation never classified `articleType` for real articles, so `ranker.ts`'s own quality boost never fired); short MeSH/journal-suggestion abbreviations (`ai`, `mi`, `ad`, `pd`, `rct`, ...) matched via plain substring instead of whole-word, so e.g. "pain management" incorrectly triggered AI-journal suggestions and "gut microbiome" incorrectly added the Myocardial Infarction MeSH term; a chat-response priority bug where a weak synthesis-text overlap could outrank a much stronger, more specific grounded answer; missing abort-propagation in two of the engine's retrieval stages (a cancelled run could continue processing instead of stopping immediately); dropped user-selected date-range/article-type query filters and an ignored synthesis article-count limit in the engine's research-report stream.
+- `AppError.toUserMessage()` now routes through the new i18n `translateSync()` path instead of a hardcoded English switch (#69) — no visible behavior change yet (the app is still English-only pending the broader migration), but removes the last hardcoded-string blocker on that shared error-display funnel.
+
+### Docs
+
+- ADR 0009 (Consolidated Non-AI Programmatic Research Engine) accepted; ADR 0010 (First-Class OpenRouter Provider with Free-Model Primacy) proposed (#67).
+- **Docs housekeeping** (#68): 6 fully-superseded audit reports deleted (`ARCHITECTURE-REVIEW.md`, `AUDIT-EXECUTIVE-SUMMARY.md`, `CODEBASE-AUDIT-COMPLETE.md`, `E2E-TEST-ANALYSIS.md`, `E2E-TEST-FIXES.md`, `IMPLEMENTATION-QUICKREF.md`); `UI-UX-AUDIT.md` and `HARDCODED-STRINGS-REMAINING.md` re-validated and corrected in place; `I18N-AUDIT.md` flagged stale pending the i18n migration's closing wave; root `AUDIT.md` fully re-derived from current gate output rather than carried forward (corrects the false "nonAi shelved" and "version parity restored" claims from the 0.3.0-era audit).
+
+### Known gaps (tracked, not yet closed — see `AUDIT.md`)
+
+- Version/tag/CHANGELOG drift: `package.json` says `0.3.0`, no matching `v0.3.0` git tag exists. A real version bump, tag, and GitHub release are tracked as separate follow-up work, done only once this `[Unreleased]` section is itself accurate.
+- API-key `extractable: true` hardening (proposed since 0.3.0, still not implemented).
+- `jsx-a11y` severity downgrade and the 650-warning lint budget in `eslint.config.js` (predate the zero-warnings policy pass, not yet tightened to match it).
 
 ## [0.3.0] - 2026-07-21
 
