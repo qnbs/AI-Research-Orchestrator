@@ -33,6 +33,7 @@
     "predeploy": "pnpm run build",
     "analyze": "ANALYZE=1 vite build && node scripts/patch-csp-hashes.mjs",
     "bundle:budget": "node scripts/check-bundle-budget.mjs",
+    "check:no-cdn-scripts": "node scripts/check-no-cdn-scripts.mjs",
     "i18n:ratchet": "node scripts/check-i18n-ratchet.mjs",
     "csp:hashes": "node scripts/patch-csp-hashes.mjs",
     "test:lighthouse": "pnpm run build && pnpm exec lhci autorun"

@@ -44,7 +44,7 @@ Main features: Orchestrator pipeline, Knowledge Base (dedup, faceted filtering, 
 - **State**: Redux is the single source of truth (slices: settings, ui, knowledgeBase, collections, theme, agentDebug + RTK Query slices). Contexts only hydrate/compose: `SettingsProvider` hydrates IndexedDB → Redux once; `KnowledgeBaseContext`/`PresetContext` compose Dexie + Redux actions; `UIContext` is a barrel. **Never duplicate** the same flags in Context and Redux.
 - **Resilience**: external calls use typed `AppError`/`toAppError` (`src/lib/errors.ts`), circuit breakers (`src/lib/circuitBreaker.ts` — never retry `AbortError`), exponential backoff honoring `Retry-After` (`src/lib/resilience.ts`, `pubmedUtils.ts`). See `.cursor/rules/102-resilience-external-calls.mdc`.
 - **Security model**: provider API keys (Gemini `AIza…`, OpenAI `sk-…`, Anthropic `sk-ant-…`) and the optional NCBI key are entered in Settings → AI Configuration and stored **AES-GCM encrypted** in IndexedDB via `apiKeyService.ts` (per-provider storage slot, legacy key migrates to Gemini slot). Keys are **not** env secrets — `.env.example` is documentation only; never put secrets in `VITE_*` (client-visible). Threat model: `SECURITY.md` + ADR 0003.
-- **PWA**: service worker `public/sw.js`, `public/manifest.json`; production SPA routing via `404.html` fallback. `index.html` carries a CSP meta (hashes for inline JSON-LD/importmap) and an import map loading React & co. from `aistudiocdn.com`; `pnpm run build` runs `scripts/patch-csp-hashes.mjs` to re-hash after bundling.
+- **PWA**: service worker `public/sw.js`, `public/manifest.json`; production SPA routing via `404.html` fallback. `index.html` carries a CSP meta (a hash for the inline JSON-LD block only — no CDN import map, removed in ADR 0011; every JS dependency is bundled by Vite); `pnpm run build` runs `scripts/patch-csp-hashes.mjs` to re-hash after bundling, and `pnpm run check:no-cdn-scripts` (wired into CI) guards against a CDN `<script>` or import map reappearing.
 
 ## Code Organization
 
@@ -130,7 +130,7 @@ pnpm run format                  # Prettier write (src + root md/json)
 - Single client-only service — no backend/DB/Docker needed. Keep long-running processes (dev server) in **tmux**.
 - If Corepack/npm TLS to `registry.npmjs.org` fails, a standalone `pnpm-linux-x64` under `~/.local/bin` (GitHub release asset) usually works; `corepack enable` is preferred otherwise.
 - DevContainer: `.devcontainer/` (postCreate installs Playwright Chromium; `SKIP_PLAYWRIGHT=true` to skip).
-- Runtime egress needed: `aistudiocdn.com` (import map), Google Fonts, Gemini/NCBI/arXiv APIs.
+- Runtime egress needed: Google Fonts, Gemini/OpenAI/Anthropic/OpenRouter/NCBI/arXiv APIs. No JS CDN — every dependency is bundled (ADR 0011).
 
 ## Human Documentation Map
 

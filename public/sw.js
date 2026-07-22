@@ -58,26 +58,7 @@ if (workbox) {
         })
     );
 
-    // --- 3. CDN Libraries (JS/CSS) ---
-    // Strategy: StaleWhileRevalidate (Speed Priority)
-    // Optimization: Long cache life for immutable libraries.
-    registerRoute(
-        ({ url }) =>
-            isHost(url.hostname, 'aistudiocdn.com') ||
-            isHost(url.hostname, 'cdn.tailwindcss.com'),
-        new StaleWhileRevalidate({
-            cacheName: 'cdn-resources',
-            plugins: [
-                new CacheableResponsePlugin({ statuses: [0, 200] }),
-                new ExpirationPlugin({
-                    maxEntries: 50,
-                    maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
-                }),
-            ],
-        })
-    );
-
-    // --- 4. Google Fonts ---
+    // --- 3. Google Fonts ---
     // Stylesheets: StaleWhileRevalidate
     registerRoute(
         ({ url }) => url.origin === 'https://fonts.googleapis.com',
@@ -101,7 +82,7 @@ if (workbox) {
         })
     );
 
-    // --- 5. Local Static Assets ---
+    // --- 4. Local Static Assets ---
     registerRoute(
         ({ request, url }) =>
             url.origin === self.location.origin &&
@@ -114,7 +95,7 @@ if (workbox) {
         })
     );
 
-    // --- 6. Images ---
+    // --- 5. Images ---
     registerRoute(
         ({ request }) => request.destination === 'image',
         new CacheFirst({
