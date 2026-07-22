@@ -1,0 +1,51 @@
+name: Claude Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+permissions:
+  contents: read
+
+jobs:
+  review:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+    steps:
+      - name: Checkout repository
+        # actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Claude Code Review
+        # anthropics/claude-code-action@v1
+        uses: anthropics/claude-code-action@fa7e2f0a29a126f0b81cdcf360561b36e44cf608
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude_args: |
+            --model claude-sonnet-5
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+
+            Review this pull request against this repository's CLAUDE.md and
+            AGENTS.md conventions (English-only content, i18n EN+DE for new
+            strings, provider-agnostic error codes, no bare dangerouslySetInnerHTML,
+            circuit breakers on external calls). Focus on correctness, security,
+            and adherence to existing patterns - this repo already runs
+            CodeRabbit, so avoid pure style nitpicks CodeRabbit already covers.
+
+            Use `gh pr comment` once for a top-level summary.
+            Use `mcp__github_inline_comment__create_inline_comment` (with
+            `confirmed: true`) for specific line-level findings so they land as
+            inline review threads, not just in this run's log.
+            Only post GitHub comments - do not just print review text as plain
+            output with nothing posted.

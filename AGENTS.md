@@ -109,6 +109,7 @@ pnpm run format                  # Prettier write (src + root md/json)
 - Accessibility: WCAG 2.2 AA — ARIA roles, keyboard navigation, focus management, `⌘+K` palette; honor jsx-a11y (no blanket eslint-disables).
 - **New feature checklist**: Redux slice or RTK Query endpoint → Dexie schema (if persisted) → i18n EN+DE → Framer Motion transition → ARIA/keyboard → unit test stub.
 - **PR gates**: resolve **all** automated review-bot comments (CodeRabbit, CodeAntai, …) including nitpicks and out-of-diff items — loop until clear before merging (rule `011`). PRs target `main`, focused changes, English description.
+- PRs additionally receive an automated Claude Code review (`.github/workflows/claude-code-review.yml`, alongside `.github/workflows/claude.yml` for on-demand `@claude` mentions). Its findings land as inline review threads the same way CodeRabbit's do — read both channels before merge. CodeRabbit's out-of-diff findings still only ever appear in the review body text, never as a thread; keep checking the paginated review body every pass, per the standing lesson already captured for CodeRabbit.
 
 ## Testing Strategy
 
