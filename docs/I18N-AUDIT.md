@@ -5,11 +5,17 @@
 **Version:** 0.2.1
 
 > **⚠️ Known stale, 2026-07-22.** This audit's headline "German Parity 6/10 /
-> incomplete" score is no longer true: `src/i18n/translations.test.ts` now hard-gates
-> exact EN/DE key-set parity (every key in one locale has a counterpart in the other)
-> and rejects empty translation values, as a normal part of the test suite — coverage
-> is a CI invariant now, not a percentage to track here. The "Hardcoded Strings 4/10 —
-> HelpView" line is still accurate (re-verified, `HelpView.tsx` has zero `t()` calls).
+> incomplete" score is no longer true **for what it actually measured**:
+> `src/i18n/translations.test.ts` now hard-gates _structural_ EN/DE key-set parity
+> (every key defined in one locale has a non-empty counterpart in the other) as a
+> normal part of the test suite. That is a narrower guarantee than this score implied —
+> it proves the two locale objects are structurally in sync, **not** that every
+> user-facing string is routed through `t()` in the first place, nor that existing
+> translations are semantically accurate. Structural parity is a solved, CI-enforced
+> problem; translation _coverage_ and _quality_ are not, and remain tracked separately
+> (see the "Hardcoded Strings" line below, and the broader hardcoded-string inventory in
+> the in-progress i18n migration plan). The "Hardcoded Strings 4/10 — HelpView" line
+> below is still accurate (re-verified, `HelpView.tsx` has zero `t()` calls).
 > This document will be **fully rewritten** as the closing step of the in-progress i18n
 > migration effort (see the migration plan's final wave), once the new
 > `src/i18n/translate.ts` non-React translate path and the full namespace/key inventory

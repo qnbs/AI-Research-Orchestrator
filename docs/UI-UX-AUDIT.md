@@ -214,12 +214,15 @@ are done — re-verified directly against current `geminiService.ts`/`journalPro
 ## 6. Internationalization (i18n) Audit
 
 **2026-07-22 update:** this section originally scored coverage as a point-in-time
-percentage. That framing is now obsolete — `src/i18n/translations.test.ts` **hard-gates
-exact EN/DE key-set parity** (every `en` key has a `de` counterpart and vice versa) and
-rejects empty values in either locale, as a normal part of the test suite. Coverage is no
-longer a percentage to audit periodically; it's a CI invariant. See that test file for the
-authoritative, always-current state, and see `docs/adr/` / the i18n migration plan for the
-namespace conventions new keys should follow.
+percentage. That framing is now partly obsolete: `src/i18n/translations.test.ts`
+**hard-gates structural EN/DE key-set parity** (every `en` key has a non-empty `de`
+counterpart and vice versa), as a normal part of the test suite — that specific
+question is no longer worth periodically auditing, it's a CI invariant. What that test
+does **not** cover — and what §6.1 below still tracks — is _translation coverage_
+(whether a given user-facing string is routed through `t()` at all) and _translation
+quality_ (whether an existing `{en, de}` pair is semantically accurate). Those remain
+real, open, manually-tracked concerns; see `docs/HARDCODED-STRINGS-REMAINING.md` and the
+in-progress i18n migration plan for the current inventory.
 
 ### 6.1 Hardcoded strings (still real, re-verified)
 
