@@ -57,10 +57,14 @@ async function getOrCreateEncryptionKey(): Promise<CryptoKey> {
   return key;
 }
 
+function toRejectionError(error: DOMException | null): Error {
+  return error instanceof Error ? error : new Error('IndexedDB request failed');
+}
+
 function openKeyDatabase(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open('APIKeyVault', 1);
-    request.onerror = () => reject(request.error);
+    request.onerror = () => reject(toRejectionError(request.error));
     request.onsuccess = () => resolve(request.result);
     request.onupgradeneeded = (event) => {
       const db = (event.target as IDBOpenDBRequest).result;
@@ -76,7 +80,7 @@ function getFromKeyStore<T = Uint8Array>(db: IDBDatabase, key: string): Promise<
     const tx = db.transaction('keys', 'readonly');
     const store = tx.objectStore('keys');
     const request = store.get(key);
-    request.onerror = () => reject(request.error);
+    request.onerror = () => reject(toRejectionError(request.error));
     request.onsuccess = () => resolve((request.result as T | undefined) ?? null);
   });
 }
@@ -86,7 +90,7 @@ function saveToKeyStore<T>(db: IDBDatabase, key: string, value: T): Promise<void
     const tx = db.transaction('keys', 'readwrite');
     const store = tx.objectStore('keys');
     const request = store.put(value, key);
-    request.onerror = () => reject(request.error);
+    request.onerror = () => reject(toRejectionError(request.error));
     request.onsuccess = () => resolve();
   });
 }
@@ -96,7 +100,7 @@ function deleteFromKeyStore(db: IDBDatabase, key: string): Promise<void> {
     const tx = db.transaction('keys', 'readwrite');
     const store = tx.objectStore('keys');
     const request = store.delete(key);
-    request.onerror = () => reject(request.error);
+    request.onerror = () => reject(toRejectionError(request.error));
     request.onsuccess = () => resolve();
   });
 }
@@ -106,7 +110,7 @@ function clearKeyStore(db: IDBDatabase): Promise<void> {
     const tx = db.transaction('keys', 'readwrite');
     const store = tx.objectStore('keys');
     const request = store.clear();
-    request.onerror = () => reject(request.error);
+    request.onerror = () => reject(toRejectionError(request.error));
     request.onsuccess = () => resolve();
   });
 }
