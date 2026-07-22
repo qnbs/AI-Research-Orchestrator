@@ -49,11 +49,11 @@ On SonarQube Cloud **Free**:
 
 ## What is already in the repo
 
-| File                            | Free-tier optimization                                                                                                                                                             |
-| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `sonar-project.properties`      | Coverage limited to Vitest logic layers (store/services/hooks/lib) so UI-only PRs are not scored as 0% coverage; CPD exclusions for translations, static/demo data, icons, scripts |
-| `vitest.config.ts`              | `lcov` reporter → `coverage/lcov.info`                                                                                                                                             |
-| `security.yml` job `sonarcloud` | CI scan, **non-blocking**, runs only if `SONAR_TOKEN` is set; no `qualitygate.wait` yet                                                                                            |
+| File                            | Free-tier optimization                                                                                                                                                                                           |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sonar-project.properties`      | Coverage limited to Vitest logic layers (store/services/hooks/lib) so UI-only PRs are not scored as 0% coverage; CPD exclusions for translations, static/demo data, icons, scripts                               |
+| `vitest.config.ts`              | `lcov` reporter → `coverage/lcov.info`                                                                                                                                                                           |
+| `security.yml` job `sonarcloud` | CI scan, **non-blocking**. The job itself always starts; a `check_token` step gates every later step (checkout, install, test, scan) so nothing meaningful runs without `SONAR_TOKEN`. No `qualitygate.wait` yet |
 
 ## What you still do in the UI (required)
 
@@ -98,11 +98,11 @@ No paid plan required — this only waits for the built-in Sonar way result.
 
 ## Troubleshooting
 
-| Symptom                 | What to do                                                                                              |
-| ----------------------- | ------------------------------------------------------------------------------------------------------- |
-| Job skipped             | Add `SONAR_TOKEN` repository secret                                                                     |
-| Project not found       | Fix `sonar.organization` / `sonar.projectKey` to match the dashboard                                    |
-| Coverage 0% on new code | Ensure `pnpm run test:coverage` writes `coverage/lcov.info`; keep new logic in store/services/hooks/lib |
-| Duplication > 3%        | Rely on `sonar.cpd.exclusions`; avoid duplicating UI patterns outside exclusions                        |
-| Gate fails on Hotspots  | Review new hotspots in the Sonar UI (required by Sonar way on Free)                                     |
-| Double analysis         | Disable Automatic Analysis                                                                              |
+| Symptom                                                                   | What to do                                                                                              |
+| ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Sonar steps skipped (job still runs, `check_token` shows `present=false`) | Add `SONAR_TOKEN` repository secret                                                                     |
+| Project not found                                                         | Fix `sonar.organization` / `sonar.projectKey` to match the dashboard                                    |
+| Coverage 0% on new code                                                   | Ensure `pnpm run test:coverage` writes `coverage/lcov.info`; keep new logic in store/services/hooks/lib |
+| Duplication > 3%                                                          | Rely on `sonar.cpd.exclusions`; avoid duplicating UI patterns outside exclusions                        |
+| Gate fails on Hotspots                                                    | Review new hotspots in the Sonar UI (required by Sonar way on Free)                                     |
+| Double analysis                                                           | Disable Automatic Analysis                                                                              |

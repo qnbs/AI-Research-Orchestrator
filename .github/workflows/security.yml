@@ -129,10 +129,12 @@ jobs:
   # ---------------------------------------------------------------------------
   # SonarQube Cloud — CI-based analysis (replaces Automatic Analysis)
   #
-  # Prerequisites (manual, cannot be automated):
-  #   1. SONAR_TOKEN repository secret (SonarQube Cloud → My Account → Security)
-  #   2. Automatic Analysis disabled in the Sonar project Administration
-  #   3. Custom Quality Gate assigned (see docs/sonarcloud-setup-todo.md)
+  # Prerequisite: SONAR_TOKEN repository secret (SonarQube Cloud → My Account →
+  # Security). Verified live (docs/sonarcloud-setup-todo.md): Automatic Analysis
+  # does not need to be manually disabled - a CI-submitted scan already
+  # completes successfully alongside it - and a custom Quality Gate is not
+  # available on the free tier this repo is on regardless, so this job targets
+  # the built-in read-only "Sonar way" gate rather than a custom one.
   #
   # Starts non-blocking (continue-on-error). Promote to blocking once the gate
   # has run clean across several real PRs — same pattern as e2e.yml.
@@ -144,17 +146,13 @@ jobs:
     # Advisory phase: do not fail the Security workflow on gate/scanner issues.
     continue-on-error: true
     steps:
-      - name: Checkout
-        # actions/checkout@v7 — full history for blame / new-code detection
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-
+      # secrets.* is not a valid job-level `if:` context (only github/inputs/
+      # needs/vars are) - so the presence check has to happen in a step, via
+      # env:, and be consumed by later steps' `if: steps.*.outputs.*`. Runs
+      # first (before checkout) so the whole job - including the full-history
+      # checkout below - stays a true no-op without the secret, e.g. on a
+      # fork PR that never receives repo secrets in the first place.
       - name: Check SONAR_TOKEN is configured
-        # secrets.* is not a valid job-level `if:` context (only github/inputs/
-        # needs/vars are) - so the presence check has to happen in a step, via
-        # env:, and be consumed by later steps' `if: steps.*.outputs.*`.
         id: check_token
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -164,6 +162,14 @@ jobs:
           else
             echo "present=false" >> "$GITHUB_OUTPUT"
           fi
+
+      - name: Checkout
+        if: steps.check_token.outputs.present == 'true'
+        # actions/checkout@v7 — full history for blame / new-code detection
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
 
       - name: Setup pnpm
         if: steps.check_token.outputs.present == 'true'
