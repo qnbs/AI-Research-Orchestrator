@@ -20,34 +20,40 @@ try {
   process.exit(1);
 }
 
+/** Reads an HTML attribute's value from a tag's source text, quoted or not. */
+function getAttr(tagHtml, attrName) {
+  const re = new RegExp(`\\b${attrName}\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^\\s"'>]+))`, 'i');
+  const m = tagHtml.match(re);
+  if (!m) return undefined;
+  return m[1] ?? m[2] ?? m[3];
+}
+
+/**
+ * Resolves an attribute value to an external hostname, or null if it isn't
+ * one (relative path, data:/blob: URI, or unparseable). Protocol-relative
+ * URLs ("//host/path") are real external references despite looking
+ * relative, so they're normalized to https: before parsing rather than
+ * discarded as unparseable.
+ */
 function extractHost(url) {
+  const normalized = url.startsWith('//') ? `https:${url}` : url;
+  let parsed;
   try {
-    return new URL(url).hostname;
+    parsed = new URL(normalized);
   } catch {
-    return null; // relative URL, data:, etc. - not an external host
+    return null;
   }
+  return parsed.protocol === 'http:' || parsed.protocol === 'https:' ? parsed.hostname : null;
 }
 
 const violations = [];
 
-if (/<script[^>]*\btype=["']importmap["']/i.test(html)) {
-  violations.push(
-    'Found a <script type="importmap"> - CDN import maps were removed (ADR 0011); ' +
-      'all JS dependencies must be bundled by Vite instead.',
-  );
-}
-
-for (const match of html.matchAll(/<script\b[^>]*\bsrc=["']([^"']+)["'][^>]*>/gi)) {
-  const host = extractHost(match[1]);
-  if (host && !ALLOWED_HOSTS.has(host)) {
-    violations.push(`<script src="${match[1]}"> references a disallowed host: ${host}`);
-  }
-}
-
 // Only <link> rels that make the browser actually fetch something belong
 // here — rel="canonical" (and similar purely-referential rels like
 // "alternate") point at this app's own production URL for SEO and are never
-// fetched, so they're not part of this CDN surface at all.
+// fetched, so they're not part of this CDN surface at all. A `rel` attribute
+// can carry multiple whitespace-separated tokens (e.g. "alternate
+// stylesheet"), so every token is checked individually.
 const FETCHED_LINK_RELS = new Set([
   'stylesheet',
   'preconnect',
@@ -60,18 +66,36 @@ const FETCHED_LINK_RELS = new Set([
   'manifest',
 ]);
 
+for (const match of html.matchAll(/<script\b[^>]*>/gi)) {
+  const tag = match[0];
+  const type = getAttr(tag, 'type');
+  if (type?.toLowerCase() === 'importmap') {
+    violations.push(
+      'Found a <script type="importmap"> - CDN import maps were removed (ADR 0011); ' +
+        'all JS dependencies must be bundled by Vite instead.',
+    );
+    continue;
+  }
+  const src = getAttr(tag, 'src');
+  if (!src) continue;
+  const host = extractHost(src);
+  if (host && !ALLOWED_HOSTS.has(host)) {
+    violations.push(`<script src="${src}"> references a disallowed host: ${host}`);
+  }
+}
+
 for (const match of html.matchAll(/<link\b[^>]*>/gi)) {
-  const relMatch = match[0].match(/\brel=["']([^"']+)["']/i);
-  const rel = relMatch?.[1]?.toLowerCase();
-  if (!rel || !FETCHED_LINK_RELS.has(rel)) continue;
+  const tag = match[0];
+  const relTokens = (getAttr(tag, 'rel') ?? '').toLowerCase().split(/\s+/).filter(Boolean);
+  if (!relTokens.some((token) => FETCHED_LINK_RELS.has(token))) continue;
 
-  const hrefMatch = match[0].match(/\bhref=["']([^"']+)["']/i);
-  if (!hrefMatch) continue;
+  const href = getAttr(tag, 'href');
+  if (!href) continue;
 
-  const host = extractHost(hrefMatch[1]);
+  const host = extractHost(href);
   if (host && !ALLOWED_HOSTS.has(host)) {
     violations.push(
-      `<link rel="${rel}" href="${hrefMatch[1]}"> references a disallowed host: ${host}`,
+      `<link rel="${relTokens.join(' ')}" href="${href}"> references a disallowed host: ${host}`,
     );
   }
 }

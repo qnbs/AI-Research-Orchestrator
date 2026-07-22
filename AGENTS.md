@@ -18,7 +18,7 @@ Main features: Orchestrator pipeline, Knowledge Base (dedup, faceted filtering, 
 1. **`.github/copilot-instructions.md`** — current stack, folder structure, state management, testing, safety rules.
 2. **`.cursor/index.mdc`** — always-on project manifest.
 3. **`.cursor/rules/*.mdc`** — contextual rules (Security, APIs, Architecture, UI, QA — numbering scheme in `000-cursor-rules.mdc`).
-4. **`docs/adr/`** — architecture decisions (0001 state management … 0008 multi-provider architecture).
+4. **`docs/adr/`** — architecture decisions; see `docs/adr/README.md` for the full, current index (0001 state management … 0011 remove the CDN import map).
 
 ## Technology Stack
 
@@ -40,7 +40,7 @@ Main features: Orchestrator pipeline, Knowledge Base (dedup, faceted filtering, 
 
 - **Agentic pipeline**: implemented in **`src/services/geminiService.ts`** (AsyncGenerator `generateResearchReportStream`): query generation → PubMed/optional arXiv fetch → ranking → streaming synthesis. `App.tsx` `getAgentForPhase()` maps phases to **conceptual agent roles** for the trace/debug UI (QueryGenerator, PubMedFetcher, ArxivFetcher, Ranker, Synthesizer) — these are prompt/phase roles, not separate SDK processes.
 - **AI provider layer**: transport adapters live in `src/services/providers/` (`gemini.ts`, `openai.ts`, `anthropic.ts`, `ollama.ts`, `heuristic.ts`) and are loaded lazily via `getProviderForSettings()` so SDKs do not inflate the initial bundle. `geminiService.ts` remains the feature façade and routes AI calls through the selected provider.
-- **InferenceMode** `live | heuristic`: derived from API-key presence, `navigator.onLine`, and an optional Force-Heuristic toggle (`src/services/inferenceMode.ts`, `resolveActiveInferenceMode.ts`, hook `useInferenceMode`). Without a key or offline, the app **never** throws `NO_API_KEY` into an empty UI — the deterministic heuristic layer (`src/services/heuristics/`: query formulation, lexical ranking, template synthesis, extractive TL;DR, report-grounded chat, author/journal tools, demo corpus) keeps every feature usable (ADR 0007).
+- **InferenceMode** `live | heuristic`: derived from API-key presence, `navigator.onLine`, and an optional Force-Heuristic toggle (`src/services/inferenceMode.ts`, `resolveActiveInferenceMode.ts`, hook `useInferenceMode`). Without a key or offline, the app **never** throws `NO_API_KEY` into an empty UI — the consolidated deterministic engine (`src/services/nonAi/`: query formulation, lexical ranking, template synthesis, extractive TL;DR, report-grounded chat, author/journal tools, demo corpus) keeps every feature usable (ADR 0007, consolidated in ADR 0009 — `src/services/heuristics/` no longer exists, deleted in that consolidation).
 - **State**: Redux is the single source of truth (slices: settings, ui, knowledgeBase, collections, theme, agentDebug + RTK Query slices). Contexts only hydrate/compose: `SettingsProvider` hydrates IndexedDB → Redux once; `KnowledgeBaseContext`/`PresetContext` compose Dexie + Redux actions; `UIContext` is a barrel. **Never duplicate** the same flags in Context and Redux.
 - **Resilience**: external calls use typed `AppError`/`toAppError` (`src/lib/errors.ts`), circuit breakers (`src/lib/circuitBreaker.ts` — never retry `AbortError`), exponential backoff honoring `Retry-After` (`src/lib/resilience.ts`, `pubmedUtils.ts`). See `.cursor/rules/102-resilience-external-calls.mdc`.
 - **Security model**: provider API keys (Gemini `AIza…`, OpenAI `sk-…`, Anthropic `sk-ant-…`) and the optional NCBI key are entered in Settings → AI Configuration and stored **AES-GCM encrypted** in IndexedDB via `apiKeyService.ts` (per-provider storage slot, legacy key migrates to Gemini slot). Keys are **not** env secrets — `.env.example` is documentation only; never put secrets in `VITE_*` (client-visible). Threat model: `SECURITY.md` + ADR 0003.
@@ -68,7 +68,7 @@ src/
   store/                 # store.ts, hooks.ts, slices/ (one slice per domain + *.test.ts)
   test/                  # setup.ts (IndexedDB + crypto mocks), e2e/ (agent-flow, smoke specs)
 scripts/                 # patch-csp-hashes, check-bundle-budget, generate-pwa-icons
-docs/adr/                # Architecture Decision Records 0001–0008
+docs/adr/                # Architecture Decision Records — see docs/adr/README.md for the current index
 ```
 
 ## Build, Test & Quality Commands
