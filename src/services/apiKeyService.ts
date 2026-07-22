@@ -92,6 +92,7 @@ async function resolveEncryptionKey(): Promise<CryptoKey> {
   const db = await openKeyDatabase();
 
   const existingKeyData = await getFromKeyStore<CryptoKey | Uint8Array>(db, ENCRYPTION_KEY_NAME);
+  let wasReset = false;
   if (existingKeyData) {
     if (existingKeyData instanceof CryptoKey) {
       return existingKeyData;
@@ -104,7 +105,7 @@ async function resolveEncryptionKey(): Promise<CryptoKey> {
       'API key vault used an outdated, extractable key format; resetting the local vault.',
     );
     await clearKeyStore(db);
-    notifyVaultReset();
+    wasReset = true;
   }
 
   const key = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, false, [
@@ -112,6 +113,13 @@ async function resolveEncryptionKey(): Promise<CryptoKey> {
     'decrypt',
   ]);
   await saveToKeyStore(db, ENCRYPTION_KEY_NAME, key);
+  // Notify only once the replacement key is durably saved - not right after
+  // the clear - so a user is never told "re-enter your keys" while the vault
+  // is actually stuck unable to save any new key at all (e.g. an engine that
+  // rejects CryptoKey structured-clone; see SECURITY.md's residual risk).
+  if (wasReset) {
+    notifyVaultReset();
+  }
   return key;
 }
 

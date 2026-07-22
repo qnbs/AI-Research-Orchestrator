@@ -273,6 +273,28 @@ describe('apiKeyService', () => {
       expect(listener).toHaveBeenCalledTimes(1);
     });
 
+    it('does not notify if key generation fails after a legacy-format clear', async () => {
+      // If generateKey/saveToKeyStore fails after the clear, the vault is
+      // stuck unable to save any new key at all - a user must not be told
+      // "just re-enter your keys" in that state, since re-entry can never
+      // succeed until the underlying failure is resolved.
+      const db = await openVaultDatabase();
+      await putVaultEntry(db, ENCRYPTION_KEY_NAME, new Uint8Array(32));
+      db.close();
+
+      const listener = vi.fn();
+      setVaultResetListener(listener);
+
+      vi.spyOn(console, 'warn').mockImplementation(() => {});
+      vi.spyOn(crypto.subtle, 'generateKey').mockRejectedValueOnce(
+        new Error('simulated engine failure'),
+      );
+
+      await expect(saveApiKey(VALID_KEY)).rejects.toThrow('simulated engine failure');
+
+      expect(listener).not.toHaveBeenCalled();
+    });
+
     it('converges concurrent callers on one master key instead of racing to different ones', async () => {
       // Concurrent Promise.all-style calls (mirroring ApiKeySettings.tsx's
       // mount-time Promise.all([hasProviderApiKey(...), getNcbiApiKey()]))
