@@ -28,6 +28,7 @@ import { ConfirmationModal } from './components/ConfirmationModal';
 import { useResearchAssistant } from './hooks/useResearchAssistant';
 import { useDocumentAppearance } from './hooks/useDocumentAppearance';
 import { generateResearchReportStream } from './services/geminiService';
+import { setVaultResetListener } from './services/apiKeyService';
 import { handleResearchStreamFailure } from './lib/researchStreamFailure';
 import { estimateResearchRunCostUsd, shouldWarnAboutResearchCost } from './lib/resilience';
 import { reportFromCheckpoint, type ResearchCheckpoint } from './lib/researchCheckpoint';
@@ -172,6 +173,21 @@ const AppLayout: React.FC = () => {
   useEffect(() => {
     dispatch(loadCollections());
   }, [dispatch]);
+
+  // apiKeyService.ts has no dependency on the Redux store (avoids an import
+  // cycle back through geminiService.ts, which imports it for getNcbiApiKey).
+  // It notifies of a rare pre-hardening vault reset via this registered
+  // callback instead, set up once here where dispatch/t are already available.
+  useEffect(() => {
+    setVaultResetListener(() =>
+      setNotification({
+        id: Date.now(),
+        message: t('settings.apiKeyVaultReset.message'),
+        type: 'error',
+      }),
+    );
+    return () => setVaultResetListener(null);
+  }, [setNotification, t]);
 
   useEffect(() => {
     // Accessibility Best Practice: Update document title on view change

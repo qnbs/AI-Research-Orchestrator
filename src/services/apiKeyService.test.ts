@@ -2,9 +2,6 @@ import 'fake-indexeddb/auto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { store } from '../store/store';
-import { setNotification } from '../store/slices/uiSlice';
-import { translateSync } from '../i18n/translate';
 import {
   validateApiKeyFormat,
   saveApiKey,
@@ -15,6 +12,7 @@ import {
   getNcbiApiKey,
   hasNcbiApiKey,
   removeNcbiApiKey,
+  setVaultResetListener,
   __resetEncryptionKeyCacheForTests,
 } from './apiKeyService';
 
@@ -59,6 +57,7 @@ describe('apiKeyService', () => {
       writable: true,
     });
     __resetEncryptionKeyCacheForTests();
+    setVaultResetListener(null);
     try {
       await removeApiKey();
       await removeNcbiApiKey();
@@ -229,29 +228,29 @@ describe('apiKeyService', () => {
       expect((stored as CryptoKey).extractable).toBe(false);
     });
 
-    it('notifies the user when a pre-hardening vault is reset', async () => {
+    it('notifies the registered listener when a pre-hardening vault is reset', async () => {
       const db = await openVaultDatabase();
       await putVaultEntry(db, ENCRYPTION_KEY_NAME, new Uint8Array(32));
       db.close();
+
+      const listener = vi.fn();
+      setVaultResetListener(listener);
 
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
       await saveApiKey(VALID_KEY);
       warnSpy.mockRestore();
 
-      expect(store.getState().ui.notification).toEqual({
-        id: expect.any(Number),
-        message: translateSync('settings.apiKeyVaultReset.message'),
-        type: 'error',
-      });
+      expect(listener).toHaveBeenCalledTimes(1);
     });
 
     it('does not notify when the vault already holds a hardened key', async () => {
       await saveApiKey(VALID_KEY);
-      store.dispatch(setNotification(null));
 
+      const listener = vi.fn();
+      setVaultResetListener(listener);
       await saveApiKey(VALID_KEY);
 
-      expect(store.getState().ui.notification).toBeNull();
+      expect(listener).not.toHaveBeenCalled();
     });
 
     it('converges concurrent callers on one master key instead of racing to different ones', async () => {

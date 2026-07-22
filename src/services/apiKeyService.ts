@@ -7,9 +7,6 @@
 import type { AIProviderId } from './providers/types';
 import { toAppError } from '../lib/errors';
 import { getProviderMeta } from './providers/provider';
-import { store } from '../store/store';
-import { setNotification } from '../store/slices/uiSlice';
-import { translateSync } from '../i18n/translate';
 
 const ENCRYPTION_KEY_NAME = 'ai-research-encryption-key';
 const LEGACY_GEMINI_STORAGE_KEY = 'encrypted-api-key';
@@ -34,6 +31,20 @@ let encryptionKeyPromise: Promise<CryptoKey> | null = null;
 /** Test-only: clears the in-memory cache so the next call re-reads IndexedDB. */
 export function __resetEncryptionKeyCacheForTests(): void {
   encryptionKeyPromise = null;
+}
+
+// This service has no dependency on the Redux store or React - it's called
+// from provider adapters and Settings alike, with no single call site that
+// naturally has `dispatch` on hand. A pre-hardening vault reset is notified
+// via this registered callback (set once at app bootstrap, where dispatch/t
+// are already available) instead of importing the store singleton directly,
+// which would close an import cycle back through geminiService.ts (which
+// imports this file for getNcbiApiKey) to store.ts.
+let vaultResetListener: (() => void) | null = null;
+
+/** Registers a callback invoked when a pre-hardening vault is reset. Pass null to unregister. */
+export function setVaultResetListener(listener: (() => void) | null): void {
+  vaultResetListener = listener;
 }
 
 /**
@@ -71,13 +82,7 @@ async function resolveEncryptionKey(): Promise<CryptoKey> {
       'API key vault used an outdated, extractable key format; resetting the local vault.',
     );
     await clearKeyStore(db);
-    store.dispatch(
-      setNotification({
-        id: Date.now(),
-        message: translateSync('settings.apiKeyVaultReset.message'),
-        type: 'error',
-      }),
-    );
+    vaultResetListener?.();
   }
 
   const key = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, false, [
