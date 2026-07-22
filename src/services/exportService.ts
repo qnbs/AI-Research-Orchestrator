@@ -590,10 +590,11 @@ export const exportCitations = (
   if (type === 'bib') {
     content = articles
       .map((a) => {
-        let entry = `@article{PMID:${a.pmid},\n  author  = {${a.authors.split(', ').join(' and ')}},\n  title   = ${cleanForBibtex(a.title)},\n  journal = ${cleanForBibtex(a.journal)},\n  year    = {${a.pubYear}},\n  pmid    = {${a.pmid}},\n`;
+        const authorField = cleanForBibtex(a.authors.split(', ').join(' and '));
+        let entry = `@article{PMID:${a.pmid},\n  author  = ${authorField},\n  title   = ${cleanForBibtex(a.title)},\n  journal = ${cleanForBibtex(a.journal)},\n  year    = {${a.pubYear}},\n  pmid    = {${a.pmid}},\n`;
         if (settings.includeAbstract) entry += `  abstract = ${cleanForBibtex(a.summary)},\n`;
         if (settings.includeKeywords && a.keywords && a.keywords.length > 0)
-          entry += `  keywords = {${a.keywords.join(', ')}},\n`;
+          entry += `  keywords = ${cleanForBibtex(a.keywords.join(', '))},\n`;
 
         const notes = [];
         if (settings.includeTags && a.customTags && a.customTags.length > 0)

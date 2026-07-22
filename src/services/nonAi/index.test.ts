@@ -134,6 +134,58 @@ describe('generateNonAiResearchReportStream', () => {
     });
   });
 
+  it('builds the retrieval query from the user-selected date range and article types', async () => {
+    mockPubMed.searchPubMedForIds.mockResolvedValue([]);
+    mockPubMed.fetchArticleDetails.mockResolvedValue([]);
+
+    await collectEvents(
+      makeInput({ dateRange: '3', articleTypes: ['Randomized Controlled Trial'] }),
+    );
+
+    const [sentQuery] = mockPubMed.searchPubMedForIds.mock.calls[0];
+    expect(sentQuery).toContain('[Publication Type]');
+    expect(sentQuery).toContain('"Randomized Controlled Trial"');
+    expect(sentQuery).toContain('[Date - Publication]');
+  });
+
+  it('does not filter by publication type or date when dateRange is "any" and no types are selected', async () => {
+    mockPubMed.searchPubMedForIds.mockResolvedValue([]);
+    mockPubMed.fetchArticleDetails.mockResolvedValue([]);
+
+    await collectEvents(makeInput({ dateRange: 'any', articleTypes: [] }));
+
+    const [sentQuery] = mockPubMed.searchPubMedForIds.mock.calls[0];
+    expect(sentQuery).not.toContain('[Publication Type]');
+    expect(sentQuery).not.toContain('[Date - Publication]');
+  });
+
+  it('limits the report to topNToSynthesize articles even when more were curated', async () => {
+    mockPubMed.searchPubMedForIds.mockResolvedValue(['1', '2', '3']);
+    mockPubMed.fetchArticleDetails.mockResolvedValue([
+      { pmid: '1', title: 'Aspirin study one', summary: 'Findings one about aspirin.' },
+      { pmid: '2', title: 'Aspirin study two', summary: 'Findings two about aspirin.' },
+      { pmid: '3', title: 'Aspirin study three', summary: 'Findings three about aspirin.' },
+    ]);
+
+    const events = await collectEvents(makeInput({ topNToSynthesize: 2 }));
+
+    const reportEvent = events.find((e) => e.report);
+    expect(reportEvent?.report?.rankedArticles.length).toBe(2);
+  });
+
+  it('still attempts arXiv when the PubMed article-detail fetch fails', async () => {
+    mockPubMed.searchPubMedForIds.mockResolvedValue(['1']);
+    mockPubMed.fetchArticleDetails.mockRejectedValue(new Error('details fetch failed'));
+    mockArxiv.searchAndFetchArxiv.mockResolvedValue([
+      { pmid: 'arxiv:1', title: 'A preprint', summary: 'Preprint summary about the topic.' },
+    ]);
+
+    const events = await collectEvents(makeInput({ includeArxiv: true }));
+
+    const reportEvent = events.find((e) => e.report);
+    expect(reportEvent?.report?.rankedArticles.some((a) => a.pmid === 'arxiv:1')).toBe(true);
+  });
+
   it('includes arXiv results when includeArxiv is true', async () => {
     mockPubMed.searchPubMedForIds.mockResolvedValue([]);
     mockPubMed.fetchArticleDetails.mockResolvedValue([]);

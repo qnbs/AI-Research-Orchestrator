@@ -8,7 +8,7 @@ import type { RetrievalResult, BuiltQuery } from './types';
 import { searchPubMedForIds, fetchArticleDetails } from '../pubmedUtils';
 import { searchAndFetchArxiv } from '../arxivUtils';
 import { getNcbiApiKey } from '../apiKeyService';
-import { AppError, toAppError } from '../../lib/errors';
+import { AppError, toAppError, isAbortError } from '../../lib/errors';
 import { withCircuitBreaker } from '../../lib/circuitBreaker';
 
 /** Retrieval options. */
@@ -97,7 +97,11 @@ export async function retrieveArticles(
         })),
       );
     } catch (error) {
-      throw toAppError(error, 'pubmed');
+      if (isAbortError(error)) throw toAppError(error, 'pubmed');
+      // Isolate this failure like the per-query search failures above — a details-fetch
+      // error must not block arXiv retrieval; the caller falls back to demo data only
+      // once every source (PubMed + arXiv) has come back empty.
+      console.warn('PubMed article-detail fetch failed:', error);
     }
   }
 

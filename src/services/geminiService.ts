@@ -731,10 +731,10 @@ export async function suggestAuthors(
   }
 }
 
-/** Hostname of `value` if it parses as an absolute URL, else null (bare PMIDs/DOIs are not URLs). */
-function tryGetHostname(value: string): string | null {
+/** Parses `value` as an absolute URL, or null (bare PMIDs/DOIs are not URLs). */
+function tryParseUrl(value: string): URL | null {
   try {
-    return new URL(value).hostname;
+    return new URL(value);
   } catch {
     return null;
   }
@@ -752,12 +752,14 @@ export async function analyzeSingleArticle(
   try {
     let pmid = identifier.trim();
     // Basic identifier extraction — hostname is checked exactly (not via substring
-    // matching) so e.g. `evil.example/doi.org/` can't be misclassified as a DOI link.
-    const identifierHost = tryGetHostname(pmid);
-    if (identifierHost === 'pubmed.ncbi.nlm.nih.gov') {
-      const match = pmid.match(/(\d+)\/?$/);
+    // matching) so e.g. `evil.example/doi.org/` can't be misclassified as a DOI link,
+    // and the PMID is parsed from `pathname` (not the raw URL) so a query string or
+    // fragment (`?format=pubmed`, `#comments`) can't hide the trailing digits.
+    const parsedUrl = tryParseUrl(pmid);
+    if (parsedUrl?.hostname === 'pubmed.ncbi.nlm.nih.gov') {
+      const match = parsedUrl.pathname.match(/(\d+)\/?$/);
       if (match) pmid = match[1];
-    } else if (identifierHost === 'doi.org' || identifierHost === 'dx.doi.org') {
+    } else if (parsedUrl?.hostname === 'doi.org' || parsedUrl?.hostname === 'dx.doi.org') {
       const ids = await searchPubMedForIds(identifier, 1, signal, ncbiApiKey);
       if (ids.length > 0) pmid = ids[0];
       else {

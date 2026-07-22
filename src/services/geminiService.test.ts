@@ -384,6 +384,36 @@ describe('geminiService with mocked SDK', () => {
     expect(article.pmid).toBe('987654');
   });
 
+  it('analyzeSingleArticle extracts the PMID from a pubmed URL with a query string or fragment', async () => {
+    mockPubMed.fetchArticleDetails.mockResolvedValueOnce([
+      {
+        pmid: '555111',
+        title: 'T',
+        summary: 'S',
+        authors: 'A',
+        journal: 'J',
+        pubYear: '2020',
+        keywords: [],
+        relevanceScore: 0,
+        relevanceExplanation: '',
+      },
+    ]);
+    hoisted.generateContent.mockResolvedValue({
+      text: JSON.stringify({
+        relevanceScore: 50,
+        relevanceExplanation: 'ok',
+        keywords: [],
+        articleType: 'Other',
+      }),
+    });
+    await analyzeSingleArticle('https://pubmed.ncbi.nlm.nih.gov/555111/?format=pubmed', mockAi);
+    expect(mockPubMed.fetchArticleDetails).toHaveBeenCalledWith(
+      ['555111'],
+      undefined,
+      expect.anything(),
+    );
+  });
+
   it('analyzeSingleArticle does not misclassify a host that merely contains "doi.org/"', async () => {
     mockPubMed.fetchArticleDetails.mockResolvedValueOnce([
       {

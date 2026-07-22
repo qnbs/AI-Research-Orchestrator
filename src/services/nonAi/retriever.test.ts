@@ -121,12 +121,24 @@ describe('retrieveArticles', () => {
     expect(result.pubmedArticles[0].pmid).toBe('1');
   });
 
-  it('propagates a fetchArticleDetails failure as an AppError', async () => {
+  it('isolates a fetchArticleDetails failure and still attempts arXiv', async () => {
     mockPubMed.searchPubMedForIds.mockResolvedValue(['1']);
     mockPubMed.fetchArticleDetails.mockRejectedValue(new Error('fetch failed'));
+    mockArxiv.searchAndFetchArxiv.mockResolvedValue([{ pmid: 'arxiv:1', title: 'Preprint' }]);
+
+    const result = await retrieveArticles([query('x')], { maxArxiv: 5 });
+
+    expect(result.pubmedArticles).toEqual([]);
+    expect(result.arxivArticles).toHaveLength(1);
+  });
+
+  it('still throws when the signal aborts mid fetchArticleDetails', async () => {
+    mockPubMed.searchPubMedForIds.mockResolvedValue(['1']);
+    const abortError = new DOMException('Aborted', 'AbortError');
+    mockPubMed.fetchArticleDetails.mockRejectedValue(abortError);
 
     await expect(retrieveArticles([query('x')], { maxArxiv: 0 })).rejects.toMatchObject({
-      name: 'AppError',
+      code: 'STREAM_ABORTED',
     });
   });
 

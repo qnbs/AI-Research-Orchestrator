@@ -10,9 +10,9 @@
 
 import type { ResearchInput, ResearchReport } from '../../types';
 import { HEURISTIC_BADGE } from './types';
-import { buildMultipleQueries } from './queryBuilder';
+import { buildQuery, type QueryBuildOptions } from './queryBuilder';
 import { retrieveArticles } from './retriever';
-import { rankArticles } from './ranker';
+import { rankArticles, getTopArticles } from './ranker';
 import { mergeAndCurate, enrichArticles, type CuratedArticle } from './curator';
 import { generateResearchReport, streamSynthesisChunks } from './synthesizer';
 import { selectDemoArticlesForTopic } from './sampleData';
@@ -37,6 +37,18 @@ function phase(label: string): string {
   return `${HEURISTIC_BADGE} · ${label}`;
 }
 
+/** Maps the user's form filters (date range, article types) onto query-builder options. */
+function queryOptionsFromInput(input: ResearchInput): QueryBuildOptions {
+  const options: QueryBuildOptions = {};
+  if (input.dateRange !== 'any') {
+    options.minYear = new Date().getFullYear() - parseInt(input.dateRange, 10);
+  }
+  if (input.articleTypes.length > 0) {
+    options.publicationTypes = input.articleTypes;
+  }
+  return options;
+}
+
 /**
  * Execute a full Non-AI research pipeline.
  * Returns a complete ResearchReport with deterministic, extractive synthesis.
@@ -49,8 +61,7 @@ export async function* generateNonAiResearchReportStream(
   yield { phase: phase('Phase 1: Building Boolean query with MeSH terms...') };
   throwIfAborted(signal, 'Aborted');
 
-  const queries = buildMultipleQueries(input.researchTopic);
-  const primaryQuery = queries[0];
+  const primaryQuery = buildQuery(input.researchTopic, queryOptionsFromInput(input));
 
   const isOnline =
     options.getOnline?.() ?? (typeof navigator === 'undefined' ? true : navigator.onLine);
@@ -86,10 +97,14 @@ export async function* generateNonAiResearchReportStream(
   throwIfAborted(signal, 'Aborted');
   yield { phase: phase('Phase 4: Ranking with BM25/TF-IDF hybrid...') };
   const ranked = rankArticles(curated, input.researchTopic);
+  const topRanked = getTopArticles(ranked, input.topNToSynthesize);
 
   throwIfAborted(signal, 'Aborted');
   yield { phase: phase('Phase 5: Generating extractive synthesis...') };
-  const report = generateResearchReport(ranked, input.researchTopic);
+  const report: ResearchReport = {
+    ...generateResearchReport(topRanked, input.researchTopic),
+    generatedQueries: [{ query: primaryQuery.query, explanation: primaryQuery.explanation }],
+  };
   yield { report, phase: phase('Phase 5: Generating extractive synthesis...') };
 
   for await (const chunk of streamSynthesisChunks(report.synthesis, signal)) {
