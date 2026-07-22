@@ -19,8 +19,8 @@
 >   that the real bound organization key is **`qnbs-1`**, not `qnbs`. Would have
 >   made every scan fail with "project/organization not found". Fixed.
 > - **CI-based analysis is confirmed working end-to-end**, verified live on the PR
->   that shipped both fixes: `SonarQube Cloud Scan` step logged `ANALYSIS
-SUCCESSFUL` / `EXECUTION SUCCESS`, the `SonarCloud Code Analysis` GitHub check
+>   that shipped both fixes: the `SonarQube Cloud Scan` step logged a successful
+>   analysis and execution, the `SonarCloud Code Analysis` GitHub check
 >   posted a real result tied to that commit, and `sonarqubecloud[bot]` commented
 >   "Quality Gate passed" on the PR — no "Automatic Analysis is enabled" conflict
 >   appeared anywhere in the scan log. A stale `components/show` timestamp earlier
