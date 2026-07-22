@@ -23,6 +23,9 @@ pnpm run test:run                # Vitest, run once
 pnpm run test:coverage           # Vitest + v8 coverage (gated, see below)
 pnpm exec vitest run src/services/pubmedUtils.test.ts   # single file
 pnpm exec vitest run -t "retries on 429"                # single test by name
+# Prefer scoped `vitest run <file>` locally; read the full test:coverage gate
+# result from CI's "Typecheck, Lint & Tests" job rather than re-running it
+# locally every time - see Testing notes below.
 
 pnpm exec playwright install chromium   # one-time browser install
 pnpm exec playwright test src/test/e2e/smoke.spec.ts -g "loads home"   # single e2e test
@@ -34,7 +37,7 @@ pnpm run bundle:budget   # gzip gate: chunk <=200kB, entry <=400kB, charts <=180
 pnpm run analyze         # bundle visualizer -> dist/stats.html
 ```
 
-Before touching orchestration/Knowledge-Base/provider code, run `typecheck`, `lint`, `test:coverage` — the same gates CI runs (`.github/workflows/deploy.yml`).
+Before touching orchestration/Knowledge-Base/provider code, run `typecheck` and `lint` locally (fast), and scope `vitest run` to the file(s) you touched — then push and read the full `test:coverage` gate result from CI's "Typecheck, Lint & Tests" job (`.github/workflows/deploy.yml`) rather than reproducing the whole suite locally every time; see Testing notes.
 
 The coverage gate (`vitest.config.ts`) is scoped to logic layers only — `src/store`, `src/services`, `src/hooks`, `src/lib` — at 80% lines/statements, 55% branches/functions. UI views are covered by Playwright E2E instead, not unit coverage.
 
@@ -84,3 +87,4 @@ This repo has both `codegraph` (`.codegraph/` — fast deterministic symbol/call
 - Unit/integration specs are colocated `*.test.ts(x)` next to their source. `src/test/setup.ts` mocks IndexedDB and Web Crypto; `fake-indexeddb` is available for DB-heavy tests. Keep specs deterministic (mock network/AI/crypto calls) and isolated (no shared mutable state across files) — never comment out or delete a failing test to get CI green.
 - E2E specs live in `src/test/e2e/` (`agent-flow.spec.ts`, `smoke.spec.ts`); Playwright auto-starts the Vite dev server and uses a fake Gemini key. Prefer `getByRole` selectors; justify any `sleep`.
 - **Full E2E suite runs belong in CI, not on the local dev machine.** This project runs on a resource-constrained (~3.7 GB RAM) local box; the full 38-test suite (both spec files together) reliably exhausts it or gets killed outright, independent of whether the code change under test is correct. Locally, only run a single spec file or a scoped `-g "<pattern>"` subset. For a genuine full-suite result (e.g. before merging a PR that touches E2E-covered code), read it from the `.github/workflows/e2e.yml` "Playwright E2E" check on the PR (`gh run view <run-id> --log` or the workflow's own summary/artifact) rather than reproducing it locally — that job already runs on every push/PR. Remember the job is `continue-on-error: true` (non-blocking): a green check badge does **not** by itself prove 0 failed tests — read the actual step output/artifact for the true pass/fail count, per `docs/e2e-ci-backlog.md`'s promotion-trigger note.
+- **The same cloud-first principle applies to `pnpm run test:coverage`.** It's not RAM-fatal the way the full E2E suite is, but it routinely runs past this box's own 120s foreground timeout and gets auto-backgrounded — repeating it before every push is wasted local resource on a machine that's already tight on RAM. Locally, run `vitest run <changed-file>.test.ts` for fast, targeted feedback while editing. Treat the "Typecheck, Lint & Tests" GitHub Actions job (`.github/workflows/deploy.yml`, blocking/required, not `continue-on-error`) as the authoritative full-suite-plus-coverage-gate result — read it with `gh run view <run-id> --log` or the PR's check output after pushing, rather than running `pnpm run test:coverage` locally as a matter of routine. A local full run is still fine when you specifically want the coverage table in front of you before writing new tests, or when iterating on a coverage-threshold failure itself.
