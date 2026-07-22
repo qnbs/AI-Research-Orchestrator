@@ -5,6 +5,12 @@ importScripts('https://storage.googleapis.com/workbox-cdn/releases/7.0.0/workbox
 // e.g. /sw.js → '' ; /AI-Research-Orchestrator/sw.js → '/AI-Research-Orchestrator'
 const BASE_PATH = self.location.pathname.replace(/\/[^/]*$/, '').replace(/\/$/, '') || '';
 
+// Exact-or-subdomain host match — a plain `.includes(domain)` also matches
+// `evil-ncbi.nlm.nih.gov.attacker.example`, since the substring can appear anywhere in the URL.
+function isHost(hostname, domain) {
+    return hostname === domain || hostname.endsWith(`.${domain}`);
+}
+
 if (workbox) {
     workbox.setConfig({ debug: false });
 
@@ -37,7 +43,7 @@ if (workbox) {
     // Strategy: Network First (Fresh Data Priority)
     // Optimization: Short timeout (5s) to prevent hanging on slow connections.
     registerRoute(
-        ({ url }) => url.hostname.includes('ncbi.nlm.nih.gov'),
+        ({ url }) => isHost(url.hostname, 'ncbi.nlm.nih.gov'),
         new NetworkFirst({
             cacheName: 'pubmed-api-cache',
             networkTimeoutSeconds: 5,
@@ -57,8 +63,8 @@ if (workbox) {
     // Optimization: Long cache life for immutable libraries.
     registerRoute(
         ({ url }) =>
-            url.origin.includes('aistudiocdn.com') ||
-            url.origin.includes('cdn.tailwindcss.com'),
+            isHost(url.hostname, 'aistudiocdn.com') ||
+            isHost(url.hostname, 'cdn.tailwindcss.com'),
         new StaleWhileRevalidate({
             cacheName: 'cdn-resources',
             plugins: [

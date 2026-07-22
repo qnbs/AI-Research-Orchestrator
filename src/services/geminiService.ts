@@ -41,7 +41,7 @@ import {
   DEMO_CORPUS,
   resolveHeuristicArticleByPmid,
   type ReportChatSession,
-} from './heuristics';
+} from './nonAi';
 import {
   generateResearchReportStreamWithMode,
   shouldUseHeuristic,
@@ -731,6 +731,15 @@ export async function suggestAuthors(
   }
 }
 
+/** Parses `value` as an absolute URL, or null (bare PMIDs/DOIs are not URLs). */
+function tryParseUrl(value: string): URL | null {
+  try {
+    return new URL(value);
+  } catch {
+    return null;
+  }
+}
+
 export async function analyzeSingleArticle(
   identifier: string,
   aiSettings: Settings['ai'],
@@ -742,11 +751,15 @@ export async function analyzeSingleArticle(
   throwIfAborted(signal);
   try {
     let pmid = identifier.trim();
-    // Basic identifier extraction
-    if (identifier.includes('pubmed.ncbi.nlm.nih.gov/')) {
-      const match = identifier.match(/(\d+)\/?$/);
+    // Basic identifier extraction — hostname is checked exactly (not via substring
+    // matching) so e.g. `evil.example/doi.org/` can't be misclassified as a DOI link,
+    // and the PMID is parsed from `pathname` (not the raw URL) so a query string or
+    // fragment (`?format=pubmed`, `#comments`) can't hide the trailing digits.
+    const parsedUrl = tryParseUrl(pmid);
+    if (parsedUrl?.hostname === 'pubmed.ncbi.nlm.nih.gov') {
+      const match = parsedUrl.pathname.match(/(\d+)\/?$/);
       if (match) pmid = match[1];
-    } else if (identifier.includes('doi.org/')) {
+    } else if (parsedUrl?.hostname === 'doi.org' || parsedUrl?.hostname === 'dx.doi.org') {
       const ids = await searchPubMedForIds(identifier, 1, signal, ncbiApiKey);
       if (ids.length > 0) pmid = ids[0];
       else {

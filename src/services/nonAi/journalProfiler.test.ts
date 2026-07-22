@@ -4,7 +4,8 @@ import {
   analyzeArticleHeuristic,
   suggestJournalsHeuristic,
   disambiguateJournalHeuristic,
-} from './journalProfiling';
+  analyzeJournalMetrics,
+} from './journalProfiler';
 import type { RankedArticle } from '../../types';
 
 const makeArticle = (overrides: Partial<RankedArticle> = {}): Partial<RankedArticle> => ({
@@ -108,6 +109,16 @@ describe('suggestJournalsHeuristic', () => {
     controller.abort();
     expect(() => suggestJournalsHeuristic('cancer', controller.signal)).toThrow();
   });
+
+  it('does not match the short "ai" key inside unrelated words', () => {
+    const suggestions = suggestJournalsHeuristic('pain management');
+    expect(suggestions.some((j) => j.name === 'Nature Machine Intelligence')).toBe(false);
+  });
+
+  it('matches the short "ai" key as a whole word', () => {
+    const suggestions = suggestJournalsHeuristic('AI in diagnostic imaging');
+    expect(suggestions.some((j) => j.name === 'Nature Machine Intelligence')).toBe(true);
+  });
 });
 
 describe('disambiguateJournalHeuristic', () => {
@@ -176,5 +187,34 @@ describe('analyzeArticleHeuristic', () => {
   it('handles empty titles gracefully', () => {
     const article = analyzeArticleHeuristic(makeArticle({ title: '' }) as RankedArticle);
     expect(article.relevanceScore).toBe(50);
+  });
+
+  it('builds aiSummary via the shared extractive-summary helper, not a raw slice', () => {
+    const article = analyzeArticleHeuristic(
+      makeArticle({
+        summary: 'First sentence about the topic. Second sentence with more detail. Third one.',
+      }) as RankedArticle,
+    );
+    expect(article.aiSummary).toContain('First sentence about the topic');
+  });
+});
+
+describe('analyzeJournalMetrics', () => {
+  it('aggregates article/open-access counts and average relevance per journal', () => {
+    const articles: RankedArticle[] = [
+      { ...makeArticle({ journal: 'Nature', relevanceScore: 80 }) } as RankedArticle,
+      {
+        ...makeArticle({ journal: 'Nature', relevanceScore: 60, isOpenAccess: true }),
+      } as RankedArticle,
+    ];
+    const stats = analyzeJournalMetrics(articles);
+    expect(stats[0].journal).toBe('Nature');
+    expect(stats[0].articleCount).toBe(2);
+    expect(stats[0].openAccessCount).toBe(1);
+    expect(stats[0].avgRelevance).toBe(70);
+  });
+
+  it('returns an empty array for no articles', () => {
+    expect(analyzeJournalMetrics([])).toEqual([]);
   });
 });

@@ -8,7 +8,7 @@ import type { RetrievalResult, BuiltQuery } from './types';
 import { searchPubMedForIds, fetchArticleDetails } from '../pubmedUtils';
 import { searchAndFetchArxiv } from '../arxivUtils';
 import { getNcbiApiKey } from '../apiKeyService';
-import { AppError, toAppError } from '../../lib/errors';
+import { AppError, toAppError, isAbortError } from '../../lib/errors';
 import { withCircuitBreaker } from '../../lib/circuitBreaker';
 
 /** Retrieval options. */
@@ -66,6 +66,7 @@ export async function retrieveArticles(
         }
       }
     } catch (error) {
+      if (isAbortError(error)) throw toAppError(error, 'pubmed');
       // Continue with other queries on failure
       console.warn(`Query failed: ${builtQuery.query}`, error);
     }
@@ -97,7 +98,11 @@ export async function retrieveArticles(
         })),
       );
     } catch (error) {
-      throw toAppError(error, 'pubmed');
+      if (isAbortError(error)) throw toAppError(error, 'pubmed');
+      // Isolate this failure like the per-query search failures above — a details-fetch
+      // error must not block arXiv retrieval; the caller falls back to demo data only
+      // once every source (PubMed + arXiv) has come back empty.
+      console.warn('PubMed article-detail fetch failed:', error);
     }
   }
 
@@ -125,6 +130,7 @@ export async function retrieveArticles(
         articleType: article.articleType ?? 'Preprint',
       }));
     } catch (error) {
+      if (isAbortError(error)) throw toAppError(error, 'arxiv');
       console.warn('arXiv search failed:', error);
     }
   }
@@ -136,45 +142,4 @@ export async function retrieveArticles(
     arxivCount: arxivArticles.length,
     apiCalls,
   };
-}
-
-/**
- * Retrieve related articles via elink for a given PMID.
- */
-export async function retrieveRelatedArticles(
-  _pmid: string,
-  _maxRelated: number = 5,
-  signal?: AbortSignal,
-): Promise<string[]> {
-  if (signal?.aborted) {
-    throw new AppError({
-      code: 'STREAM_ABORTED',
-      message: 'Related article retrieval aborted',
-      retryable: false,
-    });
-  }
-
-  // elink is handled within fetchArticleDetails in pubmedUtils
-  // This is a placeholder for explicit related-article fetching
-  return [];
-}
-
-/**
- * Check if an article is open access via PMCID or other indicators.
- */
-export function isOpenAccess(article: RankedArticle): boolean {
-  return article.isOpenAccess ?? false;
-}
-
-/**
- * Fetch open access status for articles.
- */
-export async function enrichOpenAccessStatus(
-  articles: RankedArticle[],
-  _signal?: AbortSignal,
-): Promise<RankedArticle[]> {
-  return articles.map((article) => ({
-    ...article,
-    isOpenAccess: isOpenAccess(article),
-  }));
 }

@@ -4,6 +4,7 @@
  */
 
 import { ALL_STOPWORDS, EN_STOPWORDS, DE_STOPWORDS } from './stopwords';
+import { AppError } from '../../lib/errors';
 
 /** Tokenize text into meaningful tokens. */
 export function tokenize(text: string, language: 'en' | 'de' | 'all' = 'all'): string[] {
@@ -158,4 +159,60 @@ export function cosineSimilarity(
 
   if (magnitude1 === 0 || magnitude2 === 0) return 0;
   return dotProduct / (Math.sqrt(magnitude1) * Math.sqrt(magnitude2));
+}
+
+/** Split text into sentences (simple punctuation heuristic), keeping those over `minLength`. */
+export function splitSentences(text: string, minLength: number = 20): string[] {
+  if (!text?.trim()) return [];
+  return text
+    .replace(/\s+/g, ' ')
+    .split(/(?<=[.!?])\s+/)
+    .map((s) => s.trim())
+    .filter((s) => s.length > minLength);
+}
+
+/** Stemmed tokens for a text, used for sentence-centrality/similarity scoring. */
+export function stemmedTokens(text: string): string[] {
+  return tokenize(text, 'en').map(stem);
+}
+
+function toFreqRecord(tokens: string[]): Record<string, number> {
+  const freq: Record<string, number> = {};
+  for (const t of tokens) freq[t] = (freq[t] ?? 0) + 1;
+  return freq;
+}
+
+/** Cosine similarity between two raw token lists (bag-of-words term frequency). */
+export function cosineBag(a: string[], b: string[]): number {
+  if (a.length === 0 || b.length === 0) return 0;
+  return cosineSimilarity(toFreqRecord(a), toFreqRecord(b));
+}
+
+/** Extract contiguous n-grams from tokenized text (no minimum length filter). */
+export function ngrams(text: string, n: number): string[] {
+  const tokens = tokenize(text, 'en');
+  if (tokens.length < n) return [];
+  const out: string[] = [];
+  for (let i = 0; i <= tokens.length - n; i++) {
+    out.push(tokens.slice(i, i + n).join(' '));
+  }
+  return out;
+}
+
+/** Jaccard similarity between two pre-built token sets (0-1). */
+export function jaccardSets(a: Set<string>, b: Set<string>): number {
+  if (a.size === 0 && b.size === 0) return 0;
+  let inter = 0;
+  for (const t of a) {
+    if (b.has(t)) inter += 1;
+  }
+  const union = a.size + b.size - inter;
+  return union === 0 ? 0 : inter / union;
+}
+
+/** Throw a STREAM_ABORTED AppError if the signal has already fired. */
+export function throwIfAborted(signal?: AbortSignal, message = 'Operation aborted'): void {
+  if (signal?.aborted) {
+    throw new AppError({ code: 'STREAM_ABORTED', message, retryable: false });
+  }
 }

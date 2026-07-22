@@ -4,7 +4,33 @@
  */
 
 import type { RankedArticle } from '../../types';
-import { normalizeText, tokenize } from './utils';
+import { normalizeText, tokenize, splitSentences } from './utils';
+
+/** Simple publication-type classifier from title/abstract cues. */
+export function classifyArticleType(title: string, summary: string): string {
+  const blob = `${title} ${summary}`.toLowerCase();
+  if (/meta-?analysis|meta analysis/.test(blob)) return 'Meta-Analysis';
+  if (/systematic review/.test(blob)) return 'Systematic Review';
+  if (/randomized|randomised|rct\b|placebo-controlled/.test(blob))
+    return 'Randomized Controlled Trial';
+  if (/cohort|case-control|observational|cross-sectional/.test(blob)) return 'Observational Study';
+  if (/review\b/.test(blob)) return 'Review';
+  return 'Other';
+}
+
+/** Build a short extractive summary (first/middle/last sentence) from an abstract. */
+export function buildExtractiveSummary(abstract: string, title: string): string {
+  // minLength 0: any non-empty sentence counts here (unlike splitSentences' usual
+  // TL;DR-extraction callers, this just needs a representative snippet).
+  const sentences = splitSentences(abstract, 0);
+  if (sentences.length === 0) {
+    return `Summary of "${title}": abstract unavailable; relevance based on title tokens only.`;
+  }
+  const first = sentences[0];
+  const last = sentences.length > 1 ? sentences[sentences.length - 1] : '';
+  const mid = sentences.length > 2 ? sentences[Math.floor(sentences.length / 2)] : '';
+  return [first, mid, last].filter(Boolean).join(' ').slice(0, 600);
+}
 
 /** Curated article with cleaned metadata. */
 export interface CuratedArticle extends RankedArticle {
@@ -85,15 +111,17 @@ export function mergeAndCurate(
 }
 
 /**
- * Enrich articles with computed fields.
+ * Enrich articles with computed fields: word count, a classified article type
+ * (feeds the ranker's pub-type boost - it does nothing if this stays a
+ * placeholder), and a short extractive summary for display when the source
+ * has no AI-generated one.
  */
 export function enrichArticles(articles: CuratedArticle[]): CuratedArticle[] {
   return articles.map((article) => ({
     ...article,
-    // Ensure all fields have defaults
     keywords: article.keywords ?? [],
-    articleType: article.articleType ?? 'unknown',
-    // Compute word count
+    articleType: article.articleType ?? classifyArticleType(article.title, article.summary),
+    aiSummary: article.aiSummary ?? buildExtractiveSummary(article.summary, article.title),
     wordCount: article.summary ? tokenize(article.summary, 'en').length : 0,
   }));
 }

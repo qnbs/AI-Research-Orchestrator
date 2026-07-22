@@ -1,19 +1,23 @@
 /**
  * Similar article finder for the Non-AI Programmatic Research Engine.
  * Uses Jaccard similarity on token overlap for finding related articles.
+ * Gained abort-signal support during the nonAi/heuristics consolidation
+ * (ADR 0009), ported from `services/heuristics/similarArticles.ts`.
  */
 
 import type { SimilarArticle, RankedArticle } from '../../types';
-import { tokenize, jaccardSimilarity } from './utils';
+import { tokenize, jaccardSimilarity, throwIfAborted } from './utils';
 
 /**
  * Find similar articles based on Jaccard similarity.
  */
-export function findSimilarArticles(
+export function findSimilarArticlesHeuristic(
   seed: { title: string; summary: string; keywords?: string[]; pmid?: string },
   candidates: RankedArticle[],
   limit: number = 5,
+  signal?: AbortSignal,
 ): SimilarArticle[] {
+  throwIfAborted(signal);
   const seedText = `${seed.title} ${seed.summary} ${(seed.keywords ?? []).join(' ')}`;
   const seedTokens = tokenize(seedText, 'en');
   const seedPmid = seed.pmid?.trim();
@@ -42,18 +46,4 @@ export function findSimilarArticles(
     .slice(0, limit);
 
   return scored.map(({ pmid, title, reason }) => ({ pmid, title, reason }));
-}
-
-/**
- * Find similar articles with score threshold.
- */
-export function findSimilarArticlesWithThreshold(
-  seed: { title: string; summary: string; keywords?: string[]; pmid?: string },
-  candidates: RankedArticle[],
-  minSimilarity: number = 0.1,
-  limit: number = 10,
-): SimilarArticle[] {
-  return findSimilarArticles(seed, candidates, limit).filter(
-    (a) => a.reason && parseFloat(a.reason.match(/(\d+)%/)?.[1] ?? '0') >= minSimilarity * 100,
-  );
 }

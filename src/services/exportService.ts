@@ -1,4 +1,5 @@
 import jsPDF from 'jspdf';
+import DOMPurify from 'dompurify';
 import {
   RankedArticle,
   ResearchInput,
@@ -35,10 +36,18 @@ const PDF_CONSTANTS = {
   },
 };
 
+// Strips tags via a real HTML parser (DOMPurify) rather than a naive `<[^>]*>` regex,
+// which can be bypassed by nested/malformed markup that reconstructs a tag once stripped.
+const stripHtmlTags = (text: string): string => {
+  const sanitized = DOMPurify.sanitize(text, { ALLOWED_TAGS: [], ALLOWED_ATTR: [] });
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = sanitized;
+  return tempDiv.textContent || tempDiv.innerText || '';
+};
+
 const cleanText = (text: string) =>
   text
-    ? text
-        .replace(/<[^>]*>/g, '')
+    ? stripHtmlTags(text)
         .replace(/[\u2018\u2019]/g, "'")
         .replace(/[\u201C\u201D]/g, '"')
     : '';
@@ -547,14 +556,30 @@ export const exportCitations = (
 ): void => {
   let content = '';
 
+  // Single-pass escaping: chaining sequential `.replace()` calls (backslash first, then
+  // braces) lets a later step re-match characters an earlier step just inserted (e.g. the
+  // `{}` in `\textbackslash{}` getting re-escaped by the brace step). One regex + callback
+  // resolves each *original* character exactly once, so no substitution can compound.
+  const BIBTEX_ESCAPES: Record<string, string> = {
+    '\\': '\\textbackslash{}',
+    '&': '\\&',
+    '%': '\\%',
+    $: '\\$',
+    '#': '\\#',
+    _: '\\_',
+    '{': '\\{',
+    '}': '\\}',
+    '~': '\\textasciitilde{}',
+    '^': '\\textasciicircum{}',
+  };
   const cleanForBibtex = (text: string) => {
-    if (!text) return '{}';
-    // More comprehensive BibTeX escaping
-    let s = text.replace(/\\/g, '\\textbackslash{}');
-    s = s.replace(/([&%$#_{}])/g, '\\$1');
-    s = s.replace(/~/g, '\\textasciitilde{}');
-    s = s.replace(/\^/g, '\\textasciicircum{}');
-    return `{${s}}`;
+    // BibTeX escaping alone doesn't strip HTML markup — a downstream renderer that
+    // treats the .bib file as HTML could still interpret it. Sanitize first, like
+    // every other export path, then escape the plain text for BibTeX.
+    const plainText = stripHtmlTags(text);
+    if (!plainText) return '{}';
+    const escaped = plainText.replace(/[\\&%$#_{}~^]/g, (char) => BIBTEX_ESCAPES[char] ?? char);
+    return `{${escaped}}`;
   };
 
   const cleanForRis = (text: string) => {
@@ -569,10 +594,11 @@ export const exportCitations = (
   if (type === 'bib') {
     content = articles
       .map((a) => {
-        let entry = `@article{PMID:${a.pmid},\n  author  = {${a.authors.split(', ').join(' and ')}},\n  title   = ${cleanForBibtex(a.title)},\n  journal = ${cleanForBibtex(a.journal)},\n  year    = {${a.pubYear}},\n  pmid    = {${a.pmid}},\n`;
+        const authorField = cleanForBibtex(a.authors.split(', ').join(' and '));
+        let entry = `@article{PMID:${a.pmid},\n  author  = ${authorField},\n  title   = ${cleanForBibtex(a.title)},\n  journal = ${cleanForBibtex(a.journal)},\n  year    = {${a.pubYear}},\n  pmid    = {${a.pmid}},\n`;
         if (settings.includeAbstract) entry += `  abstract = ${cleanForBibtex(a.summary)},\n`;
         if (settings.includeKeywords && a.keywords && a.keywords.length > 0)
-          entry += `  keywords = {${a.keywords.join(', ')}},\n`;
+          entry += `  keywords = ${cleanForBibtex(a.keywords.join(', '))},\n`;
 
         const notes = [];
         if (settings.includeTags && a.customTags && a.customTags.length > 0)

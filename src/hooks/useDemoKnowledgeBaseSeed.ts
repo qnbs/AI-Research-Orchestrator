@@ -5,7 +5,7 @@ import {
   createDemoKnowledgeBaseEntries,
   DEMO_DISMISS_STORAGE_KEY,
   DEMO_SEEDED_STORAGE_KEY,
-} from '../services/heuristics';
+} from '../services/nonAi';
 
 /**
  * First-run only: seed educational demo KB entries when empty and never seeded/dismissed.

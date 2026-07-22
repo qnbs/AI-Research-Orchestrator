@@ -143,6 +143,86 @@ export const MESH_DICTIONARY: Record<string, MeshEntry> = {
     synonyms: ['prevention', 'preventive', 'primary prevention', 'secondary prevention'],
     publicationTypes: ['review'],
   },
+  // Merged from services/heuristics/queryFormulation.ts during the nonAi/heuristics
+  // consolidation (ADR 0009) - these 13 topics had no entry here at all.
+  aspirin: {
+    heading: 'Aspirin',
+    ui: 'D001241',
+    synonyms: ['aspirin', 'acetylsalicylic acid', 'asa'],
+    publicationTypes: ['review', 'randomized controlled trial'],
+  },
+  vaccine: {
+    heading: 'Vaccines',
+    ui: 'D014612',
+    synonyms: ['vaccine', 'vaccination', 'vaccines', 'immunization'],
+    publicationTypes: ['review', 'clinical trial'],
+  },
+  antibiotic: {
+    heading: 'Anti-Bacterial Agents',
+    ui: 'D000900',
+    synonyms: ['antibiotic', 'antibiotics', 'antibacterial'],
+    publicationTypes: ['review', 'randomized controlled trial'],
+  },
+  asthma: {
+    heading: 'Asthma',
+    ui: 'D001249',
+    synonyms: ['asthma', 'asthmatic'],
+    publicationTypes: ['review', 'systematic review'],
+  },
+  obesity: {
+    heading: 'Obesity',
+    ui: 'D009765',
+    synonyms: ['obesity', 'obese', 'overweight'],
+    publicationTypes: ['review', 'systematic review'],
+  },
+  inflammation: {
+    heading: 'Inflammation',
+    ui: 'D007249',
+    synonyms: ['inflammation', 'inflammatory'],
+    publicationTypes: ['review'],
+  },
+  immunity: {
+    heading: 'Immune System',
+    ui: 'D007107',
+    synonyms: ['immunity', 'immune system', 'immune'],
+    publicationTypes: ['review'],
+  },
+  heart: {
+    heading: 'Heart',
+    ui: 'D006321',
+    synonyms: ['heart', 'cardiac'],
+    publicationTypes: ['review'],
+  },
+  'myocardial infarction': {
+    heading: 'Myocardial Infarction',
+    ui: 'D009203',
+    synonyms: ['myocardial infarction', 'heart attack', 'mi'],
+    publicationTypes: ['review', 'clinical trial'],
+  },
+  'parkinson disease': {
+    heading: 'Parkinson Disease',
+    ui: 'D010300',
+    synonyms: ['parkinson', "parkinson's disease", 'parkinsons disease', 'pd'],
+    publicationTypes: ['review', 'clinical trial'],
+  },
+  epilepsy: {
+    heading: 'Epilepsy',
+    ui: 'D004827',
+    synonyms: ['epilepsy', 'seizure', 'seizures'],
+    publicationTypes: ['review', 'clinical trial'],
+  },
+  microbiome: {
+    heading: 'Microbiota',
+    ui: 'D064307',
+    synonyms: ['microbiome', 'microbiota', 'gut microbiome'],
+    publicationTypes: ['review', 'systematic review'],
+  },
+  crispr: {
+    heading: 'CRISPR-Cas Systems',
+    ui: 'D000076675',
+    synonyms: ['crispr', 'gene editing', 'crispr-cas9'],
+    publicationTypes: ['review'],
+  },
 };
 
 /** Get MeSH entry by normalized term. */
@@ -161,18 +241,27 @@ export function getMeshEntry(term: string): MeshEntry | undefined {
   return undefined;
 }
 
+// Short abbreviations (ad, asa, cva, dm, htn, mdd, mi, pd, rct, slr, ...) need a whole-word
+// match — plain substring matching also hits unrelated words that merely contain the
+// letters, e.g. "mi" inside "microbiome" or "pd" inside "expand".
+function matchesMeshTerm(lowerQuery: string, term: string): boolean {
+  return term.length <= 3
+    ? new RegExp(`\\b${term}\\b`, 'i').test(lowerQuery)
+    : lowerQuery.includes(term);
+}
+
 /** Find MeSH terms in a query string. */
 export function findMeshTermsInQuery(query: string): string[] {
   const terms: string[] = [];
   const lowerQuery = query.toLowerCase();
 
   for (const [key, entry] of Object.entries(MESH_DICTIONARY)) {
-    if (lowerQuery.includes(key)) {
+    if (matchesMeshTerm(lowerQuery, key)) {
       terms.push(entry.heading);
       continue;
     }
     for (const synonym of entry.synonyms) {
-      if (lowerQuery.includes(synonym.toLowerCase())) {
+      if (matchesMeshTerm(lowerQuery, synonym.toLowerCase())) {
         terms.push(entry.heading);
         break;
       }

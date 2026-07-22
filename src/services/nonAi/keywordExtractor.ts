@@ -4,27 +4,40 @@
  */
 
 import type { RankedArticle, OverallKeyword } from '../../types';
-import { tokenize, stem } from './utils';
+import { tokenize } from './utils';
 
 /**
- * Extract keywords from a single article.
+ * Extract keywords from arbitrary text.
+ *
+ * Returns surface-form terms (not stemmed) since these are displayed directly
+ * to the user as keyword chips - a stemmed form like "hyperten" or "diabet"
+ * would be unreadable. Bigrams get a slight scoring boost to prefer
+ * multi-word terms, matching the weighting used for cross-article n-gram
+ * aggregation below.
  */
-export function extractKeywordsFromArticle(article: RankedArticle, limit: number = 10): string[] {
-  const text = `${article.title} ${article.summary} ${(article.keywords ?? []).join(' ')}`;
+export function extractKeywordsFromText(text: string, limit: number = 8): string[] {
   const tokens = tokenize(text, 'en');
+  const bigrams = extractNgrams(text, 2);
 
-  // Count term frequencies
-  const termFreq = new Map<string, number>();
+  const scores = new Map<string, number>();
   for (const token of tokens) {
-    const stemmed = stem(token.toLowerCase());
-    termFreq.set(stemmed, (termFreq.get(stemmed) ?? 0) + 1);
+    const term = token.toLowerCase();
+    scores.set(term, (scores.get(term) ?? 0) + 1);
+  }
+  for (const bigram of bigrams) {
+    scores.set(bigram, (scores.get(bigram) ?? 0) + 1.5);
   }
 
-  // Sort by frequency and return top terms
-  return [...termFreq.entries()]
+  return [...scores.entries()]
     .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
     .slice(0, limit)
     .map(([term]) => term);
+}
+
+/** Extract keywords from a single article's title, summary, and existing keywords. */
+export function extractKeywordsFromArticle(article: RankedArticle, limit: number = 10): string[] {
+  const text = `${article.title} ${article.summary} ${(article.keywords ?? []).join(' ')}`;
+  return extractKeywordsFromText(text, limit);
 }
 
 /**

@@ -21,7 +21,8 @@ describe('researchApi (apiSlice)', () => {
           text: async () => 'Abstract text here.',
         } as Response);
       }
-      if (url.includes('arxiv.org')) {
+      const hostname = new URL(url).hostname;
+      if (hostname === 'export.arxiv.org' || hostname === 'arxiv.org') {
         const atom = `<?xml version="1.0"?><feed xmlns="http://www.w3.org/2005/Atom">
           <opensearch:totalResults xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/">1</opensearch:totalResults>
           <entry><id>http://arxiv.org/abs/2301.99999v1</id><title>T</title><summary>S</summary>

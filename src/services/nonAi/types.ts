@@ -5,8 +5,8 @@
 
 import type { RankedArticle } from '../../types';
 
-/** Inference mode for the Non-AI engine. */
-export type NonAiMode = 'live' | 'nonAi' | 'hybrid';
+/** Badge string for Non-AI (deterministic) mode outputs. */
+export const HEURISTIC_BADGE = 'Heuristic mode';
 
 /** Query builder output with explanation. */
 export interface BuiltQuery {
@@ -87,6 +87,13 @@ export interface ExtractiveSynthesis {
   }>;
   /** Synthesis mode identifier. */
   synthesisMode: 'extractive-template';
+}
+
+/** Chat session interface shared by live-provider and Non-AI adapters. */
+export interface ReportChatSession {
+  sendMessageStream(params: {
+    message: string;
+  }): Promise<AsyncGenerator<{ text?: string }, void, unknown>>;
 }
 
 /** Template-based narrative section. */

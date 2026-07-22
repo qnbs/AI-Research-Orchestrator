@@ -3,7 +3,7 @@
  * Keeps `geminiService` as the public entry while avoiding further monolith growth (ADR 0007).
  */
 import type { ResearchInput, ResearchReport, Settings } from '../types';
-import { generateHeuristicResearchReportStream } from './heuristics';
+import { generateNonAiResearchReportStream } from './nonAi';
 import { resolveActiveInferenceMode } from './resolveActiveInferenceMode';
 
 export type ResearchStreamEvent = {
@@ -37,7 +37,7 @@ export async function* generateResearchReportStreamWithMode(
   signal?: AbortSignal,
 ): AsyncGenerator<ResearchStreamEvent> {
   if (await shouldUseHeuristic(aiSettings)) {
-    yield* generateHeuristicResearchReportStream(input, aiSettings, signal);
+    yield* generateNonAiResearchReportStream(input, signal);
     return;
   }
   yield* liveStream(input, aiSettings, signal);
