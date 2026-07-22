@@ -73,6 +73,7 @@ Service worker at `public/sw.js`; `404.html` handles SPA routing on GitHub Pages
 - New feature checklist: Redux slice/RTK Query endpoint → Dexie schema (if persisted) → i18n EN+DE → Framer Motion transition → ARIA/keyboard support → unit test stub.
 - Chart library is Recharts only (ADR 0005) — do not reintroduce Chart.js.
 - Resolve _all_ automated review-bot comments (CodeRabbit, CodeAnt, etc.) on a PR, including nitpicks and out-of-diff items, before considering it mergeable.
+- PRs also receive an automated Claude Code review (`.github/workflows/claude-code-review.yml`) alongside CodeRabbit. Its findings land as normal inline review threads (same GraphQL `reviewThreads` mechanism as CodeRabbit's). Read both channels before merge — same standing lesson as CodeRabbit: a bot's out-of-diff findings can still land only in the review **body** text, never as a thread, so grep the paginated review body every pass, not just the thread list.
 
 ## Code intelligence (local, not committed)
 
