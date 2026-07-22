@@ -13,7 +13,7 @@ The product is a static GitHub Pages PWA with no backend. Users must supply a Ge
 1. User enters keys in Settings → AI Configuration.
 2. **Gemini key validation before encrypt:** accept only keys matching `AIza` + 35 alphanumerics (39 chars total via `validateApiKeyFormat`). Reject malformed input without storing or encrypting.
 3. Gemini (and optional NCBI) keys are AES-GCM encrypted with a Web Crypto master key stored in IndexedDB vault `APIKeyVault`.
-4. **The master key is generated non-extractable** (`crypto.subtle.generateKey(..., extractable: false, ...)`) and the `CryptoKey` object itself — never raw key bytes — is persisted via IndexedDB's structured-clone support (`apiKeyService.ts`'s `getOrCreateEncryptionKey`). `crypto.subtle.exportKey` is never called anywhere in this file; raw key material never exists in a form any JavaScript, including this app's own, can read. Only `crypto.subtle` can use the key to encrypt/decrypt.
+4. **The master key is generated non-extractable** (`crypto.subtle.generateKey(..., extractable: false, ...)`) and the `CryptoKey` object itself — never raw key bytes — is persisted via IndexedDB's structured-clone support (`apiKeyService.ts`'s `getOrCreateEncryptionKey`). `crypto.subtle.exportKey` is never called anywhere in `apiKeyService.ts`; raw key material never exists in a form any JavaScript, including this app's own, can read. Only `crypto.subtle` can use the key to encrypt/decrypt.
 5. Ciphertext stored alongside in the same origin DB (separate storage keys per credential).
 6. Runtime decrypts in memory for Gemini SDK / NCBI E-utilities calls only.
 7. Document residual XSS risk in `SECURITY.md`; CSP + DOMPurify reduce XSS surface.
