@@ -142,6 +142,26 @@ describe('retrieveArticles', () => {
     });
   });
 
+  it('still throws when the signal aborts mid PubMed-search', async () => {
+    const abortError = new DOMException('Aborted', 'AbortError');
+    mockPubMed.searchPubMedForIds.mockRejectedValue(abortError);
+
+    await expect(retrieveArticles([query('x')], { maxArxiv: 0 })).rejects.toMatchObject({
+      code: 'STREAM_ABORTED',
+    });
+  });
+
+  it('still throws when the signal aborts mid arXiv search', async () => {
+    mockPubMed.searchPubMedForIds.mockResolvedValue([]);
+    mockPubMed.fetchArticleDetails.mockResolvedValue([]);
+    const abortError = new DOMException('Aborted', 'AbortError');
+    mockArxiv.searchAndFetchArxiv.mockRejectedValue(abortError);
+
+    await expect(retrieveArticles([query('x')], { maxArxiv: 5 })).rejects.toMatchObject({
+      code: 'STREAM_ABORTED',
+    });
+  });
+
   it('swallows an arXiv failure and returns empty arxivArticles', async () => {
     mockPubMed.searchPubMedForIds.mockResolvedValue([]);
     mockPubMed.fetchArticleDetails.mockResolvedValue([]);

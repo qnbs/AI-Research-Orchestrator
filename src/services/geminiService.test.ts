@@ -384,7 +384,10 @@ describe('geminiService with mocked SDK', () => {
     expect(article.pmid).toBe('987654');
   });
 
-  it('analyzeSingleArticle extracts the PMID from a pubmed URL with a query string or fragment', async () => {
+  it.each([
+    ['query string', 'https://pubmed.ncbi.nlm.nih.gov/555111/?format=pubmed'],
+    ['fragment', 'https://pubmed.ncbi.nlm.nih.gov/555111/#comments'],
+  ])('analyzeSingleArticle extracts the PMID from a pubmed URL with a %s', async (_label, url) => {
     mockPubMed.fetchArticleDetails.mockResolvedValueOnce([
       {
         pmid: '555111',
@@ -406,7 +409,7 @@ describe('geminiService with mocked SDK', () => {
         articleType: 'Other',
       }),
     });
-    await analyzeSingleArticle('https://pubmed.ncbi.nlm.nih.gov/555111/?format=pubmed', mockAi);
+    await analyzeSingleArticle(url, mockAi);
     expect(mockPubMed.fetchArticleDetails).toHaveBeenCalledWith(
       ['555111'],
       undefined,

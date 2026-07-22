@@ -66,6 +66,7 @@ export async function retrieveArticles(
         }
       }
     } catch (error) {
+      if (isAbortError(error)) throw toAppError(error, 'pubmed');
       // Continue with other queries on failure
       console.warn(`Query failed: ${builtQuery.query}`, error);
     }
@@ -129,6 +130,7 @@ export async function retrieveArticles(
         articleType: article.articleType ?? 'Preprint',
       }));
     } catch (error) {
+      if (isAbortError(error)) throw toAppError(error, 'arxiv');
       console.warn('arXiv search failed:', error);
     }
   }
