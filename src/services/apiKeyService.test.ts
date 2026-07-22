@@ -313,7 +313,7 @@ describe('apiKeyService', () => {
         name: 'QuotaExceededError',
         message: 'Quota exceeded',
       } as DOMException;
-      expect(domExceptionLike instanceof Error).toBe(false);
+      expect(domExceptionLike).not.toBeInstanceOf(Error);
 
       const wrapped = toRejectionError(domExceptionLike);
       expect(wrapped).toBeInstanceOf(Error);
@@ -337,7 +337,7 @@ describe('apiKeyService', () => {
         reopened.onsuccess = () => resolve(null);
       });
       expect(realError).not.toBeNull();
-      expect(realError instanceof Error).toBe(false);
+      expect(realError).not.toBeInstanceOf(Error);
 
       const wrapped = toRejectionError(realError);
       expect(wrapped).toBeInstanceOf(Error);
