@@ -256,8 +256,21 @@ describe('apiKeyService', () => {
     it('converges concurrent callers on one master key instead of racing to different ones', async () => {
       // Concurrent Promise.all-style calls (mirroring ApiKeySettings.tsx's
       // mount-time Promise.all([hasProviderApiKey(...), getNcbiApiKey()]))
-      // must not each independently regenerate the master key.
+      // must not each independently regenerate the master key. Start from a
+      // vault with no master key yet so generateKey is guaranteed to fire.
+      const db = await openVaultDatabase();
+      await new Promise<void>((resolve, reject) => {
+        const tx = db.transaction('keys', 'readwrite');
+        tx.objectStore('keys').delete(ENCRYPTION_KEY_NAME);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+      });
+      db.close();
+
+      const generateKeySpy = vi.spyOn(crypto.subtle, 'generateKey');
       await Promise.all([saveApiKey(VALID_KEY), saveNcbiApiKey('ncbi-test-key')]);
+      expect(generateKeySpy).toHaveBeenCalledTimes(1);
+      generateKeySpy.mockRestore();
 
       await expect(getApiKey()).resolves.toBe(VALID_KEY);
       await expect(getNcbiApiKey()).resolves.toBe('ncbi-test-key');
@@ -268,9 +281,12 @@ describe('apiKeyService', () => {
       await putVaultEntry(db, ENCRYPTION_KEY_NAME, new Uint8Array(32));
       db.close();
 
+      const generateKeySpy = vi.spyOn(crypto.subtle, 'generateKey');
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
       await Promise.all([saveApiKey(VALID_KEY), saveNcbiApiKey('ncbi-test-key')]);
       warnSpy.mockRestore();
+      expect(generateKeySpy).toHaveBeenCalledTimes(1);
+      generateKeySpy.mockRestore();
 
       await expect(getApiKey()).resolves.toBe(VALID_KEY);
       await expect(getNcbiApiKey()).resolves.toBe('ncbi-test-key');
