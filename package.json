@@ -54,7 +54,7 @@
     "@anthropic-ai/sdk": "^0.112.3",
     "@google/genai": "^2.13.0",
     "@reduxjs/toolkit": "^2.12.0",
-    "@tanstack/react-virtual": "^3.13.21",
+    "@tanstack/react-virtual": "^3.14.8",
     "cmdk": "^1.1.1",
     "dexie": "^4.4.2",
     "dexie-react-hooks": "^1.1.7",
