@@ -72,7 +72,12 @@ describe('service worker integrity', () => {
       const statusesMatch = block.match(/statuses:\s*\[([^\]]*)\]/);
       if (!statusesMatch) continue; // route has no CacheableResponsePlugin at all
       const statuses = statusesMatch[1].split(',').map((s) => s.trim());
-      const isWebfontsRoute = block.slice(0, statusesMatch.index).includes('fonts.gstatic.com');
+      // Matches the exact quoted literal from sw.js, not a bare substring
+      // (CodeQL js/incomplete-url-substring-sanitization would otherwise
+      // flag this the same way sw.js's own isHost() helper exists to avoid).
+      const isWebfontsRoute = block
+        .slice(0, statusesMatch.index)
+        .includes("'https://fonts.gstatic.com'");
       if (isWebfontsRoute) {
         expect(statuses).toEqual(['0', '200']);
         sawWebfontsException = true;
