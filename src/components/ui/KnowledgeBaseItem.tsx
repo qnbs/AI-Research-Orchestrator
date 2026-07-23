@@ -23,7 +23,10 @@ function relevanceColor(score: number): string {
   if (score >= 0.7) return 'var(--color-brand-accent)';
   if (score >= 0.5) return 'var(--color-accent-cyan)';
   if (score >= 0.3) return 'var(--color-accent-amber)';
-  return 'var(--color-border)';
+  // Lowest relevance tier renders as a plain, decorative accent bar rather
+  // than a semantic color - --color-border-subtle, not the WCAG-AA-bumped
+  // --color-border, matches index.css's own fallback for this same bar.
+  return 'var(--color-border-subtle)';
 }
 
 /** Short human-readable label for the relevance score. */

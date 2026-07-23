@@ -216,7 +216,7 @@ const ScientometricHub: React.FC<Props> = ({ articles, keywords = [], title }) =
             <div>
               <ResponsiveContainer width="100%" height={300}>
                 <ScatterChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border-subtle)" />
                   <XAxis type="number" dataKey="x" name="Position" hide domain={[0, 100]} />
                   <YAxis type="number" dataKey="y" name="Position" hide domain={[0, 100]} />
                   <ZAxis type="number" dataKey="articleCount" range={[40, 400]} name="Articles" />
@@ -257,7 +257,7 @@ const ScientometricHub: React.FC<Props> = ({ articles, keywords = [], title }) =
           {activeTab === 'years' && (
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={yearData} margin={{ top: 5, right: 10, bottom: 20, left: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border-subtle)" />
                 <XAxis
                   dataKey="year"
                   tick={{ fill: 'var(--color-text-secondary)', fontSize: 11 }}
