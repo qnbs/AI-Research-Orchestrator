@@ -6,7 +6,7 @@ updates:
       interval: weekly
     open-pull-requests-limit: 10
     ignore:
-      # Self-hosted under public/workbox-v<version>/ (ADR 0011/WS-B) via
+      # Self-hosted under public/workbox-v<version>/ (ADR 0004/WS-B) via
       # scripts/copy-workbox.mjs - a version bump here needs a deliberate,
       # manual `pnpm run workbox:copy` + WORKBOX_VERSION bump alongside it,
       # not a routine auto-merged Dependabot PR. check:workbox-vendor-drift
