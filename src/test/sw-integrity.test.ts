@@ -23,17 +23,44 @@ describe('service worker integrity', () => {
   });
 
   it('never calls skipWaiting() unconditionally', () => {
+    // Structural containment, not raw string-offset ordering: a prior version
+    // of this assertion only checked that *some* addEventListener('message'
+    // and *some* if ( occurred earlier in the file, in that order - which a
+    // second, genuinely-unconditional self.skipWaiting() added anywhere later
+    // in the file (e.g. back at top-level in an install handler) would still
+    // satisfy, since the legitimate gated call is always present earlier.
+    // extractBalancedBody actually finds each message-listener callback's own
+    // brace-matched body, so a stray call outside every such body fails.
+    function extractBalancedBody(source: string, openBraceSearchFrom: number) {
+      const openIndex = source.indexOf('{', openBraceSearchFrom);
+      let depth = 0;
+      for (let i = openIndex; i < source.length; i += 1) {
+        if (source[i] === '{') depth += 1;
+        else if (source[i] === '}') {
+          depth -= 1;
+          if (depth === 0)
+            return { start: openIndex + 1, end: i, body: source.slice(openIndex + 1, i) };
+        }
+      }
+      throw new Error('Unbalanced braces while extracting message-listener body');
+    }
+
+    const messageListenerSites = [...swSource.matchAll(/addEventListener\('message',/g)];
+    expect(messageListenerSites.length).toBeGreaterThan(0);
+    const messageListenerBodies = messageListenerSites.map((site) =>
+      extractBalancedBody(swSource, site.index! + site[0].length),
+    );
+
     const skipWaitingCalls = [...swSource.matchAll(/self\.skipWaiting\(\)/g)];
     expect(skipWaitingCalls.length).toBeGreaterThan(0);
-    // Every occurrence must sit inside a message-listener callback, gated by
-    // an `if` immediately before it - not fired unconditionally at the top
-    // level of the install/activate lifecycle.
     for (const call of skipWaitingCalls) {
-      const before = swSource.slice(0, call.index);
-      const lastMessageListener = before.lastIndexOf("addEventListener('message'");
-      const lastIf = before.lastIndexOf('if (');
-      expect(lastMessageListener).toBeGreaterThan(-1);
-      expect(lastIf).toBeGreaterThan(lastMessageListener);
+      const enclosingBody = messageListenerBodies.find(
+        (b) => call.index! >= b.start && call.index! < b.end,
+      );
+      expect(enclosingBody).toBeDefined();
+      // ...and still gated by an `if` within that same body, not fired as
+      // soon as any message arrives regardless of type.
+      expect(enclosingBody!.body).toMatch(/if\s*\(/);
     }
   });
 
@@ -47,16 +74,25 @@ describe('service worker integrity', () => {
     }
   });
 
-  it('prunes stale runtime cache versions on activate, including the pre-versioning bare cache names', () => {
+  it('prunes stale runtime cache versions on activate using an exact-match helper, including the pre-versioning bare cache names', () => {
     const activateIndex = swSource.indexOf("addEventListener('activate'");
     expect(activateIndex).toBeGreaterThan(-1);
     const activateBlock = swSource.slice(activateIndex);
     expect(activateBlock).toMatch(/caches\.delete\(/);
+    expect(activateBlock).toMatch(/isOwnedCacheName/);
+
+    const helperMatch = swSource.match(/function isOwnedCacheName\([^)]*\)\s*\{([\s\S]*?)\n\}/);
+    expect(helperMatch).not.toBeNull();
+    const helperBody = helperMatch![1];
     // A cache name from before CACHE_VERSION existed at all (e.g. the bare
     // `pages-cache`, still sitting in any already-installed user's storage)
-    // must also match, not only a future `<base>-v<n>` - `startsWith` alone
-    // never matches the exact bare name.
-    expect(activateBlock).toMatch(/key === base/);
+    // must also match.
+    expect(helperBody).toMatch(/key === base/);
+    // Anchored to a version suffix of digits only, not a bare `startsWith` -
+    // `pages-cache-victim` (an unrelated cache sharing the same text prefix)
+    // must NOT be treated as one of this SW's own stale versions.
+    expect(helperBody).toMatch(/-v\[0-9\]\+\$/);
+    expect(helperBody).toMatch(/\^\$\{/);
   });
 
   it('only caches real HTTP success responses, except the Google Fonts webfonts route which also intentionally allows opaque (status 0) ones', () => {

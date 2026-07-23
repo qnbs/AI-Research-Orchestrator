@@ -9,7 +9,8 @@
  * Run again (pnpm run workbox:copy) whenever WORKBOX_VERSION below changes -
  * bump it and the six `pnpm add -D workbox-*@<version>` packages together.
  * scripts/check-workbox-vendor-drift.mjs (wired into CI) fails the build if
- * the committed public/workbox-v*/ ever falls out of sync with this.
+ * the committed public/workbox-v<version> directory ever falls out of sync
+ * with this.
  */
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';

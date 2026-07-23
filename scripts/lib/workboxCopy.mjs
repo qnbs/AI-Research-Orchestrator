@@ -28,15 +28,19 @@ function copyStrippingSourceMapComment(src, dest) {
   writeFileSync(dest, content);
 }
 
+// public/sw.js hardcodes workbox.setConfig({ debug: false, ... }) - not
+// gated on hostname/env - so Workbox's loader (workbox-sw.js) always resolves
+// its per-module importScripts() to the `.prod.js` variant. Copying `.dev.js`
+// too would be ~216 kB of dead weight: committed, built into dist/, deployed,
+// and tracked forever by check-workbox-vendor-drift.mjs for zero functional
+// benefit. Only copy `.prod.js` unless debug ever becomes conditional.
 export function copyWorkboxFiles(root, outDir) {
   if (!existsSync(outDir)) mkdirSync(outDir, { recursive: true });
 
   for (const pkg of WORKBOX_MODULES) {
-    for (const variant of ['prod', 'dev']) {
-      const file = `${pkg}.${variant}.js`;
-      const src = join(root, 'node_modules', pkg, 'build', file);
-      copyStrippingSourceMapComment(src, join(outDir, file));
-    }
+    const file = `${pkg}.prod.js`;
+    const src = join(root, 'node_modules', pkg, 'build', file);
+    copyStrippingSourceMapComment(src, join(outDir, file));
   }
   // The loader script itself.
   copyStrippingSourceMapComment(

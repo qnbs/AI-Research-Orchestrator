@@ -35,6 +35,16 @@ function isHost(hostname, domain) {
     return hostname === domain || hostname.endsWith(`.${domain}`);
 }
 
+// Matches this SW's own cache names exactly - `<base>` (pre-versioning) or
+// `<base>-v<digits>` (any past/future CACHE_VERSION) - never a same-prefixed
+// but unrelated cache. A plain `startsWith(`${base}-v`)` also matches
+// `pages-cache-victim` (base "pages-cache" + "-v" + "ictim"), which isn't
+// one of ours at all.
+function isOwnedCacheName(key, base) {
+    const escapedBase = base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return key === base || new RegExp(`^${escapedBase}-v[0-9]+$`).test(key);
+}
+
 if (workbox) {
     // Take control of already-open clients once activated, but activation
     // itself waits for an explicit message from the page (see the `message`
@@ -179,12 +189,11 @@ if (workbox) {
     });
 
     // --- Prune stale versions of our own runtime caches on activate ---
-    // Matches both a previously-versioned name (`<base>-v<n>`, from a future
+    // Covers both a previously-versioned name (`<base>-v<n>`, from a future
     // version bump) AND the bare pre-versioning name (`<base>` exactly, e.g.
     // `pages-cache` from before CACHE_VERSION existed at all) - anyone with
     // this PWA already installed still has those six unversioned caches
-    // sitting around, and `startsWith(`${base}-v`)` alone never matches an
-    // exact `key === base`, so they'd otherwise survive every activate forever.
+    // sitting around, and they'd otherwise survive every activate forever.
     self.addEventListener('activate', (event) => {
         const currentNames = new Set(Object.values(CACHE_NAMES));
         event.waitUntil(
@@ -193,9 +202,8 @@ if (workbox) {
                     keys
                         .filter(
                             (key) =>
-                                CACHE_BASE_NAMES.some(
-                                    (base) => key === base || key.startsWith(`${base}-v`),
-                                ) && !currentNames.has(key),
+                                CACHE_BASE_NAMES.some((base) => isOwnedCacheName(key, base)) &&
+                                !currentNames.has(key),
                         )
                         .map((key) => caches.delete(key)),
                 ),
