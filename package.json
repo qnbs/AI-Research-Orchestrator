@@ -62,7 +62,7 @@
     "framer-motion": "^12.38.0",
     "jspdf": "^4.2.0",
     "lucide-react": "^1.14.0",
-    "marked": "^13.0.2",
+    "marked": "^18.0.7",
     "openai": "^4.104.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
