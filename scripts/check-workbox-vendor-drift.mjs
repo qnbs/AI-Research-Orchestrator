@@ -7,7 +7,7 @@
  * Dependabot bump to package.json/pnpm-lock.yaml would pass every other gate
  * while the JS actually served under public/workbox-v.../ silently stayed on
  * the old version - the exact "declared version != what's running" problem
- * WS-B (self-hosted Workbox, ADR 0011) set out to close, just relocated from
+ * WS-B (self-hosted Workbox, ADR 0004) set out to close, just relocated from
  * CDN-trust to vendor-drift. Mirrors check-no-cdn-scripts.mjs's role for the
  * CDN-removal invariant.
  *

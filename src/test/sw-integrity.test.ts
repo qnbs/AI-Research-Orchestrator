@@ -4,7 +4,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 
 /**
  * Plain-text assertions against the service worker source and the CSP meta
- * tag it must stay consistent with (ADR 0011/WS-B). No browser/SW runtime
+ * tag it must stay consistent with (ADR 0004/WS-B). No browser/SW runtime
  * involved - these are regression guards against reintroducing the exact
  * problems that motivated the self-hosting/update-flow/cache-versioning work,
  * not a functional test of the service worker itself.

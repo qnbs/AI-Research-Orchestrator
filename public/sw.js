@@ -2,7 +2,7 @@
 // e.g. /sw.js → '' ; /AI-Research-Orchestrator/sw.js → '/AI-Research-Orchestrator'
 const BASE_PATH = self.location.pathname.replace(/\/[^/]*$/, '').replace(/\/$/, '') || '';
 
-// Self-hosted Workbox (ADR 0011/WS-B): no CDN dependency at runtime. Files
+// Self-hosted Workbox (ADR 0004/WS-B): no CDN dependency at runtime. Files
 // copied from the workbox-* npm packages via scripts/copy-workbox.mjs
 // (pnpm run workbox:copy) - re-run that script and bump WORKBOX_VERSION
 // together when upgrading.
