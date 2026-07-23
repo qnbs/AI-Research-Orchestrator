@@ -160,6 +160,11 @@ for (const [themeName, vars] of Object.entries(cssThemes)) {
   requireRatio(themeName, 'text-placeholder vs input-bg', textPlaceholder, inputBg, 4.5);
   requireRatio(themeName, 'border vs background (non-text UI component)', border, background, 3.0);
   requireRatio(themeName, 'border vs surface (non-text UI component)', border, surface, 3.0);
+  // .glass-input (and similar) puts border on --color-input-bg, not only on
+  // page background / surface. inputBg is already flattened above for the
+  // placeholder check; reuse it so a future independent --color-input-bg
+  // tweak cannot silently drop input borders below 3:1.
+  requireRatio(themeName, 'border vs input-bg', border, inputBg, 3.0);
   // The two-layer focus ring's outer ring is fully opaque brand-accent
   // (see src/index.css's --focus-ring comment for why) - a solid color
   // needs no alpha-compositing step, so this is the same check as any
