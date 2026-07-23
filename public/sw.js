@@ -94,12 +94,17 @@ if (workbox) {
     );
 
     // Webfonts: CacheFirst (Immutable)
+    // statuses stays [0, 200] here (unlike the other routes above): Workbox's
+    // own Google Fonts recipe pairs [0, 200] specifically with this route,
+    // since @font-face resource fetches can legitimately come back opaque
+    // (status 0) in some browsers even on success - unlike fetch()-driven
+    // navigation/API calls, where opaque only ever masks a real failure.
     registerRoute(
         ({ url }) => url.origin === 'https://fonts.gstatic.com',
         new CacheFirst({
             cacheName: CACHE_NAMES.googleFontsWebfonts,
             plugins: [
-                new CacheableResponsePlugin({ statuses: [200] }),
+                new CacheableResponsePlugin({ statuses: [0, 200] }),
                 new ExpirationPlugin({
                     maxAgeSeconds: 60 * 60 * 24 * 365,
                     maxEntries: 30,
@@ -174,6 +179,12 @@ if (workbox) {
     });
 
     // --- Prune stale versions of our own runtime caches on activate ---
+    // Matches both a previously-versioned name (`<base>-v<n>`, from a future
+    // version bump) AND the bare pre-versioning name (`<base>` exactly, e.g.
+    // `pages-cache` from before CACHE_VERSION existed at all) - anyone with
+    // this PWA already installed still has those six unversioned caches
+    // sitting around, and `startsWith(`${base}-v`)` alone never matches an
+    // exact `key === base`, so they'd otherwise survive every activate forever.
     self.addEventListener('activate', (event) => {
         const currentNames = new Set(Object.values(CACHE_NAMES));
         event.waitUntil(
@@ -182,8 +193,9 @@ if (workbox) {
                     keys
                         .filter(
                             (key) =>
-                                CACHE_BASE_NAMES.some((base) => key.startsWith(`${base}-v`)) &&
-                                !currentNames.has(key),
+                                CACHE_BASE_NAMES.some(
+                                    (base) => key === base || key.startsWith(`${base}-v`),
+                                ) && !currentNames.has(key),
                         )
                         .map((key) => caches.delete(key)),
                 ),
@@ -197,6 +209,11 @@ if (workbox) {
     // controller present; its "Reload" button postMessages this, and the page
     // reloads once on the resulting `controllerchange`.
     self.addEventListener('message', (event) => {
+        // A service worker can only ever be controlled by same-origin clients
+        // (registration itself requires a same-origin scope), so this is
+        // defense-in-depth rather than a reachable cross-origin path - but it's
+        // what CodeQL's js/missing-origin-check rule expects regardless.
+        if (event.origin !== self.location.origin) return;
         if (event.data && event.data.type === 'SKIP_WAITING') {
             self.skipWaiting();
         }

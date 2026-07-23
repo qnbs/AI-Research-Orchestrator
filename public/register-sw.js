@@ -52,6 +52,12 @@
           }
         });
       });
+    }).catch(function () {
+      // Registration can legitimately fail (browser policy, bad scope,
+      // network failure fetching sw.js) - absorb it rather than leaving an
+      // unhandled promise rejection. sw-integrity.test.ts asserts this file
+      // never logs, so this stays a silent no-op rather than console.*.
+      return undefined;
     });
 
     window.addEventListener('sw-request-reload', function () {

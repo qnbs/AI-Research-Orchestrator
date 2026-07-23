@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 
 /**
  * Plain-text assertions against the service worker source and the CSP meta
@@ -47,18 +47,42 @@ describe('service worker integrity', () => {
     }
   });
 
-  it('prunes stale runtime cache versions on activate', () => {
-    expect(swSource).toMatch(/addEventListener\('activate'/);
-    expect(swSource).toMatch(/caches\.delete\(/);
+  it('prunes stale runtime cache versions on activate, including the pre-versioning bare cache names', () => {
+    const activateIndex = swSource.indexOf("addEventListener('activate'");
+    expect(activateIndex).toBeGreaterThan(-1);
+    const activateBlock = swSource.slice(activateIndex);
+    expect(activateBlock).toMatch(/caches\.delete\(/);
+    // A cache name from before CACHE_VERSION existed at all (e.g. the bare
+    // `pages-cache`, still sitting in any already-installed user's storage)
+    // must also match, not only a future `<base>-v<n>` - `startsWith` alone
+    // never matches the exact bare name.
+    expect(activateBlock).toMatch(/key === base/);
   });
 
-  it('only caches real HTTP success responses, not opaque (status 0) ones', () => {
-    const statusesBlocks = [...swSource.matchAll(/statuses:\s*\[([^\]]*)\]/g)];
-    expect(statusesBlocks.length).toBeGreaterThan(0);
-    for (const block of statusesBlocks) {
-      const statuses = block[1].split(',').map((s) => s.trim());
-      expect(statuses).toEqual(['200']);
+  it('only caches real HTTP success responses, except the Google Fonts webfonts route which also intentionally allows opaque (status 0) ones', () => {
+    // @font-face fetches can legitimately come back opaque in some browsers
+    // even on success, unlike fetch()-driven navigation/API calls where
+    // opaque only ever masks a real failure - see the comment in sw.js next
+    // to this route's CacheableResponsePlugin.
+    const routeBlocks = swSource.split('registerRoute(').slice(1);
+    expect(routeBlocks.length).toBeGreaterThan(0);
+    let sawWebfontsException = false;
+    let sawPlainRoutes = 0;
+    for (const block of routeBlocks) {
+      const statusesMatch = block.match(/statuses:\s*\[([^\]]*)\]/);
+      if (!statusesMatch) continue; // route has no CacheableResponsePlugin at all
+      const statuses = statusesMatch[1].split(',').map((s) => s.trim());
+      const isWebfontsRoute = block.slice(0, statusesMatch.index).includes('fonts.gstatic.com');
+      if (isWebfontsRoute) {
+        expect(statuses).toEqual(['0', '200']);
+        sawWebfontsException = true;
+      } else {
+        expect(statuses).toEqual(['200']);
+        sawPlainRoutes += 1;
+      }
     }
+    expect(sawWebfontsException).toBe(true);
+    expect(sawPlainRoutes).toBeGreaterThan(0);
   });
 
   it('has a message listener that only reacts to SKIP_WAITING', () => {
@@ -75,40 +99,6 @@ describe('service worker integrity', () => {
     expect(registerSwSource).toMatch(/postMessage|SKIP_WAITING|controllerchange/);
   });
 
-  it('never reloads on every controllerchange - only one caused by an explicit user request', () => {
-    // controllerchange also fires on a page's very first, uncontrolled ->
-    // controlled transition (clientsClaim() taking over a page with no prior
-    // service worker), not only on a genuine version swap. Reloading
-    // unconditionally there causes an unwanted reload on every fresh page
-    // load - confirmed live: an earlier version of this file did exactly
-    // that and broke two real Playwright E2E tests whose page.evaluate()/
-    // assertions raced the resulting reload. A de-dupe flag (e.g. `reloaded`)
-    // alone does NOT fix this - it still fires once, unconditionally, on the
-    // very first activation. There must be a SEPARATE flag that starts false
-    // and is only set true by a handler for an explicit user-intent event
-    // (e.g. "sw-request-reload" dispatched from the UI's reload button), and
-    // the controllerchange handler's condition must reference that same flag.
-    const requestListenerMatch = registerSwSource.match(
-      /addEventListener\('sw-request-reload',\s*function\s*\([^)]*\)\s*\{([\s\S]*?)\}\s*\);/,
-    );
-    expect(requestListenerMatch).not.toBeNull();
-    const requestBody = requestListenerMatch![1];
-    const flagAssignment = requestBody.match(/(\w+)\s*=\s*true/);
-    expect(flagAssignment).not.toBeNull();
-    const intentFlag = flagAssignment![1];
-
-    const declaresIntentFlagFalseUpFront = new RegExp(`var\\s+${intentFlag}\\s*=\\s*false`).test(
-      registerSwSource,
-    );
-    expect(declaresIntentFlagFalseUpFront).toBe(true);
-
-    const controllerChangeMatch = registerSwSource.match(
-      /addEventListener\('controllerchange',\s*function\s*\([^)]*\)\s*\{([\s\S]*?)\}\s*\);/,
-    );
-    expect(controllerChangeMatch).not.toBeNull();
-    expect(controllerChangeMatch![1]).toContain(intentFlag);
-  });
-
   it('CSP worker-src is free of external hosts', () => {
     const cspMatch = indexHtml.match(/worker-src\s+([^;]+);/);
     expect(cspMatch).not.toBeNull();
@@ -116,5 +106,132 @@ describe('service worker integrity', () => {
     for (const source of sources) {
       expect(source).not.toMatch(/^https?:\/\//);
     }
+  });
+});
+
+/**
+ * Actually executes register-sw.js against mocked browser APIs, rather than
+ * inspecting its source text - a text-based check that a variable name is
+ * merely *referenced* inside the controllerchange handler (an earlier version
+ * of this file did that) still passes for a handler with inverted or
+ * otherwise broken logic. This exercises the real control flow: controller
+ * changes also fire on a page's very first, uncontrolled -> controlled
+ * transition (clientsClaim() taking over a page with no prior service
+ * worker), not only on a genuine version swap - reloading unconditionally
+ * there breaks every fresh page load (confirmed live: an earlier version did
+ * exactly that and broke two real Playwright E2E tests).
+ */
+describe('register-sw.js runtime behavior', () => {
+  function createFakeRegistration() {
+    const listeners: Record<string, Array<() => void>> = {};
+    return {
+      waiting: null as { postMessage: (msg: unknown) => void } | null,
+      installing: null,
+      addEventListener(event: string, cb: () => void) {
+        (listeners[event] ??= []).push(cb);
+      },
+      _fire(event: string) {
+        for (const cb of listeners[event] ?? []) cb();
+      },
+    };
+  }
+
+  async function loadRegisterSw() {
+    const registration = createFakeRegistration();
+    const swListeners: Record<string, Array<() => void>> = {};
+    Object.defineProperty(navigator, 'serviceWorker', {
+      value: {
+        register: vi.fn(() => Promise.resolve(registration)),
+        addEventListener(event: string, cb: () => void) {
+          (swListeners[event] ??= []).push(cb);
+        },
+        controller: null,
+      },
+      configurable: true,
+    });
+    const reloadSpy = vi.fn();
+    // jsdom's location.reload isn't spy-able directly (non-configurable) -
+    // replace the whole window.location property instead, same pattern as
+    // ErrorBoundary.test.tsx's "Reload Page" test.
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: { ...window.location, reload: reloadSpy },
+    });
+
+    // window persists across tests within this file (only reset per file),
+    // so a "load" listener registered here would still be attached - and
+    // re-fire against a LATER test's fresh mocks - unless removed once this
+    // test ends. Capture every listener this run adds to window so it can be.
+    const addedToWindow: Array<[string, EventListener]> = [];
+    const realAddEventListener = window.addEventListener.bind(window);
+    vi.spyOn(window, 'addEventListener').mockImplementation((type, listener, options) => {
+      addedToWindow.push([type, listener as EventListener]);
+      realAddEventListener(type, listener as EventListener, options);
+    });
+
+    // register-sw.js is a plain browser IIFE (no module system) referencing
+    // navigator/window/location as bare globals - new Function(...) runs its
+    // text against this test's real globals, giving each call its own fresh
+    // closure over the script's `reloaded`/`willReloadOnControllerChange` vars.
+    new Function(registerSwSource)();
+    window.dispatchEvent(new Event('load'));
+    // Let register()'s .then()/.catch() microtasks settle before returning.
+    await Promise.resolve();
+    await Promise.resolve();
+
+    return {
+      registration,
+      fireControllerChange: () => {
+        for (const cb of swListeners.controllerchange ?? []) cb();
+      },
+      reloadSpy,
+      cleanup: () => {
+        for (const [type, listener] of addedToWindow) window.removeEventListener(type, listener);
+      },
+    };
+  }
+
+  let cleanupCurrent: (() => void) | null = null;
+
+  afterEach(() => {
+    cleanupCurrent?.();
+    cleanupCurrent = null;
+    // @ts-expect-error - test-only cleanup of a property jsdom doesn't define by default
+    delete navigator.serviceWorker;
+    vi.restoreAllMocks();
+  });
+
+  it('does not reload on the first controllerchange (uncontrolled -> controlled transition, no reload requested yet)', async () => {
+    const { fireControllerChange, reloadSpy, cleanup } = await loadRegisterSw();
+    cleanupCurrent = cleanup;
+    fireControllerChange();
+    expect(reloadSpy).not.toHaveBeenCalled();
+  });
+
+  it('does nothing on sw-request-reload if no worker is waiting', async () => {
+    const { fireControllerChange, reloadSpy, cleanup } = await loadRegisterSw();
+    cleanupCurrent = cleanup;
+    window.dispatchEvent(new Event('sw-request-reload'));
+    fireControllerChange();
+    expect(reloadSpy).not.toHaveBeenCalled();
+  });
+
+  it('posts SKIP_WAITING on an explicit sw-request-reload, then reloads exactly once on the resulting controllerchange', async () => {
+    const { registration, fireControllerChange, reloadSpy, cleanup } = await loadRegisterSw();
+    cleanupCurrent = cleanup;
+    const postMessage = vi.fn();
+    registration.waiting = { postMessage };
+
+    window.dispatchEvent(new Event('sw-request-reload'));
+    expect(postMessage).toHaveBeenCalledWith({ type: 'SKIP_WAITING' });
+    expect(reloadSpy).not.toHaveBeenCalled();
+
+    fireControllerChange();
+    expect(reloadSpy).toHaveBeenCalledTimes(1);
+
+    // A further controllerchange (e.g. a second tab updating) must not
+    // trigger a second reload of this page.
+    fireControllerChange();
+    expect(reloadSpy).toHaveBeenCalledTimes(1);
   });
 });

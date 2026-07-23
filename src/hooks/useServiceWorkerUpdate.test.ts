@@ -1,9 +1,16 @@
-import { describe, it, expect, vi } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import { renderHook, act, waitFor } from '@testing-library/react';
 import { useServiceWorkerUpdate } from './useServiceWorkerUpdate';
 
 function dispatchUpdateAvailable(registration: unknown) {
   window.dispatchEvent(new CustomEvent('sw-update-available', { detail: { registration } }));
+}
+
+function stubServiceWorker(getRegistration: () => Promise<unknown>) {
+  Object.defineProperty(navigator, 'serviceWorker', {
+    value: { getRegistration },
+    configurable: true,
+  });
 }
 
 describe('useServiceWorkerUpdate', () => {
@@ -61,5 +68,36 @@ describe('useServiceWorkerUpdate', () => {
     unmount();
     expect(removeSpy).toHaveBeenCalledWith('sw-update-available', expect.any(Function));
     removeSpy.mockRestore();
+  });
+
+  describe('a worker already waiting before mount', () => {
+    afterEach(() => {
+      // @ts-expect-error - test-only cleanup of a property jsdom doesn't define by default
+      delete navigator.serviceWorker;
+    });
+
+    it('recovers it via getRegistration() so a missed dispatch is not lost', async () => {
+      stubServiceWorker(() => Promise.resolve({ waiting: { postMessage: vi.fn() } }));
+      const { result } = renderHook(() => useServiceWorkerUpdate());
+      await waitFor(() => expect(result.current.updateAvailable).toBe(true));
+    });
+
+    it('stays hidden when the registration has no waiting worker', async () => {
+      stubServiceWorker(() => Promise.resolve({ waiting: null }));
+      const { result } = renderHook(() => useServiceWorkerUpdate());
+      await act(async () => {
+        await Promise.resolve();
+      });
+      expect(result.current.updateAvailable).toBe(false);
+    });
+
+    it('stays hidden and does not throw when the lookup rejects', async () => {
+      stubServiceWorker(() => Promise.reject(new Error('no service worker support')));
+      const { result } = renderHook(() => useServiceWorkerUpdate());
+      await act(async () => {
+        await Promise.resolve();
+      });
+      expect(result.current.updateAvailable).toBe(false);
+    });
   });
 });

@@ -19,6 +19,19 @@ export function useServiceWorkerUpdate() {
       if (detail?.registration) setRegistration(detail.registration);
     };
     window.addEventListener('sw-update-available', onUpdateAvailable);
+
+    // register-sw.js's notifyWaiting() runs on window "load", which can fire
+    // before App finishes hydration/onboarding and mounts this hook - a
+    // worker already waiting at that point would otherwise never be surfaced.
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker
+        .getRegistration()
+        .then((reg) => {
+          if (reg?.waiting) setRegistration(reg);
+        })
+        .catch(() => undefined);
+    }
+
     return () => window.removeEventListener('sw-update-available', onUpdateAvailable);
   }, []);
 
