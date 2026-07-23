@@ -2,14 +2,14 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, act, fireEvent } from '@testing-library/react';
 import { UpdateAvailableBanner } from './UpdateAvailableBanner';
 
+const TRANSLATIONS: Record<string, string> = {
+  'sw.update.available': 'A new version of this app is available.',
+  'sw.update.reload': 'Reload',
+};
+
 vi.mock('../hooks/useTranslation', () => ({
   useTranslation: () => ({
-    t: (key: string) =>
-      key === 'sw.update.available'
-        ? 'A new version of this app is available.'
-        : key === 'sw.update.reload'
-          ? 'Reload'
-          : key,
+    t: (key: string) => TRANSLATIONS[key] ?? key,
     lang: 'en',
   }),
 }));
