@@ -32,13 +32,15 @@ describe('UpdateAvailableBanner', () => {
     expect(screen.getByRole('status')).toHaveTextContent('A new version of this app is available.');
   });
 
-  it('posts SKIP_WAITING to the waiting worker when Reload is clicked', () => {
-    const postMessage = vi.fn();
+  it('dispatches sw-request-reload when Reload is clicked', () => {
+    const onRequestReload = vi.fn();
+    window.addEventListener('sw-request-reload', onRequestReload);
     render(<UpdateAvailableBanner />);
     act(() => {
-      dispatchUpdateAvailable({ waiting: { postMessage } });
+      dispatchUpdateAvailable({ waiting: { postMessage: vi.fn() } });
     });
     fireEvent.click(screen.getByRole('button', { name: 'Reload' }));
-    expect(postMessage).toHaveBeenCalledWith({ type: 'SKIP_WAITING' });
+    expect(onRequestReload).toHaveBeenCalledTimes(1);
+    window.removeEventListener('sw-request-reload', onRequestReload);
   });
 });

@@ -75,6 +75,40 @@ describe('service worker integrity', () => {
     expect(registerSwSource).toMatch(/postMessage|SKIP_WAITING|controllerchange/);
   });
 
+  it('never reloads on every controllerchange - only one caused by an explicit user request', () => {
+    // controllerchange also fires on a page's very first, uncontrolled ->
+    // controlled transition (clientsClaim() taking over a page with no prior
+    // service worker), not only on a genuine version swap. Reloading
+    // unconditionally there causes an unwanted reload on every fresh page
+    // load - confirmed live: an earlier version of this file did exactly
+    // that and broke two real Playwright E2E tests whose page.evaluate()/
+    // assertions raced the resulting reload. A de-dupe flag (e.g. `reloaded`)
+    // alone does NOT fix this - it still fires once, unconditionally, on the
+    // very first activation. There must be a SEPARATE flag that starts false
+    // and is only set true by a handler for an explicit user-intent event
+    // (e.g. "sw-request-reload" dispatched from the UI's reload button), and
+    // the controllerchange handler's condition must reference that same flag.
+    const requestListenerMatch = registerSwSource.match(
+      /addEventListener\('sw-request-reload',\s*function\s*\([^)]*\)\s*\{([\s\S]*?)\}\s*\);/,
+    );
+    expect(requestListenerMatch).not.toBeNull();
+    const requestBody = requestListenerMatch![1];
+    const flagAssignment = requestBody.match(/(\w+)\s*=\s*true/);
+    expect(flagAssignment).not.toBeNull();
+    const intentFlag = flagAssignment![1];
+
+    const declaresIntentFlagFalseUpFront = new RegExp(`var\\s+${intentFlag}\\s*=\\s*false`).test(
+      registerSwSource,
+    );
+    expect(declaresIntentFlagFalseUpFront).toBe(true);
+
+    const controllerChangeMatch = registerSwSource.match(
+      /addEventListener\('controllerchange',\s*function\s*\([^)]*\)\s*\{([\s\S]*?)\}\s*\);/,
+    );
+    expect(controllerChangeMatch).not.toBeNull();
+    expect(controllerChangeMatch![1]).toContain(intentFlag);
+  });
+
   it('CSP worker-src is free of external hosts', () => {
     const cspMatch = indexHtml.match(/worker-src\s+([^;]+);/);
     expect(cspMatch).not.toBeNull();

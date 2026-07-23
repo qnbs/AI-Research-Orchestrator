@@ -20,21 +20,31 @@ describe('useServiceWorkerUpdate', () => {
     expect(result.current.updateAvailable).toBe(true);
   });
 
-  it('posts SKIP_WAITING to the waiting worker on reload()', () => {
-    const postMessage = vi.fn();
+  it('dispatches sw-request-reload instead of posting to the worker directly on reload()', () => {
+    // register-sw.js owns the actual postMessage/controllerchange mechanics -
+    // see its own comment on why a direct postMessage here would bypass the
+    // guard against reloading on a page's first, uncontrolled -> controlled
+    // transition, not only a genuine update.
+    const onRequestReload = vi.fn();
+    window.addEventListener('sw-request-reload', onRequestReload);
     const { result } = renderHook(() => useServiceWorkerUpdate());
     act(() => {
-      dispatchUpdateAvailable({ waiting: { postMessage } });
+      dispatchUpdateAvailable({ waiting: { postMessage: vi.fn() } });
     });
     act(() => {
       result.current.reload();
     });
-    expect(postMessage).toHaveBeenCalledWith({ type: 'SKIP_WAITING' });
+    expect(onRequestReload).toHaveBeenCalledTimes(1);
+    window.removeEventListener('sw-request-reload', onRequestReload);
   });
 
   it('does nothing if reload() is called before any update is available', () => {
+    const onRequestReload = vi.fn();
+    window.addEventListener('sw-request-reload', onRequestReload);
     const { result } = renderHook(() => useServiceWorkerUpdate());
     expect(() => result.current.reload()).not.toThrow();
+    expect(onRequestReload).not.toHaveBeenCalled();
+    window.removeEventListener('sw-request-reload', onRequestReload);
   });
 
   it('ignores an event with no registration in its detail', () => {

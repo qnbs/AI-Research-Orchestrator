@@ -6,9 +6,15 @@
  * Update flow: dispatches a window "sw-update-available" CustomEvent once a
  * new worker has installed alongside an already-active one (i.e. this is a
  * real update, not the first install) - src/hooks/useServiceWorkerUpdate.ts
- * listens for it to show UpdateAvailableBanner. The banner's "Reload" button
- * posts SKIP_WAITING to the waiting worker; once it activates and becomes
- * the controller, this reloads the page exactly once via `reloaded`.
+ * listens for it to show UpdateAvailableBanner. Its "Reload" button dispatches
+ * "sw-request-reload" rather than posting to the worker directly, so this
+ * script - not the React layer - decides whether the resulting controllerchange
+ * should reload the page. That matters: controllerchange also fires on a
+ * page's very first, uncontrolled -> controlled transition (clientsClaim()
+ * taking over a page that had no service worker yet at all), not only on a
+ * genuine version swap - reloading on that fires an unwanted reload on every
+ * user's first-ever visit. Only a controllerchange caused by an explicit
+ * "sw-request-reload" is honored.
  */
 (function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) return;
@@ -18,9 +24,13 @@
   // Vite copies public/sw.js → dist/sw.js (or dist/<base>/ via base href).
   var swUrl = scope + 'sw.js';
   var reloaded = false;
+  var willReloadOnControllerChange = false;
+  var currentRegistration = null;
 
   window.addEventListener('load', function () {
     navigator.serviceWorker.register(swUrl, { scope: scope }).then(function (registration) {
+      currentRegistration = registration;
+
       function notifyWaiting() {
         if (!registration.waiting) return;
         window.dispatchEvent(
@@ -44,8 +54,14 @@
       });
     });
 
+    window.addEventListener('sw-request-reload', function () {
+      if (!currentRegistration || !currentRegistration.waiting) return;
+      willReloadOnControllerChange = true;
+      currentRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
+    });
+
     navigator.serviceWorker.addEventListener('controllerchange', function () {
-      if (reloaded) return;
+      if (reloaded || !willReloadOnControllerChange) return;
       reloaded = true;
       window.location.reload();
     });

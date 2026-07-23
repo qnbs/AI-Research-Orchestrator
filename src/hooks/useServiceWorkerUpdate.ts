@@ -3,9 +3,12 @@ import { useCallback, useEffect, useState } from 'react';
 /**
  * Bridges public/register-sw.js's "sw-update-available" window CustomEvent
  * (dispatched when a new service worker has installed alongside an already
- * active one) into React state, and exposes reload() to post SKIP_WAITING to
- * the waiting worker - it activates, the page's controllerchange listener
- * (also in register-sw.js) reloads once.
+ * active one) into React state. reload() dispatches "sw-request-reload"
+ * rather than posting SKIP_WAITING to the worker directly - register-sw.js
+ * owns that mechanic so it alone decides whether the resulting
+ * controllerchange should reload the page (that event also fires on a page's
+ * very first, uncontrolled -> controlled transition, not only on a genuine
+ * update, so only a controllerchange caused by this explicit request reloads).
  */
 export function useServiceWorkerUpdate() {
   const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
@@ -20,7 +23,8 @@ export function useServiceWorkerUpdate() {
   }, []);
 
   const reload = useCallback(() => {
-    registration?.waiting?.postMessage({ type: 'SKIP_WAITING' });
+    if (!registration) return;
+    window.dispatchEvent(new CustomEvent('sw-request-reload'));
   }, [registration]);
 
   return { updateAvailable: registration !== null, reload };
