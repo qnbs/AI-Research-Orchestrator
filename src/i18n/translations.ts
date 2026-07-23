@@ -147,6 +147,8 @@ export const translations = {
     'charts.no_publication_years': 'No publication years available.',
     'offline.banner':
       'You are offline. Heuristic mode keeps research, summaries, and Knowledge Base fully usable with local algorithms; reconnect for live PubMed fetch and Gemini.',
+    'sw.update.available': 'A new version of this app is available.',
+    'sw.update.reload': 'Reload',
     'inference.tooltip.live': 'Live Gemini inference — API key present and online.',
     'inference.tooltip.force': 'Heuristic mode forced in Settings — local algorithms only.',
     'inference.tooltip.offline':
@@ -503,6 +505,8 @@ export const translations = {
     'charts.no_publication_years': 'Keine Erscheinungsjahre verfügbar.',
     'offline.banner':
       'Sie sind offline. Der Heuristik-Modus hält Recherche, Zusammenfassungen und Wissensdatenbank mit lokalen Algorithmen nutzbar; für Live-PubMed und Gemini bitte erneut verbinden.',
+    'sw.update.available': 'Eine neue Version dieser App ist verfügbar.',
+    'sw.update.reload': 'Neu laden',
     'inference.tooltip.live': 'Live-Gemini-Inferenz — API-Schlüssel vorhanden und online.',
     'inference.tooltip.force':
       'Heuristik-Modus in den Einstellungen erzwungen — nur lokale Algorithmen.',

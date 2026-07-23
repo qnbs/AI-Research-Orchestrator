@@ -331,8 +331,12 @@ test.describe('5. Knowledge Base View', () => {
 
   test('KB shows demo data on first launch', async ({ page }) => {
     await navigateToView(page, '#knowledgeBase');
-    // Demo data seeds 5 articles on first launch
-    await expect(page.getByText(/5 Articles Found/i).first()).toBeVisible({ timeout: 10_000 });
+    // Demo data seeds 5 articles on first launch. Service worker registration
+    // (register-sw.js, on window 'load') races this on a first-ever page
+    // load in CI; 20s gives IndexedDB hydration + demo seeding room without
+    // masking a real regression (the 60s budget below is for a heavier,
+    // multi-step test, not needed for this single assertion).
+    await expect(page.getByText(/5 Articles Found/i).first()).toBeVisible({ timeout: 20_000 });
   });
 
   test('KB shows empty-state message when no data saved', async ({ page }) => {

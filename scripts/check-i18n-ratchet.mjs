@@ -20,6 +20,7 @@ const MIGRATED_FILES = [
   'src/components/settings/ApiKeySettings.tsx',
   'src/components/journals/useJournalsViewLogic.ts',
   'src/components/OrchestratorView.tsx',
+  'src/components/UpdateAvailableBanner.tsx',
 ];
 
 const IGNORE_COMMENT = 'i18n-ratchet-ignore-next-line';

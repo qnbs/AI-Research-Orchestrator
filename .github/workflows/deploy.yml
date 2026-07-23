@@ -123,6 +123,9 @@ jobs:
       - name: No disallowed CDN scripts (ADR 0011)
         run: pnpm run check:no-cdn-scripts
 
+      - name: No self-hosted Workbox vendor drift (ADR 0011/WS-B)
+        run: pnpm run check:workbox-vendor-drift
+
       - name: Setup SPA routing
         run: cp dist/index.html dist/404.html
 

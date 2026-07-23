@@ -5,6 +5,15 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 10
+    ignore:
+      # Self-hosted under public/workbox-v<version>/ (ADR 0011/WS-B) via
+      # scripts/copy-workbox.mjs - a version bump here needs a deliberate,
+      # manual `pnpm run workbox:copy` + WORKBOX_VERSION bump alongside it,
+      # not a routine auto-merged Dependabot PR. check:workbox-vendor-drift
+      # (CI) fails loudly if the two ever fall out of sync regardless, but an
+      # ignore rule here avoids Dependabot opening PRs that would just sit
+      # red until someone does that manual step.
+      - dependency-name: "workbox-*"
   - package-ecosystem: github-actions
     directory: /
     schedule:

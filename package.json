@@ -29,11 +29,13 @@
     "format": "prettier --write \"src/**/*.{ts,tsx,css}\" \"*.{json,md}\" \".github/**/*.md\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,css}\" \"*.{json,md}\" \".github/**/*.md\"",
     "icons": "node scripts/generate-pwa-icons.mjs",
+    "workbox:copy": "node scripts/copy-workbox.mjs",
     "prepare": "husky",
     "predeploy": "pnpm run build",
     "analyze": "ANALYZE=1 vite build && node scripts/patch-csp-hashes.mjs",
     "bundle:budget": "node scripts/check-bundle-budget.mjs",
     "check:no-cdn-scripts": "node scripts/check-no-cdn-scripts.mjs",
+    "check:workbox-vendor-drift": "node scripts/check-workbox-vendor-drift.mjs",
     "i18n:ratchet": "node scripts/check-i18n-ratchet.mjs",
     "csp:hashes": "node scripts/patch-csp-hashes.mjs",
     "test:lighthouse": "pnpm run build && pnpm exec lhci autorun"
@@ -100,6 +102,13 @@
     "typescript": "~5.8.2",
     "typescript-eslint": "^8.59.2",
     "vite": "8.1.5",
-    "vitest": "^3.2.7"
+    "vitest": "^3.2.7",
+    "workbox-cacheable-response": "7.0.0",
+    "workbox-core": "7.0.0",
+    "workbox-expiration": "7.0.0",
+    "workbox-precaching": "7.0.0",
+    "workbox-routing": "7.0.0",
+    "workbox-strategies": "7.0.0",
+    "workbox-sw": "7.0.0"
   }
 }
