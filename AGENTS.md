@@ -134,4 +134,4 @@ pnpm run format                  # Prettier write (src + root md/json)
 
 ## Human Documentation Map
 
-- `README.md` — overview & setup (EN/DE) · `CONTRIBUTING.md` — workflow & PR expectations · `CHANGELOG.md`, `AUDIT.md` (living backlog), `SECURITY.md` (threat model) · `docs/` — audits, ADRs, i18n reviews · `.notes/meeting_notes.md` — dated decision log for later sessions.
+- `README.md` — overview & setup (EN/DE) · `CONTRIBUTING.md` — workflow & PR expectations · `CHANGELOG.md` (dated history of what actually shipped — prefer this and `git log`/open GitHub issues over a standalone self-audit doc for "what's left to do"), `SECURITY.md` (threat model) · `docs/` — ADRs, i18n reviews · `.notes/meeting_notes.md` — dated decision log for later sessions.

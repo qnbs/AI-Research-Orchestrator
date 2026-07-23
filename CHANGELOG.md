@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - `eslint-plugin-react-hooks` upgraded to v7.1.1 (#62).
-- **No-`any` / zero-warnings ESLint policy completed** across two PRs (#64, #65): eliminated all `no-explicit-any`, `no-unused-vars`, `no-unescaped-entities`, and `display-name` findings, all `react-hooks/exhaustive-deps` warnings, and all `jsx-a11y` warnings. Lint is now **0 errors / 0 warnings**, down from 176 warnings against the existing 650-warning budget (the budget itself and the `jsx-a11y` severity downgrade block in `eslint.config.js` are not yet tightened to match — tracked as a residual gap in `AUDIT.md`).
+- **No-`any` / zero-warnings ESLint policy completed** across two PRs (#64, #65): eliminated all `no-explicit-any`, `no-unused-vars`, `no-unescaped-entities`, and `display-name` findings, all `react-hooks/exhaustive-deps` warnings, and all `jsx-a11y` warnings. Lint is now **0 errors / 0 warnings**, down from 176 warnings against the existing 650-warning budget (the budget itself and the `jsx-a11y` severity downgrade block in `eslint.config.js` are not yet tightened to match — see "Known gaps" below).
 - **Migrated to Vite 8 + `@vitejs/plugin-react` 6** (#66) — a bundler-architecture change (esbuild/Rollup → Rolldown/Oxc), handled as a dedicated migration rather than a routine version bump.
 - `useTranslation.ts` refactored to delegate its lookup/interpolation logic to the new framework-free `resolveTranslation()` core shared with `translateSync()` (#69) — pure extraction, no behavior or signature change.
 
@@ -45,7 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ADR 0009 (Consolidated Non-AI Programmatic Research Engine) accepted; ADR 0010 (First-Class OpenRouter Provider with Free-Model Primacy) proposed (#67).
 - **Docs housekeeping** (#68): 6 fully-superseded audit reports deleted (`ARCHITECTURE-REVIEW.md`, `AUDIT-EXECUTIVE-SUMMARY.md`, `CODEBASE-AUDIT-COMPLETE.md`, `E2E-TEST-ANALYSIS.md`, `E2E-TEST-FIXES.md`, `IMPLEMENTATION-QUICKREF.md`); `UI-UX-AUDIT.md` and `HARDCODED-STRINGS-REMAINING.md` re-validated and corrected in place; `I18N-AUDIT.md` flagged stale pending the i18n migration's closing wave; root `AUDIT.md` fully re-derived from current gate output rather than carried forward (corrects the false "nonAi shelved" and "version parity restored" claims from the 0.3.0-era audit).
 
-### Known gaps (tracked, not yet closed — see `AUDIT.md`)
+### Known gaps (tracked, not yet closed)
 
 - Version/tag/CHANGELOG drift: `package.json` says `0.3.0`, no matching `v0.3.0` git tag exists. A real version bump, tag, and GitHub release are tracked as separate follow-up work, done only once this `[Unreleased]` section is itself accurate.
 - `jsx-a11y` severity downgrade and the 650-warning lint budget in `eslint.config.js` (predate the zero-warnings policy pass, not yet tightened to match it).
