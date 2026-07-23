@@ -11,7 +11,7 @@ Both were root-caused and fixed, plus the full scoped suite (`smoke.spec.ts` + `
 
 ## Promotion trigger
 
-Both known failures are now fixed. Flip `continue-on-error` to `false` once the job has run clean for **2 consecutive weeks** of normal PR activity, or **10 consecutive green runs**, whichever comes first. Because the job has `continue-on-error: true`, the workflow's own pass/fail badge does **not** reflect real test outcomes - a run with failed Playwright tests still shows as a successful workflow. "Green" here means **zero failed tests in the Playwright output itself** (check the run's own summary or the uploaded `playwright-report` artifact), not the workflow conclusion. Whoever does the flip should also remove this backlog note's promotion section and fold a one-line mention into `AUDIT.md`'s next dated entry.
+Both known failures are now fixed. Flip `continue-on-error` to `false` once the job has run clean for **2 consecutive weeks** of normal PR activity, or **10 consecutive green runs**, whichever comes first. Because the job has `continue-on-error: true`, the workflow's own pass/fail badge does **not** reflect real test outcomes - a run with failed Playwright tests still shows as a successful workflow. "Green" here means **zero failed tests in the Playwright output itself** (check the run's own summary or the uploaded `playwright-report` artifact), not the workflow conclusion. Whoever does the flip should also remove this backlog note's promotion section and fold a one-line mention into `CHANGELOG.md`'s next `[Unreleased]` entry.
 
 ## Deferred specs
 

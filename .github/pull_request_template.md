@@ -9,4 +9,3 @@
 ## Checklist
 
 - [ ] `CHANGELOG.md` updated if this PR changes user-facing behavior or adds/removes a feature
-- [ ] `AUDIT.md` updated if this PR closes or introduces a tracked audit item
