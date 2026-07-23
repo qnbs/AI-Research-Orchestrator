@@ -54,4 +54,12 @@ describe('useServiceWorkerUpdate', () => {
     });
     expect(result.current.updateAvailable).toBe(false);
   });
+
+  it('removes its sw-update-available listener on unmount', () => {
+    const removeSpy = vi.spyOn(window, 'removeEventListener');
+    const { unmount } = renderHook(() => useServiceWorkerUpdate());
+    unmount();
+    expect(removeSpy).toHaveBeenCalledWith('sw-update-available', expect.any(Function));
+    removeSpy.mockRestore();
+  });
 });
