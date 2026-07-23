@@ -231,10 +231,13 @@ const VPipelineStep: React.FC<PipelineStepProps> = ({
             <div
               className="absolute left-[17px] top-9 bottom-0 w-px"
               style={{
+                // Decorative connector line, not a component boundary -
+                // exempt from WCAG 2.2 AA SC 1.4.11, same as .timeline-step's
+                // own connector in index.css.
                 background:
                   stepStatus === 'done'
-                    ? 'linear-gradient(to bottom, var(--color-brand-accent), var(--color-border))'
-                    : 'var(--color-border)',
+                    ? 'linear-gradient(to bottom, var(--color-brand-accent), var(--color-border-subtle))'
+                    : 'var(--color-border-subtle)',
               }}
             />
           )}

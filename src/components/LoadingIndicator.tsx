@@ -17,7 +17,7 @@ const CyberneticSpinner: React.FC = () => (
       cy="50"
       r="45"
       fill="none"
-      stroke="var(--color-border)"
+      stroke="var(--color-border-subtle)"
       strokeWidth="1"
       opacity="0.5"
     />
@@ -26,7 +26,7 @@ const CyberneticSpinner: React.FC = () => (
       cy="50"
       r="35"
       fill="none"
-      stroke="var(--color-border)"
+      stroke="var(--color-border-subtle)"
       strokeWidth="1"
       strokeDasharray="3 3"
       opacity="0.5"

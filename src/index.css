@@ -16,7 +16,23 @@
   --radius-md: 10px;
   --radius-lg: 14px;
   --space-density: 1;
-  --focus-ring: 0 0 0 3px color-mix(in srgb, var(--color-brand-accent) 28%, transparent);
+  /* Two-layer ring (WCAG 2.2 AA, SC 1.4.11 Non-text Contrast): a background-
+     colored "gap" ring so the outer ring never blends into the focused
+     element's own border, then a fully OPAQUE brand-accent ring - opaque
+     because a translucent ring's effective color dilutes toward whatever's
+     behind it, which is what made the previous 28%-mix ring fail 3:1 against
+     every theme's surface color (verified: ink-dark 1.86:1, paper-light
+     1.50:1, matrix-green 1.84:1). --color-brand-accent at full strength
+     already clears 3:1 against every theme's background/surface with room
+     to spare (4.9:1-10.6:1), so no per-theme opacity tuning is needed here. */
+  --focus-ring: 0 0 0 2px var(--color-background), 0 0 0 5px var(--color-brand-accent);
+  /* WCAG SC 1.4.3 applies the same 4.5:1 text-contrast minimum to
+     placeholder text as to any other text (no blanket placeholder
+     exception - flagged on review, verified against the W3C Understanding
+     doc). 85% clears 4.5:1 against every theme's --color-input-bg with
+     margin (5.13-9.40:1) while still reading as visibly more muted than
+     real input content at full --color-text-secondary strength. */
+  --color-text-placeholder: color-mix(in srgb, var(--color-text-secondary) 85%, transparent);
   --color-danger: #f87171;
   --color-success: #34d399;
   --color-warning: #fbbf24;
@@ -34,7 +50,13 @@
   --color-surface: rgba(16, 22, 32, 0.78);
   --color-surface-hover: rgba(28, 36, 50, 0.88);
   --color-input-bg: rgba(8, 12, 20, 0.55);
-  --color-border: rgba(226, 232, 240, 0.12);
+  /* 0.4 opacity clears 3:1 (WCAG 2.2 AA SC 1.4.11) against both the page
+     background and the surface color - verified 3.27:1 / 3.33:1 - the
+     previous 0.12 measured only 1.29:1 / 1.34:1. Decorative-only dividers
+     that don't convey a component boundary keep the original faint value
+     via --color-border-subtle instead (exempt from 1.4.11). */
+  --color-border: rgba(226, 232, 240, 0.4);
+  --color-border-subtle: rgba(226, 232, 240, 0.12);
   --color-text-primary: #e8eef7;
   --color-text-secondary: #94a3b8;
   --color-brand-accent: #2dd4bf;
@@ -68,7 +90,15 @@
   --color-surface: rgba(255, 255, 255, 0.82);
   --color-surface-hover: rgba(255, 255, 255, 0.96);
   --color-input-bg: rgba(255, 255, 255, 0.72);
-  --color-border: rgba(100, 116, 139, 0.28);
+  /* A same-opacity bump on this theme's original slate-500 base would need
+     0.77 to clear 3:1 (verified) - visually a heavy solid-looking box rather
+     than a thin border. Switching to a darker base (slate-700) reaches 3:1
+     at a much more moderate 0.6 (3.21:1 / 3.34:1 vs background/surface,
+     verified) while still reading as a thin line. --color-border-subtle
+     keeps the theme's original faint slate-500 value for decorative-only
+     dividers exempt from WCAG 2.2 AA SC 1.4.11. */
+  --color-border: rgba(51, 65, 85, 0.6);
+  --color-border-subtle: rgba(100, 116, 139, 0.28);
   --color-text-primary: #0f172a;
   --color-text-secondary: #475569;
   --color-brand-accent: #0f766e;
@@ -80,10 +110,17 @@
   --color-accent-magenta: #e11d48;
   --color-accent-amber: #b45309;
   --color-accent-green: #059669;
-  --color-danger: #e11d48;
-  --color-success: #059669;
-  --color-warning: #b45309;
-  --color-info: #0284c7;
+  /* One shade darker than this theme's --color-accent-* twins above: these
+     four specifically render as colored TEXT on their own *-muted tint
+     background (status badges/alerts), which needs 4.5:1 (WCAG 2.2 AA SC
+     1.4.3) - the lighter shared hues only reached 3.14-4.07:1 there
+     (verified) even though they read fine as plain text elsewhere. Dark/
+     matrix themes already clear 4.5:1 with their existing values, so only
+     paper-light needed this. */
+  --color-danger: #9f1239;
+  --color-success: #065f46;
+  --color-warning: #92400e;
+  --color-info: #075985;
   --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
   --shadow-md: 0 8px 20px -8px rgba(15, 23, 42, 0.12);
   --shadow-lg: 0 22px 44px -16px rgba(15, 23, 42, 0.16);
@@ -102,7 +139,10 @@
   --color-surface: rgba(0, 24, 12, 0.78);
   --color-surface-hover: rgba(0, 40, 18, 0.88);
   --color-input-bg: rgba(0, 14, 8, 0.6);
-  --color-border: rgba(52, 211, 153, 0.22);
+  /* 0.5 opacity clears 3:1 (verified 3.26:1 / 3.32:1 vs background/surface)
+     - the previous 0.22 measured only 1.49:1 / 1.57:1. */
+  --color-border: rgba(52, 211, 153, 0.5);
+  --color-border-subtle: rgba(52, 211, 153, 0.22);
   --color-text-primary: #d1fae5;
   --color-text-secondary: #6ee7b7;
   --color-brand-accent: #34d399;
@@ -171,7 +211,8 @@
     left: -50%;
     width: 200%;
     height: 200%;
-    background: radial-gradient(circle at 50% 50%, var(--aurora-1) 0%, transparent 40%),
+    background:
+      radial-gradient(circle at 50% 50%, var(--aurora-1) 0%, transparent 40%),
       radial-gradient(circle at 85% 15%, var(--aurora-2) 0%, transparent 35%),
       radial-gradient(circle at 15% 85%, var(--aurora-3) 0%, transparent 35%);
     animation: auroraMove 60s linear infinite alternate;
@@ -195,7 +236,8 @@
 
   /* Matrix scanlines */
   :root.matrix body::after {
-    background: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.04'/%3E%3C/svg%3E"),
+    background:
+      url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.04'/%3E%3C/svg%3E"),
       repeating-linear-gradient(
         0deg,
         transparent,
@@ -279,6 +321,10 @@
   .glass-input:focus {
     border-color: var(--color-brand-accent);
     box-shadow: var(--focus-ring);
+  }
+
+  .glass-input::placeholder {
+    color: var(--color-text-placeholder);
   }
 
   /* ── Neon Card ── */
@@ -397,7 +443,9 @@
     top: 32px;
     bottom: 0;
     width: 1px;
-    background: linear-gradient(to bottom, var(--color-border), transparent);
+    /* Decorative fade-to-transparent connector, not a component boundary -
+       exempt from WCAG 2.2 AA SC 1.4.11, keeps the original subtle value. */
+    background: linear-gradient(to bottom, var(--color-border-subtle), transparent);
   }
 
   .timeline-step:last-child::before {
@@ -574,7 +622,8 @@
 
   /* Gradient mesh */
   .mesh-gradient {
-    background-image: radial-gradient(at 40% 20%, var(--aurora-1) 0px, transparent 50%),
+    background-image:
+      radial-gradient(at 40% 20%, var(--aurora-1) 0px, transparent 50%),
       radial-gradient(at 80% 0%, var(--aurora-2) 0px, transparent 50%),
       radial-gradient(at 0% 50%, var(--aurora-3) 0px, transparent 50%);
   }
@@ -609,7 +658,9 @@
 
   .agent-card--idle,
   .agent-card--skipped {
-    border-left-color: var(--color-border);
+    /* Inactive/skipped state - WCAG 2.2 AA SC 1.4.11 explicitly exempts
+       inactive UI components, so the subtle (pre-fix) value is fine here. */
+    border-left-color: var(--color-border-subtle);
     opacity: 0.7;
   }
 
@@ -622,7 +673,9 @@
   .pipeline-connector {
     flex: 1;
     height: 2px;
-    background: var(--color-border);
+    /* Decorative flow connector between pipeline steps, not a component
+       boundary - exempt from WCAG 2.2 AA SC 1.4.11. */
+    background: var(--color-border-subtle);
     position: relative;
     overflow: hidden;
   }
@@ -711,9 +764,11 @@
     top: 0;
     bottom: 0;
     width: 3px;
+    /* Decorative fade-to-transparent bar (fallback when --relevance-color
+       isn't set) - exempt from WCAG 2.2 AA SC 1.4.11. */
     background: linear-gradient(
       to bottom,
-      var(--relevance-color, var(--color-border)),
+      var(--relevance-color, var(--color-border-subtle)),
       transparent
     );
     border-radius: 12px 0 0 12px;

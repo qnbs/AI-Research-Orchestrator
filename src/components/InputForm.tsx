@@ -230,7 +230,7 @@ const InputFormComponent: React.FC<InputFormProps> = ({
               rows={3}
               value={formData.researchTopic}
               onChange={handleChange}
-              className="glass-input block w-full rounded-lg shadow-inner py-3 px-4 text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-brand-accent transition-all text-base placeholder-text-secondary/50"
+              className="glass-input block w-full rounded-lg shadow-inner py-3 px-4 text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-brand-accent transition-all text-base"
               required
               placeholder="e.g., What are the long-term neurocognitive effects of COVID-19?"
             />
