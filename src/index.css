@@ -26,12 +26,13 @@
      already clears 3:1 against every theme's background/surface with room
      to spare (4.9:1-10.6:1), so no per-theme opacity tuning is needed here. */
   --focus-ring: 0 0 0 2px var(--color-background), 0 0 0 5px var(--color-brand-accent);
-  /* Placeholder text is intentionally more muted than real input content,
-     but still comfortably clears 3:1 (a defensible floor for placeholder
-     legibility - WCAG doesn't mandate a specific ratio for advisory-only
-     placeholder text the way it does for --color-text-secondary's 4.5:1)
-     against every theme's --color-input-bg: verified 3.56-6.65:1. */
-  --color-text-placeholder: color-mix(in srgb, var(--color-text-secondary) 70%, transparent);
+  /* WCAG SC 1.4.3 applies the same 4.5:1 text-contrast minimum to
+     placeholder text as to any other text (no blanket placeholder
+     exception - flagged on review, verified against the W3C Understanding
+     doc). 85% clears 4.5:1 against every theme's --color-input-bg with
+     margin (5.13-9.40:1) while still reading as visibly more muted than
+     real input content at full --color-text-secondary strength. */
+  --color-text-placeholder: color-mix(in srgb, var(--color-text-secondary) 85%, transparent);
   --color-danger: #f87171;
   --color-success: #34d399;
   --color-warning: #fbbf24;

@@ -155,7 +155,9 @@ for (const [themeName, vars] of Object.entries(cssThemes)) {
   requireRatio(themeName, 'text-primary vs surface', textPrimary, surface, 4.5);
   requireRatio(themeName, 'text-secondary vs background', textSecondary, background, 4.5);
   requireRatio(themeName, 'text-secondary vs surface', textSecondary, surface, 4.5);
-  requireRatio(themeName, 'text-placeholder vs input-bg', textPlaceholder, inputBg, 3.0);
+  // WCAG SC 1.4.3 applies the full 4.5:1 text-contrast minimum to
+  // placeholder text too - there's no blanket exception for it.
+  requireRatio(themeName, 'text-placeholder vs input-bg', textPlaceholder, inputBg, 4.5);
   requireRatio(themeName, 'border vs background (non-text UI component)', border, background, 3.0);
   requireRatio(themeName, 'border vs surface (non-text UI component)', border, surface, 3.0);
   // The two-layer focus ring's outer ring is fully opaque brand-accent
