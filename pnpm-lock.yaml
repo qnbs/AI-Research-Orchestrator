@@ -172,6 +172,27 @@ importers:
       vitest:
         specifier: ^3.2.7
         version: 3.2.7(@types/node@22.19.13)(jiti@2.7.0)(jsdom@29.1.1)(terser@5.49.0)(yaml@2.9.0)
+      workbox-cacheable-response:
+        specifier: 7.0.0
+        version: 7.0.0
+      workbox-core:
+        specifier: 7.0.0
+        version: 7.0.0
+      workbox-expiration:
+        specifier: 7.0.0
+        version: 7.0.0
+      workbox-precaching:
+        specifier: 7.0.0
+        version: 7.0.0
+      workbox-routing:
+        specifier: 7.0.0
+        version: 7.0.0
+      workbox-strategies:
+        specifier: 7.0.0
+        version: 7.0.0
+      workbox-sw:
+        specifier: 7.0.0
+        version: 7.0.0
 
 packages:
 
@@ -2494,6 +2515,9 @@ packages:
     resolution: {integrity: sha512-v3MXnZAcvnywkTUEZomIActle7RXXeedOR31wwl7VlyoXO4Qi9arvSenNQWne1TcRwhCL1HwLI21bEqdpj8/rA==}
     engines: {node: '>=0.10.0'}
 
+  idb@7.1.1:
+    resolution: {integrity: sha512-gchesWBzyvGHRO9W8tzUWFDycow5gwjvFKfyV9FF32Y7F50yZMp7mP+T2mJIWFx49zicqyC4uefHM17o6xKIVQ==}
+
   ignore@5.3.2:
     resolution: {integrity: sha512-hsBTNUqQTDwkWtcdYI2i06Y/nUBEsNEDJKjWdigLvegy8kDuJAS8uRlpkkcQpyEXL0Z/pjDy5HBmMjRCJ2gq+g==}
     engines: {node: '>= 4'}
@@ -4181,6 +4205,27 @@ packages:
   word-wrap@1.2.5:
     resolution: {integrity: sha512-BN22B5eaMMI9UMtjrGd5g5eCYPpCPDUy0FJXbYsaT5zYxjFOckS53SQDE3pWkVoWpHXVb3BrYcEN4Twa55B5cA==}
     engines: {node: '>=0.10.0'}
+
+  workbox-cacheable-response@7.0.0:
+    resolution: {integrity: sha512-0lrtyGHn/LH8kKAJVOQfSu3/80WDc9Ma8ng0p2i/5HuUndGttH+mGMSvOskjOdFImLs2XZIimErp7tSOPmu/6g==}
+
+  workbox-core@7.0.0:
+    resolution: {integrity: sha512-81JkAAZtfVP8darBpfRTovHg8DGAVrKFgHpOArZbdFd78VqHr5Iw65f2guwjE2NlCFbPFDoez3D3/6ZvhI/rwQ==}
+
+  workbox-expiration@7.0.0:
+    resolution: {integrity: sha512-MLK+fogW+pC3IWU9SFE+FRStvDVutwJMR5if1g7oBJx3qwmO69BNoJQVaMXq41R0gg3MzxVfwOGKx3i9P6sOLQ==}
+
+  workbox-precaching@7.0.0:
+    resolution: {integrity: sha512-EC0vol623LJqTJo1mkhD9DZmMP604vHqni3EohhQVwhJlTgyKyOkMrZNy5/QHfOby+39xqC01gv4LjOm4HSfnA==}
+
+  workbox-routing@7.0.0:
+    resolution: {integrity: sha512-8YxLr3xvqidnbVeGyRGkaV4YdlKkn5qZ1LfEePW3dq+ydE73hUUJJuLmGEykW3fMX8x8mNdL0XrWgotcuZjIvA==}
+
+  workbox-strategies@7.0.0:
+    resolution: {integrity: sha512-dg3qJU7tR/Gcd/XXOOo7x9QoCI9nk74JopaJaYAQ+ugLi57gPsXycVdBnYbayVj34m6Y8ppPwIuecrzkpBVwbA==}
+
+  workbox-sw@7.0.0:
+    resolution: {integrity: sha512-SWfEouQfjRiZ7GNABzHUKUyj8pCoe+RwjfOIajcx6J5mtgKkN+t8UToHnpaJL5UVVOf5YhJh+OHhbVNIHe+LVA==}
 
   wrap-ansi@6.2.0:
     resolution: {integrity: sha512-r6lPcBGxZXlIcymEu7InxDMhdW0KDxpLgoFLcguasxCaJ/SOIZwINatK9KY/tf+ZrlywOKU0UDj3ATXUBfxJXA==}
@@ -6747,6 +6792,8 @@ snapshots:
     dependencies:
       safer-buffer: 2.1.2
 
+  idb@7.1.1: {}
+
   ignore@5.3.2: {}
 
   ignore@7.0.6: {}
@@ -8611,6 +8658,33 @@ snapshots:
       stackback: 0.0.2
 
   word-wrap@1.2.5: {}
+
+  workbox-cacheable-response@7.0.0:
+    dependencies:
+      workbox-core: 7.0.0
+
+  workbox-core@7.0.0: {}
+
+  workbox-expiration@7.0.0:
+    dependencies:
+      idb: 7.1.1
+      workbox-core: 7.0.0
+
+  workbox-precaching@7.0.0:
+    dependencies:
+      workbox-core: 7.0.0
+      workbox-routing: 7.0.0
+      workbox-strategies: 7.0.0
+
+  workbox-routing@7.0.0:
+    dependencies:
+      workbox-core: 7.0.0
+
+  workbox-strategies@7.0.0:
+    dependencies:
+      workbox-core: 7.0.0
+
+  workbox-sw@7.0.0: {}
 
   wrap-ansi@6.2.0:
     dependencies:

@@ -1,9 +1,33 @@
-
-importScripts('https://storage.googleapis.com/workbox-cdn/releases/7.0.0/workbox-sw.js');
-
 // Derive base from this worker's URL so root (dev) and /AI-Research-Orchestrator/ (GH Pages) stay aligned with register-sw.js.
 // e.g. /sw.js → '' ; /AI-Research-Orchestrator/sw.js → '/AI-Research-Orchestrator'
 const BASE_PATH = self.location.pathname.replace(/\/[^/]*$/, '').replace(/\/$/, '') || '';
+
+// Self-hosted Workbox (ADR 0011/WS-B): no CDN dependency at runtime. Files
+// copied from the workbox-* npm packages via scripts/copy-workbox.mjs
+// (pnpm run workbox:copy) - re-run that script and bump WORKBOX_VERSION
+// together when upgrading.
+const WORKBOX_VERSION = '7.0.0';
+importScripts(`${BASE_PATH}/workbox-v${WORKBOX_VERSION}/workbox-sw.js`);
+workbox.setConfig({
+  debug: false,
+  modulePathPrefix: `${BASE_PATH}/workbox-v${WORKBOX_VERSION}`,
+});
+
+// Bump on any change to what gets cached or how - activate-time cleanup
+// below removes every runtime cache from a previous version.
+const CACHE_VERSION = 'v1';
+const CACHE_NAMES = {
+  pages: `pages-cache-${CACHE_VERSION}`,
+  pubmedApi: `pubmed-api-cache-${CACHE_VERSION}`,
+  googleFontsStylesheets: `google-fonts-stylesheets-${CACHE_VERSION}`,
+  googleFontsWebfonts: `google-fonts-webfonts-${CACHE_VERSION}`,
+  staticResources: `static-resources-${CACHE_VERSION}`,
+  images: `image-cache-${CACHE_VERSION}`,
+};
+// Base names (without version) - used to recognize a previous version of one
+// of our own runtime caches without also touching Workbox's own precache
+// (versioned separately by workbox.precaching.cleanupOutdatedCaches()).
+const CACHE_BASE_NAMES = Object.keys(CACHE_NAMES).map((key) => CACHE_NAMES[key].replace(/-v[^-]*$/, ''));
 
 // Exact-or-subdomain host match — a plain `.includes(domain)` also matches
 // `evil-ncbi.nlm.nih.gov.attacker.example`, since the substring can appear anywhere in the URL.
@@ -12,11 +36,13 @@ function isHost(hostname, domain) {
 }
 
 if (workbox) {
-    workbox.setConfig({ debug: false });
-
-    // Take control immediately
+    // Take control of already-open clients once activated, but activation
+    // itself waits for an explicit message from the page (see the `message`
+    // listener below) rather than skipping the waiting phase unconditionally -
+    // an unconditional skipWaiting() silently hot-swaps the SW under an
+    // already-open tab, which can serve a new SW's fetch handlers against a
+    // page still running the old JS bundle in memory.
     workbox.core.clientsClaim();
-    self.skipWaiting();
 
     // Cleanup old caches from previous versions
     workbox.precaching.cleanupOutdatedCaches();
@@ -32,9 +58,9 @@ if (workbox) {
     registerRoute(
         ({ request }) => request.mode === 'navigate',
         new NetworkFirst({
-            cacheName: 'pages-cache',
+            cacheName: CACHE_NAMES.pages,
             plugins: [
-                new CacheableResponsePlugin({ statuses: [0, 200] }),
+                new CacheableResponsePlugin({ statuses: [200] }),
             ],
         })
     );
@@ -45,10 +71,10 @@ if (workbox) {
     registerRoute(
         ({ url }) => isHost(url.hostname, 'ncbi.nlm.nih.gov'),
         new NetworkFirst({
-            cacheName: 'pubmed-api-cache',
+            cacheName: CACHE_NAMES.pubmedApi,
             networkTimeoutSeconds: 5,
             plugins: [
-                new CacheableResponsePlugin({ statuses: [0, 200] }),
+                new CacheableResponsePlugin({ statuses: [200] }),
                 new ExpirationPlugin({
                     maxEntries: 200,
                     maxAgeSeconds: 60 * 60 * 24 * 7, // 1 week
@@ -63,7 +89,7 @@ if (workbox) {
     registerRoute(
         ({ url }) => url.origin === 'https://fonts.googleapis.com',
         new StaleWhileRevalidate({
-            cacheName: 'google-fonts-stylesheets',
+            cacheName: CACHE_NAMES.googleFontsStylesheets,
         })
     );
 
@@ -71,9 +97,9 @@ if (workbox) {
     registerRoute(
         ({ url }) => url.origin === 'https://fonts.gstatic.com',
         new CacheFirst({
-            cacheName: 'google-fonts-webfonts',
+            cacheName: CACHE_NAMES.googleFontsWebfonts,
             plugins: [
-                new CacheableResponsePlugin({ statuses: [0, 200] }),
+                new CacheableResponsePlugin({ statuses: [200] }),
                 new ExpirationPlugin({
                     maxAgeSeconds: 60 * 60 * 24 * 365,
                     maxEntries: 30,
@@ -91,7 +117,7 @@ if (workbox) {
              request.destination === 'manifest' ||
              url.pathname.endsWith('.json')),
         new StaleWhileRevalidate({
-            cacheName: 'static-resources',
+            cacheName: CACHE_NAMES.staticResources,
         })
     );
 
@@ -99,7 +125,7 @@ if (workbox) {
     registerRoute(
         ({ request }) => request.destination === 'image',
         new CacheFirst({
-            cacheName: 'image-cache',
+            cacheName: CACHE_NAMES.images,
             plugins: [
                 new ExpirationPlugin({
                     maxEntries: 100,
@@ -134,7 +160,7 @@ if (workbox) {
             `${BASE_PATH}/icons/icon-512.png`,
         ];
         event.waitUntil(
-            caches.open('pages-cache').then(async (cache) => {
+            caches.open(CACHE_NAMES.pages).then(async (cache) => {
                 await Promise.all(requiredUrls.map((url) => cache.add(url)));
                 await Promise.all(
                     optionalUrls.map((url) =>
@@ -145,6 +171,35 @@ if (workbox) {
                 );
             }),
         );
+    });
+
+    // --- Prune stale versions of our own runtime caches on activate ---
+    self.addEventListener('activate', (event) => {
+        const currentNames = new Set(Object.values(CACHE_NAMES));
+        event.waitUntil(
+            caches.keys().then((keys) =>
+                Promise.all(
+                    keys
+                        .filter(
+                            (key) =>
+                                CACHE_BASE_NAMES.some((base) => key.startsWith(`${base}-v`)) &&
+                                !currentNames.has(key),
+                        )
+                        .map((key) => caches.delete(key)),
+                ),
+            ),
+        );
+    });
+
+    // --- Update flow: wait for the page to explicitly ask before activating ---
+    // register-sw.js shows an "update available" banner (UpdateAvailableBanner)
+    // once a new worker reaches the `installed` state with an existing
+    // controller present; its "Reload" button postMessages this, and the page
+    // reloads once on the resulting `controllerchange`.
+    self.addEventListener('message', (event) => {
+        if (event.data && event.data.type === 'SKIP_WAITING') {
+            self.skipWaiting();
+        }
     });
 
     // Warm hashed build assets (js/css under assets/ and chunks/) on first fetch via SWR above.
