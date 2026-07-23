@@ -3,11 +3,16 @@
  * Fails CI if any of this repo's three themes' CSS custom properties (in
  * src/index.css) fall below WCAG 2.2 AA contrast: 4.5:1 for text (SC 1.4.3),
  * 3:1 for UI-component/graphical-object boundaries and large text (SC
- * 1.4.11), computed against the specific background each token actually
- * renders on (translucent colors are alpha-composited first). Also asserts
- * FOUC parity: index.html's inline <style> "bootstrap" duplicates a subset
- * of these same tokens (so the page paints correctly before the real
- * stylesheet loads) and must never silently drift from src/index.css.
+ * 1.4.11), computed against every background a token's real consumers
+ * actually render on (translucent colors are alpha-composited first) - both
+ * the page background and the (opaque-flattened) surface color, since e.g.
+ * the semantic *-muted badge backgrounds appear both on plain page
+ * background (OfflineBanner/DemoDataBanner/UpdateAvailableBanner) and on
+ * surface cards. Also asserts FOUC parity: index.html's inline <style>
+ * "bootstrap" duplicates a subset of these same tokens, in both the
+ * per-theme color blocks AND the shared classless `:root {}` block (fonts,
+ * radii, etc.) - so the page paints correctly before the real stylesheet
+ * loads - and must never silently drift from src/index.css.
  *
  * Deliberately not a full CSS parser (same proportionality as the other
  * check-*.mjs scripts): tailored regexes against this file's known,
@@ -164,8 +169,26 @@ for (const [themeName, vars] of Object.entries(cssThemes)) {
     const fg = vars.get(`--color-${semantic}`);
     const mutedRaw = vars.get(`--color-${semantic}-muted`);
     const resolvedMuted = resolveVar(mutedRaw, vars);
-    const mutedBg = flattenOver(resolvedMuted, surface);
-    requireRatio(themeName, `${semantic} text vs its own muted badge background`, fg, mutedBg, 4.5);
+    // Real consumers of these tokens don't all sit on the same parent:
+    // .banner-warning/.banner-info (OfflineBanner/DemoDataBanner/
+    // UpdateAvailableBanner) render directly on the page background, while
+    // badge/chip usages sit on a surface card - check both.
+    const mutedBgOnSurface = flattenOver(resolvedMuted, surface);
+    const mutedBgOnBackground = flattenOver(resolvedMuted, background);
+    requireRatio(
+      themeName,
+      `${semantic} text vs its own muted background (on a surface card)`,
+      fg,
+      mutedBgOnSurface,
+      4.5,
+    );
+    requireRatio(
+      themeName,
+      `${semantic} text vs its own muted background (directly on page background, e.g. banner-warning/banner-info)`,
+      fg,
+      mutedBgOnBackground,
+      4.5,
+    );
   }
 }
 
@@ -197,6 +220,25 @@ for (const [themeName, selector] of Object.entries(htmlThemeSelectors)) {
         `[${themeName}] FOUC parity: ${name} is "${htmlValue}" in index.html's bootstrap but "${cssValue}" in src/index.css`,
       );
     }
+  }
+}
+
+// The shared, classless `:root {}` block (fonts, --radius-*, etc. - anything
+// NOT theme-specific) is also duplicated in index.html's bootstrap, but the
+// per-theme loop above never walks it. Check it too, the same way.
+let htmlSharedVars;
+try {
+  htmlSharedVars = extractBlock(htmlSource, ':root(?![.\\w])');
+} catch {
+  htmlSharedVars = new Map();
+}
+for (const [name, htmlValue] of htmlSharedVars) {
+  const cssValue = sharedVars.get(name);
+  if (cssValue === undefined) continue; // css-only tokens are fine to skip
+  if (cssValue !== htmlValue) {
+    problems.push(
+      `[shared :root] FOUC parity: ${name} is "${htmlValue}" in index.html's bootstrap but "${cssValue}" in src/index.css`,
+    );
   }
 }
 
