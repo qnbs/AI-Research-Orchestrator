@@ -143,6 +143,15 @@ const parseArticleAuthors = (article: AggregatedArticle): string[] =>
     .map((name) => name.trim())
     .filter((name) => name.length > 1 && name.length < 60);
 
+const incrementCoAuthorPairs = (authors: string[], coCount: Map<string, number>): void => {
+  for (let i = 0; i < authors.length; i++) {
+    for (let j = i + 1; j < authors.length; j++) {
+      const key = [authors[i], authors[j]].sort().join(AUTHOR_SEP);
+      coCount.set(key, (coCount.get(key) ?? 0) + 1);
+    }
+  }
+};
+
 const collectAuthorCoCounts = (
   articles: AggregatedArticle[],
 ): { authorCount: Map<string, number>; coCount: Map<string, number> } => {
@@ -151,12 +160,7 @@ const collectAuthorCoCounts = (
   for (const article of articles) {
     const authors = parseArticleAuthors(article);
     for (const author of authors) authorCount.set(author, (authorCount.get(author) ?? 0) + 1);
-    for (let i = 0; i < authors.length; i++) {
-      for (let j = i + 1; j < authors.length; j++) {
-        const key = [authors[i], authors[j]].sort().join(AUTHOR_SEP);
-        coCount.set(key, (coCount.get(key) ?? 0) + 1);
-      }
-    }
+    incrementCoAuthorPairs(authors, coCount);
   }
   return { authorCount, coCount };
 };
