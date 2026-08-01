@@ -172,6 +172,26 @@ const ArticleSummary: React.FC<{
   );
 };
 
+const resolveArticlePresentation = (
+  article: RankedArticle,
+  summaryCharLimit: number,
+  isExpanded: boolean,
+  summaryLabelAi: string,
+  summaryLabelPlain: string,
+) => {
+  const articleLink = article.pmcId
+    ? `https://www.ncbi.nlm.nih.gov/pmc/articles/${article.pmcId}/`
+    : `https://pubmed.ncbi.nlm.nih.gov/${article.pmid}/`;
+  const summaryToDisplay = article.aiSummary || article.summary;
+  const summaryLabel = article.aiSummary ? summaryLabelAi : summaryLabelPlain;
+  const isLongSummary = summaryToDisplay.length > summaryCharLimit;
+  const displayedSummary =
+    isLongSummary && !isExpanded
+      ? `${summaryToDisplay.substring(0, summaryCharLimit)}...`
+      : summaryToDisplay;
+  return { articleLink, summaryLabel, isLongSummary, displayedSummary };
+};
+
 export const ReportArticleCard: React.FC<{
   article: RankedArticle;
   rank: number;
@@ -204,19 +224,13 @@ export const ReportArticleCard: React.FC<{
     );
   };
 
-  const articleLink = article.pmcId
-    ? `https://www.ncbi.nlm.nih.gov/pmc/articles/${article.pmcId}/`
-    : `https://pubmed.ncbi.nlm.nih.gov/${article.pmid}/`;
-
-  const summaryToDisplay = article.aiSummary || article.summary;
-  const summaryLabel = article.aiSummary
-    ? t('report.article.aiSummary')
-    : t('report.article.summary');
-  const isLongSummary = summaryToDisplay.length > summaryCharLimit;
-  const displayedSummary =
-    isLongSummary && !isExpanded
-      ? `${summaryToDisplay.substring(0, summaryCharLimit)}...`
-      : summaryToDisplay;
+  const { articleLink, summaryLabel, isLongSummary, displayedSummary } = resolveArticlePresentation(
+    article,
+    summaryCharLimit,
+    isExpanded,
+    t('report.article.aiSummary'),
+    t('report.article.summary'),
+  );
 
   const handleCopy = (text: string, typeLabel: string) => {
     navigator.clipboard.writeText(text).then(() => {
