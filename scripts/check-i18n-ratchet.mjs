@@ -39,6 +39,7 @@ const MIGRATED_FILES = [
   'src/components/InputForm.tsx',
   'src/components/InputFormHeader.tsx',
   'src/components/ResearchView.tsx',
+  'src/components/ResearchResultsPanel.tsx',
 ];
 
 const IGNORE_COMMENT = 'i18n-ratchet-ignore-next-line';
