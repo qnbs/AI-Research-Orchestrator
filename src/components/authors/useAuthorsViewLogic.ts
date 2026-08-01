@@ -186,9 +186,9 @@ export const useAuthorsViewLogic = (
           setAuthorProfile(profile);
           setView('profile');
         }
-      } catch (err) {
+      } catch {
         if (isMounted.current) {
-          setError(err instanceof Error ? err.message : t('authors.error.profile_build'));
+          setError(t('authors.error.profile_build'));
           setView('landing');
         }
       } finally {
@@ -238,9 +238,9 @@ export const useAuthorsViewLogic = (
           setAuthorClusters(clusters);
           setView('disambiguation');
         }
-      } catch (err) {
+      } catch {
         if (isMounted.current) {
-          setError(err instanceof Error ? err.message : t('authors.error.generic'));
+          setError(t('authors.error.generic'));
           setView('landing');
         }
       } finally {
@@ -263,9 +263,9 @@ export const useAuthorsViewLogic = (
         if (isMounted.current) {
           setSuggestedAuthors(result);
         }
-      } catch (err) {
+      } catch {
         if (isMounted.current) {
-          setSuggestionError(err instanceof Error ? err.message : t('authors.error.suggest'));
+          setSuggestionError(t('authors.error.suggest'));
         }
       } finally {
         if (isMounted.current) {

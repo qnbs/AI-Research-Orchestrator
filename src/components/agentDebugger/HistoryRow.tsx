@@ -46,7 +46,11 @@ export const HistoryRow: React.FC<{
         <span>🪙 {trace.totalTokens.toLocaleString()}</span>
         <span>💵 ${trace.totalCostUsd.toFixed(4)}</span>
         <span>⏱ {dur}</span>
-        <span className="ml-auto">{t('debugger.steps', { count: trace.events.length })}</span>
+        <span className="ml-auto">
+          {trace.events.length === 1
+            ? t('debugger.steps_one', { count: trace.events.length })
+            : t('debugger.steps_other', { count: trace.events.length })}
+        </span>
       </div>
     </motion.button>
   );

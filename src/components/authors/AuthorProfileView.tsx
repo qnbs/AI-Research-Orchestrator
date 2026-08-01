@@ -182,7 +182,11 @@ export const AuthorProfileView: React.FC = () => {
                 {profile.coreConcepts.map(({ concept, frequency }) => (
                   <Tooltip
                     key={concept}
-                    content={t('authors.profile.concept_tooltip', { count: frequency })}
+                    content={
+                      frequency === 1
+                        ? t('authors.profile.concept_tooltip_one', { count: frequency })
+                        : t('authors.profile.concept_tooltip_other', { count: frequency })
+                    }
                   >
                     <div className="group cursor-default">
                       <div className="flex justify-between text-sm mb-1">
@@ -215,7 +219,11 @@ export const AuthorProfileView: React.FC = () => {
                     <span
                       key={ca.name}
                       className="px-3 py-1 rounded-full bg-surface-hover border border-border text-xs font-medium text-text-primary"
-                      title={t('authors.profile.coauthored_title', { count: ca.count })}
+                      title={
+                        ca.count === 1
+                          ? t('authors.profile.coauthored_title_one', { count: ca.count })
+                          : t('authors.profile.coauthored_title_other', { count: ca.count })
+                      }
                     >
                       {ca.name}
                     </span>
@@ -288,9 +296,14 @@ export const AuthorProfileView: React.FC = () => {
               <div className="flex items-center gap-2 font-bold">
                 <DocumentIcon className="h-5 w-5 text-brand-accent" />
                 <span>
-                  {t('authors.profile.publication_list', {
-                    count: profile.publications.length,
-                  })}
+                  {t(
+                    profile.publications.length === 1
+                      ? 'authors.profile.publication_list_one'
+                      : 'authors.profile.publication_list_other',
+                    {
+                      count: profile.publications.length,
+                    },
+                  )}
                 </span>
               </div>
             }

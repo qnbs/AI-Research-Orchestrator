@@ -106,6 +106,7 @@ const AgentDebuggerPanel: React.FC = () => {
                 type="button"
                 onClick={handlePin}
                 title={isPinned ? t('debugger.pin.expand') : t('debugger.pin.side')}
+                aria-label={isPinned ? t('debugger.pin.expand') : t('debugger.pin.side')}
                 className={`p-1.5 rounded-md text-xs transition-colors ${
                   isPinned
                     ? 'text-brand-accent bg-brand-accent/10'
