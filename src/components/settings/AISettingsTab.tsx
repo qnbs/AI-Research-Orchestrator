@@ -51,23 +51,20 @@ const ARTICLE_TYPE_LABEL_KEYS: Record<(typeof ARTICLE_TYPES)[number], Translatio
   'Observational Study': 'inputForm.articleType.observational',
 };
 
-function resolveCustomBaseUrl(meta: ReturnType<typeof getProviderMeta>): string {
-  return meta.supportsBaseUrl ? (meta.defaultBaseUrl ?? '') : '';
-}
-
 const ProviderSelect: React.FC = () => {
   const { tempSettings, setTempSettings, t } = useSettingsView();
   const currentProvider = tempSettings.ai.provider ?? 'gemini';
 
   const handleProviderChange = (provider: AIProviderSelection) => {
     const meta = getProviderMeta(provider);
+    const customBaseUrl = meta.supportsBaseUrl ? (meta.defaultBaseUrl ?? '') : '';
     setTempSettings((s) => ({
       ...s,
       ai: {
         ...s.ai,
         provider,
         model: meta.defaultModel,
-        customBaseUrl: resolveCustomBaseUrl(meta),
+        customBaseUrl,
       },
     }));
   };
@@ -543,8 +540,27 @@ const DefaultArticleTypes: React.FC = () => {
   );
 };
 
+const AutoSaveReportsToggle: React.FC = () => {
+  const { tempSettings, setTempSettings, t } = useSettingsView();
+  return (
+    <div className="pt-6 border-t border-border">
+      <Toggle
+        checked={tempSettings.defaults.autoSaveReports}
+        onChange={(checked) =>
+          setTempSettings((s) => ({
+            ...s,
+            defaults: { ...s.defaults, autoSaveReports: checked },
+          }))
+        }
+      >
+        {t('settings.ai.formDefaults.auto_save')}
+      </Toggle>
+    </div>
+  );
+};
+
 const FormDefaultsCard: React.FC = () => {
-  const { tempSettings, setTempSettings, errors, t } = useSettingsView();
+  const { errors, t } = useSettingsView();
   return (
     <SettingCard
       title={t('settings.ai.formDefaults.title')}
@@ -554,19 +570,7 @@ const FormDefaultsCard: React.FC = () => {
         <DefaultScanFields />
         {errors.formDefaults && <p className="text-xs text-red-400 mt-2">{errors.formDefaults}</p>}
         <DefaultArticleTypes />
-        <div className="pt-6 border-t border-border">
-          <Toggle
-            checked={tempSettings.defaults.autoSaveReports}
-            onChange={(checked) =>
-              setTempSettings((s) => ({
-                ...s,
-                defaults: { ...s.defaults, autoSaveReports: checked },
-              }))
-            }
-          >
-            {t('settings.ai.formDefaults.auto_save')}
-          </Toggle>
-        </div>
+        <AutoSaveReportsToggle />
       </div>
     </SettingCard>
   );
