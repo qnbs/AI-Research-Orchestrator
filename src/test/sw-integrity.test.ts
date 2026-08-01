@@ -170,6 +170,15 @@ describe('service worker integrity', () => {
  * exactly that and broke two real Playwright E2E tests).
  */
 describe('register-sw.js runtime behavior', () => {
+  /**
+   * Shared non-`load` window listeners across loadRegisterSw() calls in one test
+   * (multi-tab). We cannot safely call through to jsdom's native addEventListener
+   * after replacing `window.location` (breaks EventTarget brand checks) or when
+   * Vitest 4 reuses the same spy on a second spyOn (recursion). Dispatch is
+   * fanned out manually below instead.
+   */
+  const sharedWindowListeners: Array<[string, EventListener]> = [];
+
   function createFakeRegistration() {
     const listeners: Record<string, Array<() => void>> = {};
     return {
@@ -220,14 +229,20 @@ describe('register-sw.js runtime behavior', () => {
     // specifically - never really attach it at all (invoked directly below
     // instead), so a second loadRegisterSw() call in the same test can't
     // trigger the first call's stale "load" handler as a side effect of
-    // dispatching its own. Real attachment is kept for everything else (e.g.
-    // "sw-request-reload") - multiple tabs' listeners for that coexisting and
-    // all reacting to one dispatch is the actually-desired multi-tab shape.
+    // dispatching its own. Non-load listeners (e.g. "sw-request-reload") go
+    // into sharedWindowListeners so one dispatch reaches every simulated tab.
     const addedToWindow: Array<[string, EventListener]> = [];
-    const realAddEventListener = window.addEventListener.bind(window);
-    vi.spyOn(window, 'addEventListener').mockImplementation((type, listener, options) => {
-      addedToWindow.push([type, listener as EventListener]);
-      if (type !== 'load') realAddEventListener(type, listener as EventListener, options);
+    vi.spyOn(window, 'addEventListener').mockImplementation((type, listener) => {
+      const entry: [string, EventListener] = [type, listener as EventListener];
+      addedToWindow.push(entry);
+      if (type !== 'load') sharedWindowListeners.push(entry);
+    });
+    vi.spyOn(window, 'dispatchEvent').mockImplementation((event) => {
+      const e = event as Event;
+      for (const [type, listener] of sharedWindowListeners) {
+        if (type === e.type) listener.call(window, e);
+      }
+      return true;
     });
 
     // register-sw.js is a plain browser IIFE (no module system) referencing
@@ -249,7 +264,10 @@ describe('register-sw.js runtime behavior', () => {
       },
       reloadSpy,
       cleanup: () => {
-        for (const [type, listener] of addedToWindow) window.removeEventListener(type, listener);
+        for (const entry of addedToWindow) {
+          const idx = sharedWindowListeners.indexOf(entry);
+          if (idx >= 0) sharedWindowListeners.splice(idx, 1);
+        }
       },
     };
   }
@@ -259,6 +277,7 @@ describe('register-sw.js runtime behavior', () => {
   afterEach(() => {
     cleanupCurrent?.();
     cleanupCurrent = null;
+    sharedWindowListeners.length = 0;
     // @ts-expect-error - test-only cleanup of a property jsdom doesn't define by default
     delete navigator.serviceWorker;
     vi.restoreAllMocks();

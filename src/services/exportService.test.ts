@@ -13,7 +13,10 @@ const pdfDocMock = vi.hoisted(() => {
 });
 
 vi.mock('jspdf', () => ({
-  default: vi.fn(() => pdfDocMock),
+  // Vitest 4: `new jsPDF()` requires a constructable mock (function/class, not arrow).
+  default: vi.fn().mockImplementation(function MockJsPdf(this: Record<string, unknown>) {
+    return pdfDocMock;
+  }),
 }));
 
 import type {
