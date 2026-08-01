@@ -499,7 +499,7 @@ const DefaultScanFields: React.FC = () => {
 
 const ArticleTypeCheckbox: React.FC<{ type: (typeof ARTICLE_TYPES)[number] }> = ({ type }) => {
   const { tempSettings, setTempSettings, t } = useSettingsView();
-  const id = `def-${type}`;
+  const id = `def-${type.replace(/\s+/g, '-')}`;
   return (
     <label htmlFor={id} className="flex items-start gap-3 text-sm font-medium text-text-primary">
       <input

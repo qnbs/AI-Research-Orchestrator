@@ -76,7 +76,7 @@ const KbPageSelect: React.FC = () => {
             ...s,
             knowledgeBase: {
               ...s.knowledgeBase,
-              articlesPerPage: parseInt(
+              articlesPerPage: Number.parseInt(
                 e.target.value,
                 10,
               ) as Settings['knowledgeBase']['articlesPerPage'],
