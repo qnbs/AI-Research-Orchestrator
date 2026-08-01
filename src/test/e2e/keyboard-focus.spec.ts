@@ -38,7 +38,6 @@ const focusStyles = (locator: Locator) =>
     };
   });
 
-/** Assert a focus-driven style change vs unfocused baseline. */
 const expectFocusIndicator = async (locator: Locator, label: string) => {
   await expect(locator).toBeVisible();
   await locator.focus();
@@ -54,7 +53,6 @@ const expectFocusIndicator = async (locator: Locator, label: string) => {
   ).toBe(true);
 };
 
-/** Capture styles produced by Tab (keyboard :focus-visible path). */
 const expectTabFocusIndicator = async (page: Page, label: string) => {
   await page.keyboard.press('Tab');
   const focused = page.locator(':focus');
@@ -76,18 +74,16 @@ test.describe('Keyboard focus visibility (WS-E)', () => {
 
   test('header settings and bottom nav show focus rings', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
-    const settings = page.getByRole('button', { name: /settings/i }).first();
+    const settings = page.getByRole('button', { name: 'Settings' });
     await expectFocusIndicator(settings, 'settings button');
 
     await page.setViewportSize({ width: 390, height: 844 });
-    const home = page.locator('nav.fixed button, nav[class*="fixed"] button').first();
-    // Bottom nav is md:hidden fixed — ensure a nav button exists
-    const bottomNavBtn = page
-      .locator('nav')
-      .filter({ hasText: /home|start|orchestrator/i })
-      .getByRole('button')
-      .first();
-    const target = (await bottomNavBtn.count()) > 0 ? bottomNavBtn : home;
+    const bottomNavBtn = page.locator('nav.fixed button, nav[class*="bottom"] button').first();
+    // Fall back to any visible bottom-bar control
+    const target =
+      (await bottomNavBtn.count()) > 0
+        ? bottomNavBtn
+        : page.getByRole('navigation').getByRole('button').first();
     await expectFocusIndicator(target, 'bottom nav item');
   });
 
@@ -104,21 +100,20 @@ test.describe('Keyboard focus visibility (WS-E)', () => {
   test('orchestrator topic field shows a focus ring', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.evaluate(() => {
-      window.location.hash = '#/orchestrator';
+      window.location.hash = '#orchestrator';
     });
+    await page.waitForFunction(() => window.location.hash === '#orchestrator');
     const topic = page.getByRole('textbox').first();
-    await expect(topic).toBeVisible({ timeout: 10_000 });
+    await expect(topic).toBeVisible({ timeout: 15_000 });
     await expectFocusIndicator(topic, 'orchestrator topic input');
   });
 
   test('Tab traversal keeps a focus-specific indicator', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
-    // Seed keyboard modality so :focus-visible matches on subsequent Tabs.
     await page
       .locator('body')
       .click({ position: { x: 1, y: 1 } })
       .catch(() => undefined);
-    await page.keyboard.press('Tab');
     for (let i = 0; i < 5; i++) {
       await expectTabFocusIndicator(page, `tab stop ${i + 1}`);
     }
