@@ -4,7 +4,7 @@ import { expect, type Page } from '@playwright/test';
 /**
  * Skip onboarding and suppress demo-seed side effects so a11y smoke stays deterministic.
  */
-export async function skipOnboardingForA11y(page: Page): Promise<void> {
+export const skipOnboardingForA11y = async (page: Page): Promise<void> => {
   await page.goto('/');
   await page.waitForLoadState('domcontentloaded');
   await page.evaluate(() => {
@@ -26,22 +26,22 @@ export async function skipOnboardingForA11y(page: Page): Promise<void> {
     await startBtn.click();
     await header.waitFor({ state: 'visible', timeout: 10_000 });
   }
-}
+};
 
 /** In-page hash navigation without full reload (matches production hash router). */
-export async function navigateToViewHash(page: Page, viewHash: string): Promise<void> {
+export const navigateToViewHash = async (page: Page, viewHash: string): Promise<void> => {
   await page.evaluate((h) => {
     window.location.hash = h;
   }, viewHash);
   // Lazy Suspense views need a beat to mount before axe scans the tree.
   await page.waitForTimeout(1_500);
-}
+};
 
 /**
  * Fail on critical/serious axe findings inside `#root` (WCAG 2 A/AA tags only).
  * Moderate/minor noise is intentionally ignored — see meeting notes / P1-5.
  */
-export async function expectNoCriticalAxeViolations(page: Page): Promise<void> {
+export const expectNoCriticalAxeViolations = async (page: Page): Promise<void> => {
   await expect(page.locator('#root')).toBeVisible();
   const results = await new AxeBuilder({ page })
     .include('#root')
@@ -52,4 +52,4 @@ export async function expectNoCriticalAxeViolations(page: Page): Promise<void> {
     (v) => v.impact === 'critical' || v.impact === 'serious',
   );
   expect(critical, critical.map((v) => `${v.id}: ${v.help}`).join('\n')).toEqual([]);
-}
+};
