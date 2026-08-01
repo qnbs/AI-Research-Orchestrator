@@ -12,6 +12,8 @@
 - **#126** WS-H2: CommandPalette EN+DE via `commandPaletteTranslations.ts` + ratchet (merged).
 - **#127** WS-I: blocking axe critical/serious smoke (`a11y.yml` + `a11y.spec.ts`) (merged).
 - **InputForm i18n (this branch):** research parameters form + header EN+DE via `inputFormTranslations.ts` + ratchet.
+  - **Why:** residual DE locale still showed English form chrome after H1/H2; Orchestrator is the primary entry path.
+  - **Impact:** EN+DE form labels/options via `t()`; PubMed article-type filter values stay English in state; ratchet guards regressions.
 
 ## Still open
 

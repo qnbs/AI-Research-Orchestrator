@@ -22,4 +22,18 @@ describe('i18n translations parity', () => {
       expect(value.trim().length, `de:${key}`).toBeGreaterThan(0);
     }
   });
+
+  it('wires inputForm.* keys in both locales', () => {
+    const samples = [
+      'inputForm.header.title',
+      'inputForm.topic.label',
+      'inputForm.submit',
+      'inputForm.sources.arxiv_hint',
+    ] as const satisfies readonly TranslationKey[];
+    for (const key of samples) {
+      expect(translations.en[key].length).toBeGreaterThan(0);
+      expect(translations.de[key].length).toBeGreaterThan(0);
+      expect(translations.de[key]).not.toEqual(translations.en[key]);
+    }
+  });
 });

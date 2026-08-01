@@ -69,7 +69,7 @@ const CustomCheckbox: React.FC<{
 }> = ({ id, value, checked, onChange, label }) => (
   <label
     htmlFor={id}
-    className={`flex items-center cursor-pointer group p-2 rounded-lg border transition-all duration-200 ${checked ? 'bg-brand-accent/10 border-brand-accent/40 shadow-glow' : 'bg-transparent border-transparent hover:bg-surface-hover hover:border-border'}`}
+    className={`flex items-center cursor-pointer group p-2 rounded-lg border transition-all duration-200 focus-within:ring-2 focus-within:ring-brand-accent focus-within:ring-offset-2 focus-within:ring-offset-surface ${checked ? 'bg-brand-accent/10 border-brand-accent/40 shadow-glow' : 'bg-transparent border-transparent hover:bg-surface-hover hover:border-border'}`}
   >
     <div className="relative flex-shrink-0">
       <input
