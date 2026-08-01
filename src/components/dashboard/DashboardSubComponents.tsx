@@ -47,18 +47,24 @@ export const CyberTooltip = ({ active, payload, label }: TooltipContentProps) =>
       {label != null && (
         <p style={{ color: '#7d8590', marginBottom: 4, fontWeight: 500 }}>{label}</p>
       )}
-      {payload.map((entry, entryIndex) => (
-        <p
-          key={`${String(entry.name)}-${entryIndex}`}
-          style={{
-            color: entry.color ?? CHART_PALETTE[entryIndex % CHART_PALETTE.length],
-            fontWeight: 600,
-            margin: 0,
-          }}
-        >
-          {entry.name}: <span style={{ color: '#e6edf3' }}>{entry.value}</span>
-        </p>
-      ))}
+      {payload.map((entry) => {
+        const entryKey = `${String(entry.name)}:${String(entry.value)}:${String(entry.dataKey ?? '')}`;
+        const paletteIndex =
+          Math.abs([...String(entry.name ?? '')].reduce((hash, ch) => hash + ch.charCodeAt(0), 0)) %
+          CHART_PALETTE.length;
+        return (
+          <p
+            key={entryKey}
+            style={{
+              color: entry.color ?? CHART_PALETTE[paletteIndex],
+              fontWeight: 600,
+              margin: 0,
+            }}
+          >
+            {entry.name}: <span style={{ color: '#e6edf3' }}>{entry.value}</span>
+          </p>
+        );
+      })}
     </div>
   );
 };
@@ -127,35 +133,41 @@ interface NetEdge {
   weight: number;
 }
 
-const buildCoAuthorGraph = (
+const AUTHOR_SEP = '\x00';
+const CANVAS_WIDTH = 580;
+const CANVAS_HEIGHT = 420;
+
+const parseArticleAuthors = (article: AggregatedArticle): string[] =>
+  (article.authors ?? '')
+    .split(/,\s*/)
+    .map((name) => name.trim())
+    .filter((name) => name.length > 1 && name.length < 60);
+
+const collectAuthorCoCounts = (
   articles: AggregatedArticle[],
-): { nodes: NetNode[]; edges: NetEdge[] } => {
+): { authorCount: Map<string, number>; coCount: Map<string, number> } => {
   const authorCount = new Map<string, number>();
   const coCount = new Map<string, number>();
-  const SEP = '\x00';
-
   for (const article of articles) {
-    const authors = (article.authors ?? '')
-      .split(/,\s*/)
-      .map((name) => name.trim())
-      .filter((name) => name.length > 1 && name.length < 60);
+    const authors = parseArticleAuthors(article);
     for (const author of authors) authorCount.set(author, (authorCount.get(author) ?? 0) + 1);
     for (let i = 0; i < authors.length; i++) {
       for (let j = i + 1; j < authors.length; j++) {
-        const key = [authors[i], authors[j]].sort().join(SEP);
+        const key = [authors[i], authors[j]].sort().join(AUTHOR_SEP);
         coCount.set(key, (coCount.get(key) ?? 0) + 1);
       }
     }
   }
+  return { authorCount, coCount };
+};
 
+const buildTopAuthorNodes = (
+  authorCount: Map<string, number>,
+): { nodes: NetNode[]; topSet: Set<string> } => {
   const topAuthors = [...authorCount.entries()]
     .sort((left, right) => right[1] - left[1])
     .slice(0, 15)
     .map(([authorName]) => authorName);
-  const topSet = new Set(topAuthors);
-  const CANVAS_WIDTH = 580;
-  const CANVAS_HEIGHT = 420;
-
   const nodes: NetNode[] = topAuthors.map((name, index) => {
     const angle = (index / topAuthors.length) * Math.PI * 2 - Math.PI / 2;
     return {
@@ -166,62 +178,106 @@ const buildCoAuthorGraph = (
       y: CANVAS_HEIGHT / 2 + Math.sin(angle) * CANVAS_HEIGHT * 0.34,
     };
   });
+  return { nodes, topSet: new Set(topAuthors) };
+};
 
+const buildTopCoAuthorEdges = (coCount: Map<string, number>, topSet: Set<string>): NetEdge[] => {
   const edges: NetEdge[] = [];
   for (const [key, weight] of coCount.entries()) {
-    const sep = key.indexOf(SEP);
+    const sep = key.indexOf(AUTHOR_SEP);
     const authorA = key.slice(0, sep);
     const authorB = key.slice(sep + 1);
     if (topSet.has(authorA) && topSet.has(authorB)) {
       edges.push({ source: authorA, target: authorB, weight });
     }
   }
+  return edges;
+};
 
-  // Spring-force simulation (mutable working arrays)
+const applyRepulsionForces = (
+  px: number[],
+  py: number[],
+  fx: Float64Array,
+  fy: Float64Array,
+): void => {
+  for (let i = 0; i < px.length; i++) {
+    for (let j = i + 1; j < px.length; j++) {
+      const dx = px[j] - px[i];
+      const dy = py[j] - py[i];
+      const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+      const force = 2800 / (dist * dist);
+      fx[i] -= (force * dx) / dist;
+      fy[i] -= (force * dy) / dist;
+      fx[j] += (force * dx) / dist;
+      fy[j] += (force * dy) / dist;
+    }
+  }
+};
+
+const applyEdgeSpringForces = (
+  nodes: NetNode[],
+  edges: NetEdge[],
+  px: number[],
+  py: number[],
+  fx: Float64Array,
+  fy: Float64Array,
+): void => {
+  for (const edge of edges) {
+    const sourceIndex = nodes.findIndex((node) => node.id === edge.source);
+    const targetIndex = nodes.findIndex((node) => node.id === edge.target);
+    if (sourceIndex === -1 || targetIndex === -1) continue;
+    const dx = px[targetIndex] - px[sourceIndex];
+    const dy = py[targetIndex] - py[sourceIndex];
+    const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+    const force = (dist - 120) * 0.025;
+    fx[sourceIndex] += (force * dx) / dist;
+    fy[sourceIndex] += (force * dy) / dist;
+    fx[targetIndex] -= (force * dx) / dist;
+    fy[targetIndex] -= (force * dy) / dist;
+  }
+};
+
+const integrateSpringStep = (
+  px: number[],
+  py: number[],
+  vx: Float64Array,
+  vy: Float64Array,
+  fx: Float64Array,
+  fy: Float64Array,
+): void => {
+  for (let i = 0; i < px.length; i++) {
+    vx[i] = (vx[i] + fx[i] + (CANVAS_WIDTH / 2 - px[i]) * 0.012) * 0.82;
+    vy[i] = (vy[i] + fy[i] + (CANVAS_HEIGHT / 2 - py[i]) * 0.012) * 0.82;
+    px[i] = Math.max(24, Math.min(CANVAS_WIDTH - 24, px[i] + vx[i]));
+    py[i] = Math.max(24, Math.min(CANVAS_HEIGHT - 24, py[i] + vy[i]));
+  }
+};
+
+const runSpringLayout = (nodes: NetNode[], edges: NetEdge[]): void => {
   const px = nodes.map((node) => node.x);
   const py = nodes.map((node) => node.y);
   const vx = new Float64Array(nodes.length);
   const vy = new Float64Array(nodes.length);
-
   for (let iter = 0; iter < 160; iter++) {
     const fx = new Float64Array(nodes.length);
     const fy = new Float64Array(nodes.length);
-    for (let i = 0; i < nodes.length; i++) {
-      for (let j = i + 1; j < nodes.length; j++) {
-        const dx = px[j] - px[i];
-        const dy = py[j] - py[i];
-        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-        const force = 2800 / (dist * dist);
-        fx[i] -= (force * dx) / dist;
-        fy[i] -= (force * dy) / dist;
-        fx[j] += (force * dx) / dist;
-        fy[j] += (force * dy) / dist;
-      }
-    }
-    for (const edge of edges) {
-      const sourceIndex = nodes.findIndex((node) => node.id === edge.source);
-      const targetIndex = nodes.findIndex((node) => node.id === edge.target);
-      if (sourceIndex === -1 || targetIndex === -1) continue;
-      const dx = px[targetIndex] - px[sourceIndex];
-      const dy = py[targetIndex] - py[sourceIndex];
-      const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-      const force = (dist - 120) * 0.025;
-      fx[sourceIndex] += (force * dx) / dist;
-      fy[sourceIndex] += (force * dy) / dist;
-      fx[targetIndex] -= (force * dx) / dist;
-      fy[targetIndex] -= (force * dy) / dist;
-    }
-    for (let i = 0; i < nodes.length; i++) {
-      vx[i] = (vx[i] + fx[i] + (CANVAS_WIDTH / 2 - px[i]) * 0.012) * 0.82;
-      vy[i] = (vy[i] + fy[i] + (CANVAS_HEIGHT / 2 - py[i]) * 0.012) * 0.82;
-      px[i] = Math.max(24, Math.min(CANVAS_WIDTH - 24, px[i] + vx[i]));
-      py[i] = Math.max(24, Math.min(CANVAS_HEIGHT - 24, py[i] + vy[i]));
-    }
+    applyRepulsionForces(px, py, fx, fy);
+    applyEdgeSpringForces(nodes, edges, px, py, fx, fy);
+    integrateSpringStep(px, py, vx, vy, fx, fy);
   }
   for (let i = 0; i < nodes.length; i++) {
     nodes[i].x = px[i];
     nodes[i].y = py[i];
   }
+};
+
+const buildCoAuthorGraph = (
+  articles: AggregatedArticle[],
+): { nodes: NetNode[]; edges: NetEdge[] } => {
+  const { authorCount, coCount } = collectAuthorCoCounts(articles);
+  const { nodes, topSet } = buildTopAuthorNodes(authorCount);
+  const edges = buildTopCoAuthorEdges(coCount, topSet);
+  runSpringLayout(nodes, edges);
   return { nodes, edges };
 };
 
