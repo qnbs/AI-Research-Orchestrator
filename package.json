@@ -63,7 +63,7 @@
     "jspdf": "^4.2.0",
     "lucide-react": "^1.14.0",
     "marked": "^18.0.7",
-    "openai": "^6.48.0",
+    "openai": "^7.1.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-redux": "^9.3.0",
