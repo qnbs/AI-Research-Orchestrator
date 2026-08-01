@@ -4,16 +4,19 @@
 
 - **#119** openai 6→7.2 (Dependabot #98 closed as superseded).
 - **#120** HelpView i18n Wave 8 (EN+DE `help.*`, catalog split under 700 lines, FAQ accuracy fixes).
-- **#118** WS-E focus rings (in flight / merge pending): `.focus-ring-aa`, ESLint guard, Playwright keyboard-focus.
+- **#118** WS-E focus rings: `.focus-ring-aa`, ESLint guard, Playwright keyboard-focus.
+- **WS-F (this branch):** skip-to-content + `#main-content` landmark + 44×44 touch targets. Original `PROMPT-ARO-HARDENING-UIUX` still not in-repo — WS-F reconstructed as bypass-blocks + touch-target AA after WS-E.
 
-## Still open on GitHub
+## Still open
 
-- Issues **#74 / #78** are implemented via #110 but agent lacks permission to close — close manually if still open.
-- UIUX **WS-F onward** — original `PROMPT-ARO-HARDENING-UIUX` not in-repo; continue from meeting-note summaries when ready.
+- Issues **#74 / #78** implemented via #110 but agent lacks permission to close — close manually if still open.
+- **Chrome i18n rest:** Header aria-labels / theme menu, Welcome, OrchestratorDashboard, ConfirmationModal, FeatureErrorBoundary → `chromeTranslations.ts` + ratchet.
+- UIUX **WS-G onward** — continue from meeting-note summaries unless user re-shares the hardening prompt.
 
 ## Process
 
 - DeepSource JS often flags ESM/`eslint-local-rules` and nesting nitpicks; core gates (typecheck/lint/tests/build) remain authoritative. Claude Code "review" ~10s failures remain transient infra.
+- Skip links in this app **must** `preventDefault` and focus `#main-content` manually — bare `href="#main-content"` fights `useUrlSync` hash view routing.
 
 ---
 
@@ -107,8 +110,10 @@
 ## Sprint status (workstream sequence: WS-C → WS-A → WS-B → WS-D → WS-E → WS-F → WS-G → WS-H1 → WS-H2 → WS-I)
 
 - **WS-C, WS-A, WS-B, WS-D: done and merged.**
-- **WS-E (2026-08-01):** focus rings restored on bare `focus:outline-none` sites; `.focus-ring-aa` utility; ESLint `local/no-bare-outline-none`; Playwright `keyboard-focus.spec.ts`. Full original WS-F→WS-I prompt still not in-repo — proceed from meeting-note summaries / prior session compaction unless user re-shares `PROMPT-ARO-HARDENING-UIUX`.
-- Next: **WS-F** (when scope known) and/or HelpView i18n Wave 8 + openai 7 (#98).
+- **WS-E (2026-08-01):** focus rings restored on bare `focus:outline-none` sites; `.focus-ring-aa` utility; ESLint `local/no-bare-outline-none`; Playwright `keyboard-focus.spec.ts`.
+- **WS-F (2026-08-01):** skip-to-content + main landmark + 44×44 touch targets (reconstructed — full original prompt not in-repo). Next: chrome i18n rest, then **WS-G** when scope known.
+- Full original WS-G→WS-I prompt still not in-repo — proceed from meeting-note summaries / prior session compaction unless user re-shares `PROMPT-ARO-HARDENING-UIUX`.
+- Next: **chrome i18n** (Header/Welcome/OrchestratorDashboard/ConfirmationModal/FeatureErrorBoundary) then WS-G.
 
 ## Merged this session (chronological)
 

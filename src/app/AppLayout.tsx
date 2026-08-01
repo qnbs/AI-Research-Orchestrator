@@ -6,6 +6,7 @@ import { DemoDataBanner } from '../components/DemoDataBanner';
 import { Notification } from '../components/Notification';
 import { ConfirmationModal } from '../components/ConfirmationModal';
 import { BottomNavBar } from '../components/BottomNavBar';
+import { SkipToContentLink } from '../components/SkipToContentLink';
 import { ContentSpinner, FullScreenSpinner } from './AppSpinners';
 import { useAppLogic } from './useAppLogic';
 import { AppViewRouter } from './AppViewRouter';
@@ -61,6 +62,7 @@ const AppLayout: React.FC = () => {
 
   return (
     <>
+      <SkipToContentLink />
       <Header
         onViewChange={handleViewChange}
         currentView={currentView}
@@ -72,7 +74,11 @@ const AppLayout: React.FC = () => {
       <OfflineBanner />
       <DemoDataBanner />
       <UpdateAvailableBanner />
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8 md:pt-36 pt-20 pb-24">
+      <main
+        id="main-content"
+        tabIndex={-1}
+        className="container mx-auto px-4 sm:px-6 lg:px-8 md:pt-36 pt-20 pb-24 focus-ring-aa rounded-sm"
+      >
         <Suspense fallback={<ContentSpinner label={t('common.loading')} />}>
           <AppViewRouter {...logic} />
         </Suspense>

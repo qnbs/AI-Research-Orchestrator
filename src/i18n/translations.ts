@@ -295,6 +295,7 @@ export const translations = {
     'common.cancel': 'Cancel',
     'common.close': 'Close',
     'common.loading': 'Loading…',
+    'a11y.skip_to_content': 'Skip to main content',
     'settings.discardUnsaved.title': 'Discard Unsaved Changes?',
     'settings.discardUnsaved.message':
       'You have unsaved changes in Settings. Are you sure you want to discard them and navigate away?',
@@ -628,6 +629,7 @@ export const translations = {
     'common.cancel': 'Abbrechen',
     'common.close': 'Schließen',
     'common.loading': 'Laden…',
+    'a11y.skip_to_content': 'Zum Hauptinhalt springen',
     'settings.discardUnsaved.title': 'Ungespeicherte Änderungen verwerfen?',
     'settings.discardUnsaved.message':
       'Sie haben ungespeicherte Änderungen in den Einstellungen. Möchten Sie diese wirklich verwerfen und die Seite verlassen?',

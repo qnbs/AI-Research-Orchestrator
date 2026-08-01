@@ -25,6 +25,7 @@ const MIGRATED_FILES = [
   'src/app/useKbExports.ts',
   'src/components/HelpView.tsx',
   'src/components/help/helpContent.tsx',
+  'src/components/SkipToContentLink.tsx',
 ];
 
 const IGNORE_COMMENT = 'i18n-ratchet-ignore-next-line';
