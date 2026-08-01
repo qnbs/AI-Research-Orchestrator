@@ -12,6 +12,9 @@ jobs:
     if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    # Advisory: OAuth/token infra intermittently fails with is_error:true and zero
+    # tool calls (~10s). Keep posting reviews when auth works; do not block PR CI.
+    continue-on-error: true
     permissions:
       contents: read
       pull-requests: write

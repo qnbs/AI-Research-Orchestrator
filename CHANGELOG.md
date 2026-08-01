@@ -36,11 +36,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **i18n Knowledge Base / Article detail / Dashboard / Scientometric Hub:** EN+DE via `kbChromeTranslations.ts` and `dashboardTranslations.ts`; Dashboard split (`DashboardSubComponents`); ratchet covers KB, ArticleDetailPanel, Dashboard, and ScientometricHub.
 - **i18n residual chrome + enum chips:** Tooltip, Notification, LoadingIndicator, PipelineStep, and KnowledgeBaseItem shared chrome now use EN+DE `chrome.*` keys; author/journal featured category chips, journal match types, and journal open-access policy chips render localized labels while keeping English enum/category values in state.
 - **WS-E:** restored visible keyboard focus rings on 12 interactive sites that used bare `focus:outline-none` (nav, accordions, command palette, search inputs, dashboard actions).
+- **E2E CI promotion:** Playwright job is blocking after 10 consecutive clean runs (51 passed each); added `journal-hub.spec.ts` + `provider-flow.spec.ts` and shared `e2eHelpers.ts`.
+- **Claude Code Review:** job marked `continue-on-error: true` so intermittent OAuth/`is_error:true` infra failures do not fail PR checks while reviews still post when auth works.
 
 ### Known gaps (tracked, not yet closed)
 
 - Broader i18n migration (#69) — Help through Collections, Knowledge Base, Article Detail, Dashboard, Scientometric Hub, residual shared chrome, and enum/chip labels landed; no known residual chrome or enum-label backlog remains outside future audit findings.
-- Full Playwright E2E job remains non-blocking until `docs/e2e-ci-backlog.md` promotion criteria; WS-I a11y smoke is the blocking a11y gate.
+- Playwright E2E job is **blocking** as of 2026-08-01 (10 consecutive clean CI runs verified); deferred `journal-hub` / `provider-flow` specs are now in the suite — see `docs/e2e-ci-backlog.md`.
+- Claude Code Review remains advisory (`continue-on-error: true`) while OAuth infra intermittently fails with empty tool runs.
+- Vite 8 / plugin-react 6 already on `main`; Vitest 4 major remains deferred (coverage-v8 pairing) when opened as a dedicated upgrade.
 
 ## [0.4.0] - 2026-08-01
 

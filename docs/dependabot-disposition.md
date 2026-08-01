@@ -114,3 +114,10 @@ Dependabot retargeted #98 to **openai 6.48.0 → 7.1.0** after #113 landed 4→6
 | Change                  | Audit notes                                                                                                                                                                                                                                                        | Disposition | Status          |
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------- | --------------- |
 | openai ^6.48.0 → ^7.2.0 | Upstream 7.0.0 breaking change is **Node.js ≥22 only** (already `engines.node >=22.12.0`). Adapter still uses `chat.completions.create` + async iterator + `dangerouslyAllowBrowser`. `pnpm run typecheck` + `vitest run src/services/providers` (27 tests) green. | **Adopt**   | Closed via #119 |
+
+## 2026-08-01 — Vite 8 / plugin-react 6 + remaining majors
+
+| PR / change                                     | Disposition                                                                                                                                                                             | Status              |
+| ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
+| #50 `@vitejs/plugin-react` 5→6 / #51 `vite` 6→8 | **Landed on `main`** via dedicated Vite 8 migration (#66); `package.json` pins `vite@8.1.5` + `@vitejs/plugin-react@^6.0.3`                                                             | Closed / superseded |
+| Vitest 3 → 4 + `@vitest/coverage-v8` 4          | **Still deferred** — last major Dependabot-class upgrade; needs pool/coverage config review + full `test:coverage` green. Prior tracking #10 closed; reopen as dedicated PR when ready. | Deferred            |

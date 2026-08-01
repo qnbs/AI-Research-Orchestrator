@@ -1,8 +1,8 @@
 # ==============================================================================
 # Playwright E2E Workflow
 #
-# Runs on every push/PR to main. Non-blocking (continue-on-error) while the
-# suite proves out in CI — see docs/e2e-ci-backlog.md for the promotion trigger.
+# Runs on every push/PR to main. Blocking after 10 consecutive clean CI runs
+# (51 passed each) verified 2026-08-01 — see docs/e2e-ci-backlog.md.
 # ==============================================================================
 
 name: E2E Tests
@@ -28,10 +28,6 @@ jobs:
     name: Playwright E2E
     runs-on: ubuntu-24.04
     timeout-minutes: 30
-    # Non-blocking: E2E is new to CI and hasn't proven stable on GitHub's
-    # runners yet. Flip to false once it has run clean for a few weeks
-    # (see docs/e2e-ci-backlog.md).
-    continue-on-error: true
     steps:
       - name: Checkout repository
         # actions/checkout@v7
@@ -61,7 +57,18 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Run Playwright E2E
-        run: pnpm run test:e2e -- src/test/e2e/smoke.spec.ts src/test/e2e/agent-flow.spec.ts
+        # Call playwright directly — `pnpm run test:e2e -- <files>` leaves a bare `--`
+        # that makes Playwright ignore the file list and run the entire testDir
+        # (including a11y.spec.ts, which already has its own blocking a11y.yml job).
+        run: >-
+          pnpm exec playwright test
+          src/test/e2e/smoke.spec.ts
+          src/test/e2e/agent-flow.spec.ts
+          src/test/e2e/dialog-a11y.spec.ts
+          src/test/e2e/keyboard-focus.spec.ts
+          src/test/e2e/skip-to-content.spec.ts
+          src/test/e2e/journal-hub.spec.ts
+          src/test/e2e/provider-flow.spec.ts
 
       - name: Upload Playwright report
         if: always()
