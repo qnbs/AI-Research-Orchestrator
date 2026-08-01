@@ -95,11 +95,24 @@ const TopicSection: React.FC<{ items: HelpTopic[]; searchTerm: string; emptyMess
 
 /** Pure text extraction from a React node tree, used to search rendered help content. */
 const getTextFromReactNode = (node: React.ReactNode): string => {
-  if (node == null || typeof node === 'boolean') return '';
-  if (typeof node === 'string' || typeof node === 'number') return String(node);
-  if (Array.isArray(node)) return node.map(getTextFromReactNode).join('');
-  if (!React.isValidElement<{ children?: React.ReactNode }>(node)) return '';
-  return getTextFromReactNode(node.props.children);
+  const parts: string[] = [];
+  const stack: React.ReactNode[] = [node];
+  while (stack.length > 0) {
+    const cur = stack.pop();
+    if (cur == null || typeof cur === 'boolean') continue;
+    if (typeof cur === 'string' || typeof cur === 'number') {
+      parts.push(String(cur));
+      continue;
+    }
+    if (Array.isArray(cur)) {
+      for (let i = cur.length - 1; i >= 0; i -= 1) stack.push(cur[i]);
+      continue;
+    }
+    if (React.isValidElement<{ children?: React.ReactNode }>(cur)) {
+      stack.push(cur.props.children);
+    }
+  }
+  return parts.join('');
 };
 
 const HelpView: React.FC<HelpViewProps> = ({ initialTab, onTabConsumed }) => {

@@ -49,6 +49,37 @@ const Note: React.FC<{
   );
 };
 
+/** Flat list item — keeps JSX depth low for DeepSource nesting limits. */
+const Bullet: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
+  <li>
+    <strong>{label}</strong> {children}
+  </li>
+);
+
+const ExportGuideContent: React.FC<{ t: Translator }> = ({ t }) => (
+  <div>
+    <p>
+      {t('help.guide.export.intro.start')} <code>{t('help.guide.export.settings')}</code>{' '}
+      {t('help.guide.export.intro.end')}
+    </p>
+    <ul>
+      <Bullet label={t('help.guide.export.report.label')}>
+        {t('help.guide.export.report.desc')}
+      </Bullet>
+      <Bullet label={t('help.guide.export.kb.label')}>{t('help.guide.export.kb.desc')}</Bullet>
+      <Bullet label={t('help.guide.export.pdf.label')}>{t('help.guide.export.pdf.desc')}</Bullet>
+      <Bullet label={t('help.guide.export.csv.label')}>{t('help.guide.export.csv.desc')}</Bullet>
+      <Bullet label={t('help.guide.export.citations.label')}>
+        {t('help.guide.export.citations.start')}{' '}
+        <strong>{t('help.guide.export.citations.bib')}</strong>{' '}
+        {t('help.guide.export.citations.or')}{' '}
+        <strong>{t('help.guide.export.citations.ris')}</strong>{' '}
+        {t('help.guide.export.citations.end')}
+      </Bullet>
+    </ul>
+  </div>
+);
+
 export const getGuideTopics = (t: Translator): HelpTopic[] => [
   {
     title: t('help.guide.workflows.title'),
@@ -210,37 +241,7 @@ export const getGuideTopics = (t: Translator): HelpTopic[] => [
   },
   {
     title: t('help.guide.export.title'),
-    content: (
-      <>
-        <p>
-          {t('help.guide.export.intro.start')} <code>{t('help.guide.export.settings')}</code>{' '}
-          {t('help.guide.export.intro.end')}
-        </p>
-        <ul>
-          <li>
-            <strong>{t('help.guide.export.report.label')}</strong>{' '}
-            {t('help.guide.export.report.desc')}
-          </li>
-          <li>
-            <strong>{t('help.guide.export.kb.label')}</strong> {t('help.guide.export.kb.desc')}
-          </li>
-          <li>
-            <strong>{t('help.guide.export.pdf.label')}</strong> {t('help.guide.export.pdf.desc')}
-          </li>
-          <li>
-            <strong>{t('help.guide.export.csv.label')}</strong> {t('help.guide.export.csv.desc')}
-          </li>
-          <li>
-            <strong>{t('help.guide.export.citations.label')}</strong>{' '}
-            {t('help.guide.export.citations.start')}{' '}
-            <strong>{t('help.guide.export.citations.bib')}</strong>{' '}
-            {t('help.guide.export.citations.or')}{' '}
-            <strong>{t('help.guide.export.citations.ris')}</strong>{' '}
-            {t('help.guide.export.citations.end')}
-          </li>
-        </ul>
-      </>
-    ),
+    content: <ExportGuideContent t={t} />,
     keywords: t('help.guide.export.keywords'),
   },
   {
