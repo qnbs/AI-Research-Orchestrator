@@ -30,11 +30,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **i18n InputForm body:** orchestrator research parameters form + header EN+DE via `inputFormTranslations.ts` + ratchet (PubMed article-type filter values stay English in state).
 - **i18n ResearchView:** Rapid Research Assistant chrome EN+DE via `researchViewTranslations.ts` + ratchet (phase ID constant shared with `useResearchAssistant`).
 - **i18n ReportDisplay:** report chrome, article cards, chat, and relevance score EN+DE via `reportTranslations.ts` + ratchet (`ReportArticleCard` extracted under the 700-line cap).
+- **i18n Settings General tab:** EN+DE via `settingsTranslations.ts`; `GeneralSettingsTab` extracted from `SettingsSubComponents`; Settings shell tab names / About / FAQ piggybacked; ratchet covers `GeneralSettingsTab`.
 - **WS-E:** restored visible keyboard focus rings on 12 interactive sites that used bare `focus:outline-none` (nav, accordions, command palette, search inputs, dashboard actions).
 
 ### Known gaps (tracked, not yet closed)
 
-- Broader i18n migration (#69) — HelpView Wave 8 + chrome/modal/CommandPalette + InputForm + ResearchView + ReportDisplay landed; residual backlog: SettingsSubComponents by tab.
+- Broader i18n migration (#69) — HelpView Wave 8 + chrome/modal/CommandPalette + InputForm + ResearchView + ReportDisplay + Settings General tab landed; residual backlog: Settings AI/KB/Export/Data tabs, SettingsView confirm modals, useSettingsViewLogic toasts.
 - Full Playwright E2E job remains non-blocking until `docs/e2e-ci-backlog.md` promotion criteria; WS-I a11y smoke is the blocking a11y gate.
 
 ## [0.4.0] - 2026-08-01

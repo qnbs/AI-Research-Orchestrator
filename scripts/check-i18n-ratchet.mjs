@@ -44,6 +44,7 @@ const MIGRATED_FILES = [
   'src/components/ReportArticleCard.tsx',
   'src/components/ChatInterface.tsx',
   'src/components/RelevanceScoreDisplay.tsx',
+  'src/components/settings/GeneralSettingsTab.tsx',
 ];
 
 const IGNORE_COMMENT = 'i18n-ratchet-ignore-next-line';
