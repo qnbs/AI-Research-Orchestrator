@@ -7,7 +7,8 @@
 - **#118** WS-E focus rings: `.focus-ring-aa`, ESLint guard, Playwright keyboard-focus.
 - **#122** WS-F skip-to-content + `#main-content` landmark + 44×44 touch targets (merged).
 - **#123** Chrome i18n shell: Header/Welcome/OrchestratorDashboard/ConfirmationModal/FeatureErrorBoundary → `chromeTranslations.ts` + ratchet.
-- **WS-G (this branch):** dialog a11y — `useFocusTrap` Escape + scroll lock; ConfirmationModal / QuickAdd / Settings Modal / preset dialog. Reconstructed (original hardening prompt still not in-repo).
+- **#124** WS-G dialog a11y: Escape + scroll lock via `useFocusTrap` (merged).
+- **WS-H1 (this branch / #125):** QuickAdd / History / preset modal EN+DE via `modalTranslations.ts` + ratchet.
 
 ## Still open
 
