@@ -62,7 +62,7 @@ const DashboardComponent: React.FC<OrchestratorDashboardProps> = ({
               </p>
               <button
                 onClick={() => onStartNewReview(entry.input.researchTopic)}
-                className="font-semibold text-text-primary mb-3 h-20 overflow-hidden text-left group-hover:text-brand-accent focus:outline-none focus:text-brand-accent transition-colors w-full rounded"
+                className="font-semibold text-text-primary mb-3 h-20 overflow-hidden text-left group-hover:text-brand-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent focus:text-brand-accent transition-colors w-full rounded"
                 title={`Start new search for: ${entry.input.researchTopic}`}
               >
                 {entry.title}
@@ -78,7 +78,7 @@ const DashboardComponent: React.FC<OrchestratorDashboardProps> = ({
             </div>
             <button
               onClick={() => onViewReport(entry)}
-              className="w-full mt-5 inline-flex justify-center items-center py-2 px-4 border border-border shadow-sm text-sm font-semibold rounded-md text-text-primary bg-background group-hover:bg-brand-accent group-hover:text-brand-text-on-accent focus:outline-none transition-colors"
+              className="w-full mt-5 inline-flex justify-center items-center py-2 px-4 border border-border shadow-sm text-sm font-semibold rounded-md text-text-primary bg-background group-hover:bg-brand-accent group-hover:text-brand-text-on-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent transition-colors"
             >
               View Report
             </button>

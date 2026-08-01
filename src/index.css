@@ -401,6 +401,22 @@
     box-shadow: var(--focus-ring);
   }
 
+  /**
+   * AA-compliant keyboard focus ring (WS-E).
+   * Use with `focus:outline-none` to suppress the browser default while restoring
+   * a 3:1+ non-text contrast ring via `--focus-ring` (see check-contrast.mjs).
+   */
+  .focus-ring-aa {
+    outline: none;
+  }
+
+  .focus-ring-aa:focus-visible {
+    outline: 2px solid var(--color-brand-accent);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+    box-shadow: var(--focus-ring);
+  }
+
   .glass-input::placeholder {
     color: var(--color-text-placeholder);
   }

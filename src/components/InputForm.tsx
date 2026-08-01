@@ -309,7 +309,7 @@ const InputFormComponent: React.FC<InputFormProps> = ({
               <button
                 type="button"
                 onClick={handleToggleAllArticleTypes}
-                className="text-xs font-semibold text-brand-accent hover:text-brand-secondary transition-colors focus:outline-none"
+                className="text-xs font-semibold text-brand-accent hover:text-brand-secondary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent rounded-sm"
               >
                 {allArticleTypesSelected ? 'Deselect All' : 'Select All'}
               </button>

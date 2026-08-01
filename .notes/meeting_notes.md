@@ -87,8 +87,9 @@
 
 ## Sprint status (workstream sequence: WS-C → WS-A → WS-B → WS-D → WS-E → WS-F → WS-G → WS-H1 → WS-H2 → WS-I)
 
-- **WS-C, WS-A, WS-B, WS-D: done and merged.** WS-E onward: **not started.**
-- Next action when resuming: start **WS-E** (fix the 14 confirmed `focus:outline-none`-with-no-replacement sites, new `.focus-ring-aa` utility, custom ESLint rule, keyboard-walk Playwright spec) — see the original sprint prompt for full WS-E through WS-I scope; it wasn't re-pasted here, only summarized in earlier session compaction, so if the details aren't in this session's context, ask the user to re-share `PROMPT-ARO-HARDENING-UIUX` before starting WS-E.
+- **WS-C, WS-A, WS-B, WS-D: done and merged.**
+- **WS-E (2026-08-01):** focus rings restored on bare `focus:outline-none` sites; `.focus-ring-aa` utility; ESLint `local/no-bare-outline-none`; Playwright `keyboard-focus.spec.ts`. Full original WS-F→WS-I prompt still not in-repo — proceed from meeting-note summaries / prior session compaction unless user re-shares `PROMPT-ARO-HARDENING-UIUX`.
+- Next: **WS-F** (when scope known) and/or HelpView i18n Wave 8 + openai 7 (#98).
 
 ## Merged this session (chronological)
 
@@ -106,9 +107,10 @@
 
 - **SonarCloud kept showing red on `main`** even though nothing broke: root cause was that `sonar.projectVersion` was never set on any scan, so its "new code = since previous version" period had no real previous version to diff against, and was resurfacing pre-existing bugs (in files untouched for days) as "new." Fixed in `security.yml` by versioning every scan with `${{ github.sha }}`. This job is still `continue-on-error: true` (advisory phase, not yet promoted to blocking) so it was never actually breaking CI, just noisy/misleading.
 
-## Tracked follow-ups (GitHub issues, not yet started)
+## Tracked follow-ups (GitHub issues)
 
-(None currently — #95/#78/#74/#96 closed.)
+- #95 / #96 closed. #74 / #78 implemented via #110 (close on GitHub if still open).
+- Dependabot #98 retargeted to openai 6→7 after #113 landed 4→6 — adopt or document deferral.
 
 ## Process notes for next session
 

@@ -298,7 +298,7 @@ const KBArticleCard: React.FC<{
             <button
               type="button"
               onClick={() => onView(article)}
-              className={`font-bold text-text-primary text-left group-hover:text-brand-accent focus:outline-none focus:text-brand-accent ${densityClasses.title}`}
+              className={`font-bold text-text-primary text-left group-hover:text-brand-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent focus:text-brand-accent rounded-sm ${densityClasses.title}`}
             >
               {article.title}
             </button>

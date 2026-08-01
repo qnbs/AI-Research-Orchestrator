@@ -157,7 +157,7 @@ export const JournalLandingView: React.FC = () => {
                     ? t('journals.placeholder.analyze')
                     : t('journals.placeholder.suggest')
                 }
-                className="w-full bg-transparent p-2 focus:outline-none text-text-primary"
+                className="w-full bg-transparent p-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent rounded-md text-text-primary"
                 aria-label={
                   mode === 'search' ? t('journals.aria.analyze') : t('journals.aria.suggest')
                 }
