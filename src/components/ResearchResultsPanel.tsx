@@ -63,7 +63,7 @@ const SkeletonLoader: React.FC<{ lines?: number; className?: string }> = ({
   lines = 3,
   className = '',
 }) => (
-  <div className={`space-y-3 animate-pulse ${className}`}>
+  <div className={`space-y-3 animate-pulse ${className}`} data-testid="research-skeleton" aria-busy>
     {SKELETON_SLOT_IDS.slice(0, lines).map((slotId) => (
       <div key={slotId} className="p-3 rounded-md bg-surface border border-border/70">
         <div className="h-4 w-3/4 rounded bg-border" />
@@ -121,7 +121,7 @@ const SimilarArticlesSection: React.FC<{
       }
       defaultOpen
     >
-      <div className="space-y-3">
+      <div className="space-y-3" aria-live="polite" aria-busy={state.loading}>
         {state.loading && <SkeletonLoader lines={3} />}
         {state.error && (
           <p className="text-red-400 text-sm text-center">{t('research.error.similar')}</p>
@@ -167,38 +167,40 @@ const OnlineFindingsSection: React.FC<{
       }
       defaultOpen
     >
-      {state.loading && <SkeletonLoader lines={1} className="p-3" />}
-      {state.error && (
-        <p className="text-red-400 text-sm text-center">{t('research.error.online')}</p>
-      )}
-      {state.findings && (
-        <div className="bg-surface p-3 rounded-md border border-border/70 animate-fadeIn">
-          <h5 className="font-semibold text-text-primary mb-2">{t('research.online.summary')}</h5>
-          <p className="text-sm text-text-secondary/90 mb-3">{state.findings.summary}</p>
-          {state.findings.sources.length > 0 && (
-            <>
-              <h6 className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
-                {t('research.online.sources')}
-              </h6>
-              <ul className="mt-2 space-y-1">
-                {state.findings.sources.map((source) => (
-                  <li key={source.uri}>
-                    <a
-                      href={source.uri}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-brand-accent hover:underline truncate block"
-                      title={source.title}
-                    >
-                      {source.title || source.uri}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </>
-          )}
-        </div>
-      )}
+      <div aria-live="polite" aria-busy={state.loading}>
+        {state.loading && <SkeletonLoader lines={1} className="p-3" />}
+        {state.error && (
+          <p className="text-red-400 text-sm text-center">{t('research.error.online')}</p>
+        )}
+        {state.findings && (
+          <div className="bg-surface p-3 rounded-md border border-border/70 animate-fadeIn">
+            <h5 className="font-semibold text-text-primary mb-2">{t('research.online.summary')}</h5>
+            <p className="text-sm text-text-secondary/90 mb-3">{state.findings.summary}</p>
+            {state.findings.sources.length > 0 && (
+              <>
+                <h6 className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
+                  {t('research.online.sources')}
+                </h6>
+                <ul className="mt-2 space-y-1">
+                  {state.findings.sources.map((source) => (
+                    <li key={source.uri}>
+                      <a
+                        href={source.uri}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-brand-accent hover:underline truncate block"
+                        title={source.title}
+                      >
+                        {source.title || source.uri}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </div>
+        )}
+      </div>
     </AccordionSection>
   );
 };
@@ -259,7 +261,7 @@ export const ResearchResultsPanel: React.FC<ResearchResultsPanelProps> = ({
         <AccordionSection title={t('research.section.summary')} defaultOpen>
           <div
             className="prose prose-sm prose-invert max-w-none text-text-secondary/90 leading-relaxed"
-            dangerouslySetInnerHTML={{ __html: summaryHtml }} // skipcq: JS-0440 — marked + DOMPurify only
+            dangerouslySetInnerHTML={{ __html: summaryHtml }} // skipcq: JS-0440
           />
         </AccordionSection>
       )}

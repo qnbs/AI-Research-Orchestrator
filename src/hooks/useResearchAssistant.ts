@@ -75,6 +75,18 @@ type FollowUpTriggers = {
   track: (req: AbortablePromise) => void;
 };
 
+const startOptional = <T>(
+  enabled: boolean,
+  start: () => (AbortablePromise & { unwrap: () => Promise<T> }) | null,
+  track: (req: AbortablePromise) => void,
+): Promise<T | null> => {
+  if (!enabled) return Promise.resolve(null);
+  const req = start();
+  if (!req) return Promise.resolve(null);
+  track(req);
+  return req.unwrap();
+};
+
 const fetchFollowUps = async ({
   autoFetchSimilar,
   autoFetchOnline,
@@ -84,22 +96,21 @@ const fetchFollowUps = async ({
   aiSettings,
   track,
 }: FollowUpTriggers) => {
-  const similarPromise = autoFetchSimilar
-    ? triggerSimilar({
-        article: { title: analysis.synthesizedTopic, summary: analysis.summary },
-        aiSettings,
-      })
-    : null;
-  const onlinePromise = autoFetchOnline
-    ? triggerOnline({ topic: analysis.synthesizedTopic, aiSettings })
-    : null;
-
-  if (similarPromise) track(similarPromise);
-  if (onlinePromise) track(onlinePromise);
-
   const [similarResult, onlineResult] = await Promise.allSettled([
-    similarPromise ? similarPromise.unwrap() : Promise.resolve(null),
-    onlinePromise ? onlinePromise.unwrap() : Promise.resolve(null),
+    startOptional(
+      autoFetchSimilar,
+      () =>
+        triggerSimilar({
+          article: { title: analysis.synthesizedTopic, summary: analysis.summary },
+          aiSettings,
+        }),
+      track,
+    ),
+    startOptional(
+      autoFetchOnline,
+      () => triggerOnline({ topic: analysis.synthesizedTopic, aiSettings }),
+      track,
+    ),
   ]);
 
   return {

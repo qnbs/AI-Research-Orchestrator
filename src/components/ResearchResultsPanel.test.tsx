@@ -31,7 +31,7 @@ describe('ResearchResultsPanel', () => {
       />,
     );
     expect(screen.getByText('research.result.complete')).toBeInTheDocument();
-    expect(document.querySelector('.animate-pulse')).toBeTruthy();
+    expect(screen.getByTestId('research-skeleton')).toBeInTheDocument();
   });
 
   it('renders localized similar-articles error', () => {
