@@ -46,6 +46,20 @@ function resetClient(): void {
   clientBaseUrl = null;
 }
 
+/** Newer OpenAI models (gpt-5.x, o1/o3/o4, …) reject `max_tokens` in favor of `max_completion_tokens`. */
+function tokenLimitParams(
+  model: string,
+  maxOutputTokens: number | undefined,
+): { max_tokens?: number; max_completion_tokens?: number } {
+  if (maxOutputTokens === undefined) return {};
+  const m = model.toLowerCase();
+  const needsCompletionTokens =
+    /^o[0-9]/.test(m) || /^gpt-5/.test(m) || /^gpt-4o/.test(m) || /^chatgpt-4o/.test(m);
+  return needsCompletionTokens
+    ? { max_completion_tokens: maxOutputTokens }
+    : { max_tokens: maxOutputTokens };
+}
+
 function mapOpenAIError(error: unknown): AppError {
   if (error instanceof AppError) return error;
 
@@ -126,7 +140,7 @@ export function createOpenAIProvider(): AIProvider {
           model: request.model,
           messages,
           temperature: request.temperature ?? 0.7,
-          max_tokens: request.maxOutputTokens,
+          ...tokenLimitParams(request.model, request.maxOutputTokens),
           response_format: request.json ? { type: 'json_object' } : undefined,
         },
         { signal: request.signal },
@@ -156,7 +170,7 @@ export function createOpenAIProvider(): AIProvider {
           model: request.model,
           messages,
           temperature: request.temperature ?? 0.7,
-          max_tokens: request.maxOutputTokens,
+          ...tokenLimitParams(request.model, request.maxOutputTokens),
           stream: true,
         },
         { signal: request.signal },
@@ -206,7 +220,7 @@ export function createOpenAIProvider(): AIProvider {
       await openai.chat.completions.create({
         model: 'gpt-5',
         messages: [{ role: 'user', content: 'ping' }],
-        max_tokens: 1,
+        ...tokenLimitParams('gpt-5', 1),
       });
       return true;
     },
