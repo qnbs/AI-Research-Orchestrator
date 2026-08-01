@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Known gaps (tracked, not yet closed)
 
-- Broader i18n migration (#69) — remaining hardcoded UI strings outside the ratchet list.
+- Broader i18n migration (#69) — HelpView Wave 8 done; remaining chrome strings outside the ratchet list.
 
 ## [0.4.0] - 2026-08-01
 

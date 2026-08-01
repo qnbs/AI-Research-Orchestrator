@@ -23,6 +23,8 @@ const MIGRATED_FILES = [
   'src/components/UpdateAvailableBanner.tsx',
   'src/components/knowledge-base/useKnowledgeBaseLogic.ts',
   'src/app/useKbExports.ts',
+  'src/components/HelpView.tsx',
+  'src/components/help/helpContent.tsx',
 ];
 
 const IGNORE_COMMENT = 'i18n-ratchet-ignore-next-line';
