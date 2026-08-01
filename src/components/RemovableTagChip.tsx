@@ -27,7 +27,7 @@ export const RemovableTagChip: React.FC<RemovableTagChipProps> = ({
       type="button"
       onClick={onRemove}
       aria-label={removeLabel}
-      className="ml-1.5 text-accent-magenta hover:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent rounded-sm"
+      className="ml-1.5 text-accent-magenta hover:text-text-primary focus-ring-aa rounded-sm"
     >
       <XIcon className="h-3 w-3" />
     </button>

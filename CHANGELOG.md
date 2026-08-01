@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **WS-E focus visibility:** `.focus-ring-aa` utility (`src/index.css`), ESLint rule `local/no-bare-outline-none`, and Playwright keyboard-walk smoke (`keyboard-focus.spec.ts`).
+
 ### Changed
 
 - **openai** `^6.48.0` → `^7.2.0` (upstream 7.x requires Node ≥22 only; adapter API unchanged). Closes Dependabot #98 retarget.
@@ -19,10 +21,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Cross-tab API-key vault race mitigated via Web Locks** (`apiKeyService`, #116).
 - **i18n:** Knowledge Base / report export modals and notifications use EN+DE `t()` keys (`kb.export.*`); ratchet covers `useKnowledgeBaseLogic` + `useKbExports` (#117).
+- **WS-E:** restored visible keyboard focus rings on 12 interactive sites that used bare `focus:outline-none` (nav, accordions, command palette, search inputs, dashboard actions).
 
 ### Known gaps (tracked, not yet closed)
 
 - Broader i18n migration (#69) — HelpView Wave 8 done; remaining chrome strings outside the ratchet list.
+- UIUX hardening WS-F onward (see `.notes/meeting_notes.md`).
 
 ## [0.4.0] - 2026-08-01
 

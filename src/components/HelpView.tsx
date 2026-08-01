@@ -47,7 +47,7 @@ const AccordionItem: React.FC<AccordionItemProps> = ({ title, children, defaultO
           onClick={() => setIsOpen(!isOpen)}
           aria-expanded={isOpen}
           aria-controls={panelId}
-          className="w-full flex justify-between items-center py-4 text-left text-lg font-semibold text-text-primary hover:bg-surface-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent transition-colors"
+          className="w-full flex justify-between items-center py-4 text-left text-lg font-semibold text-text-primary hover:bg-surface-hover focus-ring-aa transition-colors"
         >
           <span>{title}</span>
           <ChevronDownIcon

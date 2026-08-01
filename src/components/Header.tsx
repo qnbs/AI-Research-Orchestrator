@@ -46,7 +46,7 @@ const NavButton: React.FC<{
     disabled={disabled}
     aria-label={ariaLabel}
     aria-current={isActive ? 'page' : undefined}
-    className={`relative flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent overflow-hidden
+    className={`relative flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 focus-ring-aa overflow-hidden
         ${
           isActive
             ? 'text-brand-accent bg-brand-accent/10 border border-brand-accent/25 shadow-glow'
@@ -146,7 +146,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
           <div className="flex items-center justify-between">
             <button
               onClick={() => onViewChange('home')}
-              className="flex items-center gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent rounded-md group"
+              className="flex items-center gap-3 focus-ring-aa rounded-md group"
               aria-label="Go to Home"
             >
               <AppLogo
@@ -249,7 +249,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
               </button>
               <button
                 onClick={onQuickAdd}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-brand-text-on-accent bg-gradient-to-r from-brand-primary to-brand-accent rounded-lg shadow-md hover:shadow-glow hover:opacity-95 transition-all duration-300 transform hover:-translate-y-0.5 active:scale-95"
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-brand-text-on-accent bg-gradient-to-r from-brand-primary to-brand-accent rounded-lg shadow-md hover:shadow-glow hover:opacity-95 transition-all duration-300 transform hover:-translate-y-0.5 active:scale-95 focus-ring-aa"
                 aria-label="Quick Add Article"
               >
                 <DocumentPlusIcon className="h-4 w-4" />{' '}
@@ -259,7 +259,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
 
               <button
                 onClick={toggleLanguage}
-                className="p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-colors font-bold text-xs flex items-center gap-1 border border-transparent hover:border-border"
+                className="p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-colors font-bold text-xs flex items-center gap-1 border border-transparent hover:border-border focus-ring-aa"
                 aria-label="Toggle Language"
               >
                 <GlobeAltIcon className="h-4 w-4" />
@@ -268,7 +268,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
 
               <button
                 onClick={() => onViewChange('settings')}
-                className={`p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-colors relative ${currentView === 'settings' ? 'bg-surface-hover text-text-primary' : ''}`}
+                className={`p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-colors relative focus-ring-aa ${currentView === 'settings' ? 'bg-surface-hover text-text-primary' : ''}`}
                 aria-label="Settings"
               >
                 <CogIcon className={`h-5 w-5 ${isSettingsDirty ? 'text-accent-amber' : ''}`} />
@@ -278,14 +278,14 @@ const HeaderComponent: React.FC<HeaderProps> = ({
               </button>
               <button
                 onClick={() => onViewChange('help')}
-                className={`p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-colors ${currentView === 'help' ? 'bg-surface-hover text-text-primary' : ''}`}
+                className={`p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-colors focus-ring-aa ${currentView === 'help' ? 'bg-surface-hover text-text-primary' : ''}`}
                 aria-label="Help"
               >
                 <QuestionMarkCircleIcon className="h-5 w-5" />
               </button>
               <button
                 onClick={toggleTheme}
-                className="p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-colors"
+                className="p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-colors focus-ring-aa"
                 aria-label={themeLabel}
               >
                 {themeIcon}

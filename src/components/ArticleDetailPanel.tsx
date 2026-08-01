@@ -290,7 +290,7 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({
                 onChange={(e) => setTagInput(e.target.value)}
                 onKeyDown={handleTagInputKeyDown}
                 placeholder="+ Add tag"
-                className="bg-transparent border border-border rounded-full py-0.5 px-3 text-sm focus:outline-none focus:border-brand-accent text-text-primary w-24 focus:w-32 transition-all placeholder-text-secondary/50"
+                className="bg-transparent border border-border rounded-full py-0.5 px-3 text-sm focus-ring-aa focus:border-brand-accent text-text-primary w-24 focus:w-32 transition-all placeholder-text-secondary/50"
               />
             </div>
           </div>

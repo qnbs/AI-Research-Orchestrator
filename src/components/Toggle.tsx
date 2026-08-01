@@ -18,7 +18,7 @@ export const Toggle: React.FC<{
         role="switch"
         aria-checked={checked}
         onClick={() => onChange(!checked)}
-        className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+        className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors duration-200 ease-out focus-ring-aa focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
           checked
             ? 'bg-brand-accent border-brand-accent/40'
             : 'bg-border border-border group-hover:bg-surface-hover'

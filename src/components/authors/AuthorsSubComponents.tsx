@@ -323,7 +323,7 @@ export const LandingView: React.FC = () => {
                 placeholder={
                   mode === 'search' ? "e.g., 'Jennifer Doudna'" : "e.g., 'CRISPR Gene Editing'"
                 }
-                className="w-full bg-transparent p-2 focus:outline-none text-text-primary"
+                className="w-full bg-transparent p-2 focus-ring-aa rounded-md text-text-primary"
                 aria-label={
                   mode === 'search' ? 'Author name to search' : 'Field of study for suggestions'
                 }
@@ -438,7 +438,7 @@ const ProfileAccordion: React.FC<{
         onClick={() => setIsOpen(!isOpen)}
         aria-expanded={isOpen}
         aria-controls={panelId}
-        className="w-full flex justify-between items-center p-4 text-left text-lg font-semibold text-text-primary hover:bg-surface-hover focus:outline-none transition-colors"
+        className="w-full flex justify-between items-center p-4 text-left text-lg font-semibold text-text-primary hover:bg-surface-hover focus-ring-aa transition-colors"
       >
         <div className="flex items-center">{title}</div>
         <ChevronDownIcon

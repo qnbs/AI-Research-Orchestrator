@@ -35,7 +35,7 @@ export const UiButton: React.FC<UiButtonProps> = ({
 }) => (
   <button
     type={type}
-    className={`inline-flex items-center justify-center gap-2 rounded-md border font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent disabled:opacity-50 disabled:pointer-events-none active:scale-[0.98] ${variantClass[variant]} ${sizeClass[size]} ${className}`}
+    className={`inline-flex items-center justify-center gap-2 rounded-md border font-medium transition-all duration-200 focus-ring-aa disabled:opacity-50 disabled:pointer-events-none active:scale-[0.98] ${variantClass[variant]} ${sizeClass[size]} ${className}`}
     {...props}
   />
 );
