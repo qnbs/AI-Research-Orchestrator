@@ -199,7 +199,7 @@ const ResearchView: React.FC<ResearchViewProps> = ({
         setTextQuery={setTextQuery}
         onSubmit={handleSubmit}
         isLoading={isLoading}
-        hasAnalysis={!!analysis}
+        hasAnalysis={Boolean(analysis)}
       />
       <ResearchBody
         isLoading={isLoading}
