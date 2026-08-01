@@ -70,7 +70,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Known gaps (tracked, not yet closed)
 
-- Cross-tab API-key vault race (residual after in-tab memoization) — mitigated via Web Locks in PR #116 when that lands; see ADR 0003 / `SECURITY.md`.
+- (None remaining for the 0.4.0 cut — post-release follow-ups live under `[Unreleased]`.)
 
 ## [0.3.0] - 2026-07-21
 

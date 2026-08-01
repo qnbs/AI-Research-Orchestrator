@@ -361,6 +361,28 @@ describe('apiKeyService', () => {
       db2.close();
       expect(stored).toBeInstanceOf(CryptoKey);
     });
+
+    it('serializes vault key resolution through navigator.locks when available', async () => {
+      const lockRequest = vi.fn(async (_name: string, callback: () => Promise<CryptoKey>) =>
+        callback(),
+      );
+      Object.defineProperty(globalThis.navigator, 'locks', {
+        value: { request: lockRequest },
+        configurable: true,
+      });
+
+      try {
+        await saveApiKey(VALID_KEY);
+        expect(lockRequest).toHaveBeenCalled();
+        expect(lockRequest.mock.calls[0]?.[0]).toBe('ai-research-api-key-vault');
+        await expect(getApiKey()).resolves.toBe(VALID_KEY);
+      } finally {
+        Object.defineProperty(globalThis.navigator, 'locks', {
+          value: undefined,
+          configurable: true,
+        });
+      }
+    });
   });
 
   describe('toRejectionError', () => {
