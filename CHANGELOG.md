@@ -40,6 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **E2E CI promotion:** Playwright job is blocking after 10 consecutive clean runs (51 passed each); added `journal-hub.spec.ts` + `provider-flow.spec.ts` and shared `e2eHelpers.ts`.
 - **Claude Code Review:** job marked `continue-on-error: true` so intermittent OAuth/`is_error:true` infra failures do not fail PR checks while reviews still post when auth works.
 - **Vitest 4:** `vitest` + `@vitest/coverage-v8` bumped to `^4.1.10`; constructor-style SDK mocks and SW integrity event-listener harness updated for Vitest 4 spy/`new` semantics.
+- **Claude Code Review `allowed_bots`:** allow actor `cursor` so Cloud Agent–opened PRs get a real review instead of aborting with “non-human actor”.
 
 ### Known gaps (tracked, not yet closed)
 
