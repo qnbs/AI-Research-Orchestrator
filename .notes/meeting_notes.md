@@ -18,10 +18,13 @@
 - **ReportDisplay i18n (this branch):** report chrome + `ReportArticleCard` + ChatInterface + RelevanceScoreDisplay EN+DE via `reportTranslations.ts` + ratchet.
   - **Why:** Report view was still English-only after ResearchView wave; file over 700 lines before ArticleCard extract.
   - **Impact:** EN+DE report UI; accordion panels get `inert` when closed; export confirm still uses `kb.export.*`.
+- **Settings General i18n (this branch):** General tab EN+DE via `settingsTranslations.ts`; extracted `GeneralSettingsTab.tsx`; SettingsView shell tab/nav chrome piggybacked; ratchet covers General tab only.
+  - **Why:** Settings was still English-only after ReportDisplay wave; General was the first SettingsSubComponents tab slice.
+  - **Impact:** Language / Appearance / PWA / Notifications / Performance fully localized; shell KB/Export/Data tab labels + About/FAQ localized.
 
 ## Still open
 
-- Residual i18n backlog outside ratchet: SettingsSubComponents (by tab).
+- Residual Settings i18n: AI / Knowledge Base / Export / Data tab bodies in `SettingsSubComponents`; SettingsView confirm modals; `useSettingsViewLogic` toasts.
 - Full E2E job remains non-blocking until promotion criteria in `docs/e2e-ci-backlog.md`.
 
 ## Process

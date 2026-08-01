@@ -56,9 +56,9 @@ const SettingsViewLayout: React.FC = () => {
     () => [
       { id: 'general', name: t('settings.general'), icon: CogIcon },
       { id: 'ai', name: t('settings.ai'), icon: SparklesIcon },
-      { id: 'knowledgeBase', name: 'Knowledge Base', icon: DatabaseIcon },
-      { id: 'export', name: 'Export', icon: ExportIcon },
-      { id: 'data', name: 'Data Management & Privacy', icon: ShieldCheckIcon },
+      { id: 'knowledgeBase', name: t('settings.tab.knowledgeBase'), icon: DatabaseIcon },
+      { id: 'export', name: t('settings.tab.export'), icon: ExportIcon },
+      { id: 'data', name: t('settings.tab.data'), icon: ShieldCheckIcon },
     ],
     [t],
   );
@@ -125,7 +125,7 @@ const SettingsViewLayout: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
         <aside className="md:col-span-1">
           <div className="space-y-1 sticky top-24">
-            <div className="relative" role="tablist" aria-label="Settings categories">
+            <div className="relative" role="tablist" aria-label={t('settings.aria.categories')}>
               {tabs.map((tab, index) => (
                 <button
                   key={tab.id}
@@ -155,14 +155,14 @@ const SettingsViewLayout: React.FC = () => {
                 className="w-full text-left px-3 py-2.5 rounded-md text-sm font-medium transition-colors text-text-primary bg-surface hover:bg-border flex items-center"
               >
                 <InfoIcon className="h-5 w-5 mr-3 text-text-secondary flex-shrink-0" />
-                <span>About & Features</span>
+                <span>{t('settings.nav.about')}</span>
               </button>
               <button
                 onClick={() => onNavigateToHelpTab('faq')}
                 className="w-full text-left px-3 py-2.5 rounded-md text-sm font-medium transition-colors text-text-primary bg-surface hover:bg-border flex items-center"
               >
                 <InfoIcon className="h-5 w-5 mr-3 text-text-secondary flex-shrink-0" />
-                <span>FAQ & Shortcuts</span>
+                <span>{t('settings.nav.faq')}</span>
               </button>
             </div>
           </div>
