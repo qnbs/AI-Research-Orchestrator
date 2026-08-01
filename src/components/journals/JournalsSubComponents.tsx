@@ -401,7 +401,7 @@ export const AnalysisCharts: React.FC = () => {
     <div className="lg:col-span-1 space-y-6">
       <div className="bg-surface p-5 rounded-lg border border-border">
         <h3 className="text-sm font-semibold text-text-primary mb-4 uppercase tracking-wide">
-          Recent Topic Landscape
+          {t('journals.charts.topic_landscape')}
         </h3>
         <div className="h-48">
           {analyticsData.topicData.length > 0 ? (
@@ -437,7 +437,7 @@ export const AnalysisCharts: React.FC = () => {
       </div>
       <div className="bg-surface p-5 rounded-lg border border-border">
         <h3 className="text-sm font-semibold text-text-primary mb-4 uppercase tracking-wide">
-          Activity Timeline
+          {t('journals.charts.activity_timeline')}
         </h3>
         <div className="h-32">
           {analyticsData.timelineData.length > 0 ? (
@@ -452,7 +452,7 @@ export const AnalysisCharts: React.FC = () => {
                 <RechartsTooltip />
                 <Bar
                   dataKey="count"
-                  name="Articles"
+                  name={t('journals.charts.articles')}
                   fill="rgba(31, 111, 235, 0.5)"
                   radius={[4, 4, 0, 0]}
                 />

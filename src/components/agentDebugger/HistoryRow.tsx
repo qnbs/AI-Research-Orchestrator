@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import type { AgentPipelineTrace } from '../../types';
+import { useTranslation } from '../../hooks/useTranslation';
 import { StatusDot } from './StatusDot';
 
 export const HistoryRow: React.FC<{
@@ -9,6 +10,7 @@ export const HistoryRow: React.FC<{
   isSelected: boolean;
   onSelect: () => void;
 }> = ({ trace, index, isSelected, onSelect }) => {
+  const { t } = useTranslation();
   const dur =
     trace.completedAt && trace.startedAt
       ? ((trace.completedAt - trace.startedAt) / 1000).toFixed(1) + 's'
@@ -22,6 +24,7 @@ export const HistoryRow: React.FC<{
 
   return (
     <motion.button
+      type="button"
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.04 }}
@@ -43,7 +46,7 @@ export const HistoryRow: React.FC<{
         <span>🪙 {trace.totalTokens.toLocaleString()}</span>
         <span>💵 ${trace.totalCostUsd.toFixed(4)}</span>
         <span>⏱ {dur}</span>
-        <span className="ml-auto">{trace.events.length} steps</span>
+        <span className="ml-auto">{t('debugger.steps', { count: trace.events.length })}</span>
       </div>
     </motion.button>
   );

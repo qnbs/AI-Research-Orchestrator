@@ -1,7 +1,9 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { AuthorCluster, AuthorProfile, RankedArticle } from '../../types';
 import { useSettings } from '../../contexts/SettingsContext';
 import { useKnowledgeBase } from '../../contexts/KnowledgeBaseContext';
+import { useTranslation } from '../../hooks/useTranslation';
+import type { TranslationKey } from '../../hooks/useTranslation';
 import {
   disambiguateAuthor,
   generateAuthorQuery,
@@ -14,38 +16,30 @@ import {
   useGetFeaturedAuthorsQuery,
 } from '../../store/slices/apiSlice';
 
-const authorLoadingPhases = [
-  'Phase 1: Searching PubMed for publications...',
-  'Phase 2: Fetching article details...',
-  'Phase 3: AI is disambiguating author profiles...',
-  'Phase 4: Fetching details for selected profile...',
-  'Phase 5: AI is generating career analysis...',
-  'Finalizing Profile...',
+const authorPhaseKeys = [
+  'authors.phase.search',
+  'authors.phase.details',
+  'authors.phase.disambiguate',
+  'authors.phase.cluster_details',
+  'authors.phase.analysis',
+  'authors.phase.finalize',
 ] as const;
 
-const authorPhaseDetails: Record<string, string[]> = {
-  'Phase 1: Searching PubMed for publications...': [
-    'Constructing PubMed query...',
-    'Scanning database for author name...',
+const authorPhaseDetailKeys: Record<(typeof authorPhaseKeys)[number], TranslationKey[]> = {
+  'authors.phase.search': ['authors.phase.search.d1', 'authors.phase.search.d2'],
+  'authors.phase.details': ['authors.phase.details.d1', 'authors.phase.details.d2'],
+  'authors.phase.disambiguate': [
+    'authors.phase.disambiguate.d1',
+    'authors.phase.disambiguate.d2',
+    'authors.phase.disambiguate.d3',
   ],
-  'Phase 2: Fetching article details...': [
-    'Requesting metadata for found articles...',
-    'Parsing publication data...',
+  'authors.phase.cluster_details': ['authors.phase.cluster_details.d1'],
+  'authors.phase.analysis': [
+    'authors.phase.analysis.d1',
+    'authors.phase.analysis.d2',
+    'authors.phase.analysis.d3',
   ],
-  'Phase 3: AI is disambiguating author profiles...': [
-    'Analyzing co-author networks...',
-    'Clustering publications by topic...',
-    'Identifying distinct author personas...',
-  ],
-  'Phase 4: Fetching details for selected profile...': [
-    'Retrieving full data for selected publications...',
-  ],
-  'Phase 5: AI is generating career analysis...': [
-    'Synthesizing career narrative...',
-    'Estimating impact metrics...',
-    'Extracting core research concepts...',
-  ],
-  'Finalizing Profile...': ['Assembling final profile...', 'Preparing visualizations...'],
+  'authors.phase.finalize': ['authors.phase.finalize.d1', 'authors.phase.finalize.d2'],
 };
 
 export const useAuthorsViewLogic = (
@@ -54,6 +48,7 @@ export const useAuthorsViewLogic = (
 ) => {
   const { settings } = useSettings();
   const { saveAuthorProfile } = useKnowledgeBase();
+  const { t } = useTranslation();
   const [view, setView] = useState<'landing' | 'disambiguation' | 'profile'>('landing');
   const [authorQuery, setAuthorQuery] = useState('');
 
@@ -70,13 +65,26 @@ export const useAuthorsViewLogic = (
     { name: string; description: string }[] | null
   >(null);
 
+  const authorLoadingPhases = useMemo(
+    () => authorPhaseKeys.map((k) => t(k as TranslationKey)),
+    [t],
+  );
+
+  const authorPhaseDetails = useMemo(() => {
+    const details: Record<string, string[]> = {};
+    authorPhaseKeys.forEach((phaseKey) => {
+      details[t(phaseKey as TranslationKey)] = authorPhaseDetailKeys[phaseKey].map((dk) => t(dk));
+    });
+    return details;
+  }, [t]);
+
   // ── RTK Query hooks ──────────────────────────────────────────────────────
   const {
     data: featuredCategories = [],
     isLoading: isFeaturedLoading,
     error: featuredQueryError,
   } = useGetFeaturedAuthorsQuery();
-  const featuredError = featuredQueryError ? 'Could not load featured authors.' : null;
+  const featuredError = featuredQueryError ? t('authors.featured.error') : null;
 
   const [triggerSearchIds] = useLazySearchPubMedIdsQuery();
   const [triggerGetDetails] = useLazyGetArticleDetailsFullQuery();
@@ -180,11 +188,7 @@ export const useAuthorsViewLogic = (
         }
       } catch (err) {
         if (isMounted.current) {
-          setError(
-            err instanceof Error
-              ? err.message
-              : 'An unknown error occurred while building the profile.',
-          );
+          setError(err instanceof Error ? err.message : t('authors.error.profile_build'));
           setView('landing');
         }
       } finally {
@@ -193,7 +197,7 @@ export const useAuthorsViewLogic = (
         }
       }
     },
-    [settings.ai, saveAuthorProfile, triggerGetDetails],
+    [settings.ai, saveAuthorProfile, triggerGetDetails, authorLoadingPhases, t],
   );
 
   const handleSearch = useCallback(
@@ -213,9 +217,7 @@ export const useAuthorsViewLogic = (
           maxResults: settings.ai.researchAssistant.authorSearchLimit,
         }).unwrap();
         if (pmids.length === 0) {
-          throw new Error(
-            'No publications found for this author on PubMed. Try a different name variation or check spelling.',
-          );
+          throw new Error(t('authors.error.no_publications'));
         }
 
         if (!isMounted.current) return;
@@ -238,7 +240,7 @@ export const useAuthorsViewLogic = (
         }
       } catch (err) {
         if (isMounted.current) {
-          setError(err instanceof Error ? err.message : 'An unknown error occurred.');
+          setError(err instanceof Error ? err.message : t('authors.error.generic'));
           setView('landing');
         }
       } finally {
@@ -247,7 +249,7 @@ export const useAuthorsViewLogic = (
         }
       }
     },
-    [settings.ai, handleSelectCluster, triggerSearchIds, triggerGetDetails],
+    [settings.ai, handleSelectCluster, triggerSearchIds, triggerGetDetails, authorLoadingPhases, t],
   );
 
   const handleSuggestAuthors = useCallback(
@@ -263,7 +265,7 @@ export const useAuthorsViewLogic = (
         }
       } catch (err) {
         if (isMounted.current) {
-          setSuggestionError(err instanceof Error ? err.message : 'Failed to suggest authors.');
+          setSuggestionError(err instanceof Error ? err.message : t('authors.error.suggest'));
         }
       } finally {
         if (isMounted.current) {
@@ -271,7 +273,7 @@ export const useAuthorsViewLogic = (
         }
       }
     },
-    [settings.ai],
+    [settings.ai, t],
   );
 
   const handleReset = useCallback(() => {

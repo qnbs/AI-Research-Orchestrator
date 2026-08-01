@@ -53,6 +53,19 @@ const MIGRATED_FILES = [
   'src/components/SettingsView.tsx',
   'src/components/settings/useSettingsViewLogic.ts',
   'src/components/settings/CostEstimateCard.tsx',
+  'src/components/AuthorsView.tsx',
+  'src/components/authors/AuthorsSubComponents.tsx',
+  'src/components/authors/AuthorProfileView.tsx',
+  'src/components/authors/useAuthorsViewLogic.ts',
+  'src/components/JournalsView.tsx',
+  'src/components/journals/JournalsSubComponents.tsx',
+  'src/components/journals/JournalProfileView.tsx',
+  'src/components/agentDebugger/AgentDebuggerPanel.tsx',
+  'src/components/agentDebugger/AgentDebuggerToggle.tsx',
+  'src/components/agentDebugger/EventRow.tsx',
+  'src/components/agentDebugger/HistoryRow.tsx',
+  'src/components/agentDebugger/TokenBudgetBar.tsx',
+  'src/components/CollectionsView.tsx',
 ];
 
 const IGNORE_COMMENT = 'i18n-ratchet-ignore-next-line';

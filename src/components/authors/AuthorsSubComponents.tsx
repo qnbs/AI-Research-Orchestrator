@@ -1,8 +1,7 @@
-import React, { useState, useRef, useEffect, useCallback, useMemo, useId } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useAuthorsView } from './AuthorsViewContext';
 import { ChevronLeftIcon } from '../icons/ChevronLeftIcon';
 import { ChevronRightIcon } from '../icons/ChevronRightIcon';
-import { ChevronDownIcon } from '../icons/ChevronDownIcon';
 import { SparklesIcon } from '../icons/SparklesIcon';
 import { DnaIcon } from '../icons/DnaIcon';
 import { HeartIcon } from '../icons/HeartIcon';
@@ -11,21 +10,9 @@ import { BrainIcon } from '../icons/BrainIcon';
 import { BeakerIcon } from '../icons/BeakerIcon';
 import { ChartBarIcon } from '../icons/ChartBarIcon';
 import { SearchIcon } from '../icons/SearchIcon';
-import { DocumentIcon } from '../icons/DocumentIcon';
-import { Tooltip } from '../Tooltip';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip as RechartsTooltip,
-  ResponsiveContainer,
-} from 'recharts';
-import { useSettings } from '../../contexts/SettingsContext';
 import { useTranslation } from '../../hooks/useTranslation';
-import { marked } from 'marked';
-import DOMPurify from 'dompurify';
+
+export { AuthorProfileView } from './AuthorProfileView';
 
 const categoryIcons: { [key: string]: React.FC<React.SVGProps<SVGSVGElement>> } = {
   'Genetics & Genomics': DnaIcon,
@@ -39,40 +26,37 @@ const categoryIcons: { [key: string]: React.FC<React.SVGProps<SVGSVGElement>> } 
   'AI & Computational Biology': ChartBarIcon,
 };
 
-const secureMarkdownToHtml = (text: string): string => {
-  if (!text) return '';
-  const rawMarkup = marked.parse(text.trim(), { breaks: true, gfm: true }) as string;
-  return DOMPurify.sanitize(rawMarkup);
-};
-
 export const AuthorCard: React.FC<{ name: string; description: string; onClick: () => void }> = ({
   name,
   description,
   onClick,
-}) => (
-  <button
-    onClick={onClick}
-    className="group relative w-full h-full p-5 bg-surface border border-border rounded-lg text-left transition-all duration-300 hover:shadow-xl hover:border-brand-accent/50 hover:-translate-y-1.5 focus:outline-none focus:ring-2 focus:ring-brand-accent ring-offset-2 ring-offset-background"
-  >
-    <div className="flex items-center gap-3 mb-3">
-      <div className="h-10 w-10 rounded-full bg-brand-accent/10 flex items-center justify-center text-brand-accent font-bold text-sm">
-        {name
-          .split(' ')
-          .map((n) => n[0])
-          .join('')
-          .substring(0, 2)
-          .toUpperCase()}
+}) => {
+  const { t } = useTranslation();
+  return (
+    <button
+      onClick={onClick}
+      className="group relative w-full h-full p-5 bg-surface border border-border rounded-lg text-left transition-all duration-300 hover:shadow-xl hover:border-brand-accent/50 hover:-translate-y-1.5 focus:outline-none focus:ring-2 focus:ring-brand-accent ring-offset-2 ring-offset-background"
+    >
+      <div className="flex items-center gap-3 mb-3">
+        <div className="h-10 w-10 rounded-full bg-brand-accent/10 flex items-center justify-center text-brand-accent font-bold text-sm">
+          {name
+            .split(' ')
+            .map((n) => n[0])
+            .join('')
+            .substring(0, 2)
+            .toUpperCase()}
+        </div>
+        <h4 className="text-lg font-bold text-text-primary transition-colors duration-300 group-hover:brand-gradient-text">
+          {name}
+        </h4>
       </div>
-      <h4 className="text-lg font-bold text-text-primary transition-colors duration-300 group-hover:brand-gradient-text">
-        {name}
-      </h4>
-    </div>
-    <p className="text-sm text-text-secondary leading-relaxed">{description}</p>
-    <div className="absolute bottom-4 right-4 flex items-center text-xs font-semibold text-text-secondary opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-300">
-      Analyze <ChevronRightIcon className="h-4 w-4 ml-1" />
-    </div>
-  </button>
-);
+      <p className="text-sm text-text-secondary leading-relaxed">{description}</p>
+      <div className="absolute bottom-4 right-4 flex items-center text-xs font-semibold text-text-secondary opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-300">
+        {t('authors.analyze')} <ChevronRightIcon className="h-4 w-4 ml-1" />
+      </div>
+    </button>
+  );
+};
 
 export const FeaturedAuthorsView: React.FC = () => {
   const {
@@ -81,6 +65,7 @@ export const FeaturedAuthorsView: React.FC = () => {
     isFeaturedLoading: isLoading,
     featuredError: error,
   } = useAuthorsView();
+  const { t } = useTranslation();
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
   const ITEMS_PER_PAGE = 9;
@@ -139,7 +124,7 @@ export const FeaturedAuthorsView: React.FC = () => {
     return (
       <div className="text-center py-8">
         <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-brand-accent mx-auto mb-4"></div>
-        <p className="text-text-secondary">Loading featured researchers...</p>
+        <p className="text-text-secondary">{t('authors.featured.loading')}</p>
       </div>
     );
   }
@@ -155,13 +140,13 @@ export const FeaturedAuthorsView: React.FC = () => {
   return (
     <div className="space-y-8">
       <h2 className="text-3xl font-bold text-text-primary text-center">
-        Or Browse Featured Researchers
+        {t('authors.featured.title')}
       </h2>
 
       <div className="relative group">
         <button
           onClick={() => handleScroll('left')}
-          aria-label="Scroll left"
+          aria-label={t('authors.featured.scroll_left')}
           className={`absolute -left-4 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-surface border border-border shadow-lg transition-all opacity-0 group-hover:opacity-100 hover:bg-surface-hover disabled:opacity-0 disabled:cursor-not-allowed ${scrollState.canScrollLeft ? '' : 'opacity-0'}`}
           disabled={!scrollState.canScrollLeft}
         >
@@ -200,7 +185,7 @@ export const FeaturedAuthorsView: React.FC = () => {
         ></div>
         <button
           onClick={() => handleScroll('right')}
-          aria-label="Scroll right"
+          aria-label={t('authors.featured.scroll_right')}
           className={`absolute -right-4 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-surface border border-border shadow-lg transition-all opacity-0 group-hover:opacity-100 hover:bg-surface-hover disabled:opacity-0 ${scrollState.canScrollRight ? '' : 'opacity-0'}`}
           disabled={!scrollState.canScrollRight}
         >
@@ -231,20 +216,20 @@ export const FeaturedAuthorsView: React.FC = () => {
               onClick={() => setCurrentPage((prev) => Math.max(0, prev - 1))}
               disabled={currentPage === 0}
               className="p-2 bg-surface border border-border rounded-full shadow-lg transition-all duration-300 hover:bg-surface-hover disabled:opacity-50 disabled:cursor-not-allowed"
-              aria-label="Previous page"
+              aria-label={t('authors.featured.prev_page')}
             >
               <ChevronLeftIcon className="h-6 w-6 text-text-primary" />
             </button>
 
             <span className="text-sm font-medium text-text-secondary tabular-nums">
-              Page {currentPage + 1} / {totalPages}
+              {t('authors.featured.page', { current: currentPage + 1, total: totalPages })}
             </span>
 
             <button
               onClick={() => setCurrentPage((prev) => Math.min(totalPages - 1, prev + 1))}
               disabled={currentPage >= totalPages - 1}
               className="p-2 bg-surface border border-border rounded-full shadow-lg transition-all duration-300 hover:bg-surface-hover disabled:opacity-50 disabled:cursor-not-allowed"
-              aria-label="Next page"
+              aria-label={t('authors.featured.next_page')}
             >
               <ChevronRightIcon className="h-6 w-6 text-text-primary" />
             </button>
@@ -289,7 +274,7 @@ export const LandingView: React.FC = () => {
     <div className="pt-2 space-y-12">
       <div className="space-y-8">
         <div className="text-center">
-          <h1 className="text-4xl font-bold brand-gradient-text">Author Hub</h1>
+          <h1 className="text-4xl font-bold brand-gradient-text">{t('authors.title')}</h1>
           <p className="mt-2 text-lg text-text-secondary max-w-3xl mx-auto">
             {t('authors.subtitle')}
           </p>
@@ -305,14 +290,14 @@ export const LandingView: React.FC = () => {
                 onClick={() => handleModeChange('search')}
                 className={`w-1/2 p-1.5 rounded-md text-sm font-medium transition-colors ${mode === 'search' ? 'bg-brand-accent text-brand-text-on-accent' : 'text-text-secondary hover:bg-surface'}`}
               >
-                Analyze Author
+                {t('authors.mode.analyze')}
               </button>
               <button
                 type="button"
                 onClick={() => handleModeChange('suggest')}
                 className={`w-1/2 p-1.5 rounded-md text-sm font-medium transition-colors ${mode === 'suggest' ? 'bg-brand-accent text-brand-text-on-accent' : 'text-text-secondary hover:bg-surface'}`}
               >
-                Suggest Authors
+                {t('authors.mode.suggest')}
               </button>
             </div>
             <div className="flex items-center gap-2">
@@ -321,11 +306,13 @@ export const LandingView: React.FC = () => {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder={
-                  mode === 'search' ? "e.g., 'Jennifer Doudna'" : "e.g., 'CRISPR Gene Editing'"
+                  mode === 'search'
+                    ? t('authors.placeholder.analyze')
+                    : t('authors.placeholder.suggest')
                 }
                 className="w-full bg-transparent p-2 focus-ring-aa rounded-md text-text-primary"
                 aria-label={
-                  mode === 'search' ? 'Author name to search' : 'Field of study for suggestions'
+                  mode === 'search' ? t('authors.aria.analyze') : t('authors.aria.suggest')
                 }
               />
               <button
@@ -336,12 +323,12 @@ export const LandingView: React.FC = () => {
                 {mode === 'search' ? (
                   <>
                     <SearchIcon className="h-4 w-4 mr-2" />
-                    Analyze
+                    {t('authors.analyze')}
                   </>
                 ) : (
                   <>
                     <SparklesIcon className="h-4 w-4 mr-2" />
-                    Suggest
+                    {t('authors.suggest')}
                   </>
                 )}
               </button>
@@ -355,7 +342,7 @@ export const LandingView: React.FC = () => {
         {isSuggesting && (
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-brand-accent mx-auto mb-4"></div>
-            <p className="text-text-secondary">AI is discovering researchers for you...</p>
+            <p className="text-text-secondary">{t('authors.suggest.loading')}</p>
           </div>
         )}
         {suggestionError && <p className="text-center text-red-400">{suggestionError}</p>}
@@ -388,7 +375,9 @@ export const DisambiguationView: React.FC = () => {
 
   return (
     <div className="mt-8 animate-fadeIn pt-2">
-      <h2 className="text-2xl font-bold text-text-primary text-center">Disambiguation Required</h2>
+      <h2 className="text-2xl font-bold text-text-primary text-center">
+        {t('authors.disambiguation.title')}
+      </h2>
       <p className="text-center text-text-secondary mt-2">
         {t('authors.disambiguation.prefix')} “{authorQuery}”. {t('authors.disambiguation.suffix')}
       </p>
@@ -405,308 +394,19 @@ export const DisambiguationView: React.FC = () => {
             <div className="mt-3 space-y-2 text-sm text-text-secondary">
               <p>
                 <strong className="text-text-primary">{cluster.publicationCount}</strong>{' '}
-                publications
+                {t('authors.disambiguation.publications')}
               </p>
               <p>
-                <strong>Affiliation:</strong> {cluster.primaryAffiliation || 'N/A'}
+                <strong>{t('authors.disambiguation.affiliation')}</strong>{' '}
+                {cluster.primaryAffiliation || t('authors.na')}
               </p>
               <p>
-                <strong>Top Topics:</strong> {cluster.coreTopics.join(', ')}
+                <strong>{t('authors.disambiguation.topics')}</strong>{' '}
+                {cluster.coreTopics.join(', ')}
               </p>
             </div>
           </button>
         ))}
-      </div>
-    </div>
-  );
-};
-
-const ProfileAccordion: React.FC<{
-  title: React.ReactNode;
-  children: React.ReactNode;
-  defaultOpen?: boolean;
-}> = ({ title, children, defaultOpen = false }) => {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
-  const id = useId();
-  const panelId = `accordion-panel-${id}`;
-  const buttonId = `accordion-button-${id}`;
-
-  return (
-    <div className="border border-border rounded-lg bg-surface overflow-hidden">
-      <button
-        id={buttonId}
-        onClick={() => setIsOpen(!isOpen)}
-        aria-expanded={isOpen}
-        aria-controls={panelId}
-        className="w-full flex justify-between items-center p-4 text-left text-lg font-semibold text-text-primary hover:bg-surface-hover focus-ring-aa transition-colors"
-      >
-        <div className="flex items-center">{title}</div>
-        <ChevronDownIcon
-          className={`h-6 w-6 transform transition-transform duration-300 text-text-secondary ${isOpen ? 'rotate-180' : ''}`}
-        />
-      </button>
-      <div
-        id={panelId}
-        role="region"
-        aria-labelledby={buttonId}
-        className={`grid transition-all duration-500 ease-in-out ${isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}
-      >
-        <div className="overflow-hidden">
-          <div className="p-4 border-t border-border bg-background/30">{children}</div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export const AuthorProfileView: React.FC = () => {
-  const { authorProfile: profile, handleReset: onReset } = useAuthorsView();
-  const { settings } = useSettings();
-  const { t } = useTranslation();
-
-  // --- Derived State: Top Co-Authors ---
-  const topCoAuthors = useMemo(() => {
-    if (!profile) return [];
-    const authorCounts: Record<string, number> = {};
-    const mainNameParts = profile.name.toLowerCase().split(' ');
-    const mainLastName = mainNameParts[mainNameParts.length - 1];
-
-    profile.publications.forEach((pub) => {
-      const authors = pub.authors.split(', ');
-      authors.forEach((auth) => {
-        const cleanAuth = auth.trim();
-        // Simple filter to avoid listing the profile author themselves
-        if (cleanAuth && !cleanAuth.toLowerCase().includes(mainLastName)) {
-          authorCounts[cleanAuth] = (authorCounts[cleanAuth] || 0) + 1;
-        }
-      });
-    });
-
-    return Object.entries(authorCounts)
-      .sort(([, a], [, b]) => b - a)
-      .slice(0, 5)
-      .map(([name, count]) => ({ name, count }));
-  }, [profile]);
-
-  if (!profile) return null;
-
-  const isDarkMode = settings.theme === 'dark';
-  const textColor = isDarkMode ? '#7d8590' : '#57606a';
-  const gridColor = isDarkMode ? 'rgba(125, 133, 144, 0.1)' : 'rgba(87, 96, 106, 0.1)';
-
-  const citationTimeline = Object.keys(profile.metrics.citationsPerYear)
-    .sort()
-    .map((year) => ({
-      year,
-      citations: profile.metrics.citationsPerYear[year],
-    }));
-
-  return (
-    <div className="animate-fadeIn space-y-8 pt-2">
-      <div className="flex items-center justify-between">
-        <button
-          onClick={onReset}
-          className="flex items-center text-sm font-medium text-text-secondary hover:text-brand-accent transition-colors"
-        >
-          <ChevronLeftIcon className="h-4 w-4 mr-1" />
-          Back to Search
-        </button>
-      </div>
-
-      <div className="bg-surface p-8 rounded-xl border border-border shadow-lg">
-        <div className="flex flex-col md:flex-row md:items-start gap-6 mb-8 border-b border-border pb-8">
-          <div className="h-20 w-20 rounded-full bg-gradient-to-br from-brand-primary to-brand-accent flex items-center justify-center text-white text-2xl font-bold shadow-md">
-            {profile.name
-              .split(' ')
-              .map((n) => n[0])
-              .join('')
-              .substring(0, 2)
-              .toUpperCase()}
-          </div>
-          <div>
-            <h1 className="text-4xl font-bold text-text-primary">{profile.name}</h1>
-            <p className="mt-2 text-lg text-text-secondary">
-              {profile.affiliations[0] || 'Affiliation not available'}
-            </p>
-            {profile.orcid && (
-              <p className="text-sm font-mono text-text-secondary mt-1">ORCID: {profile.orcid}</p>
-            )}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column: Metrics & Concepts */}
-          <div className="lg:col-span-1 space-y-8">
-            {/* Metrics Dashboard */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 bg-background rounded-lg border border-border text-center">
-                <div className="text-3xl font-bold text-brand-accent">
-                  {profile.metrics.publicationCount}
-                </div>
-                <div className="text-xs font-medium text-text-secondary uppercase tracking-wide mt-1">
-                  Publications
-                </div>
-              </div>
-              <div className="p-4 bg-background rounded-lg border border-border text-center">
-                <div className="text-3xl font-bold text-brand-accent">
-                  {profile.metrics.hIndex ?? 'N/A'}
-                </div>
-                <div className="text-xs font-medium text-text-secondary uppercase tracking-wide mt-1">
-                  Est. H-Index
-                </div>
-              </div>
-              <div className="p-4 bg-background rounded-lg border border-border text-center">
-                <div className="text-3xl font-bold text-accent-cyan">
-                  {profile.metrics.publicationsAsFirstAuthor}
-                </div>
-                <div className="text-xs font-medium text-text-secondary uppercase tracking-wide mt-1">
-                  First Author
-                </div>
-              </div>
-              <div className="p-4 bg-background rounded-lg border border-border text-center">
-                <div className="text-3xl font-bold text-accent-magenta">
-                  {profile.metrics.publicationsAsLastAuthor}
-                </div>
-                <div className="text-xs font-medium text-text-secondary uppercase tracking-wide mt-1">
-                  Last Author
-                </div>
-              </div>
-            </div>
-
-            {/* Core Concepts */}
-            <div>
-              <h3 className="text-lg font-bold text-text-primary mb-4">Core Concepts</h3>
-              <div className="space-y-3">
-                {profile.coreConcepts.map(({ concept, frequency }) => (
-                  <Tooltip key={concept} content={`${frequency} publications mention this concept`}>
-                    <div className="group cursor-default">
-                      <div className="flex justify-between text-sm mb-1">
-                        <span className="text-text-secondary font-medium group-hover:text-brand-accent transition-colors">
-                          {concept}
-                        </span>
-                        <span className="text-text-secondary text-xs">{frequency}</span>
-                      </div>
-                      <div className="w-full h-2 bg-border rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-brand-accent/70 group-hover:bg-brand-accent transition-colors rounded-full"
-                          style={{
-                            width: `${(frequency / profile.metrics.publicationCount) * 100}%`,
-                          }}
-                        ></div>
-                      </div>
-                    </div>
-                  </Tooltip>
-                ))}
-              </div>
-            </div>
-
-            {/* Top Co-Authors (Derived) */}
-            {topCoAuthors.length > 0 && (
-              <div>
-                <h3 className="text-lg font-bold text-text-primary mb-4">Top Collaborators</h3>
-                <div className="flex flex-wrap gap-2">
-                  {topCoAuthors.map((ca) => (
-                    <span
-                      key={ca.name}
-                      className="px-3 py-1 rounded-full bg-surface-hover border border-border text-xs font-medium text-text-primary"
-                      title={`${ca.count} co-authored papers`}
-                    >
-                      {ca.name}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Right Column: Narrative & Timeline */}
-          <div className="lg:col-span-2 space-y-8">
-            <div>
-              <h3 className="text-xl font-bold text-text-primary mb-4">Career Synthesis</h3>
-              <div
-                className="prose prose-sm prose-invert max-w-none text-text-secondary/90 leading-relaxed bg-background p-6 rounded-lg border border-border shadow-inner"
-                dangerouslySetInnerHTML={{ __html: secureMarkdownToHtml(profile.careerSummary) }}
-              />
-            </div>
-
-            <div>
-              <h3 className="text-xl font-bold text-text-primary mb-4">Citation Impact Timeline</h3>
-              <div className="h-64 bg-background p-4 rounded-lg border border-border">
-                {citationTimeline.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={citationTimeline}
-                      margin={{ top: 8, right: 8, left: 0, bottom: 24 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
-                      <XAxis
-                        dataKey="year"
-                        tick={{ fill: textColor, fontSize: 11 }}
-                        angle={-45}
-                        textAnchor="end"
-                        height={50}
-                      />
-                      <YAxis
-                        tick={{ fill: textColor, fontSize: 12 }}
-                        label={{
-                          value: t('charts.citations'),
-                          angle: -90,
-                          position: 'insideLeft',
-                          fill: textColor,
-                        }}
-                      />
-                      <RechartsTooltip />
-                      <Bar
-                        dataKey="citations"
-                        name={t('charts.citations')}
-                        fill="rgba(31, 111, 235, 0.75)"
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <p className="h-full flex items-center justify-center text-sm text-text-secondary">
-                    {t('charts.no_citation_timeline')}
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-10">
-          <ProfileAccordion
-            title={
-              <div className="flex items-center gap-2 font-bold">
-                <DocumentIcon className="h-5 w-5 text-brand-accent" />
-                <span>Full Publication List ({profile.publications.length})</span>
-              </div>
-            }
-          >
-            <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2 scrollbar-thin">
-              {[...profile.publications]
-                .sort((a, b) => parseInt(b.pubYear) - parseInt(a.pubYear))
-                .map((pub) => (
-                  <a
-                    key={pub.pmid}
-                    href={`https://pubmed.ncbi.nlm.nih.gov/${pub.pmid}/`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block p-4 bg-surface border border-border rounded-lg hover:bg-surface-hover hover:border-brand-accent/50 transition-all group"
-                  >
-                    <div className="flex justify-between items-start">
-                      <p className="font-semibold text-sm text-text-primary group-hover:text-brand-accent">
-                        {pub.title}
-                      </p>
-                      <span className="text-xs font-mono text-text-secondary bg-background px-2 py-0.5 rounded border border-border ml-2 shrink-0">
-                        {pub.pubYear}
-                      </span>
-                    </div>
-                    <p className="text-xs text-text-secondary mt-2 italic">{pub.journal}</p>
-                  </a>
-                ))}
-            </div>
-          </ProfileAccordion>
-        </div>
       </div>
     </div>
   );

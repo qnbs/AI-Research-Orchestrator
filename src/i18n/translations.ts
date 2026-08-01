@@ -7,6 +7,8 @@ import { inputFormTranslations } from './inputFormTranslations';
 import { researchViewTranslations } from './researchViewTranslations';
 import { reportTranslations } from './reportTranslations';
 import { settingsTranslations } from './settingsTranslations';
+import { debuggerTranslations } from './debuggerTranslations';
+import { authorTranslations } from './authorTranslations';
 
 export const translations = {
   en: {
@@ -88,6 +90,32 @@ export const translations = {
     'collections.form.icon': 'Icon',
     'collections.form.color': 'Color',
     'collections.selectCard': 'Select collection',
+    'collections.form.name_placeholder': 'My Research Collection',
+    'collections.form.tags_placeholder': 'immunology, oncology, AI',
+    'collections.form.desc_placeholder': 'What is this collection about?',
+    'collections.loading': 'Loading collections…',
+    'collections.share_aria': 'Share collection',
+    'collections.edit_aria': 'Edit collection',
+    'collections.delete_aria': 'Delete collection',
+    'collections.reports_one': '{count} report',
+    'collections.reports_other': '{count} reports',
+    'collections.articles_one': '{count} article',
+    'collections.articles_other': '{count} articles',
+    'collections.form.name': 'Name',
+    'collections.form.description': 'Description',
+    'collections.form.tags': 'Tags (comma-separated)',
+    'collections.form.cancel': 'Cancel',
+    'collections.form.save': 'Save Changes',
+    'collections.form.create_btn': 'Create',
+    'collections.form.color_aria': 'Color {color}',
+    'collections.untitled': 'Untitled',
+    'collections.share.link_label': 'Shareable export link',
+    'collections.share.copy': 'Copy link',
+    'collections.share.copied_btn': 'Copied!',
+    'collections.share.hint': 'Anyone with this link can view the collection.',
+    'collections.share.no_token':
+      'No share token yet — close and click the share button on the card to generate one.',
+    'collections.shared': 'Shared',
     'collections.icon.books': 'Books',
     'collections.icon.microscope': 'Microscope',
     'collections.icon.brain': 'Brain',
@@ -98,13 +126,6 @@ export const translations = {
     'collections.icon.idea': 'Idea',
     'collections.icon.target': 'Target',
     'collections.icon.chart': 'Chart',
-    // ── Agent Debugger ──
-    'debugger.title': 'Agent Debugger',
-    'debugger.live': 'Live',
-    'debugger.tokens': 'tokens',
-    'debugger.cost': 'Estimated cost',
-    'debugger.clear': 'Clear history',
-    'debugger.empty': 'Start a research session to see the agent pipeline live.',
     // ── Themes ──
     'theme.cyber_dark': 'Cyber-Dark',
     'theme.neon_light': 'Neon-Light',
@@ -271,12 +292,6 @@ export const translations = {
       'Build a personal, de-duplicated knowledge base and export your findings for any workflow.',
     'onboarding.start': 'Start Researching',
     'onboarding.privacy': 'Your data remains private and is stored only locally in your browser.',
-    // ── Author Hub ──
-    'authors.subtitle':
-      "Analyze a researcher's impact or discover key figures in any scientific field.",
-    'authors.suggest.heading': 'Key Researchers in',
-    'authors.disambiguation.prefix': 'Multiple potential author profiles were found for',
-    'authors.disambiguation.suffix': 'Please select the correct one.',
     'settings.ai.enable_tldr': 'Enable AI “TL;DR” Summaries',
     ...journalTranslations.en,
     'kb.analyze_journal': 'Analyze journal in Journal Hub',
@@ -288,6 +303,8 @@ export const translations = {
     ...researchViewTranslations.en,
     ...reportTranslations.en,
     ...settingsTranslations.en,
+    ...debuggerTranslations.en,
+    ...authorTranslations.en,
     'errors.code.noApiKey': 'Please configure your API key in Settings.',
     'errors.code.quota': 'AI provider quota exhausted. Try again later or check your usage.',
     'errors.code.rateLimit': 'AI provider rate limit reached. Wait briefly and try again.',
@@ -416,6 +433,32 @@ export const translations = {
     'collections.form.icon': 'Symbol',
     'collections.form.color': 'Farbe',
     'collections.selectCard': 'Sammlung auswählen',
+    'collections.form.name_placeholder': 'Meine Forschungssammlung',
+    'collections.form.tags_placeholder': 'Immunologie, Onkologie, KI',
+    'collections.form.desc_placeholder': 'Worum geht es in dieser Sammlung?',
+    'collections.loading': 'Sammlungen werden geladen…',
+    'collections.share_aria': 'Sammlung teilen',
+    'collections.edit_aria': 'Sammlung bearbeiten',
+    'collections.delete_aria': 'Sammlung löschen',
+    'collections.reports_one': '{count} Bericht',
+    'collections.reports_other': '{count} Berichte',
+    'collections.articles_one': '{count} Artikel',
+    'collections.articles_other': '{count} Artikel',
+    'collections.form.name': 'Name',
+    'collections.form.description': 'Beschreibung',
+    'collections.form.tags': 'Tags (kommagetrennt)',
+    'collections.form.cancel': 'Abbrechen',
+    'collections.form.save': 'Änderungen speichern',
+    'collections.form.create_btn': 'Erstellen',
+    'collections.form.color_aria': 'Farbe {color}',
+    'collections.untitled': 'Ohne Titel',
+    'collections.share.link_label': 'Teilbarer Export-Link',
+    'collections.share.copy': 'Link kopieren',
+    'collections.share.copied_btn': 'Kopiert!',
+    'collections.share.hint': 'Jeder mit diesem Link kann die Sammlung einsehen.',
+    'collections.share.no_token':
+      'Noch kein Freigabe-Token — schließen und auf der Karte teilen klicken, um eines zu erzeugen.',
+    'collections.shared': 'Geteilt',
     'collections.icon.books': 'Bücher',
     'collections.icon.microscope': 'Mikroskop',
     'collections.icon.brain': 'Gehirn',
@@ -426,14 +469,6 @@ export const translations = {
     'collections.icon.idea': 'Idee',
     'collections.icon.target': 'Ziel',
     'collections.icon.chart': 'Diagramm',
-    // ── Agent Debugger ──
-    'debugger.title': 'Agenten-Debugger',
-    'debugger.live': 'Live',
-    'debugger.tokens': 'Token',
-    'debugger.cost': 'Geschätzte Kosten',
-    'debugger.clear': 'Verlauf leeren',
-    'debugger.empty':
-      'Starten Sie eine Recherche-Session, um die Agenten-Pipeline live zu verfolgen.',
     // ── Themes ──
     'theme.cyber_dark': 'Cyber-Dunkel',
     'theme.neon_light': 'Neon-Hell',
@@ -607,12 +642,6 @@ export const translations = {
     'onboarding.start': 'Recherche starten',
     'onboarding.privacy':
       'Ihre Daten bleiben privat und werden nur lokal in Ihrem Browser gespeichert.',
-    // ── Author Hub (German locale) ──
-    'authors.subtitle':
-      'Analysieren Sie die Wirkung eines Forschers oder entdecken Sie Schlüsselfiguren in jedem wissenschaftlichen Bereich.',
-    'authors.suggest.heading': 'Wichtige Forscher zu',
-    'authors.disambiguation.prefix': 'Mehrere mögliche Autorenprofile wurden gefunden für',
-    'authors.disambiguation.suffix': 'Bitte wählen Sie das richtige aus.',
     'settings.ai.enable_tldr': 'KI-„TL;DR“-Zusammenfassungen aktivieren',
     ...journalTranslations.de,
     'kb.analyze_journal': 'Journal im Journal-Hub analysieren',
@@ -624,6 +653,8 @@ export const translations = {
     ...researchViewTranslations.de,
     ...reportTranslations.de,
     ...settingsTranslations.de,
+    ...debuggerTranslations.de,
+    ...authorTranslations.de,
     'errors.code.noApiKey': 'Bitte konfigurieren Sie Ihren API-Schlüssel in den Einstellungen.',
     'errors.code.quota':
       'KI-Anbieter-Kontingent erschöpft. Versuchen Sie es später erneut oder überprüfen Sie Ihre Nutzung.',
