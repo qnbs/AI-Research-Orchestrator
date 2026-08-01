@@ -5,12 +5,14 @@ import { DocumentPlusIcon } from './icons/DocumentPlusIcon';
 import { useSettings } from '../contexts/SettingsContext';
 import { useKnowledgeBase } from '../contexts/KnowledgeBaseContext';
 import { analyzeSingleArticle } from '../services/geminiService';
+import { useTranslation } from '../hooks/useTranslation';
 
 interface QuickAddModalProps {
   onClose: () => void;
 }
 
 const QuickAddModal: React.FC<QuickAddModalProps> = ({ onClose }) => {
+  const { t } = useTranslation();
   const [identifier, setIdentifier] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -34,7 +36,7 @@ const QuickAddModal: React.FC<QuickAddModalProps> = ({ onClose }) => {
       await addSingleArticleReport(article);
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An unknown error occurred during analysis.');
+      setError(err instanceof Error ? err.message : t('quickAdd.error.unknown'));
     } finally {
       setIsLoading(false);
     }
@@ -58,23 +60,20 @@ const QuickAddModal: React.FC<QuickAddModalProps> = ({ onClose }) => {
             className="text-lg font-bold brand-gradient-text flex items-center"
           >
             <DocumentPlusIcon className="w-6 h-6 mr-2" />
-            Quick Add Article
+            {t('quickAdd.title')}
           </h3>
           <button
             onClick={onClose}
             className="p-1 rounded-full hover:bg-surface-hover focus-ring-aa"
-            aria-label="Close modal"
+            aria-label={t('chrome.aria.close_modal')}
           >
             <XIcon className="h-5 w-5" />
           </button>
         </div>
-        <p className="text-sm text-text-secondary mb-4">
-          Quickly add a single article to your knowledge base by providing its PubMed URL, PMID, or
-          DOI.
-        </p>
+        <p className="text-sm text-text-secondary mb-4">{t('quickAdd.body')}</p>
         <form onSubmit={handleSubmit}>
           <label htmlFor="article-identifier" className="sr-only">
-            Article Identifier
+            {t('quickAdd.identifier_label')}
           </label>
           <input
             id="article-identifier"
@@ -82,7 +81,7 @@ const QuickAddModal: React.FC<QuickAddModalProps> = ({ onClose }) => {
             value={identifier}
             onChange={(e) => setIdentifier(e.target.value)}
             className="block w-full bg-input-bg border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent sm:text-sm"
-            placeholder="e.g., 31354136 or https://pubmed.ncbi.nlm.nih.gov/..."
+            placeholder={t('quickAdd.placeholder')}
             // eslint-disable-next-line jsx-a11y/no-autofocus -- this is the sole input of a focus-trapped modal (useFocusTrap above); focusing it on open is expected, not page-load autofocus.
             autoFocus
           />
@@ -93,7 +92,7 @@ const QuickAddModal: React.FC<QuickAddModalProps> = ({ onClose }) => {
               onClick={onClose}
               className="px-4 py-2 border border-border text-sm font-medium rounded-md shadow-sm text-text-primary bg-surface hover:bg-surface-hover"
             >
-              Cancel
+              {t('common.cancel')}
             </button>
             <button
               type="submit"
@@ -107,6 +106,7 @@ const QuickAddModal: React.FC<QuickAddModalProps> = ({ onClose }) => {
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24"
+                    aria-hidden
                   >
                     <circle
                       className="opacity-25"
@@ -122,10 +122,10 @@ const QuickAddModal: React.FC<QuickAddModalProps> = ({ onClose }) => {
                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                     ></path>
                   </svg>
-                  Analyzing...
+                  {t('quickAdd.analyzing')}
                 </>
               ) : (
-                'Analyze & Add'
+                t('quickAdd.submit')
               )}
             </button>
           </div>

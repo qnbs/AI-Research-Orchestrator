@@ -15,16 +15,18 @@ import { useUI } from '../contexts/UIContext';
 import { DocumentIcon } from './icons/DocumentIcon';
 import { AuthorIcon } from './icons/AuthorIcon';
 import { BookOpenIcon } from './icons/BookOpenIcon';
+import { useTranslation } from '../hooks/useTranslation';
+import type { TranslationKey } from '../i18n/translations';
 
 interface HistoryViewProps {
   onViewEntry: (entry: KnowledgeBaseEntry) => void;
 }
 
-const synthesisFocusText: { [key: string]: string } = {
-  overview: 'Broad Overview',
-  clinical: 'Clinical Implications',
-  future: 'Future Research',
-  gaps: 'Contradictions & Gaps',
+const SYNTHESIS_FOCUS_KEYS: Record<string, TranslationKey> = {
+  overview: 'orchestrator.focus.overview',
+  clinical: 'orchestrator.focus.clinical',
+  future: 'orchestrator.focus.future',
+  gaps: 'orchestrator.focus.gaps',
 };
 
 const QuickViewModal: React.FC<{
@@ -32,6 +34,7 @@ const QuickViewModal: React.FC<{
   onClose: () => void;
   onViewEntry: (entry: KnowledgeBaseEntry) => void;
 }> = ({ entry, onClose, onViewEntry }) => {
+  const { t } = useTranslation();
   const modalRef = useFocusTrap<HTMLDivElement>(true);
   const { sourceType, title, articles } = entry;
 
@@ -57,6 +60,20 @@ const QuickViewModal: React.FC<{
         ? (entry.profile.coreConcepts || []).slice(0, 3).map((c) => c.concept)
         : (entry.journalProfile.focusAreas || []).slice(0, 3);
 
+  const typeTitle =
+    sourceType === 'author'
+      ? t('history.quick.author_profile')
+      : sourceType === 'journal'
+        ? t('history.quick.journal_profile')
+        : t('history.quick.research_report');
+
+  const viewAction =
+    sourceType === 'author'
+      ? t('history.quick.view_full_profile')
+      : sourceType === 'journal'
+        ? t('history.quick.view_details')
+        : t('history.quick.view_full_report');
+
   return (
     // eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events -- standard modal backdrop click-to-dismiss; keyboard users dismiss via the Escape key handler above, not by activating the backdrop itself.
     <div
@@ -75,17 +92,17 @@ const QuickViewModal: React.FC<{
       >
         <div className="flex justify-between items-start mb-4">
           <div>
-            <h3 id="quick-view-title" className={`text-lg font-bold text-brand-accent`}>
-              {sourceType === 'author'
-                ? 'Author Profile'
-                : sourceType === 'journal'
-                  ? 'Journal Profile'
-                  : 'Research Report'}
+            <h3 id="quick-view-title" className="text-lg font-bold text-brand-accent">
+              {typeTitle}
             </h3>
             <p className="text-sm text-text-secondary mt-1 max-w-md">{title}</p>
           </div>
-          <button onClick={onClose} className="p-1 rounded-full hover:bg-surface-hover">
-            <span className="sr-only">Close</span>
+          <button
+            onClick={onClose}
+            className="p-1 rounded-full hover:bg-surface-hover focus-ring-aa"
+            aria-label={t('common.close')}
+          >
+            <span className="sr-only">{t('common.close')}</span>
             <XIcon className="h-5 w-5 text-text-secondary" />
           </button>
         </div>
@@ -93,13 +110,15 @@ const QuickViewModal: React.FC<{
         <div className="space-y-4 my-6">
           <div>
             <h4 className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
-              {sourceType === 'author' ? 'Publications Found' : 'Articles Found'}
+              {sourceType === 'author'
+                ? t('history.quick.publications_found')
+                : t('history.quick.articles_found')}
             </h4>
             <p className="text-text-primary font-medium">{articles.length}</p>
           </div>
           <div>
             <h4 className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
-              Top 3 Keywords/Concepts
+              {t('history.quick.top_keywords')}
             </h4>
             {keywordsAndConcepts.length > 0 ? (
               <div className="flex flex-wrap gap-2 mt-2">
@@ -113,7 +132,9 @@ const QuickViewModal: React.FC<{
                 ))}
               </div>
             ) : (
-              <p className="text-text-secondary italic text-sm mt-1">No keywords identified.</p>
+              <p className="text-text-secondary italic text-sm mt-1">
+                {t('history.quick.no_keywords')}
+              </p>
             )}
           </div>
         </div>
@@ -123,7 +144,7 @@ const QuickViewModal: React.FC<{
             onClick={onClose}
             className="px-4 py-2 border border-border text-sm font-medium rounded-md shadow-sm text-text-primary bg-surface hover:bg-surface-hover"
           >
-            Close
+            {t('common.close')}
           </button>
           <button
             onClick={() => {
@@ -132,11 +153,7 @@ const QuickViewModal: React.FC<{
             }}
             className="px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-brand-text-on-accent bg-brand-accent hover:bg-opacity-90"
           >
-            {sourceType === 'author'
-              ? 'View Full Profile'
-              : sourceType === 'journal'
-                ? 'View Details'
-                : 'View Full Report'}
+            {viewAction}
           </button>
         </div>
       </div>
@@ -169,6 +186,7 @@ const HistoryListItem = memo<HistoryListItemProps>(function HistoryListItem({
   onCancelEdit,
   onEditKeyDown,
 }) {
+  const { t, lang } = useTranslation();
   const { sourceType, title, timestamp, articles } = entry;
   const Icon =
     sourceType === 'author' ? AuthorIcon : sourceType === 'journal' ? BookOpenIcon : DocumentIcon;
@@ -178,6 +196,28 @@ const HistoryListItem = memo<HistoryListItemProps>(function HistoryListItem({
       : sourceType === 'journal'
         ? 'text-green-400'
         : 'text-brand-accent';
+
+  const viewLabel =
+    sourceType === 'author'
+      ? t('history.list.view_profile')
+      : sourceType === 'journal'
+        ? t('history.list.view_details')
+        : t('history.list.view_report');
+
+  const articleCount = articles.length;
+  const articlesLabel = t(
+    articleCount === 1 ? 'history.list.articles_one' : 'history.list.articles',
+    { count: articleCount },
+  );
+  const focusKey =
+    entry.sourceType === 'research' ? SYNTHESIS_FOCUS_KEYS[entry.input.synthesisFocus] : undefined;
+  const focusLabel = focusKey ? t(focusKey) : undefined;
+  const dateRangeLabel =
+    entry.sourceType === 'research'
+      ? entry.input.dateRange === 'any'
+        ? t('history.list.date_any')
+        : t('history.list.date_last_years', { years: entry.input.dateRange })
+      : undefined;
 
   return (
     <li className="p-4 sm:p-6 hover:bg-surface-hover transition-colors duration-150 group focus-within:ring-2 focus-within:ring-brand-accent focus-within:ring-offset-2 focus-within:ring-offset-surface rounded-md">
@@ -215,67 +255,62 @@ const HistoryListItem = memo<HistoryListItemProps>(function HistoryListItem({
               </h3>
             )}
             <p className="text-xs text-text-secondary mt-1">
-              Created on {new Date(timestamp).toLocaleString()}
+              {t('history.created_on', {
+                date: new Date(timestamp).toLocaleString(lang),
+              })}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0 self-start sm:self-center">
           <button
             onClick={() => onStartEdit({ id: entry.id, title: title })}
-            className="p-2 rounded-md text-text-secondary hover:bg-surface-hover hover:text-brand-accent transition-colors"
-            aria-label="Edit title"
+            className="p-2 rounded-md text-text-secondary hover:bg-surface-hover hover:text-brand-accent transition-colors focus-ring-aa"
+            aria-label={t('history.aria.edit_title')}
           >
             <PencilIcon className="h-4 w-4" />
           </button>
           <button
             onClick={() => onQuickView(entry)}
-            className="p-2 rounded-md text-text-secondary hover:bg-surface-hover hover:text-brand-accent transition-colors"
-            aria-label="Quick view"
+            className="p-2 rounded-md text-text-secondary hover:bg-surface-hover hover:text-brand-accent transition-colors focus-ring-aa"
+            aria-label={t('history.aria.quick_view')}
           >
             <EyeIcon className="h-5 w-5" />
           </button>
           <button
             onClick={() => onViewEntry(entry)}
-            className="inline-flex items-center px-3 py-1.5 border border-border text-xs font-medium rounded-md shadow-sm text-text-primary bg-surface hover:bg-surface-hover hover:border-brand-accent transition-colors"
+            className="inline-flex items-center px-3 py-1.5 border border-border text-xs font-medium rounded-md shadow-sm text-text-primary bg-surface hover:bg-surface-hover hover:border-brand-accent transition-colors focus-ring-aa"
           >
-            {sourceType === 'author'
-              ? 'View Profile'
-              : sourceType === 'journal'
-                ? 'View Details'
-                : 'View Report'}
+            {viewLabel}
           </button>
         </div>
       </div>
       <div className="mt-4 pt-4 border-t border-border/50 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-text-secondary">
         {entry.sourceType === 'research' && (
           <>
+            <div>{articlesLabel}</div>
             <div>
-              <strong>{articles.length}</strong> articles
+              <strong>{t('history.list.focus')}</strong> {focusLabel}
             </div>
             <div>
-              <strong>Focus:</strong> {synthesisFocusText[entry.input.synthesisFocus]}
-            </div>
-            <div>
-              <strong>Date Range:</strong>{' '}
-              {entry.input.dateRange === 'any' ? 'Any time' : `Last ${entry.input.dateRange} years`}
+              <strong>{t('history.list.date_range')}</strong> {dateRangeLabel}
             </div>
           </>
         )}
         {entry.sourceType === 'author' && (
           <div>
-            <strong>{articles.length}</strong> publications
+            {t(articleCount === 1 ? 'history.list.publications_one' : 'history.list.publications', {
+              count: articleCount,
+            })}
           </div>
         )}
         {entry.sourceType === 'journal' && (
           <>
+            <div>{articlesLabel}</div>
             <div>
-              <strong>{articles.length}</strong> articles
+              <strong>{t('history.list.issn')}</strong> {entry.journalProfile.issn}
             </div>
             <div>
-              <strong>ISSN:</strong> {entry.journalProfile.issn}
-            </div>
-            <div>
-              <strong>OA Policy:</strong> {entry.journalProfile.oaPolicy}
+              <strong>{t('history.list.oa_policy')}</strong> {entry.journalProfile.oaPolicy}
             </div>
           </>
         )}
@@ -285,6 +320,7 @@ const HistoryListItem = memo<HistoryListItemProps>(function HistoryListItem({
 });
 
 const HistoryView: React.FC<HistoryViewProps> = ({ onViewEntry }) => {
+  const { t } = useTranslation();
   const { knowledgeBase, updateEntryTitle } = useKnowledgeBase();
   const { setCurrentView } = useUI();
   const [quickViewEntry, setQuickViewEntry] = useState<KnowledgeBaseEntry | null>(null);
@@ -318,10 +354,10 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onViewEntry }) => {
       <div className="h-[calc(100vh-200px)]">
         <EmptyState
           icon={<HistoryIcon className="h-24 w-24" />}
-          title="No History Yet"
-          message="Your saved reports will appear here. Start a new search on the Orchestrator tab to begin building your research history."
+          title={t('history.empty.title')}
+          message={t('history.empty.message')}
           action={{
-            text: 'Start Research',
+            text: t('history.empty.action'),
             onClick: () => setCurrentView('orchestrator'),
             icon: <DocumentPlusIcon className="h-5 w-5" />,
           }}
@@ -333,10 +369,8 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onViewEntry }) => {
   return (
     <div className="animate-fadeIn">
       <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold brand-gradient-text">History</h1>
-        <p className="mt-2 text-lg text-text-secondary">
-          Review, manage, and revisit your past research reports and author profiles.
-        </p>
+        <h1 className="text-4xl font-bold brand-gradient-text">{t('history.page.title')}</h1>
+        <p className="mt-2 text-lg text-text-secondary">{t('history.page.subtitle')}</p>
       </div>
 
       <div className="max-w-3xl mx-auto mb-6">
@@ -344,7 +378,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onViewEntry }) => {
           <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-text-secondary" />
           <input
             type="text"
-            placeholder={`Search ${knowledgeBase.length} entries...`}
+            placeholder={t('history.search.entries', { count: knowledgeBase.length })}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full bg-surface border border-border rounded-md py-2 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-brand-accent"

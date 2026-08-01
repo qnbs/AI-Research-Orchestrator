@@ -1,6 +1,7 @@
 import { helpTranslations } from './helpTranslations';
 import { journalTranslations } from './journalTranslations';
 import { chromeTranslations } from './chromeTranslations';
+import { modalTranslations } from './modalTranslations';
 
 export const translations = {
   en: {
@@ -276,6 +277,7 @@ export const translations = {
     'kb.analyze_journal': 'Analyze journal in Journal Hub',
     ...helpTranslations.en,
     ...chromeTranslations.en,
+    ...modalTranslations.en,
     'errors.code.noApiKey': 'Please configure your API key in Settings.',
     'errors.code.quota': 'AI provider quota exhausted. Try again later or check your usage.',
     'errors.code.rateLimit': 'AI provider rate limit reached. Wait briefly and try again.',
@@ -606,6 +608,7 @@ export const translations = {
     'kb.analyze_journal': 'Journal im Journal-Hub analysieren',
     ...helpTranslations.de,
     ...chromeTranslations.de,
+    ...modalTranslations.de,
     'errors.code.noApiKey': 'Bitte konfigurieren Sie Ihren API-Schlüssel in den Einstellungen.',
     'errors.code.quota':
       'KI-Anbieter-Kontingent erschöpft. Versuchen Sie es später erneut oder überprüfen Sie Ihre Nutzung.',
