@@ -1,354 +1,18 @@
-import React, { useState, memo } from 'react';
+import React, { useState } from 'react';
 import type { KnowledgeBaseEntry } from '../types';
-import { useFocusTrap } from '../hooks/useFocusTrap';
 import { HistoryIcon } from './icons/HistoryIcon';
-import { EyeIcon } from './icons/EyeIcon';
-import { XIcon } from './icons/XIcon';
-import { PencilIcon } from './icons/PencilIcon';
-import { CheckCircleIcon } from './icons/CheckCircleIcon';
-import { XCircleIcon } from './icons/XCircleIcon';
 import { SearchIcon } from './icons/SearchIcon';
 import { useKnowledgeBase } from '../contexts/KnowledgeBaseContext';
 import { EmptyState } from './EmptyState';
 import { DocumentPlusIcon } from './icons/DocumentPlusIcon';
 import { useUI } from '../contexts/UIContext';
-import { DocumentIcon } from './icons/DocumentIcon';
-import { AuthorIcon } from './icons/AuthorIcon';
-import { BookOpenIcon } from './icons/BookOpenIcon';
 import { useTranslation } from '../hooks/useTranslation';
-import type { TranslationKey } from '../i18n/translations';
+import { HistoryListItem } from './history/HistoryListItem';
+import { HistoryQuickViewModal } from './history/HistoryQuickViewModal';
 
 interface HistoryViewProps {
   onViewEntry: (entry: KnowledgeBaseEntry) => void;
 }
-
-const SYNTHESIS_FOCUS_KEYS: Record<string, TranslationKey> = {
-  overview: 'orchestrator.focus.overview',
-  clinical: 'orchestrator.focus.clinical',
-  future: 'orchestrator.focus.future',
-  gaps: 'orchestrator.focus.gaps',
-};
-
-const sourceTypeTitleKey = (sourceType: KnowledgeBaseEntry['sourceType']): TranslationKey => {
-  if (sourceType === 'author') return 'history.quick.author_profile';
-  if (sourceType === 'journal') return 'history.quick.journal_profile';
-  return 'history.quick.research_report';
-};
-
-const sourceTypeQuickViewKey = (sourceType: KnowledgeBaseEntry['sourceType']): TranslationKey => {
-  if (sourceType === 'author') return 'history.quick.view_full_profile';
-  if (sourceType === 'journal') return 'history.quick.view_details';
-  return 'history.quick.view_full_report';
-};
-
-const sourceTypeListViewKey = (sourceType: KnowledgeBaseEntry['sourceType']): TranslationKey => {
-  if (sourceType === 'author') return 'history.list.view_profile';
-  if (sourceType === 'journal') return 'history.list.view_details';
-  return 'history.list.view_report';
-};
-
-const keywordsForEntry = (entry: KnowledgeBaseEntry): string[] => {
-  if (entry.sourceType === 'research') {
-    return (entry.report.overallKeywords || []).slice(0, 3).map((kw) => kw.keyword);
-  }
-  if (entry.sourceType === 'author') {
-    return (entry.profile.coreConcepts || []).slice(0, 3).map((c) => c.concept);
-  }
-  return (entry.journalProfile.focusAreas || []).slice(0, 3);
-};
-
-const articlesFoundLabelKey = (sourceType: KnowledgeBaseEntry['sourceType']): TranslationKey =>
-  sourceType === 'author' ? 'history.quick.publications_found' : 'history.quick.articles_found';
-
-const historyEntryIcon = (sourceType: KnowledgeBaseEntry['sourceType']) => {
-  if (sourceType === 'author') return { Icon: AuthorIcon, color: 'text-accent-magenta' };
-  if (sourceType === 'journal') return { Icon: BookOpenIcon, color: 'text-green-400' };
-  return { Icon: DocumentIcon, color: 'text-brand-accent' };
-};
-
-function QuickViewKeywords({ keywords }: { keywords: string[] }) {
-  const { t } = useTranslation();
-  if (keywords.length === 0) {
-    return (
-      <p className="text-text-secondary italic text-sm mt-1">{t('history.quick.no_keywords')}</p>
-    );
-  }
-  return (
-    <div className="flex flex-wrap gap-2 mt-2">
-      {keywords.map((kw) => (
-        <span
-          key={kw}
-          className="bg-sky-500/10 text-sky-300 text-xs font-medium px-2 py-0.5 rounded-full border border-sky-500/20"
-        >
-          {kw}
-        </span>
-      ))}
-    </div>
-  );
-}
-
-const QuickViewModal: React.FC<{
-  entry: KnowledgeBaseEntry;
-  onClose: () => void;
-  onViewEntry: (entry: KnowledgeBaseEntry) => void;
-}> = ({ entry, onClose, onViewEntry }) => {
-  const { t } = useTranslation();
-  const modalRef = useFocusTrap<HTMLDivElement>(true, {
-    onEscape: onClose,
-    lockScroll: true,
-  });
-  const { sourceType, title, articles } = entry;
-  const keywordsAndConcepts = keywordsForEntry(entry);
-  const typeTitle = t(sourceTypeTitleKey(sourceType));
-  const viewAction = t(sourceTypeQuickViewKey(sourceType));
-  const foundLabel = t(articlesFoundLabelKey(sourceType));
-
-  return (
-    // eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events -- standard modal backdrop click-to-dismiss; keyboard users dismiss via the Escape key handler above, not by activating the backdrop itself.
-    <div
-      className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center backdrop-blur-sm animate-fadeIn"
-      style={{ animationDuration: '150ms' }}
-      onClick={onClose}
-    >
-      {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/click-events-have-key-events -- only stops the backdrop's dismiss-on-click from firing when clicking inside the panel; not itself an interactive widget. */}
-      <div
-        ref={modalRef}
-        className="bg-surface rounded-lg border border-border shadow-2xl p-6 w-full max-w-lg m-4"
-        onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="quick-view-title"
-      >
-        <div className="flex justify-between items-start mb-4">
-          <div>
-            <h3 id="quick-view-title" className="text-lg font-bold text-brand-accent">
-              {typeTitle}
-            </h3>
-            <p className="text-sm text-text-secondary mt-1 max-w-md">{title}</p>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-1 rounded-full hover:bg-surface-hover focus-ring-aa"
-            aria-label={t('common.close')}
-          >
-            <span className="sr-only">{t('common.close')}</span>
-            <XIcon className="h-5 w-5 text-text-secondary" />
-          </button>
-        </div>
-
-        <div className="space-y-4 my-6">
-          <div>
-            <h4 className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
-              {foundLabel}
-            </h4>
-            <p className="text-text-primary font-medium">{articles.length}</p>
-          </div>
-          <div>
-            <h4 className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
-              {t('history.quick.top_keywords')}
-            </h4>
-            <QuickViewKeywords keywords={keywordsAndConcepts} />
-          </div>
-        </div>
-
-        <div className="mt-6 flex justify-end space-x-3">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 border border-border text-sm font-medium rounded-md shadow-sm text-text-primary bg-surface hover:bg-surface-hover"
-          >
-            {t('common.close')}
-          </button>
-          <button
-            onClick={() => {
-              onViewEntry(entry);
-              onClose();
-            }}
-            className="px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-brand-text-on-accent bg-brand-accent hover:bg-opacity-90"
-          >
-            {viewAction}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-function HistoryTitleEditor({
-  editingTitle,
-  onTitleChange,
-  onEditKeyDown,
-  onSaveTitle,
-  onCancelEdit,
-}: {
-  editingTitle: string;
-  onTitleChange: (title: string) => void;
-  onEditKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
-  onSaveTitle: () => void;
-  onCancelEdit: () => void;
-}) {
-  return (
-    <div className="flex items-center gap-2">
-      <input
-        type="text"
-        value={editingTitle}
-        onChange={(e) => onTitleChange(e.target.value)}
-        onKeyDown={onEditKeyDown}
-        className="w-full bg-input-bg border border-brand-accent rounded-md py-1 px-2 text-base font-semibold focus:outline-none focus:ring-2 focus:ring-brand-accent"
-        // eslint-disable-next-line jsx-a11y/no-autofocus -- this input only renders after the user explicitly clicks "rename"; focusing it is the expected result of that action, not page-load autofocus.
-        autoFocus
-      />
-      <button
-        onClick={onSaveTitle}
-        className="p-1.5 rounded-full text-green-400 hover:bg-green-500/10"
-      >
-        <CheckCircleIcon className="h-5 w-5" />
-      </button>
-      <button
-        onClick={onCancelEdit}
-        className="p-1.5 rounded-full text-red-400 hover:bg-red-500/10"
-      >
-        <XCircleIcon className="h-5 w-5" />
-      </button>
-    </div>
-  );
-}
-
-function HistoryEntryMeta({ entry }: { entry: KnowledgeBaseEntry }) {
-  const { t } = useTranslation();
-  const articleCount = entry.articles.length;
-  const articlesLabel = t(
-    articleCount === 1 ? 'history.list.articles_one' : 'history.list.articles',
-    { count: articleCount },
-  );
-
-  if (entry.sourceType === 'author') {
-    return (
-      <div>
-        {t(articleCount === 1 ? 'history.list.publications_one' : 'history.list.publications', {
-          count: articleCount,
-        })}
-      </div>
-    );
-  }
-
-  if (entry.sourceType === 'journal') {
-    return (
-      <>
-        <div>{articlesLabel}</div>
-        <div>
-          <strong>{t('history.list.issn')}</strong> {entry.journalProfile.issn}
-        </div>
-        <div>
-          <strong>{t('history.list.oa_policy')}</strong> {entry.journalProfile.oaPolicy}
-        </div>
-      </>
-    );
-  }
-
-  const focusKey = SYNTHESIS_FOCUS_KEYS[entry.input.synthesisFocus];
-  const dateRangeLabel =
-    entry.input.dateRange === 'any'
-      ? t('history.list.date_any')
-      : t('history.list.date_last_years', { years: entry.input.dateRange });
-
-  return (
-    <>
-      <div>{articlesLabel}</div>
-      <div>
-        <strong>{t('history.list.focus')}</strong> {t(focusKey)}
-      </div>
-      <div>
-        <strong>{t('history.list.date_range')}</strong> {dateRangeLabel}
-      </div>
-    </>
-  );
-}
-
-interface HistoryListItemProps {
-  entry: KnowledgeBaseEntry;
-  onViewEntry: (entry: KnowledgeBaseEntry) => void;
-  onQuickView: (entry: KnowledgeBaseEntry) => void;
-  onStartEdit: (entry: { id: string; title: string }) => void;
-  isEditing: boolean;
-  editingTitle: string;
-  onTitleChange: (title: string) => void;
-  onSaveTitle: () => void;
-  onCancelEdit: () => void;
-  onEditKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
-}
-
-const HistoryListItem = memo<HistoryListItemProps>(function HistoryListItem({
-  entry,
-  onViewEntry,
-  onQuickView,
-  onStartEdit,
-  isEditing,
-  editingTitle,
-  onTitleChange,
-  onSaveTitle,
-  onCancelEdit,
-  onEditKeyDown,
-}) {
-  const { t, lang } = useTranslation();
-  const { sourceType, title, timestamp } = entry;
-  const { Icon, color: iconColor } = historyEntryIcon(sourceType);
-  const viewLabel = t(sourceTypeListViewKey(sourceType));
-
-  return (
-    <li className="p-4 sm:p-6 hover:bg-surface-hover transition-colors duration-150 group focus-within:ring-2 focus-within:ring-brand-accent focus-within:ring-offset-2 focus-within:ring-offset-surface rounded-md">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-start gap-4 flex-grow min-w-0">
-          <Icon className={`h-8 w-8 mt-1 flex-shrink-0 ${iconColor}`} />
-          <div className="flex-grow min-w-0">
-            {isEditing ? (
-              <HistoryTitleEditor
-                editingTitle={editingTitle}
-                onTitleChange={onTitleChange}
-                onEditKeyDown={onEditKeyDown}
-                onSaveTitle={onSaveTitle}
-                onCancelEdit={onCancelEdit}
-              />
-            ) : (
-              <h3 className="text-lg font-semibold text-text-primary truncate" title={title}>
-                {title}
-              </h3>
-            )}
-            <p className="text-xs text-text-secondary mt-1">
-              {t('history.created_on', {
-                date: new Date(timestamp).toLocaleString(lang),
-              })}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 flex-shrink-0 self-start sm:self-center">
-          <button
-            onClick={() => onStartEdit({ id: entry.id, title })}
-            className="p-2 rounded-md text-text-secondary hover:bg-surface-hover hover:text-brand-accent transition-colors focus-ring-aa"
-            aria-label={t('history.aria.edit_title')}
-          >
-            <PencilIcon className="h-4 w-4" />
-          </button>
-          <button
-            onClick={() => onQuickView(entry)}
-            className="p-2 rounded-md text-text-secondary hover:bg-surface-hover hover:text-brand-accent transition-colors focus-ring-aa"
-            aria-label={t('history.aria.quick_view')}
-          >
-            <EyeIcon className="h-5 w-5" />
-          </button>
-          <button
-            onClick={() => onViewEntry(entry)}
-            className="inline-flex items-center px-3 py-1.5 border border-border text-xs font-medium rounded-md shadow-sm text-text-primary bg-surface hover:bg-surface-hover hover:border-brand-accent transition-colors focus-ring-aa"
-          >
-            {viewLabel}
-          </button>
-        </div>
-      </div>
-      <div className="mt-4 pt-4 border-t border-border/50 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-text-secondary">
-        <HistoryEntryMeta entry={entry} />
-      </div>
-    </li>
-  );
-});
 
 const HistoryView: React.FC<HistoryViewProps> = ({ onViewEntry }) => {
   const { t } = useTranslation();
@@ -363,21 +27,20 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onViewEntry }) => {
     .sort((a, b) => b.timestamp - a.timestamp);
 
   const handleEditKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      if (editingEntry) {
-        updateEntryTitle(editingEntry.id, editingEntry.title);
-        setEditingEntry(null);
-      }
-    } else if (e.key === 'Escape') {
+    if (e.key === 'Enter' && editingEntry) {
+      updateEntryTitle(editingEntry.id, editingEntry.title);
+      setEditingEntry(null);
+      return;
+    }
+    if (e.key === 'Escape') {
       setEditingEntry(null);
     }
   };
 
   const handleSaveTitle = () => {
-    if (editingEntry) {
-      updateEntryTitle(editingEntry.id, editingEntry.title);
-      setEditingEntry(null);
-    }
+    if (!editingEntry) return;
+    updateEntryTitle(editingEntry.id, editingEntry.title);
+    setEditingEntry(null);
   };
 
   if (knowledgeBase.length === 0) {
@@ -438,7 +101,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onViewEntry }) => {
       </div>
 
       {quickViewEntry && (
-        <QuickViewModal
+        <HistoryQuickViewModal
           entry={quickViewEntry}
           onClose={() => setQuickViewEntry(null)}
           onViewEntry={onViewEntry}
@@ -447,4 +110,5 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onViewEntry }) => {
     </div>
   );
 };
+
 export default HistoryView;

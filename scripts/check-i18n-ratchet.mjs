@@ -33,6 +33,8 @@ const MIGRATED_FILES = [
   'src/components/FeatureErrorBoundary.tsx',
   'src/components/QuickAddModal.tsx',
   'src/components/HistoryView.tsx',
+  'src/components/history/HistoryListItem.tsx',
+  'src/components/history/HistoryQuickViewModal.tsx',
 ];
 
 const IGNORE_COMMENT = 'i18n-ratchet-ignore-next-line';
