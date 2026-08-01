@@ -22,7 +22,7 @@ export const DemoDataBanner: React.FC = () => {
       <span>{t('inference.demo.banner')}</span>
       <button
         type="button"
-        className="rounded-md border border-warning/40 px-2 py-1 text-xs font-medium text-warning hover:bg-warning/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent"
+        className="rounded-md border border-warning/40 px-2 py-1 text-xs font-medium text-warning hover:bg-warning/10 focus-ring-aa"
         onClick={() => {
           void clearDemoData().catch(() => {
             /* errors surfaced via KnowledgeBase notification */

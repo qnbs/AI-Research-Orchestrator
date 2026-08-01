@@ -36,7 +36,7 @@ const NavItem: React.FC<{
     <button
       onClick={handleClick}
       disabled={isDisabled}
-      className={`flex flex-col items-center justify-center w-full pt-3 pb-2 text-[10px] font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent rounded-lg relative ${
+      className={`flex flex-col items-center justify-center w-full pt-3 pb-2 text-[10px] font-medium transition-all duration-200 focus-ring-aa rounded-lg relative ${
         isActive ? 'text-brand-accent' : 'text-text-secondary hover:text-text-primary'
       } ${isDisabled ? 'opacity-30 cursor-not-allowed grayscale' : ''}`}
       aria-current={isActive ? 'page' : undefined}

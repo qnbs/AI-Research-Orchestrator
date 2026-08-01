@@ -279,7 +279,7 @@ export const GeneralSettingsTab: React.FC = () => {
                           },
                         }))
                       }
-                      className="block w-full bg-transparent border-none focus:outline-none focus:ring-0 sm:text-sm font-mono"
+                      className="block w-full bg-transparent border-none focus-ring-aa sm:text-sm font-mono"
                       aria-label={`${colorType} color hex value`}
                     />
                   </div>
@@ -761,7 +761,7 @@ export const AISettingsTab: React.FC = () => {
                     defaults: { ...s.defaults, maxArticlesToScan: parseInt(e.target.value, 10) },
                   }))
                 }
-                className={`block w-full bg-input-bg border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 sm:text-sm ${errors.formDefaults ? 'border-red-500 focus:ring-red-500' : 'border-border focus:ring-brand-accent'}`}
+                className={`block w-full bg-input-bg border rounded-md shadow-sm py-2 px-3 focus-ring-aa sm:text-sm ${errors.formDefaults ? 'border-red-500' : 'border-border'}`}
               />
             </div>
             <div>
@@ -783,7 +783,7 @@ export const AISettingsTab: React.FC = () => {
                     defaults: { ...s.defaults, topNToSynthesize: parseInt(e.target.value, 10) },
                   }))
                 }
-                className={`block w-full bg-input-bg border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 sm:text-sm ${errors.formDefaults ? 'border-red-500 focus:ring-red-500' : 'border-border focus:ring-brand-accent'}`}
+                className={`block w-full bg-input-bg border rounded-md shadow-sm py-2 px-3 focus-ring-aa sm:text-sm ${errors.formDefaults ? 'border-red-500' : 'border-border'}`}
               />
             </div>
             <div>

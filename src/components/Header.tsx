@@ -46,7 +46,7 @@ const NavButton: React.FC<{
     disabled={disabled}
     aria-label={ariaLabel}
     aria-current={isActive ? 'page' : undefined}
-    className={`relative flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent overflow-hidden
+    className={`relative flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 focus-ring-aa overflow-hidden
         ${
           isActive
             ? 'text-brand-accent bg-brand-accent/10 border border-brand-accent/25 shadow-glow'
@@ -146,7 +146,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
           <div className="flex items-center justify-between">
             <button
               onClick={() => onViewChange('home')}
-              className="flex items-center gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent rounded-md group"
+              className="flex items-center gap-3 focus-ring-aa rounded-md group"
               aria-label="Go to Home"
             >
               <AppLogo

@@ -315,7 +315,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Type a command or search..."
-            className="w-full bg-transparent px-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent rounded-md text-text-primary"
+            className="w-full bg-transparent px-2 focus-ring-aa rounded-md text-text-primary"
           />
         </div>
         <div ref={resultsRef} className="max-h-[400px] overflow-y-auto p-2">
