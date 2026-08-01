@@ -13,11 +13,6 @@ interface UiState {
   isSettingsDirty: boolean;
   pendingNavigation: View | null;
   isCommandPaletteOpen: boolean;
-  // We can't store complex objects like Events in Redux easily without serialization warnings,
-  // but for this specific prompt event, we might treat it as a non-serializable value or keep it out of Redux.
-  // For strict Redux compliance, we'll omit the event object itself and just track status,
-  // but sticking to practical utility, we will handle install state here.
-  isPwaInstalled: boolean;
 }
 
 const initialState: UiState = {
@@ -26,7 +21,6 @@ const initialState: UiState = {
   isSettingsDirty: false,
   pendingNavigation: null,
   isCommandPaletteOpen: false,
-  isPwaInstalled: false,
 };
 
 export const uiSlice = createSlice({
@@ -48,9 +42,6 @@ export const uiSlice = createSlice({
     setIsCommandPaletteOpen: (state, action: PayloadAction<boolean>) => {
       state.isCommandPaletteOpen = action.payload;
     },
-    setIsPwaInstalled: (state, action: PayloadAction<boolean>) => {
-      state.isPwaInstalled = action.payload;
-    },
   },
 });
 
@@ -60,7 +51,6 @@ export const {
   setIsSettingsDirty,
   setPendingNavigation,
   setIsCommandPaletteOpen,
-  setIsPwaInstalled,
 } = uiSlice.actions;
 
 export default uiSlice.reducer;

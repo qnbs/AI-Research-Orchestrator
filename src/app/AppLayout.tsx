@@ -6,46 +6,23 @@ import { DemoDataBanner } from '../components/DemoDataBanner';
 import { Notification } from '../components/Notification';
 import { ConfirmationModal } from '../components/ConfirmationModal';
 import { BottomNavBar } from '../components/BottomNavBar';
-import { FeatureErrorBoundary } from '../components/FeatureErrorBoundary';
 import { ContentSpinner, FullScreenSpinner } from './AppSpinners';
 import { useAppLogic } from './useAppLogic';
-import {
-  OnboardingView,
-  KnowledgeBaseView,
-  SettingsView,
-  HelpView,
-  DashboardView,
-  HistoryView,
-  ResearchView,
-  AuthorsView,
-  OrchestratorView,
-  HomeView,
-  CommandPalette,
-  QuickAddModal,
-  JournalsView,
-  CollectionsView,
-  AgentDebugger,
-} from './lazyViews';
+import { AppViewRouter } from './AppViewRouter';
+import { OnboardingView, CommandPalette, QuickAddModal, AgentDebugger } from './lazyViews';
 
 /**
  * App shell: banners, chrome, and view routing.
- * State/effects/handlers live in useAppLogic (pure structural split from App.tsx).
+ * State/effects/handlers live in useAppLogic (composed domain hooks).
  */
 const AppLayout: React.FC = () => {
+  const logic = useAppLogic();
   const {
     isLoading,
     isSettingsLoading,
     arePresetsLoading,
     settings,
-    localResearchInput,
-    setLocalResearchInput,
     report,
-    reportStatus,
-    error,
-    currentPhase,
-    selectedAuthorProfile,
-    selectedJournalEntry,
-    pendingJournalQuery,
     currentView,
     notification,
     setNotification,
@@ -56,168 +33,31 @@ const AppLayout: React.FC = () => {
     uniqueArticles,
     isCurrentReportSaved,
     selectedKbPmids,
-    setSelectedKbPmids,
     showExportModal,
     setShowExportModal,
     isQuickAddModalOpen,
     setIsQuickAddModalOpen,
-    resumeCheckpoints,
-    chatHistory,
-    isChatting,
-    sendMessage,
     isResearching,
-    researchPhase,
-    researchError,
-    researchAnalysis,
-    similar,
-    online,
-    startResearch,
-    clearResearch,
-    settingsResetToken,
-    initialHelpTab,
-    setInitialHelpTab,
-    prefilledTopic,
-    kbFilter,
-    handleDiscardCheckpoint,
-    handleRestoreCheckpoint,
-    handleFormSubmit,
-    handleRerunCheckpoint,
-    handleSaveReport,
-    handleNewSearch,
-    handleClearKnowledgeBase,
-    handleViewChange,
     handleConfirmNavigation,
     handleCompleteOnboarding,
-    handleFilterChange,
-    handlePrefillConsumed,
-    handleStartNewReviewFromTopic,
-    handleViewEntry,
-    handleAuthorProfileViewed,
-    handleJournalEntryViewed,
-    handleAnalyzeJournalByName,
-    handleJournalQueryConsumed,
-    handleTagsUpdate,
+    handleViewChange,
+    handleSaveReport,
     handleExportSelection,
     handleConfirmExport,
-    handleNavigateToHelp,
-  } = useAppLogic();
+    t,
+  } = logic;
 
   if (isSettingsLoading || isLoading || arePresetsLoading) {
-    return <FullScreenSpinner />;
+    return <FullScreenSpinner label={t('common.loading')} />;
   }
 
   if (!settings.hasCompletedOnboarding) {
     return (
-      <Suspense fallback={<FullScreenSpinner />}>
+      <Suspense fallback={<FullScreenSpinner label={t('common.loading')} />}>
         <OnboardingView onComplete={handleCompleteOnboarding} />
       </Suspense>
     );
   }
-
-  const renderView = () => {
-    switch (currentView) {
-      case 'home':
-        return <HomeView onNavigate={handleViewChange} />;
-      case 'orchestrator':
-        return (
-          <FeatureErrorBoundary featureName="Research Orchestrator">
-            <OrchestratorView
-              reportStatus={reportStatus}
-              currentPhase={currentPhase}
-              error={error}
-              report={report}
-              researchInput={localResearchInput}
-              isCurrentReportSaved={isCurrentReportSaved}
-              settings={settings}
-              prefilledTopic={prefilledTopic}
-              handleFormSubmit={handleFormSubmit}
-              handleSaveReport={handleSaveReport}
-              handleNewSearch={handleNewSearch}
-              onPrefillConsumed={handlePrefillConsumed}
-              handleViewReportFromHistory={handleViewEntry}
-              handleStartNewReview={handleStartNewReviewFromTopic}
-              onUpdateResearchInput={setLocalResearchInput}
-              handleTagsUpdate={handleTagsUpdate}
-              chatHistory={chatHistory}
-              isChatting={isChatting}
-              onSendMessage={sendMessage}
-              resumeCheckpoints={resumeCheckpoints}
-              onRestoreCheckpoint={handleRestoreCheckpoint}
-              onRerunCheckpoint={handleRerunCheckpoint}
-              onDiscardCheckpoint={handleDiscardCheckpoint}
-            />
-          </FeatureErrorBoundary>
-        );
-      case 'research':
-        return (
-          <FeatureErrorBoundary featureName="Research Assistant">
-            <ResearchView
-              onStartNewReview={handleStartNewReviewFromTopic}
-              onStartResearch={startResearch}
-              onClearResearch={clearResearch}
-              isLoading={isResearching}
-              phase={researchPhase}
-              error={researchError}
-              analysis={researchAnalysis}
-              similarArticlesState={similar}
-              onlineFindingsState={online}
-            />
-          </FeatureErrorBoundary>
-        );
-      case 'authors':
-        return (
-          <AuthorsView
-            initialProfile={selectedAuthorProfile}
-            onViewedInitialProfile={handleAuthorProfileViewed}
-          />
-        );
-      case 'knowledgeBase':
-        return (
-          <FeatureErrorBoundary featureName="Knowledge Base">
-            <KnowledgeBaseView
-              onViewChange={handleViewChange}
-              filter={kbFilter}
-              onFilterChange={handleFilterChange}
-              selectedPmids={selectedKbPmids}
-              setSelectedPmids={setSelectedKbPmids}
-              onAnalyzeJournal={handleAnalyzeJournalByName}
-            />
-          </FeatureErrorBoundary>
-        );
-      case 'journals':
-        return (
-          <JournalsView
-            initialEntry={selectedJournalEntry}
-            onViewedInitialEntry={handleJournalEntryViewed}
-            onStartResearch={handleStartNewReviewFromTopic}
-            initialQuery={pendingJournalQuery}
-            onInitialQueryConsumed={handleJournalQueryConsumed}
-          />
-        );
-      case 'collections':
-        return <CollectionsView />;
-      case 'dashboard':
-        return (
-          <DashboardView onFilterChange={handleFilterChange} onViewChange={handleViewChange} />
-        );
-      case 'history':
-        return <HistoryView onViewEntry={handleViewEntry} />;
-      case 'settings':
-        return (
-          <SettingsView
-            onClearKnowledgeBase={handleClearKnowledgeBase}
-            resetToken={settingsResetToken}
-            onNavigateToHelpTab={handleNavigateToHelp}
-          />
-        );
-      case 'help':
-        return (
-          <HelpView initialTab={initialHelpTab} onTabConsumed={() => setInitialHelpTab(null)} />
-        );
-      default:
-        return <HomeView onNavigate={handleViewChange} />;
-    }
-  };
 
   return (
     <>
@@ -233,7 +73,9 @@ const AppLayout: React.FC = () => {
       <DemoDataBanner />
       <UpdateAvailableBanner />
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 md:pt-36 pt-20 pb-24">
-        <Suspense fallback={<ContentSpinner />}>{renderView()}</Suspense>
+        <Suspense fallback={<ContentSpinner label={t('common.loading')} />}>
+          <AppViewRouter {...logic} />
+        </Suspense>
       </main>
       <BottomNavBar
         currentView={currentView}
@@ -254,25 +96,28 @@ const AppLayout: React.FC = () => {
         <ConfirmationModal
           onConfirm={handleConfirmNavigation}
           onCancel={() => setPendingNavigation(null)}
-          title="Discard Unsaved Changes?"
-          message="You have unsaved changes in Settings. Are you sure you want to discard them and navigate away?"
-          confirmText="Yes, Discard Changes"
+          title={t('settings.discardUnsaved.title')}
+          message={t('settings.discardUnsaved.message')}
+          confirmText={t('settings.discardUnsaved.confirm')}
         />
       )}
       {showExportModal && ['pdf', 'csv', 'bib', 'ris'].includes(showExportModal) && (
         <ConfirmationModal
           onConfirm={handleConfirmExport}
           onCancel={() => setShowExportModal(null)}
-          title={`Export ${selectedKbPmids.length} Articles`}
-          message={`Are you sure you want to export citations for the ${selectedKbPmids.length} selected articles as a ${showExportModal.toUpperCase()} file?`}
-          confirmText="Yes, Export"
+          title={t('kb.export.confirmTitle', { count: selectedKbPmids.length })}
+          message={t('kb.export.confirmMessage', {
+            count: selectedKbPmids.length,
+            format: showExportModal.toUpperCase(),
+          })}
+          confirmText={t('kb.export.confirm')}
         />
       )}
 
       <Suspense>
         {isCommandPaletteOpen && (
           <CommandPalette
-            isReportVisible={!!report}
+            isReportVisible={Boolean(report)}
             isCurrentReportSaved={isCurrentReportSaved}
             selectedArticleCount={selectedKbPmids.length}
             onSaveReport={handleSaveReport}
@@ -287,4 +132,3 @@ const AppLayout: React.FC = () => {
 };
 
 export const MemoizedAppLayout = memo(AppLayout);
-export default AppLayout;

@@ -347,6 +347,19 @@ export const translations = {
     'errors.code.unknown': 'An unexpected error occurred.',
     'common.cancel': 'Cancel',
     'common.close': 'Close',
+    'common.loading': 'Loading…',
+    'settings.discardUnsaved.title': 'Discard Unsaved Changes?',
+    'settings.discardUnsaved.message':
+      'You have unsaved changes in Settings. Are you sure you want to discard them and navigate away?',
+    'settings.discardUnsaved.confirm': 'Yes, Discard Changes',
+    'kb.export.confirmTitle': 'Export {count} Articles',
+    'kb.export.confirmMessage':
+      'Are you sure you want to export citations for the {count} selected articles as a {format} file?',
+    'kb.export.confirm': 'Yes, Export',
+    'kb.export.noneSelected': 'No articles selected for export.',
+    'kb.export.success': 'Exported {count} articles as {format}.',
+    'kb.export.pdfTitle': 'Knowledge Base Selection',
+    'orchestrator.emptyStream': 'Research completed without article data. Please try again.',
     'settings.apiKeyVaultReset.message':
       'Your saved API keys were reset during a security upgrade and need to be re-entered.',
   },
@@ -716,6 +729,20 @@ export const translations = {
     'errors.code.unknown': 'Ein unerwarteter Fehler ist aufgetreten.',
     'common.cancel': 'Abbrechen',
     'common.close': 'Schließen',
+    'common.loading': 'Laden…',
+    'settings.discardUnsaved.title': 'Ungespeicherte Änderungen verwerfen?',
+    'settings.discardUnsaved.message':
+      'Sie haben ungespeicherte Änderungen in den Einstellungen. Möchten Sie diese wirklich verwerfen und die Seite verlassen?',
+    'settings.discardUnsaved.confirm': 'Ja, Änderungen verwerfen',
+    'kb.export.confirmTitle': '{count} Artikel exportieren',
+    'kb.export.confirmMessage':
+      'Möchten Sie die Zitationen für die {count} ausgewählten Artikel wirklich als {format}-Datei exportieren?',
+    'kb.export.confirm': 'Ja, exportieren',
+    'kb.export.noneSelected': 'Keine Artikel für den Export ausgewählt.',
+    'kb.export.success': '{count} Artikel als {format} exportiert.',
+    'kb.export.pdfTitle': 'Wissensdatenbank-Auswahl',
+    'orchestrator.emptyStream':
+      'Die Recherche wurde ohne Artikeldaten abgeschlossen. Bitte versuchen Sie es erneut.',
     'settings.apiKeyVaultReset.message':
       'Ihre gespeicherten API-Schlüssel wurden im Rahmen eines Sicherheitsupdates zurückgesetzt und müssen erneut eingegeben werden.',
   },
