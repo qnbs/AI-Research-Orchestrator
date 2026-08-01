@@ -4,13 +4,16 @@ import { createOpenAIProvider } from './openai';
 const createMock = vi.fn();
 
 vi.mock('openai', () => ({
-  default: vi.fn().mockImplementation(() => ({
-    chat: {
+  // Vitest 4: mocks used with `new` must be function/class, not arrow implementations.
+  default: vi.fn().mockImplementation(function MockOpenAI(this: {
+    chat: { completions: { create: typeof createMock } };
+  }) {
+    this.chat = {
       completions: {
         create: createMock,
       },
-    },
-  })),
+    };
+  }),
 }));
 
 vi.mock('../apiKeyService', () => ({

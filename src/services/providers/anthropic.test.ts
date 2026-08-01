@@ -4,11 +4,14 @@ import { createAnthropicProvider } from './anthropic';
 const createMock = vi.fn();
 
 vi.mock('@anthropic-ai/sdk', () => ({
-  default: vi.fn().mockImplementation(() => ({
-    messages: {
+  // Vitest 4: mocks used with `new` must be function/class, not arrow implementations.
+  default: vi.fn().mockImplementation(function MockAnthropic(this: {
+    messages: { create: typeof createMock };
+  }) {
+    this.messages = {
       create: createMock,
-    },
-  })),
+    };
+  }),
 }));
 
 vi.mock('../apiKeyService', () => ({

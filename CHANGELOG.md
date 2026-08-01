@@ -44,7 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Broader i18n migration (#69) — Help through Collections, Knowledge Base, Article Detail, Dashboard, Scientometric Hub, residual shared chrome, and enum/chip labels landed; no known residual chrome or enum-label backlog remains outside future audit findings.
 - Playwright E2E job is **blocking** as of 2026-08-01 (10 consecutive clean CI runs verified); deferred `journal-hub` / `provider-flow` specs are now in the suite — see `docs/e2e-ci-backlog.md`.
 - Claude Code Review remains advisory (`continue-on-error: true`) while OAuth infra intermittently fails with empty tool runs.
-- Vite 8 / plugin-react 6 already on `main`; Vitest 4 major remains deferred (coverage-v8 pairing) when opened as a dedicated upgrade.
+- Vite 8 / plugin-react 6 and Vitest 4 + coverage-v8 are on `main` (or this upgrade PR); no further Dependabot-class majors deferred from that set.
 
 ## [0.4.0] - 2026-08-01
 

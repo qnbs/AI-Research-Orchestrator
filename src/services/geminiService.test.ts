@@ -21,19 +21,26 @@ const hoisted = vi.hoisted(() => ({
 }));
 
 vi.mock('@google/genai', () => ({
-  GoogleGenAI: vi.fn().mockImplementation(() => ({
+  // Vitest 4: mocks used with `new` must be function/class, not arrow implementations.
+  GoogleGenAI: vi.fn().mockImplementation(function MockGoogleGenAI(this: {
     models: {
+      generateContent: typeof hoisted.generateContent;
+      generateContentStream: typeof hoisted.generateContentStream;
+    };
+    chats: { create: ReturnType<typeof vi.fn> };
+  }) {
+    this.models = {
       generateContent: hoisted.generateContent,
       generateContentStream: hoisted.generateContentStream,
-    },
-    chats: {
+    };
+    this.chats = {
       create: vi.fn(() => ({
         sendMessageStream: vi.fn(async function* () {
           yield { text: 'reply' };
         }),
       })),
-    },
-  })),
+    };
+  }),
   Type: { OBJECT: 'OBJECT', ARRAY: 'ARRAY', STRING: 'STRING', INTEGER: 'INTEGER' },
 }));
 

@@ -37,14 +37,19 @@
 ## Still open
 
 - No known residual chrome or enum-label i18n backlog; continue auditing any newly introduced surfaces with the ratchet.
-- Vitest 4 + coverage-v8 major remains a dedicated upgrade (not started).
 - SonarCloud Quality Gate wait / hotspot review remains free-tier dashboard work (`docs/sonarcloud-setup-todo.md`).
 
 ## 2026-08-01 — E2E promotion + deferred specs
 
 - **Why:** 10 consecutive CI runs logged `51 passed` with zero failures; promotion criteria in `docs/e2e-ci-backlog.md` met. Deferred Journal Hub + provider-selection specs were still unwritten.
 - **What:** Flip E2E `continue-on-error` to false; add `journal-hub.spec.ts` / `provider-flow.spec.ts` + `e2eHelpers.ts`; Claude Code Review advisory-only; refresh backlog docs.
-- **Impact:** E2E becomes a required check; new specs cover Journal Hub landing/featured/suggest and Settings AI provider cycling (including heuristic).
+- **Impact:** E2E becomes a required check; new specs cover Journal Hub landing/featured/suggest and Settings AI provider cycling (including heuristic). Merged as #136.
+
+## 2026-08-01 — Vitest 4 upgrade
+
+- **Why:** Last remaining Dependabot-class major after Vite 8 / openai 7.
+- **What:** Bump `vitest` + `@vitest/coverage-v8` to `^4.1.10`; fix constructor mocks (OpenAI/Anthropic/Gemini/jsPDF) to use `function`/`class`; rewrite SW integrity window listener harness for Vitest 4 spy reuse + jsdom location brand issues.
+- **Impact:** 564 unit tests green; coverage gate still ≥80/80/55/55.
 
 ## Process
 
