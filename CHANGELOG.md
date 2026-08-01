@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **openai** `^6.48.0` → `^7.2.0` (upstream 7.x requires Node ≥22 only; adapter API unchanged). Closes Dependabot #98 retarget.
 - ESLint warning budget tightened to `--max-warnings 0`; `jsx-a11y` recommended rules run as errors (#115).
 - `.github/workflows/claude.yml` live-capable `--allowedTools` allowlist for on-demand `@claude` (#115).
 
