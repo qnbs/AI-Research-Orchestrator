@@ -21,6 +21,8 @@ const MIGRATED_FILES = [
   'src/components/journals/useJournalsViewLogic.ts',
   'src/components/OrchestratorView.tsx',
   'src/components/UpdateAvailableBanner.tsx',
+  'src/components/knowledge-base/useKnowledgeBaseLogic.ts',
+  'src/app/useKbExports.ts',
 ];
 
 const IGNORE_COMMENT = 'i18n-ratchet-ignore-next-line';

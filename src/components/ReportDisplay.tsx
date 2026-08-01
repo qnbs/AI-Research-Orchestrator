@@ -28,6 +28,7 @@ import { RelevanceScoreDisplay } from './RelevanceScoreDisplay';
 import { AcademicCapIcon } from './icons/AcademicCapIcon';
 import { WebIcon } from './icons/WebIcon';
 import { useUI } from '../contexts/UIContext';
+import { useTranslation } from '../hooks/useTranslation';
 import { ExportIcon } from './icons/ExportIcon';
 import { ChatInterface } from './ChatInterface';
 import { ChatBubbleLeftRightIcon } from './icons/ChatBubbleLeftRightIcon';
@@ -332,6 +333,7 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(function R
   const [isExporting, setIsExporting] = useState(false);
   const { settings } = useSettings();
   const { setNotification } = useUI();
+  const { t } = useTranslation();
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
   const exportMenuRef = useRef<HTMLDivElement>(null);
 
@@ -749,13 +751,16 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(function R
             if (modalState.type === 'insights') handleInsightsExport();
           }}
           onCancel={() => setModalState(null)}
-          title="Confirm Export"
+          title={t('kb.export.confirmExportTitle')}
           message={
             modalState.type === 'insights'
-              ? `You are about to export the ${report.aiGeneratedInsights.length} AI-generated insights as a CSV file. Continue?`
-              : `You are about to export this report (${report.rankedArticles.length} articles) as a ${modalState.type.toUpperCase()} file. Continue?`
+              ? t('kb.export.insightsMessage', { count: report.aiGeneratedInsights.length })
+              : t('kb.export.reportMessage', {
+                  count: report.rankedArticles.length,
+                  format: modalState.type.toUpperCase(),
+                })
           }
-          confirmText={isExporting ? 'Exporting...' : 'Yes, Export'}
+          confirmText={isExporting ? t('kb.export.exporting') : t('kb.export.confirm')}
           isConfirming={isExporting}
           confirmButtonClass="bg-brand-accent hover:bg-opacity-90"
           titleClass="text-brand-accent"

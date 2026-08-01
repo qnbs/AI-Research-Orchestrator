@@ -10,6 +10,7 @@ import {
   exportCitations,
 } from '../../services/exportService';
 import { useDebounce } from '../../hooks/useDebounce';
+import { useTranslation } from '../../hooks/useTranslation';
 
 export const useKnowledgeBaseLogic = (
   onViewChange: (view: View) => void,
@@ -22,6 +23,7 @@ export const useKnowledgeBaseLogic = (
   const { settings } = useSettings();
   const { knowledgeBase, uniqueArticles, deleteArticles } = useKnowledgeBase();
   const { setNotification } = useUI();
+  const { t } = useTranslation();
 
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(settings.knowledgeBase.defaultView);
   const [sortOrder, setSortOrder] = useState<'relevance' | 'newest'>(
@@ -123,7 +125,7 @@ export const useKnowledgeBaseLogic = (
         if (articlesToExport.length === 0) {
           setNotification({
             id: Date.now(),
-            message: 'No articles selected for export.',
+            message: t('kb.export.noneSelected'),
             type: 'error',
           });
           return;
@@ -132,7 +134,7 @@ export const useKnowledgeBaseLogic = (
           case 'pdf':
             exportKnowledgeBaseToPdf(
               articlesToExport,
-              'Knowledge Base Selection',
+              t('kb.export.pdfTitle'),
               findRelatedInsights,
               settings.export.pdf,
             );
@@ -147,13 +149,18 @@ export const useKnowledgeBaseLogic = (
         }
         setNotification({
           id: Date.now(),
-          message: `Exported ${articlesToExport.length} articles as ${showExportModal.toUpperCase()}`,
+          message: t('kb.export.success', {
+            count: articlesToExport.length,
+            format: showExportModal.toUpperCase(),
+          }),
           type: 'success',
         });
       } catch (error) {
         setNotification({
           id: Date.now(),
-          message: `Export failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          message: t('kb.export.failed', {
+            error: error instanceof Error ? error.message : t('errors.code.unknown'),
+          }),
           type: 'error',
         });
       } finally {
@@ -168,6 +175,7 @@ export const useKnowledgeBaseLogic = (
     setNotification,
     settings.export,
     findRelatedInsights,
+    t,
   ]);
 
   return {

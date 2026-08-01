@@ -356,9 +356,16 @@ export const translations = {
     'kb.export.confirmMessage':
       'Are you sure you want to export citations for the {count} selected articles as a {format} file?',
     'kb.export.confirm': 'Yes, Export',
+    'kb.export.exporting': 'Exporting…',
     'kb.export.noneSelected': 'No articles selected for export.',
     'kb.export.success': 'Exported {count} articles as {format}.',
     'kb.export.pdfTitle': 'Knowledge Base Selection',
+    'kb.export.failed': 'Export failed: {error}',
+    'kb.export.confirmExportTitle': 'Confirm Export',
+    'kb.export.reportMessage':
+      'You are about to export this report ({count} articles) as a {format} file. Continue?',
+    'kb.export.insightsMessage':
+      'You are about to export the {count} AI-generated insights as a CSV file. Continue?',
     'orchestrator.emptyStream': 'Research completed without article data. Please try again.',
     'settings.apiKeyVaultReset.message':
       'Your saved API keys were reset during a security upgrade and need to be re-entered.',
@@ -738,9 +745,16 @@ export const translations = {
     'kb.export.confirmMessage':
       'Möchten Sie die Zitationen für die {count} ausgewählten Artikel wirklich als {format}-Datei exportieren?',
     'kb.export.confirm': 'Ja, exportieren',
+    'kb.export.exporting': 'Exportiere…',
     'kb.export.noneSelected': 'Keine Artikel für den Export ausgewählt.',
     'kb.export.success': '{count} Artikel als {format} exportiert.',
     'kb.export.pdfTitle': 'Wissensdatenbank-Auswahl',
+    'kb.export.failed': 'Export fehlgeschlagen: {error}',
+    'kb.export.confirmExportTitle': 'Export bestätigen',
+    'kb.export.reportMessage':
+      'Sie sind dabei, diesen Bericht ({count} Artikel) als {format}-Datei zu exportieren. Fortfahren?',
+    'kb.export.insightsMessage':
+      'Sie sind dabei, die {count} KI-generierten Insights als CSV-Datei zu exportieren. Fortfahren?',
     'orchestrator.emptyStream':
       'Die Recherche wurde ohne Artikeldaten abgeschlossen. Bitte versuchen Sie es erneut.',
     'settings.apiKeyVaultReset.message':
