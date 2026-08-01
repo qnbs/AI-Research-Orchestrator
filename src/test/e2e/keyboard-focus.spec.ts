@@ -59,9 +59,25 @@ const expectTabFocusIndicator = async (page: Page, label: string) => {
   await expect(focused).toBeVisible({ timeout: 5000 });
   const tag = await focused.evaluate((el) => el.tagName.toLowerCase());
   if (tag === 'body' || tag === 'html') return;
-  const onStyles = await focusStyles(focused);
-  await focused.evaluate((el) => el.blur());
-  const offStyles = await focusStyles(focused);
+  // Pin the node before blur — `:focus` no longer matches afterward.
+  const handle = await focused.elementHandle();
+  if (!handle) return;
+  const onStyles = await handle.evaluate((el) => {
+    const cs = getComputedStyle(el);
+    return {
+      outline: `${cs.outlineStyle}|${cs.outlineWidth}|${cs.outlineColor}`,
+      boxShadow: cs.boxShadow,
+    };
+  });
+  await handle.evaluate((el) => el.blur());
+  const offStyles = await handle.evaluate((el) => {
+    const cs = getComputedStyle(el);
+    return {
+      outline: `${cs.outlineStyle}|${cs.outlineWidth}|${cs.outlineColor}`,
+      boxShadow: cs.boxShadow,
+    };
+  });
+  await handle.dispose();
   const changed =
     onStyles.outline !== offStyles.outline || onStyles.boxShadow !== offStyles.boxShadow;
   expect(changed, `${label} <${tag}>: Tab focus produced no style delta`).toBe(true);
