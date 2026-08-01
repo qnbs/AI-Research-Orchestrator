@@ -360,7 +360,7 @@ const AuthorSearchLimit: React.FC = () => {
                 ...s.ai,
                 researchAssistant: {
                   ...s.ai.researchAssistant,
-                  authorSearchLimit: parseInt(e.target.value),
+                  authorSearchLimit: Number.parseInt(e.target.value, 10),
                 },
               },
             }))
@@ -420,7 +420,7 @@ const DefaultScanFields: React.FC = () => {
           onChange={(e) =>
             setTempSettings((s) => ({
               ...s,
-              defaults: { ...s.defaults, maxArticlesToScan: parseInt(e.target.value, 10) },
+              defaults: { ...s.defaults, maxArticlesToScan: Number.parseInt(e.target.value, 10) },
             }))
           }
           className={defaultsInputClass(err)}
@@ -439,7 +439,7 @@ const DefaultScanFields: React.FC = () => {
           onChange={(e) =>
             setTempSettings((s) => ({
               ...s,
-              defaults: { ...s.defaults, topNToSynthesize: parseInt(e.target.value, 10) },
+              defaults: { ...s.defaults, topNToSynthesize: Number.parseInt(e.target.value, 10) },
             }))
           }
           className={defaultsInputClass(err)}
