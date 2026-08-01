@@ -49,7 +49,7 @@ export const CostEstimateCard: React.FC = () => {
               {t('settings.cost.tier')}
             </dt>
             <dd className="mt-1 font-medium text-text-primary capitalize">
-              {showZero ? 'heuristic' : estimate.tier}
+              {showZero ? t('settings.cost.tier_heuristic') : estimate.tier}
             </dd>
           </div>
           <div className="rounded-lg border border-border bg-surface/40 px-3 py-2">

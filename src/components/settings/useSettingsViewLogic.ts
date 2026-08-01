@@ -65,7 +65,11 @@ export const useSettingsViewLogic = (
     | { type: 'deletePreset'; data: Preset };
   const [modalState, setModalState] = useState<ModalState | null>(null);
   const [pruneScore, setPruneScore] = useState(20);
-  const [storageUsage, setStorageUsage] = useState({ totalMB: '0.00', percentage: '0' });
+  const [storageUsage, setStorageUsage] = useState({
+    totalMB: '0.00',
+    quotaMB: '5.00',
+    percentage: '0',
+  });
   const [isProcessing, setIsProcessing] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -86,18 +90,21 @@ export const useSettingsViewLogic = (
         const { usage, quota } = await navigator.storage.estimate();
         if (usage && quota && isMounted.current) {
           const totalMB = (usage / (1024 * 1024)).toFixed(2);
+          const quotaMB = (quota / (1024 * 1024)).toFixed(2);
           const percentage = Math.min(100, (usage / quota) * 100).toFixed(1);
-          setStorageUsage({ totalMB, percentage });
+          setStorageUsage({ totalMB, quotaMB, percentage });
           return;
         }
       }
       // Fallback for browsers without StorageManager API
       const kbSize = (await db.knowledgeBaseEntries.count()) * 2048; // Estimate 2KB per entry
       const totalBytes = kbSize;
+      const assumedQuotaBytes = 5 * 1024 * 1024;
       const totalMB = (totalBytes / (1024 * 1024)).toFixed(2);
-      const percentage = Math.min(100, (totalBytes / (5 * 1024 * 1024)) * 100).toFixed(1); // Assume 5MB limit
+      const quotaMB = (assumedQuotaBytes / (1024 * 1024)).toFixed(2);
+      const percentage = Math.min(100, (totalBytes / assumedQuotaBytes) * 100).toFixed(1);
       if (isMounted.current) {
-        setStorageUsage({ totalMB, percentage });
+        setStorageUsage({ totalMB, quotaMB, percentage });
       }
     };
     calculateUsage();
@@ -158,7 +165,7 @@ export const useSettingsViewLogic = (
     if (hasErrors) {
       setNotification({
         id: Date.now(),
-        message: 'Please fix the errors before saving.',
+        message: t('settings.toast.fix_errors'),
         type: 'error',
       });
       return;
@@ -172,8 +179,8 @@ export const useSettingsViewLogic = (
     };
     updateSettings(settingsToSave);
     setTempSettings(settingsToSave);
-    setNotification({ id: Date.now(), message: 'Settings saved successfully!', type: 'success' });
-  }, [hasErrors, tempSettings, updateSettings, setNotification]);
+    setNotification({ id: Date.now(), message: t('settings.toast.saved'), type: 'success' });
+  }, [hasErrors, tempSettings, updateSettings, setNotification, t]);
 
   const handleCancel = useCallback(() => {
     setTempSettings(settings);
@@ -183,20 +190,24 @@ export const useSettingsViewLogic = (
     if (knowledgeBase.length === 0) {
       setNotification({
         id: Date.now(),
-        message: 'History is empty. Nothing to export.',
+        message: t('settings.toast.history_empty'),
         type: 'error',
       });
       return;
     }
     exportHistoryToJson(knowledgeBase);
-    setNotification({ id: Date.now(), message: 'History exported successfully.', type: 'success' });
-  }, [knowledgeBase, setNotification]);
+    setNotification({
+      id: Date.now(),
+      message: t('settings.toast.history_exported'),
+      type: 'success',
+    });
+  }, [knowledgeBase, setNotification, t]);
 
   const handleExportKnowledgeBase = useCallback(() => {
     if (uniqueArticles.length === 0) {
       setNotification({
         id: Date.now(),
-        message: 'Knowledge Base is empty. Nothing to export.',
+        message: t('settings.toast.kb_empty'),
         type: 'error',
       });
       return;
@@ -204,10 +215,10 @@ export const useSettingsViewLogic = (
     exportKnowledgeBaseToJson(uniqueArticles);
     setNotification({
       id: Date.now(),
-      message: 'Full Knowledge Base (all unique articles) exported successfully.',
+      message: t('settings.toast.kb_exported'),
       type: 'success',
     });
-  }, [uniqueArticles, setNotification]);
+  }, [uniqueArticles, setNotification, t]);
 
   const handleImport = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -223,14 +234,17 @@ export const useSettingsViewLogic = (
           if (Array.isArray(dataToImport) && dataToImport.every(isKnowledgeBaseEntry)) {
             setModalState({ type: 'import', data: dataToImport });
           } else {
-            throw new Error(
-              'Invalid file format. The file must be an array of Knowledge Base entries.',
-            );
+            setNotification({
+              id: Date.now(),
+              message: t('settings.toast.import_invalid_kb'),
+              type: 'error',
+            });
           }
         } catch (error) {
+          console.error('Knowledge Base import failed:', error);
           setNotification({
             id: Date.now(),
-            message: `Import failed: ${error instanceof Error ? error.message : 'Could not read file.'}`,
+            message: t('settings.toast.import_failed'),
             type: 'error',
           });
         } finally {
@@ -239,7 +253,7 @@ export const useSettingsViewLogic = (
       };
       reader.readAsText(file);
     },
-    [setNotification],
+    [setNotification, t],
   );
 
   const handleExportSettings = useCallback(() => {
@@ -251,10 +265,10 @@ export const useSettingsViewLogic = (
     link.click();
     setNotification({
       id: Date.now(),
-      message: 'Settings exported successfully.',
+      message: t('settings.toast.settings_exported'),
       type: 'success',
     });
-  }, [settings, setNotification]);
+  }, [settings, setNotification, t]);
 
   const handleConfirmImportSettings = useCallback(
     (importedSettings: Partial<Settings>) => {
@@ -263,11 +277,11 @@ export const useSettingsViewLogic = (
       setTempSettings(newSettings);
       setNotification({
         id: Date.now(),
-        message: 'Settings successfully imported and saved.',
+        message: t('settings.toast.settings_imported'),
         type: 'success',
       });
     },
-    [settings, updateSettings, setNotification],
+    [settings, updateSettings, setNotification, t],
   );
 
   const handleImportSettings = useCallback(
@@ -283,7 +297,12 @@ export const useSettingsViewLogic = (
             !isObject(importedSettings) ||
             (!('theme' in importedSettings) && !('ai' in importedSettings))
           ) {
-            throw new Error('Invalid settings file format.');
+            setNotification({
+              id: Date.now(),
+              message: t('settings.toast.import_invalid_settings'),
+              type: 'error',
+            });
+            return;
           }
           if (
             importedSettings.ai &&
@@ -294,9 +313,10 @@ export const useSettingsViewLogic = (
           }
           handleConfirmImportSettings(importedSettings);
         } catch (error) {
+          console.error('Settings import failed:', error);
           setNotification({
             id: Date.now(),
-            message: `Import failed: ${error instanceof Error ? error.message : 'Could not read file.'}`,
+            message: t('settings.toast.import_failed'),
             type: 'error',
           });
         } finally {
@@ -305,7 +325,7 @@ export const useSettingsViewLogic = (
       };
       reader.readAsText(file);
     },
-    [handleConfirmImportSettings, setNotification],
+    [handleConfirmImportSettings, setNotification, t],
   );
 
   const handlePrune = useCallback(async () => {
@@ -336,11 +356,11 @@ export const useSettingsViewLogic = (
     resetSettings();
     setNotification({
       id: Date.now(),
-      message: 'All settings have been reset to their defaults.',
+      message: t('settings.toast.reset'),
       type: 'success',
     });
     setModalState(null);
-  }, [resetSettings, setNotification]);
+  }, [resetSettings, setNotification, t]);
 
   const handleDeletePreset = useCallback(
     async (preset: Preset) => {
@@ -348,11 +368,11 @@ export const useSettingsViewLogic = (
       setModalState(null);
       setNotification({
         id: Date.now(),
-        message: `Preset "${preset.name}" deleted.`,
+        message: t('settings.toast.preset_deleted', { name: preset.name }),
         type: 'success',
       });
     },
-    [removePreset, setNotification],
+    [removePreset, setNotification, t],
   );
 
   const handleInstallPwa = useCallback(async () => {

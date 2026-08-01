@@ -21,10 +21,13 @@
 - **Settings General i18n (this branch):** General tab EN+DE via `settingsTranslations.ts`; extracted `GeneralSettingsTab.tsx`; SettingsView shell tab/nav chrome piggybacked; ratchet covers General tab only.
   - **Why:** Settings was still English-only after ReportDisplay wave; General was the first SettingsSubComponents tab slice.
   - **Impact:** Language / Appearance / PWA / Notifications / Performance fully localized; shell KB/Export/Data tab labels + About/FAQ localized.
+- **Settings remaining i18n (this branch):** AI / KB / Export / Data tabs + confirm/prune modals + toasts EN+DE via `settingsTranslations.ts`; extracted dedicated tab files; ratchet covers Settings surfaces.
+  - **Why:** Close residual Settings English-only backlog after General wave.
+  - **Impact:** Full Settings UI localized; CSV column / persona / article-type protocol values stay English in state; import errors no longer leak raw exception text.
 
 ## Still open
 
-- Residual Settings i18n: AI / Knowledge Base / Export / Data tab bodies in `SettingsSubComponents`; SettingsView confirm modals; `useSettingsViewLogic` toasts.
+- Residual i18n outside Settings (Authors/Journals hubs, agent debugger chrome) if still English-only.
 - Full E2E job remains non-blocking until promotion criteria in `docs/e2e-ci-backlog.md`.
 
 ## Process

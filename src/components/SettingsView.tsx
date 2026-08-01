@@ -189,35 +189,25 @@ const SettingsViewLayout: React.FC = () => {
                 setModalState(null);
               }}
               onCancel={() => setModalState(null)}
-              title="Clear Knowledge Base?"
-              message={
-                <>
-                  Are you sure you want to delete all <strong>{uniqueArticles.length}</strong>{' '}
-                  articles from your knowledge base? This action cannot be undone.
-                </>
-              }
-              confirmText="Yes, Delete All"
+              title={t('settings.modal.clear.title')}
+              message={t('settings.modal.clear.message', { count: uniqueArticles.length })}
+              confirmText={t('settings.modal.clear.confirm')}
             />
           )}
           {modalState.type === 'reset' && (
             <ConfirmationModal
               onConfirm={handleResetAllSettings}
               onCancel={() => setModalState(null)}
-              title="Reset All Settings?"
-              message="Are you sure you want to reset all application settings to their default values? This cannot be undone."
-              confirmText="Yes, Reset All"
+              title={t('settings.modal.reset.title')}
+              message={t('settings.modal.reset.message')}
+              confirmText={t('settings.modal.reset.confirm')}
             />
           )}
           {modalState.type === 'import' && (
             <ConfirmationModal
-              title="Import Knowledge Base"
-              message={
-                <>
-                  You are about to import <strong>{modalState.data.length}</strong> new reports.
-                  This will be added to your existing knowledge base. Do you want to continue?
-                </>
-              }
-              confirmText="Yes, Import"
+              title={t('settings.modal.import.title')}
+              message={t('settings.modal.import.message', { count: modalState.data.length })}
+              confirmText={t('settings.modal.import.confirm')}
               confirmButtonClass="bg-brand-accent hover:bg-opacity-90"
               titleClass="text-brand-accent"
               onConfirm={() => {
@@ -228,14 +218,11 @@ const SettingsViewLayout: React.FC = () => {
             />
           )}
           {modalState.type === 'prune' && (
-            <Modal onClose={() => setModalState(null)} title="Prune by Relevance Score">
-              <p className="text-sm text-text-secondary mb-4">
-                This will permanently delete all articles from your knowledge base with a relevance
-                score below the value you select.
-              </p>
+            <Modal onClose={() => setModalState(null)} title={t('settings.modal.prune.title')}>
+              <p className="text-sm text-text-secondary mb-4">{t('settings.modal.prune.desc')}</p>
               <div className="flex items-center mt-2">
                 <label htmlFor="prune-score-slider" className="sr-only">
-                  Prune score
+                  {t('settings.modal.prune.score_aria')}
                 </label>
                 <input
                   id="prune-score-slider"
@@ -253,11 +240,11 @@ const SettingsViewLayout: React.FC = () => {
                 </span>
               </div>
               <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 text-red-300 rounded-md text-center text-sm">
-                This action will permanently delete <strong>{articlesToPruneCount}</strong>{' '}
-                article(s).
+                {t('settings.modal.prune.warning', { count: articlesToPruneCount })}
               </div>
               <div className="mt-6 flex justify-end">
                 <button
+                  type="button"
                   onClick={handlePrune}
                   disabled={isProcessing}
                   className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -269,6 +256,7 @@ const SettingsViewLayout: React.FC = () => {
                         xmlns="http://www.w3.org/2000/svg"
                         fill="none"
                         viewBox="0 0 24 24"
+                        aria-hidden="true"
                       >
                         <circle
                           className="opacity-25"
@@ -284,10 +272,10 @@ const SettingsViewLayout: React.FC = () => {
                           d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                         ></path>
                       </svg>
-                      Pruning...
+                      {t('settings.modal.prune.processing')}
                     </>
                   ) : (
-                    'Prune Articles'
+                    t('settings.modal.prune.confirm')
                   )}
                 </button>
               </div>
@@ -295,9 +283,13 @@ const SettingsViewLayout: React.FC = () => {
           )}
           {modalState.type === 'merge' && (
             <ConfirmationModal
-              title="Merge Duplicates"
-              message="This will scan for duplicate articles and keep only the highest-scored version of each. This helps clean your data. Proceed?"
-              confirmText={isProcessing ? 'Merging...' : 'Yes, Merge'}
+              title={t('settings.modal.merge.title')}
+              message={t('settings.modal.merge.message')}
+              confirmText={
+                isProcessing
+                  ? t('settings.modal.merge.processing')
+                  : t('settings.modal.merge.confirm')
+              }
               isConfirming={isProcessing}
               confirmButtonClass="bg-brand-accent hover:bg-opacity-90"
               titleClass="text-brand-accent"
@@ -307,9 +299,9 @@ const SettingsViewLayout: React.FC = () => {
           )}
           {modalState.type === 'deletePreset' && (
             <ConfirmationModal
-              title={`Delete Preset "${modalState.data.name}"?`}
-              message="Are you sure you want to permanently delete this preset? This action cannot be undone."
-              confirmText="Yes, Delete"
+              title={t('settings.modal.delete_preset.title', { name: modalState.data.name })}
+              message={t('settings.modal.delete_preset.message')}
+              confirmText={t('settings.modal.delete_preset.confirm')}
               onConfirm={() => handleDeletePreset(modalState.data)}
               onCancel={() => setModalState(null)}
             />
