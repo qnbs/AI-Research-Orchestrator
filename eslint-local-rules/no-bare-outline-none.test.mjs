@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import { RuleTester } from 'eslint';
 import plugin from './no-bare-outline-none.js';
 
-const rule = plugin.default.rules['no-bare-outline-none'];
+const rule = plugin.rules['no-bare-outline-none'];
 
 const tester = new RuleTester({
   languageOptions: {
