@@ -132,7 +132,7 @@ export function AppViewRouter(props: AppViewRouterProps): React.ReactElement {
       return <HomeView onNavigate={handleViewChange} />;
     case 'orchestrator':
       return (
-        <FeatureErrorBoundary featureName="Research Orchestrator">
+        <FeatureErrorBoundary featureNameKey="error.feature.name.orchestrator">
           <OrchestratorView
             reportStatus={reportStatus}
             currentPhase={currentPhase}
@@ -162,7 +162,7 @@ export function AppViewRouter(props: AppViewRouterProps): React.ReactElement {
       );
     case 'research':
       return (
-        <FeatureErrorBoundary featureName="Research Assistant">
+        <FeatureErrorBoundary featureNameKey="error.feature.name.research">
           <ResearchView
             onStartNewReview={handleStartNewReviewFromTopic}
             onStartResearch={startResearch}
@@ -185,7 +185,7 @@ export function AppViewRouter(props: AppViewRouterProps): React.ReactElement {
       );
     case 'knowledgeBase':
       return (
-        <FeatureErrorBoundary featureName="Knowledge Base">
+        <FeatureErrorBoundary featureNameKey="error.feature.name.knowledgeBase">
           <KnowledgeBaseView
             onViewChange={handleViewChange}
             filter={kbFilter}

@@ -1,11 +1,12 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { ExclamationTriangleIcon } from './icons/ExclamationTriangleIcon';
 import { translateSync } from '../i18n/translate';
+import type { TranslationKey } from '../i18n/translations';
 
 interface Props {
   children: ReactNode;
-  /** Short feature label shown to the user (e.g. "Research Orchestrator"). */
-  featureName: string;
+  /** i18n key for the short feature label shown to the user. */
+  featureNameKey: TranslationKey;
   onReset?: () => void;
 }
 
@@ -25,7 +26,7 @@ export class FeatureErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    console.error(`[${this.props.featureName}]`, error, errorInfo);
+    console.error(`[${translateSync(this.props.featureNameKey)}]`, error, errorInfo);
   }
 
   private handleRetry = (): void => {
@@ -38,6 +39,8 @@ export class FeatureErrorBoundary extends Component<Props, State> {
       return this.props.children;
     }
 
+    const feature = translateSync(this.props.featureNameKey);
+
     return (
       <div
         role="alert"
@@ -45,7 +48,7 @@ export class FeatureErrorBoundary extends Component<Props, State> {
       >
         <ExclamationTriangleIcon className="mx-auto h-10 w-10 text-red-400 mb-3" aria-hidden />
         <h2 className="text-lg font-semibold text-text-primary mb-2">
-          {translateSync('error.feature.unavailable', { feature: this.props.featureName })}
+          {translateSync('error.feature.unavailable', { feature })}
         </h2>
         <p className="text-sm text-text-secondary mb-4 max-w-md mx-auto">
           {translateSync('error.feature.body')}

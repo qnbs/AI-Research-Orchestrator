@@ -13,7 +13,7 @@ describe('FeatureErrorBoundary', () => {
     render(
       <div>
         <span>sibling-ok</span>
-        <FeatureErrorBoundary featureName="Knowledge Base">
+        <FeatureErrorBoundary featureNameKey="error.feature.name.knowledgeBase">
           <Boom />
         </FeatureErrorBoundary>
       </div>,
@@ -34,7 +34,7 @@ describe('FeatureErrorBoundary', () => {
     }
     render(
       <FeatureErrorBoundary
-        featureName="Orchestrator"
+        featureNameKey="error.feature.name.orchestrator"
         onReset={() => {
           shouldThrow = false;
           onReset();

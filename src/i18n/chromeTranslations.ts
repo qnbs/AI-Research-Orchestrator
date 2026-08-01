@@ -31,6 +31,7 @@ export const chromeTranslations = {
     'orchestrator.dashboard.recent': 'Recent Activity',
     'orchestrator.dashboard.report_from': 'Report from {date}',
     'orchestrator.dashboard.articles': '{count} articles',
+    'orchestrator.dashboard.articles_one': '{count} article',
     'orchestrator.dashboard.focus_label': 'Focus:',
     'orchestrator.dashboard.view_report': 'View Report',
     'orchestrator.dashboard.start_new_search': 'Start new search for: {topic}',
@@ -43,6 +44,9 @@ export const chromeTranslations = {
     'error.feature.body':
       'Something went wrong in this section. Your data in other areas is unaffected.',
     'error.feature.retry': 'Try again',
+    'error.feature.name.orchestrator': 'Research Orchestrator',
+    'error.feature.name.research': 'Research Assistant',
+    'error.feature.name.knowledgeBase': 'Knowledge Base',
   },
   de: {
     'chrome.aria.go_home': 'Zur Startseite',
@@ -75,6 +79,7 @@ export const chromeTranslations = {
     'orchestrator.dashboard.recent': 'Letzte Aktivität',
     'orchestrator.dashboard.report_from': 'Bericht vom {date}',
     'orchestrator.dashboard.articles': '{count} Artikel',
+    'orchestrator.dashboard.articles_one': '{count} Artikel',
     'orchestrator.dashboard.focus_label': 'Fokus:',
     'orchestrator.dashboard.view_report': 'Bericht anzeigen',
     'orchestrator.dashboard.start_new_search': 'Neue Suche starten für: {topic}',
@@ -87,5 +92,8 @@ export const chromeTranslations = {
     'error.feature.body':
       'In diesem Bereich ist etwas schiefgelaufen. Ihre Daten in anderen Bereichen sind unberührt.',
     'error.feature.retry': 'Erneut versuchen',
+    'error.feature.name.orchestrator': 'Research Orchestrator',
+    'error.feature.name.research': 'Recherche-Assistent',
+    'error.feature.name.knowledgeBase': 'Wissensdatenbank',
   },
 } as const;

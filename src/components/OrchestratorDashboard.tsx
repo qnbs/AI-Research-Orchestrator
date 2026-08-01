@@ -23,15 +23,18 @@ const RecentEntryCard: React.FC<{
   onViewReport: (entry: KnowledgeBaseEntry) => void;
   onStartNewReview: (topic: string) => void;
 }> = ({ entry, onViewReport, onStartNewReview }) => {
-  const { t } = useTranslation();
+  const { t, lang } = useTranslation();
   const focusKey = SYNTHESIS_FOCUS_KEYS[entry.input.synthesisFocus];
   const focusLabel = focusKey ? t(focusKey) : entry.input.synthesisFocus;
+  const articleCount = entry.report.rankedArticles.length;
+  const articlesKey =
+    articleCount === 1 ? 'orchestrator.dashboard.articles_one' : 'orchestrator.dashboard.articles';
 
   return (
     <article className="bg-surface border border-border rounded-lg p-5 flex flex-col justify-between transition-all duration-300 hover:shadow-xl hover:border-brand-accent/50 hover:-translate-y-1 group focus-within:ring-2 focus-within:ring-brand-accent focus-within:border-brand-accent/50">
       <p className="text-xs text-text-secondary mb-2">
         {t('orchestrator.dashboard.report_from', {
-          date: new Date(entry.timestamp).toLocaleDateString(),
+          date: new Date(entry.timestamp).toLocaleDateString(lang),
         })}
       </p>
       <button
@@ -45,11 +48,7 @@ const RecentEntryCard: React.FC<{
         {entry.title}
       </button>
       <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-text-secondary border-t border-border pt-3">
-        <span>
-          {t('orchestrator.dashboard.articles', {
-            count: entry.report.rankedArticles.length,
-          })}
-        </span>
+        <span>{t(articlesKey, { count: articleCount })}</span>
         <span>
           <strong>{t('orchestrator.dashboard.focus_label')}</strong> {focusLabel}
         </span>

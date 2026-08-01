@@ -6,7 +6,7 @@
 - **#120** HelpView i18n Wave 8 (EN+DE `help.*`, catalog split under 700 lines, FAQ accuracy fixes).
 - **#118** WS-E focus rings: `.focus-ring-aa`, ESLint guard, Playwright keyboard-focus.
 - **#122** WS-F skip-to-content + `#main-content` landmark + 44×44 touch targets (merged).
-- **Chrome i18n shell (this branch / #123):** Header/Welcome/OrchestratorDashboard/ConfirmationModal/FeatureErrorBoundary → `chromeTranslations.ts` + ratchet.
+- **Chrome i18n shell (PR #123):** Migrated Header/Welcome/OrchestratorDashboard/ConfirmationModal/FeatureErrorBoundary to EN+DE via `chromeTranslations.ts` so chrome UI is no longer hardcoded English; ratchet now guards those files. Larger backlog (CommandPalette, InputForm, …) remains open.
 
 ## Still open
 
