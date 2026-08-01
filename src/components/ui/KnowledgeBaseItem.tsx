@@ -19,7 +19,7 @@ import { useTranslation, type TranslationKey } from '../../hooks/useTranslation'
 // ─── Relevance colour helper ──────────────────────────────────────────────────
 
 /** Maps 0–1 relevance score to a CSS colour string. */
-function relevanceColor(score: number): string {
+const relevanceColor = (score: number): string => {
   if (score >= 0.85) return 'var(--color-accent-green)';
   if (score >= 0.7) return 'var(--color-brand-accent)';
   if (score >= 0.5) return 'var(--color-accent-cyan)';
@@ -28,10 +28,10 @@ function relevanceColor(score: number): string {
   // than a semantic color - --color-border-subtle, not the WCAG-AA-bumped
   // --color-border, matches index.css's own fallback for this same bar.
   return 'var(--color-border-subtle)';
-}
+};
 
 /** Short human-readable label for the relevance score. */
-function relevanceLabel(score: number): { labelKey: TranslationKey; className: string } {
+const relevanceLabel = (score: number): { labelKey: TranslationKey; className: string } => {
   if (score >= 0.85)
     return {
       labelKey: 'chrome.kb_item.relevance.high',
@@ -51,7 +51,7 @@ function relevanceLabel(score: number): { labelKey: TranslationKey; className: s
     labelKey: 'chrome.kb_item.relevance.low',
     className: 'bg-text-secondary/10 text-text-secondary border-border',
   };
-}
+};
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 

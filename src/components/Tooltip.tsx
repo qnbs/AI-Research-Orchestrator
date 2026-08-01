@@ -20,7 +20,7 @@ interface TooltipProps {
 // synthesized aria-label to avoid being an unlabeled focus stop. Only looks one level deep: a
 // deeply-nested all-aria-hidden subtree won't be detected, but no current caller does that, and
 // fully replicating DOM accessible-name computation here isn't proportionate for this helper.
-function hasAccessibleChildContent(node: React.ReactNode): boolean {
+const hasAccessibleChildContent = (node: React.ReactNode): boolean => {
   return React.Children.toArray(node).some((child) => {
     if (typeof child === 'string' || typeof child === 'number') {
       return child.toString().trim() !== '';
@@ -31,7 +31,7 @@ function hasAccessibleChildContent(node: React.ReactNode): boolean {
     }
     return false;
   });
-}
+};
 
 export const Tooltip: React.FC<TooltipProps> = ({ content, children, detailedContent }) => {
   const { t } = useTranslation();
