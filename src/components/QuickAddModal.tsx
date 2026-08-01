@@ -35,8 +35,8 @@ const QuickAddModal: React.FC<QuickAddModalProps> = ({ onClose }) => {
       const article = await analyzeSingleArticle(identifier, settings.ai);
       await addSingleArticleReport(article);
       onClose();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('quickAdd.error.unknown'));
+    } catch {
+      setError(t('quickAdd.error.unknown'));
     } finally {
       setIsLoading(false);
     }
@@ -63,6 +63,7 @@ const QuickAddModal: React.FC<QuickAddModalProps> = ({ onClose }) => {
             {t('quickAdd.title')}
           </h3>
           <button
+            type="button"
             onClick={onClose}
             className="p-1 rounded-full hover:bg-surface-hover focus-ring-aa"
             aria-label={t('chrome.aria.close_modal')}

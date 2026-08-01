@@ -37,12 +37,14 @@ const HistoryTitleEditor: React.FC<{
         className="w-full bg-input-bg border border-brand-accent rounded-md py-1 px-2 text-base font-semibold focus:outline-none focus:ring-2 focus:ring-brand-accent"
       />
       <button
+        type="button"
         onClick={onSaveTitle}
         className="p-1.5 rounded-full text-green-400 hover:bg-green-500/10"
       >
         <CheckCircleIcon className="h-5 w-5" />
       </button>
       <button
+        type="button"
         onClick={onCancelEdit}
         className="p-1.5 rounded-full text-red-400 hover:bg-red-500/10"
       >
@@ -115,10 +117,13 @@ const HistoryEntryMeta: React.FC<{ entry: KnowledgeBaseEntry }> = ({ entry }) =>
   }
 
   const focusKey = SYNTHESIS_FOCUS_KEYS[entry.input.synthesisFocus];
+  const years = entry.input.dateRange;
   const dateRangeLabel =
-    entry.input.dateRange === 'any'
+    years === 'any'
       ? t('history.list.date_any')
-      : t('history.list.date_last_years', { years: entry.input.dateRange });
+      : t(years === '1' ? 'history.list.date_last_years_one' : 'history.list.date_last_years', {
+          years,
+        });
 
   return (
     <ResearchEntryMeta
@@ -191,6 +196,7 @@ const HistoryListItemActions: React.FC<{
   return (
     <div className="flex items-center gap-2 flex-shrink-0 self-start sm:self-center">
       <button
+        type="button"
         onClick={startEdit}
         className="p-2 rounded-md text-text-secondary hover:bg-surface-hover hover:text-brand-accent transition-colors focus-ring-aa"
         aria-label={t('history.aria.edit_title')}
@@ -198,6 +204,7 @@ const HistoryListItemActions: React.FC<{
         <PencilIcon className="h-4 w-4" />
       </button>
       <button
+        type="button"
         onClick={() => onQuickView(entry)}
         className="p-2 rounded-md text-text-secondary hover:bg-surface-hover hover:text-brand-accent transition-colors focus-ring-aa"
         aria-label={t('history.aria.quick_view')}
@@ -205,6 +212,7 @@ const HistoryListItemActions: React.FC<{
         <EyeIcon className="h-5 w-5" />
       </button>
       <button
+        type="button"
         onClick={() => onViewEntry(entry)}
         className="inline-flex items-center px-3 py-1.5 border border-border text-xs font-medium rounded-md shadow-sm text-text-primary bg-surface hover:bg-surface-hover hover:border-brand-accent transition-colors focus-ring-aa"
       >

@@ -41,6 +41,7 @@ export const modalTranslations = {
     'history.list.date_range': 'Date Range:',
     'history.list.date_any': 'Any time',
     'history.list.date_last_years': 'Last {years} years',
+    'history.list.date_last_years_one': 'Last {years} year',
     'history.empty.title': 'No History Yet',
     'history.empty.message':
       'Your saved reports will appear here. Start a new search on the Orchestrator tab to begin building your research history.',
@@ -50,6 +51,8 @@ export const modalTranslations = {
       'Review, manage, and revisit your past research reports and author profiles.',
     'history.search.placeholder': 'Search history…',
     'history.search.entries': 'Search {count} entries…',
+    'history.search.entries_one': 'Search {count} entry…',
+    'history.search.aria_label': 'Search history entries',
     'history.list.issn': 'ISSN:',
     'history.list.oa_policy': 'OA Policy:',
 
@@ -94,6 +97,7 @@ export const modalTranslations = {
     'history.list.date_range': 'Zeitraum:',
     'history.list.date_any': 'Jederzeit',
     'history.list.date_last_years': 'Letzte {years} Jahre',
+    'history.list.date_last_years_one': 'Letztes {years} Jahr',
     'history.empty.title': 'Noch kein Verlauf',
     'history.empty.message':
       'Ihre gespeicherten Berichte erscheinen hier. Starten Sie eine neue Suche im Orchestrator-Tab, um Ihren Forschungsverlauf aufzubauen.',
@@ -103,6 +107,8 @@ export const modalTranslations = {
       'Prüfen, verwalten und erneut öffnen Sie frühere Forschungsberichte und Autorenprofile.',
     'history.search.placeholder': 'Verlauf durchsuchen…',
     'history.search.entries': '{count} Einträge durchsuchen…',
+    'history.search.entries_one': '{count} Eintrag durchsuchen…',
+    'history.search.aria_label': 'Verlaufseinträge durchsuchen',
     'history.list.issn': 'ISSN:',
     'history.list.oa_policy': 'OA-Richtlinie:',
 

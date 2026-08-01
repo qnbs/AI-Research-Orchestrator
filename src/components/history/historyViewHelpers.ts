@@ -56,6 +56,10 @@ export const keywordsForEntry = (entry: KnowledgeBaseEntry): string[] => {
       return takeTop3(entry.profile.coreConcepts, (c) => c.concept);
     case 'journal':
       return (entry.journalProfile.focusAreas ?? []).slice(0, 3);
+    default: {
+      const _exhaustive: never = entry;
+      return _exhaustive;
+    }
   }
 };
 
@@ -67,5 +71,9 @@ export const historyEntryIcon = (sourceType: KnowledgeBaseEntry['sourceType']) =
       return { Icon: BookOpenIcon, color: 'text-green-400' };
     case 'research':
       return { Icon: DocumentIcon, color: 'text-brand-accent' };
+    default: {
+      const _exhaustive: never = sourceType;
+      return _exhaustive;
+    }
   }
 };

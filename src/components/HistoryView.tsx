@@ -72,7 +72,11 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onViewEntry }) => {
           <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-text-secondary" />
           <input
             type="text"
-            placeholder={t('history.search.entries', { count: knowledgeBase.length })}
+            placeholder={t(
+              knowledgeBase.length === 1 ? 'history.search.entries_one' : 'history.search.entries',
+              { count: knowledgeBase.length },
+            )}
+            aria-label={t('history.search.aria_label')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full bg-surface border border-border rounded-md py-2 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-brand-accent"
