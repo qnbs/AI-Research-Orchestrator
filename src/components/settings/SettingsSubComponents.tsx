@@ -761,7 +761,7 @@ export const AISettingsTab: React.FC = () => {
                     defaults: { ...s.defaults, maxArticlesToScan: parseInt(e.target.value, 10) },
                   }))
                 }
-                className={`block w-full bg-input-bg border rounded-md shadow-sm py-2 px-3 focus-ring-aa sm:text-sm ${errors.formDefaults ? 'border-red-500' : 'border-border'}`}
+                className={`block w-full bg-input-bg border rounded-md shadow-sm py-2 px-3 focus:outline-none focus-visible:ring-2 sm:text-sm ${errors.formDefaults ? 'border-red-500 focus-visible:ring-red-500' : 'border-border focus-visible:ring-brand-accent'}`}
               />
             </div>
             <div>
@@ -783,7 +783,7 @@ export const AISettingsTab: React.FC = () => {
                     defaults: { ...s.defaults, topNToSynthesize: parseInt(e.target.value, 10) },
                   }))
                 }
-                className={`block w-full bg-input-bg border rounded-md shadow-sm py-2 px-3 focus-ring-aa sm:text-sm ${errors.formDefaults ? 'border-red-500' : 'border-border'}`}
+                className={`block w-full bg-input-bg border rounded-md shadow-sm py-2 px-3 focus:outline-none focus-visible:ring-2 sm:text-sm ${errors.formDefaults ? 'border-red-500 focus-visible:ring-red-500' : 'border-border focus-visible:ring-brand-accent'}`}
               />
             </div>
             <div>

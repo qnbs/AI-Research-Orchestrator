@@ -1,16 +1,12 @@
 /**
  * Unit fixtures for `local/no-bare-outline-none` (WS-E).
  * Run via: node --test eslint-local-rules/no-bare-outline-none.test.mjs
- * (also exercised indirectly by `pnpm run lint` on the src tree).
  */
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { createRequire } from 'node:module';
 import { RuleTester } from 'eslint';
+import plugin from './no-bare-outline-none.js';
 
-const require = createRequire(import.meta.url);
-// Rule file is ESM — import dynamically
-const plugin = await import('./no-bare-outline-none.js');
 const rule = plugin.default.rules['no-bare-outline-none'];
 
 const tester = new RuleTester({
