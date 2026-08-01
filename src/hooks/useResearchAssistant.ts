@@ -36,6 +36,32 @@ const initialState: ResearchState = {
 
 type AbortablePromise = { abort: () => void };
 
+function settledErrorMessage(reason: unknown): string {
+  return reason instanceof Error ? reason.message : 'An unknown error occurred.';
+}
+
+function mapSimilarSettled(result: PromiseSettledResult<SimilarArticle[] | null>): {
+  loading: false;
+  articles: SimilarArticle[] | null;
+  error: string | null;
+} {
+  if (result.status === 'fulfilled') {
+    return { loading: false, articles: result.value, error: null };
+  }
+  return { loading: false, articles: null, error: settledErrorMessage(result.reason) };
+}
+
+function mapOnlineSettled(result: PromiseSettledResult<OnlineFindings | null>): {
+  loading: false;
+  findings: OnlineFindings | null;
+  error: string | null;
+} {
+  if (result.status === 'fulfilled') {
+    return { loading: false, findings: result.value, error: null };
+  }
+  return { loading: false, findings: null, error: settledErrorMessage(result.reason) };
+}
+
 /**
  * Rapid Research Assistant state machine: analysis + optional similar/online fetches
  * via lazy RTK Query endpoints. In-flight triggers are aborted on unmount / clear /
@@ -134,24 +160,8 @@ export const useResearchAssistant = (
 
         setState((s) => ({
           ...s,
-          similar: {
-            loading: false,
-            articles:
-              similarResult.status === 'fulfilled'
-                ? (similarResult.value as SimilarArticle[] | null)
-                : null,
-            error:
-              similarResult.status === 'rejected' ? (similarResult.reason as Error).message : null,
-          },
-          online: {
-            loading: false,
-            findings:
-              onlineResult.status === 'fulfilled'
-                ? (onlineResult.value as OnlineFindings | null)
-                : null,
-            error:
-              onlineResult.status === 'rejected' ? (onlineResult.reason as Error).message : null,
-          },
+          similar: mapSimilarSettled(similarResult),
+          online: mapOnlineSettled(onlineResult),
         }));
         if (isCurrent()) {
           inflightRef.current = [];
@@ -159,7 +169,7 @@ export const useResearchAssistant = (
       } catch (err) {
         if (!isCurrent()) return;
         // Aborted requests should not surface as user-visible errors
-        const message = err instanceof Error ? err.message : 'An unknown error occurred.';
+        const message = settledErrorMessage(err);
         if (/abort/i.test(message)) return;
         setState((s) => ({
           ...s,
