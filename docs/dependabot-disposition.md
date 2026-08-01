@@ -91,8 +91,18 @@ Consolidation PR: `cursor/dependabot-safe-minors-aa80` (safe same-major / patche
 | #105 | recharts 3.8.0 → 3.10.0                         | **Included** in consolidation                    | Superseded  |
 | #106 | @tanstack/react-virtual 3.13.21 → 3.14.8        | **Included** in consolidation                    | Superseded  |
 | #108 | anthropics/claude-code-action 1.0.181 → 1.0.183 | **Included** (SHA pin updated in both workflows) | Superseded  |
-| #98  | openai 4.104.0 → 6.48.0                         | Dedicated audit PR (runtime major)               | In progress |
-| #101 | dexie-react-hooks 1.1.7 → 4.4.0                 | Dedicated audit PR (runtime major)               | In progress |
-| #104 | marked 13.0.3 → 18.0.7                          | Dedicated audit PR (runtime major)               | In progress |
+| #98  | openai 4.104.0 → 6.48.0                         | Dedicated audit PR (runtime major)               | Merged via #113 |
+| #101 | dexie-react-hooks 1.1.7 → 4.4.0                 | Dedicated audit PR (runtime major)               | Merged via #113 |
+| #104 | marked 13.0.3 → 18.0.7                          | Dedicated audit PR (runtime major)               | Merged via #113 |
 
 Also included: `brace-expansion` override bump for GHSA-mh99-v99m-4gvg (required for `pnpm audit --audit-level=high` on current main).
+
+## 2026-08-01 majors (#98 / #101 / #104)
+
+Dedicated PR: `cursor/dependabot-majors-aa80`.
+
+| PR   | Change                          | Audit notes                                                                                                                                                                                                                                       | Disposition  | Status                  |
+| ---- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | ----------------------- |
+| #98  | openai 4.104.0 → 6.48.0         | SDK MIGRATION.md: our adapter only uses `chat.completions.create` + async iterator streaming + `dangerouslyAllowBrowser` — all still valid. Added `max_completion_tokens` for gpt-5/o-series (default model is gpt-5). Provider unit tests green. | **Included** | Superseded by majors PR |
+| #101 | dexie-react-hooks 1.1.7 → 4.4.0 | **No runtime imports** of `dexie-react-hooks` / `useLiveQuery` remain in `src/` (Dexie is used only via `databaseService.ts`). Bump is lockfile-hygiene; package retained for documented stack parity.                                            | **Included** | Superseded by majors PR |
+| #104 | marked 13.0.3 → 18.0.7          | Call sites use `marked.parse(..., { breaks, gfm })` and cast to `string`. Runtime check: still sync string (not Promise) with these options. DOMPurify sanitization path unchanged. typecheck + export tests green.                               | **Included** | Superseded by majors PR |

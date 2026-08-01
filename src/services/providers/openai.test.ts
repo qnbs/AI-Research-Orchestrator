@@ -33,6 +33,7 @@ describe('createOpenAIProvider', () => {
       model: 'gpt-5',
       prompt: 'hello',
       json: true,
+      maxOutputTokens: 256,
       baseURL: 'https://api.openai.com/v1',
     });
 
@@ -41,10 +42,34 @@ describe('createOpenAIProvider', () => {
     expect(createMock).toHaveBeenCalledWith(
       expect.objectContaining({
         model: 'gpt-5',
+        max_completion_tokens: 256,
         response_format: { type: 'json_object' },
       }),
       expect.objectContaining({ signal: undefined }),
     );
+    expect(createMock.mock.calls[0][0]).not.toHaveProperty('max_tokens');
+  });
+
+  it('keeps max_tokens for legacy chat models', async () => {
+    createMock.mockResolvedValueOnce({
+      choices: [{ message: { content: 'ok' } }],
+    });
+
+    const provider = createOpenAIProvider();
+    await provider.generateContent({
+      model: 'gpt-4.1-mini',
+      prompt: 'hello',
+      maxOutputTokens: 128,
+    });
+
+    expect(createMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        model: 'gpt-4.1-mini',
+        max_tokens: 128,
+      }),
+      expect.anything(),
+    );
+    expect(createMock.mock.calls[0][0]).not.toHaveProperty('max_completion_tokens');
   });
 
   it('streams content', async () => {
