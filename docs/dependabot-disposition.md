@@ -76,3 +76,23 @@ All 10 created within a few minutes of each other (triggered by this session's e
 | #100 | rollup-plugin-visualizer 6.0.11 → 7.0.1  | Major (dev tool)   | Dev-only (build)    | Only used by the opt-in `pnpm run analyze` bundle-visualizer script (`ANALYZE=1`), not part of any CI gate or the normal build path. Low blast radius even if something broke.                                                                                                                                                                                                                                                                                                                                                       | Safe to merge directly; low priority to even verify given it's opt-in tooling. | Open (not yet merged) |
 
 Branches also cleaned up this pass (all individually re-verified via two-dot tree-diff against `main`, not taken on the disposition doc's word alone, per the standing rule that content must be verified per-branch): `feature/journal-hub-multi-provider`, `feature/non-ai-programmatic-research-engine` (post-merge of its own tooling PR), `cursor/cloud-dev-env-setup-2873`, `cursor/phase0-audit-perfection-eec8`, `coderabbitai/utg/5daadbd`, `cursor/setup-dev-environment-e575`, `cursor/phase2-release-and-p2-rest-eec8` — all confirmed zero unique content vs `main`. Two more (`cursor/deep-audit-v0.2.0-4790`, `fix-author-query`) had apparent unique files that turned out to be pre-restructure path duplicates or clearly-superseded early drafts (same concept implemented differently under main's current names) — deleted after explicit user confirmation given the residual uncertainty.
+
+## 2026-08-01 processing (Master Sprint Phase 4)
+
+Consolidation PR: `cursor/dependabot-safe-minors-aa80` (safe same-major / patches / Actions + brace-expansion audit unblocker).
+
+| PR   | Change                                          | Disposition                                      | Status      |
+| ---- | ----------------------------------------------- | ------------------------------------------------ | ----------- |
+| #97  | react-redux 9.2.0 → 9.3.0                       | **Included** in consolidation                    | Superseded  |
+| #99  | typescript-eslint 8.64.0 → 8.65.0               | **Included** in consolidation                    | Superseded  |
+| #100 | rollup-plugin-visualizer 6.0.11 → 7.0.1         | **Included** in consolidation                    | Superseded  |
+| #102 | @types/jsdom 28.0.0 → 28.0.3                    | **Included** in consolidation                    | Superseded  |
+| #103 | eslint-config-prettier 9.1.0 → 10.1.8           | **Included** in consolidation (lint stays 0)     | Superseded  |
+| #105 | recharts 3.8.0 → 3.10.0                         | **Included** in consolidation                    | Superseded  |
+| #106 | @tanstack/react-virtual 3.13.21 → 3.14.8        | **Included** in consolidation                    | Superseded  |
+| #108 | anthropics/claude-code-action 1.0.181 → 1.0.183 | **Included** (SHA pin updated in both workflows) | Superseded  |
+| #98  | openai 4.104.0 → 6.48.0                         | Dedicated audit PR (runtime major)               | In progress |
+| #101 | dexie-react-hooks 1.1.7 → 4.4.0                 | Dedicated audit PR (runtime major)               | In progress |
+| #104 | marked 13.0.3 → 18.0.7                          | Dedicated audit PR (runtime major)               | In progress |
+
+Also included: `brace-expansion` override bump for GHSA-mh99-v99m-4gvg (required for `pnpm audit --audit-level=high` on current main).
