@@ -5,7 +5,7 @@ import { test, expect, type Page, type Locator } from '@playwright/test';
  * focus-specific outline/box-shadow (compare focused vs unfocused styles).
  */
 
-async function skipOnboarding(page: Page) {
+const skipOnboarding = async (page: Page) => {
   await page.goto('/');
   await page.waitForLoadState('domcontentloaded');
   await page.evaluate(() => {
@@ -27,9 +27,9 @@ async function skipOnboarding(page: Page) {
     await startBtn.click();
     await header.waitFor({ state: 'visible', timeout: 10_000 });
   }
-}
+};
 
-async function focusStyles(locator: Locator) {
+const focusStyles = (locator: Locator) => {
   return locator.evaluate((el) => {
     const cs = getComputedStyle(el);
     return {
@@ -37,10 +37,10 @@ async function focusStyles(locator: Locator) {
       boxShadow: cs.boxShadow,
     };
   });
-}
+};
 
 /** Assert the element shows a focus-driven style change vs its unfocused baseline. */
-async function expectFocusIndicator(locator: Locator, label: string) {
+const expectFocusIndicator = async (locator: Locator, label: string) => {
   await expect(locator).toBeVisible();
   await locator.focus();
   await expect(locator).toBeFocused();
@@ -59,7 +59,7 @@ async function expectFocusIndicator(locator: Locator, label: string) {
     outlineChanged || shadowChanged,
     `${label}: no focus-specific outline/box-shadow change (focused=${focused.outline}/${focused.boxShadow}; unfocused=${unfocused.outline}/${unfocused.boxShadow})`,
   ).toBe(true);
-}
+};
 
 test.describe('Keyboard focus visibility (WS-E)', () => {
   test.beforeEach(async ({ page }) => {

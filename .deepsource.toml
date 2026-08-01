@@ -4,9 +4,9 @@ version = 1
 name = "javascript"
 
   [analyzers.meta]
-  module_system = "es-modules"
-  # Local ESLint plugin sources are plain ESM loaded only by eslint.config.js;
-  # DeepSource's default parser treats them as scripts and false-fails on import/export.
+  plugins = ["react"]
+  # Treat sources as ES modules so `import`/`export` parse cleanly.
+  module = "esm"
   exclude_patterns = [
     "eslint-local-rules/**",
   ]
