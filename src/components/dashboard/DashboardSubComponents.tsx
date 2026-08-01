@@ -9,27 +9,28 @@ import { DASHBOARD_CHART_COLORS, DASHBOARD_ACCENT } from '../dashboardChartTheme
 import { useTranslation } from '../../hooks/useTranslation';
 
 // ── Palette ───────────────────────────────────────────────────────────────────
-const C = [...DASHBOARD_CHART_COLORS, ...DASHBOARD_CHART_COLORS];
+const CHART_PALETTE = [...DASHBOARD_CHART_COLORS, ...DASHBOARD_CHART_COLORS];
 
 // ── SVG Export ────────────────────────────────────────────────────────────────
-function exportSVG(ref: React.RefObject<HTMLDivElement | null>, filename: string) {
+const exportSVG = (ref: React.RefObject<HTMLDivElement | null>, filename: string): void => {
   const svg = ref.current?.querySelector('svg');
   if (!svg) return;
   const clone = svg.cloneNode(true) as SVGElement;
   clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
   const blob = new Blob([new XMLSerializer().serializeToString(clone)], { type: 'image/svg+xml' });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
   URL.revokeObjectURL(url);
-}
+};
 
 // ── Custom Tooltip ────────────────────────────────────────────────────────────
-export { C };
+export { CHART_PALETTE };
+
 export const CyberTooltip = ({ active, payload, label }: TooltipContentProps) => {
   if (!active || !payload?.length) return null;
   return (
@@ -46,9 +47,16 @@ export const CyberTooltip = ({ active, payload, label }: TooltipContentProps) =>
       {label != null && (
         <p style={{ color: '#7d8590', marginBottom: 4, fontWeight: 500 }}>{label}</p>
       )}
-      {payload.map((p, i) => (
-        <p key={i} style={{ color: p.color ?? C[i % C.length], fontWeight: 600, margin: 0 }}>
-          {p.name}: <span style={{ color: '#e6edf3' }}>{p.value}</span>
+      {payload.map((entry, entryIndex) => (
+        <p
+          key={`${String(entry.name)}-${entryIndex}`}
+          style={{
+            color: entry.color ?? CHART_PALETTE[entryIndex % CHART_PALETTE.length],
+            fontWeight: 600,
+            margin: 0,
+          }}
+        >
+          {entry.name}: <span style={{ color: '#e6edf3' }}>{entry.value}</span>
         </p>
       ))}
     </div>
@@ -59,8 +67,9 @@ export const CyberTooltip = ({ active, payload, label }: TooltipContentProps) =>
 export const TreemapCell = (props: TreemapNode) => {
   const { x, y, width, height, name, value, index, depth } = props;
   if (!width || !height || depth > 1) return <g />;
-  const color = C[index % C.length];
+  const color = CHART_PALETTE[index % CHART_PALETTE.length];
   const showLabel = width > 48 && height > 22;
+  const displayName = name.length > 16 ? `${name.slice(0, 14)}…` : name;
   return (
     <g>
       <rect
@@ -85,7 +94,7 @@ export const TreemapCell = (props: TreemapNode) => {
               pointerEvents: 'none',
             }}
           >
-            {name.length > 16 ? name.slice(0, 14) + '…' : name}
+            {displayName}
           </text>
           {value && (
             <text
@@ -118,17 +127,19 @@ interface NetEdge {
   weight: number;
 }
 
-function buildCoAuthorGraph(articles: AggregatedArticle[]): { nodes: NetNode[]; edges: NetEdge[] } {
+const buildCoAuthorGraph = (
+  articles: AggregatedArticle[],
+): { nodes: NetNode[]; edges: NetEdge[] } => {
   const authorCount = new Map<string, number>();
   const coCount = new Map<string, number>();
   const SEP = '\x00';
 
-  for (const art of articles) {
-    const authors = (art.authors ?? '')
+  for (const article of articles) {
+    const authors = (article.authors ?? '')
       .split(/,\s*/)
-      .map((a) => a.trim())
-      .filter((a) => a.length > 1 && a.length < 60);
-    for (const a of authors) authorCount.set(a, (authorCount.get(a) ?? 0) + 1);
+      .map((name) => name.trim())
+      .filter((name) => name.length > 1 && name.length < 60);
+    for (const author of authors) authorCount.set(author, (authorCount.get(author) ?? 0) + 1);
     for (let i = 0; i < authors.length; i++) {
       for (let j = i + 1; j < authors.length; j++) {
         const key = [authors[i], authors[j]].sort().join(SEP);
@@ -138,71 +149,73 @@ function buildCoAuthorGraph(articles: AggregatedArticle[]): { nodes: NetNode[]; 
   }
 
   const topAuthors = [...authorCount.entries()]
-    .sort((a, b) => b[1] - a[1])
+    .sort((left, right) => right[1] - left[1])
     .slice(0, 15)
-    .map(([n]) => n);
+    .map(([authorName]) => authorName);
   const topSet = new Set(topAuthors);
-  const W = 580,
-    H = 420;
+  const CANVAS_WIDTH = 580;
+  const CANVAS_HEIGHT = 420;
 
-  const nodes: NetNode[] = topAuthors.map((name, i) => {
-    const angle = (i / topAuthors.length) * Math.PI * 2 - Math.PI / 2;
+  const nodes: NetNode[] = topAuthors.map((name, index) => {
+    const angle = (index / topAuthors.length) * Math.PI * 2 - Math.PI / 2;
     return {
       id: name,
       label: name,
       weight: authorCount.get(name) ?? 1,
-      x: W / 2 + Math.cos(angle) * W * 0.31,
-      y: H / 2 + Math.sin(angle) * H * 0.34,
+      x: CANVAS_WIDTH / 2 + Math.cos(angle) * CANVAS_WIDTH * 0.31,
+      y: CANVAS_HEIGHT / 2 + Math.sin(angle) * CANVAS_HEIGHT * 0.34,
     };
   });
 
   const edges: NetEdge[] = [];
   for (const [key, weight] of coCount.entries()) {
     const sep = key.indexOf(SEP);
-    const a = key.slice(0, sep),
-      b = key.slice(sep + 1);
-    if (topSet.has(a) && topSet.has(b)) edges.push({ source: a, target: b, weight });
+    const authorA = key.slice(0, sep);
+    const authorB = key.slice(sep + 1);
+    if (topSet.has(authorA) && topSet.has(authorB)) {
+      edges.push({ source: authorA, target: authorB, weight });
+    }
   }
 
   // Spring-force simulation (mutable working arrays)
-  const px = nodes.map((n) => n.x),
-    py = nodes.map((n) => n.y);
-  const vx = new Float64Array(nodes.length),
-    vy = new Float64Array(nodes.length);
+  const px = nodes.map((node) => node.x);
+  const py = nodes.map((node) => node.y);
+  const vx = new Float64Array(nodes.length);
+  const vy = new Float64Array(nodes.length);
 
   for (let iter = 0; iter < 160; iter++) {
-    const fx = new Float64Array(nodes.length),
-      fy = new Float64Array(nodes.length);
+    const fx = new Float64Array(nodes.length);
+    const fy = new Float64Array(nodes.length);
     for (let i = 0; i < nodes.length; i++) {
       for (let j = i + 1; j < nodes.length; j++) {
-        const dx = px[j] - px[i],
-          dy = py[j] - py[i];
+        const dx = px[j] - px[i];
+        const dy = py[j] - py[i];
         const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-        const f = 2800 / (dist * dist);
-        fx[i] -= (f * dx) / dist;
-        fy[i] -= (f * dy) / dist;
-        fx[j] += (f * dx) / dist;
-        fy[j] += (f * dy) / dist;
+        const force = 2800 / (dist * dist);
+        fx[i] -= (force * dx) / dist;
+        fy[i] -= (force * dy) / dist;
+        fx[j] += (force * dx) / dist;
+        fy[j] += (force * dy) / dist;
       }
     }
-    for (const e of edges) {
-      const si = nodes.findIndex((n) => n.id === e.source);
-      const ti = nodes.findIndex((n) => n.id === e.target);
-      if (si === -1 || ti === -1) continue;
-      const dx = px[ti] - px[si],
-        dy = py[ti] - py[si];
+    for (const edge of edges) {
+      const sourceIndex = nodes.findIndex((node) => node.id === edge.source);
+      const targetIndex = nodes.findIndex((node) => node.id === edge.target);
+      if (sourceIndex === -1 || targetIndex === -1) continue;
+      const dx = px[targetIndex] - px[sourceIndex];
+      const dy = py[targetIndex] - py[sourceIndex];
       const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-      const f = (dist - 120) * 0.025;
-      fx[si] += (f * dx) / dist;
-      fy[si] += (f * dy) / dist;
-      fx[ti] -= (f * dx) / dist;
-      fy[ti] -= (f * dy) / dist;
+      const force = (dist - 120) * 0.025;
+      fx[sourceIndex] += (force * dx) / dist;
+      fy[sourceIndex] += (force * dy) / dist;
+      fx[targetIndex] -= (force * dx) / dist;
+      fy[targetIndex] -= (force * dy) / dist;
     }
     for (let i = 0; i < nodes.length; i++) {
-      vx[i] = (vx[i] + fx[i] + (W / 2 - px[i]) * 0.012) * 0.82;
-      vy[i] = (vy[i] + fy[i] + (H / 2 - py[i]) * 0.012) * 0.82;
-      px[i] = Math.max(24, Math.min(W - 24, px[i] + vx[i]));
-      py[i] = Math.max(24, Math.min(H - 24, py[i] + vy[i]));
+      vx[i] = (vx[i] + fx[i] + (CANVAS_WIDTH / 2 - px[i]) * 0.012) * 0.82;
+      vy[i] = (vy[i] + fy[i] + (CANVAS_HEIGHT / 2 - py[i]) * 0.012) * 0.82;
+      px[i] = Math.max(24, Math.min(CANVAS_WIDTH - 24, px[i] + vx[i]));
+      py[i] = Math.max(24, Math.min(CANVAS_HEIGHT - 24, py[i] + vy[i]));
     }
   }
   for (let i = 0; i < nodes.length; i++) {
@@ -210,7 +223,7 @@ function buildCoAuthorGraph(articles: AggregatedArticle[]): { nodes: NetNode[]; 
     nodes[i].y = py[i];
   }
   return { nodes, edges };
-}
+};
 
 export const CoAuthorshipNetwork: React.FC<{ articles: AggregatedArticle[] }> = ({ articles }) => {
   const { t } = useTranslation();
@@ -223,12 +236,12 @@ export const CoAuthorshipNetwork: React.FC<{ articles: AggregatedArticle[] }> = 
       type: 'image/svg+xml',
     });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'co-authorship-network.svg';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'co-authorship-network.svg';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
     URL.revokeObjectURL(url);
   }, []);
 
@@ -239,7 +252,7 @@ export const CoAuthorshipNetwork: React.FC<{ articles: AggregatedArticle[] }> = 
       </p>
     );
   }
-  const maxW = Math.max(...nodes.map((n) => n.weight));
+  const maxWeight = Math.max(...nodes.map((node) => node.weight));
 
   return (
     <div>
@@ -267,42 +280,50 @@ export const CoAuthorshipNetwork: React.FC<{ articles: AggregatedArticle[] }> = 
             <stop offset="100%" stopColor={DASHBOARD_ACCENT} stopOpacity="0" />
           </radialGradient>
         </defs>
-        {edges.map((e, i) => {
-          const s = nodes.find((n) => n.id === e.source)!;
-          const t = nodes.find((n) => n.id === e.target)!;
+        {edges.map((edge) => {
+          const sourceNode = nodes.find((node) => node.id === edge.source);
+          const targetNode = nodes.find((node) => node.id === edge.target);
+          if (!sourceNode || !targetNode) return null;
           return (
             <line
-              key={i}
-              x1={s.x}
-              y1={s.y}
-              x2={t.x}
-              y2={t.y}
+              key={`${edge.source}\0${edge.target}`}
+              x1={sourceNode.x}
+              y1={sourceNode.y}
+              x2={targetNode.x}
+              y2={targetNode.y}
               stroke={DASHBOARD_ACCENT}
-              strokeOpacity={Math.min(0.6, 0.12 + e.weight * 0.14)}
-              strokeWidth={Math.min(e.weight * 0.8 + 0.5, 3)}
+              strokeOpacity={Math.min(0.6, 0.12 + edge.weight * 0.14)}
+              strokeWidth={Math.min(edge.weight * 0.8 + 0.5, 3)}
             />
           );
         })}
-        {nodes.map((n, i) => {
-          const r = Math.max(7, Math.min(18, 5 + (n.weight / maxW) * 13));
-          const color = C[i % C.length];
-          const shortName = n.label.includes(',')
-            ? n.label.split(',')[0].trim()
-            : (n.label.split(' ').pop() ?? n.label);
+        {nodes.map((node, nodeIndex) => {
+          const radius = Math.max(7, Math.min(18, 5 + (node.weight / maxWeight) * 13));
+          const color = CHART_PALETTE[nodeIndex % CHART_PALETTE.length];
+          const shortName = node.label.includes(',')
+            ? node.label.split(',')[0].trim()
+            : (node.label.split(' ').pop() ?? node.label);
+          const labelText = shortName.length > 14 ? `${shortName.slice(0, 12)}…` : shortName;
           return (
-            <g key={n.id}>
-              <circle cx={n.x} cy={n.y} r={r + 5} fill="url(#ng)" />
+            <g key={node.id}>
+              <circle cx={node.x} cy={node.y} r={radius + 5} fill="url(#ng)" />
               <circle
-                cx={n.x}
-                cy={n.y}
-                r={r}
+                cx={node.x}
+                cy={node.y}
+                r={radius}
                 fill={color}
                 fillOpacity={0.82}
                 stroke={color}
                 strokeWidth={1.5}
               />
-              <text x={n.x} y={n.y + r + 11} textAnchor="middle" fontSize="8.5" fill="#7d8590">
-                {shortName.length > 14 ? shortName.slice(0, 12) + '…' : shortName}
+              <text
+                x={node.x}
+                y={node.y + radius + 11}
+                textAnchor="middle"
+                fontSize="8.5"
+                fill="#7d8590"
+              >
+                {labelText}
               </text>
             </g>
           );

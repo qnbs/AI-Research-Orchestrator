@@ -82,68 +82,71 @@ const CustomTooltip: React.FC<{ active?: boolean; payload?: Array<{ payload: Aut
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-function parseAuthors(articles: AggregatedArticle[]): AuthorNode[] {
+const parseAuthors = (articles: AggregatedArticle[]): AuthorNode[] => {
   const map = new Map<string, { articles: AggregatedArticle[]; collaborators: Set<string> }>();
 
   articles.forEach((article) => {
     const authors = article.authors
       .split(/,\s*/)
-      .map((a) => a.trim())
+      .map((name) => name.trim())
       .filter(Boolean);
     authors.forEach((author) => {
       if (!map.has(author)) map.set(author, { articles: [], collaborators: new Set() });
-      map.get(author)!.articles.push(article);
+      const entry = map.get(author);
+      if (!entry) return;
+      entry.articles.push(article);
       authors
-        .filter((a) => a !== author)
-        .forEach((collab) => map.get(author)!.collaborators.add(collab));
+        .filter((other) => other !== author)
+        .forEach((collab) => entry.collaborators.add(collab));
     });
   });
 
   const nodes: AuthorNode[] = [];
-  let i = 0;
+  let nodeIndex = 0;
   map.forEach((data, name) => {
     if (data.articles.length < 1) return;
     const avgRelevance =
-      data.articles.reduce((s, a) => s + (a.relevanceScore ?? 0), 0) / data.articles.length;
-    const angle = (i / map.size) * Math.PI * 2;
+      data.articles.reduce((sum, article) => sum + (article.relevanceScore ?? 0), 0) /
+      data.articles.length;
+    const angle = (nodeIndex / map.size) * Math.PI * 2;
     const radius = 30 + Math.log(data.articles.length + 1) * 15;
     nodes.push({
       name,
       articleCount: data.articles.length,
       avgRelevance,
-      journals: [...new Set(data.articles.map((a) => a.journal).filter(Boolean))],
+      journals: [...new Set(data.articles.map((article) => article.journal).filter(Boolean))],
       collaborators: [...data.collaborators].slice(0, 5),
       x: 50 + Math.cos(angle) * radius,
       y: 50 + Math.sin(angle) * radius,
     });
-    i++;
+    nodeIndex++;
   });
 
-  return nodes.sort((a, b) => b.articleCount - a.articleCount).slice(0, 40);
-}
+  return nodes.sort((left, right) => right.articleCount - left.articleCount).slice(0, 40);
+};
 
-function getYearDistribution(articles: AggregatedArticle[], unknownLabel: string) {
+const getYearDistribution = (articles: AggregatedArticle[], unknownLabel: string) => {
   const map = new Map<string, number>();
-  articles.forEach((a) => {
-    const y = a.pubYear || unknownLabel;
-    map.set(y, (map.get(y) ?? 0) + 1);
+  articles.forEach((article) => {
+    const year = article.pubYear || unknownLabel;
+    map.set(year, (map.get(year) ?? 0) + 1);
   });
   return [...map.entries()]
     .map(([year, count]) => ({ year, count }))
-    .sort((a, b) => a.year.localeCompare(b.year));
-}
+    .sort((left, right) => left.year.localeCompare(right.year));
+};
 
-function getJournalDistribution(articles: AggregatedArticle[], unknownLabel: string) {
+const getJournalDistribution = (articles: AggregatedArticle[], unknownLabel: string) => {
   const map = new Map<string, number>();
-  articles.forEach((a) => {
-    const j = a.journal || unknownLabel;
-    map.set(j, (map.get(j) ?? 0) + 1);
+  articles.forEach((article) => {
+    const journal = article.journal || unknownLabel;
+    map.set(journal, (map.get(journal) ?? 0) + 1);
   });
   return [...map.entries()]
     .map(([name, value]) => ({ name, value }))
-    .sort((a, b) => b.value - a.value)
+    .sort((left, right) => right.value - left.value)
     .slice(0, 8);
-}
+};
 
 // ── Tab Types ─────────────────────────────────────────────────────────────────
 type Tab = 'authors' | 'years' | 'journals' | 'keywords';

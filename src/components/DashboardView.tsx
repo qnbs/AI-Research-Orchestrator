@@ -31,7 +31,7 @@ import {
   CyberTooltip,
   TreemapCell,
   CoAuthorshipNetwork,
-  C,
+  CHART_PALETTE,
 } from './dashboard/DashboardSubComponents';
 
 interface DashboardViewProps {
@@ -149,15 +149,15 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({ onFilterChange, 
               <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: '#7d8590' }} />
               <Tooltip content={(props) => <CyberTooltip {...props} />} />
               <Bar dataKey="count" name={t('dashboard.series.articles')} radius={[4, 4, 0, 0]}>
-                {data.years.map((_, i) => (
-                  <Cell key={i} fill={C[0]} fillOpacity={0.82} />
+                {data.years.map((row) => (
+                  <Cell key={row.year} fill={CHART_PALETTE[0]} fillOpacity={0.82} />
                 ))}
               </Bar>
               {data.years.length > 8 && (
                 <Brush
                   dataKey="year"
                   height={18}
-                  stroke={C[0]}
+                  stroke={CHART_PALETTE[0]}
                   fill="color-mix(in srgb, var(--color-brand-accent) 12%, transparent)"
                   travellerWidth={6}
                 />
@@ -201,15 +201,15 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({ onFilterChange, 
                   onViewChange('knowledgeBase');
                 }}
               >
-                {data.journals.map((_, i) => (
-                  <Cell key={i} fill={C[1]} fillOpacity={0.82} />
+                {data.journals.map((row) => (
+                  <Cell key={row.name} fill={CHART_PALETTE[1]} fillOpacity={0.82} />
                 ))}
               </Bar>
               {data.journals.length > 6 && (
                 <Brush
                   dataKey="name"
                   height={14}
-                  stroke={C[1]}
+                  stroke={CHART_PALETTE[1]}
                   fill={dashboardAccentFill(0.08)}
                   travellerWidth={6}
                 />
@@ -247,8 +247,13 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({ onFilterChange, 
                   onViewChange('knowledgeBase');
                 }}
               >
-                {data.types.map((_, i) => (
-                  <Cell key={i} fill={C[i % C.length]} fillOpacity={0.82} stroke="transparent" />
+                {data.types.map((row, typeIndex) => (
+                  <Cell
+                    key={row.name}
+                    fill={CHART_PALETTE[typeIndex % CHART_PALETTE.length]}
+                    fillOpacity={0.82}
+                    stroke="transparent"
+                  />
                 ))}
               </Pie>
               <Tooltip content={(props) => <CyberTooltip {...props} />} />
@@ -314,7 +319,7 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({ onFilterChange, 
                 labelLine={{ stroke: 'rgba(125,133,144,0.4)' }}
               >
                 <Cell fill={DASHBOARD_ACCENT} fillOpacity={0.85} stroke="transparent" />
-                <Cell fill={C[1]} fillOpacity={0.85} stroke="transparent" />
+                <Cell fill={CHART_PALETTE[1]} fillOpacity={0.85} stroke="transparent" />
               </Pie>
               <Tooltip content={(props) => <CyberTooltip {...props} />} />
               <Legend
