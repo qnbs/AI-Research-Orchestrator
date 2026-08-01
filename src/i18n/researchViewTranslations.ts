@@ -27,6 +27,9 @@ export const researchViewTranslations = {
     'research.continue.title': 'Continue Your Research',
     'research.continue.body': 'Use the synthesized topic below to start a full literature review.',
     'research.continue.cta': 'Start Full Review on This Topic',
+    'research.error.analysis': 'Analysis failed. Please try again.',
+    'research.error.similar': 'Could not load similar articles.',
+    'research.error.online': 'Could not load online discussions.',
   },
   de: {
     'research.title': 'Recherche-Assistent',
@@ -55,5 +58,8 @@ export const researchViewTranslations = {
     'research.continue.body':
       'Nutzen Sie das synthetisierte Thema unten, um eine vollständige Literaturübersicht zu starten.',
     'research.continue.cta': 'Vollständige Übersicht zu diesem Thema starten',
+    'research.error.analysis': 'Analyse fehlgeschlagen. Bitte erneut versuchen.',
+    'research.error.similar': 'Ähnliche Artikel konnten nicht geladen werden.',
+    'research.error.online': 'Online-Diskussionen konnten nicht geladen werden.',
   },
 } as const;
