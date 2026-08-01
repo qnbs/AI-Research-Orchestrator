@@ -13,7 +13,7 @@ export const HistoryRow: React.FC<{
   const { t } = useTranslation();
   const dur =
     trace.completedAt && trace.startedAt
-      ? ((trace.completedAt - trace.startedAt) / 1000).toFixed(1) + 's'
+      ? `${((trace.completedAt - trace.startedAt) / 1000).toFixed(1)}s`
       : '–';
   const date = new Date(trace.startedAt).toLocaleString(undefined, {
     month: 'short',

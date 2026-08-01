@@ -13,6 +13,7 @@ import {
 } from '../store/slices/collectionsSlice';
 import type { ResearchCollection } from '../types';
 import { useTranslation } from '../hooks/useTranslation';
+import { ConfirmationModal } from './ConfirmationModal';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const COLLECTION_COLORS = [
@@ -433,6 +434,7 @@ const CollectionsView: React.FC = () => {
   const [editTarget, setEditTarget] = useState<ResearchCollection | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [shareTarget, setShareTarget] = useState<string | null>(null);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
   const handleCreate = useCallback(
     (data: Partial<ResearchCollection>) => {
@@ -463,15 +465,16 @@ const CollectionsView: React.FC = () => {
     [dispatch, editTarget],
   );
 
-  const handleDelete = useCallback(
-    (id: string) => {
-      if (window.confirm(t('collections.delete.confirm'))) {
-        dispatch(deleteCollection(id));
-        if (selectedId === id) setSelectedId(null);
-      }
-    },
-    [dispatch, selectedId, t],
-  );
+  const handleDeleteRequest = useCallback((id: string) => {
+    setDeleteTargetId(id);
+  }, []);
+
+  const handleDeleteConfirm = useCallback(() => {
+    if (!deleteTargetId) return;
+    dispatch(deleteCollection(deleteTargetId));
+    if (selectedId === deleteTargetId) setSelectedId(null);
+    setDeleteTargetId(null);
+  }, [dispatch, deleteTargetId, selectedId]);
 
   const handleShare = useCallback(
     (collection: ResearchCollection) => {
@@ -536,7 +539,7 @@ const CollectionsView: React.FC = () => {
                 key={col.id}
                 collection={col}
                 onEdit={(c) => setEditTarget(c)}
-                onDelete={handleDelete}
+                onDelete={handleDeleteRequest}
                 onShare={handleShare}
                 onSelect={(c) => setSelectedId((s) => (s === c.id ? null : c.id))}
                 isSelected={selectedId === col.id}
@@ -566,6 +569,15 @@ const CollectionsView: React.FC = () => {
             ) : null;
           })()}
       </AnimatePresence>
+      {deleteTargetId && (
+        <ConfirmationModal
+          onConfirm={handleDeleteConfirm}
+          onCancel={() => setDeleteTargetId(null)}
+          title={t('collections.delete.title')}
+          message={t('collections.delete.confirm')}
+          confirmText={t('collections.delete.action')}
+        />
+      )}
     </div>
   );
 };
