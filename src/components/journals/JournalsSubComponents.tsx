@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useJournalsView } from './JournalsViewContext';
 import { Article, JournalCandidate } from '../../types';
-import { useTranslation } from '../../hooks/useTranslation';
+import { useTranslation, type TranslationKey } from '../../hooks/useTranslation';
 import { ChevronRightIcon } from '../icons/ChevronRightIcon';
 import { SearchIcon } from '../icons/SearchIcon';
 import { SparklesIcon } from '../icons/SparklesIcon';
@@ -30,6 +30,21 @@ const categoryIcons: { [key: string]: React.FC<React.SVGProps<SVGSVGElement>> } 
   'Life Sciences & Cell Biology': DnaIcon,
   'Clinical Medicine': HeartIcon,
   'Methods & Computational': ChartBarIcon,
+};
+
+const categoryTranslationKeys: Record<string, TranslationKey> = {
+  'Open Access Mega-Journals': 'journals.category.open_access_mega_journals',
+  Multidisciplinary: 'journals.category.multidisciplinary',
+  'Life Sciences & Cell Biology': 'journals.category.life_sciences_cell_biology',
+  'Clinical Medicine': 'journals.category.clinical_medicine',
+  'Methods & Computational': 'journals.category.methods_computational',
+};
+
+const matchTypeTranslationKeys: Partial<Record<string, TranslationKey>> = {
+  exact: 'journals.match.exact',
+  alias: 'journals.match.alias',
+  abbreviation: 'journals.match.abbreviation',
+  partial: 'journals.match.partial',
 };
 
 export const JournalCard: React.FC<{ name: string; description: string; onClick: () => void }> = ({
@@ -308,7 +323,7 @@ export const FeaturedJournalsView: React.FC = () => {
               }`}
             >
               <Icon className="h-5 w-5" />
-              {category.category}
+              {t(categoryTranslationKeys[category.category] ?? category.category)}
             </button>
           );
         })}
@@ -365,7 +380,7 @@ export const JournalDisambiguationView: React.FC = () => {
               <p>{candidate.description}</p>
               <p className="flex items-center gap-2 text-xs">
                 <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-brand-primary/10 text-brand-primary border border-brand-primary/20 font-medium">
-                  {candidate.matchType}
+                  {t(matchTypeTranslationKeys[candidate.matchType] ?? candidate.matchType)}
                 </span>
                 <span>
                   {candidate.confidence}% {t('journals.disambiguation.confidence')}

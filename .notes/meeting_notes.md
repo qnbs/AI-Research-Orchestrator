@@ -30,10 +30,13 @@
 - **KB / Article detail / Dashboard / Scientometric i18n (follow-up branch):** EN+DE via `kbChromeTranslations.ts` + `dashboardTranslations.ts`; Dashboard chart primitives extracted; ratchet covers KB + dashboard surfaces.
   - **Why:** Continue residual English-only chrome after hubs/debugger/collections.
   - **Impact:** Knowledge Base filters/list/delete, ArticleDetailPanel discovery tools, Dashboard charts, and ScientometricHub tabs localized.
+- **Residual chrome / enum-chip i18n (this branch):** shared tooltip/notification/loading/pipeline/KB-item chrome plus author/journal featured categories, match types, and OA policy chips use EN+DE labels.
+  - **Why:** Close the remaining chrome and enum-label i18n backlog after #133/#134.
+  - **Impact:** English enum/category values stay in state and JSON data; UI labels render through `t()` with raw fallback for unknown values.
 
 ## Still open
 
-- Optional i18n for journal category/matchType/oaPolicy enums and author featured-category chips (protocol labels).
+- No known residual chrome or enum-label i18n backlog; continue auditing any newly introduced surfaces with the ratchet.
 - Full E2E job remains non-blocking until promotion criteria in `docs/e2e-ci-backlog.md`.
 
 ## Process

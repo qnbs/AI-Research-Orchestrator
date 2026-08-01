@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { XIcon } from './icons/XIcon';
 import { CheckCircleIcon } from './icons/CheckCircleIcon';
 import { InfoIcon } from './icons/InfoIcon';
+import { useTranslation } from '../hooks/useTranslation';
 
 interface NotificationProps {
   message: string;
@@ -18,6 +19,7 @@ export const Notification: React.FC<NotificationProps> = ({
   position,
   duration,
 }) => {
+  const { t } = useTranslation();
   const [exiting, setExiting] = useState(false);
 
   useEffect(() => {
@@ -61,9 +63,10 @@ export const Notification: React.FC<NotificationProps> = ({
       <Icon className="h-6 w-6 mr-3 flex-shrink-0" />
       <p className="flex-grow text-sm font-medium">{message}</p>
       <button
+        type="button"
         onClick={handleClose}
         className="ml-4 p-1 rounded-full hover:bg-surface-hover"
-        aria-label="Close notification"
+        aria-label={t('chrome.notification.close')}
       >
         <XIcon className="h-5 w-5" />
       </button>

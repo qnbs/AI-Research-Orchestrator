@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from '../hooks/useTranslation';
 
 interface LoadingIndicatorProps {
   title: string;
@@ -105,6 +106,7 @@ const PipelineTimeline: React.FC<{
   phases: readonly string[];
   currentIndex: number;
 }> = ({ phases, currentIndex }) => {
+  const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll active chip into view
@@ -123,7 +125,7 @@ const PipelineTimeline: React.FC<{
       className="flex gap-2 overflow-x-auto snap-x snap-mandatory py-3 mt-4 -mx-4 px-4"
       style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
       role="list"
-      aria-label="Agent pipeline phases"
+      aria-label={t('chrome.loading.pipeline_phases')}
     >
       {phases.map((phase, i) => {
         const isDone = i < currentIndex;

@@ -11,6 +11,7 @@
 import React, { memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { AgentStatus } from '../../types';
+import { useTranslation } from '../../hooks/useTranslation';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -181,75 +182,80 @@ const VPipelineStep: React.FC<PipelineStepProps> = ({
   status = 'idle',
   onStepClick,
   className = '',
-}) => (
-  <ol className={`space-y-0 ${className}`} aria-label="Pipeline steps">
-    {steps.map((step, i) => {
-      const stepStatus = resolveStepStatus(i, currentStep, status, step.status);
-      const isCurrent = i === currentStep;
-      const isLast = i === steps.length - 1;
+}) => {
+  const { t } = useTranslation();
 
-      return (
-        <li key={step.id} className="timeline-step" aria-current={isCurrent ? 'step' : undefined}>
-          <motion.div
-            className={`pipeline-node pipeline-node--${stepStatus} relative z-10`}
-            animate={stepStatus === 'running' ? { scale: [1, 1.1, 1] } : { scale: 1 }}
-            transition={stepStatus === 'running' ? { duration: 1.5, repeat: Infinity } : {}}
-            onClick={onStepClick ? () => onStepClick(i) : undefined}
-          >
-            <NodeIcon status={stepStatus} icon={step.icon} label={step.label} />
-          </motion.div>
+  return (
+    <ol className={`space-y-0 ${className}`} aria-label={t('chrome.pipeline.steps')}>
+      {steps.map((step, i) => {
+        const stepStatus = resolveStepStatus(i, currentStep, status, step.status);
+        const isCurrent = i === currentStep;
+        const isLast = i === steps.length - 1;
 
-          <div className="flex-1 min-w-0 pb-1">
-            <p
-              className={`text-sm font-semibold ${
-                stepStatus === 'running'
-                  ? 'text-brand-accent'
-                  : stepStatus === 'done'
-                    ? 'text-accent-green'
-                    : stepStatus === 'error'
-                      ? 'text-red-400'
-                      : 'text-text-secondary'
-              }`}
+        return (
+          <li key={step.id} className="timeline-step" aria-current={isCurrent ? 'step' : undefined}>
+            <motion.div
+              className={`pipeline-node pipeline-node--${stepStatus} relative z-10`}
+              animate={stepStatus === 'running' ? { scale: [1, 1.1, 1] } : { scale: 1 }}
+              transition={stepStatus === 'running' ? { duration: 1.5, repeat: Infinity } : {}}
+              onClick={onStepClick ? () => onStepClick(i) : undefined}
             >
-              {step.label}
-            </p>
-            <AnimatePresence>
-              {(isCurrent || stepStatus === 'running') && step.description && (
-                <motion.p
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="text-xs text-text-secondary mt-0.5"
-                >
-                  {step.description}
-                </motion.p>
-              )}
-            </AnimatePresence>
-          </div>
+              <NodeIcon status={stepStatus} icon={step.icon} label={step.label} />
+            </motion.div>
 
-          {!isLast && (
-            <div
-              className="absolute left-[17px] top-9 bottom-0 w-px"
-              style={{
-                // Decorative connector line, not a component boundary -
-                // exempt from WCAG 2.2 AA SC 1.4.11, same as .timeline-step's
-                // own connector in index.css.
-                background:
-                  stepStatus === 'done'
-                    ? 'linear-gradient(to bottom, var(--color-brand-accent), var(--color-border-subtle))'
-                    : 'var(--color-border-subtle)',
-              }}
-            />
-          )}
-        </li>
-      );
-    })}
-  </ol>
-);
+            <div className="flex-1 min-w-0 pb-1">
+              <p
+                className={`text-sm font-semibold ${
+                  stepStatus === 'running'
+                    ? 'text-brand-accent'
+                    : stepStatus === 'done'
+                      ? 'text-accent-green'
+                      : stepStatus === 'error'
+                        ? 'text-red-400'
+                        : 'text-text-secondary'
+                }`}
+              >
+                {step.label}
+              </p>
+              <AnimatePresence>
+                {(isCurrent || stepStatus === 'running') && step.description && (
+                  <motion.p
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="text-xs text-text-secondary mt-0.5"
+                  >
+                    {step.description}
+                  </motion.p>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {!isLast && (
+              <div
+                className="absolute left-[17px] top-9 bottom-0 w-px"
+                style={{
+                  // Decorative connector line, not a component boundary -
+                  // exempt from WCAG 2.2 AA SC 1.4.11, same as .timeline-step's
+                  // own connector in index.css.
+                  background:
+                    stepStatus === 'done'
+                      ? 'linear-gradient(to bottom, var(--color-brand-accent), var(--color-border-subtle))'
+                      : 'var(--color-border-subtle)',
+                }}
+              />
+            )}
+          </li>
+        );
+      })}
+    </ol>
+  );
+};
 
 // ─── Main export ──────────────────────────────────────────────────────────────
 
 const PipelineStepInner: React.FC<PipelineStepProps> = (props) => {
+  const { t } = useTranslation();
   const {
     steps,
     currentStep,
@@ -266,7 +272,7 @@ const PipelineStepInner: React.FC<PipelineStepProps> = (props) => {
   return (
     <div
       role="list"
-      aria-label="Pipeline steps"
+      aria-label={t('chrome.pipeline.steps')}
       className={`flex items-start gap-0 w-full ${className}`}
     >
       {steps.map((step, i) => {

@@ -10,7 +10,7 @@ import { BrainIcon } from '../icons/BrainIcon';
 import { BeakerIcon } from '../icons/BeakerIcon';
 import { ChartBarIcon } from '../icons/ChartBarIcon';
 import { SearchIcon } from '../icons/SearchIcon';
-import { useTranslation } from '../../hooks/useTranslation';
+import { useTranslation, type TranslationKey } from '../../hooks/useTranslation';
 
 export { AuthorProfileView } from './AuthorProfileView';
 
@@ -24,6 +24,18 @@ const categoryIcons: { [key: string]: React.FC<React.SVGProps<SVGSVGElement>> } 
   'Cardiology & Public Health': HeartIcon,
   'Bioengineering & Regenerative Medicine': BeakerIcon,
   'AI & Computational Biology': ChartBarIcon,
+};
+
+const categoryTranslationKeys: Record<string, TranslationKey> = {
+  'Genetics & Genomics': 'authors.category.genetics_genomics',
+  'CRISPR & Gene Editing': 'authors.category.crispr_gene_editing',
+  'Cancer Research': 'authors.category.cancer_research',
+  'Immunology & Infectious Disease': 'authors.category.immunology_infectious_disease',
+  Neuroscience: 'authors.category.neuroscience',
+  'Biochemistry & Pharmacology': 'authors.category.biochemistry_pharmacology',
+  'Cardiology & Public Health': 'authors.category.cardiology_public_health',
+  'Bioengineering & Regenerative Medicine': 'authors.category.bioengineering_regenerative_medicine',
+  'AI & Computational Biology': 'authors.category.ai_computational_biology',
 };
 
 export const AuthorCard: React.FC<{ name: string; description: string; onClick: () => void }> = ({
@@ -177,7 +189,7 @@ export const FeaturedAuthorsView: React.FC = () => {
                 }`}
               >
                 <Icon className="h-5 w-5" />
-                {category.category}
+                {t(categoryTranslationKeys[category.category] ?? category.category)}
               </button>
             );
           })}

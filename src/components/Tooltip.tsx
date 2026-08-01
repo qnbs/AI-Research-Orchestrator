@@ -1,6 +1,7 @@
 import React, { useState, useId } from 'react';
 import { InfoIcon } from './icons/InfoIcon';
 import { XIcon } from './icons/XIcon';
+import { useTranslation } from '../hooks/useTranslation';
 
 interface TooltipProps {
   content: React.ReactNode;
@@ -33,6 +34,7 @@ function hasAccessibleChildContent(node: React.ReactNode): boolean {
 }
 
 export const Tooltip: React.FC<TooltipProps> = ({ content, children, detailedContent }) => {
+  const { t } = useTranslation();
   const [isHoverVisible, setIsHoverVisible] = useState(false);
   const [isDetailVisible, setIsDetailVisible] = useState(false);
   const id = useId();
@@ -136,19 +138,21 @@ export const Tooltip: React.FC<TooltipProps> = ({ content, children, detailedCon
             <div className="flex-shrink-0 flex items-center">
               {detailedContent && !isDetailVisible && (
                 <button
+                  type="button"
                   onClick={handleDetailToggle}
                   className="text-text-secondary hover:text-brand-accent"
                   aria-expanded={isDetailVisible}
-                  aria-label="Show details"
+                  aria-label={t('chrome.tooltip.show_details')}
                 >
                   <InfoIcon className="h-4 w-4" />
                 </button>
               )}
               {isDetailVisible && (
                 <button
+                  type="button"
                   onClick={forceHide}
                   className="text-text-secondary hover:text-text-primary"
-                  aria-label="Hide details"
+                  aria-label={t('chrome.tooltip.hide_details')}
                 >
                   <XIcon className="h-4 w-4" />
                 </button>

@@ -14,6 +14,7 @@
 import React, { memo } from 'react';
 import { motion } from 'framer-motion';
 import type { RankedArticle } from '../../types';
+import { useTranslation, type TranslationKey } from '../../hooks/useTranslation';
 
 // ─── Relevance colour helper ──────────────────────────────────────────────────
 
@@ -30,35 +31,39 @@ function relevanceColor(score: number): string {
 }
 
 /** Short human-readable label for the relevance score. */
-function relevanceLabel(score: number): { label: string; className: string } {
+function relevanceLabel(score: number): { labelKey: TranslationKey; className: string } {
   if (score >= 0.85)
     return {
-      label: 'Highly Relevant',
+      labelKey: 'chrome.kb_item.relevance.high',
       className: 'bg-accent-green/10 text-accent-green border-accent-green/30',
     };
   if (score >= 0.7)
     return {
-      label: 'Relevant',
+      labelKey: 'chrome.kb_item.relevance.medium',
       className: 'bg-brand-accent/10 text-brand-accent border-brand-accent/30',
     };
   if (score >= 0.5)
     return {
-      label: 'Possibly Relevant',
+      labelKey: 'chrome.kb_item.relevance.possible',
       className: 'bg-accent-cyan/10 text-accent-cyan border-accent-cyan/30',
     };
   return {
-    label: 'Low Relevance',
+    labelKey: 'chrome.kb_item.relevance.low',
     className: 'bg-text-secondary/10 text-text-secondary border-border',
   };
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-const OABadge: React.FC = () => (
-  <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-accent-green/10 text-accent-green border border-accent-green/30">
-    🔓 Open Access
-  </span>
-);
+const OABadge: React.FC = () => {
+  const { t } = useTranslation();
+
+  return (
+    <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-accent-green/10 text-accent-green border border-accent-green/30">
+      🔓 {t('chrome.kb_item.open_access')}
+    </span>
+  );
+};
 
 const SourcePill: React.FC<{ type?: string }> = ({ type }) => {
   if (!type) return null;
@@ -107,6 +112,7 @@ const KnowledgeBaseItemInner: React.FC<KnowledgeBaseItemProps> = ({
   index = 0,
   className = '',
 }) => {
+  const { t } = useTranslation();
   const {
     pmid,
     title,
@@ -121,7 +127,7 @@ const KnowledgeBaseItemInner: React.FC<KnowledgeBaseItemProps> = ({
     summary,
   } = article;
 
-  const { label: relLabel, className: relClass } = relevanceLabel(relevanceScore);
+  const { labelKey: relLabelKey, className: relClass } = relevanceLabel(relevanceScore);
   const displaySummary = aiSummary || summary;
 
   return (
@@ -163,7 +169,7 @@ const KnowledgeBaseItemInner: React.FC<KnowledgeBaseItemProps> = ({
         <span
           className={`flex-shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded border ${relClass}`}
         >
-          {relLabel}
+          {t(relLabelKey)}
         </span>
       </div>
 
@@ -201,14 +207,15 @@ const KnowledgeBaseItemInner: React.FC<KnowledgeBaseItemProps> = ({
       {onOpen && (
         <div className="mt-3 flex justify-end">
           <button
+            type="button"
             onClick={(e) => {
               e.stopPropagation();
               onOpen();
             }}
             className="btn-neon text-[11px] px-3 py-1"
-            aria-label={`Open article: ${title}`}
+            aria-label={t('chrome.kb_item.open_aria', { title })}
           >
-            Open →
+            {t('chrome.kb_item.open')}
           </button>
         </div>
       )}
