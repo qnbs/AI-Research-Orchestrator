@@ -14,36 +14,38 @@ export interface HelpTopic {
   keywords?: string;
 }
 
+type NoteType = 'info' | 'tip' | 'warning';
+
+const NOTE_STYLES: Record<NoteType, { base: string; icon: string; title: string }> = {
+  info: { base: 'bg-sky-500/10 border-sky-500/20', icon: 'text-sky-400', title: 'text-sky-300' },
+  tip: {
+    base: 'bg-green-500/10 border-green-500/20',
+    icon: 'text-green-400',
+    title: 'text-green-300',
+  },
+  warning: {
+    base: 'bg-red-500/10 border-red-500/20',
+    icon: 'text-red-400',
+    title: 'text-red-300',
+  },
+};
+
 const Note: React.FC<{
   children: React.ReactNode;
-  type?: 'info' | 'tip' | 'warning';
+  type?: NoteType;
   title?: string;
 }> = ({ children, type = 'info', title }) => {
-  const styles = {
-    info: { base: 'bg-sky-500/10 border-sky-500/20', icon: 'text-sky-400', title: 'text-sky-300' },
-    tip: {
-      base: 'bg-green-500/10 border-green-500/20',
-      icon: 'text-green-400',
-      title: 'text-green-300',
-    },
-    warning: {
-      base: 'bg-red-500/10 border-red-500/20',
-      icon: 'text-red-400',
-      title: 'text-red-300',
-    },
-  };
-  const selectedStyle = styles[type];
+  const selectedStyle = NOTE_STYLES[type];
 
   return (
-    <div className={`p-4 my-4 rounded-lg border not-prose ${selectedStyle.base}`}>
-      <div className="flex">
-        <div className="flex-shrink-0">
-          <InfoIcon className={`h-5 w-5 ${selectedStyle.icon}`} aria-hidden="true" />
-        </div>
-        <div className="ml-3">
-          {title && <h4 className={`text-sm font-bold mb-1 ${selectedStyle.title}`}>{title}</h4>}
-          <div className="text-sm text-text-secondary">{children}</div>
-        </div>
+    <div className={`p-4 my-4 rounded-lg border not-prose flex gap-3 ${selectedStyle.base}`}>
+      <InfoIcon
+        className={`mt-0.5 h-5 w-5 flex-shrink-0 ${selectedStyle.icon}`}
+        aria-hidden="true"
+      />
+      <div>
+        {title && <h4 className={`text-sm font-bold mb-1 ${selectedStyle.title}`}>{title}</h4>}
+        <div className="text-sm text-text-secondary">{children}</div>
       </div>
     </div>
   );

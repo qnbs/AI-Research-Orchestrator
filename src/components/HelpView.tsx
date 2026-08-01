@@ -79,8 +79,8 @@ const TopicSection: React.FC<{ items: HelpTopic[]; searchTerm: string; emptyMess
 }) => {
   return (
     <div>
-      {items.map((topic, index) => (
-        <AccordionItem key={index} title={topic.title} defaultOpen={!!searchTerm}>
+      {items.map((topic) => (
+        <AccordionItem key={topic.title} title={topic.title} defaultOpen={!!searchTerm}>
           {topic.content}
         </AccordionItem>
       ))}
@@ -94,25 +94,30 @@ const TopicSection: React.FC<{ items: HelpTopic[]; searchTerm: string; emptyMess
 };
 
 /** Pure text extraction from a React node tree, used to search rendered help content. */
-const getTextFromReactNode = (node: React.ReactNode): string => {
-  const parts: string[] = [];
-  const stack: React.ReactNode[] = [node];
-  while (stack.length > 0) {
-    const cur = stack.pop();
-    if (cur == null || typeof cur === 'boolean') continue;
-    if (typeof cur === 'string' || typeof cur === 'number') {
-      parts.push(String(cur));
-      continue;
-    }
-    if (Array.isArray(cur)) {
-      for (let i = cur.length - 1; i >= 0; i -= 1) stack.push(cur[i]);
-      continue;
-    }
-    if (React.isValidElement<{ children?: React.ReactNode }>(cur)) {
-      stack.push(cur.props.children);
-    }
+export const getTextFromReactNode = (node: React.ReactNode): string => {
+  if (node == null || typeof node === 'boolean') return '';
+  if (typeof node === 'string' || typeof node === 'number' || typeof node === 'bigint') {
+    return String(node);
   }
-  return parts.join('');
+  if (React.isValidElement<{ children?: React.ReactNode }>(node)) {
+    return getTextFromReactNode(node.props.children);
+  }
+  return React.Children.toArray(node).map(getTextFromReactNode).join('');
+};
+
+export const filterHelpTopics = (
+  items: HelpTopic[],
+  searchTerm: string,
+  getText: (node: React.ReactNode) => string = getTextFromReactNode,
+): HelpTopic[] => {
+  const normalizedTerm = searchTerm.trim().toLowerCase();
+  if (!normalizedTerm) return items;
+
+  return items.filter((topic) =>
+    [topic.title, topic.keywords ?? '', getText(topic.content)].some((value) =>
+      value.toLowerCase().includes(normalizedTerm),
+    ),
+  );
 };
 
 const HelpView: React.FC<HelpViewProps> = ({ initialTab, onTabConsumed }) => {
@@ -151,35 +156,20 @@ const HelpView: React.FC<HelpViewProps> = ({ initialTab, onTabConsumed }) => {
   const faqItems = useMemo(() => getFaqItems(t), [t]);
   const glossaryItems = useMemo(() => getGlossaryItems(t), [t]);
 
-  const filteredGuideTopics = useMemo(() => {
-    if (!searchTerm) return guideTopics;
-    const lowercasedTerm = searchTerm.toLowerCase();
-    return guideTopics.filter(
-      (topic) =>
-        topic.title.toLowerCase().includes(lowercasedTerm) ||
-        topic.keywords?.toLowerCase().includes(lowercasedTerm),
-    );
-  }, [searchTerm, guideTopics]);
+  const filteredGuideTopics = useMemo(
+    () => filterHelpTopics(guideTopics, searchTerm),
+    [searchTerm, guideTopics],
+  );
 
-  const filteredFaqItems = useMemo(() => {
-    if (!searchTerm) return faqItems;
-    const lowercasedTerm = searchTerm.toLowerCase();
-    return faqItems.filter(
-      (item) =>
-        item.title.toLowerCase().includes(lowercasedTerm) ||
-        getTextFromReactNode(item.content).toLowerCase().includes(lowercasedTerm),
-    );
-  }, [searchTerm, faqItems]);
+  const filteredFaqItems = useMemo(
+    () => filterHelpTopics(faqItems, searchTerm),
+    [searchTerm, faqItems],
+  );
 
-  const filteredGlossaryItems = useMemo(() => {
-    if (!searchTerm) return glossaryItems;
-    const lowercasedTerm = searchTerm.toLowerCase();
-    return glossaryItems.filter(
-      (item) =>
-        item.title.toLowerCase().includes(lowercasedTerm) ||
-        getTextFromReactNode(item.content).toLowerCase().includes(lowercasedTerm),
-    );
-  }, [searchTerm, glossaryItems]);
+  const filteredGlossaryItems = useMemo(
+    () => filterHelpTopics(glossaryItems, searchTerm),
+    [searchTerm, glossaryItems],
+  );
 
   const tabs = useMemo<
     Array<{
