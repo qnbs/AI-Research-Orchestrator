@@ -37,7 +37,14 @@
 ## Still open
 
 - No known residual chrome or enum-label i18n backlog; continue auditing any newly introduced surfaces with the ratchet.
-- Full E2E job remains non-blocking until promotion criteria in `docs/e2e-ci-backlog.md`.
+- Vitest 4 + coverage-v8 major remains a dedicated upgrade (not started).
+- SonarCloud Quality Gate wait / hotspot review remains free-tier dashboard work (`docs/sonarcloud-setup-todo.md`).
+
+## 2026-08-01 — E2E promotion + deferred specs
+
+- **Why:** 10 consecutive CI runs logged `51 passed` with zero failures; promotion criteria in `docs/e2e-ci-backlog.md` met. Deferred Journal Hub + provider-selection specs were still unwritten.
+- **What:** Flip E2E `continue-on-error` to false; add `journal-hub.spec.ts` / `provider-flow.spec.ts` + `e2eHelpers.ts`; Claude Code Review advisory-only; refresh backlog docs.
+- **Impact:** E2E becomes a required check; new specs cover Journal Hub landing/featured/suggest and Settings AI provider cycling (including heuristic).
 
 ## Process
 
