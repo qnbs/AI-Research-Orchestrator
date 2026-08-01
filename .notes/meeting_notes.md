@@ -8,13 +8,14 @@
 - **#122** WS-F skip-to-content + `#main-content` landmark + 44×44 touch targets (merged).
 - **#123** Chrome i18n shell: Header/Welcome/OrchestratorDashboard/ConfirmationModal/FeatureErrorBoundary → `chromeTranslations.ts` + ratchet.
 - **#124** WS-G dialog a11y: Escape + scroll lock via `useFocusTrap` (merged).
-- **WS-H1 (this branch / #125):** QuickAdd / History / preset modal EN+DE via `modalTranslations.ts` + ratchet.
+- **#125** WS-H1: QuickAdd / History / preset modal EN+DE via `modalTranslations.ts` + ratchet (merged).
+- **WS-H2 (this branch):** CommandPalette EN+DE via `commandPaletteTranslations.ts` + ratchet; Escape/scroll lock via `useFocusTrap`.
 
 ## Still open
 
 - Issues **#74 / #78** closed on GitHub.
-- UIUX **WS-H2 next** — CommandPalette command titles + remaining InputForm/Settings chrome i18n; then WS-I (a11y CI / axe smoke).
-- Larger i18n backlog still outside ratchet: CommandPalette, InputForm, SettingsSubComponents, ReportDisplay, ResearchView, etc.
+- UIUX **WS-I next** — a11y CI gate / axe smoke when scope is clear; residual InputForm/Settings/ReportDisplay i18n backlog.
+- Larger i18n backlog still outside ratchet: InputForm body, SettingsSubComponents, ReportDisplay, ResearchView, etc.
 
 ## Process
 
@@ -117,7 +118,8 @@
 - **WS-E (2026-08-01):** focus rings restored on bare `focus:outline-none` sites; `.focus-ring-aa` utility; ESLint `local/no-bare-outline-none`; Playwright `keyboard-focus.spec.ts`.
 - **WS-F (2026-08-01):** skip-to-content + main landmark + 44×44 touch targets (reconstructed — full original prompt not in-repo).
 - **WS-G (2026-08-01):** dialog a11y — Escape + scroll lock via `useFocusTrap` options; Confirmation/QuickAdd/Settings/Preset modals.
-- **WS-H1 (2026-08-01 / #125):** QuickAdd / History / preset modal EN+DE via `modalTranslations.ts` + ratchet. Next: **WS-H2** (CommandPalette + form chrome i18n) then WS-I.
+- **WS-H1 (2026-08-01 / #125):** QuickAdd / History / preset modal EN+DE via `modalTranslations.ts` + ratchet.
+- **WS-H2 (2026-08-01):** CommandPalette EN+DE via `commandPaletteTranslations.ts` + ratchet. Next: **WS-I** (a11y CI / axe smoke) and residual form/settings i18n.
 - Full original WS-H→WS-I prompt still not in-repo — proceed from meeting-note summaries / prior session compaction unless user re-shares `PROMPT-ARO-HARDENING-UIUX`.
 
 ## Merged this session (chronological)

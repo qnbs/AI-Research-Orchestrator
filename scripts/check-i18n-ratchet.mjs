@@ -35,6 +35,7 @@ const MIGRATED_FILES = [
   'src/components/HistoryView.tsx',
   'src/components/history/HistoryListItem.tsx',
   'src/components/history/HistoryQuickViewModal.tsx',
+  'src/components/CommandPalette.tsx',
 ];
 
 const IGNORE_COMMENT = 'i18n-ratchet-ignore-next-line';
