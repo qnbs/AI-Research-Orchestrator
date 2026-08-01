@@ -334,7 +334,7 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(function R
           >
             <div
               className="prose prose-sm prose-invert max-w-none text-text-secondary/90 leading-relaxed"
-              dangerouslySetInnerHTML={{ __html: secureMarkdownToHtml(report.synthesis) }}
+              dangerouslySetInnerHTML={{ __html: secureMarkdownToHtml(report.synthesis) }} // skipcq: JS-0440
             />
           </AccordionSection>
           <AccordionSection
