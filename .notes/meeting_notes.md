@@ -1,3 +1,22 @@
+# 2026-08-01 — Autonomous continuation (post v0.4.0)
+
+## Landed
+
+- **#119** openai 6→7.2 (Dependabot #98 closed as superseded).
+- **#120** HelpView i18n Wave 8 (EN+DE `help.*`, catalog split under 700 lines, FAQ accuracy fixes).
+- **#118** WS-E focus rings (in flight / merge pending): `.focus-ring-aa`, ESLint guard, Playwright keyboard-focus.
+
+## Still open on GitHub
+
+- Issues **#74 / #78** are implemented via #110 but agent lacks permission to close — close manually if still open.
+- UIUX **WS-F onward** — original `PROMPT-ARO-HARDENING-UIUX` not in-repo; continue from meeting-note summaries when ready.
+
+## Process
+
+- DeepSource JS often flags ESM/`eslint-local-rules` and nesting nitpicks; core gates (typecheck/lint/tests/build) remain authoritative. Claude Code "review" ~10s failures remain transient infra.
+
+---
+
 # 2026-07-16 — Phase 0 audit execution
 
 ## Decisions
