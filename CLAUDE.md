@@ -15,7 +15,7 @@ pnpm install --frozen-lockfile   # Node >=22, pnpm 11 — always frozen lockfile
 pnpm run dev                     # Vite dev server, port 3000
 pnpm run build                   # production build + CSP hash patch -> dist/
 pnpm run typecheck               # tsc --noEmit (strict)
-pnpm run lint                    # ESLint 9, warning budget --max-warnings 650
+pnpm run lint                    # ESLint 9, zero-warning gate (--max-warnings 0)
 pnpm run format                  # Prettier write
 
 pnpm run test                    # Vitest, watch mode
