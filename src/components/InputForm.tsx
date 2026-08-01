@@ -447,14 +447,14 @@ const InputFormComponent: React.FC<InputFormProps> = ({
             aria-labelledby="save-preset-modal-title"
           >
             <h3 id="save-preset-modal-title" className="text-lg font-bold brand-gradient-text">
-              Save Preset
+              {t('preset.save_title')}
             </h3>
             <div className="mt-4">
               <label
                 htmlFor="presetName"
                 className="block text-sm font-medium text-text-primary mb-1"
               >
-                Preset Name
+                {t('preset.name_label')}
               </label>
               <input
                 type="text"
@@ -462,7 +462,7 @@ const InputFormComponent: React.FC<InputFormProps> = ({
                 value={newPresetName}
                 onChange={(e) => setNewPresetName(e.target.value)}
                 className="glass-input block w-full rounded-lg shadow-sm py-2 px-3 text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-accent sm:text-sm"
-                placeholder="e.g., Clinical Trials (Last 5 Years)"
+                placeholder={t('preset.name_placeholder')}
                 // eslint-disable-next-line jsx-a11y/no-autofocus -- this is the sole input of a focus-trapped modal (useFocusTrap above); focusing it on open is expected, not page-load autofocus.
                 autoFocus
               />
@@ -472,14 +472,14 @@ const InputFormComponent: React.FC<InputFormProps> = ({
                 onClick={() => setIsPresetModalOpen(false)}
                 className="px-4 py-2 border border-border text-sm font-medium rounded-lg shadow-sm text-text-primary bg-surface hover:bg-surface-hover transition-colors"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 onClick={handleSavePreset}
                 disabled={!newPresetName.trim()}
                 className="px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-brand-accent hover:bg-opacity-90 disabled:opacity-50 transition-colors"
               >
-                Save
+                {t('preset.save')}
               </button>
             </div>
           </div>

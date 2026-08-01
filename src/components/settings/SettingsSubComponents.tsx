@@ -47,6 +47,7 @@ export const Modal: React.FC<{ onClose: () => void; title: string; children: Rea
     onEscape: onClose,
     lockScroll: true,
   });
+  const { t } = useSettingsView();
   return (
     <div
       className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center backdrop-blur-sm animate-fadeIn"
@@ -66,7 +67,7 @@ export const Modal: React.FC<{ onClose: () => void; title: string; children: Rea
           <button
             onClick={onClose}
             className="p-1 rounded-full hover:bg-surface-hover focus-ring-aa"
-            aria-label="Close modal"
+            aria-label={t('chrome.aria.close_modal')}
           >
             &times;
           </button>

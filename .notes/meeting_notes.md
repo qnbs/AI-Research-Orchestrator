@@ -7,12 +7,13 @@
 - **#118** WS-E focus rings: `.focus-ring-aa`, ESLint guard, Playwright keyboard-focus.
 - **#122** WS-F skip-to-content + `#main-content` landmark + 44×44 touch targets (merged).
 - **#123** Chrome i18n shell: Header/Welcome/OrchestratorDashboard/ConfirmationModal/FeatureErrorBoundary → `chromeTranslations.ts` + ratchet.
-- **WS-G (this branch):** dialog a11y — `useFocusTrap` Escape + scroll lock; ConfirmationModal / QuickAdd / Settings Modal / preset dialog. Reconstructed (original hardening prompt still not in-repo).
+- **#124** WS-G dialog a11y: Escape + scroll lock via `useFocusTrap` (merged).
+- **WS-H1 (this branch / #125):** QuickAdd / History / preset modal EN+DE via `modalTranslations.ts` + ratchet.
 
 ## Still open
 
 - Issues **#74 / #78** closed on GitHub.
-- UIUX **WS-H1 onward** — next reconstructed candidate: modal/chrome i18n (QuickAddModal, InputForm preset, Settings Modal close labels) or form-label association pass.
+- UIUX **WS-H2 next** — CommandPalette command titles + remaining InputForm/Settings chrome i18n; then WS-I (a11y CI / axe smoke).
 - Larger i18n backlog still outside ratchet: CommandPalette, InputForm, SettingsSubComponents, ReportDisplay, ResearchView, etc.
 
 ## Process
@@ -115,7 +116,8 @@
 - **WS-C, WS-A, WS-B, WS-D: done and merged.**
 - **WS-E (2026-08-01):** focus rings restored on bare `focus:outline-none` sites; `.focus-ring-aa` utility; ESLint `local/no-bare-outline-none`; Playwright `keyboard-focus.spec.ts`.
 - **WS-F (2026-08-01):** skip-to-content + main landmark + 44×44 touch targets (reconstructed — full original prompt not in-repo).
-- **WS-G (2026-08-01):** dialog a11y — Escape + scroll lock via `useFocusTrap` options; Confirmation/QuickAdd/Settings/Preset modals. Next: **WS-H1** (modal/chrome i18n wave) then WS-H2/WS-I.
+- **WS-G (2026-08-01):** dialog a11y — Escape + scroll lock via `useFocusTrap` options; Confirmation/QuickAdd/Settings/Preset modals.
+- **WS-H1 (2026-08-01 / #125):** QuickAdd / History / preset modal EN+DE via `modalTranslations.ts` + ratchet. Next: **WS-H2** (CommandPalette + form chrome i18n) then WS-I.
 - Full original WS-H→WS-I prompt still not in-repo — proceed from meeting-note summaries / prior session compaction unless user re-shares `PROMPT-ARO-HARDENING-UIUX`.
 
 ## Merged this session (chronological)
