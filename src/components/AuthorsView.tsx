@@ -1,5 +1,6 @@
 import React from 'react';
 import { AuthorProfile } from '../types';
+import { useTranslation } from '../hooks/useTranslation';
 import { useAuthorsViewLogic } from './authors/useAuthorsViewLogic';
 import { AuthorsViewProvider } from './authors/AuthorsViewContext';
 import {
@@ -19,15 +20,16 @@ interface AuthorsViewProps {
 const AuthorsViewContent: React.FC = () => {
   const { view, isLoading, loadingPhase, authorLoadingPhases, authorPhaseDetails } =
     useAuthorsView();
+  const { t } = useTranslation();
 
   if (isLoading) {
     return (
       <LoadingIndicator
-        title="Analyzing Author Profile..."
+        title={t('authors.loading.title')}
         phase={loadingPhase}
         phases={authorLoadingPhases}
         phaseDetails={authorPhaseDetails}
-        footerText="This may take up to a minute. The AI is performing multiple complex steps, including live database searches and synthesis."
+        footerText={t('authors.loading.footer')}
       />
     );
   }

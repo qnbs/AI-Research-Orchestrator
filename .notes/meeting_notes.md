@@ -24,10 +24,13 @@
 - **Settings remaining i18n (this branch):** AI / KB / Export / Data tabs + confirm/prune modals + toasts EN+DE via `settingsTranslations.ts`; extracted dedicated tab files; ratchet covers Settings surfaces.
   - **Why:** Close residual Settings English-only backlog after General wave.
   - **Impact:** Full Settings UI localized; CSV column / persona / article-type protocol values stay English in state; import errors no longer leak raw exception text.
+- **Authors / Journals / Agent Debugger / Collections i18n (this branch):** hub chrome + debugger panel/toggle/rows + Collections view EN+DE; `authorTranslations.ts` / `debuggerTranslations.ts` extracted; `AuthorProfileView` split under 700-line cap; ratchet extended.
+  - **Why:** Next residual English-only surfaces after Settings.
+  - **Impact:** Authors/Journals hubs, Agent Debugger chrome, and Collections fully localized; protocol agent IDs / journal category keys stay English in state.
 
 ## Still open
 
-- Residual i18n outside Settings (Authors/Journals hubs, agent debugger chrome) if still English-only.
+- Optional i18n for journal category/matchType/oaPolicy enums and author featured-category chips (protocol labels).
 - Full E2E job remains non-blocking until promotion criteria in `docs/e2e-ci-backlog.md`.
 
 ## Process

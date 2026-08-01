@@ -13,6 +13,8 @@ import {
 } from '../store/slices/collectionsSlice';
 import type { ResearchCollection } from '../types';
 import { useTranslation } from '../hooks/useTranslation';
+import { useUI } from '../hooks/useUI';
+import { ConfirmationModal } from './ConfirmationModal';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const COLLECTION_COLORS = [
@@ -65,6 +67,7 @@ const ShareLinkModal: React.FC<{
   collection: ResearchCollection;
   onClose: () => void;
 }> = ({ collection, onClose }) => {
+  const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
   const url = collection.shareToken
     ? `${window.location.origin}?collection=${collection.shareToken}`
@@ -99,12 +102,12 @@ const ShareLinkModal: React.FC<{
           <span className="text-3xl">{collection.icon}</span>
           <div className="min-w-0 flex-1">
             <h2 className="text-sm font-semibold text-text-primary truncate">{collection.name}</h2>
-            <p className="text-xs text-text-secondary">Shareable export link</p>
+            <p className="text-xs text-text-secondary">{t('collections.share.link_label')}</p>
           </div>
           <button
             onClick={onClose}
             className="text-text-secondary hover:text-red-400 transition-colors text-lg leading-none"
-            aria-label="Close"
+            aria-label={t('chrome.aria.close_modal')}
           >
             ✕
           </button>
@@ -127,15 +130,15 @@ const ShareLinkModal: React.FC<{
                   : 'bg-brand-accent/90 hover:bg-brand-accent text-brand-text-on-accent'
               }`}
             >
-              {copied ? '✓ Copied to clipboard!' : '📋 Copy Link'}
+              {copied ? t('collections.share.copied_btn') : t('collections.share.copy')}
             </motion.button>
             <p className="text-xs text-text-secondary mt-2 text-center">
-              Anyone with this link can view the collection.
+              {t('collections.share.hint')}
             </p>
           </>
         ) : (
           <p className="text-sm text-text-secondary text-center py-4">
-            No share token yet — close and click 🔗 on the card to generate one.
+            {t('collections.share.no_token')}
           </p>
         )}
       </motion.div>
@@ -201,23 +204,25 @@ const CollectionCard: React.FC<{
             <div className="flex gap-1 flex-shrink-0 pointer-events-auto">
               <button
                 onClick={() => onShare(collection)}
-                title="Share collection"
+                title={t('collections.share_aria')}
                 className="p-1.5 rounded-md text-text-secondary hover:text-brand-accent transition-colors text-xs"
-                aria-label="Share collection"
+                aria-label={t('collections.share_aria')}
               >
                 🔗
               </button>
               <button
+                type="button"
                 onClick={() => onEdit(collection)}
                 className="p-1.5 rounded-md text-text-secondary hover:text-text-primary transition-colors text-xs"
-                aria-label="Edit collection"
+                aria-label={t('collections.edit_aria')}
               >
                 ✏️
               </button>
               <button
+                type="button"
                 onClick={() => onDelete(collection.id)}
                 className="p-1.5 rounded-md text-text-secondary hover:text-red-400 transition-colors text-xs"
-                aria-label="Delete collection"
+                aria-label={t('collections.delete_aria')}
               >
                 🗑️
               </button>
@@ -231,10 +236,14 @@ const CollectionCard: React.FC<{
                 className="w-1.5 h-1.5 rounded-full"
                 style={{ backgroundColor: collection.color }}
               />
-              {entryCount} report{entryCount !== 1 ? 's' : ''}
+              {entryCount === 1
+                ? t('collections.reports_one', { count: entryCount })
+                : t('collections.reports_other', { count: entryCount })}
             </span>
             <span>
-              {articleCount} article{articleCount !== 1 ? 's' : ''}
+              {articleCount === 1
+                ? t('collections.articles_one', { count: articleCount })
+                : t('collections.articles_other', { count: articleCount })}
             </span>
             {collection.tags.length > 0 && (
               <span className="text-accent-cyan truncate">
@@ -243,7 +252,7 @@ const CollectionCard: React.FC<{
             )}
             {collection.shareToken && (
               <span className="ml-auto text-accent-green text-[10px] flex items-center gap-0.5">
-                🔒 Shared
+                🔒 {t('collections.shared')}
               </span>
             )}
           </div>
@@ -298,7 +307,7 @@ const CollectionModal: React.FC<{
         className="glass-panel rounded-2xl p-6 w-full max-w-md"
       >
         <h2 className="text-lg font-semibold text-text-primary mb-4">
-          {initial?.name ? 'Edit Collection' : 'New Collection'}
+          {initial?.name ? t('collections.edit') : t('collections.new')}
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -331,13 +340,13 @@ const CollectionModal: React.FC<{
           {/* Name */}
           <div>
             <label htmlFor="col-name" className="text-xs text-text-secondary mb-1 block">
-              Name *
+              {t('collections.form.name')} *
             </label>
             <input
               id="col-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="My Research Collection"
+              placeholder={t('collections.form.name_placeholder')}
               required
               className="glass-input w-full px-3 py-2 rounded-lg text-sm text-text-primary focus:outline-none"
             />
@@ -346,13 +355,13 @@ const CollectionModal: React.FC<{
           {/* Description */}
           <div>
             <label htmlFor="col-desc" className="text-xs text-text-secondary mb-1 block">
-              Description
+              {t('collections.form.description')}
             </label>
             <textarea
               id="col-desc"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="What is this collection about?"
+              placeholder={t('collections.form.desc_placeholder')}
               rows={2}
               className="glass-input w-full px-3 py-2 rounded-lg text-sm text-text-primary focus:outline-none resize-none"
             />
@@ -372,7 +381,7 @@ const CollectionModal: React.FC<{
                   aria-pressed={color === c}
                   className={`w-7 h-7 rounded-full transition-all ${color === c ? 'ring-2 ring-white scale-110' : ''}`}
                   style={{ backgroundColor: c }}
-                  aria-label={`Color ${c}`}
+                  aria-label={t('collections.form.color_aria', { color: c })}
                 />
               ))}
             </div>
@@ -381,13 +390,13 @@ const CollectionModal: React.FC<{
           {/* Tags */}
           <div>
             <label htmlFor="col-tags" className="text-xs text-text-secondary mb-1 block">
-              Tags (comma-separated)
+              {t('collections.form.tags')}
             </label>
             <input
               id="col-tags"
               value={tagsInput}
               onChange={(e) => setTagsInput(e.target.value)}
-              placeholder="immunology, oncology, AI"
+              placeholder={t('collections.form.tags_placeholder')}
               className="glass-input w-full px-3 py-2 rounded-lg text-sm text-text-primary focus:outline-none"
             />
           </div>
@@ -399,14 +408,14 @@ const CollectionModal: React.FC<{
               onClick={onClose}
               className="flex-1 px-4 py-2 rounded-lg glass-panel text-sm text-text-secondary hover:text-text-primary transition-colors"
             >
-              Cancel
+              {t('collections.form.cancel')}
             </button>
             <button
               type="submit"
               disabled={!name.trim()}
               className="flex-1 px-4 py-2 rounded-lg bg-brand-accent/90 hover:bg-brand-accent text-brand-text-on-accent text-sm font-medium transition-colors disabled:opacity-50"
             >
-              {initial?.name ? 'Save Changes' : 'Create'}
+              {initial?.name ? t('collections.form.save') : t('collections.form.create_btn')}
             </button>
           </div>
         </form>
@@ -417,6 +426,8 @@ const CollectionModal: React.FC<{
 
 // ── Main View ─────────────────────────────────────────────────────────────────
 const CollectionsView: React.FC = () => {
+  const { t } = useTranslation();
+  const { setNotification } = useUI();
   const dispatch = useAppDispatch();
   const collections = useAppSelector((s) => s.collections.items);
   const isLoading = useAppSelector((s) => s.collections.isLoading);
@@ -425,12 +436,14 @@ const CollectionsView: React.FC = () => {
   const [editTarget, setEditTarget] = useState<ResearchCollection | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [shareTarget, setShareTarget] = useState<string | null>(null);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleCreate = useCallback(
     (data: Partial<ResearchCollection>) => {
       const col: ResearchCollection = {
         id: generateId(),
-        name: data.name ?? 'Untitled',
+        name: data.name ?? t('collections.untitled'),
         description: data.description ?? '',
         color: data.color ?? COLLECTION_COLORS[0],
         icon: data.icon ?? '📚',
@@ -443,7 +456,7 @@ const CollectionsView: React.FC = () => {
       dispatch(createCollection(col));
       setIsModalOpen(false);
     },
-    [dispatch],
+    [dispatch, t],
   );
 
   const handleEdit = useCallback(
@@ -455,15 +468,27 @@ const CollectionsView: React.FC = () => {
     [dispatch, editTarget],
   );
 
-  const handleDelete = useCallback(
-    (id: string) => {
-      if (window.confirm('Delete this collection?')) {
-        dispatch(deleteCollection(id));
-        if (selectedId === id) setSelectedId(null);
-      }
-    },
-    [dispatch, selectedId],
-  );
+  const handleDeleteRequest = useCallback((id: string) => {
+    setDeleteTargetId(id);
+  }, []);
+
+  const handleDeleteConfirm = useCallback(async () => {
+    if (!deleteTargetId) return;
+    setIsDeleting(true);
+    try {
+      await dispatch(deleteCollection(deleteTargetId)).unwrap();
+      if (selectedId === deleteTargetId) setSelectedId(null);
+      setDeleteTargetId(null);
+    } catch {
+      setNotification({
+        id: Date.now(),
+        message: t('collections.delete.error'),
+        type: 'error',
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  }, [dispatch, deleteTargetId, selectedId, setNotification, t]);
 
   const handleShare = useCallback(
     (collection: ResearchCollection) => {
@@ -484,10 +509,8 @@ const CollectionsView: React.FC = () => {
         className="flex items-center justify-between"
       >
         <div>
-          <h1 className="text-2xl font-bold brand-gradient-text">Research Collections</h1>
-          <p className="text-sm text-text-secondary mt-0.5">
-            Organize your knowledge base into curated, shareable collections.
-          </p>
+          <h1 className="text-2xl font-bold brand-gradient-text">{t('collections.title')}</h1>
+          <p className="text-sm text-text-secondary mt-0.5">{t('collections.subtitle')}</p>
         </div>
         <motion.button
           whileHover={{ scale: 1.04 }}
@@ -495,14 +518,16 @@ const CollectionsView: React.FC = () => {
           onClick={() => setIsModalOpen(true)}
           className="px-4 py-2 rounded-xl bg-brand-accent/90 hover:bg-brand-accent text-brand-text-on-accent text-sm font-semibold transition-colors"
         >
-          + New Collection
+          {t('collections.new')}
         </motion.button>
       </motion.div>
 
       {/* Grid */}
       {isLoading ? (
         <div className="flex-1 flex items-center justify-center">
-          <span className="text-text-secondary text-sm animate-pulse">Loading collections…</span>
+          <span className="text-text-secondary text-sm animate-pulse">
+            {t('collections.loading')}
+          </span>
         </div>
       ) : collections.length === 0 ? (
         <motion.div
@@ -511,15 +536,13 @@ const CollectionsView: React.FC = () => {
           className="flex-1 flex flex-col items-center justify-center text-center py-16"
         >
           <span className="text-5xl mb-4">📚</span>
-          <p className="text-text-primary font-semibold">No collections yet</p>
-          <p className="text-sm text-text-secondary mt-1">
-            Create your first collection to organize research reports and articles.
-          </p>
+          <p className="text-text-primary font-semibold">{t('collections.empty.title')}</p>
+          <p className="text-sm text-text-secondary mt-1">{t('collections.empty.desc')}</p>
           <button
             onClick={() => setIsModalOpen(true)}
             className="mt-4 px-4 py-2 rounded-lg btn-neon text-sm"
           >
-            Create Collection
+            {t('collections.create')}
           </button>
         </motion.div>
       ) : (
@@ -530,7 +553,7 @@ const CollectionsView: React.FC = () => {
                 key={col.id}
                 collection={col}
                 onEdit={(c) => setEditTarget(c)}
-                onDelete={handleDelete}
+                onDelete={handleDeleteRequest}
                 onShare={handleShare}
                 onSelect={(c) => setSelectedId((s) => (s === c.id ? null : c.id))}
                 isSelected={selectedId === col.id}
@@ -560,6 +583,16 @@ const CollectionsView: React.FC = () => {
             ) : null;
           })()}
       </AnimatePresence>
+      {deleteTargetId && (
+        <ConfirmationModal
+          onConfirm={handleDeleteConfirm}
+          onCancel={() => setDeleteTargetId(null)}
+          title={t('collections.delete.title')}
+          message={t('collections.delete.confirm')}
+          confirmText={t('collections.delete.action')}
+          isConfirming={isDeleting}
+        />
+      )}
     </div>
   );
 };

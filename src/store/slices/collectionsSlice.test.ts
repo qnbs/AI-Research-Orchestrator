@@ -66,6 +66,13 @@ describe('collectionsSlice', () => {
     expect(s.items).toHaveLength(0);
   });
 
+  it('handles deleteCollection.rejected without removing items', () => {
+    let state = collectionsReducer(undefined, loadCollections.fulfilled([col], 'r'));
+    state = collectionsReducer(state, deleteCollection.rejected(new Error('db fail'), 'r', 'c1'));
+    expect(state.items).toHaveLength(1);
+    expect(state.items[0].id).toBe('c1');
+  });
+
   it('addEntryToCollection appends id', () => {
     const s0 = collectionsReducer(
       undefined,

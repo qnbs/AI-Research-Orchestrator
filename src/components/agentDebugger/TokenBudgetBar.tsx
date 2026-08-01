@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { useTranslation } from '../../hooks/useTranslation';
 import { TOKEN_BUDGET } from './constants';
 
 export const TokenBudgetBar: React.FC<{
@@ -8,6 +9,7 @@ export const TokenBudgetBar: React.FC<{
   durationSec: number | null;
   isRunning: boolean;
 }> = ({ used, cost, durationSec, isRunning }) => {
+  const { t } = useTranslation();
   const pct = Math.min((used / TOKEN_BUDGET) * 100, 100);
   const gradientClass =
     pct < 30
@@ -21,7 +23,7 @@ export const TokenBudgetBar: React.FC<{
       <div className="flex items-center justify-between text-[11px] font-mono">
         <span className="text-text-secondary">
           <span className="text-text-primary font-semibold">{used.toLocaleString()}</span> /{' '}
-          {TOKEN_BUDGET.toLocaleString()} tokens
+          {TOKEN_BUDGET.toLocaleString()} {t('debugger.tokens')}
         </span>
         <div className="flex items-center gap-3 text-text-secondary">
           <span className="text-accent-amber">${cost.toFixed(5)}</span>

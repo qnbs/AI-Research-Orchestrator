@@ -7,6 +7,9 @@ import { inputFormTranslations } from './inputFormTranslations';
 import { researchViewTranslations } from './researchViewTranslations';
 import { reportTranslations } from './reportTranslations';
 import { settingsTranslations } from './settingsTranslations';
+import { debuggerTranslations } from './debuggerTranslations';
+import { authorTranslations } from './authorTranslations';
+import { collectionTranslations } from './collectionTranslations';
 
 export const translations = {
   en: {
@@ -72,39 +75,6 @@ export const translations = {
     'orchestrator.phase5': 'Phase 5: Synthesizing Top Findings...',
     'orchestrator.phase6': 'Streaming Synthesis...',
     'orchestrator.phase7': 'Finalizing Report...',
-    // ── Collections ──
-    'nav.collections': 'Collections',
-    'collections.title': 'Research Collections',
-    'collections.subtitle': 'Organize your knowledge into curated, shareable collections.',
-    'collections.new': 'New Collection',
-    'collections.empty.title': 'No collections yet',
-    'collections.empty.desc':
-      'Create your first collection to organize research reports and articles.',
-    'collections.create': 'Create Collection',
-    'collections.edit': 'Edit Collection',
-    'collections.delete.confirm': 'Delete this collection?',
-    'collections.share': 'Generate share link',
-    'collections.copied': 'Link copied to clipboard!',
-    'collections.form.icon': 'Icon',
-    'collections.form.color': 'Color',
-    'collections.selectCard': 'Select collection',
-    'collections.icon.books': 'Books',
-    'collections.icon.microscope': 'Microscope',
-    'collections.icon.brain': 'Brain',
-    'collections.icon.lightning': 'Lightning',
-    'collections.icon.star': 'Star',
-    'collections.icon.telescope': 'Telescope',
-    'collections.icon.dna': 'DNA',
-    'collections.icon.idea': 'Idea',
-    'collections.icon.target': 'Target',
-    'collections.icon.chart': 'Chart',
-    // ── Agent Debugger ──
-    'debugger.title': 'Agent Debugger',
-    'debugger.live': 'Live',
-    'debugger.tokens': 'tokens',
-    'debugger.cost': 'Estimated cost',
-    'debugger.clear': 'Clear history',
-    'debugger.empty': 'Start a research session to see the agent pipeline live.',
     // ── Themes ──
     'theme.cyber_dark': 'Cyber-Dark',
     'theme.neon_light': 'Neon-Light',
@@ -271,12 +241,6 @@ export const translations = {
       'Build a personal, de-duplicated knowledge base and export your findings for any workflow.',
     'onboarding.start': 'Start Researching',
     'onboarding.privacy': 'Your data remains private and is stored only locally in your browser.',
-    // ── Author Hub ──
-    'authors.subtitle':
-      "Analyze a researcher's impact or discover key figures in any scientific field.",
-    'authors.suggest.heading': 'Key Researchers in',
-    'authors.disambiguation.prefix': 'Multiple potential author profiles were found for',
-    'authors.disambiguation.suffix': 'Please select the correct one.',
     'settings.ai.enable_tldr': 'Enable AI “TL;DR” Summaries',
     ...journalTranslations.en,
     'kb.analyze_journal': 'Analyze journal in Journal Hub',
@@ -288,6 +252,9 @@ export const translations = {
     ...researchViewTranslations.en,
     ...reportTranslations.en,
     ...settingsTranslations.en,
+    ...debuggerTranslations.en,
+    ...authorTranslations.en,
+    ...collectionTranslations.en,
     'errors.code.noApiKey': 'Please configure your API key in Settings.',
     'errors.code.quota': 'AI provider quota exhausted. Try again later or check your usage.',
     'errors.code.rateLimit': 'AI provider rate limit reached. Wait briefly and try again.',
@@ -400,40 +367,6 @@ export const translations = {
     'orchestrator.phase5': 'Phase 5: Synthetisiere Top-Ergebnisse...',
     'orchestrator.phase6': 'Streame Zusammenfassung...',
     'orchestrator.phase7': 'Finalisiere Bericht...',
-    // ── Collections ──
-    'nav.collections': 'Sammlungen',
-    'collections.title': 'Forschungssammlungen',
-    'collections.subtitle': 'Organisieren Sie Ihr Wissen in kuratierten, teilbaren Sammlungen.',
-    'collections.new': 'Neue Sammlung',
-    'collections.empty.title': 'Noch keine Sammlungen',
-    'collections.empty.desc':
-      'Erstellen Sie Ihre erste Sammlung, um Forschungsberichte und Artikel zu organisieren.',
-    'collections.create': 'Sammlung erstellen',
-    'collections.edit': 'Sammlung bearbeiten',
-    'collections.delete.confirm': 'Diese Sammlung löschen?',
-    'collections.share': 'Freigabelink erstellen',
-    'collections.copied': 'Link in Zwischenablage kopiert!',
-    'collections.form.icon': 'Symbol',
-    'collections.form.color': 'Farbe',
-    'collections.selectCard': 'Sammlung auswählen',
-    'collections.icon.books': 'Bücher',
-    'collections.icon.microscope': 'Mikroskop',
-    'collections.icon.brain': 'Gehirn',
-    'collections.icon.lightning': 'Blitz',
-    'collections.icon.star': 'Stern',
-    'collections.icon.telescope': 'Teleskop',
-    'collections.icon.dna': 'DNA',
-    'collections.icon.idea': 'Idee',
-    'collections.icon.target': 'Ziel',
-    'collections.icon.chart': 'Diagramm',
-    // ── Agent Debugger ──
-    'debugger.title': 'Agenten-Debugger',
-    'debugger.live': 'Live',
-    'debugger.tokens': 'Token',
-    'debugger.cost': 'Geschätzte Kosten',
-    'debugger.clear': 'Verlauf leeren',
-    'debugger.empty':
-      'Starten Sie eine Recherche-Session, um die Agenten-Pipeline live zu verfolgen.',
     // ── Themes ──
     'theme.cyber_dark': 'Cyber-Dunkel',
     'theme.neon_light': 'Neon-Hell',
@@ -607,12 +540,6 @@ export const translations = {
     'onboarding.start': 'Recherche starten',
     'onboarding.privacy':
       'Ihre Daten bleiben privat und werden nur lokal in Ihrem Browser gespeichert.',
-    // ── Author Hub (German locale) ──
-    'authors.subtitle':
-      'Analysieren Sie die Wirkung eines Forschers oder entdecken Sie Schlüsselfiguren in jedem wissenschaftlichen Bereich.',
-    'authors.suggest.heading': 'Wichtige Forscher zu',
-    'authors.disambiguation.prefix': 'Mehrere mögliche Autorenprofile wurden gefunden für',
-    'authors.disambiguation.suffix': 'Bitte wählen Sie das richtige aus.',
     'settings.ai.enable_tldr': 'KI-„TL;DR“-Zusammenfassungen aktivieren',
     ...journalTranslations.de,
     'kb.analyze_journal': 'Journal im Journal-Hub analysieren',
@@ -624,6 +551,9 @@ export const translations = {
     ...researchViewTranslations.de,
     ...reportTranslations.de,
     ...settingsTranslations.de,
+    ...debuggerTranslations.de,
+    ...authorTranslations.de,
+    ...collectionTranslations.de,
     'errors.code.noApiKey': 'Bitte konfigurieren Sie Ihren API-Schlüssel in den Einstellungen.',
     'errors.code.quota':
       'KI-Anbieter-Kontingent erschöpft. Versuchen Sie es später erneut oder überprüfen Sie Ihre Nutzung.',

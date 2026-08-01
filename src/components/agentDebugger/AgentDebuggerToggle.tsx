@@ -2,14 +2,17 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { useAppSelector, useAppDispatch } from '../../store/hooks';
 import { toggleDebugger } from '../../store/slices/agentDebugSlice';
+import { useTranslation } from '../../hooks/useTranslation';
 
 export const AgentDebuggerToggle: React.FC = () => {
+  const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const { isVisible, currentTrace } = useAppSelector((s) => s.agentDebug);
   const isRunning = currentTrace?.status === 'running';
 
   return (
     <motion.button
+      type="button"
       onClick={() => dispatch(toggleDebugger())}
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
@@ -18,9 +21,9 @@ export const AgentDebuggerToggle: React.FC = () => {
           ? 'bg-brand-accent/10 text-brand-accent border border-brand-accent/30'
           : 'text-text-secondary hover:text-text-primary glass-panel'
       }`}
-      title="Agent Debugger — live pipeline trace"
+      title={t('debugger.toggle.title')}
       aria-pressed={isVisible}
-      aria-label="Toggle Agent Debugger"
+      aria-label={t('debugger.toggle.aria')}
     >
       🐛
       {isRunning && (
