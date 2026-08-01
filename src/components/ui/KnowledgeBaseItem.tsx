@@ -55,12 +55,10 @@ const relevanceLabel = (score: number): { labelKey: TranslationKey; className: s
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-const OABadge: React.FC = () => {
-  const { t } = useTranslation();
-
+const OABadge: React.FC<{ label: string }> = ({ label }) => {
   return (
     <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-accent-green/10 text-accent-green border border-accent-green/30">
-      🔓 {t('chrome.kb_item.open_access')}
+      🔓 {label}
     </span>
   );
 };
@@ -162,7 +160,7 @@ const KnowledgeBaseItemInner: React.FC<KnowledgeBaseItemProps> = ({
       {/* Top metadata row */}
       <div className="flex items-start justify-between gap-3 mb-2">
         <div className="flex items-center gap-1.5 flex-wrap min-w-0">
-          {isOpenAccess && <OABadge />}
+          {isOpenAccess && <OABadge label={t('chrome.kb_item.open_access')} />}
           <SourcePill type={articleType} />
           <span className="text-[10px] text-text-secondary font-mono">PMID {pmid}</span>
         </div>

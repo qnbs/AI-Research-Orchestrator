@@ -176,17 +176,16 @@ const HConnector: React.FC<{ leftStatus: AgentStatus }> = ({ leftStatus }) => {
 
 // ─── Vertical variant ─────────────────────────────────────────────────────────
 
-const VPipelineStep: React.FC<PipelineStepProps> = ({
+const VPipelineStep: React.FC<PipelineStepProps & { stepsAriaLabel: string }> = ({
   steps,
   currentStep,
   status = 'idle',
   onStepClick,
   className = '',
+  stepsAriaLabel,
 }) => {
-  const { t } = useTranslation();
-
   return (
-    <ol className={`space-y-0 ${className}`} aria-label={t('chrome.pipeline.steps')}>
+    <ol className={`space-y-0 ${className}`} aria-label={stepsAriaLabel}>
       {steps.map((step, i) => {
         const stepStatus = resolveStepStatus(i, currentStep, status, step.status);
         const isCurrent = i === currentStep;
@@ -264,15 +263,16 @@ const PipelineStepInner: React.FC<PipelineStepProps> = (props) => {
     className = '',
     onStepClick,
   } = props;
+  const stepsAriaLabel = t('chrome.pipeline.steps');
 
   if (orientation === 'vertical') {
-    return <VPipelineStep {...props} />;
+    return <VPipelineStep {...props} stepsAriaLabel={stepsAriaLabel} />;
   }
 
   return (
     <div
       role="list"
-      aria-label={t('chrome.pipeline.steps')}
+      aria-label={stepsAriaLabel}
       className={`flex items-start gap-0 w-full ${className}`}
     >
       {steps.map((step, i) => {
