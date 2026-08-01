@@ -16,6 +16,25 @@ export type FocusTrapOptions = {
   lockScroll?: boolean;
 };
 
+function cycleTabFocus(
+  e: KeyboardEvent,
+  firstElement: HTMLElement,
+  lastElement: HTMLElement,
+): void {
+  if (e.key !== 'Tab') return;
+
+  if (e.shiftKey && document.activeElement === firstElement) {
+    lastElement.focus();
+    e.preventDefault();
+    return;
+  }
+
+  if (!e.shiftKey && document.activeElement === lastElement) {
+    firstElement.focus();
+    e.preventDefault();
+  }
+}
+
 /**
  * Trap focus within a designated container (modal / panel).
  * Optionally dismisses on Escape and locks background scroll (WS-G).
@@ -33,12 +52,15 @@ export const useFocusTrap = <T extends HTMLElement>(
   }, [onEscape]);
 
   useEffect(() => {
-    if (!isOpen || !containerRef.current) return;
-
     const container = containerRef.current;
-    const focusableElements = container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR);
+    if (!isOpen || !container) {
+      return undefined;
+    }
 
-    if (focusableElements.length === 0) return;
+    const focusableElements = container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR);
+    if (focusableElements.length === 0) {
+      return undefined;
+    }
 
     const firstElement = focusableElements[0];
     const lastElement = focusableElements[focusableElements.length - 1];
@@ -51,27 +73,15 @@ export const useFocusTrap = <T extends HTMLElement>(
       document.body.style.overflow = 'hidden';
     }
 
-    const handleKeyDown = (e: KeyboardEvent) => {
+    const handleKeyDown = (e: KeyboardEvent): void => {
       if (e.key === 'Escape' && onEscapeRef.current) {
         e.stopPropagation();
         onEscapeRef.current();
         return;
       }
-
-      if (e.key !== 'Tab') return;
-
-      if (e.shiftKey) {
-        if (document.activeElement === firstElement) {
-          lastElement.focus();
-          e.preventDefault();
-        }
-      } else if (document.activeElement === lastElement) {
-        firstElement.focus();
-        e.preventDefault();
-      }
+      cycleTabFocus(e, firstElement, lastElement);
     };
 
-    // Listen on document so Escape works even when focus is inside nested portals.
     document.addEventListener('keydown', handleKeyDown);
 
     return () => {
