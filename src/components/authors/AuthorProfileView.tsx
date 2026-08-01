@@ -37,6 +37,7 @@ const ProfileAccordion: React.FC<{
   return (
     <div className="border border-border rounded-lg bg-surface overflow-hidden">
       <button
+        type="button"
         id={buttonId}
         onClick={() => setIsOpen(!isOpen)}
         aria-expanded={isOpen}
@@ -52,6 +53,8 @@ const ProfileAccordion: React.FC<{
         id={panelId}
         role="region"
         aria-labelledby={buttonId}
+        aria-hidden={!isOpen}
+        inert={!isOpen}
         className={`grid transition-all duration-500 ease-in-out ${isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}
       >
         <div className="overflow-hidden">
@@ -106,6 +109,7 @@ export const AuthorProfileView: React.FC = () => {
     <div className="animate-fadeIn space-y-8 pt-2">
       <div className="flex items-center justify-between">
         <button
+          type="button"
           onClick={onReset}
           className="flex items-center text-sm font-medium text-text-secondary hover:text-brand-accent transition-colors"
         >

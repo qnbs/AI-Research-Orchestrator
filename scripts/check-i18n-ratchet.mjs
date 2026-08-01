@@ -66,6 +66,12 @@ const MIGRATED_FILES = [
   'src/components/agentDebugger/HistoryRow.tsx',
   'src/components/agentDebugger/TokenBudgetBar.tsx',
   'src/components/CollectionsView.tsx',
+  'src/components/ArticleDetailPanel.tsx',
+  'src/components/KnowledgeBaseView.tsx',
+  'src/components/knowledge-base/KnowledgeBaseSubComponents.tsx',
+  'src/components/DashboardView.tsx',
+  'src/components/dashboard/DashboardSubComponents.tsx',
+  'src/components/ScientometricHub.tsx',
 ];
 
 const IGNORE_COMMENT = 'i18n-ratchet-ignore-next-line';

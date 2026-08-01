@@ -21,6 +21,8 @@ import {
   Legend,
 } from 'recharts';
 import type { AggregatedArticle, OverallKeyword } from '../types';
+import { useTranslation } from '../hooks/useTranslation';
+import type { TranslationKey } from '../hooks/useTranslation';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface AuthorNode {
@@ -56,8 +58,13 @@ const CustomTooltip: React.FC<{ active?: boolean; payload?: Array<{ payload: Aut
   active,
   payload,
 }) => {
+  const { t, lang } = useTranslation();
   if (!active || !payload?.length) return null;
   const node = payload[0].payload;
+  const avgRelevance = Number(node.avgRelevance).toLocaleString(lang === 'de' ? 'de-DE' : 'en-US', {
+    maximumFractionDigits: 1,
+    minimumFractionDigits: 1,
+  });
   return (
     <div
       className="glass-panel rounded-xl p-3 text-xs max-w-[220px]"
@@ -65,9 +72,13 @@ const CustomTooltip: React.FC<{ active?: boolean; payload?: Array<{ payload: Aut
     >
       <p className="font-semibold text-text-primary text-sm mb-1">{node.name}</p>
       <p className="text-text-secondary">
-        {node.articleCount} article{node.articleCount !== 1 ? 's' : ''}
+        {node.articleCount === 1
+          ? t('scientometrics.tooltip.articles_one', { count: node.articleCount })
+          : t('scientometrics.tooltip.articles_other', { count: node.articleCount })}
       </p>
-      <p className="text-accent-cyan">Avg relevance: {node.avgRelevance.toFixed(1)}</p>
+      <p className="text-accent-cyan">
+        {t('scientometrics.tooltip.avg_relevance', { value: avgRelevance })}
+      </p>
       {node.journals.length > 0 && (
         <p className="text-text-secondary mt-1 truncate">{node.journals.slice(0, 2).join(', ')}</p>
       )}
@@ -76,85 +87,110 @@ const CustomTooltip: React.FC<{ active?: boolean; payload?: Array<{ payload: Aut
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-function parseAuthors(articles: AggregatedArticle[]): AuthorNode[] {
+const parseAuthors = (articles: AggregatedArticle[]): AuthorNode[] => {
   const map = new Map<string, { articles: AggregatedArticle[]; collaborators: Set<string> }>();
 
   articles.forEach((article) => {
     const authors = article.authors
       .split(/,\s*/)
-      .map((a) => a.trim())
+      .map((name) => name.trim())
       .filter(Boolean);
     authors.forEach((author) => {
       if (!map.has(author)) map.set(author, { articles: [], collaborators: new Set() });
-      map.get(author)!.articles.push(article);
+      const entry = map.get(author);
+      if (!entry) return;
+      entry.articles.push(article);
       authors
-        .filter((a) => a !== author)
-        .forEach((collab) => map.get(author)!.collaborators.add(collab));
+        .filter((other) => other !== author)
+        .forEach((collab) => entry.collaborators.add(collab));
     });
   });
 
   const nodes: AuthorNode[] = [];
-  let i = 0;
+  let nodeIndex = 0;
   map.forEach((data, name) => {
     if (data.articles.length < 1) return;
     const avgRelevance =
-      data.articles.reduce((s, a) => s + (a.relevanceScore ?? 0), 0) / data.articles.length;
-    const angle = (i / map.size) * Math.PI * 2;
+      data.articles.reduce((sum, article) => sum + (article.relevanceScore ?? 0), 0) /
+      data.articles.length;
+    const angle = (nodeIndex / map.size) * Math.PI * 2;
     const radius = 30 + Math.log(data.articles.length + 1) * 15;
     nodes.push({
       name,
       articleCount: data.articles.length,
       avgRelevance,
-      journals: [...new Set(data.articles.map((a) => a.journal).filter(Boolean))],
+      journals: [...new Set(data.articles.map((article) => article.journal).filter(Boolean))],
       collaborators: [...data.collaborators].slice(0, 5),
       x: 50 + Math.cos(angle) * radius,
       y: 50 + Math.sin(angle) * radius,
     });
-    i++;
+    nodeIndex++;
   });
 
-  return nodes.sort((a, b) => b.articleCount - a.articleCount).slice(0, 40);
-}
+  return nodes.sort((left, right) => right.articleCount - left.articleCount).slice(0, 40);
+};
 
-function getYearDistribution(articles: AggregatedArticle[]) {
+const getYearDistribution = (articles: AggregatedArticle[], unknownLabel: string) => {
   const map = new Map<string, number>();
-  articles.forEach((a) => {
-    const y = a.pubYear || 'Unknown';
-    map.set(y, (map.get(y) ?? 0) + 1);
+  articles.forEach((article) => {
+    const year = article.pubYear || unknownLabel;
+    map.set(year, (map.get(year) ?? 0) + 1);
   });
   return [...map.entries()]
     .map(([year, count]) => ({ year, count }))
-    .sort((a, b) => a.year.localeCompare(b.year));
-}
+    .sort((left, right) => left.year.localeCompare(right.year));
+};
 
-function getJournalDistribution(articles: AggregatedArticle[]) {
+const getJournalDistribution = (articles: AggregatedArticle[], unknownLabel: string) => {
   const map = new Map<string, number>();
-  articles.forEach((a) => {
-    const j = a.journal || 'Unknown';
-    map.set(j, (map.get(j) ?? 0) + 1);
+  articles.forEach((article) => {
+    const journal = article.journal || unknownLabel;
+    map.set(journal, (map.get(journal) ?? 0) + 1);
   });
   return [...map.entries()]
     .map(([name, value]) => ({ name, value }))
-    .sort((a, b) => b.value - a.value)
+    .sort((left, right) => right.value - left.value)
     .slice(0, 8);
-}
+};
 
 // ── Tab Types ─────────────────────────────────────────────────────────────────
 type Tab = 'authors' | 'years' | 'journals' | 'keywords';
-const TABS: { id: Tab; label: string; icon: string }[] = [
-  { id: 'authors', label: 'Author Network', icon: '👥' },
-  { id: 'years', label: 'Publication Timeline', icon: '📅' },
-  { id: 'journals', label: 'Journal Distribution', icon: '📰' },
-  { id: 'keywords', label: 'Keyword Cloud', icon: '🏷️' },
+const TABS: { id: Tab; labelKey: TranslationKey; icon: string }[] = [
+  { id: 'authors', labelKey: 'scientometrics.authors', icon: '👥' },
+  { id: 'years', labelKey: 'scientometrics.timeline', icon: '📅' },
+  { id: 'journals', labelKey: 'scientometrics.journals', icon: '📰' },
+  { id: 'keywords', labelKey: 'scientometrics.keywords', icon: '🏷️' },
 ];
 
 // ── Main Component ────────────────────────────────────────────────────────────
 const ScientometricHub: React.FC<Props> = ({ articles, keywords = [], title }) => {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<Tab>('authors');
+  const unknownLabel = t('scientometrics.unknown');
+  const activeTabIndex = TABS.findIndex((tab) => tab.id === activeTab);
+
+  const handleTabListKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    const keyOffsets: Record<string, number> = { ArrowLeft: -1, ArrowRight: 1 };
+    const offset = keyOffsets[event.key];
+    if (offset == null) return;
+    event.preventDefault();
+    const nextIndex = (activeTabIndex + offset + TABS.length) % TABS.length;
+    const nextTab = TABS[nextIndex].id;
+    setActiveTab(nextTab);
+    requestAnimationFrame(() => {
+      document.getElementById(`scientometrics-tab-${nextTab}`)?.focus();
+    });
+  };
 
   const authorNodes = useMemo(() => parseAuthors(articles), [articles]);
-  const yearData = useMemo(() => getYearDistribution(articles), [articles]);
-  const journalData = useMemo(() => getJournalDistribution(articles), [articles]);
+  const yearData = useMemo(
+    () => getYearDistribution(articles, unknownLabel),
+    [articles, unknownLabel],
+  );
+  const journalData = useMemo(
+    () => getJournalDistribution(articles, unknownLabel),
+    [articles, unknownLabel],
+  );
 
   // Top 30 keywords for cloud
   const topKeywords = useMemo(
@@ -165,7 +201,7 @@ const ScientometricHub: React.FC<Props> = ({ articles, keywords = [], title }) =
   if (!articles.length)
     return (
       <div className="flex items-center justify-center h-40 text-text-secondary text-sm">
-        No articles to visualize.
+        {t('scientometrics.empty')}
       </div>
     );
 
@@ -174,19 +210,35 @@ const ScientometricHub: React.FC<Props> = ({ articles, keywords = [], title }) =
       {/* Header */}
       <div className="px-5 py-4 border-b border-border">
         <h2 className="text-base font-semibold brand-gradient-text">
-          {title ?? 'Scientometric Analysis'}
+          {title ?? t('scientometrics.title')}
         </h2>
         <p className="text-xs text-text-secondary mt-0.5">
-          {articles.length} articles · {authorNodes.length} authors · {yearData.length} years
+          {t('scientometrics.stats', {
+            articles: articles.length,
+            authors: authorNodes.length,
+            years: yearData.length,
+          })}
         </p>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 px-4 pt-3 pb-0 overflow-x-auto">
+      <div
+        className="flex gap-1 px-4 pt-3 pb-0 overflow-x-auto"
+        role="tablist"
+        aria-label={t('scientometrics.title')}
+        onKeyDown={handleTabListKeyDown}
+        tabIndex={-1}
+      >
         {TABS.map((tab) => (
           <button
             key={tab.id}
+            type="button"
+            id={`scientometrics-tab-${tab.id}`}
+            role="tab"
             onClick={() => setActiveTab(tab.id)}
+            aria-selected={activeTab === tab.id}
+            aria-controls={`scientometrics-panel-${tab.id}`}
+            tabIndex={activeTab === tab.id ? 0 : -1}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-t-lg text-xs font-medium transition-all whitespace-nowrap
               ${
                 activeTab === tab.id
@@ -195,7 +247,7 @@ const ScientometricHub: React.FC<Props> = ({ articles, keywords = [], title }) =
               }`}
           >
             <span>{tab.icon}</span>
-            <span>{tab.label}</span>
+            <span>{t(tab.labelKey)}</span>
           </button>
         ))}
       </div>
@@ -204,6 +256,9 @@ const ScientometricHub: React.FC<Props> = ({ articles, keywords = [], title }) =
       <AnimatePresence mode="wait">
         <motion.div
           key={activeTab}
+          id={`scientometrics-panel-${activeTab}`}
+          role="tabpanel"
+          aria-labelledby={`scientometrics-tab-${activeTab}`}
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -8 }}
@@ -221,7 +276,7 @@ const ScientometricHub: React.FC<Props> = ({ articles, keywords = [], title }) =
                   <YAxis type="number" dataKey="y" name="Position" hide domain={[0, 100]} />
                   <ZAxis type="number" dataKey="articleCount" range={[40, 400]} name="Articles" />
                   <Tooltip content={<CustomTooltip />} />
-                  <Scatter data={authorNodes} name="Authors">
+                  <Scatter data={authorNodes} name={t('scientometrics.series.authors')}>
                     {authorNodes.map((entry, index) => (
                       <Cell
                         key={entry.name}
@@ -276,7 +331,11 @@ const ScientometricHub: React.FC<Props> = ({ articles, keywords = [], title }) =
                   labelStyle={{ color: 'var(--color-text-primary)' }}
                   itemStyle={{ color: 'var(--color-brand-accent)' }}
                 />
-                <Bar dataKey="count" name="Articles" radius={[4, 4, 0, 0]}>
+                <Bar
+                  dataKey="count"
+                  name={t('scientometrics.series.articles')}
+                  radius={[4, 4, 0, 0]}
+                >
                   {yearData.map((entry, index) => (
                     <Cell
                       key={entry.year}
@@ -337,7 +396,7 @@ const ScientometricHub: React.FC<Props> = ({ articles, keywords = [], title }) =
           {activeTab === 'keywords' && (
             <div className="flex flex-wrap gap-2 p-2 justify-center items-center min-h-[280px]">
               {topKeywords.length === 0 ? (
-                <p className="text-text-secondary text-sm">No keyword data available.</p>
+                <p className="text-text-secondary text-sm">{t('scientometrics.no_keywords')}</p>
               ) : (
                 topKeywords.map((kw, i) => {
                   const maxFreq = topKeywords[0].frequency;
@@ -357,7 +416,11 @@ const ScientometricHub: React.FC<Props> = ({ articles, keywords = [], title }) =
                         color,
                         border: `1px solid ${color}35`,
                       }}
-                      title={`${kw.frequency} occurrence${kw.frequency !== 1 ? 's' : ''}`}
+                      title={
+                        kw.frequency === 1
+                          ? t('scientometrics.occurrence_one', { count: kw.frequency })
+                          : t('scientometrics.occurrence_other', { count: kw.frequency })
+                      }
                     >
                       {kw.keyword}
                     </motion.span>

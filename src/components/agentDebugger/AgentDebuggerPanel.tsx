@@ -127,13 +127,22 @@ const AgentDebuggerPanel: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex border-b border-border flex-shrink-0 px-4 bg-surface/20">
+          <div
+            className="flex border-b border-border flex-shrink-0 px-4 bg-surface/20"
+            role="tablist"
+            aria-label={t('debugger.title')}
+            tabIndex={-1}
+          >
             {(['trace', 'history'] as const).map((tab) => (
               <button
                 type="button"
                 key={tab}
+                id={`agent-debugger-tab-${tab}`}
+                role="tab"
                 onClick={() => setActiveTab(tab)}
-                aria-pressed={activeTab === tab}
+                aria-selected={activeTab === tab}
+                aria-controls={`agent-debugger-panel-${tab}`}
+                tabIndex={activeTab === tab ? 0 : -1}
                 className={`py-2.5 px-3 text-xs font-medium border-b-2 -mb-px transition-colors ${
                   activeTab === tab
                     ? 'text-brand-accent border-brand-accent'
@@ -169,7 +178,12 @@ const AgentDebuggerPanel: React.FC = () => {
 
           <div className="flex-1 overflow-y-auto min-h-0 scrollbar-thin">
             {activeTab === 'trace' && (
-              <div className="px-4 py-4">
+              <div
+                id="agent-debugger-panel-trace"
+                role="tabpanel"
+                aria-labelledby="agent-debugger-tab-trace"
+                className="px-4 py-4"
+              >
                 {!currentTrace?.events.length ? (
                   <div className="text-center text-text-secondary text-xs py-12">
                     <p className="text-4xl mb-3 select-none">🔍</p>
@@ -204,7 +218,11 @@ const AgentDebuggerPanel: React.FC = () => {
             )}
 
             {activeTab === 'history' && (
-              <div>
+              <div
+                id="agent-debugger-panel-history"
+                role="tabpanel"
+                aria-labelledby="agent-debugger-tab-history"
+              >
                 {history.length === 0 ? (
                   <div className="text-center text-text-secondary text-xs py-12">
                     <p className="text-4xl mb-3 select-none">📜</p>

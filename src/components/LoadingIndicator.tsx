@@ -7,6 +7,7 @@ interface LoadingIndicatorProps {
   phases: readonly string[];
   phaseDetails: Record<string, string[]>;
   footerText?: string;
+  swipeHintText?: string;
 }
 
 // ── Cybernetic Spinner (unchanged) ───────────────────────────────────────────
@@ -177,6 +178,7 @@ export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
   phases,
   phaseDetails,
   footerText,
+  swipeHintText,
 }) => {
   const [currentPhaseIndex, setCurrentPhaseIndex] = useState(0);
   const [currentSubPhase, setCurrentSubPhase] = useState('');
@@ -265,9 +267,9 @@ export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
         {/* ── Swipeable Pipeline Timeline (mobile-first) ── */}
         <PipelineTimeline phases={phases} currentIndex={currentPhaseIndex} />
 
-        <p className="text-[10px] text-text-secondary/50 mt-1 md:hidden">
-          ← Swipe to explore pipeline stages →
-        </p>
+        {swipeHintText && (
+          <p className="text-[10px] text-text-secondary/50 mt-1 md:hidden">{swipeHintText}</p>
+        )}
 
         {footerText && <p className="text-xs text-text-secondary/70 mt-4">{footerText}</p>}
       </div>

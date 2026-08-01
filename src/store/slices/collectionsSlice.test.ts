@@ -67,7 +67,7 @@ describe('collectionsSlice', () => {
   });
 
   it('handles deleteCollection.rejected without removing items', () => {
-    let state = collectionsReducer(undefined, loadCollections.fulfilled([col], 'r'));
+    let state = collectionsReducer(undefined, loadCollections.fulfilled([col], 'r', undefined));
     state = collectionsReducer(state, deleteCollection.rejected(new Error('db fail'), 'r', 'c1'));
     expect(state.items).toHaveLength(1);
     expect(state.items[0].id).toBe('c1');

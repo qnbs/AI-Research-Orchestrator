@@ -105,6 +105,7 @@ const ShareLinkModal: React.FC<{
             <p className="text-xs text-text-secondary">{t('collections.share.link_label')}</p>
           </div>
           <button
+            type="button"
             onClick={onClose}
             className="text-text-secondary hover:text-red-400 transition-colors text-lg leading-none"
             aria-label={t('chrome.aria.close_modal')}
@@ -121,6 +122,7 @@ const ShareLinkModal: React.FC<{
               </p>
             </div>
             <motion.button
+              type="button"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.97 }}
               onClick={handleCopy}
@@ -203,6 +205,7 @@ const CollectionCard: React.FC<{
             </div>
             <div className="flex gap-1 flex-shrink-0 pointer-events-auto">
               <button
+                type="button"
                 onClick={() => onShare(collection)}
                 title={t('collections.share_aria')}
                 className="p-1.5 rounded-md text-text-secondary hover:text-brand-accent transition-colors text-xs"
@@ -513,6 +516,7 @@ const CollectionsView: React.FC = () => {
           <p className="text-sm text-text-secondary mt-0.5">{t('collections.subtitle')}</p>
         </div>
         <motion.button
+          type="button"
           whileHover={{ scale: 1.04 }}
           whileTap={{ scale: 0.96 }}
           onClick={() => setIsModalOpen(true)}
@@ -539,6 +543,7 @@ const CollectionsView: React.FC = () => {
           <p className="text-text-primary font-semibold">{t('collections.empty.title')}</p>
           <p className="text-sm text-text-secondary mt-1">{t('collections.empty.desc')}</p>
           <button
+            type="button"
             onClick={() => setIsModalOpen(true)}
             className="mt-4 px-4 py-2 rounded-lg btn-neon text-sm"
           >

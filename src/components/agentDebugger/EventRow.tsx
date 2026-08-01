@@ -21,6 +21,7 @@ export const EventRow: React.FC<{
 }> = ({ event, index, isLast }) => {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
+  const detailsId = `event-details-${event.id}`;
   const dur =
     event.durationMs != null
       ? event.durationMs < 1000
@@ -84,6 +85,8 @@ export const EventRow: React.FC<{
           <button
             type="button"
             onClick={() => setExpanded((e) => !e)}
+            aria-expanded={expanded}
+            aria-controls={detailsId}
             className="flex items-center gap-1 text-[10px] text-brand-accent/80 hover:text-brand-accent mt-1 transition-colors"
           >
             <motion.span
@@ -100,6 +103,8 @@ export const EventRow: React.FC<{
         <AnimatePresence>
           {expanded && hasDetails && (
             <motion.div
+              id={detailsId}
+              role="region"
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}

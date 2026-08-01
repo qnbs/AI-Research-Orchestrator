@@ -17,6 +17,7 @@ import { RelevanceScoreDisplay } from './RelevanceScoreDisplay';
 import { AcademicCapIcon } from './icons/AcademicCapIcon';
 import { useKnowledgeBase } from '../contexts/KnowledgeBaseContext';
 import { useTranslation } from '../hooks/useTranslation';
+import type { TranslationKey } from '../hooks/useTranslation';
 import { ChevronUpIcon } from './icons/ChevronUpIcon';
 
 interface ArticleDetailPanelProps {
@@ -56,13 +57,14 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({
 
   const [similarArticles, setSimilarArticles] = useState<SimilarArticle[] | null>(null);
   const [isFindingSimilar, setIsFindingSimilar] = useState(false);
-  const [findError, setFindError] = useState<string | null>(null);
+  const [findError, setFindError] = useState<TranslationKey | null>(null);
 
   const [onlineFindings, setOnlineFindings] = useState<OnlineFindings | null>(null);
   const [isFindingOnline, setIsFindingOnline] = useState(false);
+  const [onlineError, setOnlineError] = useState<TranslationKey | null>(null);
   const [tldr, setTldr] = useState<string | null>(null);
   const [isGeneratingTldr, setIsGeneratingTldr] = useState(false);
-  const [tldrError, setTldrError] = useState<string | null>(null);
+  const [tldrError, setTldrError] = useState<TranslationKey | null>(null);
 
   const panelRef = useFocusTrap<HTMLDivElement>(true);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -127,8 +129,8 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({
       );
       if (isMounted.current) setSimilarArticles(result);
     } catch (err) {
-      if (isMounted.current)
-        setFindError(err instanceof Error ? err.message : 'Failed to find similar articles.');
+      console.error('Failed to find similar articles', err);
+      if (isMounted.current) setFindError('article.error.similar');
     } finally {
       if (isMounted.current) setIsFindingSimilar(false);
     }
@@ -136,11 +138,16 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({
 
   const handleFindOnline = async () => {
     setIsFindingOnline(true);
+    setOnlineError(null);
     try {
       const result = await findRelatedOnline(article.title, settings.ai);
       if (isMounted.current) setOnlineFindings(result);
     } catch (err) {
-      // Handle error silently or add UI for it
+      console.error('Failed to find related online discussions', err);
+      if (isMounted.current) {
+        setOnlineFindings(null);
+        setOnlineError('article.error.online');
+      }
     } finally {
       if (isMounted.current) setIsFindingOnline(false);
     }
@@ -153,8 +160,8 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({
       const result = await generateTldrSummary(article.summary, settings.ai);
       if (isMounted.current) setTldr(result);
     } catch (err) {
-      if (isMounted.current)
-        setTldrError(err instanceof Error ? err.message : 'Failed to generate TL;DR.');
+      console.error('Failed to generate TL;DR summary', err);
+      if (isMounted.current) setTldrError('article.error.tldr');
     } finally {
       if (isMounted.current) setIsGeneratingTldr(false);
     }
@@ -185,9 +192,10 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({
             {article.title}
           </h2>
           <button
+            type="button"
             onClick={onClose}
             className="p-2 rounded-full hover:bg-surface-hover text-text-secondary transition-colors"
-            aria-label="Close panel"
+            aria-label={t('article.close')}
           >
             <XIcon className="h-6 w-6" />
           </button>
@@ -238,7 +246,7 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({
                   rel="noopener noreferrer"
                   className="flex items-center gap-1 hover:text-brand-accent transition-colors"
                 >
-                  <AcademicCapIcon className="h-4 w-4" /> Scholar
+                  <AcademicCapIcon className="h-4 w-4" /> {t('article.scholar')}
                 </a>
               </div>
             </div>
@@ -248,22 +256,22 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({
           {article.isOpenAccess && (
             <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-500/10 text-green-400 border border-green-500/20 shadow-[0_0_10px_rgba(74,222,128,0.2)]">
               <UnlockIcon className="h-3 w-3 mr-1.5" />
-              <span>Open Access Article</span>
+              <span>{t('article.open_access')}</span>
             </div>
           )}
 
           <div className="glass-panel rounded-lg p-5 shadow-none bg-surface/30">
             <h4 className="text-sm font-bold text-text-primary mb-2 uppercase tracking-wide text-xs opacity-80">
-              AI Summary
+              {t('article.ai_summary')}
             </h4>
             <div className="prose prose-sm prose-invert max-w-none text-text-secondary/90 leading-relaxed">
-              <p>{article.aiSummary || 'No AI summary available.'}</p>
+              <p>{article.aiSummary || t('article.no_ai_summary')}</p>
             </div>
           </div>
 
           <div>
             <h4 className="text-sm font-bold text-text-primary mb-2 uppercase tracking-wide text-xs opacity-80">
-              Original Abstract
+              {t('article.abstract')}
             </h4>
             <div className="prose prose-sm prose-invert max-w-none text-text-secondary/90 leading-relaxed">
               <p>{article.summary}</p>
@@ -272,7 +280,7 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({
 
           <div className="pt-6 border-t border-border">
             <h4 className="font-bold text-text-primary mb-3 flex items-center gap-2 text-sm uppercase tracking-wide">
-              <TagIcon className="h-4 w-4" /> Tags
+              <TagIcon className="h-4 w-4" /> {t('article.tags')}
             </h4>
             <div className="flex flex-wrap gap-2 items-center">
               {(article.customTags || []).map((tag) => (
@@ -280,7 +288,7 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({
                   key={tag}
                   label={tag}
                   onRemove={() => handleRemoveTag(tag)}
-                  removeLabel={`Remove tag ${tag}`}
+                  removeLabel={t('article.remove_tag', { tag })}
                   size="md"
                 />
               ))}
@@ -289,7 +297,7 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({
                 value={tagInput}
                 onChange={(e) => setTagInput(e.target.value)}
                 onKeyDown={handleTagInputKeyDown}
-                placeholder="+ Add tag"
+                placeholder={t('article.add_tag')}
                 className="bg-transparent border border-border rounded-full py-0.5 px-3 text-sm focus-ring-aa focus:border-brand-accent text-text-primary w-24 focus:w-32 transition-all placeholder-text-secondary/50"
               />
             </div>
@@ -298,7 +306,7 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({
           {relatedInsights.length > 0 && (
             <div className="pt-6 border-t border-border">
               <h4 className="font-bold text-text-primary mb-3 text-sm uppercase tracking-wide">
-                Related AI Insights
+                {t('article.related_insights')}
               </h4>
               <div className="space-y-3">
                 {relatedInsights.map((insight, index) => (
@@ -317,24 +325,25 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({
           )}
 
           <div className="pt-6 border-t border-border">
-            <h3 className="text-lg font-bold brand-gradient-text mb-6">Discovery Tools</h3>
+            <h3 className="text-lg font-bold brand-gradient-text mb-6">{t('article.discovery')}</h3>
             <div className="grid grid-cols-1 gap-6">
               {settings.ai.enableTldr && (
                 <div className="glass-panel p-4 rounded-lg shadow-none bg-surface/30 hover:bg-surface/50 transition-colors">
                   <div className="flex justify-between items-center mb-3">
-                    <h4 className="font-semibold text-text-primary">TL;DR Summary</h4>
+                    <h4 className="font-semibold text-text-primary">{t('article.tldr')}</h4>
                     <button
+                      type="button"
                       onClick={handleGenerateTldr}
                       disabled={isGeneratingTldr}
                       className="text-xs font-medium text-brand-accent hover:text-brand-secondary disabled:opacity-50"
                     >
-                      {isGeneratingTldr ? 'Generating...' : 'Generate'}
+                      {isGeneratingTldr ? t('article.generating') : t('article.generate')}
                     </button>
                   </div>
                   {isGeneratingTldr && (
                     <div className="h-4 w-3/4 rounded bg-border animate-pulse"></div>
                   )}
-                  {tldrError && <p className="text-xs text-red-400">{tldrError}</p>}
+                  {tldrError && <p className="text-xs text-red-400">{t(tldrError)}</p>}
                   {tldr && <p className="text-sm text-text-secondary italic">“{tldr}”</p>}
                 </div>
               )}
@@ -342,19 +351,20 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({
               <div className="glass-panel p-4 rounded-lg shadow-none bg-surface/30 hover:bg-surface/50 transition-colors">
                 <div className="flex justify-between items-center mb-3">
                   <h4 className="font-semibold text-text-primary flex items-center gap-2">
-                    <SparklesIcon className="h-4 w-4 text-accent-cyan" /> Similar Articles
+                    <SparklesIcon className="h-4 w-4 text-accent-cyan" /> {t('article.similar')}
                   </h4>
                   <button
+                    type="button"
                     onClick={handleFindSimilar}
                     disabled={isFindingSimilar}
                     className="text-xs font-medium text-brand-accent hover:text-brand-secondary disabled:opacity-50"
                   >
-                    {isFindingSimilar ? 'Finding...' : 'Find'}
+                    {isFindingSimilar ? t('article.finding') : t('article.find')}
                   </button>
                 </div>
                 <div className="space-y-3">
                   {isFindingSimilar && <SkeletonLoader lines={2} />}
-                  {findError && <p className="text-red-400 text-sm">{findError}</p>}
+                  {findError && <p className="text-red-400 text-sm">{t(findError)}</p>}
                   {similarArticles &&
                     similarArticles.map((similar) => (
                       <div
@@ -370,7 +380,7 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({
                           {similar.title}
                         </a>
                         <p className="text-xs text-text-secondary">
-                          <strong>Why:</strong> {similar.reason}
+                          <strong>{t('article.why')}</strong> {similar.reason}
                         </p>
                       </div>
                     ))}
@@ -380,18 +390,20 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({
               <div className="glass-panel p-4 rounded-lg shadow-none bg-surface/30 hover:bg-surface/50 transition-colors">
                 <div className="flex justify-between items-center mb-3">
                   <h4 className="font-semibold text-text-primary flex items-center gap-2">
-                    <WebIcon className="h-4 w-4 text-accent-amber" /> Online Discussions
+                    <WebIcon className="h-4 w-4 text-accent-amber" /> {t('article.online')}
                   </h4>
                   <button
+                    type="button"
                     onClick={handleFindOnline}
                     disabled={isFindingOnline}
                     className="text-xs font-medium text-brand-accent hover:text-brand-secondary disabled:opacity-50"
                   >
-                    {isFindingOnline ? 'Searching...' : 'Search'}
+                    {isFindingOnline ? t('article.searching') : t('article.search')}
                   </button>
                 </div>
                 <div>
                   {isFindingOnline && <SkeletonLoader lines={1} />}
+                  {onlineError && <p className="text-red-400 text-sm">{t(onlineError)}</p>}
                   {onlineFindings && (
                     <div className="bg-background/50 p-3 rounded-md border border-border">
                       <p className="text-sm text-text-secondary mb-3">{onlineFindings.summary}</p>
@@ -417,8 +429,9 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({
           </div>
           {showGoToTop && (
             <button
+              type="button"
               onClick={scrollToTop}
-              aria-label="Scroll to top"
+              aria-label={t('article.scroll_top')}
               className="absolute bottom-6 right-6 p-3 rounded-full bg-brand-accent text-brand-text-on-accent shadow-lg hover:bg-opacity-90 transition-all duration-300 animate-fadeIn"
             >
               <ChevronUpIcon className="h-5 w-5" />
