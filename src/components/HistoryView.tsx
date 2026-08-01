@@ -1,4 +1,4 @@
-import React, { useState, useEffect, memo } from 'react';
+import React, { useState, memo } from 'react';
 import type { KnowledgeBaseEntry } from '../types';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 import { HistoryIcon } from './icons/HistoryIcon';
@@ -29,50 +29,48 @@ const SYNTHESIS_FOCUS_KEYS: Record<string, TranslationKey> = {
   gaps: 'orchestrator.focus.gaps',
 };
 
+const sourceTypeTitleKey = (sourceType: KnowledgeBaseEntry['sourceType']): TranslationKey => {
+  if (sourceType === 'author') return 'history.quick.author_profile';
+  if (sourceType === 'journal') return 'history.quick.journal_profile';
+  return 'history.quick.research_report';
+};
+
+const sourceTypeQuickViewKey = (sourceType: KnowledgeBaseEntry['sourceType']): TranslationKey => {
+  if (sourceType === 'author') return 'history.quick.view_full_profile';
+  if (sourceType === 'journal') return 'history.quick.view_details';
+  return 'history.quick.view_full_report';
+};
+
+const sourceTypeListViewKey = (sourceType: KnowledgeBaseEntry['sourceType']): TranslationKey => {
+  if (sourceType === 'author') return 'history.list.view_profile';
+  if (sourceType === 'journal') return 'history.list.view_details';
+  return 'history.list.view_report';
+};
+
+const keywordsForEntry = (entry: KnowledgeBaseEntry): string[] => {
+  if (entry.sourceType === 'research') {
+    return (entry.report.overallKeywords || []).slice(0, 3).map((kw) => kw.keyword);
+  }
+  if (entry.sourceType === 'author') {
+    return (entry.profile.coreConcepts || []).slice(0, 3).map((c) => c.concept);
+  }
+  return (entry.journalProfile.focusAreas || []).slice(0, 3);
+};
+
 const QuickViewModal: React.FC<{
   entry: KnowledgeBaseEntry;
   onClose: () => void;
   onViewEntry: (entry: KnowledgeBaseEntry) => void;
 }> = ({ entry, onClose, onViewEntry }) => {
   const { t } = useTranslation();
-  const modalRef = useFocusTrap<HTMLDivElement>(true);
+  const modalRef = useFocusTrap<HTMLDivElement>(true, {
+    onEscape: onClose,
+    lockScroll: true,
+  });
   const { sourceType, title, articles } = entry;
-
-  useEffect(() => {
-    const handleEsc = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        onClose();
-      }
-    };
-    window.addEventListener('keydown', handleEsc);
-    document.body.style.overflow = 'hidden';
-
-    return () => {
-      window.removeEventListener('keydown', handleEsc);
-      document.body.style.overflow = '';
-    };
-  }, [onClose]);
-
-  const keywordsAndConcepts =
-    entry.sourceType === 'research'
-      ? (entry.report.overallKeywords || []).slice(0, 3).map((kw) => kw.keyword)
-      : entry.sourceType === 'author'
-        ? (entry.profile.coreConcepts || []).slice(0, 3).map((c) => c.concept)
-        : (entry.journalProfile.focusAreas || []).slice(0, 3);
-
-  const typeTitle =
-    sourceType === 'author'
-      ? t('history.quick.author_profile')
-      : sourceType === 'journal'
-        ? t('history.quick.journal_profile')
-        : t('history.quick.research_report');
-
-  const viewAction =
-    sourceType === 'author'
-      ? t('history.quick.view_full_profile')
-      : sourceType === 'journal'
-        ? t('history.quick.view_details')
-        : t('history.quick.view_full_report');
+  const keywordsAndConcepts = keywordsForEntry(entry);
+  const typeTitle = t(sourceTypeTitleKey(sourceType));
+  const viewAction = t(sourceTypeQuickViewKey(sourceType));
 
   return (
     // eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events -- standard modal backdrop click-to-dismiss; keyboard users dismiss via the Escape key handler above, not by activating the backdrop itself.
@@ -161,6 +159,97 @@ const QuickViewModal: React.FC<{
   );
 };
 
+function HistoryTitleEditor({
+  editingTitle,
+  onTitleChange,
+  onEditKeyDown,
+  onSaveTitle,
+  onCancelEdit,
+}: {
+  editingTitle: string;
+  onTitleChange: (title: string) => void;
+  onEditKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  onSaveTitle: () => void;
+  onCancelEdit: () => void;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <input
+        type="text"
+        value={editingTitle}
+        onChange={(e) => onTitleChange(e.target.value)}
+        onKeyDown={onEditKeyDown}
+        className="w-full bg-input-bg border border-brand-accent rounded-md py-1 px-2 text-base font-semibold focus:outline-none focus:ring-2 focus:ring-brand-accent"
+        // eslint-disable-next-line jsx-a11y/no-autofocus -- this input only renders after the user explicitly clicks "rename"; focusing it is the expected result of that action, not page-load autofocus.
+        autoFocus
+      />
+      <button
+        onClick={onSaveTitle}
+        className="p-1.5 rounded-full text-green-400 hover:bg-green-500/10"
+      >
+        <CheckCircleIcon className="h-5 w-5" />
+      </button>
+      <button
+        onClick={onCancelEdit}
+        className="p-1.5 rounded-full text-red-400 hover:bg-red-500/10"
+      >
+        <XCircleIcon className="h-5 w-5" />
+      </button>
+    </div>
+  );
+}
+
+function HistoryEntryMeta({ entry }: { entry: KnowledgeBaseEntry }) {
+  const { t } = useTranslation();
+  const articleCount = entry.articles.length;
+  const articlesLabel = t(
+    articleCount === 1 ? 'history.list.articles_one' : 'history.list.articles',
+    { count: articleCount },
+  );
+
+  if (entry.sourceType === 'author') {
+    return (
+      <div>
+        {t(articleCount === 1 ? 'history.list.publications_one' : 'history.list.publications', {
+          count: articleCount,
+        })}
+      </div>
+    );
+  }
+
+  if (entry.sourceType === 'journal') {
+    return (
+      <>
+        <div>{articlesLabel}</div>
+        <div>
+          <strong>{t('history.list.issn')}</strong> {entry.journalProfile.issn}
+        </div>
+        <div>
+          <strong>{t('history.list.oa_policy')}</strong> {entry.journalProfile.oaPolicy}
+        </div>
+      </>
+    );
+  }
+
+  const focusKey = SYNTHESIS_FOCUS_KEYS[entry.input.synthesisFocus];
+  const dateRangeLabel =
+    entry.input.dateRange === 'any'
+      ? t('history.list.date_any')
+      : t('history.list.date_last_years', { years: entry.input.dateRange });
+
+  return (
+    <>
+      <div>{articlesLabel}</div>
+      <div>
+        <strong>{t('history.list.focus')}</strong> {t(focusKey)}
+      </div>
+      <div>
+        <strong>{t('history.list.date_range')}</strong> {dateRangeLabel}
+      </div>
+    </>
+  );
+}
+
 interface HistoryListItemProps {
   entry: KnowledgeBaseEntry;
   onViewEntry: (entry: KnowledgeBaseEntry) => void;
@@ -187,7 +276,7 @@ const HistoryListItem = memo<HistoryListItemProps>(function HistoryListItem({
   onEditKeyDown,
 }) {
   const { t, lang } = useTranslation();
-  const { sourceType, title, timestamp, articles } = entry;
+  const { sourceType, title, timestamp } = entry;
   const Icon =
     sourceType === 'author' ? AuthorIcon : sourceType === 'journal' ? BookOpenIcon : DocumentIcon;
   const iconColor =
@@ -196,28 +285,7 @@ const HistoryListItem = memo<HistoryListItemProps>(function HistoryListItem({
       : sourceType === 'journal'
         ? 'text-green-400'
         : 'text-brand-accent';
-
-  const viewLabel =
-    sourceType === 'author'
-      ? t('history.list.view_profile')
-      : sourceType === 'journal'
-        ? t('history.list.view_details')
-        : t('history.list.view_report');
-
-  const articleCount = articles.length;
-  const articlesLabel = t(
-    articleCount === 1 ? 'history.list.articles_one' : 'history.list.articles',
-    { count: articleCount },
-  );
-  const focusKey =
-    entry.sourceType === 'research' ? SYNTHESIS_FOCUS_KEYS[entry.input.synthesisFocus] : undefined;
-  const focusLabel = focusKey ? t(focusKey) : undefined;
-  const dateRangeLabel =
-    entry.sourceType === 'research'
-      ? entry.input.dateRange === 'any'
-        ? t('history.list.date_any')
-        : t('history.list.date_last_years', { years: entry.input.dateRange })
-      : undefined;
+  const viewLabel = t(sourceTypeListViewKey(sourceType));
 
   return (
     <li className="p-4 sm:p-6 hover:bg-surface-hover transition-colors duration-150 group focus-within:ring-2 focus-within:ring-brand-accent focus-within:ring-offset-2 focus-within:ring-offset-surface rounded-md">
@@ -226,29 +294,13 @@ const HistoryListItem = memo<HistoryListItemProps>(function HistoryListItem({
           <Icon className={`h-8 w-8 mt-1 flex-shrink-0 ${iconColor}`} />
           <div className="flex-grow min-w-0">
             {isEditing ? (
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={editingTitle}
-                  onChange={(e) => onTitleChange(e.target.value)}
-                  onKeyDown={onEditKeyDown}
-                  className="w-full bg-input-bg border border-brand-accent rounded-md py-1 px-2 text-base font-semibold focus:outline-none focus:ring-2 focus:ring-brand-accent"
-                  // eslint-disable-next-line jsx-a11y/no-autofocus -- this input only renders after the user explicitly clicks "rename"; focusing it is the expected result of that action, not page-load autofocus.
-                  autoFocus
-                />
-                <button
-                  onClick={onSaveTitle}
-                  className="p-1.5 rounded-full text-green-400 hover:bg-green-500/10"
-                >
-                  <CheckCircleIcon className="h-5 w-5" />
-                </button>
-                <button
-                  onClick={onCancelEdit}
-                  className="p-1.5 rounded-full text-red-400 hover:bg-red-500/10"
-                >
-                  <XCircleIcon className="h-5 w-5" />
-                </button>
-              </div>
+              <HistoryTitleEditor
+                editingTitle={editingTitle}
+                onTitleChange={onTitleChange}
+                onEditKeyDown={onEditKeyDown}
+                onSaveTitle={onSaveTitle}
+                onCancelEdit={onCancelEdit}
+              />
             ) : (
               <h3 className="text-lg font-semibold text-text-primary truncate" title={title}>
                 {title}
@@ -263,7 +315,7 @@ const HistoryListItem = memo<HistoryListItemProps>(function HistoryListItem({
         </div>
         <div className="flex items-center gap-2 flex-shrink-0 self-start sm:self-center">
           <button
-            onClick={() => onStartEdit({ id: entry.id, title: title })}
+            onClick={() => onStartEdit({ id: entry.id, title })}
             className="p-2 rounded-md text-text-secondary hover:bg-surface-hover hover:text-brand-accent transition-colors focus-ring-aa"
             aria-label={t('history.aria.edit_title')}
           >
@@ -285,35 +337,7 @@ const HistoryListItem = memo<HistoryListItemProps>(function HistoryListItem({
         </div>
       </div>
       <div className="mt-4 pt-4 border-t border-border/50 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-text-secondary">
-        {entry.sourceType === 'research' && (
-          <>
-            <div>{articlesLabel}</div>
-            <div>
-              <strong>{t('history.list.focus')}</strong> {focusLabel}
-            </div>
-            <div>
-              <strong>{t('history.list.date_range')}</strong> {dateRangeLabel}
-            </div>
-          </>
-        )}
-        {entry.sourceType === 'author' && (
-          <div>
-            {t(articleCount === 1 ? 'history.list.publications_one' : 'history.list.publications', {
-              count: articleCount,
-            })}
-          </div>
-        )}
-        {entry.sourceType === 'journal' && (
-          <>
-            <div>{articlesLabel}</div>
-            <div>
-              <strong>{t('history.list.issn')}</strong> {entry.journalProfile.issn}
-            </div>
-            <div>
-              <strong>{t('history.list.oa_policy')}</strong> {entry.journalProfile.oaPolicy}
-            </div>
-          </>
-        )}
+        <HistoryEntryMeta entry={entry} />
       </div>
     </li>
   );
