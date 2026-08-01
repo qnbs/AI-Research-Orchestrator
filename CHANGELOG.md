@@ -39,7 +39,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`src/App.tsx` decomposed below the 700-line hard max (#78 / #74):** pure structural split into `src/app/useAppLogic.ts` (state/effects/handlers), `src/app/AppLayout.tsx` (chrome + view routing), plus small helpers (`getAgentForPhase`, spinners, lazy view map). Behavior preserved — vault-reset listener registration/cleanup, Redux dispatch stability, banners, and phase→agent mapping unchanged.
 - **Dependabot majors (#98 / #101 / #104):** `openai` 4→6 (with `max_completion_tokens` for gpt-5/o-series), `dexie-react-hooks` 1→4 (unused import hygiene), `marked` 13→18 (parse + DOMPurify path verified).
 - `eslint-plugin-react-hooks` upgraded to v7.1.1 (#62).
-- **No-`any` / zero-warnings ESLint policy completed** across two PRs (#64, #65): eliminated all `no-explicit-any`, `no-unused-vars`, `no-unescaped-entities`, and `display-name` findings, all `react-hooks/exhaustive-deps` warnings, and all `jsx-a11y` warnings. Lint is now **0 errors / 0 warnings**, down from 176 warnings against the existing 650-warning budget (the budget itself and the `jsx-a11y` severity downgrade block in `eslint.config.js` are not yet tightened to match — see "Known gaps" below).
+- **No-`any` / zero-warnings ESLint policy completed** across two PRs (#64, #65): eliminated all `no-explicit-any`, `no-unused-vars`, `no-unescaped-entities`, and `display-name` findings, all `react-hooks/exhaustive-deps` warnings, and all `jsx-a11y` warnings. Lint is now **0 errors / 0 warnings**, down from 176 warnings against the previous 650-warning budget.
+- ESLint gate tightened to match the zero-warnings policy: `--max-warnings 0` (package.json + lint-staged); removed the temporary `jsx-a11y` error→warn severity downgrade so recommended a11y rules (plus explicit interactive-element rules) run as errors.
+- `.github/workflows/claude.yml` (on-demand `@claude`): added a live-capable `--allowedTools` allowlist (Read/Grep/Glob/Edit/Write + scoped gh/git/pnpm Bash) and synced `anthropics/claude-code-action` SHA with the review workflow / Dependabot #108.
 - **Migrated to Vite 8 + `@vitejs/plugin-react` 6** (#66) — a bundler-architecture change (esbuild/Rollup → Rolldown/Oxc), handled as a dedicated migration rather than a routine version bump.
 - `useTranslation.ts` refactored to delegate its lookup/interpolation logic to the new framework-free `resolveTranslation()` core shared with `translateSync()` (#69) — pure extraction, no behavior or signature change.
 
@@ -68,8 +70,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Known gaps (tracked, not yet closed)
 
-- `jsx-a11y` severity downgrade and the 650-warning lint budget in `eslint.config.js` (predate the zero-warnings policy pass, not yet tightened to match it).
-- `.github/workflows/claude.yml`'s on-demand `@claude` mention job has no `--allowedTools` at all, so every tool call likely falls through to a denied permission decision in headless mode the same way the review job's did before this pass's fix — not yet live-tested since no `@claude` mention has triggered it this session.
+- Cross-tab API-key vault race (residual after in-tab memoization) — mitigated via Web Locks in PR #116 when that lands; see ADR 0003 / `SECURITY.md`.
 
 ## [0.3.0] - 2026-07-21
 

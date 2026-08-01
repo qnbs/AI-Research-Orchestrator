@@ -79,7 +79,7 @@ pnpm run dev                     # Vite dev server — port 3000, host 0.0.0.0
 pnpm run build                   # production build + CSP hash patching → dist/
 pnpm run preview                 # preview built app — port 4173
 pnpm run typecheck               # tsc --noEmit (strict)
-pnpm run lint                    # ESLint 9, warning budget --max-warnings 650
+pnpm run lint                    # ESLint 9, zero-warning gate (--max-warnings 0)
 pnpm run test:run                # Vitest, fast loop
 pnpm run test:coverage           # Vitest + v8 coverage — gated (see below)
 pnpm run test:e2e                # Playwright, full suite — CI only, do NOT run locally (see below)

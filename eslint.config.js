@@ -37,28 +37,23 @@ export default tseslint.config(
     rules: {
       ...reactHooks.configs.recommended.rules,
       ...react.configs.flat.recommended.rules,
-      // Escalate a11y incrementally: errors would block CI on legacy interactive markup.
-      ...Object.fromEntries(
-        Object.entries(jsxA11y.flatConfigs.recommended.rules).map(([rule, sev]) => [
-          rule,
-          sev === 'error' ? 'warn' : sev,
-        ]),
-      ),
+      ...jsxA11y.flatConfigs.recommended.rules,
+      // Keep interactive-element rules at error (recommended may omit some of these).
+      'jsx-a11y/no-static-element-interactions': 'error',
+      'jsx-a11y/no-noninteractive-element-interactions': 'error',
+      'jsx-a11y/no-noninteractive-element-to-interactive-role': 'error',
       'react/react-in-jsx-scope': 'off',
       'react/prop-types': 'off',
       'react/no-unescaped-entities': 'error',
       'react/display-name': 'error',
-      '@typescript-eslint/no-empty-object-type': 'warn',
-      'jsx-a11y/no-static-element-interactions': 'warn',
-      'jsx-a11y/no-noninteractive-element-interactions': 'warn',
-      'jsx-a11y/no-noninteractive-element-to-interactive-role': 'warn',
+      '@typescript-eslint/no-empty-object-type': 'error',
       '@typescript-eslint/no-unused-vars': [
         'error',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrors: 'none' },
       ],
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/no-require-imports': 'off',
-      'no-console': ['warn', { allow: ['warn', 'error'] }],
+      'no-console': ['error', { allow: ['warn', 'error'] }],
     },
     settings: { react: { version: 'detect' } },
   },
