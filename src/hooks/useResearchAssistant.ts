@@ -6,6 +6,7 @@ import {
   useLazyFindSimilarArticlesQuery,
   useLazyFindRelatedOnlineQuery,
 } from '../store/slices/geminiApiSlice';
+import { RESEARCH_PHASE_ANALYZING } from '../i18n/researchViewTranslations';
 
 interface ResearchState {
   isLoading: boolean;
@@ -34,6 +35,89 @@ const initialState: ResearchState = {
 };
 
 type AbortablePromise = { abort: () => void };
+
+const settledErrorMessage = (reason: unknown): string =>
+  reason instanceof Error ? reason.message : 'An unknown error occurred.';
+
+const mapSimilarSettled = (
+  result: PromiseSettledResult<SimilarArticle[] | null>,
+): {
+  loading: false;
+  articles: SimilarArticle[] | null;
+  error: string | null;
+} => {
+  if (result.status === 'fulfilled') {
+    return { loading: false, articles: result.value, error: null };
+  }
+  return { loading: false, articles: null, error: settledErrorMessage(result.reason) };
+};
+
+const mapOnlineSettled = (
+  result: PromiseSettledResult<OnlineFindings | null>,
+): {
+  loading: false;
+  findings: OnlineFindings | null;
+  error: string | null;
+} => {
+  if (result.status === 'fulfilled') {
+    return { loading: false, findings: result.value, error: null };
+  }
+  return { loading: false, findings: null, error: settledErrorMessage(result.reason) };
+};
+
+type FollowUpTriggers = {
+  autoFetchSimilar: boolean;
+  autoFetchOnline: boolean;
+  triggerSimilar: ReturnType<typeof useLazyFindSimilarArticlesQuery>[0];
+  triggerOnline: ReturnType<typeof useLazyFindRelatedOnlineQuery>[0];
+  analysis: ResearchAnalysis;
+  aiSettings: Settings['ai'];
+  track: (req: AbortablePromise) => void;
+};
+
+const startOptional = <T>(
+  enabled: boolean,
+  start: () => (AbortablePromise & { unwrap: () => Promise<T> }) | null,
+  track: (req: AbortablePromise) => void,
+): Promise<T | null> => {
+  if (!enabled) return Promise.resolve(null);
+  const req = start();
+  if (!req) return Promise.resolve(null);
+  track(req);
+  return req.unwrap();
+};
+
+const fetchFollowUps = async ({
+  autoFetchSimilar,
+  autoFetchOnline,
+  triggerSimilar,
+  triggerOnline,
+  analysis,
+  aiSettings,
+  track,
+}: FollowUpTriggers) => {
+  const [similarResult, onlineResult] = await Promise.allSettled([
+    startOptional(
+      autoFetchSimilar,
+      () =>
+        triggerSimilar({
+          article: { title: analysis.synthesizedTopic, summary: analysis.summary },
+          aiSettings,
+        }),
+      track,
+    ),
+    startOptional(
+      autoFetchOnline,
+      () => triggerOnline({ topic: analysis.synthesizedTopic, aiSettings }),
+      track,
+    ),
+  ]);
+
+  return {
+    similar: mapSimilarSettled(similarResult),
+    online: mapOnlineSettled(onlineResult),
+  };
+};
 
 /**
  * Rapid Research Assistant state machine: analysis + optional similar/online fetches
@@ -89,7 +173,7 @@ export const useResearchAssistant = (
       setState({
         ...initialState,
         isLoading: true,
-        phase: 'Analyzing input and generating summary...',
+        phase: RESEARCH_PHASE_ANALYZING,
       });
       setCurrentView('research');
 
@@ -111,46 +195,24 @@ export const useResearchAssistant = (
           online: { ...s.online, loading: aiSettings.researchAssistant.autoFetchOnline },
         }));
 
-        const similarPromise = aiSettings.researchAssistant.autoFetchSimilar
-          ? triggerSimilar({
-              article: { title: analysisResult.synthesizedTopic, summary: analysisResult.summary },
-              aiSettings,
-            })
-          : null;
-        const onlinePromise = aiSettings.researchAssistant.autoFetchOnline
-          ? triggerOnline({ topic: analysisResult.synthesizedTopic, aiSettings })
-          : null;
-
-        if (similarPromise) inflightRef.current.push(similarPromise);
-        if (onlinePromise) inflightRef.current.push(onlinePromise);
-
-        const [similarResult, onlineResult] = await Promise.allSettled([
-          similarPromise ? similarPromise.unwrap() : Promise.resolve(null),
-          onlinePromise ? onlinePromise.unwrap() : Promise.resolve(null),
-        ]);
+        const followUps = await fetchFollowUps({
+          autoFetchSimilar: aiSettings.researchAssistant.autoFetchSimilar,
+          autoFetchOnline: aiSettings.researchAssistant.autoFetchOnline,
+          triggerSimilar,
+          triggerOnline,
+          analysis: analysisResult,
+          aiSettings,
+          track: (req) => {
+            inflightRef.current.push(req);
+          },
+        });
 
         if (!isCurrent()) return;
 
         setState((s) => ({
           ...s,
-          similar: {
-            loading: false,
-            articles:
-              similarResult.status === 'fulfilled'
-                ? (similarResult.value as SimilarArticle[] | null)
-                : null,
-            error:
-              similarResult.status === 'rejected' ? (similarResult.reason as Error).message : null,
-          },
-          online: {
-            loading: false,
-            findings:
-              onlineResult.status === 'fulfilled'
-                ? (onlineResult.value as OnlineFindings | null)
-                : null,
-            error:
-              onlineResult.status === 'rejected' ? (onlineResult.reason as Error).message : null,
-          },
+          similar: followUps.similar,
+          online: followUps.online,
         }));
         if (isCurrent()) {
           inflightRef.current = [];
@@ -158,7 +220,7 @@ export const useResearchAssistant = (
       } catch (err) {
         if (!isCurrent()) return;
         // Aborted requests should not surface as user-visible errors
-        const message = err instanceof Error ? err.message : 'An unknown error occurred.';
+        const message = settledErrorMessage(err);
         if (/abort/i.test(message)) return;
         setState((s) => ({
           ...s,
