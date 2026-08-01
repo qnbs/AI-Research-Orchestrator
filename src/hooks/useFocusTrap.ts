@@ -1,60 +1,97 @@
 import { useEffect, useRef } from 'react';
 
+const FOCUSABLE_SELECTOR = [
+  'a[href]:not([disabled])',
+  'button:not([disabled])',
+  'textarea:not([disabled])',
+  'input:not([disabled])',
+  'select:not([disabled])',
+  '[tabindex]:not([tabindex="-1"])',
+].join(', ');
+
+export type FocusTrapOptions = {
+  /** When set, Escape dismisses the overlay (WCAG 2.1.2 / dialog pattern). */
+  onEscape?: () => void;
+  /** Lock document body scroll while the trap is active. Default false. */
+  lockScroll?: boolean;
+};
+
+function cycleTabFocus(
+  e: KeyboardEvent,
+  firstElement: HTMLElement,
+  lastElement: HTMLElement,
+): void {
+  if (e.key !== 'Tab') return;
+
+  if (e.shiftKey && document.activeElement === firstElement) {
+    lastElement.focus();
+    e.preventDefault();
+    return;
+  }
+
+  if (!e.shiftKey && document.activeElement === lastElement) {
+    firstElement.focus();
+    e.preventDefault();
+  }
+}
+
 /**
- * A custom hook to trap focus within a designated container element (e.g., a modal or panel).
- * This is a critical accessibility feature.
- * @param isOpen A boolean indicating if the container is currently open.
- * @returns A ref object to be attached to the container element.
+ * Trap focus within a designated container (modal / panel).
+ * Optionally dismisses on Escape and locks background scroll (WS-G).
  */
-export const useFocusTrap = <T extends HTMLElement>(isOpen: boolean) => {
+export const useFocusTrap = <T extends HTMLElement>(
+  isOpen: boolean,
+  options: FocusTrapOptions = {},
+) => {
   const containerRef = useRef<T>(null);
+  const { onEscape, lockScroll = false } = options;
+  const onEscapeRef = useRef(onEscape);
 
   useEffect(() => {
-    if (!isOpen || !containerRef.current) return;
+    onEscapeRef.current = onEscape;
+  }, [onEscape]);
 
-    const focusableElements = containerRef.current.querySelectorAll<HTMLElement>(
-      'a[href]:not([disabled]), button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled])',
-    );
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!isOpen || !container) {
+      return undefined;
+    }
 
-    if (focusableElements.length === 0) return;
+    const focusableElements = container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR);
+    if (focusableElements.length === 0) {
+      return undefined;
+    }
 
     const firstElement = focusableElements[0];
     const lastElement = focusableElements[focusableElements.length - 1];
+    const previouslyFocusedElement = document.activeElement as HTMLElement | null;
 
-    // Store the element that was focused before the modal opened
-    const previouslyFocusedElement = document.activeElement as HTMLElement;
-
-    // Move focus to the first focusable element in the container
     firstElement.focus();
 
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== 'Tab') return;
+    const previousOverflow = document.body.style.overflow;
+    if (lockScroll) {
+      document.body.style.overflow = 'hidden';
+    }
 
-      // Handle Shift + Tab to go backwards
-      if (e.shiftKey) {
-        if (document.activeElement === firstElement) {
-          lastElement.focus();
-          e.preventDefault();
-        }
-      } else {
-        // Handle Tab to go forwards
-        if (document.activeElement === lastElement) {
-          firstElement.focus();
-          e.preventDefault();
-        }
+    const handleKeyDown = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape' && onEscapeRef.current) {
+        e.stopPropagation();
+        onEscapeRef.current();
+        return;
       }
+      cycleTabFocus(e, firstElement, lastElement);
     };
 
-    const container = containerRef.current;
-    container.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('keydown', handleKeyDown);
 
-    // When the component unmounts or isOpen becomes false, clean up
     return () => {
-      container.removeEventListener('keydown', handleKeyDown);
-      // Restore focus to the element that was focused before the modal opened
-      previouslyFocusedElement?.focus();
+      document.removeEventListener('keydown', handleKeyDown);
+      if (lockScroll) {
+        document.body.style.overflow = previousOverflow;
+      }
+      previouslyFocusedElement?.focus?.();
     };
-  }, [isOpen]);
+  }, [isOpen, lockScroll]);
 
   return containerRef;
 };

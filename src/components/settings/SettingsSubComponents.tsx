@@ -43,7 +43,10 @@ export const Modal: React.FC<{ onClose: () => void; title: string; children: Rea
   title,
   children,
 }) => {
-  const modalRef = useFocusTrap<HTMLDivElement>(true);
+  const modalRef = useFocusTrap<HTMLDivElement>(true, {
+    onEscape: onClose,
+    lockScroll: true,
+  });
   return (
     <div
       className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center backdrop-blur-sm animate-fadeIn"
@@ -52,12 +55,17 @@ export const Modal: React.FC<{ onClose: () => void; title: string; children: Rea
       <div
         ref={modalRef}
         className="bg-surface rounded-lg border border-border shadow-2xl p-6 w-full max-w-lg m-4 flex flex-col max-h-[80vh]"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="settings-shared-modal-title"
       >
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-bold brand-gradient-text">{title}</h3>
+          <h3 id="settings-shared-modal-title" className="text-lg font-bold brand-gradient-text">
+            {title}
+          </h3>
           <button
             onClick={onClose}
-            className="p-1 rounded-full hover:bg-surface-hover"
+            className="p-1 rounded-full hover:bg-surface-hover focus-ring-aa"
             aria-label="Close modal"
           >
             &times;
