@@ -4,6 +4,7 @@ export const RESEARCH_PHASE_ANALYZING = 'Analyzing input and generating summary.
 export const researchViewTranslations = {
   en: {
     'research.title': 'Research Assistant',
+    'research.query.label': 'Research query',
     'research.placeholder': "Enter a research question, abstract, a paper's full text, or a topic…",
     'research.submit': 'Analyze',
     'research.submit.loading': 'Analyzing…',
@@ -33,6 +34,7 @@ export const researchViewTranslations = {
   },
   de: {
     'research.title': 'Recherche-Assistent',
+    'research.query.label': 'Rechercheanfrage',
     'research.placeholder':
       'Geben Sie eine Forschungsfrage, ein Abstract, den Volltext eines Papers oder ein Thema ein…',
     'research.submit': 'Analysieren',

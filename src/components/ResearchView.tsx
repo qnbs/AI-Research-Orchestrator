@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import type { ResearchAnalysis, SimilarArticle, OnlineFindings } from '../types';
 import { LoadingIndicator } from './LoadingIndicator';
 import { BeakerIcon } from './icons/BeakerIcon';
@@ -48,7 +48,7 @@ const ResearchQueryForm: React.FC<{
       <h2 className="text-xl font-bold mb-4 text-brand-accent">{t('research.title')}</h2>
       <form onSubmit={onSubmit}>
         <label htmlFor="research-assistant-query" className="sr-only">
-          {t('research.title')}
+          {t('research.query.label')}
         </label>
         <textarea
           id="research-assistant-query"
@@ -174,14 +174,17 @@ const ResearchView: React.FC<ResearchViewProps> = ({
   const [textQuery, setTextQuery] = useState('');
 
   const analyzingLabel = t('research.phase.analyzing');
-  const researchPhases = [analyzingLabel];
-  const researchPhaseDetails = {
-    [analyzingLabel]: [
-      t('research.phase.detail.processing'),
-      t('research.phase.detail.concepts'),
-      t('research.phase.detail.searching'),
-    ],
-  };
+  const researchPhases = useMemo(() => [analyzingLabel], [analyzingLabel]);
+  const researchPhaseDetails = useMemo(
+    () => ({
+      [analyzingLabel]: [
+        t('research.phase.detail.processing'),
+        t('research.phase.detail.concepts'),
+        t('research.phase.detail.searching'),
+      ],
+    }),
+    [analyzingLabel, t],
+  );
   const displayPhase = !phase || phase === RESEARCH_PHASE_ANALYZING ? analyzingLabel : phase;
 
   const handleSubmit = (e: React.FormEvent) => {
