@@ -57,6 +57,36 @@ const keywordsForEntry = (entry: KnowledgeBaseEntry): string[] => {
   return (entry.journalProfile.focusAreas || []).slice(0, 3);
 };
 
+const articlesFoundLabelKey = (sourceType: KnowledgeBaseEntry['sourceType']): TranslationKey =>
+  sourceType === 'author' ? 'history.quick.publications_found' : 'history.quick.articles_found';
+
+const historyEntryIcon = (sourceType: KnowledgeBaseEntry['sourceType']) => {
+  if (sourceType === 'author') return { Icon: AuthorIcon, color: 'text-accent-magenta' };
+  if (sourceType === 'journal') return { Icon: BookOpenIcon, color: 'text-green-400' };
+  return { Icon: DocumentIcon, color: 'text-brand-accent' };
+};
+
+function QuickViewKeywords({ keywords }: { keywords: string[] }) {
+  const { t } = useTranslation();
+  if (keywords.length === 0) {
+    return (
+      <p className="text-text-secondary italic text-sm mt-1">{t('history.quick.no_keywords')}</p>
+    );
+  }
+  return (
+    <div className="flex flex-wrap gap-2 mt-2">
+      {keywords.map((kw) => (
+        <span
+          key={kw}
+          className="bg-sky-500/10 text-sky-300 text-xs font-medium px-2 py-0.5 rounded-full border border-sky-500/20"
+        >
+          {kw}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 const QuickViewModal: React.FC<{
   entry: KnowledgeBaseEntry;
   onClose: () => void;
@@ -71,6 +101,7 @@ const QuickViewModal: React.FC<{
   const keywordsAndConcepts = keywordsForEntry(entry);
   const typeTitle = t(sourceTypeTitleKey(sourceType));
   const viewAction = t(sourceTypeQuickViewKey(sourceType));
+  const foundLabel = t(articlesFoundLabelKey(sourceType));
 
   return (
     // eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events -- standard modal backdrop click-to-dismiss; keyboard users dismiss via the Escape key handler above, not by activating the backdrop itself.
@@ -108,9 +139,7 @@ const QuickViewModal: React.FC<{
         <div className="space-y-4 my-6">
           <div>
             <h4 className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
-              {sourceType === 'author'
-                ? t('history.quick.publications_found')
-                : t('history.quick.articles_found')}
+              {foundLabel}
             </h4>
             <p className="text-text-primary font-medium">{articles.length}</p>
           </div>
@@ -118,22 +147,7 @@ const QuickViewModal: React.FC<{
             <h4 className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
               {t('history.quick.top_keywords')}
             </h4>
-            {keywordsAndConcepts.length > 0 ? (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {keywordsAndConcepts.map((kw) => (
-                  <span
-                    key={kw}
-                    className="bg-sky-500/10 text-sky-300 text-xs font-medium px-2 py-0.5 rounded-full border border-sky-500/20"
-                  >
-                    {kw}
-                  </span>
-                ))}
-              </div>
-            ) : (
-              <p className="text-text-secondary italic text-sm mt-1">
-                {t('history.quick.no_keywords')}
-              </p>
-            )}
+            <QuickViewKeywords keywords={keywordsAndConcepts} />
           </div>
         </div>
 
@@ -277,14 +291,7 @@ const HistoryListItem = memo<HistoryListItemProps>(function HistoryListItem({
 }) {
   const { t, lang } = useTranslation();
   const { sourceType, title, timestamp } = entry;
-  const Icon =
-    sourceType === 'author' ? AuthorIcon : sourceType === 'journal' ? BookOpenIcon : DocumentIcon;
-  const iconColor =
-    sourceType === 'author'
-      ? 'text-accent-magenta'
-      : sourceType === 'journal'
-        ? 'text-green-400'
-        : 'text-brand-accent';
+  const { Icon, color: iconColor } = historyEntryIcon(sourceType);
   const viewLabel = t(sourceTypeListViewKey(sourceType));
 
   return (
