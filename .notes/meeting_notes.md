@@ -93,6 +93,7 @@
 ## Merged this session (chronological)
 
 - **2026-08-01 — PR #109 (#95 Tailwind v4 `@theme`).** Native `@theme reference inline` + `@theme` blocks in `src/index.css`; legacy `tailwind.config.js` deleted. Custom utilities (`bg-surface`, `text-text-primary`, `border-border`, `animate-fadeIn`, …) now emit real CSS.
+- **2026-08-01 — PR #111 (#96 WS-D follow-ups).** Unquoted `ui-monospace` in `--font-mono`; contrast gate asserts border vs input-bg.
 - **2026-08-01 — #78 / #74 (App.tsx decomposition) on branch `cursor/app-tsx-decomposition-aa80`.** `src/App.tsx` reduced from 869 → ~20 lines (providers only). Split into `src/app/useAppLogic.ts` (composer) + domain hooks (`useResearchSession`, `useAppChromeEffects`, `useKbExports`), `AppLayout` / `AppViewRouter` (chrome + routing), plus `getAgentForPhase` / spinners / lazyViews. Vault-reset listener semantics preserved; review pass also fixed empty-stream guard, checkpoint delete error handling, stream abort on history open, spinner a11y, and modal/export i18n.
 - **PR #75** — SonarCloud CI workflow validation fix (invalid `secrets.*` in job-level `if:`) + wrong `sonar.organization` key.
 - **PR #76** (WS-A) — removed vestigial CDN import map (ADR 0011), new `check-no-cdn-scripts.mjs` gate.
@@ -107,7 +108,7 @@
 
 ## Tracked follow-ups (GitHub issues, not yet started)
 
-- **#96** — 2 small, non-urgent findings from WS-D's last review pass, deferred to keep that loop bounded: (1) `--font-mono`'s `ui-monospace` should be **unquoted** in both `src/index.css` and `index.html` — quoting it (which the FOUC-parity gate's "fix" did, propagating a pre-existing bug from `src/index.css` into `index.html` rather than fixing the actual source) turns a CSS generic-keyword into a literal (never-matching) font name, silently losing the OS-native monospace fallback; (2) `check-contrast.mjs`'s border check never tests `--color-border` against `--color-input-bg` (only against `background`/`surface`) even though `.glass-input` renders its border directly on `input-bg` — no live failure today, but a real gate-coverage gap.
+(None currently — #95/#78/#74/#96 closed.)
 
 ## Process notes for next session
 
