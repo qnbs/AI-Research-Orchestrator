@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+### Fixed
+
+### Known gaps (tracked, not yet closed)
+
+- Master sprint follow-ups in flight: Tailwind v4 `@theme` (#95 / PR #109), App.tsx split (#78/#74 / PR #110), WS-D follow-ups (#96 / PR #111), Dependabot consolidations (PRs #112/#113). Land those before the next version bump.
+- `jsx-a11y` severity downgrade and the 650-warning lint budget (tighten to 0 once confirmed stable).
+- `.github/workflows/claude.yml` still needs a live-tested `--allowedTools` allowlist.
+
+## [0.4.0] - 2026-08-01
+
+> Promotes the previously unreleased work that already landed on `main` prior to the 2026-08-01 Master Sprint PRs. Aligns `package.json` with a real `v0.4.0` tag (no `v0.3.0` tag ever existed).
+
+### Added
+
 - **Self-hosted Workbox, versioned caches, explicit SW update flow** (`public/sw.js`, ADR 0004 amended, WS-B): `scripts/copy-workbox.mjs` (`pnpm run workbox:copy`) copies the built module files from the `workbox-*` npm packages into `public/workbox-v7.0.0/`, replacing `importScripts('https://storage.googleapis.com/workbox-cdn/...')` — this self-hosting, not the CSP, is what actually closes the CDN-trust gap at SW runtime: a meta-tag CSP (as opposed to one delivered via HTTP response headers) does not govern a service worker's own execution context or its `importScripts()` calls, so dropping `storage.googleapis.com` from CSP `worker-src` here is good hygiene (one fewer unnecessarily broad allowance) rather than the enforcement mechanism. Every runtime cache name now carries a `CACHE_VERSION` suffix, pruned on `activate`. The SW no longer calls `skipWaiting()` unconditionally on install (which could hot-swap fetch handlers under an already-open tab still running the old JS bundle); instead `register-sw.js` detects a waiting worker and a new `UpdateAvailableBanner` (via `useServiceWorkerUpdate`) shows an i18n'd (EN+DE) reload prompt, dispatching a `sw-request-reload` intent event only once the user acts, which `register-sw.js` turns into the actual `SKIP_WAITING` postMessage. `CacheableResponsePlugin` tightened from `statuses: [0, 200]` to `[200]` only on the navigation and PubMed-API routes (no longer caches ambiguous opaque cross-origin responses that might be failures); the Google Fonts _webfonts_ route intentionally retains `[0, 200]`, since Workbox's own recipe pairs it with that specific route (`@font-face` fetches can legitimately come back opaque on success in some browsers, unlike `fetch()`-driven navigation/API calls). New `src/test/sw-integrity.test.ts` gate — demonstrated catching all of the above as regressions against the pre-fix `sw.js`/`register-sw.js` before confirming the fix passes. **Caught by this PR's own E2E run**, not just written speculatively: an early version of the update flow reloaded on _every_ `controllerchange` event, including the one `clientsClaim()` fires on a page's very first, uncontrolled→controlled transition — not only on a genuine update. That caused an unwanted reload on every fresh page load, breaking two real Playwright tests whose assertions raced it. Fixed by having `register-sw.js` (not the React layer) own the actual `postMessage`/`controllerchange` handling; a further review round found the first fix still reloaded only the tab that clicked "Reload" (`clientsClaim()` fires `controllerchange` in _every_ open, already-controlled, same-origin tab, not just the initiating one), leaving other open tabs silently taken over by the new worker while still running the old JS bundle — reload-worthiness is now gated on whether _this_ tab already had a controller when it loaded (true for every tab a genuine update can affect, false only for a page's first-ever, controller-less activation), not on which tab clicked the button. Regression assertions in `sw-integrity.test.ts` confirmed failing against each buggy version before passing the fix — the E2E suite re-run on this same PR is the actual confirmation that the original fix resolves the two tests it broke.
 - `scripts/check-no-cdn-scripts.mjs` + `pnpm run check:no-cdn-scripts` CI gate (`.github/workflows/deploy.yml`'s build job): fails if `dist/index.html` ever references a JS/CSS host outside an explicit allowlist (`fonts.googleapis.com`/`fonts.gstatic.com`) or reintroduces a `<script type="importmap">` — guards ADR 0011 below as a permanent regression check, not a one-time cleanup.
 - CI: automated Claude Code review on every PR (`.github/workflows/claude-code-review.yml`) alongside CodeRabbit, plus an on-demand `@claude` mention assistant (`.github/workflows/claude.yml`), both via `anthropics/claude-code-action@v1`.
@@ -52,7 +68,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Known gaps (tracked, not yet closed)
 
-- Version/tag/CHANGELOG drift: `package.json` says `0.3.0`, no matching `v0.3.0` git tag exists. A real version bump, tag, and GitHub release are tracked as separate follow-up work, done only once this `[Unreleased]` section is itself accurate.
 - `jsx-a11y` severity downgrade and the 650-warning lint budget in `eslint.config.js` (predate the zero-warnings policy pass, not yet tightened to match it).
 - `.github/workflows/claude.yml`'s on-demand `@claude` mention job has no `--allowedTools` at all, so every tool call likely falls through to a denied permission decision in headless mode the same way the review job's did before this pass's fix — not yet live-tested since no `@claude` mention has triggered it this session.
 
