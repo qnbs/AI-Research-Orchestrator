@@ -18,6 +18,53 @@ const SYNTHESIS_FOCUS_KEYS: Record<string, TranslationKey> = {
   gaps: 'orchestrator.focus.gaps',
 };
 
+const RecentEntryCard: React.FC<{
+  entry: ResearchEntry;
+  onViewReport: (entry: KnowledgeBaseEntry) => void;
+  onStartNewReview: (topic: string) => void;
+}> = ({ entry, onViewReport, onStartNewReview }) => {
+  const { t } = useTranslation();
+  const focusKey = SYNTHESIS_FOCUS_KEYS[entry.input.synthesisFocus];
+  const focusLabel = focusKey ? t(focusKey) : entry.input.synthesisFocus;
+
+  return (
+    <div className="bg-surface border border-border rounded-lg p-5 flex flex-col justify-between transition-all duration-300 hover:shadow-xl hover:border-brand-accent/50 hover:-translate-y-1 group focus-within:ring-2 focus-within:ring-brand-accent focus-within:border-brand-accent/50">
+      <div>
+        <p className="text-xs text-text-secondary mb-2">
+          {t('orchestrator.dashboard.report_from', {
+            date: new Date(entry.timestamp).toLocaleDateString(),
+          })}
+        </p>
+        <button
+          onClick={() => onStartNewReview(entry.input.researchTopic)}
+          className="font-semibold text-text-primary mb-3 h-20 overflow-hidden text-left group-hover:text-brand-accent focus-ring-aa focus:text-brand-accent transition-colors w-full rounded"
+          title={t('orchestrator.dashboard.start_new_search', {
+            topic: entry.input.researchTopic,
+          })}
+        >
+          {entry.title}
+        </button>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-text-secondary border-t border-border pt-3">
+          <span>
+            {t('orchestrator.dashboard.articles', {
+              count: entry.report.rankedArticles.length,
+            })}
+          </span>
+          <span>
+            <strong>{t('orchestrator.dashboard.focus_label')}</strong> {focusLabel}
+          </span>
+        </div>
+      </div>
+      <button
+        onClick={() => onViewReport(entry)}
+        className="w-full mt-5 inline-flex justify-center items-center py-2 px-4 border border-border shadow-sm text-sm font-semibold rounded-md text-text-primary bg-background group-hover:bg-brand-accent group-hover:text-brand-text-on-accent focus-ring-aa transition-colors"
+      >
+        {t('orchestrator.dashboard.view_report')}
+      </button>
+    </div>
+  );
+};
+
 const DashboardComponent: React.FC<OrchestratorDashboardProps> = ({
   onViewReport,
   onStartNewReview,
@@ -55,49 +102,14 @@ const DashboardComponent: React.FC<OrchestratorDashboardProps> = ({
         </h2>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {recentEntries.map((entry: ResearchEntry) => {
-          const focusKey = SYNTHESIS_FOCUS_KEYS[entry.input.synthesisFocus];
-          const focusLabel = focusKey ? t(focusKey) : entry.input.synthesisFocus;
-          return (
-            <div
-              key={entry.id}
-              className="bg-surface border border-border rounded-lg p-5 flex flex-col justify-between transition-all duration-300 hover:shadow-xl hover:border-brand-accent/50 hover:-translate-y-1 group focus-within:ring-2 focus-within:ring-brand-accent focus-within:border-brand-accent/50"
-            >
-              <div>
-                <p className="text-xs text-text-secondary mb-2">
-                  {t('orchestrator.dashboard.report_from', {
-                    date: new Date(entry.timestamp).toLocaleDateString(),
-                  })}
-                </p>
-                <button
-                  onClick={() => onStartNewReview(entry.input.researchTopic)}
-                  className="font-semibold text-text-primary mb-3 h-20 overflow-hidden text-left group-hover:text-brand-accent focus-ring-aa focus:text-brand-accent transition-colors w-full rounded"
-                  title={t('orchestrator.dashboard.start_new_search', {
-                    topic: entry.input.researchTopic,
-                  })}
-                >
-                  {entry.title}
-                </button>
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-text-secondary border-t border-border pt-3">
-                  <span>
-                    {t('orchestrator.dashboard.articles', {
-                      count: entry.report.rankedArticles.length,
-                    })}
-                  </span>
-                  <span>
-                    <strong>{t('orchestrator.dashboard.focus_label')}</strong> {focusLabel}
-                  </span>
-                </div>
-              </div>
-              <button
-                onClick={() => onViewReport(entry)}
-                className="w-full mt-5 inline-flex justify-center items-center py-2 px-4 border border-border shadow-sm text-sm font-semibold rounded-md text-text-primary bg-background group-hover:bg-brand-accent group-hover:text-brand-text-on-accent focus-ring-aa transition-colors"
-              >
-                {t('orchestrator.dashboard.view_report')}
-              </button>
-            </div>
-          );
-        })}
+        {recentEntries.map((entry: ResearchEntry) => (
+          <RecentEntryCard
+            key={entry.id}
+            entry={entry}
+            onViewReport={onViewReport}
+            onStartNewReview={onStartNewReview}
+          />
+        ))}
       </div>
     </div>
   );
