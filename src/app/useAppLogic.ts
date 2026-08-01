@@ -1,0 +1,699 @@
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { useAppDispatch } from '../store/hooks';
+import { loadCollections } from '../store/slices/collectionsSlice';
+import {
+  startNewTrace,
+  addTraceEvent,
+  setAgentStatus,
+  completeTrace,
+  setDebuggerVisible,
+} from '../store/slices/agentDebugSlice';
+import {
+  ResearchInput,
+  ResearchReport,
+  KnowledgeBaseEntry,
+  AuthorProfile,
+  KnowledgeBaseFilter,
+  AggregatedArticle,
+} from '../types';
+import type { AgentName } from '../types';
+import type { InitialJournalEntry } from '../components/JournalsView';
+import { useSettings } from '../contexts/SettingsContext';
+import { usePresets } from '../contexts/PresetContext';
+import { useResearchAssistant } from '../hooks/useResearchAssistant';
+import { useDocumentAppearance } from '../hooks/useDocumentAppearance';
+import { generateResearchReportStream } from '../services/geminiService';
+import { setVaultResetListener } from '../services/apiKeyService';
+import { setNotification as setNotificationAction } from '../store/slices/uiSlice';
+import { handleResearchStreamFailure } from '../lib/researchStreamFailure';
+import { estimateResearchRunCostUsd, shouldWarnAboutResearchCost } from '../lib/resilience';
+import { reportFromCheckpoint, type ResearchCheckpoint } from '../lib/researchCheckpoint';
+import {
+  deleteResearchCheckpoint,
+  getLatestResearchCheckpoints,
+} from '../services/databaseService';
+import { useKnowledgeBase } from '../contexts/KnowledgeBaseContext';
+import { useUI } from '../hooks/useUI';
+import type { View, BeforeInstallPromptEvent } from '../types/ui';
+import { exportKnowledgeBaseToPdf, exportToCsv, exportCitations } from '../services/exportService';
+import { useChat } from '../hooks/useChat';
+import { useHaptic } from '../hooks/useHaptic';
+import { useTranslation } from '../hooks/useTranslation';
+import { useUrlSync } from '../hooks/useUrlSync';
+import { getAgentForPhase } from './getAgentForPhase';
+
+/**
+ * App-wide orchestration state, lifecycle effects, and handlers.
+ * Pure extraction from AppLayout — no behavior changes.
+ */
+export function useAppLogic() {
+  const { isLoading } = useKnowledgeBase();
+  const { isSettingsLoading, settings, updateSettings } = useSettings();
+  useDocumentAppearance(settings);
+  const { arePresetsLoading } = usePresets();
+  const { t } = useTranslation();
+
+  // Orchestrator State
+  const [localResearchInput, setLocalResearchInput] = useState<ResearchInput | null>(null); // For editable title
+  const [report, setReport] = useState<ResearchReport | null>(null);
+  const [reportStatus, setReportStatus] = useState<
+    'idle' | 'generating' | 'streaming' | 'done' | 'error'
+  >('idle');
+  const [error, setError] = useState<string | null>(null);
+  const [currentPhase, setCurrentPhase] = useState<string>('');
+  const [selectedAuthorProfile, setSelectedAuthorProfile] = useState<AuthorProfile | null>(null);
+  const [selectedJournalEntry, setSelectedJournalEntry] = useState<InitialJournalEntry | null>(
+    null,
+  );
+  const [pendingJournalQuery, setPendingJournalQuery] = useState<string | null>(null);
+
+  // Ref to track the current generation session ID to prevent race conditions
+  const generationIdRef = useRef<number>(0);
+  const streamAbortRef = useRef<AbortController | null>(null);
+
+  // App-wide State from contexts
+  const haptic = useHaptic();
+  const {
+    currentView,
+    notification,
+    setNotification,
+    isSettingsDirty,
+    setIsSettingsDirty,
+    pendingNavigation,
+    setPendingNavigation,
+    setCurrentView,
+    isCommandPaletteOpen,
+    setIsCommandPaletteOpen,
+    setInstallPromptEvent,
+    setIsPwaInstalled,
+  } = useUI();
+  const { knowledgeBase, saveReport, clearKnowledgeBase, uniqueArticles, updateTags } =
+    useKnowledgeBase();
+
+  const [isCurrentReportSaved, setIsCurrentReportSaved] = useState<boolean>(false);
+  const [selectedKbPmids, setSelectedKbPmids] = useState<string[]>([]);
+  const [showExportModal, setShowExportModal] = useState<'pdf' | 'csv' | 'bib' | 'ris' | null>(
+    null,
+  );
+  const [isQuickAddModalOpen, setIsQuickAddModalOpen] = useState(false);
+  const [resumeCheckpoints, setResumeCheckpoints] = useState<ResearchCheckpoint[]>([]);
+  const [checkpointRefreshToken, setCheckpointRefreshToken] = useState(0);
+
+  // Chat Hook
+  const { chatHistory, isChatting, sendMessage } = useChat(report, reportStatus, settings.ai);
+
+  // Research Assistant Hook
+  const {
+    isLoading: isResearching,
+    phase: researchPhase,
+    error: researchError,
+    analysis: researchAnalysis,
+    similar,
+    online,
+    startResearch,
+    clearResearch,
+  } = useResearchAssistant(settings.ai, setCurrentView);
+
+  const [settingsResetToken, setSettingsResetToken] = useState(0);
+  const [initialHelpTab, setInitialHelpTab] = useState<string | null>(null);
+  const [prefilledTopic, setPrefilledTopic] = useState<string | null>(null);
+  const [kbFilter, setKbFilter] = useState<KnowledgeBaseFilter>({
+    searchTerm: '',
+    selectedTopics: [],
+    selectedTags: [],
+    selectedArticleTypes: [],
+    selectedJournals: [],
+    showOpenAccessOnly: false,
+  });
+
+  // Activate URL syncing
+  useUrlSync(currentView, setCurrentView);
+
+  // Load collections from DB on mount
+  const dispatch = useAppDispatch();
+  useEffect(() => {
+    dispatch(loadCollections());
+  }, [dispatch]);
+
+  // apiKeyService.ts has no dependency on the Redux store (avoids an import
+  // cycle back through geminiService.ts, which imports it for getNcbiApiKey).
+  // It notifies of a rare pre-hardening vault reset via this registered
+  // callback instead, set up once here where dispatch/t are already
+  // available. Dispatches via dispatch(setNotificationAction(...)) directly
+  // rather than useUI()'s setNotification wrapper: that wrapper's identity
+  // changes on every unrelated ui-slice update (nav, command palette, PWA
+  // install state, ...), which would re-run this effect far more than "once"
+  // - dispatch itself is Redux's stable reference, so this only re-registers
+  // when the translation function changes (i.e. on language change).
+  useEffect(() => {
+    setVaultResetListener(() =>
+      dispatch(
+        setNotificationAction({
+          id: Date.now(),
+          message: t('settings.apiKeyVaultReset.message'),
+          type: 'error',
+        }),
+      ),
+    );
+    return () => setVaultResetListener(null);
+  }, [dispatch, t]);
+
+  useEffect(() => {
+    // Accessibility Best Practice: Update document title on view change
+    const viewTitles: Record<View, string> = {
+      home: t('nav.home'),
+      orchestrator: t('nav.orchestrator'),
+      research: t('nav.research'),
+      authors: t('nav.authors'),
+      journals: t('nav.journals'),
+      knowledgeBase: t('nav.knowledgeBase'),
+      dashboard: t('nav.dashboard'),
+      history: t('nav.history'),
+      settings: t('nav.settings'),
+      help: t('nav.help'),
+      collections: t('nav.collections') || 'Collections',
+    };
+    document.title = `${viewTitles[currentView] || t('nav.research')} | ${t('app.name')}`;
+  }, [currentView, t]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsCommandPaletteOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [setIsCommandPaletteOpen]);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setInstallPromptEvent(e as BeforeInstallPromptEvent);
+      setIsPwaInstalled(false);
+    };
+
+    const handleAppInstalled = () => {
+      setInstallPromptEvent(null);
+      setIsPwaInstalled(true);
+    };
+
+    // iOS Safari exposes a non-standard `navigator.standalone` flag not in lib.dom.d.ts.
+    const nav = window.navigator as Navigator & { standalone?: boolean };
+    if (window.matchMedia('(display-mode: standalone)').matches || nav.standalone) {
+      setIsPwaInstalled(true);
+    }
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, [setInstallPromptEvent, setIsPwaInstalled]);
+
+  useEffect(() => {
+    // Clear selection when navigating away from the knowledge base
+    if (currentView !== 'knowledgeBase' && selectedKbPmids.length > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- clears persisted selection state in reaction to navigation, not derivable from render.
+      setSelectedKbPmids([]);
+    }
+  }, [currentView, selectedKbPmids.length]);
+
+  useEffect(() => {
+    if (
+      currentView !== 'orchestrator' ||
+      reportStatus === 'generating' ||
+      reportStatus === 'streaming'
+    ) {
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        const latest = await getLatestResearchCheckpoints(10);
+        if (!cancelled) setResumeCheckpoints(latest);
+      } catch (err) {
+        console.error('Failed to load research checkpoints', err);
+        if (!cancelled) setResumeCheckpoints([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [currentView, reportStatus, checkpointRefreshToken]);
+
+  const refreshCheckpoints = useCallback(() => {
+    setCheckpointRefreshToken((n) => n + 1);
+  }, []);
+
+  const handleDiscardCheckpoint = useCallback(
+    async (id: string) => {
+      await deleteResearchCheckpoint(id);
+      setResumeCheckpoints((prev) => prev.filter((c) => c.id !== id));
+      setNotification({
+        id: Date.now(),
+        type: 'success',
+        message: t('checkpoint.discarded'),
+      });
+    },
+    [setNotification, t],
+  );
+
+  const handleRestoreCheckpoint = useCallback(
+    async (ckpt: ResearchCheckpoint) => {
+      const restored = reportFromCheckpoint(ckpt);
+      if (!restored) return;
+      generationIdRef.current += 1;
+      streamAbortRef.current?.abort();
+      setLocalResearchInput(ckpt.input);
+      setReport(restored);
+      setReportStatus('done');
+      setError(ckpt.errorMessage ?? null);
+      setCurrentPhase(ckpt.phase);
+      setIsCurrentReportSaved(false);
+      setCurrentView('orchestrator');
+      await deleteResearchCheckpoint(ckpt.id);
+      setResumeCheckpoints((prev) => prev.filter((c) => c.id !== ckpt.id));
+      setNotification({
+        id: Date.now(),
+        type: 'success',
+        message: t('checkpoint.restored'),
+      });
+    },
+    [setCurrentView, setNotification, t],
+  );
+
+  const handleFormSubmit = useCallback(
+    async (data: ResearchInput) => {
+      // Increment generation ID to invalidate any previous streams
+      generationIdRef.current += 1;
+      const currentGenId = generationIdRef.current;
+
+      setReportStatus('generating');
+      setError(null);
+      setReport(null);
+      setLocalResearchInput(data); // Set local copy for editing
+      setCurrentView('orchestrator');
+      setIsCurrentReportSaved(false);
+
+      const costEstimate = estimateResearchRunCostUsd({
+        topic: data.researchTopic,
+        maxArticlesToScan: data.maxArticlesToScan,
+        topNToSynthesize: data.topNToSynthesize,
+        model: settings.ai.model,
+      });
+      if (shouldWarnAboutResearchCost(costEstimate.estimatedUsd)) {
+        const msg = t('orchestrator.cost_preflight')
+          .replace('${usd}', costEstimate.estimatedUsd.toFixed(3))
+          .replace('${tier}', costEstimate.tier);
+        setNotification({
+          id: Date.now(),
+          type: 'success',
+          message: msg,
+        });
+      }
+
+      // ── Start live trace ──────────────────────────────────────────────────────
+      const sessionId = `sess_${currentGenId}_${Date.now()}`;
+      dispatch(startNewTrace({ sessionId, topic: data.researchTopic }));
+      dispatch(setDebuggerVisible(true));
+      let prevAgent: AgentName | null = null;
+
+      streamAbortRef.current?.abort();
+      streamAbortRef.current = new AbortController();
+      const streamSignal = streamAbortRef.current.signal;
+
+      let finalSynthesis = '';
+      let finalReport: ResearchReport | null = null;
+      let lastPhase = 'Initializing...';
+
+      try {
+        const stream = generateResearchReportStream(data, settings.ai, streamSignal);
+        let isFirstChunk = true;
+
+        for await (const { report: partialReport, synthesisChunk, phase } of stream) {
+          // Check if this stream is still the active one
+          if (generationIdRef.current !== currentGenId) {
+            streamAbortRef.current?.abort();
+            return; // Generation aborted: new request started
+          }
+
+          lastPhase = phase;
+          setCurrentPhase(phase);
+
+          // ── Trace: agent transition detection ────────────────────────────
+          const currentAgent = getAgentForPhase(phase);
+          if (currentAgent !== prevAgent) {
+            if (prevAgent !== null) {
+              dispatch(setAgentStatus({ agentName: prevAgent, status: 'done' }));
+            }
+            dispatch(
+              addTraceEvent({
+                agentName: currentAgent,
+                status: 'running',
+                message: phase,
+                startedAt: Date.now(),
+              }),
+            );
+            prevAgent = currentAgent;
+          } else {
+            // Same agent, update message
+            dispatch(
+              setAgentStatus({ agentName: currentAgent, status: 'running', message: phase }),
+            );
+          }
+
+          if (isFirstChunk && partialReport) {
+            finalReport = partialReport;
+            setReport(finalReport);
+            setReportStatus('streaming');
+            isFirstChunk = false;
+          }
+
+          if (synthesisChunk) {
+            finalSynthesis += synthesisChunk;
+            setReport((prev) => (prev ? { ...prev, synthesis: finalSynthesis } : null));
+          }
+        }
+
+        // Final check before completing
+        if (generationIdRef.current !== currentGenId) return;
+
+        // ── Complete trace ────────────────────────────────────────────────────
+        if (prevAgent !== null) {
+          dispatch(setAgentStatus({ agentName: prevAgent, status: 'done' }));
+        }
+        dispatch(completeTrace({ status: 'done' }));
+
+        const completeReport = { ...finalReport!, synthesis: finalSynthesis };
+        setReport(completeReport);
+        setReportStatus('done');
+
+        if (settings.defaults.autoSaveReports) {
+          await saveReport(data, completeReport);
+          setIsCurrentReportSaved(true);
+        }
+      } catch (err) {
+        await handleResearchStreamFailure({
+          error: err,
+          currentGenerationId: currentGenId,
+          getActiveGenerationId: () => generationIdRef.current,
+          input: data,
+          phase: lastPhase,
+          finalReport,
+          finalSynthesis,
+          previousAgent: prevAgent,
+          dispatch,
+          setReport,
+          setReportStatus,
+          setError,
+          setNotification,
+        });
+        refreshCheckpoints();
+      }
+    },
+    [
+      dispatch,
+      settings.ai,
+      settings.defaults.autoSaveReports,
+      setCurrentView,
+      saveReport,
+      setNotification,
+      t,
+      refreshCheckpoints,
+    ],
+  );
+
+  // Soft re-run: discard checkpoint then start a fresh full pipeline with the same input.
+  const handleRerunCheckpoint = useCallback(
+    async (ckpt: ResearchCheckpoint) => {
+      await deleteResearchCheckpoint(ckpt.id);
+      setResumeCheckpoints((prev) => prev.filter((c) => c.id !== ckpt.id));
+      await handleFormSubmit(ckpt.input);
+    },
+    [handleFormSubmit],
+  );
+
+  const handleSaveReport = useCallback(async () => {
+    if (report && localResearchInput) {
+      await saveReport(localResearchInput, report);
+      setIsCurrentReportSaved(true);
+      haptic('success');
+    }
+  }, [report, localResearchInput, saveReport, haptic]);
+
+  const handleNewSearch = useCallback(() => {
+    generationIdRef.current += 1; // Invalidate any ongoing generation
+    streamAbortRef.current?.abort();
+    setReport(null);
+    setLocalResearchInput(null);
+    setReportStatus('idle');
+    setError(null);
+    setIsCurrentReportSaved(false);
+    setCurrentView('orchestrator');
+  }, [setCurrentView]);
+
+  const handleClearKnowledgeBase = useCallback(async () => {
+    await clearKnowledgeBase();
+    setSettingsResetToken(Date.now());
+  }, [clearKnowledgeBase]);
+
+  const handleViewChange = useCallback(
+    (view: View) => {
+      if (isSettingsDirty) {
+        setPendingNavigation(view);
+      } else {
+        setCurrentView(view);
+      }
+    },
+    [isSettingsDirty, setCurrentView, setPendingNavigation],
+  );
+
+  const handleConfirmNavigation = useCallback(() => {
+    if (pendingNavigation) {
+      setIsSettingsDirty(false); // Discard changes
+      setCurrentView(pendingNavigation);
+      setPendingNavigation(null);
+    }
+  }, [pendingNavigation, setCurrentView, setPendingNavigation, setIsSettingsDirty]);
+
+  const handleCompleteOnboarding = useCallback(() => {
+    updateSettings((s) => ({ ...s, hasCompletedOnboarding: true }));
+  }, [updateSettings]);
+
+  const handleFilterChange = useCallback((newFilter: Partial<KnowledgeBaseFilter>) => {
+    setKbFilter((prev) => ({ ...prev, ...newFilter }));
+  }, []);
+
+  const handlePrefillConsumed = useCallback(() => {
+    setPrefilledTopic(null);
+  }, []);
+
+  const handleStartNewReviewFromTopic = useCallback(
+    (topic: string) => {
+      setPrefilledTopic(topic);
+      setCurrentView('orchestrator');
+    },
+    [setCurrentView],
+  );
+
+  const handleViewEntry = useCallback(
+    (entry: KnowledgeBaseEntry) => {
+      if (entry.sourceType === 'research') {
+        // Stop any ongoing generation when viewing an old report
+        generationIdRef.current += 1;
+        setLocalResearchInput(entry.input);
+        setReport(entry.report);
+        setReportStatus('done');
+        setError(null);
+        setIsCurrentReportSaved(true);
+        setCurrentView('orchestrator');
+      } else if (entry.sourceType === 'author') {
+        setSelectedAuthorProfile(entry.profile);
+        setCurrentView('authors');
+      } else if (entry.sourceType === 'journal') {
+        setSelectedJournalEntry({ profile: entry.journalProfile, articles: entry.articles });
+        setCurrentView('journals');
+      }
+    },
+    [setCurrentView],
+  );
+
+  const handleAuthorProfileViewed = useCallback(() => {
+    setSelectedAuthorProfile(null);
+  }, []);
+
+  const handleJournalEntryViewed = useCallback(() => {
+    setSelectedJournalEntry(null);
+  }, []);
+
+  /** Cross-link: open the Journal Hub with a prefilled journal name (e.g. from KB detail panel). */
+  const handleAnalyzeJournalByName = useCallback(
+    (journalName: string) => {
+      setPendingJournalQuery(journalName);
+      setCurrentView('journals');
+    },
+    [setCurrentView],
+  );
+
+  const handleJournalQueryConsumed = useCallback(() => {
+    setPendingJournalQuery(null);
+  }, []);
+
+  const handleTagsUpdate = useCallback(
+    async (pmid: string, newTags: string[]) => {
+      await updateTags(pmid, newTags);
+      // Also update the local report state if it's being viewed
+      setReport((prevReport) => {
+        if (!prevReport || !prevReport.rankedArticles.some((a) => a.pmid === pmid)) {
+          return prevReport;
+        }
+        return {
+          ...prevReport,
+          rankedArticles: prevReport.rankedArticles.map((a) =>
+            a.pmid === pmid ? { ...a, customTags: newTags } : a,
+          ),
+        };
+      });
+    },
+    [updateTags],
+  );
+
+  const handleExportSelection = useCallback((format: 'pdf' | 'csv' | 'bib' | 'ris') => {
+    setShowExportModal(format);
+  }, []);
+
+  const handleConfirmExport = useCallback(() => {
+    if (!showExportModal) return;
+
+    const articlesToExport: AggregatedArticle[] = uniqueArticles.filter((a) =>
+      selectedKbPmids.includes(a.pmid),
+    );
+    if (articlesToExport.length === 0) {
+      setNotification({
+        id: Date.now(),
+        message: 'No articles selected for export.',
+        type: 'error',
+      });
+      return;
+    }
+
+    switch (showExportModal) {
+      case 'pdf':
+        exportKnowledgeBaseToPdf(
+          articlesToExport,
+          'Knowledge Base Selection',
+          (pmid) =>
+            knowledgeBase
+              .flatMap((e) =>
+                e.sourceType === 'research' ? e.report.aiGeneratedInsights || [] : [],
+              )
+              .filter((i) => (i.supportingArticles || []).includes(pmid)),
+          settings.export.pdf,
+        );
+        break;
+      case 'csv':
+        exportToCsv(articlesToExport, 'knowledge_base_selection', settings.export.csv);
+        break;
+      case 'bib':
+      case 'ris':
+        exportCitations(articlesToExport, settings.export.citation, showExportModal);
+        break;
+    }
+    setShowExportModal(null);
+    setNotification({
+      id: Date.now(),
+      message: `Exported ${articlesToExport.length} articles as ${showExportModal.toUpperCase()}.`,
+      type: 'success',
+    });
+  }, [
+    showExportModal,
+    selectedKbPmids,
+    uniqueArticles,
+    settings.export,
+    setNotification,
+    knowledgeBase,
+  ]);
+
+  // Fix for infinite render loop: Memoize the callback passed to SettingsView
+  const handleNavigateToHelp = useCallback(
+    (tab: 'about' | 'faq') => {
+      setInitialHelpTab(tab);
+      setCurrentView('help');
+    },
+    [setCurrentView],
+  );
+
+  return {
+    isLoading,
+    isSettingsLoading,
+    arePresetsLoading,
+    settings,
+    localResearchInput,
+    setLocalResearchInput,
+    report,
+    reportStatus,
+    error,
+    currentPhase,
+    selectedAuthorProfile,
+    selectedJournalEntry,
+    pendingJournalQuery,
+    currentView,
+    notification,
+    setNotification,
+    pendingNavigation,
+    setPendingNavigation,
+    isCommandPaletteOpen,
+    knowledgeBase,
+    uniqueArticles,
+    isCurrentReportSaved,
+    selectedKbPmids,
+    setSelectedKbPmids,
+    showExportModal,
+    setShowExportModal,
+    isQuickAddModalOpen,
+    setIsQuickAddModalOpen,
+    resumeCheckpoints,
+    chatHistory,
+    isChatting,
+    sendMessage,
+    isResearching,
+    researchPhase,
+    researchError,
+    researchAnalysis,
+    similar,
+    online,
+    startResearch,
+    clearResearch,
+    settingsResetToken,
+    initialHelpTab,
+    setInitialHelpTab,
+    prefilledTopic,
+    kbFilter,
+    handleDiscardCheckpoint,
+    handleRestoreCheckpoint,
+    handleFormSubmit,
+    handleRerunCheckpoint,
+    handleSaveReport,
+    handleNewSearch,
+    handleClearKnowledgeBase,
+    handleViewChange,
+    handleConfirmNavigation,
+    handleCompleteOnboarding,
+    handleFilterChange,
+    handlePrefillConsumed,
+    handleStartNewReviewFromTopic,
+    handleViewEntry,
+    handleAuthorProfileViewed,
+    handleJournalEntryViewed,
+    handleAnalyzeJournalByName,
+    handleJournalQueryConsumed,
+    handleTagsUpdate,
+    handleExportSelection,
+    handleConfirmExport,
+    handleNavigateToHelp,
+  };
+}

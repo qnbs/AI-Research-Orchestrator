@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **`src/App.tsx` decomposed below the 700-line hard max (#78 / #74):** pure structural split into `src/app/useAppLogic.ts` (state/effects/handlers), `src/app/AppLayout.tsx` (chrome + view routing), plus small helpers (`getAgentForPhase`, spinners, lazy view map). Behavior preserved — vault-reset listener registration/cleanup, Redux dispatch stability, banners, and phase→agent mapping unchanged.
 - `eslint-plugin-react-hooks` upgraded to v7.1.1 (#62).
 - **No-`any` / zero-warnings ESLint policy completed** across two PRs (#64, #65): eliminated all `no-explicit-any`, `no-unused-vars`, `no-unescaped-entities`, and `display-name` findings, all `react-hooks/exhaustive-deps` warnings, and all `jsx-a11y` warnings. Lint is now **0 errors / 0 warnings**, down from 176 warnings against the existing 650-warning budget (the budget itself and the `jsx-a11y` severity downgrade block in `eslint.config.js` are not yet tightened to match — see "Known gaps" below).
 - **Migrated to Vite 8 + `@vitejs/plugin-react` 6** (#66) — a bundler-architecture change (esbuild/Rollup → Rolldown/Oxc), handled as a dedicated migration rather than a routine version bump.
@@ -52,7 +53,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Version/tag/CHANGELOG drift: `package.json` says `0.3.0`, no matching `v0.3.0` git tag exists. A real version bump, tag, and GitHub release are tracked as separate follow-up work, done only once this `[Unreleased]` section is itself accurate.
 - `jsx-a11y` severity downgrade and the 650-warning lint budget in `eslint.config.js` (predate the zero-warnings policy pass, not yet tightened to match it).
 - `.github/workflows/claude.yml`'s on-demand `@claude` mention job has no `--allowedTools` at all, so every tool call likely falls through to a denied permission decision in headless mode the same way the review job's did before this pass's fix — not yet live-tested since no `@claude` mention has triggered it this session.
-- `src/App.tsx` is ~869 lines, well past the project's own 700-line hard max for `src/**/*.{ts,tsx}` files (tracked as #78 / #74).
 - WS-D follow-ups (#96): unquote `ui-monospace` in `--font-mono`; extend `check-contrast.mjs` to assert `--color-border` vs `--color-input-bg`.
 
 ## [0.3.0] - 2026-07-21
