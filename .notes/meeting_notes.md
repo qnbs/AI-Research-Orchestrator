@@ -8,7 +8,8 @@
 - **#122** WS-F skip-to-content + `#main-content` landmark + 44×44 touch targets (merged).
 - **#123** Chrome i18n shell: Header/Welcome/OrchestratorDashboard/ConfirmationModal/FeatureErrorBoundary → `chromeTranslations.ts` + ratchet.
 - **#124** WS-G dialog a11y: Escape + scroll lock via `useFocusTrap` (merged).
-- **WS-H2 (2026-08-01 / #126):** CommandPalette EN+DE via `commandPaletteTranslations.ts` + ratchet (merged).
+- **#125** WS-H1: QuickAdd / History / preset modal EN+DE via `modalTranslations.ts` + ratchet (merged).
+- **#126** WS-H2: CommandPalette EN+DE via `commandPaletteTranslations.ts` + ratchet (merged).
 - **WS-I (this branch):** blocking axe critical/serious smoke on key views (`.github/workflows/a11y.yml` + `a11y.spec.ts`).
 
 ## Still open
