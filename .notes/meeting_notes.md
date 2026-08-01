@@ -5,13 +5,14 @@
 - **#119** openai 6→7.2 (Dependabot #98 closed as superseded).
 - **#120** HelpView i18n Wave 8 (EN+DE `help.*`, catalog split under 700 lines, FAQ accuracy fixes).
 - **#118** WS-E focus rings: `.focus-ring-aa`, ESLint guard, Playwright keyboard-focus.
-- **WS-F (this branch):** skip-to-content + `#main-content` landmark + 44×44 touch targets. Original `PROMPT-ARO-HARDENING-UIUX` still not in-repo — WS-F reconstructed as bypass-blocks + touch-target AA after WS-E.
+- **#122** WS-F skip-to-content + `#main-content` landmark + 44×44 touch targets (merged).
+- **Chrome i18n shell (PR #123):** Migrated Header/Welcome/OrchestratorDashboard/ConfirmationModal/FeatureErrorBoundary to EN+DE via `chromeTranslations.ts` so chrome UI is no longer hardcoded English; ratchet now guards those files. Larger backlog (CommandPalette, InputForm, …) remains open.
 
 ## Still open
 
 - Issues **#74 / #78** implemented via #110 but agent lacks permission to close — close manually if still open.
-- **Chrome i18n rest:** Header aria-labels / theme menu, Welcome, OrchestratorDashboard, ConfirmationModal, FeatureErrorBoundary → `chromeTranslations.ts` + ratchet.
 - UIUX **WS-G onward** — continue from meeting-note summaries unless user re-shares the hardening prompt.
+- Larger i18n backlog still outside ratchet: CommandPalette, InputForm, SettingsSubComponents, ReportDisplay, ResearchView, etc.
 
 ## Process
 
