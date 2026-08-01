@@ -11,13 +11,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- ESLint warning budget tightened to `--max-warnings 0`; `jsx-a11y` recommended rules run as errors (#115).
+- `.github/workflows/claude.yml` live-capable `--allowedTools` allowlist for on-demand `@claude` (#115).
+
 ### Fixed
+
+- **Cross-tab API-key vault race mitigated via Web Locks** (`apiKeyService`, #116).
+- **i18n:** Knowledge Base / report export modals and notifications use EN+DE `t()` keys (`kb.export.*`); ratchet covers `useKnowledgeBaseLogic` + `useKbExports` (#117).
 
 ### Known gaps (tracked, not yet closed)
 
-- Master sprint follow-ups in flight: Tailwind v4 `@theme` (#95 / PR #109), App.tsx split (#78/#74 / PR #110), WS-D follow-ups (#96 / PR #111), Dependabot consolidations (PRs #112/#113). Land those before the next version bump.
-- `jsx-a11y` severity downgrade and the 650-warning lint budget (tighten to 0 once confirmed stable).
-- `.github/workflows/claude.yml` still needs a live-tested `--allowedTools` allowlist.
+- Broader i18n migration (#69) — remaining hardcoded UI strings outside the ratchet list.
 
 ## [0.4.0] - 2026-08-01
 
