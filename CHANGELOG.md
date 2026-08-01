@@ -27,11 +27,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **i18n:** Knowledge Base / report export modals and notifications use EN+DE `t()` keys (`kb.export.*`); ratchet covers `useKnowledgeBaseLogic` + `useKbExports` (#117).
 - **i18n chrome shell:** Header aria-labels/theme menu, Welcome, OrchestratorDashboard, ConfirmationModal, and FeatureErrorBoundary use EN+DE keys via `chromeTranslations.ts` + ratchet.
 - **i18n modal chrome (WS-H1):** QuickAddModal, History quick-view/list chrome, InputForm preset dialog, and Settings shared Modal close label use EN+DE via `modalTranslations.ts` + ratchet.
+- **i18n InputForm body:** orchestrator research parameters form + header EN+DE via `inputFormTranslations.ts` + ratchet (PubMed article-type filter values stay English in state).
 - **WS-E:** restored visible keyboard focus rings on 12 interactive sites that used bare `focus:outline-none` (nav, accordions, command palette, search inputs, dashboard actions).
 
 ### Known gaps (tracked, not yet closed)
 
-- Broader i18n migration (#69) — HelpView Wave 8 + chrome shell + modal chrome (H1) + CommandPalette (H2) landed; larger backlog (InputForm body, SettingsSubComponents, ReportDisplay, ResearchView) still outside ratchet.
+- Broader i18n migration (#69) — HelpView Wave 8 + chrome/modal/CommandPalette + InputForm body landed; larger backlog (SettingsSubComponents, ReportDisplay, ResearchView) still outside ratchet.
 - Full Playwright E2E job remains non-blocking until `docs/e2e-ci-backlog.md` promotion criteria; WS-I a11y smoke is the blocking a11y gate.
 
 ## [0.4.0] - 2026-08-01
