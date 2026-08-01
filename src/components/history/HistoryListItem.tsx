@@ -11,8 +11,6 @@ import {
   sourceTypeListViewKey,
 } from './historyViewHelpers';
 
-type Translate = ReturnType<typeof useTranslation>['t'];
-
 const HistoryTitleEditor: React.FC<{
   editingTitle: string;
   onTitleChange: (title: string) => void;
@@ -54,68 +52,47 @@ const HistoryTitleEditor: React.FC<{
   );
 };
 
-const AuthorEntryMeta: React.FC<{ count: number; t: Translate }> = ({ count, t }) => (
-  <div>
-    {t(count === 1 ? 'history.list.publications_one' : 'history.list.publications', { count })}
-  </div>
-);
+const AuthorEntryMeta: React.FC<{
+  entry: Extract<KnowledgeBaseEntry, { sourceType: 'author' }>;
+}> = ({ entry }) => {
+  const { t } = useTranslation();
+  const count = entry.articles.length;
+  return (
+    <div>
+      {t(count === 1 ? 'history.list.publications_one' : 'history.list.publications', { count })}
+    </div>
+  );
+};
 
 const JournalEntryMeta: React.FC<{
-  articlesLabel: string;
-  issn: string;
-  oaPolicy: string;
-  t: Translate;
-}> = ({ articlesLabel, issn, oaPolicy, t }) => (
-  <>
-    <div>{articlesLabel}</div>
-    <div>
-      <strong>{t('history.list.issn')}</strong> {issn}
-    </div>
-    <div>
-      <strong>{t('history.list.oa_policy')}</strong> {oaPolicy}
-    </div>
-  </>
-);
+  entry: Extract<KnowledgeBaseEntry, { sourceType: 'journal' }>;
+}> = ({ entry }) => {
+  const { t } = useTranslation();
+  const count = entry.articles.length;
+  const articlesLabel = t(count === 1 ? 'history.list.articles_one' : 'history.list.articles', {
+    count,
+  });
+  return (
+    <>
+      <div>{articlesLabel}</div>
+      <div>
+        <strong>{t('history.list.issn')}</strong> {entry.journalProfile.issn}
+      </div>
+      <div>
+        <strong>{t('history.list.oa_policy')}</strong> {entry.journalProfile.oaPolicy}
+      </div>
+    </>
+  );
+};
 
 const ResearchEntryMeta: React.FC<{
-  articlesLabel: string;
-  focusLabel: string;
-  dateRangeLabel: string;
-  t: Translate;
-}> = ({ articlesLabel, focusLabel, dateRangeLabel, t }) => (
-  <>
-    <div>{articlesLabel}</div>
-    <div>
-      <strong>{t('history.list.focus')}</strong> {focusLabel}
-    </div>
-    <div>
-      <strong>{t('history.list.date_range')}</strong> {dateRangeLabel}
-    </div>
-  </>
-);
-
-const HistoryEntryMeta: React.FC<{ entry: KnowledgeBaseEntry }> = ({ entry }) => {
+  entry: Extract<KnowledgeBaseEntry, { sourceType: 'research' }>;
+}> = ({ entry }) => {
   const { t } = useTranslation();
-  const articleCount = entry.articles.length;
-  const articlesLabel = t(
-    articleCount === 1 ? 'history.list.articles_one' : 'history.list.articles',
-    { count: articleCount },
-  );
-
-  if (entry.sourceType === 'author') {
-    return <AuthorEntryMeta count={articleCount} t={t} />;
-  }
-  if (entry.sourceType === 'journal') {
-    return (
-      <JournalEntryMeta
-        articlesLabel={articlesLabel}
-        issn={entry.journalProfile.issn}
-        oaPolicy={entry.journalProfile.oaPolicy}
-        t={t}
-      />
-    );
-  }
-
+  const count = entry.articles.length;
+  const articlesLabel = t(count === 1 ? 'history.list.articles_one' : 'history.list.articles', {
+    count,
+  });
   const focusKey = SYNTHESIS_FOCUS_KEYS[entry.input.synthesisFocus];
   const years = entry.input.dateRange;
   const dateRangeLabel =
@@ -126,13 +103,31 @@ const HistoryEntryMeta: React.FC<{ entry: KnowledgeBaseEntry }> = ({ entry }) =>
         });
 
   return (
-    <ResearchEntryMeta
-      articlesLabel={articlesLabel}
-      focusLabel={t(focusKey)}
-      dateRangeLabel={dateRangeLabel}
-      t={t}
-    />
+    <>
+      <div>{articlesLabel}</div>
+      <div>
+        <strong>{t('history.list.focus')}</strong> {t(focusKey)}
+      </div>
+      <div>
+        <strong>{t('history.list.date_range')}</strong> {dateRangeLabel}
+      </div>
+    </>
   );
+};
+
+const HistoryEntryMeta: React.FC<{ entry: KnowledgeBaseEntry }> = ({ entry }) => {
+  switch (entry.sourceType) {
+    case 'author':
+      return <AuthorEntryMeta entry={entry} />;
+    case 'journal':
+      return <JournalEntryMeta entry={entry} />;
+    case 'research':
+      return <ResearchEntryMeta entry={entry} />;
+    default: {
+      const _exhaustive: never = entry;
+      return _exhaustive;
+    }
+  }
 };
 
 const HistoryListItemIdentity: React.FC<{
