@@ -217,7 +217,11 @@ export const useAuthorsViewLogic = (
           maxResults: settings.ai.researchAssistant.authorSearchLimit,
         }).unwrap();
         if (pmids.length === 0) {
-          throw new Error(t('authors.error.no_publications'));
+          if (isMounted.current) {
+            setError(t('authors.error.no_publications'));
+            setView('landing');
+          }
+          return;
         }
 
         if (!isMounted.current) return;

@@ -133,6 +133,7 @@ const AgentDebuggerPanel: React.FC = () => {
                 type="button"
                 key={tab}
                 onClick={() => setActiveTab(tab)}
+                aria-pressed={activeTab === tab}
                 className={`py-2.5 px-3 text-xs font-medium border-b-2 -mb-px transition-colors ${
                   activeTab === tab
                     ? 'text-brand-accent border-brand-accent'

@@ -29,6 +29,7 @@ export const HistoryRow: React.FC<{
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.04 }}
       onClick={onSelect}
+      aria-pressed={isSelected}
       className={`w-full text-left px-3 py-2.5 rounded-lg transition-colors border ${
         isSelected
           ? 'bg-brand-accent/10 border-brand-accent/30'

@@ -13,6 +13,7 @@ import {
 } from '../store/slices/collectionsSlice';
 import type { ResearchCollection } from '../types';
 import { useTranslation } from '../hooks/useTranslation';
+import { useUI } from '../hooks/useUI';
 import { ConfirmationModal } from './ConfirmationModal';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -426,6 +427,7 @@ const CollectionModal: React.FC<{
 // ── Main View ─────────────────────────────────────────────────────────────────
 const CollectionsView: React.FC = () => {
   const { t } = useTranslation();
+  const { setNotification } = useUI();
   const dispatch = useAppDispatch();
   const collections = useAppSelector((s) => s.collections.items);
   const isLoading = useAppSelector((s) => s.collections.isLoading);
@@ -435,6 +437,7 @@ const CollectionsView: React.FC = () => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [shareTarget, setShareTarget] = useState<string | null>(null);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleCreate = useCallback(
     (data: Partial<ResearchCollection>) => {
@@ -469,12 +472,23 @@ const CollectionsView: React.FC = () => {
     setDeleteTargetId(id);
   }, []);
 
-  const handleDeleteConfirm = useCallback(() => {
+  const handleDeleteConfirm = useCallback(async () => {
     if (!deleteTargetId) return;
-    dispatch(deleteCollection(deleteTargetId));
-    if (selectedId === deleteTargetId) setSelectedId(null);
-    setDeleteTargetId(null);
-  }, [dispatch, deleteTargetId, selectedId]);
+    setIsDeleting(true);
+    try {
+      await dispatch(deleteCollection(deleteTargetId)).unwrap();
+      if (selectedId === deleteTargetId) setSelectedId(null);
+      setDeleteTargetId(null);
+    } catch {
+      setNotification({
+        id: Date.now(),
+        message: t('collections.delete.error'),
+        type: 'error',
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  }, [dispatch, deleteTargetId, selectedId, setNotification, t]);
 
   const handleShare = useCallback(
     (collection: ResearchCollection) => {
@@ -576,6 +590,7 @@ const CollectionsView: React.FC = () => {
           title={t('collections.delete.title')}
           message={t('collections.delete.confirm')}
           confirmText={t('collections.delete.action')}
+          isConfirming={isDeleting}
         />
       )}
     </div>
