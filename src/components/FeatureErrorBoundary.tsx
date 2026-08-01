@@ -1,5 +1,6 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { ExclamationTriangleIcon } from './icons/ExclamationTriangleIcon';
+import { translateSync } from '../i18n/translate';
 
 interface Props {
   children: ReactNode;
@@ -45,17 +46,17 @@ export class FeatureErrorBoundary extends Component<Props, State> {
       >
         <ExclamationTriangleIcon className="mx-auto h-10 w-10 text-red-400 mb-3" aria-hidden />
         <h2 className="text-lg font-semibold text-text-primary mb-2">
-          {this.props.featureName} unavailable
+          {translateSync('error.feature.unavailable', { feature: this.props.featureName })}
         </h2>
         <p className="text-sm text-text-secondary mb-4 max-w-md mx-auto">
-          Something went wrong in this section. Your data in other areas is unaffected.
+          {translateSync('error.feature.body')}
         </p>
         <button
           type="button"
           onClick={this.handleRetry}
-          className="px-4 py-2 rounded-lg bg-brand-accent text-white text-sm font-medium hover:opacity-90 focus:ring-2 focus:ring-brand-accent focus:ring-offset-2"
+          className="px-4 py-2 rounded-lg bg-brand-accent text-white text-sm font-medium hover:opacity-90 focus-ring-aa"
         >
-          Try again
+          {translateSync('error.feature.retry')}
         </button>
       </div>
     );

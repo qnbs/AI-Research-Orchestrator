@@ -26,6 +26,11 @@ const MIGRATED_FILES = [
   'src/components/HelpView.tsx',
   'src/components/help/helpContent.tsx',
   'src/components/SkipToContentLink.tsx',
+  'src/components/Header.tsx',
+  'src/components/Welcome.tsx',
+  'src/components/OrchestratorDashboard.tsx',
+  'src/components/ConfirmationModal.tsx',
+  'src/components/FeatureErrorBoundary.tsx',
 ];
 
 const IGNORE_COMMENT = 'i18n-ratchet-ignore-next-line';

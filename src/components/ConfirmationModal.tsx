@@ -1,6 +1,7 @@
 import React from 'react';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 import { XIcon } from './icons/XIcon';
+import { useTranslation } from '../hooks/useTranslation';
 
 interface ConfirmationModalProps {
   onConfirm: () => void;
@@ -24,6 +25,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   titleClass = 'text-red-400',
 }) => {
   const modalRef = useFocusTrap<HTMLDivElement>(true);
+  const { t } = useTranslation();
 
   return (
     <div
@@ -43,8 +45,8 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
           </h3>
           <button
             onClick={onCancel}
-            className="p-1 rounded-full hover:bg-surface-hover text-text-secondary"
-            aria-label="Close"
+            className="p-1 rounded-full hover:bg-surface-hover text-text-secondary focus-ring-aa"
+            aria-label={t('common.close')}
           >
             <XIcon className="h-5 w-5" />
           </button>
@@ -53,14 +55,14 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
         <div className="p-4 bg-background/50 rounded-b-lg flex justify-end space-x-3">
           <button
             onClick={onCancel}
-            className="px-4 py-2 border border-border text-sm font-medium rounded-md shadow-sm text-text-primary bg-surface hover:bg-surface-hover"
+            className="px-4 py-2 border border-border text-sm font-medium rounded-md shadow-sm text-text-primary bg-surface hover:bg-surface-hover focus-ring-aa"
           >
-            Cancel
+            {t('common.cancel')}
           </button>
           <button
             onClick={onConfirm}
             disabled={isConfirming}
-            className={`px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white ${confirmButtonClass} disabled:opacity-50 disabled:cursor-wait`}
+            className={`px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white ${confirmButtonClass} disabled:opacity-50 disabled:cursor-wait focus-ring-aa`}
           >
             {confirmText}
           </button>

@@ -92,7 +92,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
     history: t('nav.history'),
     settings: t('nav.settings'),
     help: t('nav.help'),
-    collections: t('nav.collections') || 'Collections',
+    collections: t('nav.collections'),
   };
 
   // Close dropdowns on outside click
@@ -120,17 +120,17 @@ const HeaderComponent: React.FC<HeaderProps> = ({
     ) : (
       <span
         className="text-[10px] font-mono font-semibold text-success tracking-wide"
-        title="Matrix Theme"
+        title={t('chrome.theme.matrix_title')}
       >
         MX
       </span>
     );
   const themeLabel =
     currentTheme === 'dark'
-      ? 'Switch to Neon-Light'
+      ? t('chrome.theme.switch_light')
       : currentTheme === 'light'
-        ? 'Switch to Matrix-Green'
-        : 'Switch to Cyber-Dark';
+        ? t('chrome.theme.switch_matrix')
+        : t('chrome.theme.switch_dark');
 
   const toggleLanguage = () =>
     updateSettings((prev) => ({ ...prev, appLanguage: prev.appLanguage === 'en' ? 'de' : 'en' }));
@@ -147,21 +147,24 @@ const HeaderComponent: React.FC<HeaderProps> = ({
             <button
               onClick={() => onViewChange('home')}
               className="flex items-center gap-3 focus-ring-aa rounded-md group"
-              aria-label="Go to Home"
+              aria-label={t('chrome.aria.go_home')}
             >
               <AppLogo
                 idPrefix="header-logo"
                 className="w-8 h-8 drop-shadow-lg group-hover:scale-105 transition-transform duration-300"
               />
               <span className="font-bold text-lg tracking-tight text-text-primary">
-                Research<span className="text-brand-accent drop-shadow-sm">Orchestrator</span>
+                {t('chrome.brand.research')}
+                <span className="text-brand-accent drop-shadow-sm">
+                  {t('chrome.brand.orchestrator')}
+                </span>
               </span>
             </button>
             <div className="flex items-center gap-3">
               <InferenceModeBadge />
               <nav
                 className="flex items-center gap-1 p-1.5 rounded-xl border border-white/5 bg-black/5 backdrop-blur-md shadow-inner"
-                aria-label="Main navigation"
+                aria-label={t('chrome.aria.main_nav')}
               >
                 <NavButton
                   onClick={() => onViewChange('research')}
@@ -239,7 +242,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
               <button
                 onClick={() => setIsCommandPaletteOpen(true)}
                 className="group flex items-center gap-3 px-4 py-2 text-sm text-text-secondary bg-input-bg border border-border rounded-lg hover:border-brand-accent/50 hover:text-text-primary hover:shadow-glow transition-all duration-300 backdrop-blur-sm focus-ring-aa touch-target-aa"
-                aria-label="Open command palette"
+                aria-label={t('chrome.aria.open_command_palette')}
               >
                 <SearchIcon className="h-4 w-4 group-hover:text-brand-accent transition-colors" />
                 <span>{t('nav.search_placeholder')}</span>
@@ -250,7 +253,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
               <button
                 onClick={onQuickAdd}
                 className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-brand-text-on-accent bg-gradient-to-r from-brand-primary to-brand-accent rounded-lg shadow-md hover:shadow-glow hover:opacity-95 transition-all duration-300 transform hover:-translate-y-0.5 active:scale-95 focus-ring-aa touch-target-aa"
-                aria-label="Quick Add Article"
+                aria-label={t('chrome.aria.quick_add_article')}
               >
                 <DocumentPlusIcon className="h-4 w-4" />{' '}
                 <span className="hidden lg:inline">{t('nav.quick_add')}</span>
@@ -260,7 +263,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
               <button
                 onClick={toggleLanguage}
                 className="p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-colors font-bold text-xs flex items-center gap-1 border border-transparent hover:border-border focus-ring-aa touch-target-aa"
-                aria-label="Toggle Language"
+                aria-label={t('chrome.aria.toggle_language')}
               >
                 <GlobeAltIcon className="h-4 w-4" />
                 {lang.toUpperCase()}
@@ -269,7 +272,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
               <button
                 onClick={() => onViewChange('settings')}
                 className={`p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-colors relative focus-ring-aa touch-target-aa ${currentView === 'settings' ? 'bg-surface-hover text-text-primary' : ''}`}
-                aria-label="Settings"
+                aria-label={t('chrome.aria.settings')}
               >
                 <CogIcon className={`h-5 w-5 ${isSettingsDirty ? 'text-accent-amber' : ''}`} />
                 {isSettingsDirty && (
@@ -279,7 +282,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
               <button
                 onClick={() => onViewChange('help')}
                 className={`p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-colors focus-ring-aa touch-target-aa ${currentView === 'help' ? 'bg-surface-hover text-text-primary' : ''}`}
-                aria-label="Help"
+                aria-label={t('chrome.aria.help')}
               >
                 <QuestionMarkCircleIcon className="h-5 w-5" />
               </button>
@@ -300,7 +303,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
           <button
             onClick={() => onViewChange('home')}
             className="flex items-center gap-3 focus-ring-aa rounded-md touch-target-aa"
-            aria-label="Go to Home"
+            aria-label={t('chrome.aria.go_home')}
           >
             <AppLogo idPrefix="mobile-header-logo" />
             <span className="font-bold text-lg text-text-primary truncate max-w-[140px] brand-gradient-text">
@@ -317,14 +320,14 @@ const HeaderComponent: React.FC<HeaderProps> = ({
             <button
               onClick={() => setIsCommandPaletteOpen(true)}
               className="p-2.5 text-text-secondary hover:text-text-primary rounded-full hover:bg-surface-hover focus-ring-aa touch-target-aa"
-              aria-label="Search"
+              aria-label={t('chrome.aria.search')}
             >
               <SearchIcon className="h-5 w-5" />
             </button>
             <button
               onClick={onQuickAdd}
               className="p-2.5 text-text-secondary hover:text-text-primary rounded-full hover:bg-surface-hover focus-ring-aa touch-target-aa"
-              aria-label="Quick Add"
+              aria-label={t('chrome.aria.quick_add')}
             >
               <DocumentPlusIcon className="h-5 w-5" />
             </button>
@@ -332,7 +335,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
               <button
                 onClick={() => setIsMobileMenuOpen((prev) => !prev)}
                 className="p-2.5 text-text-secondary hover:text-text-primary rounded-full hover:bg-surface-hover focus-ring-aa touch-target-aa"
-                aria-label="More options"
+                aria-label={t('chrome.aria.more_options')}
               >
                 <EllipsisHorizontalIcon className="h-6 w-6" />
               </button>
@@ -357,15 +360,18 @@ const HeaderComponent: React.FC<HeaderProps> = ({
                   >
                     {currentTheme === 'dark' ? (
                       <>
-                        <SunIcon className="h-5 w-5 text-accent-amber" /> Light Mode
+                        <SunIcon className="h-5 w-5 text-accent-amber" />{' '}
+                        {t('chrome.theme.menu_light')}
                       </>
                     ) : currentTheme === 'matrix' ? (
                       <>
-                        <MoonIcon className="h-5 w-5 text-brand-accent" /> Dark Mode
+                        <MoonIcon className="h-5 w-5 text-brand-accent" />{' '}
+                        {t('chrome.theme.menu_dark')}
                       </>
                     ) : (
                       <>
-                        <span className="font-mono text-xs text-success">MX</span> Matrix Mode
+                        <span className="font-mono text-xs text-success">MX</span>{' '}
+                        {t('chrome.theme.menu_matrix')}
                       </>
                     )}
                   </button>
