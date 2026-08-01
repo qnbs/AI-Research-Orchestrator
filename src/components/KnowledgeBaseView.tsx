@@ -19,6 +19,7 @@ import {
   Pagination,
   PdfExportingOverlay,
 } from './knowledge-base/KnowledgeBaseSubComponents';
+import { useTranslation } from '../hooks/useTranslation';
 
 interface KnowledgeBaseViewProps {
   onViewChange: (view: View) => void;
@@ -30,6 +31,7 @@ interface KnowledgeBaseViewProps {
 }
 
 const KnowledgeBaseViewLayout: React.FC = () => {
+  const { t } = useTranslation();
   const {
     uniqueArticles,
     articleInDetail,
@@ -100,9 +102,12 @@ const KnowledgeBaseViewLayout: React.FC = () => {
         <ConfirmationModal
           onConfirm={handleConfirmExport}
           onCancel={() => setShowExportModal(null)}
-          title={`Export ${selectedPmids.length} Articles`}
-          message={`You are about to export citations for the ${selectedPmids.length} selected articles as a ${showExportModal.toUpperCase()} file.`}
-          confirmText={isExporting ? 'Exporting...' : 'Yes, Export'}
+          title={t('kb.export.confirmTitle', { count: selectedPmids.length })}
+          message={t('kb.export.confirmMessage', {
+            count: selectedPmids.length,
+            format: showExportModal.toUpperCase(),
+          })}
+          confirmText={isExporting ? t('kb.export.exporting') : t('kb.export.confirm')}
           isConfirming={isExporting}
           confirmButtonClass="bg-brand-accent"
         />
