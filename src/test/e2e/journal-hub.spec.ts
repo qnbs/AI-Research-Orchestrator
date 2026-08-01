@@ -40,16 +40,20 @@ test.describe('Journal Hub', () => {
   });
 
   test('landing shows Journal Hub title and analyze controls', async ({ page }) => {
-    await expect(page.getByRole('heading', { name: /journal hub|journal-hub/i })).toBeVisible({
+    // Header banner also shows the view title — scope to main content to avoid strict-mode clash.
+    const main = page.locator('#main-content');
+    await expect(main.getByRole('heading', { name: /journal hub|journal-hub/i })).toBeVisible({
       timeout: 15_000,
     });
     await expect(
-      page.getByRole('button', { name: /analyze journal|journal analysieren/i }),
+      main.getByRole('button', { name: /analyze journal|journal analysieren/i }),
     ).toBeVisible({
       timeout: 10_000,
     });
     await expect(
-      page.getByRole('textbox', { name: /journal name to analyze|zu analysierender journalname/i }),
+      main.getByRole('textbox', {
+        name: /journal name to analyze|zu analysierender journalname/i,
+      }),
     ).toBeVisible({ timeout: 10_000 });
   });
 

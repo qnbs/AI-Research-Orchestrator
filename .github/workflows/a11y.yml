@@ -2,8 +2,8 @@
 # Accessibility smoke (axe) — blocking gate
 #
 # Runs the focused WS-I suite (`src/test/e2e/a11y.spec.ts`) only. Critical/serious
-# WCAG 2 A/AA findings fail the job. Full Playwright E2E remains non-blocking
-# (see docs/e2e-ci-backlog.md); this job is intentionally small and required.
+# WCAG 2 A/AA findings fail the job. Intentionally small and separate from the
+# full Playwright E2E workflow (`.github/workflows/e2e.yml`, also blocking).
 # ==============================================================================
 
 name: A11y Smoke

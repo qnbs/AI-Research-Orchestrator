@@ -57,10 +57,16 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Run Playwright E2E
+        # Call playwright directly — `pnpm run test:e2e -- <files>` leaves a bare `--`
+        # that makes Playwright ignore the file list and run the entire testDir
+        # (including a11y.spec.ts, which already has its own blocking a11y.yml job).
         run: >-
-          pnpm run test:e2e --
+          pnpm exec playwright test
           src/test/e2e/smoke.spec.ts
           src/test/e2e/agent-flow.spec.ts
+          src/test/e2e/dialog-a11y.spec.ts
+          src/test/e2e/keyboard-focus.spec.ts
+          src/test/e2e/skip-to-content.spec.ts
           src/test/e2e/journal-hub.spec.ts
           src/test/e2e/provider-flow.spec.ts
 
