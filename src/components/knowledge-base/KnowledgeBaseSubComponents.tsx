@@ -193,12 +193,15 @@ export const HeaderControls: React.FC = () => {
   return (
     <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
       <h2 className="text-2xl font-bold brand-gradient-text">
-        {t('kb.articles_found', { count: filteredArticles.length })}
+        {t(filteredArticles.length === 1 ? 'kb.articles_found_one' : 'kb.articles_found_other', {
+          count: filteredArticles.length,
+        })}
       </h2>
       <div className="flex items-center gap-2">
         <select
           value={sortOrder}
           onChange={(e) => setSortOrder(e.target.value as 'relevance' | 'newest')}
+          aria-label={t('kb.sort.label')}
           className="bg-input-bg border border-border rounded-md p-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-accent"
         >
           <option value="relevance">{t('kb.sort.relevance')}</option>
@@ -255,7 +258,9 @@ export const BulkActionsToolbar: React.FC = () => {
           <XCircleIcon className="h-6 w-6 text-text-secondary" />
         </button>
         <span className="font-semibold text-text-primary">
-          {t('kb.selected', { count: selectedPmids.length })}
+          {t(selectedPmids.length === 1 ? 'kb.selected_one' : 'kb.selected_other', {
+            count: selectedPmids.length,
+          })}
         </span>
         <button
           type="button"
@@ -478,7 +483,9 @@ export const ArticleList: React.FC = () => {
     return (
       <>
         <p className="text-xs text-text-secondary mb-2 text-right">
-          {t('kb.virtualized', { count: filteredArticles.length })}
+          {t(filteredArticles.length === 1 ? 'kb.virtualized_one' : 'kb.virtualized_other', {
+            count: filteredArticles.length,
+          })}
         </p>
         <div
           ref={listScrollRef}
@@ -494,6 +501,7 @@ export const ArticleList: React.FC = () => {
                 key={vRow.key}
                 data-index={vRow.index}
                 ref={virtualizer.measureElement}
+                role="listitem"
                 style={{
                   position: 'absolute',
                   top: 0,
@@ -541,6 +549,7 @@ export const Pagination: React.FC = () => {
     <nav className="mt-6 flex items-center justify-center gap-4 text-sm font-medium">
       {currentPage > 1 && (
         <button
+          type="button"
           onClick={() => setCurrentPage((p) => p - 1)}
           className="px-3 py-1 bg-surface border border-border rounded-md hover:bg-surface-hover"
         >
@@ -550,6 +559,7 @@ export const Pagination: React.FC = () => {
       <span>{t('kb.page', { current: currentPage, total: totalPages })}</span>
       {currentPage < totalPages && (
         <button
+          type="button"
           onClick={() => setCurrentPage((p) => p + 1)}
           className="px-3 py-1 bg-surface border border-border rounded-md hover:bg-surface-hover"
         >

@@ -49,6 +49,7 @@ export const authorTranslations = {
     'authors.loading.title': 'Analyzing Author Profile...',
     'authors.loading.footer':
       'This may take up to a minute. The AI is performing multiple complex steps, including live database searches and synthesis.',
+    'authors.loading.swipe_hint': 'Swipe to explore pipeline stages',
     'authors.phase.search': 'Phase 1: Searching PubMed for publications...',
     'authors.phase.details': 'Phase 2: Fetching article details...',
     'authors.phase.disambiguate': 'Phase 3: AI is disambiguating author profiles...',
@@ -123,6 +124,7 @@ export const authorTranslations = {
     'authors.loading.title': 'Autorenprofil wird analysiert...',
     'authors.loading.footer':
       'Dies kann bis zu einer Minute dauern. Die KI führt mehrere komplexe Schritte aus, einschließlich Live-Datenbanksuchen und Synthese.',
+    'authors.loading.swipe_hint': 'Wischen, um Pipeline-Phasen zu erkunden',
     'authors.phase.search': 'Phase 1: PubMed wird nach Publikationen durchsucht...',
     'authors.phase.details': 'Phase 2: Artikeldetails werden abgerufen...',
     'authors.phase.disambiguate': 'Phase 3: KI disambiguiert Autorenprofile...',

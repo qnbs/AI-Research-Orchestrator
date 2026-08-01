@@ -21,6 +21,8 @@ export const dashboardTranslations = {
     'dashboard.chart.keywords': 'Keyword Clusters',
     'dashboard.chart.keywords_sub': '{count} keywords — cell size = frequency',
     'dashboard.chart.coauthors': 'Co-authorship Network',
+    'dashboard.chart.coauthors_sub':
+      'Node size = article count · edge thickness = shared publications',
     'dashboard.network.empty': 'Not enough multi-author articles for a network visualization.',
     'dashboard.network.stats': '{authors} authors · {links} co-authorship links',
     'dashboard.network.export': '↓ Export SVG',
@@ -76,6 +78,8 @@ export const dashboardTranslations = {
     'dashboard.chart.keywords': 'Keyword-Cluster',
     'dashboard.chart.keywords_sub': '{count} Keywords — Zellengröße = Häufigkeit',
     'dashboard.chart.coauthors': 'Koautorenschafts-Netzwerk',
+    'dashboard.chart.coauthors_sub':
+      'Knotengröße = Artikelanzahl · Kantenstärke = gemeinsame Publikationen',
     'dashboard.network.empty': 'Nicht genug Mehr-Autoren-Artikel für eine Netzwerkvisualisierung.',
     'dashboard.network.stats': '{authors} Autoren · {links} Koautorenschafts-Verbindungen',
     'dashboard.network.export': '↓ SVG exportieren',

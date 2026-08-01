@@ -30,6 +30,7 @@ const AuthorsViewContent: React.FC = () => {
         phases={authorLoadingPhases}
         phaseDetails={authorPhaseDetails}
         footerText={t('authors.loading.footer')}
+        swipeHintText={t('authors.loading.swipe_hint')}
       />
     );
   }

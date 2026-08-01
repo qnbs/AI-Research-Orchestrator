@@ -23,7 +23,7 @@ const authorPhaseKeys = [
   'authors.phase.cluster_details',
   'authors.phase.analysis',
   'authors.phase.finalize',
-] as const;
+] as const satisfies readonly TranslationKey[];
 
 const authorPhaseDetailKeys: Record<(typeof authorPhaseKeys)[number], TranslationKey[]> = {
   'authors.phase.search': ['authors.phase.search.d1', 'authors.phase.search.d2'],
@@ -65,15 +65,12 @@ export const useAuthorsViewLogic = (
     { name: string; description: string }[] | null
   >(null);
 
-  const authorLoadingPhases = useMemo(
-    () => authorPhaseKeys.map((k) => t(k as TranslationKey)),
-    [t],
-  );
+  const authorLoadingPhases = useMemo(() => authorPhaseKeys.map((k) => t(k)), [t]);
 
   const authorPhaseDetails = useMemo(() => {
     const details: Record<string, string[]> = {};
     authorPhaseKeys.forEach((phaseKey) => {
-      details[t(phaseKey as TranslationKey)] = authorPhaseDetailKeys[phaseKey].map((dk) => t(dk));
+      details[t(phaseKey)] = authorPhaseDetailKeys[phaseKey].map((dk) => t(dk));
     });
     return details;
   }, [t]);
@@ -186,7 +183,8 @@ export const useAuthorsViewLogic = (
           setAuthorProfile(profile);
           setView('profile');
         }
-      } catch {
+      } catch (err) {
+        console.error('Failed to build author profile', err);
         if (isMounted.current) {
           setError(t('authors.error.profile_build'));
           setView('landing');
@@ -242,7 +240,8 @@ export const useAuthorsViewLogic = (
           setAuthorClusters(clusters);
           setView('disambiguation');
         }
-      } catch {
+      } catch (err) {
+        console.error('Failed to search author profile', err);
         if (isMounted.current) {
           setError(t('authors.error.generic'));
           setView('landing');
@@ -267,7 +266,8 @@ export const useAuthorsViewLogic = (
         if (isMounted.current) {
           setSuggestedAuthors(result);
         }
-      } catch {
+      } catch (err) {
+        console.error('Failed to suggest authors', err);
         if (isMounted.current) {
           setSuggestionError(t('authors.error.suggest'));
         }

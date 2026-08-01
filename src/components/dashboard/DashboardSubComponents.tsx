@@ -9,12 +9,10 @@ import { DASHBOARD_CHART_COLORS, DASHBOARD_ACCENT } from '../dashboardChartTheme
 import { useTranslation } from '../../hooks/useTranslation';
 
 // ── Palette ───────────────────────────────────────────────────────────────────
-const CHART_PALETTE = [...DASHBOARD_CHART_COLORS, ...DASHBOARD_CHART_COLORS];
+export const CHART_PALETTE = [...DASHBOARD_CHART_COLORS, ...DASHBOARD_CHART_COLORS];
 
 // ── SVG Export ────────────────────────────────────────────────────────────────
-const exportSVG = (ref: React.RefObject<HTMLDivElement | null>, filename: string): void => {
-  const svg = ref.current?.querySelector('svg');
-  if (!svg) return;
+const downloadSvgElement = (svg: SVGElement, filename: string): void => {
   const clone = svg.cloneNode(true) as SVGElement;
   clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
   const blob = new Blob([new XMLSerializer().serializeToString(clone)], { type: 'image/svg+xml' });
@@ -28,9 +26,13 @@ const exportSVG = (ref: React.RefObject<HTMLDivElement | null>, filename: string
   URL.revokeObjectURL(url);
 };
 
-// ── Custom Tooltip ────────────────────────────────────────────────────────────
-export { CHART_PALETTE };
+const exportSVG = (ref: React.RefObject<HTMLDivElement | null>, filename: string): void => {
+  const svg = ref.current?.querySelector('svg');
+  if (!svg) return;
+  downloadSvgElement(svg, filename);
+};
 
+// ── Custom Tooltip ────────────────────────────────────────────────────────────
 export const CyberTooltip = ({ active, payload, label }: TooltipContentProps) => {
   if (!active || !payload?.length) return null;
   return (
@@ -292,17 +294,7 @@ export const CoAuthorshipNetwork: React.FC<{ articles: AggregatedArticle[] }> = 
 
   const handleExport = useCallback(() => {
     if (!svgRef.current) return;
-    const blob = new Blob([new XMLSerializer().serializeToString(svgRef.current)], {
-      type: 'image/svg+xml',
-    });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'co-authorship-network.svg';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    downloadSvgElement(svgRef.current, 'co-authorship-network.svg');
   }, []);
 
   if (nodes.length < 2) {
@@ -321,6 +313,7 @@ export const CoAuthorshipNetwork: React.FC<{ articles: AggregatedArticle[] }> = 
           {t('dashboard.network.stats', { authors: nodes.length, links: edges.length })}
         </p>
         <button
+          type="button"
           onClick={handleExport}
           className="text-[10px] text-text-secondary hover:text-brand-accent transition-colors px-2 py-1 rounded-md glass-panel border border-border/50"
         >
@@ -416,9 +409,11 @@ export const ChartCard: React.FC<{
         </div>
         {exportName && chartRef && (
           <button
+            type="button"
             onClick={() => exportSVG(chartRef, exportName)}
             className="text-[10px] text-text-secondary hover:text-brand-accent transition-colors flex-shrink-0 px-2 py-1 rounded-md glass-panel border border-border/50"
             title={t('dashboard.export_svg')}
+            aria-label={t('dashboard.export_svg')}
           >
             {t('dashboard.export_svg_short')}
           </button>

@@ -38,7 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Known gaps (tracked, not yet closed)
 
-- Broader i18n migration (#69) — Help through Collections hubs landed; residual backlog: optional enum/chip label localization and any remaining chrome outside ratchet-covered views.
+- Broader i18n migration (#69) — Help through Collections, Knowledge Base, Article Detail, Dashboard, and Scientometric Hub landed; residual backlog: optional enum/chip label localization and any remaining chrome outside ratchet-covered views.
 - Full Playwright E2E job remains non-blocking until `docs/e2e-ci-backlog.md` promotion criteria; WS-I a11y smoke is the blocking a11y gate.
 
 ## [0.4.0] - 2026-08-01

@@ -34,6 +34,7 @@ export const AuthorCard: React.FC<{ name: string; description: string; onClick: 
   const { t } = useTranslation();
   return (
     <button
+      type="button"
       onClick={onClick}
       className="group relative w-full h-full p-5 bg-surface border border-border rounded-lg text-left transition-all duration-300 hover:shadow-xl hover:border-brand-accent/50 hover:-translate-y-1.5 focus:outline-none focus:ring-2 focus:ring-brand-accent ring-offset-2 ring-offset-background"
     >
@@ -145,6 +146,7 @@ export const FeaturedAuthorsView: React.FC = () => {
 
       <div className="relative group">
         <button
+          type="button"
           onClick={() => handleScroll('left')}
           aria-label={t('authors.featured.scroll_left')}
           className={`absolute -left-4 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-surface border border-border shadow-lg transition-all opacity-0 group-hover:opacity-100 hover:bg-surface-hover disabled:opacity-0 disabled:cursor-not-allowed ${scrollState.canScrollLeft ? '' : 'opacity-0'}`}
@@ -165,6 +167,7 @@ export const FeaturedAuthorsView: React.FC = () => {
             const Icon = categoryIcons[category.category.trim()] || SparklesIcon;
             return (
               <button
+                type="button"
                 key={category.category}
                 onClick={() => setActiveCategory(category.category)}
                 className={`flex items-center gap-x-2.5 px-4 py-2 text-sm font-semibold rounded-md transition-all whitespace-nowrap border-2 ${
@@ -184,6 +187,7 @@ export const FeaturedAuthorsView: React.FC = () => {
           style={{ opacity: scrollState.canScrollRight ? 1 : 0 }}
         ></div>
         <button
+          type="button"
           onClick={() => handleScroll('right')}
           aria-label={t('authors.featured.scroll_right')}
           className={`absolute -right-4 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-surface border border-border shadow-lg transition-all opacity-0 group-hover:opacity-100 hover:bg-surface-hover disabled:opacity-0 ${scrollState.canScrollRight ? '' : 'opacity-0'}`}
@@ -213,6 +217,7 @@ export const FeaturedAuthorsView: React.FC = () => {
         {totalPages > 1 && (
           <div className="flex items-center justify-center mt-6 gap-4">
             <button
+              type="button"
               onClick={() => setCurrentPage((prev) => Math.max(0, prev - 1))}
               disabled={currentPage === 0}
               className="p-2 bg-surface border border-border rounded-full shadow-lg transition-all duration-300 hover:bg-surface-hover disabled:opacity-50 disabled:cursor-not-allowed"
@@ -226,6 +231,7 @@ export const FeaturedAuthorsView: React.FC = () => {
             </span>
 
             <button
+              type="button"
               onClick={() => setCurrentPage((prev) => Math.min(totalPages - 1, prev + 1))}
               disabled={currentPage >= totalPages - 1}
               className="p-2 bg-surface border border-border rounded-full shadow-lg transition-all duration-300 hover:bg-surface-hover disabled:opacity-50 disabled:cursor-not-allowed"
@@ -384,6 +390,7 @@ export const DisambiguationView: React.FC = () => {
       <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
         {clusters.map((cluster, index) => (
           <button
+            type="button"
             key={index}
             onClick={() => onSelect(cluster)}
             className="group w-full h-full p-5 bg-surface border border-border rounded-lg text-left transition-all duration-300 hover:shadow-xl hover:border-brand-accent/50 hover:-translate-y-1.5 focus:outline-none focus:ring-2 focus:ring-brand-accent ring-offset-2 ring-offset-background"

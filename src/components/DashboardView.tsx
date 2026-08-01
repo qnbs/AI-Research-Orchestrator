@@ -39,8 +39,12 @@ interface DashboardViewProps {
   onViewChange: (v: View) => void;
 }
 
+const mutedLegendFormatter = (value: string | number) => (
+  <span style={{ fontSize: 10, color: '#7d8590' }}>{String(value)}</span>
+);
+
 const DashboardViewComponent: React.FC<DashboardViewProps> = ({ onFilterChange, onViewChange }) => {
-  const { t } = useTranslation();
+  const { t, lang } = useTranslation();
   const { getArticles } = useKnowledgeBase();
   const articles = useMemo(() => getArticles('all'), [getArticles]);
 
@@ -75,12 +79,16 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({ onFilterChange, 
 
     const typeMap = new Map<string, number>();
     for (const a of articles) {
-      const articleType = a.articleType || t('dashboard.type.other');
+      const articleType = a.articleType || '';
       typeMap.set(articleType, (typeMap.get(articleType) ?? 0) + 1);
     }
     const types = [...typeMap.entries()]
       .sort(([, a], [, b]) => b - a)
-      .map(([name, value]) => ({ name, value }));
+      .map(([articleType, value]) => ({
+        articleType,
+        name: articleType || t('dashboard.type.other'),
+        value,
+      }));
 
     const oaCount = articles.filter((a) => a.isOpenAccess).length;
     const oa = [
@@ -130,7 +138,9 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({ onFilterChange, 
       <div className="text-center">
         <h1 className="text-4xl font-bold brand-gradient-text">{t('dashboard.title')}</h1>
         <p className="mt-1.5 text-sm text-text-secondary">
-          {t('dashboard.subtitle', { count: articles.length.toLocaleString() })}
+          {t('dashboard.subtitle', {
+            count: articles.length.toLocaleString(lang === 'de' ? 'de-DE' : 'en-US'),
+          })}
         </p>
       </div>
 
@@ -202,7 +212,7 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({ onFilterChange, 
                 }}
               >
                 {data.journals.map((row) => (
-                  <Cell key={row.name} fill={CHART_PALETTE[1]} fillOpacity={0.82} />
+                  <Cell key={row.fullName} fill={CHART_PALETTE[1]} fillOpacity={0.82} />
                 ))}
               </Bar>
               {data.journals.length > 6 && (
@@ -243,13 +253,16 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({ onFilterChange, 
                 }
                 labelLine={{ stroke: 'rgba(125,133,144,0.4)' }}
                 onClick={(d) => {
-                  onFilterChange({ selectedArticleTypes: [String(d.name ?? '')] });
+                  const payload = d.payload as { articleType?: string } | undefined;
+                  const articleType = payload?.articleType ?? '';
+                  if (!articleType) return;
+                  onFilterChange({ selectedArticleTypes: [articleType] });
                   onViewChange('knowledgeBase');
                 }}
               >
                 {data.types.map((row, typeIndex) => (
                   <Cell
-                    key={row.name}
+                    key={row.articleType || row.name}
                     fill={CHART_PALETTE[typeIndex % CHART_PALETTE.length]}
                     fillOpacity={0.82}
                     stroke="transparent"
@@ -257,13 +270,7 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({ onFilterChange, 
                 ))}
               </Pie>
               <Tooltip content={(props) => <CyberTooltip {...props} />} />
-              <Legend
-                iconType="circle"
-                iconSize={8}
-                formatter={(v: string) => (
-                  <span style={{ fontSize: 10, color: '#7d8590' }}>{v}</span>
-                )}
-              />
+              <Legend iconType="circle" iconSize={8} formatter={mutedLegendFormatter} />
             </PieChart>
           </ResponsiveContainer>
         </ChartCard>
@@ -287,13 +294,7 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({ onFilterChange, 
                 <Cell fill="#7d8590" fillOpacity={0.5} stroke="transparent" />
               </Pie>
               <Tooltip content={(props) => <CyberTooltip {...props} />} />
-              <Legend
-                iconType="circle"
-                iconSize={8}
-                formatter={(v: string) => (
-                  <span style={{ fontSize: 10, color: '#7d8590' }}>{v}</span>
-                )}
-              />
+              <Legend iconType="circle" iconSize={8} formatter={mutedLegendFormatter} />
             </PieChart>
           </ResponsiveContainer>
         </ChartCard>
@@ -322,13 +323,7 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({ onFilterChange, 
                 <Cell fill={CHART_PALETTE[1]} fillOpacity={0.85} stroke="transparent" />
               </Pie>
               <Tooltip content={(props) => <CyberTooltip {...props} />} />
-              <Legend
-                iconType="circle"
-                iconSize={8}
-                formatter={(v: string) => (
-                  <span style={{ fontSize: 10, color: '#7d8590' }}>{v}</span>
-                )}
-              />
+              <Legend iconType="circle" iconSize={8} formatter={mutedLegendFormatter} />
             </PieChart>
           </ResponsiveContainer>
         </ChartCard>
@@ -365,9 +360,7 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({ onFilterChange, 
           <h3 className="text-sm font-semibold brand-gradient-text">
             {t('dashboard.chart.coauthors')}
           </h3>
-          <p className="text-xs text-text-secondary mt-0.5">
-            Node size = article count · edge thickness = shared publications
-          </p>
+          <p className="text-xs text-text-secondary mt-0.5">{t('dashboard.chart.coauthors_sub')}</p>
         </div>
         <CoAuthorshipNetwork articles={articles} />
       </motion.div>
@@ -401,7 +394,7 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({ onFilterChange, 
           </thead>
           <tbody>
             {data.journals.map((r) => (
-              <tr key={r.name}>
+              <tr key={r.fullName}>
                 <td>{r.name}</td>
                 <td>{r.count}</td>
               </tr>

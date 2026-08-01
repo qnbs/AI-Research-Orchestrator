@@ -22,6 +22,7 @@ import {
 } from 'recharts';
 import type { AggregatedArticle, OverallKeyword } from '../types';
 import { useTranslation } from '../hooks/useTranslation';
+import type { TranslationKey } from '../hooks/useTranslation';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface AuthorNode {
@@ -57,9 +58,13 @@ const CustomTooltip: React.FC<{ active?: boolean; payload?: Array<{ payload: Aut
   active,
   payload,
 }) => {
-  const { t } = useTranslation();
+  const { t, lang } = useTranslation();
   if (!active || !payload?.length) return null;
   const node = payload[0].payload;
+  const avgRelevance = Number(node.avgRelevance).toLocaleString(lang === 'de' ? 'de-DE' : 'en-US', {
+    maximumFractionDigits: 1,
+    minimumFractionDigits: 1,
+  });
   return (
     <div
       className="glass-panel rounded-xl p-3 text-xs max-w-[220px]"
@@ -72,7 +77,7 @@ const CustomTooltip: React.FC<{ active?: boolean; payload?: Array<{ payload: Aut
           : t('scientometrics.tooltip.articles_other', { count: node.articleCount })}
       </p>
       <p className="text-accent-cyan">
-        {t('scientometrics.tooltip.avg_relevance', { value: node.avgRelevance.toFixed(1) })}
+        {t('scientometrics.tooltip.avg_relevance', { value: avgRelevance })}
       </p>
       {node.journals.length > 0 && (
         <p className="text-text-secondary mt-1 truncate">{node.journals.slice(0, 2).join(', ')}</p>
@@ -150,7 +155,7 @@ const getJournalDistribution = (articles: AggregatedArticle[], unknownLabel: str
 
 // ── Tab Types ─────────────────────────────────────────────────────────────────
 type Tab = 'authors' | 'years' | 'journals' | 'keywords';
-const TABS: { id: Tab; labelKey: string; icon: string }[] = [
+const TABS: { id: Tab; labelKey: TranslationKey; icon: string }[] = [
   { id: 'authors', labelKey: 'scientometrics.authors', icon: '👥' },
   { id: 'years', labelKey: 'scientometrics.timeline', icon: '📅' },
   { id: 'journals', labelKey: 'scientometrics.journals', icon: '📰' },
@@ -162,6 +167,20 @@ const ScientometricHub: React.FC<Props> = ({ articles, keywords = [], title }) =
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<Tab>('authors');
   const unknownLabel = t('scientometrics.unknown');
+  const activeTabIndex = TABS.findIndex((tab) => tab.id === activeTab);
+
+  const handleTabListKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    const keyOffsets: Record<string, number> = { ArrowLeft: -1, ArrowRight: 1 };
+    const offset = keyOffsets[event.key];
+    if (offset == null) return;
+    event.preventDefault();
+    const nextIndex = (activeTabIndex + offset + TABS.length) % TABS.length;
+    const nextTab = TABS[nextIndex].id;
+    setActiveTab(nextTab);
+    requestAnimationFrame(() => {
+      document.getElementById(`scientometrics-tab-${nextTab}`)?.focus();
+    });
+  };
 
   const authorNodes = useMemo(() => parseAuthors(articles), [articles]);
   const yearData = useMemo(
@@ -203,13 +222,23 @@ const ScientometricHub: React.FC<Props> = ({ articles, keywords = [], title }) =
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 px-4 pt-3 pb-0 overflow-x-auto">
+      <div
+        className="flex gap-1 px-4 pt-3 pb-0 overflow-x-auto"
+        role="tablist"
+        aria-label={t('scientometrics.title')}
+        onKeyDown={handleTabListKeyDown}
+        tabIndex={-1}
+      >
         {TABS.map((tab) => (
           <button
             key={tab.id}
             type="button"
+            id={`scientometrics-tab-${tab.id}`}
+            role="tab"
             onClick={() => setActiveTab(tab.id)}
-            aria-pressed={activeTab === tab.id}
+            aria-selected={activeTab === tab.id}
+            aria-controls={`scientometrics-panel-${tab.id}`}
+            tabIndex={activeTab === tab.id ? 0 : -1}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-t-lg text-xs font-medium transition-all whitespace-nowrap
               ${
                 activeTab === tab.id
@@ -227,6 +256,9 @@ const ScientometricHub: React.FC<Props> = ({ articles, keywords = [], title }) =
       <AnimatePresence mode="wait">
         <motion.div
           key={activeTab}
+          id={`scientometrics-panel-${activeTab}`}
+          role="tabpanel"
+          aria-labelledby={`scientometrics-tab-${activeTab}`}
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -8 }}
