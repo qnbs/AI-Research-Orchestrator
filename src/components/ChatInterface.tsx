@@ -3,6 +3,7 @@ import type { ChatMessage } from '../types';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import { SparklesIcon } from './icons/SparklesIcon';
+import { useTranslation } from '../hooks/useTranslation';
 
 interface ChatInterfaceProps {
   history: ChatMessage[];
@@ -15,6 +16,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   isChatting,
   onSendMessage,
 }) => {
+  const { t } = useTranslation();
   const [input, setInput] = useState('');
   const endRef = useRef<HTMLDivElement>(null);
 
@@ -40,12 +42,12 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         {history.length === 0 && (
           <div className="text-center text-text-secondary mt-10">
             <SparklesIcon className="h-8 w-8 mx-auto mb-2 opacity-50" />
-            <p>Ask questions about this report to explore the data further.</p>
+            <p>{t('report.chat.empty')}</p>
           </div>
         )}
-        {history.map((msg, idx) => (
+        {history.map((msg) => (
           <div
-            key={idx}
+            key={`${msg.role}:${msg.parts.map((part) => part.text).join('\u0001')}`}
             className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
           >
             <div
@@ -58,7 +60,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               {msg.role === 'user' ? (
                 msg.parts[0].text
               ) : (
-                <div dangerouslySetInnerHTML={secureMarkdown(msg.parts[0].text)} />
+                <div dangerouslySetInnerHTML={secureMarkdown(msg.parts[0].text)} /> // skipcq: JS-0440
               )}
             </div>
           </div>
@@ -93,7 +95,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask a follow-up question..."
+          placeholder={t('report.chat.placeholder')}
           className="flex-grow bg-input-bg border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-accent"
           disabled={isChatting}
         />
@@ -102,7 +104,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           disabled={!input.trim() || isChatting}
           className="bg-brand-accent text-brand-text-on-accent px-4 py-2 rounded-md text-sm font-semibold disabled:opacity-50 hover:bg-opacity-90 transition-colors"
         >
-          Send
+          {t('report.chat.send')}
         </button>
       </form>
     </div>
