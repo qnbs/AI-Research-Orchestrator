@@ -81,16 +81,16 @@ Branches also cleaned up this pass (all individually re-verified via two-dot tre
 
 Consolidation PR: `cursor/dependabot-safe-minors-aa80` (safe same-major / patches / Actions + brace-expansion audit unblocker).
 
-| PR   | Change                                          | Disposition                                      | Status      |
-| ---- | ----------------------------------------------- | ------------------------------------------------ | ----------- |
-| #97  | react-redux 9.2.0 → 9.3.0                       | **Included** in consolidation                    | Superseded  |
-| #99  | typescript-eslint 8.64.0 → 8.65.0               | **Included** in consolidation                    | Superseded  |
-| #100 | rollup-plugin-visualizer 6.0.11 → 7.0.1         | **Included** in consolidation                    | Superseded  |
-| #102 | @types/jsdom 28.0.0 → 28.0.3                    | **Included** in consolidation                    | Superseded  |
-| #103 | eslint-config-prettier 9.1.0 → 10.1.8           | **Included** in consolidation (lint stays 0)     | Superseded  |
-| #105 | recharts 3.8.0 → 3.10.0                         | **Included** in consolidation                    | Superseded  |
-| #106 | @tanstack/react-virtual 3.13.21 → 3.14.8        | **Included** in consolidation                    | Superseded  |
-| #108 | anthropics/claude-code-action 1.0.181 → 1.0.183 | **Included** (SHA pin updated in both workflows) | Superseded  |
+| PR   | Change                                          | Disposition                                      | Status          |
+| ---- | ----------------------------------------------- | ------------------------------------------------ | --------------- |
+| #97  | react-redux 9.2.0 → 9.3.0                       | **Included** in consolidation                    | Superseded      |
+| #99  | typescript-eslint 8.64.0 → 8.65.0               | **Included** in consolidation                    | Superseded      |
+| #100 | rollup-plugin-visualizer 6.0.11 → 7.0.1         | **Included** in consolidation                    | Superseded      |
+| #102 | @types/jsdom 28.0.0 → 28.0.3                    | **Included** in consolidation                    | Superseded      |
+| #103 | eslint-config-prettier 9.1.0 → 10.1.8           | **Included** in consolidation (lint stays 0)     | Superseded      |
+| #105 | recharts 3.8.0 → 3.10.0                         | **Included** in consolidation                    | Superseded      |
+| #106 | @tanstack/react-virtual 3.13.21 → 3.14.8        | **Included** in consolidation                    | Superseded      |
+| #108 | anthropics/claude-code-action 1.0.181 → 1.0.183 | **Included** (SHA pin updated in both workflows) | Superseded      |
 | #98  | openai 4.104.0 → 6.48.0                         | Dedicated audit PR (runtime major)               | Merged via #113 |
 | #101 | dexie-react-hooks 1.1.7 → 4.4.0                 | Dedicated audit PR (runtime major)               | Merged via #113 |
 | #104 | marked 13.0.3 → 18.0.7                          | Dedicated audit PR (runtime major)               | Merged via #113 |
@@ -106,3 +106,11 @@ Dedicated PR: `cursor/dependabot-majors-aa80`.
 | #98  | openai 4.104.0 → 6.48.0         | SDK MIGRATION.md: our adapter only uses `chat.completions.create` + async iterator streaming + `dangerouslyAllowBrowser` — all still valid. Added `max_completion_tokens` for gpt-5/o-series (default model is gpt-5). Provider unit tests green. | **Included** | Superseded by majors PR |
 | #101 | dexie-react-hooks 1.1.7 → 4.4.0 | **No runtime imports** of `dexie-react-hooks` / `useLiveQuery` remain in `src/` (Dexie is used only via `databaseService.ts`). Bump is lockfile-hygiene; package retained for documented stack parity.                                            | **Included** | Superseded by majors PR |
 | #104 | marked 13.0.3 → 18.0.7          | Call sites use `marked.parse(..., { breaks, gfm })` and cast to `string`. Runtime check: still sync string (not Promise) with these options. DOMPurify sanitization path unchanged. typecheck + export tests green.                               | **Included** | Superseded by majors PR |
+
+## 2026-08-01 — openai 6 → 7 (#98 retarget)
+
+Dependabot retargeted #98 to **openai 6.48.0 → 7.1.0** after #113 landed 4→6. Dedicated PR: `cursor/openai-7-upgrade-aa80` pins **^7.2.0** (7.3.0 blocked by `minimumReleaseAge: 1440` until mature).
+
+| Change                  | Audit notes                                                                                                                                                                                                                                                        | Disposition | Status         |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------- | -------------- |
+| openai ^6.48.0 → ^7.2.0 | Upstream 7.0.0 breaking change is **Node.js ≥22 only** (already `engines.node >=22.12.0`). Adapter still uses `chat.completions.create` + async iterator + `dangerouslyAllowBrowser`. `pnpm run typecheck` + `vitest run src/services/providers` (27 tests) green. | **Adopt**   | Open (this PR) |
