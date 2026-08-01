@@ -27,9 +27,9 @@ export const InputFormHeader: React.FC<InputFormHeaderProps> = ({
         </div>
         <div>
           <h2 className="text-xl font-bold text-text-primary tracking-tight font-display">
-            Research Parameters
+            {t('inputForm.header.title')}
           </h2>
-          <p className="text-xs text-text-secondary mt-0.5">Define the scope for the AI agents.</p>
+          <p className="text-xs text-text-secondary mt-0.5">{t('inputForm.header.subtitle')}</p>
         </div>
       </div>
       <div className="flex items-center gap-3 w-full sm:w-auto">

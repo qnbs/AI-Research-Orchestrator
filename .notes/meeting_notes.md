@@ -10,14 +10,16 @@
 - **#124** WS-G dialog a11y: Escape + scroll lock via `useFocusTrap` (merged).
 - **#125** WS-H1: QuickAdd / History / preset modal EN+DE via `modalTranslations.ts` + ratchet (merged).
 - **#126** WS-H2: CommandPalette EN+DE via `commandPaletteTranslations.ts` + ratchet (merged).
-- **WS-I (this branch):** blocking axe critical/serious smoke on key views (`.github/workflows/a11y.yml` + `a11y.spec.ts`).
+- **#127** WS-I: blocking axe critical/serious smoke (`a11y.yml` + `a11y.spec.ts`) (merged).
+- **InputForm i18n (this branch):** research parameters form + header EN+DE via `inputFormTranslations.ts` + ratchet.
+  - **Why:** residual DE locale still showed English form chrome after H1/H2; Orchestrator is the primary entry path.
+  - **Impact:** EN+DE form labels/options via `t()`; PubMed article-type filter values stay English in state; ratchet guards regressions.
 
 ## Still open
 
-- Issues **#74 / #78** closed on GitHub.
-- Residual i18n backlog: InputForm body, SettingsSubComponents, ReportDisplay, ResearchView.
+- Residual i18n backlog: SettingsSubComponents (by tab), ReportDisplay, ResearchView.
 - Full E2E job remains non-blocking until promotion criteria in `docs/e2e-ci-backlog.md`.
-- Larger i18n backlog still outside ratchet: InputForm body, SettingsSubComponents, ReportDisplay, ResearchView, etc.
+- Larger i18n backlog still outside ratchet: SettingsSubComponents, ReportDisplay, ResearchView, etc.
 
 ## Process
 
