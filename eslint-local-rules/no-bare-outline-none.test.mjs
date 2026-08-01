@@ -34,6 +34,15 @@ describe('local/no-bare-outline-none', () => {
           {
             code: '<button className={`focus:outline-none focus-visible:ring-2`} />',
           },
+          {
+            code: '<button className={clsx("focus:outline-none", "focus-visible:ring-2")} />',
+          },
+          {
+            code: '<button className="focus:outline-none focus:ring-[3px]" />',
+          },
+          {
+            code: '<button className={"focus:outline-none focus-visible:ring-2" || other} />',
+          },
         ],
         invalid: [
           {
@@ -59,6 +68,22 @@ describe('local/no-bare-outline-none', () => {
           {
             code: '<button className={`focus:outline-none ${x}`} />',
             errors: [{ messageId: 'unresolvedOutlineNone' }],
+          },
+          {
+            code: '<button className="focus:outline-none focus:ring-brand-accent" />',
+            errors: [{ messageId: 'bareOutlineNone' }],
+          },
+          {
+            code: '<button className="focus:outline-none focus:ring-[0px]" />',
+            errors: [{ messageId: 'bareOutlineNone' }],
+          },
+          {
+            code: '<button className={cond && "focus:outline-none"} />',
+            errors: [{ messageId: 'bareOutlineNone' }],
+          },
+          {
+            code: '<button className={clsx("focus:outline-none")} />',
+            errors: [{ messageId: 'bareOutlineNone' }],
           },
         ],
       });

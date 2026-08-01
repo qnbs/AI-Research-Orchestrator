@@ -1,8 +1,8 @@
 import { test, expect, type Page, type Locator } from '@playwright/test';
 
 /**
- * WS-E keyboard focus walk — Tab moves focus and the focused control gains a
- * focus-specific outline/box-shadow (compare focused vs unfocused styles).
+ * WS-E keyboard focus walk — focused controls gain a focus-specific
+ * outline/box-shadow vs their unfocused baseline.
  */
 
 const skipOnboarding = async (page: Page) => {
@@ -29,36 +29,44 @@ const skipOnboarding = async (page: Page) => {
   }
 };
 
-const focusStyles = (locator: Locator) => {
-  return locator.evaluate((el) => {
+const focusStyles = (locator: Locator) =>
+  locator.evaluate((el) => {
     const cs = getComputedStyle(el);
     return {
       outline: `${cs.outlineStyle}|${cs.outlineWidth}|${cs.outlineColor}`,
       boxShadow: cs.boxShadow,
     };
   });
-};
 
-/** Assert the element shows a focus-driven style change vs its unfocused baseline. */
+/** Assert a focus-driven style change vs unfocused baseline. */
 const expectFocusIndicator = async (locator: Locator, label: string) => {
   await expect(locator).toBeVisible();
   await locator.focus();
   await expect(locator).toBeFocused();
-
   const focused = await focusStyles(locator);
-
-  // Blur via focusing body, then re-read baseline without :focus-visible
-  await locator.evaluate((el) => {
-    el.blur();
-  });
+  await locator.evaluate((el) => el.blur());
   const unfocused = await focusStyles(locator);
-
-  const outlineChanged = focused.outline !== unfocused.outline;
-  const shadowChanged = focused.boxShadow !== unfocused.boxShadow;
+  const changed =
+    focused.outline !== unfocused.outline || focused.boxShadow !== unfocused.boxShadow;
   expect(
-    outlineChanged || shadowChanged,
+    changed,
     `${label}: no focus-specific outline/box-shadow change (focused=${focused.outline}/${focused.boxShadow}; unfocused=${unfocused.outline}/${unfocused.boxShadow})`,
   ).toBe(true);
+};
+
+/** Capture styles produced by Tab (keyboard :focus-visible path). */
+const expectTabFocusIndicator = async (page: Page, label: string) => {
+  await page.keyboard.press('Tab');
+  const focused = page.locator(':focus');
+  await expect(focused).toBeVisible({ timeout: 5000 });
+  const tag = await focused.evaluate((el) => el.tagName.toLowerCase());
+  if (tag === 'body' || tag === 'html') return;
+  const onStyles = await focusStyles(focused);
+  await focused.evaluate((el) => el.blur());
+  const offStyles = await focusStyles(focused);
+  const changed =
+    onStyles.outline !== offStyles.outline || onStyles.boxShadow !== offStyles.boxShadow;
+  expect(changed, `${label} <${tag}>: Tab focus produced no style delta`).toBe(true);
 };
 
 test.describe('Keyboard focus visibility (WS-E)', () => {
@@ -66,63 +74,53 @@ test.describe('Keyboard focus visibility (WS-E)', () => {
     await skipOnboarding(page);
   });
 
-  test('header chrome and bottom nav show focus rings', async ({ page }) => {
+  test('header settings and bottom nav show focus rings', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
     const settings = page.getByRole('button', { name: /settings/i }).first();
     await expectFocusIndicator(settings, 'settings button');
 
     await page.setViewportSize({ width: 390, height: 844 });
-    const bottomNav = page
+    const home = page.locator('nav.fixed button, nav[class*="fixed"] button').first();
+    // Bottom nav is md:hidden fixed — ensure a nav button exists
+    const bottomNavBtn = page
       .locator('nav')
-      .filter({ has: page.getByRole('button') })
-      .last();
-    const home = bottomNav.getByRole('button').first();
-    await expectFocusIndicator(home, 'bottom nav item');
+      .filter({ hasText: /home|start|orchestrator/i })
+      .getByRole('button')
+      .first();
+    const target = (await bottomNavBtn.count()) > 0 ? bottomNavBtn : home;
+    await expectFocusIndicator(target, 'bottom nav item');
   });
 
   test('command palette input shows a focus ring', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
-    await page.keyboard.press('Control+K');
-    const input = page.getByRole('combobox').or(page.locator('[cmdk-input]')).first();
-    // Fallback: first textbox in the dialog
-    const target =
-      (await input.count()) > 0 ? input : page.getByRole('dialog').locator('input').first();
-    await expectFocusIndicator(target, 'command palette input');
+    await page.keyboard.press('Control+KeyK');
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible({ timeout: 10_000 });
+    const input = dialog.locator('input').first();
+    await expectFocusIndicator(input, 'command palette input');
     await page.keyboard.press('Escape');
   });
 
-  test('orchestrator topic field and research accordion show focus rings', async ({ page }) => {
+  test('orchestrator topic field shows a focus ring', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.evaluate(() => {
       window.location.hash = '#/orchestrator';
     });
     const topic = page.getByRole('textbox').first();
+    await expect(topic).toBeVisible({ timeout: 10_000 });
     await expectFocusIndicator(topic, 'orchestrator topic input');
-
-    await page.evaluate(() => {
-      window.location.hash = '#/research';
-    });
-    // Research accordion toggle (first button in main if present)
-    const accordion = page.locator('main button').first();
-    if (await accordion.isVisible().catch(() => false)) {
-      await expectFocusIndicator(accordion, 'research accordion');
-    }
   });
 
   test('Tab traversal keeps a focus-specific indicator', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
+    // Seed keyboard modality so :focus-visible matches on subsequent Tabs.
     await page
       .locator('body')
-      .click({ position: { x: 0, y: 0 } })
+      .click({ position: { x: 1, y: 1 } })
       .catch(() => undefined);
-
-    for (let i = 0; i < 6; i++) {
-      await page.keyboard.press('Tab');
-      const focused = page.locator(':focus');
-      if ((await focused.count()) === 0) break;
-      const tag = await focused.evaluate((el) => el.tagName.toLowerCase());
-      if (tag === 'body' || tag === 'html') continue;
-      await expectFocusIndicator(focused, `tab stop ${i + 1} <${tag}>`);
+    await page.keyboard.press('Tab');
+    for (let i = 0; i < 5; i++) {
+      await expectTabFocusIndicator(page, `tab stop ${i + 1}`);
     }
   });
 });

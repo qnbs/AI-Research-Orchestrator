@@ -13,9 +13,9 @@
  */
 
 const OUTLINE_NONE = /\bfocus(?:-visible)?:outline-none\b/;
-/** Ring utilities that produce a visible ring (width or color token). */
+/** Ring utilities that produce a visible ring width (not color-only / offset / inset / 0). */
 const HAS_RING =
-  /\bfocus(?:-visible)?:ring-(?:[1-9]\d*(?:\/\d+)?|\[|brand-|accent-|primary|secondary|white|black|transparent|current|inherit|red-|green-|blue-|sky-|amber-|yellow-|orange-|rose-|pink-|purple-|violet-|indigo-|cyan-|teal-|emerald-|lime-|fuchsia-|slate-|gray-|zinc-|neutral-|stone-)/;
+  /\bfocus(?:-visible)?:ring-(?:[1-9]\d*(?:\/\d+)?|\[[1-9][^\]]*\])/;
 const HAS_UTILITY = /\bfocus-ring-aa\b/;
 const HAS_GLASS = /\bglass-input\b/;
 
@@ -74,8 +74,11 @@ function classVariantsFromNode(node) {
       for (const l of left) for (const r of right) both.push(`${l} ${r}`);
       return [...left, ...both];
     }
-    // || and ?? : either side alone is a variant
-    if (left === UNKNOWN || right === UNKNOWN) return UNKNOWN;
+    // || and ?? : either side alone is a variant. Keep known sides even if the
+    // other is dynamic — unknown alone is not treated as a safe companion.
+    if (left === UNKNOWN && right === UNKNOWN) return UNKNOWN;
+    if (left === UNKNOWN) return right;
+    if (right === UNKNOWN) return left;
     return [...left, ...right];
   }
   if (node.type === 'CallExpression') {
