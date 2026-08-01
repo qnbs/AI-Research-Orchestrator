@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import AxeBuilder from '@axe-core/playwright';
+import { expectNoCriticalAxeViolations } from './a11yHelpers';
 
 /**
  * Smoke tests — verify the app loads correctly.
@@ -23,16 +23,6 @@ test.describe('App smoke tests', () => {
 
   test('has no critical accessibility violations on root', async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('#root')).toBeVisible();
-
-    const results = await new AxeBuilder({ page })
-      .include('#root')
-      .withTags(['wcag2a', 'wcag2aa'])
-      .analyze();
-
-    const critical = results.violations.filter(
-      (v) => v.impact === 'critical' || v.impact === 'serious',
-    );
-    expect(critical, critical.map((v) => `${v.id}: ${v.help}`).join('\n')).toEqual([]);
+    await expectNoCriticalAxeViolations(page);
   });
 });

@@ -345,7 +345,11 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                   <span className="mr-3">{cmd.icon}</span>
                   <span>{cmd.title}</span>
                 </div>
-                <span className="text-xs text-text-secondary">{t(TYPE_LABEL_KEYS[cmd.type])}</span>
+                <span
+                  className={`text-xs ${selectedIndex === index ? 'text-brand-accent/90' : 'text-text-secondary'}`}
+                >
+                  {t(TYPE_LABEL_KEYS[cmd.type])}
+                </span>
               </button>
             ))
           ) : (

@@ -1,0 +1,70 @@
+# ==============================================================================
+# Accessibility smoke (axe) — blocking gate
+#
+# Runs the focused WS-I suite (`src/test/e2e/a11y.spec.ts`) only. Critical/serious
+# WCAG 2 A/AA findings fail the job. Full Playwright E2E remains non-blocking
+# (see docs/e2e-ci-backlog.md); this job is intentionally small and required.
+# ==============================================================================
+
+name: A11y Smoke
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "${{ github.workflow }}-${{ github.ref }}"
+  cancel-in-progress: true
+
+jobs:
+  a11y:
+    name: Axe critical/serious smoke
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        # actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup pnpm
+        # pnpm/action-setup@v6
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271
+        with:
+          run_install: false
+
+      - name: Setup Node.js
+        # actions/setup-node@v7
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: "22"
+          cache: "pnpm"
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run a11y smoke (axe critical/serious)
+        run: pnpm run test:a11y
+
+      - name: Upload Playwright report
+        if: always()
+        # actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: a11y-playwright-report
+          path: playwright-report/
+          retention-days: 14

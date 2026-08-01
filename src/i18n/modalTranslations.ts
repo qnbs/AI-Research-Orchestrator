@@ -15,6 +15,9 @@ export const modalTranslations = {
     'preset.name_label': 'Preset Name',
     'preset.name_placeholder': 'e.g., Clinical Trials (Last 5 Years)',
     'preset.save': 'Save',
+    'preset.load_aria': 'Load research preset',
+    'preset.load_placeholder': 'Load preset…',
+    'preset.save_button': 'Save',
 
     // ── History quick-view modal ──
     'history.quick.author_profile': 'Author Profile',
@@ -72,6 +75,9 @@ export const modalTranslations = {
     'preset.name_label': 'Name der Voreinstellung',
     'preset.name_placeholder': 'z. B. Klinische Studien (letzte 5 Jahre)',
     'preset.save': 'Speichern',
+    'preset.load_aria': 'Forschungsvoreinstellung laden',
+    'preset.load_placeholder': 'Voreinstellung laden…',
+    'preset.save_button': 'Speichern',
 
     'history.quick.author_profile': 'Autorenprofil',
     'history.quick.journal_profile': 'Journal-Profil',
