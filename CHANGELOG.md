@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **WS-F skip link + touch targets:** `SkipToContentLink` (hash-router-safe focus to `#main-content`), `.touch-target-aa` (44×44) on header/chrome controls and bottom nav, Playwright `skip-to-content.spec.ts`.
 - **WS-G dialog a11y:** `useFocusTrap` Escape dismiss + optional body scroll lock; wired into ConfirmationModal, QuickAddModal, Settings shared Modal, and InputForm preset dialog; Playwright `dialog-a11y.spec.ts`.
 - **WS-H2 command palette i18n:** EN+DE command titles, type labels, placeholder/empty/hints via `commandPaletteTranslations.ts`; palette uses `useFocusTrap` Escape + scroll lock.
+- **WS-I a11y CI gate:** blocking `.github/workflows/a11y.yml` runs `pnpm run test:a11y` (axe critical/serious on home, orchestrator, settings, help, history, command palette).
 
 ### Changed
 
@@ -31,7 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Known gaps (tracked, not yet closed)
 
 - Broader i18n migration (#69) — HelpView Wave 8 + chrome shell + modal chrome (H1) + CommandPalette (H2) landed; larger backlog (InputForm body, SettingsSubComponents, ReportDisplay, ResearchView) still outside ratchet.
-- UIUX hardening WS-I onward (see `.notes/meeting_notes.md`).
+- Full Playwright E2E job remains non-blocking until `docs/e2e-ci-backlog.md` promotion criteria; WS-I a11y smoke is the blocking a11y gate.
 
 ## [0.4.0] - 2026-08-01
 
