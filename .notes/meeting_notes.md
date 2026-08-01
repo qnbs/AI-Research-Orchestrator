@@ -11,15 +11,17 @@
 - **#125** WS-H1: QuickAdd / History / preset modal EN+DE via `modalTranslations.ts` + ratchet (merged).
 - **#126** WS-H2: CommandPalette EN+DE via `commandPaletteTranslations.ts` + ratchet (merged).
 - **#127** WS-I: blocking axe critical/serious smoke (`a11y.yml` + `a11y.spec.ts`) (merged).
-- **InputForm i18n (this branch):** research parameters form + header EN+DE via `inputFormTranslations.ts` + ratchet.
-  - **Why:** residual DE locale still showed English form chrome after H1/H2; Orchestrator is the primary entry path.
-  - **Impact:** EN+DE form labels/options via `t()`; PubMed article-type filter values stay English in state; ratchet guards regressions.
+- **#127** WS-I: blocking axe critical/serious smoke (`a11y.yml` + `a11y.spec.ts`) (merged).
+- **#128** InputForm body/header EN+DE via `inputFormTranslations.ts` + ratchet (merged).
+- **ResearchView i18n (this branch):** Rapid Research Assistant EN+DE via `researchViewTranslations.ts` + ratchet.
+  - **Why:** Research tab was still English-only after chrome/modal/CommandPalette/InputForm waves.
+  - **Impact:** EN+DE assistant chrome; LoadingIndicator shows translated phase labels; protocol phase ID stays English.
 
 ## Still open
 
-- Residual i18n backlog: SettingsSubComponents (by tab), ReportDisplay, ResearchView.
+- Residual i18n backlog: SettingsSubComponents (by tab), ReportDisplay.
 - Full E2E job remains non-blocking until promotion criteria in `docs/e2e-ci-backlog.md`.
-- Larger i18n backlog still outside ratchet: SettingsSubComponents, ReportDisplay, ResearchView, etc.
+- Larger i18n backlog still outside ratchet: SettingsSubComponents, ReportDisplay, etc.
 
 ## Process
 

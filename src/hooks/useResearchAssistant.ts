@@ -6,6 +6,7 @@ import {
   useLazyFindSimilarArticlesQuery,
   useLazyFindRelatedOnlineQuery,
 } from '../store/slices/geminiApiSlice';
+import { RESEARCH_PHASE_ANALYZING } from '../i18n/researchViewTranslations';
 
 interface ResearchState {
   isLoading: boolean;
@@ -89,7 +90,7 @@ export const useResearchAssistant = (
       setState({
         ...initialState,
         isLoading: true,
-        phase: 'Analyzing input and generating summary...',
+        phase: RESEARCH_PHASE_ANALYZING,
       });
       setCurrentView('research');
 

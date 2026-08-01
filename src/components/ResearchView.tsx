@@ -10,6 +10,8 @@ import { BookOpenIcon } from './icons/BookOpenIcon';
 import { WebIcon } from './icons/WebIcon';
 import { DocumentIcon } from './icons/DocumentIcon';
 import { XCircleIcon } from './icons/XCircleIcon';
+import { useTranslation } from '../hooks/useTranslation';
+import { RESEARCH_PHASE_ANALYZING } from '../i18n/researchViewTranslations';
 
 interface ResearchViewProps {
   onStartNewReview: (topic: string) => void;
@@ -46,6 +48,7 @@ const AccordionSection: React.FC<{
   return (
     <div className="border-b border-border last:border-b-0">
       <button
+        type="button"
         id={buttonId}
         onClick={() => setIsOpen(!isOpen)}
         aria-expanded={isOpen}
@@ -78,22 +81,13 @@ const SkeletonLoader: React.FC<{ lines?: number; className?: string }> = ({
   <div className={`space-y-3 animate-pulse ${className}`}>
     {Array.from({ length: lines }).map((_, i) => (
       <div key={i} className="p-3 rounded-md bg-surface border border-border/70">
-        <div className="h-4 w-3/4 rounded bg-border"></div>
-        <div className="mt-2 h-2 w-1/4 rounded bg-border"></div>
-        <div className="mt-3 h-2 w-5/6 rounded bg-border"></div>
+        <div className="h-4 w-3/4 rounded bg-border" />
+        <div className="mt-2 h-2 w-1/4 rounded bg-border" />
+        <div className="mt-3 h-2 w-5/6 rounded bg-border" />
       </div>
     ))}
   </div>
 );
-
-const researchPhases = ['Analyzing input and generating summary...'];
-const researchPhaseDetails = {
-  'Analyzing input and generating summary...': [
-    'Processing text...',
-    'Identifying key concepts...',
-    'Searching for similar content...',
-  ],
-};
 
 const ResearchView: React.FC<ResearchViewProps> = ({
   onStartNewReview,
@@ -106,14 +100,25 @@ const ResearchView: React.FC<ResearchViewProps> = ({
   similarArticlesState,
   onlineFindingsState,
 }) => {
+  const { t } = useTranslation();
   const [textQuery, setTextQuery] = useState('');
+
+  const analyzingLabel = t('research.phase.analyzing');
+  const researchPhases = [analyzingLabel];
+  const researchPhaseDetails = {
+    [analyzingLabel]: [
+      t('research.phase.detail.processing'),
+      t('research.phase.detail.concepts'),
+      t('research.phase.detail.searching'),
+    ],
+  };
+  const displayPhase = !phase || phase === RESEARCH_PHASE_ANALYZING ? analyzingLabel : phase;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onStartResearch(textQuery);
   };
 
-  // Memoize summary HTML to avoid re-parsing on every render
   // eslint-disable-next-line react-hooks/preserve-manual-memoization -- this project doesn't run the React Compiler yet; the static check can't verify this boundary without it.
   const summaryHtml = useMemo(() => {
     return analysis?.summary ? secureMarkdownToHtml(analysis.summary) : '';
@@ -124,8 +129,8 @@ const ResearchView: React.FC<ResearchViewProps> = ({
       return (
         <div className="mt-8">
           <LoadingIndicator
-            title="Research Assistant"
-            phase={phase}
+            title={t('research.title')}
+            phase={displayPhase}
             phases={researchPhases}
             phaseDetails={researchPhaseDetails}
           />
@@ -143,17 +148,20 @@ const ResearchView: React.FC<ResearchViewProps> = ({
       return (
         <div className="mt-8 bg-surface rounded-lg border border-border shadow-2xl shadow-black/20 animate-fadeIn">
           <div className="p-4 flex justify-between items-center border-b border-border">
-            <h3 className="text-lg font-semibold text-text-primary">Analysis Complete</h3>
+            <h3 className="text-lg font-semibold text-text-primary">
+              {t('research.result.complete')}
+            </h3>
             <button
+              type="button"
               onClick={onClearResearch}
               className="flex items-center text-sm px-3 py-1.5 rounded-md text-text-primary bg-background hover:bg-surface-hover border border-border transition-colors"
             >
               <XCircleIcon className="h-4 w-4 mr-2" />
-              Clear Results
+              {t('research.result.clear')}
             </button>
           </div>
           {analysis.summary && (
-            <AccordionSection title="AI-Generated Summary" defaultOpen>
+            <AccordionSection title={t('research.section.summary')} defaultOpen>
               <div
                 className="prose prose-sm prose-invert max-w-none text-text-secondary/90 leading-relaxed"
                 dangerouslySetInnerHTML={{ __html: summaryHtml }}
@@ -165,7 +173,7 @@ const ResearchView: React.FC<ResearchViewProps> = ({
               title={
                 <>
                   <SparklesIcon className="h-5 w-5 mr-2" />
-                  Key Findings
+                  {t('research.section.findings')}
                 </>
               }
               defaultOpen
@@ -182,7 +190,7 @@ const ResearchView: React.FC<ResearchViewProps> = ({
             title={
               <>
                 <BookOpenIcon className="h-5 w-5 mr-2" />
-                Similar Scientific Articles
+                {t('research.section.similar')}
               </>
             }
             defaultOpen
@@ -194,7 +202,7 @@ const ResearchView: React.FC<ResearchViewProps> = ({
               )}
               {similarArticlesState.articles && similarArticlesState.articles.length === 0 && (
                 <p className="text-text-secondary text-sm text-center">
-                  No similar articles were found.
+                  {t('research.similar.empty')}
                 </p>
               )}
               {similarArticlesState.articles &&
@@ -215,7 +223,7 @@ const ResearchView: React.FC<ResearchViewProps> = ({
                       PMID: {similar.pmid}
                     </p>
                     <p className="mt-2 text-xs text-text-secondary">
-                      <strong>Reasoning:</strong> {similar.reason}
+                      <strong>{t('research.similar.reasoning')}</strong> {similar.reason}
                     </p>
                   </div>
                 ))}
@@ -226,7 +234,7 @@ const ResearchView: React.FC<ResearchViewProps> = ({
             title={
               <>
                 <WebIcon className="h-5 w-5 mr-2" />
-                Related Online Discussions
+                {t('research.section.online')}
               </>
             }
             defaultOpen
@@ -237,14 +245,16 @@ const ResearchView: React.FC<ResearchViewProps> = ({
             )}
             {onlineFindingsState.findings && (
               <div className="bg-surface p-3 rounded-md border border-border/70 animate-fadeIn">
-                <h5 className="font-semibold text-text-primary mb-2">Online Summary</h5>
+                <h5 className="font-semibold text-text-primary mb-2">
+                  {t('research.online.summary')}
+                </h5>
                 <p className="text-sm text-text-secondary/90 mb-3">
                   {onlineFindingsState.findings.summary}
                 </p>
                 {onlineFindingsState.findings.sources.length > 0 && (
                   <>
                     <h6 className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
-                      Sources
+                      {t('research.online.sources')}
                     </h6>
                     <ul className="mt-2 space-y-1">
                       {onlineFindingsState.findings.sources.map((source) => (
@@ -270,19 +280,20 @@ const ResearchView: React.FC<ResearchViewProps> = ({
           {analysis.synthesizedTopic && (
             <div className="p-4 bg-background/50">
               <div className="p-4 bg-surface border border-brand-accent/30 rounded-lg text-center">
-                <h4 className="font-semibold text-text-primary">Continue Your Research</h4>
+                <h4 className="font-semibold text-text-primary">{t('research.continue.title')}</h4>
                 <p className="text-sm text-text-secondary mt-1 mb-3">
-                  Use the synthesized topic below to start a full literature review.
+                  {t('research.continue.body')}
                 </p>
                 <code className="text-xs bg-background p-2 rounded-md text-brand-accent border border-border block truncate mb-3">
                   {analysis.synthesizedTopic}
                 </code>
                 <button
+                  type="button"
                   onClick={() => onStartNewReview(analysis.synthesizedTopic)}
                   className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-brand-text-on-accent bg-brand-accent hover:bg-opacity-90"
                 >
                   <DocumentIcon className="h-5 w-5 mr-2" />
-                  Start Full Review on This Topic
+                  {t('research.continue.cta')}
                 </button>
               </div>
             </div>
@@ -293,13 +304,8 @@ const ResearchView: React.FC<ResearchViewProps> = ({
     return (
       <div className="text-center text-text-secondary p-8 flex flex-col items-center justify-center h-full mt-10">
         <BeakerIcon className="h-24 w-24 text-border mb-6" />
-        <h2 className="text-2xl font-bold text-text-primary mb-3">
-          Ask a question or analyze a paper.
-        </h2>
-        <p className="max-w-xl mx-auto text-base">
-          Paste in a research question, topic, abstract, or even a PMID/DOI. The AI will provide a
-          concise summary, extract key findings, and find related articles for you.
-        </p>
+        <h2 className="text-2xl font-bold text-text-primary mb-3">{t('research.empty.title')}</h2>
+        <p className="max-w-xl mx-auto text-base">{t('research.empty.body')}</p>
       </div>
     );
   };
@@ -309,14 +315,18 @@ const ResearchView: React.FC<ResearchViewProps> = ({
   return (
     <div className="max-w-4xl mx-auto animate-fadeIn">
       <div className="bg-surface rounded-lg border border-border shadow-2xl shadow-black/20 p-6">
-        <h2 className="text-xl font-bold mb-4 text-brand-accent">Research Assistant</h2>
+        <h2 className="text-xl font-bold mb-4 text-brand-accent">{t('research.title')}</h2>
         <form onSubmit={handleSubmit}>
+          <label htmlFor="research-assistant-query" className="sr-only">
+            {t('research.title')}
+          </label>
           <textarea
+            id="research-assistant-query"
             value={textQuery}
             onChange={(e) => setTextQuery(e.target.value)}
             rows={5}
             className="block w-full bg-background border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-brand-accent sm:text-sm placeholder-text-secondary"
-            placeholder="Enter a research question, abstract, a paper's full text, or a topic..."
+            placeholder={t('research.placeholder')}
             disabled={isLoading || !!analysis}
           />
           <button
@@ -331,6 +341,7 @@ const ResearchView: React.FC<ResearchViewProps> = ({
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
                   viewBox="0 0 24 24"
+                  aria-hidden
                 >
                   <circle
                     className="opacity-25"
@@ -339,19 +350,19 @@ const ResearchView: React.FC<ResearchViewProps> = ({
                     r="10"
                     stroke="currentColor"
                     strokeWidth="4"
-                  ></circle>
+                  />
                   <path
                     className="opacity-75"
                     fill="currentColor"
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  ></path>
+                  />
                 </svg>
-                Analyzing...
+                {t('research.submit.loading')}
               </>
             ) : (
               <>
                 <BeakerIcon className="h-5 w-5 mr-2" />
-                Analyze
+                {t('research.submit')}
               </>
             )}
           </button>
@@ -362,4 +373,5 @@ const ResearchView: React.FC<ResearchViewProps> = ({
     </div>
   );
 };
+
 export default ResearchView;
