@@ -21,6 +21,8 @@ const PROVIDER_STORAGE_KEYS: Record<AIProviderId, string> = {
   heuristic: 'encrypted-api-key-heuristic',
 };
 
+const VAULT_LOCK_NAME = 'ai-research-api-key-vault';
+
 // Memoizes the single in-flight/resolved key so concurrent callers (e.g.
 // ApiKeySettings.tsx's Promise.all([hasProviderApiKey(...), getNcbiApiKey()])
 // on mount) converge on the same key instead of each independently reading
@@ -33,6 +35,19 @@ let encryptionKeyPromise: Promise<CryptoKey> | null = null;
 export function __resetEncryptionKeyCacheForTests(): void {
   encryptionKeyPromise = null;
   pendingVaultReset = false;
+}
+
+/**
+ * Cross-tab serialization for vault key resolution via the Web Locks API.
+ * When unavailable (older browsers / some test envs), falls through to the
+ * in-tab promise memoization only.
+ */
+async function withVaultLock<T>(fn: () => Promise<T>): Promise<T> {
+  const locks = globalThis.navigator?.locks;
+  if (!locks?.request) {
+    return fn();
+  }
+  return locks.request(VAULT_LOCK_NAME, fn);
 }
 
 // This service has no dependency on the Redux store or React - it's called
@@ -82,7 +97,10 @@ function notifyVaultReset(): void {
  * protects every stored provider secret.
  */
 async function getOrCreateEncryptionKey(): Promise<CryptoKey> {
-  encryptionKeyPromise ??= resolveEncryptionKey().catch((error: unknown) => {
+  // In-tab memoization first; Web Locks then serialize the IndexedDB read/
+  // generate/save across tabs so a second tab waits and re-reads the key the
+  // first tab just wrote instead of racing a second generateKey.
+  encryptionKeyPromise ??= withVaultLock(() => resolveEncryptionKey()).catch((error: unknown) => {
     encryptionKeyPromise = null;
     throw error;
   });
