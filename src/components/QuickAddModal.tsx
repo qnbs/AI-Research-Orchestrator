@@ -14,7 +14,10 @@ const QuickAddModal: React.FC<QuickAddModalProps> = ({ onClose }) => {
   const [identifier, setIdentifier] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const modalRef = useFocusTrap<HTMLDivElement>(true);
+  const modalRef = useFocusTrap<HTMLDivElement>(true, {
+    onEscape: onClose,
+    lockScroll: true,
+  });
 
   const { settings } = useSettings();
   const { addSingleArticleReport } = useKnowledgeBase();
@@ -45,15 +48,21 @@ const QuickAddModal: React.FC<QuickAddModalProps> = ({ onClose }) => {
       <div
         ref={modalRef}
         className="bg-surface rounded-lg border border-border shadow-2xl p-6 w-full max-w-lg m-4"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="quick-add-modal-title"
       >
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-bold brand-gradient-text flex items-center">
+          <h3
+            id="quick-add-modal-title"
+            className="text-lg font-bold brand-gradient-text flex items-center"
+          >
             <DocumentPlusIcon className="w-6 h-6 mr-2" />
             Quick Add Article
           </h3>
           <button
             onClick={onClose}
-            className="p-1 rounded-full hover:bg-surface-hover"
+            className="p-1 rounded-full hover:bg-surface-hover focus-ring-aa"
             aria-label="Close modal"
           >
             <XIcon className="h-5 w-5" />

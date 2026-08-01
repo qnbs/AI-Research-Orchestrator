@@ -124,7 +124,10 @@ const InputFormComponent: React.FC<InputFormProps> = ({
   const { presets, addPreset } = usePresets();
   const [isPresetModalOpen, setIsPresetModalOpen] = useState(false);
   const [newPresetName, setNewPresetName] = useState('');
-  const modalRef = useFocusTrap<HTMLDivElement>(isPresetModalOpen);
+  const modalRef = useFocusTrap<HTMLDivElement>(isPresetModalOpen, {
+    onEscape: () => setIsPresetModalOpen(false),
+    lockScroll: true,
+  });
 
   useEffect(() => {
     try {
@@ -436,8 +439,16 @@ const InputFormComponent: React.FC<InputFormProps> = ({
           className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center backdrop-blur-sm animate-fadeIn"
           style={{ animationDuration: '150ms' }}
         >
-          <div ref={modalRef} className="glass-panel rounded-xl p-6 w-full max-w-sm m-4 shadow-2xl">
-            <h3 className="text-lg font-bold brand-gradient-text">Save Preset</h3>
+          <div
+            ref={modalRef}
+            className="glass-panel rounded-xl p-6 w-full max-w-sm m-4 shadow-2xl"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="save-preset-modal-title"
+          >
+            <h3 id="save-preset-modal-title" className="text-lg font-bold brand-gradient-text">
+              Save Preset
+            </h3>
             <div className="mt-4">
               <label
                 htmlFor="presetName"

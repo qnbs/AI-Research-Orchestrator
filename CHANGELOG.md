@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **WS-E focus visibility:** `.focus-ring-aa` utility (`src/index.css`), ESLint rule `local/no-bare-outline-none`, and Playwright keyboard-walk smoke (`keyboard-focus.spec.ts`).
 - **WS-F skip link + touch targets:** `SkipToContentLink` (hash-router-safe focus to `#main-content`), `.touch-target-aa` (44×44) on header/chrome controls and bottom nav, Playwright `skip-to-content.spec.ts`.
+- **WS-G dialog a11y:** `useFocusTrap` Escape dismiss + optional body scroll lock; wired into ConfirmationModal, QuickAddModal, Settings shared Modal, and InputForm preset dialog; Playwright `dialog-a11y.spec.ts`.
 
 ### Changed
 
@@ -28,7 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Known gaps (tracked, not yet closed)
 
 - Broader i18n migration (#69) — HelpView Wave 8 + chrome shell wave landed; larger backlog (CommandPalette, InputForm, SettingsSubComponents, ReportDisplay, ResearchView) still outside ratchet.
-- UIUX hardening WS-G onward (see `.notes/meeting_notes.md`).
+- UIUX hardening WS-H1 onward (see `.notes/meeting_notes.md`).
 
 ## [0.4.0] - 2026-08-01
 

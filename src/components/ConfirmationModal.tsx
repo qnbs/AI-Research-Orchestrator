@@ -24,7 +24,10 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   confirmButtonClass = 'bg-red-600 hover:bg-red-700',
   titleClass = 'text-red-400',
 }) => {
-  const modalRef = useFocusTrap<HTMLDivElement>(true);
+  const modalRef = useFocusTrap<HTMLDivElement>(true, {
+    onEscape: onCancel,
+    lockScroll: true,
+  });
   const { t } = useTranslation();
 
   return (
