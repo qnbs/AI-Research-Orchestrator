@@ -40,12 +40,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **E2E CI promotion:** Playwright job is blocking after 10 consecutive clean runs (51 passed each); added `journal-hub.spec.ts` + `provider-flow.spec.ts` and shared `e2eHelpers.ts`.
 - **Claude Code Review:** job marked `continue-on-error: true` so intermittent OAuth/`is_error:true` infra failures do not fail PR checks while reviews still post when auth works.
 - **Vitest 4:** `vitest` + `@vitest/coverage-v8` bumped to `^4.1.10`; constructor-style SDK mocks and SW integrity event-listener harness updated for Vitest 4 spy/`new` semantics.
+- **Claude Code Review `allowed_bots`:** allow actor `cursor` so Cloud Agent–opened PRs get a real review instead of aborting with “non-human actor”.
 
 ### Known gaps (tracked, not yet closed)
 
 - Broader i18n migration (#69) — Help through Collections, Knowledge Base, Article Detail, Dashboard, Scientometric Hub, residual shared chrome, and enum/chip labels landed; no known residual chrome or enum-label backlog remains outside future audit findings.
 - Playwright E2E job is **blocking** as of 2026-08-01 (10 consecutive clean CI runs verified); deferred `journal-hub` / `provider-flow` specs are now in the suite — see `docs/e2e-ci-backlog.md`.
-- Claude Code Review remains advisory (`continue-on-error: true`) while OAuth infra intermittently fails with empty tool runs.
+- Claude Code Review remains advisory (`continue-on-error: true`); `allowed_bots: cursor` unblocks Cloud Agent PR actors (separate from OAuth empty-tool failures).
 - Vite 8 / plugin-react 6 and Vitest 4 + coverage-v8 are on `main` (or this upgrade PR); no further Dependabot-class majors deferred from that set.
 
 ## [0.4.0] - 2026-08-01

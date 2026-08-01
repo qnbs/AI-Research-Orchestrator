@@ -49,7 +49,13 @@
 
 - **Why:** Last remaining Dependabot-class major after Vite 8 / openai 7.
 - **What:** Bump `vitest` + `@vitest/coverage-v8` to `^4.1.10`; fix constructor mocks (OpenAI/Anthropic/Gemini/jsPDF) to use `function`/`class`; rewrite SW integrity window listener harness for Vitest 4 spy reuse + jsdom location brand issues.
-- **Impact:** 564 unit tests green; coverage gate still ≥80/80/55/55.
+- **Impact:** 564 unit tests green; coverage gate still ≥80/80/55/55. Merged as #137.
+
+## 2026-08-01 — Claude Code Review allowed_bots
+
+- **Why:** Review job aborted on Cursor Cloud Agent PRs with `Workflow initiated by non-human actor: cursor (type: Bot)`.
+- **What:** Set `allowed_bots: cursor` on `.github/workflows/claude-code-review.yml` (explicit list, not `*`). Keep `continue-on-error: true` for residual OAuth hiccups.
+- **Impact:** Cursor-opened PRs can receive Claude reviews; job stays advisory.
 
 ## Process
 
