@@ -1,6 +1,7 @@
 import React, { useState, useId } from 'react';
 import { InfoIcon } from './icons/InfoIcon';
 import { XIcon } from './icons/XIcon';
+import { useTranslation } from '../hooks/useTranslation';
 
 interface TooltipProps {
   content: React.ReactNode;
@@ -19,7 +20,7 @@ interface TooltipProps {
 // synthesized aria-label to avoid being an unlabeled focus stop. Only looks one level deep: a
 // deeply-nested all-aria-hidden subtree won't be detected, but no current caller does that, and
 // fully replicating DOM accessible-name computation here isn't proportionate for this helper.
-function hasAccessibleChildContent(node: React.ReactNode): boolean {
+const hasAccessibleChildContent = (node: React.ReactNode): boolean => {
   return React.Children.toArray(node).some((child) => {
     if (typeof child === 'string' || typeof child === 'number') {
       return child.toString().trim() !== '';
@@ -30,9 +31,10 @@ function hasAccessibleChildContent(node: React.ReactNode): boolean {
     }
     return false;
   });
-}
+};
 
 export const Tooltip: React.FC<TooltipProps> = ({ content, children, detailedContent }) => {
+  const { t } = useTranslation();
   const [isHoverVisible, setIsHoverVisible] = useState(false);
   const [isDetailVisible, setIsDetailVisible] = useState(false);
   const id = useId();
@@ -136,19 +138,21 @@ export const Tooltip: React.FC<TooltipProps> = ({ content, children, detailedCon
             <div className="flex-shrink-0 flex items-center">
               {detailedContent && !isDetailVisible && (
                 <button
+                  type="button"
                   onClick={handleDetailToggle}
                   className="text-text-secondary hover:text-brand-accent"
                   aria-expanded={isDetailVisible}
-                  aria-label="Show details"
+                  aria-label={t('chrome.tooltip.show_details')}
                 >
                   <InfoIcon className="h-4 w-4" />
                 </button>
               )}
               {isDetailVisible && (
                 <button
+                  type="button"
                   onClick={forceHide}
                   className="text-text-secondary hover:text-text-primary"
-                  aria-label="Hide details"
+                  aria-label={t('chrome.tooltip.hide_details')}
                 >
                   <XIcon className="h-4 w-4" />
                 </button>

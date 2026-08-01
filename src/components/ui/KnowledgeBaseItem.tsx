@@ -14,11 +14,12 @@
 import React, { memo } from 'react';
 import { motion } from 'framer-motion';
 import type { RankedArticle } from '../../types';
+import { useTranslation, type TranslationKey } from '../../hooks/useTranslation';
 
 // ─── Relevance colour helper ──────────────────────────────────────────────────
 
 /** Maps 0–1 relevance score to a CSS colour string. */
-function relevanceColor(score: number): string {
+const relevanceColor = (score: number): string => {
   if (score >= 0.85) return 'var(--color-accent-green)';
   if (score >= 0.7) return 'var(--color-brand-accent)';
   if (score >= 0.5) return 'var(--color-accent-cyan)';
@@ -27,38 +28,40 @@ function relevanceColor(score: number): string {
   // than a semantic color - --color-border-subtle, not the WCAG-AA-bumped
   // --color-border, matches index.css's own fallback for this same bar.
   return 'var(--color-border-subtle)';
-}
+};
 
 /** Short human-readable label for the relevance score. */
-function relevanceLabel(score: number): { label: string; className: string } {
+const relevanceLabel = (score: number): { labelKey: TranslationKey; className: string } => {
   if (score >= 0.85)
     return {
-      label: 'Highly Relevant',
+      labelKey: 'chrome.kb_item.relevance.high',
       className: 'bg-accent-green/10 text-accent-green border-accent-green/30',
     };
   if (score >= 0.7)
     return {
-      label: 'Relevant',
+      labelKey: 'chrome.kb_item.relevance.medium',
       className: 'bg-brand-accent/10 text-brand-accent border-brand-accent/30',
     };
   if (score >= 0.5)
     return {
-      label: 'Possibly Relevant',
+      labelKey: 'chrome.kb_item.relevance.possible',
       className: 'bg-accent-cyan/10 text-accent-cyan border-accent-cyan/30',
     };
   return {
-    label: 'Low Relevance',
+    labelKey: 'chrome.kb_item.relevance.low',
     className: 'bg-text-secondary/10 text-text-secondary border-border',
   };
-}
+};
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-const OABadge: React.FC = () => (
-  <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-accent-green/10 text-accent-green border border-accent-green/30">
-    🔓 Open Access
-  </span>
-);
+const OABadge: React.FC<{ label: string }> = ({ label }) => {
+  return (
+    <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-accent-green/10 text-accent-green border border-accent-green/30">
+      🔓 {label}
+    </span>
+  );
+};
 
 const SourcePill: React.FC<{ type?: string }> = ({ type }) => {
   if (!type) return null;
@@ -107,6 +110,7 @@ const KnowledgeBaseItemInner: React.FC<KnowledgeBaseItemProps> = ({
   index = 0,
   className = '',
 }) => {
+  const { t } = useTranslation();
   const {
     pmid,
     title,
@@ -121,7 +125,7 @@ const KnowledgeBaseItemInner: React.FC<KnowledgeBaseItemProps> = ({
     summary,
   } = article;
 
-  const { label: relLabel, className: relClass } = relevanceLabel(relevanceScore);
+  const { labelKey: relLabelKey, className: relClass } = relevanceLabel(relevanceScore);
   const displaySummary = aiSummary || summary;
 
   return (
@@ -156,14 +160,14 @@ const KnowledgeBaseItemInner: React.FC<KnowledgeBaseItemProps> = ({
       {/* Top metadata row */}
       <div className="flex items-start justify-between gap-3 mb-2">
         <div className="flex items-center gap-1.5 flex-wrap min-w-0">
-          {isOpenAccess && <OABadge />}
+          {isOpenAccess && <OABadge label={t('chrome.kb_item.open_access')} />}
           <SourcePill type={articleType} />
           <span className="text-[10px] text-text-secondary font-mono">PMID {pmid}</span>
         </div>
         <span
           className={`flex-shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded border ${relClass}`}
         >
-          {relLabel}
+          {t(relLabelKey)}
         </span>
       </div>
 
@@ -201,14 +205,15 @@ const KnowledgeBaseItemInner: React.FC<KnowledgeBaseItemProps> = ({
       {onOpen && (
         <div className="mt-3 flex justify-end">
           <button
+            type="button"
             onClick={(e) => {
               e.stopPropagation();
               onOpen();
             }}
             className="btn-neon text-[11px] px-3 py-1"
-            aria-label={`Open article: ${title}`}
+            aria-label={t('chrome.kb_item.open_aria', { title })}
           >
-            Open →
+            {t('chrome.kb_item.open')}
           </button>
         </div>
       )}

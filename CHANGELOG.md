@@ -34,11 +34,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **i18n Settings remaining tabs + shell:** AI / Knowledge Base / Export / Data tabs, SettingsView confirm/prune modals, and `useSettingsViewLogic` toasts EN+DE via `settingsTranslations.ts`; tabs extracted to dedicated files; ratchet covers all Settings migrated surfaces (CSV column ids and AI persona enum values stay English in state).
 - **i18n Authors / Journals hubs + Agent Debugger + Collections:** EN+DE via `authorTranslations.ts`, `journalTranslations.ts` (chart titles), `debuggerTranslations.ts`, and `collections.*` keys; `AuthorProfileView` extracted under the 700-line cap; ratchet covers migrated hub/debugger/collections surfaces (agent IDs, journal category map keys, and API status enums stay English in state).
 - **i18n Knowledge Base / Article detail / Dashboard / Scientometric Hub:** EN+DE via `kbChromeTranslations.ts` and `dashboardTranslations.ts`; Dashboard split (`DashboardSubComponents`); ratchet covers KB, ArticleDetailPanel, Dashboard, and ScientometricHub.
+- **i18n residual chrome + enum chips:** Tooltip, Notification, LoadingIndicator, PipelineStep, and KnowledgeBaseItem shared chrome now use EN+DE `chrome.*` keys; author/journal featured category chips, journal match types, and journal open-access policy chips render localized labels while keeping English enum/category values in state.
 - **WS-E:** restored visible keyboard focus rings on 12 interactive sites that used bare `focus:outline-none` (nav, accordions, command palette, search inputs, dashboard actions).
 
 ### Known gaps (tracked, not yet closed)
 
-- Broader i18n migration (#69) — Help through Collections, Knowledge Base, Article Detail, Dashboard, and Scientometric Hub landed; residual backlog: optional enum/chip label localization and any remaining chrome outside ratchet-covered views.
+- Broader i18n migration (#69) — Help through Collections, Knowledge Base, Article Detail, Dashboard, Scientometric Hub, residual shared chrome, and enum/chip labels landed; no known residual chrome or enum-label backlog remains outside future audit findings.
 - Full Playwright E2E job remains non-blocking until `docs/e2e-ci-backlog.md` promotion criteria; WS-I a11y smoke is the blocking a11y gate.
 
 ## [0.4.0] - 2026-08-01

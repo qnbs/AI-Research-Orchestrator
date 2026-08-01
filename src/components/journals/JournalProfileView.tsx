@@ -1,12 +1,18 @@
 import React, { useId, useState } from 'react';
 import { useJournalsView } from './JournalsViewContext';
-import { useTranslation } from '../../hooks/useTranslation';
+import { useTranslation, type TranslationKey } from '../../hooks/useTranslation';
 import { Article, JournalMetrics } from '../../types';
 import { ChartBarIcon } from '../icons/ChartBarIcon';
 import { ChevronDownIcon } from '../icons/ChevronDownIcon';
 import { ChevronLeftIcon } from '../icons/ChevronLeftIcon';
 import { SparklesIcon } from '../icons/SparklesIcon';
 import { AnalysisCharts, ArticleListItem } from './JournalsSubComponents';
+
+const oaPolicyTranslationKeys: Partial<Record<string, TranslationKey>> = {
+  'Full Open Access': 'journals.oa.full',
+  Hybrid: 'journals.oa.hybrid',
+  Subscription: 'journals.oa.subscription',
+};
 
 const ProfileAccordion: React.FC<{
   title: React.ReactNode;
@@ -126,7 +132,7 @@ export const JournalProfileView: React.FC<JournalProfileViewProps> = ({ onStartR
             </div>
             <div className="flex gap-2">
               <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-brand-primary/10 text-brand-primary border border-brand-primary/20">
-                {profile.oaPolicy}
+                {t(oaPolicyTranslationKeys[profile.oaPolicy] ?? profile.oaPolicy)}
               </span>
             </div>
           </div>
