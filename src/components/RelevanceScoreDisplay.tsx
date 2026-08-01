@@ -1,6 +1,8 @@
 import React from 'react';
+import { useTranslation } from '../hooks/useTranslation';
 
 export const RelevanceScoreDisplay: React.FC<{ score: number }> = ({ score }) => {
+  const { t } = useTranslation();
   const scoreColor = score > 75 ? 'text-green-400' : score > 50 ? 'text-amber-400' : 'text-red-400';
   const ringColor = score > 75 ? '#4ade80' : score > 50 ? '#fbbf24' : '#f87171';
   const circumference = 2 * Math.PI * 18; // 2 * pi * r
@@ -9,7 +11,7 @@ export const RelevanceScoreDisplay: React.FC<{ score: number }> = ({ score }) =>
   return (
     <div
       role="img"
-      aria-label={`Relevance Score: ${score} out of 100`}
+      aria-label={t('report.relevance.aria', { score })}
       className="relative h-12 w-12 flex-shrink-0 flex items-center justify-center group"
     >
       <svg

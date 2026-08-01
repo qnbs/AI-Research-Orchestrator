@@ -15,10 +15,13 @@
 - **ResearchView i18n (this branch):** Rapid Research Assistant EN+DE via `researchViewTranslations.ts` + ratchet.
   - **Why:** Research tab was still English-only after chrome/modal/CommandPalette/InputForm waves.
   - **Impact:** EN+DE assistant chrome; LoadingIndicator shows translated phase labels; protocol phase ID stays English.
+- **ReportDisplay i18n (this branch):** report chrome + `ReportArticleCard` + ChatInterface + RelevanceScoreDisplay EN+DE via `reportTranslations.ts` + ratchet.
+  - **Why:** Report view was still English-only after ResearchView wave; file over 700 lines before ArticleCard extract.
+  - **Impact:** EN+DE report UI; accordion panels get `inert` when closed; export confirm still uses `kb.export.*`.
 
 ## Still open
 
-- Residual i18n backlog outside ratchet: SettingsSubComponents (by tab), ReportDisplay.
+- Residual i18n backlog outside ratchet: SettingsSubComponents (by tab).
 - Full E2E job remains non-blocking until promotion criteria in `docs/e2e-ci-backlog.md`.
 
 ## Process
