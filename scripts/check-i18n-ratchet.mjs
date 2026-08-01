@@ -45,6 +45,14 @@ const MIGRATED_FILES = [
   'src/components/ChatInterface.tsx',
   'src/components/RelevanceScoreDisplay.tsx',
   'src/components/settings/GeneralSettingsTab.tsx',
+  'src/components/settings/AISettingsTab.tsx',
+  'src/components/settings/KnowledgeBaseSettingsTab.tsx',
+  'src/components/settings/ExportSettingsTab.tsx',
+  'src/components/settings/DataSettingsTab.tsx',
+  'src/components/settings/SettingsModal.tsx',
+  'src/components/SettingsView.tsx',
+  'src/components/settings/useSettingsViewLogic.ts',
+  'src/components/settings/CostEstimateCard.tsx',
 ];
 
 const IGNORE_COMMENT = 'i18n-ratchet-ignore-next-line';
