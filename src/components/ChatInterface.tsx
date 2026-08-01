@@ -45,9 +45,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             <p>{t('report.chat.empty')}</p>
           </div>
         )}
-        {history.map((msg, idx) => (
+        {history.map((msg) => (
           <div
-            key={`${msg.role}-${idx}-${msg.parts[0]?.text?.slice(0, 24) ?? ''}`}
+            key={`${msg.role}:${msg.parts.map((part) => part.text).join('\u0001')}`}
             className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
           >
             <div

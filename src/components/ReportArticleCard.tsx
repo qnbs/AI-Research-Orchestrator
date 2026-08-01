@@ -140,6 +140,38 @@ const ArticleExternalActions: React.FC<{
   );
 };
 
+const ArticleSummary: React.FC<{
+  summaryLabel: string;
+  displayedSummary: string;
+  isLongSummary: boolean;
+  isExpanded: boolean;
+  onToggleExpand: () => void;
+  rationale: string;
+}> = ({ summaryLabel, displayedSummary, isLongSummary, isExpanded, onToggleExpand, rationale }) => {
+  const { t } = useTranslation();
+  return (
+    <>
+      <p className="mt-3 text-sm text-text-secondary/90 leading-relaxed">
+        <strong className="text-text-secondary">{summaryLabel}: </strong>
+        {displayedSummary}
+        {isLongSummary ? (
+          <button
+            type="button"
+            onClick={onToggleExpand}
+            className="ml-2 text-brand-accent text-xs font-semibold hover:underline"
+          >
+            {isExpanded ? t('report.article.showLess') : t('report.article.showMore')}
+          </button>
+        ) : null}
+      </p>
+      <p className="mt-2 text-xs text-text-secondary italic bg-surface-hover/50 p-2 rounded-md">
+        <strong className="not-italic">{t('report.article.scoringRationale')} </strong>
+        {rationale}
+      </p>
+    </>
+  );
+};
+
 export const ReportArticleCard: React.FC<{
   article: RankedArticle;
   rank: number;
@@ -200,23 +232,14 @@ export const ReportArticleCard: React.FC<{
     <div className="bg-surface rounded-lg border border-border p-4 transition-all duration-200 hover:shadow-lg hover:border-brand-accent/30">
       <ArticleHeader article={article} rank={rank} articleLink={articleLink} />
 
-      <p className="mt-3 text-sm text-text-secondary/90 leading-relaxed">
-        <strong className="text-text-secondary">{summaryLabel}: </strong>
-        {displayedSummary}
-        {isLongSummary ? (
-          <button
-            type="button"
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="ml-2 text-brand-accent text-xs font-semibold hover:underline"
-          >
-            {isExpanded ? t('report.article.showLess') : t('report.article.showMore')}
-          </button>
-        ) : null}
-      </p>
-      <p className="mt-2 text-xs text-text-secondary italic bg-surface-hover/50 p-2 rounded-md">
-        <strong className="not-italic">{t('report.article.scoringRationale')} </strong>
-        {article.relevanceExplanation}
-      </p>
+      <ArticleSummary
+        summaryLabel={summaryLabel}
+        displayedSummary={displayedSummary}
+        isLongSummary={isLongSummary}
+        isExpanded={isExpanded}
+        onToggleExpand={() => setIsExpanded(!isExpanded)}
+        rationale={article.relevanceExplanation}
+      />
 
       <div className="mt-3 space-y-3">
         <div className="flex flex-wrap gap-2">
