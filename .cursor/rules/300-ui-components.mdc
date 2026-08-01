@@ -8,7 +8,7 @@ alwaysApply: false
 
 - **Paradigma:** Funktionale Komponenten + Hooks. Vite-SPA — Lazy-Loading wie in `App.tsx`; kein Next.js RSC-Split.
 - **Props:** Klare TS-Typen; booleans benannt (`isOpen`, `disabled`); `children` nur bei echter Komposition.
-- **Tailwind:** Utility-First; Cybernetic/Glass-Patterns vom bestehenden Designsystem; Inline-Styles nur für dynamische Werte.
+- **Tailwind v4:** Utility-First via `@theme` tokens in `src/index.css` (no `tailwind.config.js`); Cybernetic/Glass patterns from the design system; inline styles only for dynamic values.
 - **A11y:** Fokus, `aria-*`, Tastatur (inkl. Cmd+K); jsx-a11y ernst nehmen — keine blinden `eslint-disable`.
 - **i18n:** Sichtbare Strings nur über `t()` / `translations.ts`, EN+DE-Paarität.
 - **Motion:** Framer Motion sparsam; Layout-Thrashing vermeiden.

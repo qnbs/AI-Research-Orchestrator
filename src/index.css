@@ -1,5 +1,81 @@
 @import 'tailwindcss';
 
+/* Class-based `dark:` variant (matches documentElement.className = theme).
+   Replaces legacy tailwind.config.js `darkMode: 'class'`. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ============================================================
+   TAILWIND v4 THEME — registers every token formerly in
+   tailwind.config.js so custom utilities (bg-surface, text-text-primary,
+   border-border, animate-fadeIn, …) actually emit CSS.
+
+   `reference inline` for pass-through tokens: do NOT re-emit --color-* /
+   --shadow-* / --font-* / --radius-* on :root (those are already defined
+   below and theme-switched). Utilities inline `var(--…)` so opacity
+   modifiers (bg-brand-accent/10) and cascade still resolve against the
+   live theme variables.
+   ============================================================ */
+@theme reference inline {
+  /* Colors → existing runtime CSS variables (theme-switched below) */
+  --color-background: var(--color-background);
+  --color-surface: var(--color-surface);
+  --color-surface-hover: var(--color-surface-hover);
+  --color-input-bg: var(--color-input-bg);
+  --color-border: var(--color-border);
+  --color-text-primary: var(--color-text-primary);
+  --color-text-secondary: var(--color-text-secondary);
+  --color-brand-accent: var(--color-brand-accent);
+  --color-brand-primary: var(--color-brand-primary);
+  --color-brand-secondary: var(--color-brand-secondary);
+  --color-brand-text-on-accent: var(--color-brand-text-on-accent);
+  --color-accent-cyan: var(--color-accent-cyan);
+  --color-accent-magenta: var(--color-accent-magenta);
+  --color-accent-amber: var(--color-accent-amber);
+  --color-accent-green: var(--color-accent-green);
+  --color-danger: var(--color-danger);
+  --color-success: var(--color-success);
+  --color-warning: var(--color-warning);
+  --color-info: var(--color-info);
+
+  /* Fonts → existing --font-* on :root (also used by hand-authored rules) */
+  --font-sans: var(--font-sans);
+  --font-display: var(--font-display);
+  --font-mono: var(--font-mono);
+
+  /* Radii → existing --radius-* on :root */
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius: var(--radius-md);
+
+  /* Shadows → existing --shadow-* (theme-switched) + named aliases */
+  --shadow-glow: var(--shadow-glow);
+  --shadow-glow-lg: var(--shadow-lg);
+  --shadow-glow-sm: var(--shadow-sm);
+  --shadow-glass: var(--shadow-md);
+  --shadow-soft: var(--shadow-md);
+}
+
+/* Static / non-conflicting theme extensions (safe to emit as theme vars). */
+@theme {
+  --blur-xs: 2px;
+  --blur-4xl: 72px;
+
+  --ease-cyber: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-glide: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Keyframes live later in this file; utilities only need the animation shorthand. */
+  --animate-fadeIn: fadeIn 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  --animate-slideInUp: slideInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  --animate-slideInDown: slideInDown 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  --animate-slideInLeft: slideInLeft 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  --animate-pulseGlow: pulseGlow 3.5s ease-in-out infinite;
+  --animate-auroraMove: auroraMove 80s linear infinite alternate;
+  --animate-scanline: scanline 8s linear infinite;
+  --animate-neonFlicker: neonFlicker 3s infinite;
+  --animate-borderFlow: borderFlow 4s linear infinite;
+}
+
 /* ============================================================
    RESEARCH INSTRUMENT DESIGN SYSTEM — AI Research Orchestrator
    Themes: ink-dark | paper-light | matrix-green
