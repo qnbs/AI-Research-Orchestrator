@@ -36,31 +36,77 @@ const initialState: ResearchState = {
 
 type AbortablePromise = { abort: () => void };
 
-function settledErrorMessage(reason: unknown): string {
-  return reason instanceof Error ? reason.message : 'An unknown error occurred.';
-}
+const settledErrorMessage = (reason: unknown): string =>
+  reason instanceof Error ? reason.message : 'An unknown error occurred.';
 
-function mapSimilarSettled(result: PromiseSettledResult<SimilarArticle[] | null>): {
+const mapSimilarSettled = (
+  result: PromiseSettledResult<SimilarArticle[] | null>,
+): {
   loading: false;
   articles: SimilarArticle[] | null;
   error: string | null;
-} {
+} => {
   if (result.status === 'fulfilled') {
     return { loading: false, articles: result.value, error: null };
   }
   return { loading: false, articles: null, error: settledErrorMessage(result.reason) };
-}
+};
 
-function mapOnlineSettled(result: PromiseSettledResult<OnlineFindings | null>): {
+const mapOnlineSettled = (
+  result: PromiseSettledResult<OnlineFindings | null>,
+): {
   loading: false;
   findings: OnlineFindings | null;
   error: string | null;
-} {
+} => {
   if (result.status === 'fulfilled') {
     return { loading: false, findings: result.value, error: null };
   }
   return { loading: false, findings: null, error: settledErrorMessage(result.reason) };
-}
+};
+
+type FollowUpTriggers = {
+  autoFetchSimilar: boolean;
+  autoFetchOnline: boolean;
+  triggerSimilar: ReturnType<typeof useLazyFindSimilarArticlesQuery>[0];
+  triggerOnline: ReturnType<typeof useLazyFindRelatedOnlineQuery>[0];
+  analysis: ResearchAnalysis;
+  aiSettings: Settings['ai'];
+  track: (req: AbortablePromise) => void;
+};
+
+const fetchFollowUps = async ({
+  autoFetchSimilar,
+  autoFetchOnline,
+  triggerSimilar,
+  triggerOnline,
+  analysis,
+  aiSettings,
+  track,
+}: FollowUpTriggers) => {
+  const similarPromise = autoFetchSimilar
+    ? triggerSimilar({
+        article: { title: analysis.synthesizedTopic, summary: analysis.summary },
+        aiSettings,
+      })
+    : null;
+  const onlinePromise = autoFetchOnline
+    ? triggerOnline({ topic: analysis.synthesizedTopic, aiSettings })
+    : null;
+
+  if (similarPromise) track(similarPromise);
+  if (onlinePromise) track(onlinePromise);
+
+  const [similarResult, onlineResult] = await Promise.allSettled([
+    similarPromise ? similarPromise.unwrap() : Promise.resolve(null),
+    onlinePromise ? onlinePromise.unwrap() : Promise.resolve(null),
+  ]);
+
+  return {
+    similar: mapSimilarSettled(similarResult),
+    online: mapOnlineSettled(onlineResult),
+  };
+};
 
 /**
  * Rapid Research Assistant state machine: analysis + optional similar/online fetches
@@ -138,30 +184,24 @@ export const useResearchAssistant = (
           online: { ...s.online, loading: aiSettings.researchAssistant.autoFetchOnline },
         }));
 
-        const similarPromise = aiSettings.researchAssistant.autoFetchSimilar
-          ? triggerSimilar({
-              article: { title: analysisResult.synthesizedTopic, summary: analysisResult.summary },
-              aiSettings,
-            })
-          : null;
-        const onlinePromise = aiSettings.researchAssistant.autoFetchOnline
-          ? triggerOnline({ topic: analysisResult.synthesizedTopic, aiSettings })
-          : null;
-
-        if (similarPromise) inflightRef.current.push(similarPromise);
-        if (onlinePromise) inflightRef.current.push(onlinePromise);
-
-        const [similarResult, onlineResult] = await Promise.allSettled([
-          similarPromise ? similarPromise.unwrap() : Promise.resolve(null),
-          onlinePromise ? onlinePromise.unwrap() : Promise.resolve(null),
-        ]);
+        const followUps = await fetchFollowUps({
+          autoFetchSimilar: aiSettings.researchAssistant.autoFetchSimilar,
+          autoFetchOnline: aiSettings.researchAssistant.autoFetchOnline,
+          triggerSimilar,
+          triggerOnline,
+          analysis: analysisResult,
+          aiSettings,
+          track: (req) => {
+            inflightRef.current.push(req);
+          },
+        });
 
         if (!isCurrent()) return;
 
         setState((s) => ({
           ...s,
-          similar: mapSimilarSettled(similarResult),
-          online: mapOnlineSettled(onlineResult),
+          similar: followUps.similar,
+          online: followUps.online,
         }));
         if (isCurrent()) {
           inflightRef.current = [];

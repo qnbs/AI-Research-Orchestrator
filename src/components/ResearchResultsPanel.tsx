@@ -257,10 +257,9 @@ export const ResearchResultsPanel: React.FC<ResearchResultsPanelProps> = ({
       </div>
       {analysis.summary && (
         <AccordionSection title={t('research.section.summary')} defaultOpen>
-          {/* skipcq: JS-0440 — HTML from marked + DOMPurify.sanitize only (secureMarkdownToHtml). */}
           <div
             className="prose prose-sm prose-invert max-w-none text-text-secondary/90 leading-relaxed"
-            dangerouslySetInnerHTML={{ __html: summaryHtml }}
+            dangerouslySetInnerHTML={{ __html: summaryHtml }} // skipcq: JS-0440 — marked + DOMPurify only
           />
         </AccordionSection>
       )}
