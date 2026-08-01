@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **vitest** / **@vitest/coverage-v8** `^3.2.7` → `^4.1.10` (Vitest 4 migration; Node ≥20 / Vite ≥6 already satisfied).
 - **openai** `^6.48.0` → `^7.2.0` (upstream 7.x requires Node ≥22 only; adapter API unchanged). Closes Dependabot #98 retarget.
 - ESLint warning budget tightened to `--max-warnings 0`; `jsx-a11y` recommended rules run as errors (#115).
 - `.github/workflows/claude.yml` live-capable `--allowedTools` allowlist for on-demand `@claude` (#115).
@@ -38,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **WS-E:** restored visible keyboard focus rings on 12 interactive sites that used bare `focus:outline-none` (nav, accordions, command palette, search inputs, dashboard actions).
 - **E2E CI promotion:** Playwright job is blocking after 10 consecutive clean runs (51 passed each); added `journal-hub.spec.ts` + `provider-flow.spec.ts` and shared `e2eHelpers.ts`.
 - **Claude Code Review:** job marked `continue-on-error: true` so intermittent OAuth/`is_error:true` infra failures do not fail PR checks while reviews still post when auth works.
+- **Vitest 4:** `vitest` + `@vitest/coverage-v8` bumped to `^4.1.10`; constructor-style SDK mocks and SW integrity event-listener harness updated for Vitest 4 spy/`new` semantics.
 
 ### Known gaps (tracked, not yet closed)
 
