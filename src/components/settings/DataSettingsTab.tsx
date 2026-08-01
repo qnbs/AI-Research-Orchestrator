@@ -20,7 +20,10 @@ const StorageUsageCard: React.FC = () => {
             {t('settings.data.storage.used')}
           </span>
           <span className="text-sm font-medium text-text-primary">
-            {t('settings.data.storage.quota', { used: storageUsage.totalMB })}
+            {t('settings.data.storage.quota', {
+              used: storageUsage.totalMB,
+              quota: storageUsage.quotaMB,
+            })}
           </span>
         </div>
         <div className="w-full bg-border rounded-full h-2.5">

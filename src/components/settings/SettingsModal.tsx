@@ -29,6 +29,7 @@ export const Modal: React.FC<{ onClose: () => void; title: string; children: Rea
             {title}
           </h3>
           <button
+            type="button"
             onClick={onClose}
             className="p-1 rounded-full hover:bg-surface-hover focus-ring-aa"
             aria-label={t('chrome.aria.close_modal')}

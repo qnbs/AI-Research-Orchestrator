@@ -177,7 +177,7 @@ export const settingsTranslations = {
     'settings.data.storage.desc':
       'This application stores all data in your browser. Monitor your usage here.',
     'settings.data.storage.used': 'Storage Used',
-    'settings.data.storage.quota': '{used} MB / ~5.00 MB',
+    'settings.data.storage.quota': '{used} MB / ~{quota} MB',
     'settings.data.backup.title': 'Data Backup & Restore',
     'settings.data.backup.desc':
       'You have {reports} reports containing {articles} unique articles.',
@@ -291,13 +291,13 @@ export const settingsTranslations = {
 
     'settings.ai.desc': 'Verhalten, Sprache und Kernanweisungen der KI fein abstimmen.',
     'settings.ai.persona': 'KI-Persona',
-    'settings.ai.persona.neutral': 'Neutrale Wissenschaftlerin',
+    'settings.ai.persona.neutral': 'Neutrale Wissenschaft',
     'settings.ai.persona.neutral_desc':
       'Wählt einen neutralen, objektiven und streng wissenschaftlichen Ton.',
-    'settings.ai.persona.concise': 'Knappe Expertin',
+    'settings.ai.persona.concise': 'Knappe Expertise',
     'settings.ai.persona.concise_desc':
       'Kurz und präzise. Liefert die wichtigsten Informationen ohne Weitschweifigkeit.',
-    'settings.ai.persona.detailed': 'Detaillierte Analystin',
+    'settings.ai.persona.detailed': 'Detaillierte Analyse',
     'settings.ai.persona.detailed_desc':
       'Liefert tiefgehende Analysen. Erörtert Nuancen, Methodik und mögliche Implikationen gründlich.',
     'settings.ai.persona.creative': 'Kreative Synthese',
@@ -417,7 +417,7 @@ export const settingsTranslations = {
     'settings.data.storage.desc':
       'Diese Anwendung speichert alle Daten in Ihrem Browser. Überwachen Sie den Verbrauch hier.',
     'settings.data.storage.used': 'Speicher belegt',
-    'settings.data.storage.quota': '{used} MB / ~5,00 MB',
+    'settings.data.storage.quota': '{used} MB / ~{quota} MB',
     'settings.data.backup.title': 'Daten-Backup & Wiederherstellung',
     'settings.data.backup.desc':
       'Sie haben {reports} Berichte mit {articles} eindeutigen Artikeln.',

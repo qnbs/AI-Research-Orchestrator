@@ -51,10 +51,13 @@ const ARTICLE_TYPE_LABEL_KEYS: Record<(typeof ARTICLE_TYPES)[number], Translatio
   'Observational Study': 'inputForm.articleType.observational',
 };
 
-const ProviderFields: React.FC = () => {
+function resolveCustomBaseUrl(meta: ReturnType<typeof getProviderMeta>): string {
+  return meta.supportsBaseUrl ? (meta.defaultBaseUrl ?? '') : '';
+}
+
+const ProviderSelect: React.FC = () => {
   const { tempSettings, setTempSettings, t } = useSettingsView();
   const currentProvider = tempSettings.ai.provider ?? 'gemini';
-  const providerMeta = getProviderMeta(currentProvider);
 
   const handleProviderChange = (provider: AIProviderSelection) => {
     const meta = getProviderMeta(provider);
@@ -64,93 +67,103 @@ const ProviderFields: React.FC = () => {
         ...s.ai,
         provider,
         model: meta.defaultModel,
-        customBaseUrl:
-          provider === 'ollama'
-            ? (meta.defaultBaseUrl ?? '')
-            : provider === 'openai' || provider === 'anthropic'
-              ? (meta.defaultBaseUrl ?? '')
-              : '',
+        customBaseUrl: resolveCustomBaseUrl(meta),
       },
     }));
   };
 
   return (
-    <>
-      <div>
-        <label htmlFor="ai-provider" className="font-medium text-text-primary">
-          {t('settings.ai.provider')}
-        </label>
-        <select
-          id="ai-provider"
-          value={currentProvider}
-          onChange={(e) => handleProviderChange(e.target.value as AIProviderSelection)}
-          className="mt-1 block w-full bg-input-bg border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent"
-        >
-          {Object.values(AI_PROVIDERS).map((meta) => (
-            <option key={meta.id} value={meta.id}>
-              {meta.label}
-            </option>
-          ))}
-        </select>
-        <p className="text-xs text-text-secondary mt-1">{t('settings.ai.provider_desc')}</p>
-        {currentProvider === 'heuristic' && (
-          <p className="text-xs text-text-secondary mt-1">
-            {isNonAiAvailable()
-              ? t('settings.ai.nonai_available_desc')
-              : t('settings.ai.nonai_unavailable_desc')}
-          </p>
-        )}
-      </div>
-
-      <div>
-        <label htmlFor="ai-model" className="font-medium text-text-primary">
-          {t('settings.ai.model')}
-        </label>
-        <input
-          id="ai-model"
-          type="text"
-          list="ai-model-suggestions"
-          value={tempSettings.ai.model}
-          onChange={(e) =>
-            setTempSettings((s) => ({ ...s, ai: { ...s.ai, model: e.target.value } }))
-          }
-          placeholder={providerMeta.defaultModel}
-          className="mt-1 block w-full bg-input-bg border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent"
-        />
-        <datalist id="ai-model-suggestions">
-          {providerMeta.modelSuggestions.map((model) => (
-            <option key={model} value={model} />
-          ))}
-        </datalist>
+    <div>
+      <label htmlFor="ai-provider" className="font-medium text-text-primary">
+        {t('settings.ai.provider')}
+      </label>
+      <select
+        id="ai-provider"
+        value={currentProvider}
+        onChange={(e) => handleProviderChange(e.target.value as AIProviderSelection)}
+        className="mt-1 block w-full bg-input-bg border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent"
+      >
+        {Object.values(AI_PROVIDERS).map((meta) => (
+          <option key={meta.id} value={meta.id}>
+            {meta.label}
+          </option>
+        ))}
+      </select>
+      <p className="text-xs text-text-secondary mt-1">{t('settings.ai.provider_desc')}</p>
+      {currentProvider === 'heuristic' && (
         <p className="text-xs text-text-secondary mt-1">
-          {t('settings.ai.model_desc', { provider: providerMeta.label })}
+          {isNonAiAvailable()
+            ? t('settings.ai.nonai_available_desc')
+            : t('settings.ai.nonai_unavailable_desc')}
         </p>
-      </div>
-
-      {providerMeta.supportsBaseUrl && (
-        <div>
-          <label htmlFor="ai-base-url" className="font-medium text-text-primary">
-            {t('settings.ai.base_url')}
-          </label>
-          <input
-            id="ai-base-url"
-            type="url"
-            value={tempSettings.ai.customBaseUrl ?? ''}
-            onChange={(e) =>
-              setTempSettings((s) => ({
-                ...s,
-                ai: { ...s.ai, customBaseUrl: e.target.value },
-              }))
-            }
-            placeholder={providerMeta.defaultBaseUrl}
-            className="mt-1 block w-full bg-input-bg border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent"
-          />
-          <p className="text-xs text-text-secondary mt-1">{t('settings.ai.base_url_desc')}</p>
-        </div>
       )}
-    </>
+    </div>
   );
 };
+
+const ModelField: React.FC = () => {
+  const { tempSettings, setTempSettings, t } = useSettingsView();
+  const providerMeta = getProviderMeta(tempSettings.ai.provider ?? 'gemini');
+  return (
+    <div>
+      <label htmlFor="ai-model" className="font-medium text-text-primary">
+        {t('settings.ai.model')}
+      </label>
+      <input
+        id="ai-model"
+        type="text"
+        list="ai-model-suggestions"
+        value={tempSettings.ai.model}
+        onChange={(e) => setTempSettings((s) => ({ ...s, ai: { ...s.ai, model: e.target.value } }))}
+        placeholder={providerMeta.defaultModel}
+        className="mt-1 block w-full bg-input-bg border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent"
+      />
+      <datalist id="ai-model-suggestions">
+        {providerMeta.modelSuggestions.map((model) => (
+          <option key={model} value={model} />
+        ))}
+      </datalist>
+      <p className="text-xs text-text-secondary mt-1">
+        {t('settings.ai.model_desc', { provider: providerMeta.label })}
+      </p>
+    </div>
+  );
+};
+
+const BaseUrlField: React.FC = () => {
+  const { tempSettings, setTempSettings, t } = useSettingsView();
+  const providerMeta = getProviderMeta(tempSettings.ai.provider ?? 'gemini');
+  if (!providerMeta.supportsBaseUrl) return null;
+  return (
+    <div>
+      <label htmlFor="ai-base-url" className="font-medium text-text-primary">
+        {t('settings.ai.base_url')}
+      </label>
+      <input
+        id="ai-base-url"
+        type="url"
+        value={tempSettings.ai.customBaseUrl ?? ''}
+        onChange={(e) =>
+          setTempSettings((s) => ({
+            ...s,
+            ai: { ...s.ai, customBaseUrl: e.target.value },
+          }))
+        }
+        placeholder={providerMeta.defaultBaseUrl}
+        className="mt-1 block w-full bg-input-bg border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent"
+      />
+      <p className="text-xs text-text-secondary mt-1">{t('settings.ai.base_url_desc')}</p>
+    </div>
+  );
+};
+
+const ProviderFields: React.FC = () => (
+  <>
+    <ProviderSelect />
+    <ModelField />
+    <BaseUrlField />
+  </>
+);
 
 const PersonaPicker: React.FC = () => {
   const { tempSettings, setTempSettings, t } = useSettingsView();
@@ -322,6 +335,49 @@ const AiConfigurationCard: React.FC = () => {
   );
 };
 
+const AuthorSearchLimit: React.FC = () => {
+  const { tempSettings, setTempSettings, t } = useSettingsView();
+  const limit = tempSettings.ai.researchAssistant.authorSearchLimit;
+  return (
+    <div className="pt-4 border-t border-border">
+      <div className="flex items-center gap-2">
+        <label htmlFor="author-search-limit" className="font-medium text-text-primary">
+          {t('settings.ai.hub.author_limit')}
+        </label>
+        <Tooltip content={t('settings.ai.hub.author_limit_tooltip')}>
+          <InfoIcon className="h-4 w-4 text-text-secondary cursor-help" />
+        </Tooltip>
+      </div>
+      <div className="flex items-center mt-2">
+        <input
+          id="author-search-limit"
+          type="range"
+          min="50"
+          max="500"
+          step="50"
+          value={limit}
+          onChange={(e) =>
+            setTempSettings((s) => ({
+              ...s,
+              ai: {
+                ...s.ai,
+                researchAssistant: {
+                  ...s.ai.researchAssistant,
+                  authorSearchLimit: parseInt(e.target.value),
+                },
+              },
+            }))
+          }
+          className="w-full h-2 bg-border rounded-lg appearance-none cursor-pointer"
+        />
+        <span className="ml-4 font-mono text-sm text-text-primary bg-input-bg border border-border rounded-md px-2 py-1 w-16 text-center">
+          {limit}
+        </span>
+      </div>
+    </div>
+  );
+};
+
 const ResearchHubCard: React.FC = () => {
   const { tempSettings, setTempSettings, t } = useSettingsView();
   const ra = tempSettings.ai.researchAssistant;
@@ -340,180 +396,164 @@ const ResearchHubCard: React.FC = () => {
         <Toggle checked={ra.autoFetchOnline} onChange={(c) => setRa({ autoFetchOnline: c })}>
           {t('settings.ai.hub.auto_online')}
         </Toggle>
-        <div className="pt-4 border-t border-border">
-          <div className="flex items-center gap-2">
-            <label htmlFor="author-search-limit" className="font-medium text-text-primary">
-              {t('settings.ai.hub.author_limit')}
-            </label>
-            <Tooltip content={t('settings.ai.hub.author_limit_tooltip')}>
-              <InfoIcon className="h-4 w-4 text-text-secondary cursor-help" />
-            </Tooltip>
-          </div>
-          <div className="flex items-center mt-2">
-            <input
-              id="author-search-limit"
-              type="range"
-              min="50"
-              max="500"
-              step="50"
-              value={ra.authorSearchLimit}
-              onChange={(e) => setRa({ authorSearchLimit: parseInt(e.target.value) })}
-              className="w-full h-2 bg-border rounded-lg appearance-none cursor-pointer"
-            />
-            <span className="ml-4 font-mono text-sm text-text-primary bg-input-bg border border-border rounded-md px-2 py-1 w-16 text-center">
-              {ra.authorSearchLimit}
-            </span>
-          </div>
-        </div>
+        <AuthorSearchLimit />
       </div>
     </SettingCard>
   );
 };
 
+const defaultsInputClass = (hasError: boolean) =>
+  `block w-full bg-input-bg border rounded-md shadow-sm py-2 px-3 focus:outline-none focus-visible:ring-2 sm:text-sm ${hasError ? 'border-red-500 focus-visible:ring-red-500' : 'border-border focus-visible:ring-brand-accent'}`;
+
+const DefaultScanFields: React.FC = () => {
+  const { tempSettings, setTempSettings, errors, t } = useSettingsView();
+  const err = Boolean(errors.formDefaults);
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+      <div>
+        <label htmlFor="def-max-scan" className="block text-sm font-medium text-text-primary mb-1">
+          {t('settings.ai.formDefaults.max_scan')}
+        </label>
+        <input
+          type="number"
+          id="def-max-scan"
+          min="10"
+          max="200"
+          value={tempSettings.defaults.maxArticlesToScan}
+          onChange={(e) =>
+            setTempSettings((s) => ({
+              ...s,
+              defaults: { ...s.defaults, maxArticlesToScan: parseInt(e.target.value, 10) },
+            }))
+          }
+          className={defaultsInputClass(err)}
+        />
+      </div>
+      <div>
+        <label htmlFor="def-top-synth" className="block text-sm font-medium text-text-primary mb-1">
+          {t('settings.ai.formDefaults.top_synth')}
+        </label>
+        <input
+          type="number"
+          id="def-top-synth"
+          min="1"
+          max="20"
+          value={tempSettings.defaults.topNToSynthesize}
+          onChange={(e) =>
+            setTempSettings((s) => ({
+              ...s,
+              defaults: { ...s.defaults, topNToSynthesize: parseInt(e.target.value, 10) },
+            }))
+          }
+          className={defaultsInputClass(err)}
+        />
+      </div>
+      <div>
+        <label
+          htmlFor="def-date-range"
+          className="block text-sm font-medium text-text-primary mb-1"
+        >
+          {t('settings.ai.formDefaults.date')}
+        </label>
+        <select
+          id="def-date-range"
+          value={tempSettings.defaults.defaultDateRange}
+          onChange={(e) =>
+            setTempSettings((s) => ({
+              ...s,
+              defaults: { ...s.defaults, defaultDateRange: e.target.value },
+            }))
+          }
+          className="block w-full bg-input-bg border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent"
+        >
+          <option value="any">{t('inputForm.date.any')}</option>
+          <option value="1">{t('inputForm.date.year1')}</option>
+          <option value="5">{t('inputForm.date.year5')}</option>
+          <option value="10">{t('inputForm.date.year10')}</option>
+        </select>
+      </div>
+      <div>
+        <label
+          htmlFor="def-synthesis-focus"
+          className="block text-sm font-medium text-text-primary mb-1"
+        >
+          {t('settings.ai.formDefaults.focus')}
+        </label>
+        <select
+          id="def-synthesis-focus"
+          value={tempSettings.defaults.defaultSynthesisFocus}
+          onChange={(e) =>
+            setTempSettings((s) => ({
+              ...s,
+              defaults: { ...s.defaults, defaultSynthesisFocus: e.target.value },
+            }))
+          }
+          className="block w-full bg-input-bg border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent"
+        >
+          <option value="overview">{t('orchestrator.focus.overview')}</option>
+          <option value="clinical">{t('orchestrator.focus.clinical')}</option>
+          <option value="future">{t('orchestrator.focus.future')}</option>
+          <option value="gaps">{t('orchestrator.focus.gaps')}</option>
+        </select>
+      </div>
+    </div>
+  );
+};
+
+const ArticleTypeCheckbox: React.FC<{ type: (typeof ARTICLE_TYPES)[number] }> = ({ type }) => {
+  const { tempSettings, setTempSettings, t } = useSettingsView();
+  const id = `def-${type}`;
+  return (
+    <label htmlFor={id} className="flex items-start gap-3 text-sm font-medium text-text-primary">
+      <input
+        id={id}
+        value={type}
+        type="checkbox"
+        checked={tempSettings.defaults.defaultArticleTypes.includes(type)}
+        onChange={(e) => {
+          const { value, checked } = e.target;
+          setTempSettings((prev) => {
+            const currentTypes = prev.defaults.defaultArticleTypes;
+            const newTypes = checked
+              ? [...currentTypes, value]
+              : currentTypes.filter((item) => item !== value);
+            return { ...prev, defaults: { ...prev.defaults, defaultArticleTypes: newTypes } };
+          });
+        }}
+        className="mt-0.5 h-4 w-4 rounded border-border bg-input-bg text-brand-accent focus:ring-brand-accent"
+      />
+      {t(ARTICLE_TYPE_LABEL_KEYS[type])}
+    </label>
+  );
+};
+
+const DefaultArticleTypes: React.FC = () => {
+  const { t } = useSettingsView();
+  return (
+    <fieldset className="pt-6 border-t border-border">
+      <legend className="text-sm font-medium text-text-primary mb-2">
+        {t('settings.ai.formDefaults.article_types')}
+      </legend>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+        {ARTICLE_TYPES.map((type) => (
+          <ArticleTypeCheckbox key={type} type={type} />
+        ))}
+      </div>
+    </fieldset>
+  );
+};
+
 const FormDefaultsCard: React.FC = () => {
   const { tempSettings, setTempSettings, errors, t } = useSettingsView();
-
-  const handleArticleTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { value, checked } = e.target;
-    setTempSettings((prev) => {
-      const currentTypes = prev.defaults.defaultArticleTypes;
-      const newTypes = checked
-        ? [...currentTypes, value]
-        : currentTypes.filter((type) => type !== value);
-      return { ...prev, defaults: { ...prev.defaults, defaultArticleTypes: newTypes } };
-    });
-  };
-
-  const inputClass = (hasError: boolean) =>
-    `block w-full bg-input-bg border rounded-md shadow-sm py-2 px-3 focus:outline-none focus-visible:ring-2 sm:text-sm ${hasError ? 'border-red-500 focus-visible:ring-red-500' : 'border-border focus-visible:ring-brand-accent'}`;
-
   return (
     <SettingCard
       title={t('settings.ai.formDefaults.title')}
       description={t('settings.ai.formDefaults.desc')}
     >
       <div className="space-y-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          <div>
-            <label
-              htmlFor="def-max-scan"
-              className="block text-sm font-medium text-text-primary mb-1"
-            >
-              {t('settings.ai.formDefaults.max_scan')}
-            </label>
-            <input
-              type="number"
-              id="def-max-scan"
-              min="10"
-              max="200"
-              value={tempSettings.defaults.maxArticlesToScan}
-              onChange={(e) =>
-                setTempSettings((s) => ({
-                  ...s,
-                  defaults: { ...s.defaults, maxArticlesToScan: parseInt(e.target.value, 10) },
-                }))
-              }
-              className={inputClass(Boolean(errors.formDefaults))}
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="def-top-synth"
-              className="block text-sm font-medium text-text-primary mb-1"
-            >
-              {t('settings.ai.formDefaults.top_synth')}
-            </label>
-            <input
-              type="number"
-              id="def-top-synth"
-              min="1"
-              max="20"
-              value={tempSettings.defaults.topNToSynthesize}
-              onChange={(e) =>
-                setTempSettings((s) => ({
-                  ...s,
-                  defaults: { ...s.defaults, topNToSynthesize: parseInt(e.target.value, 10) },
-                }))
-              }
-              className={inputClass(Boolean(errors.formDefaults))}
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="def-date-range"
-              className="block text-sm font-medium text-text-primary mb-1"
-            >
-              {t('settings.ai.formDefaults.date')}
-            </label>
-            <select
-              id="def-date-range"
-              value={tempSettings.defaults.defaultDateRange}
-              onChange={(e) =>
-                setTempSettings((s) => ({
-                  ...s,
-                  defaults: { ...s.defaults, defaultDateRange: e.target.value },
-                }))
-              }
-              className="block w-full bg-input-bg border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent"
-            >
-              <option value="any">{t('inputForm.date.any')}</option>
-              <option value="1">{t('inputForm.date.year1')}</option>
-              <option value="5">{t('inputForm.date.year5')}</option>
-              <option value="10">{t('inputForm.date.year10')}</option>
-            </select>
-          </div>
-          <div>
-            <label
-              htmlFor="def-synthesis-focus"
-              className="block text-sm font-medium text-text-primary mb-1"
-            >
-              {t('settings.ai.formDefaults.focus')}
-            </label>
-            <select
-              id="def-synthesis-focus"
-              value={tempSettings.defaults.defaultSynthesisFocus}
-              onChange={(e) =>
-                setTempSettings((s) => ({
-                  ...s,
-                  defaults: { ...s.defaults, defaultSynthesisFocus: e.target.value },
-                }))
-              }
-              className="block w-full bg-input-bg border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent"
-            >
-              <option value="overview">{t('orchestrator.focus.overview')}</option>
-              <option value="clinical">{t('orchestrator.focus.clinical')}</option>
-              <option value="future">{t('orchestrator.focus.future')}</option>
-              <option value="gaps">{t('orchestrator.focus.gaps')}</option>
-            </select>
-          </div>
-        </div>
+        <DefaultScanFields />
         {errors.formDefaults && <p className="text-xs text-red-400 mt-2">{errors.formDefaults}</p>}
-        <fieldset className="pt-6 border-t border-border">
-          <legend className="text-sm font-medium text-text-primary mb-2">
-            {t('settings.ai.formDefaults.article_types')}
-          </legend>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-            {ARTICLE_TYPES.map((type) => (
-              <div key={type} className="relative flex items-start">
-                <div className="flex h-5 items-center">
-                  <input
-                    id={`def-${type}`}
-                    value={type}
-                    type="checkbox"
-                    checked={tempSettings.defaults.defaultArticleTypes.includes(type)}
-                    onChange={handleArticleTypeChange}
-                    className="h-4 w-4 rounded border-border bg-input-bg text-brand-accent focus:ring-brand-accent"
-                  />
-                </div>
-                <div className="ml-3 text-sm">
-                  <label htmlFor={`def-${type}`} className="font-medium text-text-primary">
-                    {t(ARTICLE_TYPE_LABEL_KEYS[type])}
-                  </label>
-                </div>
-              </div>
-            ))}
-          </div>
-        </fieldset>
+        <DefaultArticleTypes />
         <div className="pt-6 border-t border-border">
           <Toggle
             checked={tempSettings.defaults.autoSaveReports}

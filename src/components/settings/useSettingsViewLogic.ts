@@ -65,7 +65,11 @@ export const useSettingsViewLogic = (
     | { type: 'deletePreset'; data: Preset };
   const [modalState, setModalState] = useState<ModalState | null>(null);
   const [pruneScore, setPruneScore] = useState(20);
-  const [storageUsage, setStorageUsage] = useState({ totalMB: '0.00', percentage: '0' });
+  const [storageUsage, setStorageUsage] = useState({
+    totalMB: '0.00',
+    quotaMB: '5.00',
+    percentage: '0',
+  });
   const [isProcessing, setIsProcessing] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -86,18 +90,21 @@ export const useSettingsViewLogic = (
         const { usage, quota } = await navigator.storage.estimate();
         if (usage && quota && isMounted.current) {
           const totalMB = (usage / (1024 * 1024)).toFixed(2);
+          const quotaMB = (quota / (1024 * 1024)).toFixed(2);
           const percentage = Math.min(100, (usage / quota) * 100).toFixed(1);
-          setStorageUsage({ totalMB, percentage });
+          setStorageUsage({ totalMB, quotaMB, percentage });
           return;
         }
       }
       // Fallback for browsers without StorageManager API
       const kbSize = (await db.knowledgeBaseEntries.count()) * 2048; // Estimate 2KB per entry
       const totalBytes = kbSize;
+      const assumedQuotaBytes = 5 * 1024 * 1024;
       const totalMB = (totalBytes / (1024 * 1024)).toFixed(2);
-      const percentage = Math.min(100, (totalBytes / (5 * 1024 * 1024)) * 100).toFixed(1); // Assume 5MB limit
+      const quotaMB = (assumedQuotaBytes / (1024 * 1024)).toFixed(2);
+      const percentage = Math.min(100, (totalBytes / assumedQuotaBytes) * 100).toFixed(1);
       if (isMounted.current) {
-        setStorageUsage({ totalMB, percentage });
+        setStorageUsage({ totalMB, quotaMB, percentage });
       }
     };
     calculateUsage();
@@ -233,7 +240,8 @@ export const useSettingsViewLogic = (
               type: 'error',
             });
           }
-        } catch {
+        } catch (error) {
+          console.error('Knowledge Base import failed:', error);
           setNotification({
             id: Date.now(),
             message: t('settings.toast.import_failed'),
@@ -304,7 +312,8 @@ export const useSettingsViewLogic = (
             importedSettings.ai.model = 'gemini-2.5-flash';
           }
           handleConfirmImportSettings(importedSettings);
-        } catch {
+        } catch (error) {
+          console.error('Settings import failed:', error);
           setNotification({
             id: Date.now(),
             message: t('settings.toast.import_failed'),
