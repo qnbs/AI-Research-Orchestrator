@@ -54,10 +54,10 @@ const KnowledgeBaseViewLayout: React.FC = () => {
       <div className="h-[calc(100vh-200px)]">
         <EmptyState
           icon={<DatabaseIcon className="h-24 w-24" />}
-          title="Your Knowledge Base is Empty"
-          message="Save reports from the Orchestrator tab to start building your personal research library."
+          title={t('kb.empty.title')}
+          message={t('kb.empty.message')}
           action={{
-            text: 'Start Research',
+            text: t('kb.empty.action'),
             onClick: () => onViewChange('orchestrator'),
             icon: <DocumentPlusIcon className="h-5 w-5" />,
           }}
@@ -88,14 +88,9 @@ const KnowledgeBaseViewLayout: React.FC = () => {
         <ConfirmationModal
           onConfirm={handleDelete}
           onCancel={() => setShowDeleteModal(false)}
-          title="Delete Articles?"
-          message={
-            <>
-              Are you sure you want to permanently delete <strong>{selectedPmids.length}</strong>{' '}
-              article(s) from your knowledge base?
-            </>
-          }
-          confirmText="Yes, Delete"
+          title={t('kb.delete.title')}
+          message={t('kb.delete.message', { count: selectedPmids.length })}
+          confirmText={t('kb.delete.confirm')}
         />
       )}
       {showExportModal && (

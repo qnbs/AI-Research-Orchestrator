@@ -27,6 +27,9 @@
 - **Authors / Journals / Agent Debugger / Collections i18n (this branch):** hub chrome + debugger panel/toggle/rows + Collections view EN+DE; `authorTranslations.ts` / `debuggerTranslations.ts` extracted; `AuthorProfileView` split under 700-line cap; ratchet extended.
   - **Why:** Next residual English-only surfaces after Settings.
   - **Impact:** Authors/Journals hubs, Agent Debugger chrome, and Collections fully localized; protocol agent IDs / journal category keys stay English in state.
+- **KB / Article detail / Dashboard / Scientometric i18n (follow-up branch):** EN+DE via `kbChromeTranslations.ts` + `dashboardTranslations.ts`; Dashboard chart primitives extracted; ratchet covers KB + dashboard surfaces.
+  - **Why:** Continue residual English-only chrome after hubs/debugger/collections.
+  - **Impact:** Knowledge Base filters/list/delete, ArticleDetailPanel discovery tools, Dashboard charts, and ScientometricHub tabs localized.
 
 ## Still open
 

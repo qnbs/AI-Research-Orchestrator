@@ -15,16 +15,20 @@ import { DocumentIcon } from '../icons/DocumentIcon';
 import { RelevanceScoreDisplay } from '../RelevanceScoreDisplay';
 import { useSettings } from '../../contexts/SettingsContext';
 import { AggregatedArticle } from '../../types';
+import { useTranslation } from '../../hooks/useTranslation';
 
-export const PdfExportingOverlay: React.FC = () => (
-  <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center backdrop-blur-sm animate-fadeIn">
-    <div className="flex flex-col items-center text-center p-8 bg-surface rounded-lg border border-border shadow-2xl">
-      <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-brand-accent mb-6"></div>
-      <h2 className="text-xl font-semibold text-brand-accent mb-2">Generating PDF...</h2>
-      <p className="text-text-secondary">This may take a moment.</p>
+export const PdfExportingOverlay: React.FC = () => {
+  const { t } = useTranslation();
+  return (
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center backdrop-blur-sm animate-fadeIn">
+      <div className="flex flex-col items-center text-center p-8 bg-surface rounded-lg border border-border shadow-2xl">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-brand-accent mb-6"></div>
+        <h2 className="text-xl font-semibold text-brand-accent mb-2">{t('kb.pdf.generating')}</h2>
+        <p className="text-text-secondary">{t('kb.pdf.wait')}</p>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const MultiSelectFilter: React.FC<{
   title: string;
@@ -32,6 +36,7 @@ const MultiSelectFilter: React.FC<{
   selected: string[];
   onChange: (selected: string[]) => void;
 }> = ({ title, options, selected, onChange }) => {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [filterText, setFilterText] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -89,7 +94,7 @@ const MultiSelectFilter: React.FC<{
               ref={searchInputRef}
               id="filter-search"
               type="text"
-              placeholder="Search..."
+              placeholder={t('kb.filter.search')}
               value={filterText}
               onChange={(e) => setFilterText(e.target.value)}
               className="w-full px-2 py-1 bg-input-bg border border-border rounded-md text-sm mb-1"
@@ -119,40 +124,41 @@ const MultiSelectFilter: React.FC<{
 };
 
 export const SidebarFilters: React.FC = () => {
+  const { t } = useTranslation();
   const { filter, onFilterChange, topics, tags, articleTypes, journals } = useKnowledgeBaseView();
   return (
     <aside className="w-64 flex-shrink-0 space-y-4 sticky top-24 self-start hidden md:block">
-      <h3 className="text-lg font-semibold text-text-primary">Filters</h3>
+      <h3 className="text-lg font-semibold text-text-primary">{t('kb.filters')}</h3>
       <div className="relative">
         <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-secondary" />
         <input
           type="text"
-          placeholder="Search articles..."
+          placeholder={t('kb.search_placeholder')}
           value={filter.searchTerm}
           onChange={(e) => onFilterChange({ searchTerm: e.target.value })}
           className="w-full bg-input-bg border border-border rounded-md py-1.5 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-accent"
         />
       </div>
       <MultiSelectFilter
-        title="Topics"
+        title={t('kb.filter.topics')}
         options={topics}
         selected={filter.selectedTopics}
         onChange={(s) => onFilterChange({ selectedTopics: s })}
       />
       <MultiSelectFilter
-        title="Tags"
+        title={t('kb.filter.tags')}
         options={tags}
         selected={filter.selectedTags}
         onChange={(s) => onFilterChange({ selectedTags: s })}
       />
       <MultiSelectFilter
-        title="Article Types"
+        title={t('kb.filter.article_types')}
         options={articleTypes}
         selected={filter.selectedArticleTypes}
         onChange={(s) => onFilterChange({ selectedArticleTypes: s })}
       />
       <MultiSelectFilter
-        title="Journals"
+        title={t('kb.filter.journals')}
         options={journals}
         selected={filter.selectedJournals}
         onChange={(s) => onFilterChange({ selectedJournals: s })}
@@ -173,7 +179,7 @@ export const SidebarFilters: React.FC = () => {
           </div>
         </div>
         <span className="ml-3 text-sm font-medium text-text-primary group-hover:text-brand-accent transition-colors">
-          Open Access Only
+          {t('kb.filter.open_access_only')}
         </span>
       </label>
     </aside>
@@ -181,12 +187,13 @@ export const SidebarFilters: React.FC = () => {
 };
 
 export const HeaderControls: React.FC = () => {
+  const { t } = useTranslation();
   const { filteredArticles, sortOrder, setSortOrder, viewMode, setViewMode } =
     useKnowledgeBaseView();
   return (
     <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
       <h2 className="text-2xl font-bold brand-gradient-text">
-        {filteredArticles.length} Articles Found
+        {t('kb.articles_found', { count: filteredArticles.length })}
       </h2>
       <div className="flex items-center gap-2">
         <select
@@ -194,18 +201,24 @@ export const HeaderControls: React.FC = () => {
           onChange={(e) => setSortOrder(e.target.value as 'relevance' | 'newest')}
           className="bg-input-bg border border-border rounded-md p-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-accent"
         >
-          <option value="relevance">Sort by Relevance</option>
-          <option value="newest">Sort by Newest</option>
+          <option value="relevance">{t('kb.sort.relevance')}</option>
+          <option value="newest">{t('kb.sort.newest')}</option>
         </select>
         <div className="flex items-center bg-input-bg border border-border rounded-md p-1">
           <button
+            type="button"
             onClick={() => setViewMode('grid')}
+            aria-label={t('kb.view.grid')}
+            aria-pressed={viewMode === 'grid'}
             className={`p-1 rounded ${viewMode === 'grid' ? 'bg-brand-accent text-white' : 'hover:bg-surface'}`}
           >
             <GridViewIcon className="h-5 w-5" />
           </button>
           <button
+            type="button"
             onClick={() => setViewMode('list')}
+            aria-label={t('kb.view.list')}
+            aria-pressed={viewMode === 'list'}
             className={`p-1 rounded ${viewMode === 'list' ? 'bg-brand-accent text-white' : 'hover:bg-surface'}`}
           >
             <ListViewIcon className="h-5 w-5" />
@@ -217,6 +230,7 @@ export const HeaderControls: React.FC = () => {
 };
 
 export const BulkActionsToolbar: React.FC = () => {
+  const { t } = useTranslation();
   const {
     selectedPmids,
     setSelectedPmids,
@@ -233,40 +247,53 @@ export const BulkActionsToolbar: React.FC = () => {
     >
       <div className="flex items-center gap-4">
         <button
+          type="button"
           onClick={() => setSelectedPmids([])}
+          aria-label={t('kb.clear_selection')}
           className="p-1.5 rounded-full hover:bg-surface-hover"
         >
           <XCircleIcon className="h-6 w-6 text-text-secondary" />
         </button>
-        <span className="font-semibold text-text-primary">{selectedPmids.length} selected</span>
+        <span className="font-semibold text-text-primary">
+          {t('kb.selected', { count: selectedPmids.length })}
+        </span>
         <button
+          type="button"
           onClick={handleSelectAll}
           className="text-sm font-semibold text-brand-accent hover:underline"
         >
-          Select All on Page
+          {t('kb.select_all_page')}
         </button>
       </div>
       <div className="flex items-center gap-2">
         <button
+          type="button"
           onClick={() => setShowDeleteModal(true)}
+          aria-label={t('kb.delete_selected')}
           className="p-2 rounded-md bg-red-500/10 text-red-400 hover:bg-red-500/20"
         >
           <TrashIcon className="h-5 w-5" />
         </button>
         <button
+          type="button"
           onClick={() => setShowExportModal('pdf')}
+          aria-label={t('kb.export_pdf')}
           className="p-2 rounded-md bg-surface hover:bg-surface-hover"
         >
           <PdfIcon className="h-5 w-5" />
         </button>
         <button
+          type="button"
           onClick={() => setShowExportModal('csv')}
+          aria-label={t('kb.export_csv')}
           className="p-2 rounded-md bg-surface hover:bg-surface-hover"
         >
           <CsvIcon className="h-5 w-5" />
         </button>
         <button
+          type="button"
           onClick={() => setShowExportModal('bib')}
+          aria-label={t('kb.export_ris')}
           className="p-2 rounded-md bg-surface hover:bg-surface-hover"
         >
           <CitationIcon className="h-5 w-5" />
@@ -282,6 +309,7 @@ const KBArticleCard: React.FC<{
   onSelect: (pmid: string) => void;
   onView: (article: AggregatedArticle) => void;
 }> = React.memo(function KBArticleCard({ article, isSelected, onSelect, onView }) {
+  const { t } = useTranslation();
   const { settings } = useSettings();
   const densityClasses =
     settings.appearance.density === 'compact'
@@ -310,7 +338,7 @@ const KBArticleCard: React.FC<{
               checked={isSelected}
               onChange={() => onSelect(article.pmid)}
               className="h-5 w-5 rounded border-border bg-surface text-brand-accent focus:ring-brand-accent cursor-pointer"
-              aria-label={`Select article: ${article.title}`}
+              aria-label={t('kb.select_article', { title: article.title })}
             />
           </div>
         </div>
@@ -350,6 +378,7 @@ const KBArticleListItem: React.FC<{
   onSelect: (pmid: string) => void;
   onView: (article: AggregatedArticle) => void;
 }> = React.memo(function KBArticleListItem({ article, isSelected, onSelect, onView }) {
+  const { t } = useTranslation();
   return (
     <div
       className={`flex items-start gap-4 p-4 border-b border-border last:border-b-0 group transition-colors ${isSelected ? 'bg-brand-accent/5' : 'hover:bg-surface-hover'}`}
@@ -359,7 +388,7 @@ const KBArticleListItem: React.FC<{
         checked={isSelected}
         onChange={() => onSelect(article.pmid)}
         className="h-5 w-5 rounded border-border bg-surface text-brand-accent focus:ring-brand-accent mt-1 cursor-pointer"
-        aria-label={`Select article: ${article.title}`}
+        aria-label={t('kb.select_article', { title: article.title })}
       />
       <div className="flex-1">
         <button
@@ -404,6 +433,7 @@ const KBArticleListItem: React.FC<{
 const VIRTUAL_THRESHOLD = 30;
 
 export const ArticleList: React.FC = () => {
+  const { t } = useTranslation();
   const {
     viewMode,
     filteredArticles,
@@ -448,14 +478,14 @@ export const ArticleList: React.FC = () => {
     return (
       <>
         <p className="text-xs text-text-secondary mb-2 text-right">
-          {filteredArticles.length} articles · virtualized scroll
+          {t('kb.virtualized', { count: filteredArticles.length })}
         </p>
         <div
           ref={listScrollRef}
           className="bg-surface border border-border rounded-lg overflow-y-auto"
           style={{ maxHeight: 'calc(100vh - 280px)', minHeight: 240 }}
           role="list"
-          aria-label="Article list"
+          aria-label={t('kb.article_list')}
         >
           {/* Total height spacer */}
           <div style={{ height: virtualizer.getTotalSize(), width: '100%', position: 'relative' }}>
@@ -503,6 +533,7 @@ export const ArticleList: React.FC = () => {
 };
 
 export const Pagination: React.FC = () => {
+  const { t } = useTranslation();
   const { totalPages, currentPage, setCurrentPage } = useKnowledgeBaseView();
   if (totalPages <= 1) return null;
 
@@ -513,18 +544,16 @@ export const Pagination: React.FC = () => {
           onClick={() => setCurrentPage((p) => p - 1)}
           className="px-3 py-1 bg-surface border border-border rounded-md hover:bg-surface-hover"
         >
-          Previous
+          {t('kb.prev')}
         </button>
       )}
-      <span>
-        Page {currentPage} of {totalPages}
-      </span>
+      <span>{t('kb.page', { current: currentPage, total: totalPages })}</span>
       {currentPage < totalPages && (
         <button
           onClick={() => setCurrentPage((p) => p + 1)}
           className="px-3 py-1 bg-surface border border-border rounded-md hover:bg-surface-hover"
         >
-          Next
+          {t('kb.next')}
         </button>
       )}
     </nav>

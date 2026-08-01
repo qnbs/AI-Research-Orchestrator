@@ -10,6 +10,8 @@ import { settingsTranslations } from './settingsTranslations';
 import { debuggerTranslations } from './debuggerTranslations';
 import { authorTranslations } from './authorTranslations';
 import { collectionTranslations } from './collectionTranslations';
+import { kbChromeTranslations } from './kbChromeTranslations';
+import { dashboardTranslations } from './dashboardTranslations';
 
 export const translations = {
   en: {
@@ -84,12 +86,6 @@ export const translations = {
     'arxiv.source': 'arXiv preprint',
     'arxiv.categories': 'Categories',
     'arxiv.pdf': 'View PDF',
-    // ── Scientometrics ──
-    'scientometrics.title': 'Scientometric Analysis',
-    'scientometrics.authors': 'Author Network',
-    'scientometrics.timeline': 'Publication Timeline',
-    'scientometrics.journals': 'Journal Distribution',
-    'scientometrics.keywords': 'Keyword Cloud',
     // ── Checkpoints / resume ──
     'checkpoint.resume.title': 'Interrupted research',
     'checkpoint.resume.desc':
@@ -255,6 +251,8 @@ export const translations = {
     ...debuggerTranslations.en,
     ...authorTranslations.en,
     ...collectionTranslations.en,
+    ...kbChromeTranslations.en,
+    ...dashboardTranslations.en,
     'errors.code.noApiKey': 'Please configure your API key in Settings.',
     'errors.code.quota': 'AI provider quota exhausted. Try again later or check your usage.',
     'errors.code.rateLimit': 'AI provider rate limit reached. Wait briefly and try again.',
@@ -376,12 +374,6 @@ export const translations = {
     'arxiv.source': 'arXiv-Preprint',
     'arxiv.categories': 'Kategorien',
     'arxiv.pdf': 'PDF anzeigen',
-    // ── Scientometrics ──
-    'scientometrics.title': 'Scientometrische Analyse',
-    'scientometrics.authors': 'Autoren-Netzwerk',
-    'scientometrics.timeline': 'Publikations-Timeline',
-    'scientometrics.journals': 'Journal-Verteilung',
-    'scientometrics.keywords': 'Keyword-Cloud',
     // ── Checkpoints / resume ──
     'checkpoint.resume.title': 'Unterbrochene Recherche',
     'checkpoint.resume.desc':
@@ -554,6 +546,8 @@ export const translations = {
     ...debuggerTranslations.de,
     ...authorTranslations.de,
     ...collectionTranslations.de,
+    ...kbChromeTranslations.de,
+    ...dashboardTranslations.de,
     'errors.code.noApiKey': 'Bitte konfigurieren Sie Ihren API-Schlüssel in den Einstellungen.',
     'errors.code.quota':
       'KI-Anbieter-Kontingent erschöpft. Versuchen Sie es später erneut oder überprüfen Sie Ihre Nutzung.',
