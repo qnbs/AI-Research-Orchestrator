@@ -238,7 +238,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setIsCommandPaletteOpen(true)}
-                className="group flex items-center gap-3 px-4 py-2 text-sm text-text-secondary bg-input-bg border border-border rounded-lg hover:border-brand-accent/50 hover:text-text-primary hover:shadow-glow transition-all duration-300 backdrop-blur-sm"
+                className="group flex items-center gap-3 px-4 py-2 text-sm text-text-secondary bg-input-bg border border-border rounded-lg hover:border-brand-accent/50 hover:text-text-primary hover:shadow-glow transition-all duration-300 backdrop-blur-sm focus-ring-aa touch-target-aa"
                 aria-label="Open command palette"
               >
                 <SearchIcon className="h-4 w-4 group-hover:text-brand-accent transition-colors" />
@@ -249,7 +249,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
               </button>
               <button
                 onClick={onQuickAdd}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-brand-text-on-accent bg-gradient-to-r from-brand-primary to-brand-accent rounded-lg shadow-md hover:shadow-glow hover:opacity-95 transition-all duration-300 transform hover:-translate-y-0.5 active:scale-95 focus-ring-aa"
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-brand-text-on-accent bg-gradient-to-r from-brand-primary to-brand-accent rounded-lg shadow-md hover:shadow-glow hover:opacity-95 transition-all duration-300 transform hover:-translate-y-0.5 active:scale-95 focus-ring-aa touch-target-aa"
                 aria-label="Quick Add Article"
               >
                 <DocumentPlusIcon className="h-4 w-4" />{' '}
@@ -259,7 +259,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
 
               <button
                 onClick={toggleLanguage}
-                className="p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-colors font-bold text-xs flex items-center gap-1 border border-transparent hover:border-border focus-ring-aa"
+                className="p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-colors font-bold text-xs flex items-center gap-1 border border-transparent hover:border-border focus-ring-aa touch-target-aa"
                 aria-label="Toggle Language"
               >
                 <GlobeAltIcon className="h-4 w-4" />
@@ -268,7 +268,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
 
               <button
                 onClick={() => onViewChange('settings')}
-                className={`p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-colors relative focus-ring-aa ${currentView === 'settings' ? 'bg-surface-hover text-text-primary' : ''}`}
+                className={`p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-colors relative focus-ring-aa touch-target-aa ${currentView === 'settings' ? 'bg-surface-hover text-text-primary' : ''}`}
                 aria-label="Settings"
               >
                 <CogIcon className={`h-5 w-5 ${isSettingsDirty ? 'text-accent-amber' : ''}`} />
@@ -278,14 +278,14 @@ const HeaderComponent: React.FC<HeaderProps> = ({
               </button>
               <button
                 onClick={() => onViewChange('help')}
-                className={`p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-colors focus-ring-aa ${currentView === 'help' ? 'bg-surface-hover text-text-primary' : ''}`}
+                className={`p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-colors focus-ring-aa touch-target-aa ${currentView === 'help' ? 'bg-surface-hover text-text-primary' : ''}`}
                 aria-label="Help"
               >
                 <QuestionMarkCircleIcon className="h-5 w-5" />
               </button>
               <button
                 onClick={toggleTheme}
-                className="p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-colors focus-ring-aa"
+                className="p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-colors focus-ring-aa touch-target-aa"
                 aria-label={themeLabel}
               >
                 {themeIcon}
@@ -299,7 +299,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
         <div className="md:hidden flex items-center justify-between h-16">
           <button
             onClick={() => onViewChange('home')}
-            className="flex items-center gap-3"
+            className="flex items-center gap-3 focus-ring-aa rounded-md touch-target-aa"
             aria-label="Go to Home"
           >
             <AppLogo idPrefix="mobile-header-logo" />
@@ -310,20 +310,20 @@ const HeaderComponent: React.FC<HeaderProps> = ({
           <div className="flex items-center gap-1">
             <button
               onClick={toggleLanguage}
-              className="p-2.5 text-text-secondary font-bold text-xs"
+              className="p-2.5 text-text-secondary font-bold text-xs focus-ring-aa touch-target-aa rounded-full"
             >
               {lang.toUpperCase()}
             </button>
             <button
               onClick={() => setIsCommandPaletteOpen(true)}
-              className="p-2.5 text-text-secondary hover:text-text-primary rounded-full hover:bg-surface-hover"
+              className="p-2.5 text-text-secondary hover:text-text-primary rounded-full hover:bg-surface-hover focus-ring-aa touch-target-aa"
               aria-label="Search"
             >
               <SearchIcon className="h-5 w-5" />
             </button>
             <button
               onClick={onQuickAdd}
-              className="p-2.5 text-text-secondary hover:text-text-primary rounded-full hover:bg-surface-hover"
+              className="p-2.5 text-text-secondary hover:text-text-primary rounded-full hover:bg-surface-hover focus-ring-aa touch-target-aa"
               aria-label="Quick Add"
             >
               <DocumentPlusIcon className="h-5 w-5" />
@@ -331,7 +331,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
             <div ref={mobileMenuRef} className="relative">
               <button
                 onClick={() => setIsMobileMenuOpen((prev) => !prev)}
-                className="p-2.5 text-text-secondary hover:text-text-primary rounded-full hover:bg-surface-hover"
+                className="p-2.5 text-text-secondary hover:text-text-primary rounded-full hover:bg-surface-hover focus-ring-aa touch-target-aa"
                 aria-label="More options"
               >
                 <EllipsisHorizontalIcon className="h-6 w-6" />

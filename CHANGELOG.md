@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **WS-E focus visibility:** `.focus-ring-aa` utility (`src/index.css`), ESLint rule `local/no-bare-outline-none`, and Playwright keyboard-walk smoke (`keyboard-focus.spec.ts`).
+- **WS-F skip link + touch targets:** `SkipToContentLink` (hash-router-safe focus to `#main-content`), `.touch-target-aa` (44×44) on header/chrome controls and bottom nav, Playwright `skip-to-content.spec.ts`.
 
 ### Changed
 
@@ -26,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Known gaps (tracked, not yet closed)
 
 - Broader i18n migration (#69) — HelpView Wave 8 done; remaining chrome strings outside the ratchet list.
-- UIUX hardening WS-F onward (see `.notes/meeting_notes.md`).
+- UIUX hardening WS-G onward (see `.notes/meeting_notes.md`).
 
 ## [0.4.0] - 2026-08-01
 

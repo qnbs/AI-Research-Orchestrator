@@ -702,6 +702,34 @@
     -webkit-backdrop-filter: blur(16px);
   }
 
+  /* WS-F: skip link — visually hidden until keyboard focus */
+  .skip-to-content {
+    position: absolute;
+    left: 0.75rem;
+    top: 0.75rem;
+    z-index: 100;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-md);
+    background: var(--color-brand-accent);
+    color: var(--color-brand-text-on-accent);
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-decoration: none;
+    transform: translateY(-160%);
+    transition: transform 0.15s ease;
+  }
+
+  .skip-to-content:focus,
+  .skip-to-content:focus-visible {
+    transform: translateY(0);
+  }
+
+  /* WS-F: WCAG 2.5.5 / mobile — minimum 44×44 CSS px touch target */
+  .touch-target-aa {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
   /* Screen-reader only */
   .sr-only {
     position: absolute;
