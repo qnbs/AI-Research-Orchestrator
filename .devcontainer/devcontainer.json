@@ -134,8 +134,7 @@
           "*.ts": "${capture}.test.ts, ${capture}.spec.ts",
           "*.tsx": "${capture}.test.tsx, ${capture}.spec.tsx",
           "package.json": "pnpm-lock.yaml, .nvmrc",
-          "vite.config.*": "vitest.config.*, playwright.config.*",
-          "src/index.css": "postcss.config.*"
+          "vite.config.*": "vitest.config.*, playwright.config.*"
         }
       }
     }

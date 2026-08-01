@@ -5,9 +5,11 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ============================================================
-   TAILWIND v4 THEME — registers every token formerly in
-   tailwind.config.js so custom utilities (bg-surface, text-text-primary,
-   border-border, animate-fadeIn, …) actually emit CSS.
+   TAILWIND v4 THEME — registers all used/referenced tokens from
+   the former tailwind.config.js so custom utilities (bg-surface,
+   text-text-primary, border-border, animate-fadeIn, …) emit CSS.
+   Intentionally omits unused legacy entries (e.g. matrixRain had
+   no keyframes and zero TSX usage).
 
    `reference inline` for pass-through tokens: do NOT re-emit --color-* /
    --shadow-* / --font-* / --radius-* on :root (those are already defined

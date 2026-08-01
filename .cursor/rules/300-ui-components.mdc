@@ -13,4 +13,12 @@ alwaysApply: false
 - **i18n:** Sichtbare Strings nur über `t()` / `translations.ts`, EN+DE-Paarität.
 - **Motion:** Framer Motion sparsam; Layout-Thrashing vermeiden.
 
-Siehe `@src/App.tsx`, `@src/i18n/translations.ts`, `@src/components/ui/`.
+<example>
+Use `bg-surface text-text-primary border-border` backed by `@theme` tokens in `src/index.css`; render user-facing copy via `t()`; keep focus rings and keyboard access on interactive controls.
+</example>
+
+<example type="invalid">
+Add reusable tokens to a revived `tailwind.config.js`, hardcode repeated hex colors in a component, or ship a new button label as a raw English string without an EN+DE `translations.ts` key.
+</example>
+
+Siehe `@src/App.tsx`, `@src/i18n/translations.ts`, `@src/components/ui/`, `@src/index.css`.
