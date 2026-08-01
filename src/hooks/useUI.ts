@@ -8,11 +8,11 @@ import {
   setIsSettingsDirty,
   setPendingNavigation,
   setIsCommandPaletteOpen,
-  setIsPwaInstalled,
 } from '../store/slices/uiSlice';
 import {
-  getInstallPromptSnapshot,
+  getInstallPromptStateSnapshot,
   setInstallPromptEvent as setInstallPromptGlobal,
+  setIsPwaInstalled as setIsPwaInstalledGlobal,
   subscribeInstallPrompt,
 } from '../lib/installPromptStore';
 
@@ -41,19 +41,13 @@ export interface UseUIValue {
 
 export function useUI(): UseUIValue {
   const dispatch = useAppDispatch();
-  const {
-    currentView,
-    notification,
-    isSettingsDirty,
-    pendingNavigation,
-    isCommandPaletteOpen,
-    isPwaInstalled,
-  } = useAppSelector((state) => state.ui);
+  const { currentView, notification, isSettingsDirty, pendingNavigation, isCommandPaletteOpen } =
+    useAppSelector((state) => state.ui);
 
-  const installPromptEvent = useSyncExternalStore(
+  const installPromptState = useSyncExternalStore(
     subscribeInstallPrompt,
-    getInstallPromptSnapshot,
-    getInstallPromptSnapshot,
+    getInstallPromptStateSnapshot,
+    getInstallPromptStateSnapshot,
   );
 
   return useMemo(
@@ -71,10 +65,10 @@ export function useUI(): UseUIValue {
         const val = typeof isOpen === 'function' ? isOpen(isCommandPaletteOpen) : isOpen;
         dispatch(setIsCommandPaletteOpen(val));
       },
-      installPromptEvent,
+      installPromptEvent: installPromptState.event,
       setInstallPromptEvent: setInstallPromptGlobal,
-      isPwaInstalled,
-      setIsPwaInstalled: (val: boolean) => dispatch(setIsPwaInstalled(val)),
+      isPwaInstalled: installPromptState.isPwaInstalled,
+      setIsPwaInstalled: setIsPwaInstalledGlobal,
     }),
     [
       currentView,
@@ -82,8 +76,7 @@ export function useUI(): UseUIValue {
       isSettingsDirty,
       pendingNavigation,
       isCommandPaletteOpen,
-      isPwaInstalled,
-      installPromptEvent,
+      installPromptState,
       dispatch,
     ],
   );
