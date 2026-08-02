@@ -1,24 +1,29 @@
 # DeepSource setup notes
 
-## JavaScript analyzer
+## JavaScript analyzer — **disabled** (2026-08-02)
 
-The JavaScript analyzer is **enabled** in `.deepsource.toml` with excludes for:
+The JavaScript analyzer is **disabled** in `.deepsource.toml`. See **`docs/deepsource-javascript-ci.md`** for the root-cause analysis (ESM false positives, `scripts/lib` parse errors, quality-gate churn).
 
-- `scripts/**` — Node maintenance `.mjs` (parse as script, not ESM modules)
-- `public/**` — service-worker bundles (Workbox global false positives)
-
-If the **DeepSource: JavaScript** GitHub check stays red on excluded paths, verify excludes in the dashboard match `.deepsource.toml` before disabling the analyzer.
-
-## Authoritative JS/TS gates
-
-This repository enforces quality via:
+**Authoritative JS/TS gates** in this repository:
 
 - `pnpm run typecheck`
 - `pnpm run lint` (ESLint 9, zero warnings)
 - `pnpm run test:coverage` (80% logic-layer floors)
 - Playwright E2E (CI)
 
-DeepSource JavaScript is **advisory only** and has produced persistent false positives on TypeScript ESM exports and Node `.mjs` maintenance scripts.
+Docker and Shell analyzers remain **enabled** (advisory GitHub checks).
+
+## Re-enabling JavaScript (maintainers)
+
+1. Set `enabled = true` under `[[analyzers]] name = "javascript"` in `.deepsource.toml`.
+2. Set `deepsourceJavaScriptEnabled: true` in `docs/project-facts.json`.
+3. Adjust DeepSource dashboard quality gates (limit to critical/security) or add repository-wide ignore rules.
+4. Prove one full PR stays green before treating the check as merge-blocking.
+
+## Excludes (when JS is re-enabled)
+
+- `scripts/**` — Node maintenance `.mjs` (parse as script, not ESM modules)
+- `public/**` — service-worker bundles (Workbox global false positives)
 
 ## Autofix PRs
 

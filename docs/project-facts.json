@@ -33,7 +33,7 @@
   },
   "staticAnalysis": {
     "eslintBlocking": true,
-    "deepsourceJavaScriptEnabled": true,
+    "deepsourceJavaScriptEnabled": false,
     "deepsourceJavaScriptAdvisory": true
   },
   "adr": {

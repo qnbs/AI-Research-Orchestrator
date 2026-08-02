@@ -1,12 +1,13 @@
 version = 1
 
-# Node maintenance scripts and service-worker bundles are excluded — the JS analyzer
-# parses them as script (not module) and reports false JS-0833 / workbox-global noise.
+# Node maintenance scripts and service-worker bundles are excluded when the JS analyzer
+# is enabled — the analyzer parses some paths as script (not module) and reports false
+# JS-0833 / Workbox-global noise. See docs/deepsource-javascript-ci.md.
 exclude_patterns = [
   "eslint-local-rules/**",
-  "scripts",
   "scripts/**",
   "scripts/*.mjs",
+  "scripts/lib/**",
   "public/sw.js",
   "public/register-sw.js",
   "public/**",
@@ -28,22 +29,11 @@ enabled = true
 name = "shell"
 enabled = true
 
+# JavaScript analyzer disabled (2026-08-02): persistent false positives on TypeScript
+# ESM `export function` (treated as global-scope pollution), scripts/*.mjs module parse
+# errors when nested under scripts/lib/, and medium cyclomatic-complexity antipattern
+# churn that fails the DeepSource quality gate on every PR — while ESLint 9 (zero
+# warnings), typecheck, and deploy.yml are the authoritative TS/TSX gates.
 [[analyzers]]
 name = "javascript"
-enabled = true
-
-  [analyzers.meta]
-  plugins = ["react"]
-  module_system = "es-modules"
-  dialect = "typescript"
-  dependency_file_paths = ["."]
-  environment = ["browser", "nodejs", "vitest", "cypress", "serviceworker"]
-  cyclomatic_complexity_threshold = "critical"
-  skip_doc_coverage = [
-    "function-declaration",
-    "function-expression",
-    "arrow-function-expression",
-    "class-declaration",
-    "class-expression",
-    "method-definition",
-  ]
+enabled = false

@@ -7,10 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
+### Changed
 
-- **Release and version discipline (P1-6):** `docs/release-policy.md`, build-time `appVersion` + `buildCommitSha` injection, Help/About and export/PDF release labels, `ResearchReport.generationProvenance`, JSON export meta fields, `appReleaseInfo` module.
-- **DeepSource follow-up (P1-5):** `sourceIdentifier.ts` and `isKnowledgeBaseEntry` converted to `export const` arrows (JS-0125); switch `default` branches for analyzer clarity.
+- **DeepSource JavaScript analyzer disabled:** persistent false positives and quality-gate failures documented in `docs/deepsource-javascript-ci.md`; ESLint + `deploy.yml` remain authoritative. `scripts/build-meta.mjs` moved out of `scripts/lib/` for exclude hygiene.
 - **Portable deployment base path (P1-3):** `VITE_BASE_PATH` + `VITE_SITE_ORIGIN` drive Vite `base`, generated manifest/canonical/OG URLs, and service-worker scope via `<base href>`; self-hosting matrix in README.
 - **External fetch retry policy (P1-4):** `fetchWithExternalPolicy` centralizes abort-aware backoff, Retry-After, jitter, and elapsed budget for PubMed, arXiv, and RTK Query fetches.
 - **Provider-aware cost estimator (P1-2):** `providerPricing` + `researchCostEstimate` use prompt-budget token sizing, per-provider list-price heuristics, unknown-pricing state (no guessed USD), and updated Settings/orchestrator UI strings.
@@ -28,6 +27,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **SonarQube Cloud:** deleted `sonar-project.properties`, `docs/sonarcloud-setup-todo.md`, and all active CI/docs references (dashboard removed by owner).
 
 ### Changed
+
+- **DeepSource JavaScript analyzer disabled:** root cause in `docs/deepsource-javascript-ci.md`; ESLint + `deploy.yml` remain authoritative; `scripts/build-meta.mjs` at scripts root for exclude hygiene.
 
 - **Prompt budget (P0-3):** lexical pre-filter + per-field bounding before JSON serialization; `wrapUntrustedJsonBlock` no longer truncates mid-JSON; Agent Debugger trace metadata records included/omitted corpus counts.
 

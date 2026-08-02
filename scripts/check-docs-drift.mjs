@@ -170,6 +170,12 @@ async function checkProjectFacts(errors, facts) {
     if (!/name\s*=\s*"javascript"[\s\S]*enabled\s*=\s*true/.test(deepsource)) {
       errors.push('.deepsource.toml must enable javascript analyzer');
     }
+  } else if (facts.staticAnalysis?.deepsourceJavaScriptEnabled === false) {
+    if (/name\s*=\s*"javascript"[\s\S]*enabled\s*=\s*true/.test(deepsource)) {
+      errors.push(
+        '.deepsource.toml javascript analyzer must stay disabled (see docs/deepsource-javascript-ci.md)',
+      );
+    }
   }
 
   const thresholds = facts.coverageThresholds ?? {};

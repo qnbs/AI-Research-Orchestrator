@@ -3,7 +3,7 @@ import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import { visualizer } from 'rollup-plugin-visualizer';
 import { DEFAULT_GH_PAGES_BASE, normalizeBasePath } from './src/lib/deploymentConfig';
-import { buildDefineConstants } from './scripts/lib/buildMeta.mjs';
+import { buildDefineConstants } from './scripts/build-meta.mjs';
 
 // Vendor chunk assignment by package name. Rolldown (Vite 8's default bundler) only supports
 // the function form of manualChunks, not the object-shorthand form Rollup itself accepts -

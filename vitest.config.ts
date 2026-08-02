@@ -1,6 +1,6 @@
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
-import { buildDefineConstants } from './scripts/lib/buildMeta.mjs';
+import { buildDefineConstants } from './scripts/build-meta.mjs';
 
 export default defineConfig({
   plugins: [react()],

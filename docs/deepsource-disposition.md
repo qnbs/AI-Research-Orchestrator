@@ -19,10 +19,10 @@ Tracks **valid** findings fixed in-repo vs. intentional exclusions. Autofix PRs 
 | Rule              | Path                  | Reason                                                                    |
 | ----------------- | --------------------- | ------------------------------------------------------------------------- |
 | JS-0833           | `scripts/*.mjs`       | ESM maintenance scripts; excluded in `.deepsource.toml`                   |
-| JS-0125 / JS-0067 | `public/sw.js`        | Service worker + Workbox globals; excluded                                |
-| JS-0067           | TS `export function`  | ESM module exports; `dialect = typescript` + `module_system = es-modules` |
+| JS-0125 / JS-0067 | TS `export function`  | ESM exports misparsed as global scope — JavaScript analyzer **disabled**  |
+| JS-R1005          | Complexity antipattern| Medium cyclomatic churn; ESLint + tests authoritative — analyzer disabled |
+| JS-0125           | `scripts/lib/*.mjs`   | Module parse errors; use top-level `scripts/*.mjs` instead              |
 | JS-0757           | Modal `autoFocus`     | Intentional in focus-trapped modals (`eslint-disable` + a11y rationale)   |
-| JS-R1005          | Large view components | Complexity tracked by ESLint + E2E; threshold `critical` only             |
 
 ## Autofix PR disposition (#148–#160)
 
