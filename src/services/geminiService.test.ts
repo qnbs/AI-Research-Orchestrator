@@ -349,6 +349,54 @@ describe('geminiService with mocked SDK', () => {
     );
   });
 
+  it('generateResearchReportStream yields ranking and synthesis promptBudget metadata', async () => {
+    const rankingPayload = {
+      rankedArticles: [
+        {
+          pmid: '123',
+          relevanceScore: 95,
+          relevanceExplanation: 'r',
+          keywords: ['k'],
+          articleType: 'Study',
+          aiSummary: 'sum',
+        },
+      ],
+      aiGeneratedInsights: [],
+      overallKeywords: [],
+    };
+
+    hoisted.generateContent
+      .mockResolvedValueOnce({
+        text: JSON.stringify({
+          generatedQueries: [{ query: 'cancer[Title]', explanation: 'e' }],
+        }),
+      })
+      .mockResolvedValueOnce({
+        text: JSON.stringify(rankingPayload),
+      });
+
+    hoisted.generateContentStream.mockImplementation(async () =>
+      (async function* () {
+        yield { text: 'syn ' };
+      })(),
+    );
+
+    const budgets: Array<{ stage?: string; selectionMode?: string }> = [];
+    for await (const chunk of generateResearchReportStream(mockInput, mockAi)) {
+      if (chunk.promptBudget) {
+        budgets.push({
+          stage: chunk.promptBudget.stage,
+          selectionMode: chunk.promptBudget.selectionMode,
+        });
+      }
+      if (chunk.phase.includes('Finalizing')) break;
+    }
+
+    expect(budgets.some((b) => b.stage === 'ranking')).toBe(true);
+    expect(budgets.some((b) => b.stage === 'synthesis')).toBe(true);
+    expect(budgets.every((b) => typeof b.selectionMode === 'string')).toBe(true);
+  });
+
   it('generateResearchReportStream passes AbortSignal to synthesis stream', async () => {
     const rankingPayload = {
       rankedArticles: [

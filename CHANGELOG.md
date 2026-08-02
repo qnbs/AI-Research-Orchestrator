@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- None yet.
+- **P1-9 test depth (providers / Dexie / orchestration):** Expanded unit coverage for Gemini/OpenAI/Anthropic/Ollama adapters (error mapping, abort, chat sessions, `testConnection`, capability flags, schema conversion, grounding sources), `databaseService` settings sanitization + checkpoint ordering, and `generateResearchReportStream` prompt-budget stage yields.
 
 ## [0.4.1] - 2026-08-02
 

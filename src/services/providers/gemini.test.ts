@@ -154,4 +154,134 @@ describe('createGeminiProvider', () => {
       }),
     );
   });
+
+  it('exposes webGrounding + nativeJsonSchema capabilities', () => {
+    expect(provider.capabilities.webGrounding).toBe(true);
+    expect(provider.capabilities.structuredOutput.nativeJsonSchema).toBe(true);
+    expect(provider.capabilities.requiresApiKey).toBe(true);
+  });
+
+  it('passes abortSignal and system instruction into generateContent', async () => {
+    generateContentMock.mockResolvedValueOnce({ text: 'ok' });
+    const controller = new AbortController();
+    await provider.generateContent({
+      model: 'gemini-2.5-flash',
+      prompt: 'ping',
+      system: 'Be brief',
+      signal: controller.signal,
+      webGrounding: true,
+      thinkingBudget: 0,
+    });
+    expect(generateContentMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        config: expect.objectContaining({
+          systemInstruction: 'Be brief',
+          abortSignal: controller.signal,
+          tools: [{ googleSearch: {} }],
+          thinkingConfig: { thinkingBudget: 0 },
+        }),
+      }),
+    );
+  });
+
+  it('extracts grounding sources from candidates', async () => {
+    generateContentMock.mockResolvedValueOnce({
+      text: 'summary',
+      candidates: [
+        {
+          groundingMetadata: {
+            groundingChunks: [
+              { web: { uri: 'https://example.org/a', title: 'A' } },
+              { web: { uri: 'https://example.org/b' } },
+              { web: {} },
+            ],
+          },
+        },
+      ],
+    });
+    const response = await provider.generateContent({
+      model: 'gemini-2.5-flash',
+      prompt: 'grounded',
+      webGrounding: true,
+    });
+    expect(response.sources).toEqual([
+      { uri: 'https://example.org/a', title: 'A' },
+      { uri: 'https://example.org/b', title: undefined },
+    ]);
+  });
+
+  it('converts nested JSON schema types for Gemini', async () => {
+    generateContentMock.mockResolvedValueOnce({ text: '[]' });
+    await provider.generateContent({
+      model: 'gemini-2.5-flash',
+      prompt: 'schema',
+      json: true,
+      jsonSchema: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            score: { type: 'integer' },
+            tags: { type: 'array', items: { type: 'string' } },
+          },
+        },
+      },
+    });
+    const config = generateContentMock.mock.calls[0]?.[0]?.config as {
+      responseSchema: Record<string, unknown>;
+    };
+    expect(config.responseSchema).toMatchObject({
+      type: 'ARRAY',
+      items: {
+        type: 'OBJECT',
+        properties: {
+          score: { type: 'INTEGER' },
+          tags: { type: 'ARRAY', items: { type: 'STRING' } },
+        },
+      },
+    });
+  });
+
+  it('maps rate-limit, quota, safety, and abort errors', () => {
+    expect(provider.mapError({ status: 429, message: 'slow down' }).code).toBe(
+      'PROVIDER_RATE_LIMIT',
+    );
+    expect(provider.mapError({ status: 429 }).retryable).toBe(true);
+
+    expect(provider.mapError(new Error('quota exhausted')).code).toBe('PROVIDER_QUOTA');
+    expect(provider.mapError(new Error('quota exhausted')).retryable).toBe(false);
+
+    expect(
+      provider.mapError({
+        response: { candidates: [{ finishReason: 'SAFETY' }] },
+      }).code,
+    ).toBe('PROVIDER_PARSE_FAILURE');
+    expect(
+      provider.mapError({
+        response: { candidates: [{ finishReason: 'MAX_TOKENS' }] },
+      }).message,
+    ).toMatch(/token limit/i);
+
+    const abortDom = new DOMException('Aborted', 'AbortError');
+    const mappedAbort = provider.mapError(abortDom);
+    expect(mappedAbort.code).toBe('PROVIDER_UNAVAILABLE');
+    expect(mappedAbort.retryable).toBe(false);
+
+    const abortErr = new Error('aborted');
+    abortErr.name = 'AbortError';
+    expect(provider.mapError(abortErr).retryable).toBe(false);
+
+    const existing = new AppError({ code: 'PROVIDER_AUTH', message: 'keep', retryable: false });
+    expect(provider.mapError(existing)).toBe(existing);
+  });
+
+  it('reset forces a new GoogleGenAI client on next call', async () => {
+    const { GoogleGenAI } = await import('@google/genai');
+    generateContentMock.mockResolvedValue({ text: 'ok' });
+    await provider.generateContent({ model: 'gemini-2.5-flash', prompt: 'a' });
+    const callsBefore = vi.mocked(GoogleGenAI).mock.calls.length;
+    provider.reset?.();
+    await provider.generateContent({ model: 'gemini-2.5-flash', prompt: 'b' });
+    expect(vi.mocked(GoogleGenAI).mock.calls.length).toBeGreaterThan(callsBefore);
+  });
 });

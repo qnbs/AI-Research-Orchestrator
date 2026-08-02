@@ -64,6 +64,16 @@ describe('databaseService settings IO', () => {
     expect(loaded?.appLanguage).toBe('de');
   });
 
+  it('strips ncbiApiKey from persisted settings (vault-only)', async () => {
+    const next = {
+      ...defaultSettings,
+      ai: { ...defaultSettings.ai, ncbiApiKey: 'should-not-persist' },
+    };
+    await saveSettings(next);
+    const loaded = await getSettings();
+    expect(loaded?.ai.ncbiApiKey).toBe('');
+  });
+
   it('persists research checkpoints', async () => {
     const input: ResearchInput = {
       researchTopic: 'checkpoint topic',
@@ -215,5 +225,44 @@ describe('databaseService knowledge-base bulk ops', () => {
     await addEntry(makeKbEntry('wipe', 'Wipe'));
     await clearAllEntries();
     await expect(getAllEntries()).resolves.toEqual([]);
+  });
+
+  it('getAllEntries returns newest-first by timestamp', async () => {
+    await addEntry({ ...makeKbEntry('old', 'Old'), timestamp: 10 });
+    await addEntry({ ...makeKbEntry('new', 'New'), timestamp: 99 });
+    const entries = await getAllEntries();
+    expect(entries.map((e) => e.id)).toEqual(['new', 'old']);
+  });
+});
+
+describe('databaseService checkpoint ordering', () => {
+  beforeEach(async () => {
+    await db.delete();
+    await db.open();
+  });
+
+  it('getLatestResearchCheckpoints respects limit and newest-first order', async () => {
+    const input: ResearchInput = {
+      researchTopic: 't',
+      dateRange: 'any',
+      articleTypes: [],
+      synthesisFocus: 'overview',
+      maxArticlesToScan: 10,
+      topNToSynthesize: 3,
+    };
+    for (const now of [100, 200, 300]) {
+      await saveResearchCheckpoint(
+        createResearchCheckpoint({
+          input,
+          phase: 'Phase 3',
+          reason: 'abort',
+          synthesisSoFar: `partial-${now}`,
+          now,
+        }),
+      );
+    }
+    const latest = await getLatestResearchCheckpoints(2);
+    expect(latest).toHaveLength(2);
+    expect(latest[0]?.createdAt).toBeGreaterThan(latest[1]?.createdAt ?? 0);
   });
 });
