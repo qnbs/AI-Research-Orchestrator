@@ -54,27 +54,38 @@ describe('service worker integrity', () => {
     // brace-matched body, so a stray call outside every such body fails.
     const messageListenerSites = [...swSource.matchAll(/addEventListener\('message',/g)];
     expect(messageListenerSites.length).toBeGreaterThan(0);
-    const messageListenerBodies = messageListenerSites.map((site) =>
-      extractBalancedBody(swSource, site.index! + site[0].length),
-    );
+    const messageListenerBodies = messageListenerSites
+      .map((site) => {
+        const idx = site.index;
+        return idx !== undefined
+          ? extractBalancedBody(swSource, idx + site[0].length)
+          : undefined;
+      })
+      .filter(Boolean);
 
     const skipWaitingCalls = [...swSource.matchAll(/self\.skipWaiting\(\)/g)];
     expect(skipWaitingCalls.length).toBeGreaterThan(0);
     for (const call of skipWaitingCalls) {
+      const idx = call.index;
+      if (idx === undefined) {
+        continue;
+      }
       const enclosingBody = messageListenerBodies.find(
-        (b) => call.index! >= b.start && call.index! < b.end,
+        (b) => idx >= b.start && idx < b.end,
       );
       expect(enclosingBody).toBeDefined();
-      // ...and still gated by an `if` within that same body, not fired as
-      // soon as any message arrives regardless of type.
-      expect(enclosingBody!.body).toMatch(/if\s*\(/);
+      if (enclosingBody) {
+        // ...and still gated by an `if` within that same body, not fired as
+        // soon as any message arrives regardless of type.
+        expect(enclosingBody.body).toMatch(/if\s*\(/);
+      }
     }
   });
 
   it('versions every runtime cache name', () => {
     const cacheNamesBlock = swSource.match(/const CACHE_NAMES = \{([\s\S]*?)\};/);
     expect(cacheNamesBlock).not.toBeNull();
-    const entries = [...cacheNamesBlock![1].matchAll(/:\s*`([^`]+)`/g)].map((m) => m[1]);
+    const entries = [...(cacheNamesBlock?.[1].matchAll(/:\s*`([^`]+)`/g) ?? [])].map((m) => m[1]);
     expect(entries.length).toBeGreaterThan(0);
     for (const entry of entries) {
       expect(entry).toMatch(/\$\{CACHE_VERSION\}$/);
@@ -150,7 +161,7 @@ describe('service worker integrity', () => {
   it('CSP worker-src is free of external hosts', () => {
     const cspMatch = indexHtml.match(/worker-src\s+([^;]+);/);
     expect(cspMatch).not.toBeNull();
-    const sources = cspMatch![1].trim().split(/\s+/);
+    const sources = cspMatch ? cspMatch[1].trim().split(/\s+/) : [];
     for (const source of sources) {
       expect(source).not.toMatch(/^https?:\/\//);
     }
