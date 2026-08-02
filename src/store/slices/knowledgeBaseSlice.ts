@@ -20,6 +20,7 @@ import {
   updateEntry,
   bulkUpdateEntriesInTransaction,
 } from '../../services/databaseService';
+import { sanitizeKnowledgeBaseEntryForImport } from '../../lib/knowledgeBaseImport';
 import { canonicalArticleKey, resolveArticleId } from '../../lib/sourceIdentifier';
 import type { RootState } from '../store';
 
@@ -48,8 +49,9 @@ export const addKbEntry = createAsyncThunk(
 export const importKbEntries = createAsyncThunk(
   'knowledgeBase/importEntries',
   async (entries: KnowledgeBaseEntry[]) => {
-    await bulkAddEntries(entries);
-    return entries;
+    const sanitized = entries.map((entry) => sanitizeKnowledgeBaseEntryForImport(entry).entry);
+    await bulkAddEntries(sanitized);
+    return sanitized;
   },
 );
 
