@@ -109,7 +109,7 @@ describe('selectResearchPrunePmids', () => {
           hIndex: null,
           totalCitations: null,
           publicationCount: 1,
-          citationsPerYear: {},
+          publicationsPerYear: {},
           publicationsAsFirstAuthor: 0,
           publicationsAsLastAuthor: 0,
         },
