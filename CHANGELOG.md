@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Author Hub integrity (P0-A):** corpus-bound metrics only — no `Math.random()` citation timelines or LLM-estimated h-index; `authorIdentity` matching; publications-per-year chart; abort/stale-request safety in author search flow.
+
 ### Added
 
 - **Release and version discipline (P1-6):** `docs/release-policy.md`, build-time `appVersion` + `buildCommitSha`, `ResearchReport.generationProvenance`, Help/About + JSON/PDF export release labels, `appReleaseInfo` module.

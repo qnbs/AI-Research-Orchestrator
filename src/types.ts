@@ -448,10 +448,17 @@ export interface AuthorCluster {
 }
 
 export interface AuthorMetrics {
+  /** Null without an external citation index — never model-estimated. */
   hIndex: number | null;
+  /** Null without an external citation index — never model-estimated. */
   totalCitations: number | null;
   publicationCount: number;
-  citationsPerYear: { [year: string]: number };
+  /** Publication counts per year in the retrieved PubMed corpus. */
+  publicationsPerYear: Record<string, number>;
+  /**
+   * @deprecated Legacy fabricated citation timeline — ignored on display; stripped on save.
+   */
+  citationsPerYear?: Record<string, number>;
   publicationsAsFirstAuthor: number;
   publicationsAsLastAuthor: number;
 }

@@ -21,6 +21,7 @@ import { searchAndFetchArxiv } from './arxivUtils';
 import { sanitizePromptFragment } from '../lib/promptSanitize';
 import { resolveApprovedBaseUrl } from '../lib/endpointPolicy';
 import { applyCorpusCitationGrounding } from '../lib/citationGrounding';
+import { intersectClustersWithCorpus } from '../lib/authorIdentity';
 import { assertValidPubMedQuery } from '../lib/pubmedQueryValidator';
 import {
   UNTRUSTED_DATA_SYSTEM_RULE,
@@ -698,7 +699,7 @@ export async function disambiguateAuthor(
         ],
       },
     };
-    return await generateJson<AuthorCluster[]>(
+    const clusters = await generateJson<AuthorCluster[]>(
       aiSettings,
       {
         model: aiSettings.model,
@@ -718,6 +719,7 @@ export async function disambiguateAuthor(
       },
       signal,
     );
+    return intersectClustersWithCorpus(clusters, articles);
   } catch (error) {
     safeLogError('Error disambiguating author:', error);
     throw provider.mapError(error);
@@ -732,7 +734,6 @@ export async function generateAuthorProfileAnalysis(
 ): Promise<{
   careerSummary: string;
   coreConcepts: { concept: string; frequency: number }[];
-  estimatedMetrics: { hIndex: number | null; totalCitations: number | null };
 }> {
   if (await shouldUseHeuristic(aiSettings)) {
     return generateAuthorProfileHeuristic(authorName, articles, signal);
@@ -753,21 +754,12 @@ export async function generateAuthorProfileAnalysis(
             required: ['concept', 'frequency'],
           },
         },
-        estimatedMetrics: {
-          type: 'object',
-          properties: {
-            hIndex: { type: 'integer', nullable: true },
-            totalCitations: { type: 'integer', nullable: true },
-          },
-          required: ['hIndex', 'totalCitations'],
-        },
       },
-      required: ['careerSummary', 'coreConcepts', 'estimatedMetrics'],
+      required: ['careerSummary', 'coreConcepts'],
     };
     return await generateJson<{
       careerSummary: string;
       coreConcepts: { concept: string; frequency: number }[];
-      estimatedMetrics: { hIndex: number | null; totalCitations: number | null };
     }>(
       aiSettings,
       {
@@ -776,9 +768,8 @@ export async function generateAuthorProfileAnalysis(
         temperature: 0.3,
         jsonSchema: profileSchema,
         prompt: `Analyze the following publication list for author ${wrapUntrustedTextBlock('author_name', nameSafe)}. Based strictly on this list, provide:
-            1. A narrative career summary (in markdown format).
-            2. A list of their core research concepts with frequency.
-            3. An estimation of their h-index and total citations. If the provided data is insufficient for a reasonable estimation, return null for these metric fields.
+            1. A narrative career summary (in markdown format) scoped to these retrieved records only — do not state global bibliometric facts (h-index, total citations) without an authoritative citation source.
+            2. A list of core research concepts with frequency counts from these titles/abstracts.
             ${wrapUntrustedJsonBlock(
               'publications',
               articles.map((a) => ({ title: a.title, pubYear: a.pubYear, journal: a.journal })),
