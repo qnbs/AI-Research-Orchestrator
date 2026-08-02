@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import type { ResearchInput, Settings } from '../types';
+import { EXECUTION_PROVENANCE_PHASE } from '../lib/researchExecutionContext';
 import {
   generateResearchReportStreamWithMode,
   shouldUseHeuristic,
@@ -85,7 +86,8 @@ describe('researchOrchestratorAdapter', () => {
     }
 
     expect(liveStream).toHaveBeenCalledOnce();
-    expect(events).toEqual(['live-ranking']);
+    expect(events[0]).toBe(EXECUTION_PROVENANCE_PHASE);
+    expect(events.slice(1)).toEqual(['live-ranking']);
   });
 
   it('uses heuristic stream when mode resolves to heuristic', async () => {
@@ -112,7 +114,8 @@ describe('researchOrchestratorAdapter', () => {
     }
 
     expect(liveStream).not.toHaveBeenCalled();
-    expect(events[0]).toMatch(/Phase 1/i);
+    expect(events[0]).toBe(EXECUTION_PROVENANCE_PHASE);
+    expect(events[1]).toMatch(/Phase 1/i);
     expect(events.at(-1)).toMatch(/Finalizing/i);
   });
 
@@ -131,16 +134,61 @@ describe('researchOrchestratorAdapter', () => {
     });
 
     const events: string[] = [];
+    let frozenMode: string | undefined;
+    let frozenProvider: string | undefined;
     for await (const event of generateResearchReportStreamWithMode(
       { ...baseInput, educationalDemoMode: true },
       baseAiSettings,
       liveStream,
     )) {
       events.push(event.phase);
+      if (event.executionContext) {
+        frozenMode = event.executionContext.inferenceMode;
+        frozenProvider = event.executionContext.providerId;
+      }
     }
 
     expect(liveStream).not.toHaveBeenCalled();
     expect(resolveActiveInferenceMode).not.toHaveBeenCalled();
-    expect(events[0]).toMatch(/Phase 1/i);
+    expect(events[0]).toBe(EXECUTION_PROVENANCE_PHASE);
+    expect(events[1]).toMatch(/Phase 1/i);
+    expect(frozenMode).toBe('heuristic');
+    expect(frozenProvider).toBe('heuristic');
+  });
+
+  it('freezes heuristic provenance once at start even if later resolve would be live', async () => {
+    vi.mocked(resolveActiveInferenceMode).mockResolvedValue({
+      mode: 'heuristic',
+      reason: 'offline',
+      hasApiKey: true,
+      isOnline: false,
+      forceHeuristic: false,
+      provider: 'gemini',
+    });
+
+    const liveStream = vi.fn(async function* () {
+      yield { phase: 'live' };
+    });
+
+    let frozenMode: string | undefined;
+    let frozenReason: string | undefined;
+    let frozenProvider: string | undefined;
+    for await (const event of generateResearchReportStreamWithMode(
+      baseInput,
+      baseAiSettings,
+      liveStream,
+    )) {
+      if (event.executionContext) {
+        frozenMode = event.executionContext.inferenceMode;
+        frozenReason = event.executionContext.inferenceReason;
+        frozenProvider = event.executionContext.providerId;
+      }
+    }
+
+    // Only one resolve at stream start — completion must not call again.
+    expect(resolveActiveInferenceMode).toHaveBeenCalledOnce();
+    expect(frozenMode).toBe('heuristic');
+    expect(frozenReason).toBe('offline');
+    expect(frozenProvider).toBe('heuristic');
   });
 });

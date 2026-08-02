@@ -29,7 +29,10 @@ import type { TranslationKey } from '../i18n/translations';
 import type { HapticPreset } from '../hooks/useHaptic';
 import { getAgentForPhase } from './getAgentForPhase';
 import { stampReportWithProvenance } from '../lib/appReleaseInfo';
-import { resolveActiveInferenceMode } from '../services/resolveActiveInferenceMode';
+import {
+  EXECUTION_PROVENANCE_PHASE,
+  type ResearchExecutionContext,
+} from '../lib/researchExecutionContext';
 import { safeLogError } from '../lib/safeLog';
 
 type ReportStatus = 'idle' | 'generating' | 'streaming' | 'done' | 'error';
@@ -190,15 +193,30 @@ export function useResearchSession({
       let finalSynthesis = '';
       let finalReport: ResearchReport | null = null;
       let lastPhase = 'Initializing...';
+      let frozenExecutionContext: ResearchExecutionContext | undefined;
 
       try {
         const stream = generateResearchReportStream(data, aiSettings, streamSignal);
         let isFirstChunk = true;
 
-        for await (const { report: partialReport, synthesisChunk, phase, promptBudget } of stream) {
+        for await (const {
+          report: partialReport,
+          synthesisChunk,
+          phase,
+          promptBudget,
+          executionContext,
+        } of stream) {
           if (generationIdRef.current !== currentGenId) {
             streamAbortRef.current?.abort();
             return;
+          }
+
+          if (executionContext) {
+            frozenExecutionContext = executionContext;
+          }
+          // Bootstrap provenance event — do not drive agent UI / phase chrome.
+          if (phase === EXECUTION_PROVENANCE_PHASE) {
+            continue;
           }
 
           lastPhase = phase;
@@ -259,36 +277,21 @@ export function useResearchSession({
         }
         dispatch(completeTrace({ status: 'done' }));
 
-        // Educational demo always executed via Non-AI — never stamp as live provider.
-        const educationalDemoRun =
-          Boolean(data.educationalDemoMode) ||
-          finalReport.corpusClass === 'demo-only' ||
-          finalReport.retrievalOutcome === 'educational_demo';
-        const modeSnapshot = educationalDemoRun
-          ? {
-              mode: 'heuristic' as const,
-              reason: 'force' as const,
-              hasApiKey: true,
-              isOnline: true,
-              forceHeuristic: true,
-              provider: 'heuristic' as const,
-            }
-          : await resolveActiveInferenceMode({
-              forceHeuristic: Boolean(aiSettings.forceHeuristicMode),
-              provider: aiSettings.provider ?? 'gemini',
-            });
-        const executedProviderId =
-          modeSnapshot.mode === 'heuristic' ? 'heuristic' : (aiSettings.provider ?? 'gemini');
-
         // Prefer streamed chunks; fall back to report.synthesis for report-only events.
         const synthesisText = finalSynthesis || finalReport.synthesis || '';
+        // Stamp the frozen start-of-run context only — never re-resolve inference at completion
+        // (online/key flips mid-run must not rewrite provenance; ADR 0017).
+        // Educational demo is frozen as heuristic at stream start (ADR 0016).
         const completeReport = stampReportWithProvenance(
           { ...finalReport, synthesis: synthesisText },
-          {
-            inferenceMode: modeSnapshot.mode,
-            providerId: executedProviderId,
-            model: aiSettings.model,
-          },
+          frozenExecutionContext
+            ? { executionContext: frozenExecutionContext }
+            : {
+                inferenceMode: 'heuristic',
+                providerId: 'heuristic',
+                model: aiSettings.model,
+                inferenceReason: 'no_api_key',
+              },
         );
         const corpusPmids = completeReport.rankedArticles.map((a) => a.pmid);
         const extractedClaims = extractGroundedClaimsFromMarkdown(synthesisText, corpusPmids);

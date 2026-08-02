@@ -210,12 +210,7 @@ export async function* generateResearchReportStream(
   input: ResearchInput,
   aiSettings: Settings['ai'],
   signal?: AbortSignal,
-): AsyncGenerator<{
-  report?: ResearchReport;
-  synthesisChunk?: string;
-  phase: string;
-  promptBudget?: PromptBudgetAccounting;
-}> {
+) {
   yield* generateResearchReportStreamWithMode(
     input,
     aiSettings,

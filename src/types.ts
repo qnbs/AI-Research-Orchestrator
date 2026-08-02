@@ -135,7 +135,7 @@ export interface ResearchReport {
     | 'educational_demo';
 }
 
-/** Identifies the app build that produced a research report. */
+/** Identifies the app build and frozen execution context that produced a research report. */
 export interface ReportGenerationProvenance {
   appVersion: string;
   buildCommitSha: string;
@@ -145,6 +145,23 @@ export interface ReportGenerationProvenance {
   inferenceMode?: 'live' | 'heuristic';
   providerId?: import('./services/providers/types').AIProviderSelection;
   model?: string;
+  /** Stable id for this research run (from start-of-stream freeze). */
+  executionId?: string;
+  /** Why inference mode was chosen at stream start (immutable). */
+  inferenceReason?: import('./services/inferenceMode').InferenceModeReason;
+  /** Stream start timestamp (ms). */
+  startedAt?: number;
+  /** Custom/Ollama endpoint origin when configured. */
+  endpointOrigin?: string;
+  /** Prompt catalog version at run start. */
+  promptRegistryVersion?: string;
+  /** Append-only mid-run transitions (prefer clean restart; usually empty). */
+  transitions?: Array<{
+    at: number;
+    fromMode: 'live' | 'heuristic';
+    toMode: 'live' | 'heuristic';
+    reason: string;
+  }>;
 }
 
 export interface AuthorProfileInput {

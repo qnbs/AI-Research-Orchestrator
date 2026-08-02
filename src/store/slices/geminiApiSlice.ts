@@ -130,6 +130,8 @@ export const geminiApi = createApi({
           const stream = generateResearchReportStream(arg.input, arg.aiSettings, controller.signal);
           for await (const chunk of stream) {
             if (controller.signal.aborted) break;
+            // Skip bootstrap provenance event (ADR 0017) — not a user-facing phase.
+            if (chunk.phase === 'execution-provenance') continue;
             updateCachedData((draft) => {
               draft.phase = chunk.phase;
               if (chunk.synthesisChunk) draft.synthesisChunks.push(chunk.synthesisChunk);

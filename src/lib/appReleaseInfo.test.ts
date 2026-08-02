@@ -67,4 +67,45 @@ describe('appReleaseInfo', () => {
       1_700_000_000_000,
     );
   });
+
+  it('stamps frozen execution context without re-deriving release fields', () => {
+    const report = stampReportWithProvenance(
+      {
+        generatedQueries: [],
+        rankedArticles: [],
+        synthesis: '',
+        aiGeneratedInsights: [],
+        overallKeywords: [],
+      },
+      {
+        executionContext: {
+          executionId: 'run-1',
+          startedAt: 1_700_000_000_000,
+          inferenceMode: 'heuristic',
+          inferenceReason: 'offline',
+          providerId: 'heuristic',
+          model: 'gemini-2.5-flash',
+          appVersion: '0.4.1',
+          buildCommitSha: 'deadbeef',
+          dexieSchemaVersion: DEXIE_SCHEMA_VERSION,
+          swCacheVersion: SW_CACHE_VERSION,
+          promptRegistryVersion: '2026.07.16',
+          transitions: [],
+        },
+        generatedAt: 1_700_000_000_500,
+      },
+    );
+    expect(report.generationProvenance).toMatchObject({
+      executionId: 'run-1',
+      startedAt: 1_700_000_000_000,
+      inferenceMode: 'heuristic',
+      inferenceReason: 'offline',
+      providerId: 'heuristic',
+      model: 'gemini-2.5-flash',
+      appVersion: '0.4.1',
+      buildCommitSha: 'deadbeef',
+      promptRegistryVersion: '2026.07.16',
+      generatedAt: 1_700_000_000_500,
+    });
+  });
 });
