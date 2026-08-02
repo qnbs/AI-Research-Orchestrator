@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **CI hygiene:** removed SonarQube Cloud integration entirely; disabled DeepSource JavaScript analyzer (Docker/Shell advisory only).
 
+- **Deployment pruning:** `prune-deployments.yml` plus a post-deploy job in `deploy.yml` keep only the latest 3 GitHub deployment records per environment (inactive-then-delete API flow).
+
 - **Audit P0/P1 completion:** mandatory custom-endpoint approval, CSP drift gate (`check:csp-endpoint-drift`), untrusted-data framing on all live AI prompts, capability-aware `generateJson`, export/history synthesis sanitization, PubMed query validation in orchestrator, `check:agent-eval` CI gate with `liveOrchestratorEval` fixtures.
 
 - **Logging redaction audit (P1-5):** `safeLogError` / `safeLogWarn` with secret-pattern redaction; CI `check:log-redaction` blocks raw `console.*` in application source.
