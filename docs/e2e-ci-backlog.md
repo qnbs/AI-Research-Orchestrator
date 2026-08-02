@@ -61,13 +61,15 @@ Additional flake (not counted toward streak):
 
 - `e92dd0f` / #196 (`30770215657`) — Firefox **53 + 1 flaky** (`agent-flow` Command Palette / local `skipOnboarding` 10s header wait on `main`; fixed on unmerged #199 shared helper). WebKit + mobile Chrome stayed **54/0** on that run → **10/10**.
 
-| Browser       | Latest clean run                      | Streak toward 10× clean (54/0, no flaky)                                       |
-| ------------- | ------------------------------------- | ------------------------------------------------------------------------------ |
-| Firefox       | **54/0** (`a2663bef` / `30769381735`) | **0/10** (reset after `e92dd0f` flaky; merge #199 to restore harden on `main`) |
-| mobile Chrome | **54/0** (`e92dd0f` / `30770215657`)  | **10/10**                                                                      |
-| WebKit        | **54/0** (`e92dd0f` / `30770215657`)  | **10/10**                                                                      |
+Post-reset clean: `f719553` / #196 (`30770674248`) — **54/0, no flaky** all browsers (Firefox streak rebuild starts at **1/10**; WebKit/mobile remain **10/10**). Merge #199 so `main` stops depending on the old local helper.
 
-Blocking Chromium `e2e.yml`: **54 passed / 0 failed** on #195 merge `8ab0a26`, #197/`9202f50` (`30768598057`), #199/`0cea8ef` (`30769050111`), #196/`a2663bef` (`30769381737`), and #196/`e92dd0f` (`30770215660`).
+| Browser       | Latest clean run                     | Streak toward 10× clean (54/0, no flaky)                            |
+| ------------- | ------------------------------------ | ------------------------------------------------------------------- |
+| Firefox       | **54/0** (`f719553` / `30770674248`) | **1/10** (reset after `e92dd0f` flaky; merge #199 to harden `main`) |
+| mobile Chrome | **54/0** (`f719553` / `30770674248`) | **10/10**                                                           |
+| WebKit        | **54/0** (`f719553` / `30770674248`) | **10/10**                                                           |
+
+Blocking Chromium `e2e.yml`: **54 passed / 0 failed** on #195 merge `8ab0a26`, #197/`9202f50` (`30768598057`), #199/`0cea8ef` (`30769050111`), #196/`a2663bef` (`30769381737`), #196/`e92dd0f` (`30770215660`), and #196/`f719553` (`30770674211`).
 
 ## Historical note (fixed 2026-07-21)
 

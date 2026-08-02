@@ -28,7 +28,7 @@ Workstream A (E2E WebKit KB demo) was **already landed** as #195 before this ses
 | Clean baseline          | run `30767470525` / `022475d` — **54/0, no flaky** all browsers                                                             |
 | Firefox flaky (non-KB)  | `f6cdaed` / `30767766848` — Firefox **53 + 1 flaky** (`networkidle` a11y)                                                   |
 | Post-merge clean        | `8ab0a26` / `30768002841` — **54/0, no flaky** Firefox, WebKit, mobile Chrome                                               |
-| Streak (job logs)       | WebKit/mobile Chrome **10/10** (`e92dd0f` / `30770215657`); Firefox **0/10** (reset on that run’s FF flaky)                 |
+| Streak (job logs)       | WebKit/mobile Chrome **10/10**; Firefox **1/10** after `e92dd0f` flaky then clean `f719553` / `30770674248`                 |
 | Firefox flake follow-up | #199 hardens shared `skipOnboarding` (**54/0** on its branch); `main`/docs PRs still hit old local helper until #199 merges |
 | Blocking promotion      | WebKit/mobile Chrome streak criterion met; **not** flipped yet — Firefox still rebuilding + maintainer approval             |
 
