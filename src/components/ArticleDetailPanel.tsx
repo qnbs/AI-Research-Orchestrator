@@ -35,8 +35,12 @@ const SkeletonLoader: React.FC<{ lines?: number; className?: string }> = ({
   className = '',
 }) => (
   <div className={`space-y-3 animate-pulse ${className}`}>
+    {/* skipcq: JS-0437 - static skeleton placeholders; list never reorders */}
     {Array.from({ length: lines }).map((_, i) => (
-      <div key={i} className="p-3 rounded-md bg-surface/50 border border-border/70">
+      <div
+        key={`skeleton-line-${lines}-${i}`}
+        className="p-3 rounded-md bg-surface/50 border border-border/70"
+      >
         <div className="h-4 w-3/4 rounded bg-border/50"></div>
         <div className="mt-2 h-2 w-1/4 rounded bg-border/50"></div>
         <div className="mt-3 h-2 w-5/6 rounded bg-border/50"></div>
@@ -310,9 +314,9 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({
                 {t('article.related_insights')}
               </h4>
               <div className="space-y-3">
-                {relatedInsights.map((insight, index) => (
+                {relatedInsights.map((insight) => (
                   <div
-                    key={index}
+                    key={insight.question}
                     className="bg-background/50 p-4 rounded-lg border border-border shadow-sm"
                   >
                     <p className="font-semibold text-brand-accent text-sm mb-1">

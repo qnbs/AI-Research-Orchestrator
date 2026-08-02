@@ -21,4 +21,4 @@ DeepSource JavaScript is **advisory only** and has produced persistent false pos
 
 ## Autofix PRs
 
-DeepSource Autofix opens branches like `deepsource-autofix-*`. Consolidate into the active feature PR (do not merge autofix branches directly to `main` without running the deploy workflow gates).
+DeepSource Autofix opens branches like `deepsource-autofix-*`. Consolidate into a tested feature PR (see `docs/deepsource-disposition.md`); do not merge autofix branches directly to `main` without running deploy workflow gates.
