@@ -21,8 +21,10 @@ import { searchAndFetchArxiv } from './arxivUtils';
 import { sanitizePromptFragment } from '../lib/promptSanitize';
 import { resolveApprovedBaseUrl } from '../lib/endpointPolicy';
 import { applyCorpusCitationGrounding } from '../lib/citationGrounding';
+import { assertValidPubMedQuery } from '../lib/pubmedQueryValidator';
 import {
   UNTRUSTED_DATA_SYSTEM_RULE,
+  withUntrustedDataSystemRule,
   wrapUntrustedJsonBlock,
   wrapUntrustedTextBlock,
 } from '../lib/untrustedDataFraming';
@@ -86,10 +88,32 @@ async function generateJson<T>(
     aiSettings.customBaseUrl,
     aiSettings.approvedEndpointOrigin,
   );
+  const caps = provider.capabilities.structuredOutput;
+  const schema = request.jsonSchema;
+  let prompt = request.prompt;
+  const system = request.system
+    ? withUntrustedDataSystemRule(request.system)
+    : UNTRUSTED_DATA_SYSTEM_RULE;
+
+  if (schema && !caps.nativeJsonSchema && caps.jsonObjectMode) {
+    prompt = `${prompt}\n\nRespond with valid JSON matching this schema:\n${JSON.stringify(schema)}`;
+  }
+
+  if (schema && !caps.nativeJsonSchema && !caps.jsonObjectMode) {
+    throw new AppError({
+      code: 'VALIDATION',
+      message: 'Selected provider does not support structured JSON output for this request.',
+      retryable: false,
+    });
+  }
+
   try {
     const response = await provider.generateContent({
       ...request,
-      json: true,
+      system,
+      prompt,
+      json: caps.jsonObjectMode || caps.nativeJsonSchema,
+      jsonSchema: caps.nativeJsonSchema ? schema : undefined,
       baseURL,
       signal,
     });
@@ -217,7 +241,7 @@ async function* generateLiveResearchReportStream(
 - Ensure the main topic part of the query is enclosed in parentheses if it contains OR operators, before you AND the filters.
 - For example, for the topic "effects of aspirin on heart attack" with a filter for "Randomized Controlled Trial", a good query would be: (("aspirin"[MeSH Terms] OR "aspirin"[Title/Abstract]) AND ("myocardial infarction"[MeSH Terms] OR "heart attack"[Title/Abstract])) AND ("Randomized Controlled Trial"[Publication Type])
 
-Research Topic: "${topicSafe}"
+Research Topic: ${wrapUntrustedTextBlock('research_topic', topicSafe)}
 `;
     };
 
@@ -253,6 +277,7 @@ Research Topic: "${topicSafe}"
     if (!generatedQueries || generatedQueries.length === 0 || !generatedQueries[0].query) {
       throw new Error('The AI failed to generate any search queries.');
     }
+    assertValidPubMedQuery(generatedQueries[0].query);
 
     throwIfAborted(signal);
     // STEP 2: Execute Real PubMed Search
@@ -480,15 +505,20 @@ export async function findSimilarArticles(
       aiSettings,
       {
         model: aiSettings.model,
-        system: getPreamble(aiSettings, PromptId.SIMILAR_ARTICLES),
+        system: withUntrustedDataSystemRule(getPreamble(aiSettings, PromptId.SIMILAR_ARTICLES)),
         temperature: 0.3,
         jsonSchema: similarSchema,
-        prompt: `Based on the following article, find 3-5 similar articles on PubMed. For each, provide the PMID, title, and a brief reason for its relevance.
-            Title: "${article.title}"
-            Summary: "${article.summary}"`,
+        prompt: `Based on the following article, find 3-5 similar articles on PubMed. For each, provide the PMID, title, and a brief reason for its relevance. Only return PMIDs that exist on PubMed.
+            ${wrapUntrustedJsonBlock('source_article', { title: article.title, summary: article.summary })}`,
       },
       signal,
-    );
+    ).then(async (results) => {
+      const pmids = results.map((r) => r.pmid).filter(Boolean);
+      if (pmids.length === 0) return [];
+      const details = await fetchArticleDetails(pmids, signal);
+      const valid = new Set(details.map((d) => d.pmid));
+      return results.filter((r) => valid.has(r.pmid));
+    });
   } catch (error) {
     safeLogError('Error finding similar articles:', error);
     throw provider.mapError(error);
@@ -513,8 +543,8 @@ export async function findRelatedOnline(
     }
     const response = await provider.generateContent({
       model: aiSettings.model,
-      system: getPreamble(aiSettings, PromptId.RELATED_ONLINE),
-      prompt: `Provide a brief summary of the online discussion, news, or recent developments related to "${topicSafe}".`,
+      system: withUntrustedDataSystemRule(getPreamble(aiSettings, PromptId.RELATED_ONLINE)),
+      prompt: `Provide a brief summary of the online discussion, news, or recent developments related to ${wrapUntrustedTextBlock('topic', topicSafe)}.`,
       webGrounding: true,
       baseURL: resolveApprovedBaseUrl(aiSettings.customBaseUrl, aiSettings.approvedEndpointOrigin),
     });
@@ -544,9 +574,9 @@ export async function generateTldrSummary(
   try {
     const response = await provider.generateContent({
       model: aiSettings.model,
-      system: getPreamble(aiSettings, PromptId.TLDR),
+      system: withUntrustedDataSystemRule(getPreamble(aiSettings, PromptId.TLDR)),
       temperature: 0,
-      prompt: `Summarize the following abstract in a single, concise sentence (TL;DR format): "${abstractSafe}"`,
+      prompt: `Summarize the following abstract in a single, concise sentence (TL;DR format): ${wrapUntrustedTextBlock('abstract', abstractSafe)}`,
       baseURL: resolveApprovedBaseUrl(aiSettings.customBaseUrl, aiSettings.approvedEndpointOrigin),
     });
     return response.text ?? '';
@@ -582,11 +612,11 @@ export async function generateResearchAnalysis(
       aiSettings,
       {
         model: aiSettings.model,
-        system: getPreamble(aiSettings, PromptId.RESEARCH_ANALYSIS),
+        system: withUntrustedDataSystemRule(getPreamble(aiSettings, PromptId.RESEARCH_ANALYSIS)),
         temperature: 0.2,
         jsonSchema: analysisSchema,
         prompt: `Analyze the following text. Provide a concise summary, a bulleted list of 3-5 key findings, and synthesize a clear, specific research topic suitable for a PubMed search.
-            Text: "${querySafe}"`,
+            ${wrapUntrustedTextBlock('input_text', querySafe)}`,
       },
       signal,
     );
@@ -635,11 +665,19 @@ export async function disambiguateAuthor(
       aiSettings,
       {
         model: aiSettings.model,
-        system: getPreamble(aiSettings, PromptId.AUTHOR_DISAMBIGUATE),
+        system: withUntrustedDataSystemRule(getPreamble(aiSettings, PromptId.AUTHOR_DISAMBIGUATE)),
         temperature: 0.1,
         jsonSchema: authorSchema,
-        prompt: `Given the author name "${nameSafe}" and this list of their potential publications, disambiguate them into distinct author profiles. For each profile, provide a likely name variant, their most common primary affiliation, top 3 co-authors, core research topics, total publication count, and a list of their PMIDs.
-            Articles: ${JSON.stringify(articles.map((a) => ({ pmid: a.pmid, title: a.title, authors: a.authors, journal: a.journal })))}`,
+        prompt: `Given the author name ${wrapUntrustedTextBlock('author_name', nameSafe)} and this list of their potential publications, disambiguate them into distinct author profiles. For each profile, provide a likely name variant, their most common primary affiliation, top 3 co-authors, core research topics, total publication count, and a list of their PMIDs.
+            ${wrapUntrustedJsonBlock(
+              'articles',
+              articles.map((a) => ({
+                pmid: a.pmid,
+                title: a.title,
+                authors: a.authors,
+                journal: a.journal,
+              })),
+            )}`,
       },
       signal,
     );
@@ -697,14 +735,17 @@ export async function generateAuthorProfileAnalysis(
       aiSettings,
       {
         model: aiSettings.model,
-        system: getPreamble(aiSettings, PromptId.AUTHOR_PROFILE),
+        system: withUntrustedDataSystemRule(getPreamble(aiSettings, PromptId.AUTHOR_PROFILE)),
         temperature: 0.3,
         jsonSchema: profileSchema,
-        prompt: `Analyze the following publication list for author "${nameSafe}". Based strictly on this list, provide:
+        prompt: `Analyze the following publication list for author ${wrapUntrustedTextBlock('author_name', nameSafe)}. Based strictly on this list, provide:
             1. A narrative career summary (in markdown format).
             2. A list of their core research concepts with frequency.
             3. An estimation of their h-index and total citations. If the provided data is insufficient for a reasonable estimation, return null for these metric fields.
-            Publications: ${JSON.stringify(articles.map((a) => ({ title: a.title, pubYear: a.pubYear, journal: a.journal })))}`,
+            ${wrapUntrustedJsonBlock(
+              'publications',
+              articles.map((a) => ({ title: a.title, pubYear: a.pubYear, journal: a.journal })),
+            )}`,
       },
       signal,
     );
@@ -741,10 +782,10 @@ export async function suggestAuthors(
       aiSettings,
       {
         model: aiSettings.model,
-        system: getPreamble(aiSettings, PromptId.AUTHOR_SUGGEST),
+        system: withUntrustedDataSystemRule(getPreamble(aiSettings, PromptId.AUTHOR_SUGGEST)),
         temperature: 0.5,
         jsonSchema: suggestSchema,
-        prompt: `Suggest 5-10 prominent researchers in the field of "${fieldSafe}". For each, provide their name and a brief (1-sentence) description of their key contribution.`,
+        prompt: `Suggest 5-10 prominent researchers in the field of ${wrapUntrustedTextBlock('field', fieldSafe)}. For each, provide their name and a brief (1-sentence) description of their key contribution.`,
       },
       signal,
     );
@@ -851,8 +892,7 @@ export async function analyzeSingleArticle(
 
     const provider = await getProviderForSettings(aiSettings);
     const prompt = `Analyze the following article abstract and title. Provide a relevance score for how well the abstract matches the title, extract keywords, and classify the article type.
-        Title: ${articleData.title}
-        Abstract: ${articleData.summary}
+        ${wrapUntrustedJsonBlock('article', { title: articleData.title, abstract: articleData.summary })}
         
         Provide the following in a single JSON object:
         1. relevanceScore: A number from 1-100 of how relevant the abstract is to the title.
@@ -883,7 +923,7 @@ export async function analyzeSingleArticle(
         aiSettings,
         {
           model: aiSettings.model,
-          system: getPreamble(aiSettings, PromptId.ARTICLE_ANALYZE),
+          system: withUntrustedDataSystemRule(getPreamble(aiSettings, PromptId.ARTICLE_ANALYZE)),
           temperature: 0.1,
           jsonSchema: analysisSchema,
           prompt,
@@ -920,9 +960,7 @@ export async function generateJournalProfileAnalysis(
   const journalSafe = sanitizePromptFragment(journalName, 500);
   const articleContext =
     articles.length > 0
-      ? `\nRecent article titles from this journal (for focus-area grounding): ${JSON.stringify(
-          articles.map((a) => a.title).slice(0, 20),
-        )}`
+      ? `\n${wrapUntrustedJsonBlock('recent_titles', articles.map((a) => a.title).slice(0, 20))}`
       : '';
   try {
     const journalSchema: AIJsonSchema = {
@@ -942,10 +980,10 @@ export async function generateJournalProfileAnalysis(
       aiSettings,
       {
         model: aiSettings.model,
-        system: getPreamble(aiSettings, PromptId.JOURNAL_PROFILE),
+        system: withUntrustedDataSystemRule(getPreamble(aiSettings, PromptId.JOURNAL_PROFILE)),
         temperature: 0.2,
         jsonSchema: journalSchema,
-        prompt: `Act as an expert academic librarian. Analyze the journal '${journalSafe}'. Provide a JSON object with the following structure: { "name": "...", "issn": "...", "description": "...", "oaPolicy": "...", "focusAreas": ["..."], "publisher": "...", "estimatedImpactFactor": <number|null> }. Find the correct ISSN. For oaPolicy, use one of: "Full Open Access", "Hybrid", "Subscription". For estimatedImpactFactor, give your best estimate of the current Journal Impact Factor, or null if you cannot reasonably estimate it.${articleContext}`,
+        prompt: `Act as an expert academic librarian. Analyze the journal ${wrapUntrustedTextBlock('journal_name', journalSafe)}. Provide a JSON object with the following structure: { "name": "...", "issn": "...", "description": "...", "oaPolicy": "...", "focusAreas": ["..."], "publisher": "...", "estimatedImpactFactor": <number|null> }. Find the correct ISSN. For oaPolicy, use one of: "Full Open Access", "Hybrid", "Subscription". For estimatedImpactFactor, give your best estimate of the current Journal Impact Factor, or null if you cannot reasonably estimate it.${articleContext}`,
       },
       signal,
     );
@@ -1002,10 +1040,10 @@ export async function disambiguateJournal(
       aiSettings,
       {
         model: aiSettings.model,
-        system: getPreamble(aiSettings, PromptId.JOURNAL_DISAMBIGUATE),
+        system: withUntrustedDataSystemRule(getPreamble(aiSettings, PromptId.JOURNAL_DISAMBIGUATE)),
         temperature: 0.1,
         jsonSchema: disambiguateSchema,
-        prompt: `Act as an expert academic librarian. The user entered the journal name "${journalSafe}". Identify up to 5 distinct journals this could refer to (name variants, abbreviations, or similarly named journals, e.g. "BMJ" vs "BMJ Open"). For each candidate provide: the canonical full name, its ISSN (if known), a brief 1-sentence description, the matchType (one of "exact", "alias", "abbreviation", "partial"), and a confidence score 0-100. Return them sorted by confidence descending.`,
+        prompt: `Act as an expert academic librarian. The user entered the journal name ${wrapUntrustedTextBlock('journal_query', journalSafe)}. Identify up to 5 distinct journals this could refer to (name variants, abbreviations, or similarly named journals, e.g. "BMJ" vs "BMJ Open"). For each candidate provide: the canonical full name, its ISSN (if known), a brief 1-sentence description, the matchType (one of "exact", "alias", "abbreviation", "partial"), and a confidence score 0-100. Return them sorted by confidence descending.`,
       },
       signal,
     );
@@ -1052,10 +1090,10 @@ export async function suggestJournals(
       aiSettings,
       {
         model: aiSettings.model,
-        system: getPreamble(aiSettings, PromptId.JOURNAL_SUGGEST),
+        system: withUntrustedDataSystemRule(getPreamble(aiSettings, PromptId.JOURNAL_SUGGEST)),
         temperature: 0.5,
         jsonSchema: suggestSchema,
-        prompt: `Act as an expert academic librarian. Suggest 5-10 prominent peer-reviewed journals publishing research in the field of "${fieldSafe}". For each, provide the canonical journal name and a brief (1-sentence) description of its scope and reputation.`,
+        prompt: `Act as an expert academic librarian. Suggest 5-10 prominent peer-reviewed journals publishing research in the field of ${wrapUntrustedTextBlock('field', fieldSafe)}. For each, provide the canonical journal name and a brief (1-sentence) description of its scope and reputation.`,
       },
       signal,
     );
@@ -1080,30 +1118,28 @@ export const startChatWithReport = async (
   }
   const provider = await getProviderForSettings(aiSettings);
   throwIfAborted(signal);
-  const context = `
+  const context = withUntrustedDataSystemRule(`
         ${promptTag(PromptId.REPORT_CHAT)}
         You are a helpful AI assistant that answers questions about a specific research report.
         The user has just generated the following report. Your answers should be based on this context.
 
-        ## Research Synthesis ##
-        ${report.synthesis}
+        ${wrapUntrustedTextBlock('research_synthesis', report.synthesis)}
 
-        ## Ranked Articles ##
-        ${report.rankedArticles
-          .map(
-            (a) => `
-        - PMID: ${a.pmid}
-        - Title: ${a.title}
-        - Summary: ${a.summary}
-        `,
-          )
-          .join('\n')}
-    `;
+        ${wrapUntrustedJsonBlock(
+          'ranked_articles',
+          report.rankedArticles.map((a) => ({
+            pmid: a.pmid,
+            title: a.title,
+            summary: a.summary,
+          })),
+        )}
+    `);
 
   return provider.createChatSession({
     model: aiSettings.model,
     system: context,
     temperature: aiSettings.temperature * 0.8, // Slightly lower temperature for more factual chat
+    baseURL: resolveApprovedBaseUrl(aiSettings.customBaseUrl, aiSettings.approvedEndpointOrigin),
   });
 };
 

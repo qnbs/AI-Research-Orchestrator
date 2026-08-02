@@ -5,7 +5,7 @@
 
 import type { ResearchReport } from '../types';
 import { applyCorpusCitationGrounding } from './citationGrounding';
-import { sanitizeGroundedSynthesis } from './groundedSynthesis';
+import { sanitizeGroundedSynthesis, sanitizeSynthesisForExport } from './groundedSynthesis';
 
 export interface ExportProvenanceResult {
   report: ResearchReport;
@@ -14,6 +14,7 @@ export interface ExportProvenanceResult {
   droppedRankedArticles: number;
   droppedClaims: number;
   invalidCitations: number;
+  uncitedParagraphsRemoved: number;
 }
 
 /** Sanitize report citations against ranked-article corpus before export. */
@@ -26,17 +27,24 @@ export const sanitizeReportForExport = (report: ResearchReport): ExportProvenanc
   );
 
   const claimGrounding = sanitizeGroundedSynthesis(report.groundedSynthesis, corpusPmids);
+  const synthesisSanitized = sanitizeSynthesisForExport(
+    report.synthesis,
+    claimGrounding.groundedSynthesis ?? report.groundedSynthesis,
+    corpusPmids,
+  );
 
   const sanitized =
     grounded.metrics.invalidCitations > 0 ||
     grounded.metrics.droppedRankedArticles > 0 ||
     grounded.metrics.emptyInsights > 0 ||
     claimGrounding.metrics.droppedClaims > 0 ||
-    claimGrounding.metrics.invalidCitations > 0;
+    claimGrounding.metrics.invalidCitations > 0 ||
+    synthesisSanitized.uncitedParagraphsRemoved > 0;
 
   return {
     report: {
       ...report,
+      synthesis: synthesisSanitized.synthesis,
       rankedArticles: grounded.rankedArticles,
       aiGeneratedInsights: grounded.insights,
       groundedSynthesis: claimGrounding.groundedSynthesis,
@@ -46,5 +54,6 @@ export const sanitizeReportForExport = (report: ResearchReport): ExportProvenanc
     droppedRankedArticles: grounded.metrics.droppedRankedArticles,
     droppedClaims: claimGrounding.metrics.droppedClaims,
     invalidCitations: grounded.metrics.invalidCitations + claimGrounding.metrics.invalidCitations,
+    uncitedParagraphsRemoved: synthesisSanitized.uncitedParagraphsRemoved,
   };
 };

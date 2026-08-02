@@ -60,4 +60,24 @@ describe('agentEval', () => {
     expect(results).toHaveLength(2);
     expect(passRate).toBe(0.5);
   });
+
+  it('validates PubMed query structure', () => {
+    const result = evaluateCase({
+      id: 'query-ok',
+      description: 'valid query',
+      actual: '(aspirin[Title]) AND ("RCT"[Publication Type])',
+      expect: { pubmedQuery: true },
+    });
+    expect(result.passed).toBe(true);
+  });
+
+  it('flags ranked articles outside corpus', () => {
+    const result = evaluateCase({
+      id: 'ranked-bad',
+      description: 'hallucinated pmid',
+      actual: { rankedArticles: [{ pmid: '999' }] },
+      expect: { rankedCorpusPmids: ['1', '2'] },
+    });
+    expect(result.passed).toBe(false);
+  });
 });

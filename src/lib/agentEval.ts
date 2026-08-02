@@ -1,16 +1,25 @@
 /**
- * Lightweight offline agent eval harness (P1-4).
+ * Offline agent eval harness (P1-4).
  * Scores structured Gemini-like outputs against golden fixtures without network calls.
  */
 
-import { measureCitationGrounding } from './citationGrounding';
+import { measureCitationGrounding, partitionCorpusCitations } from './citationGrounding';
+import type { GroundedSynthesis } from '../types';
+import { validatePubMedQuery } from './pubmedQueryValidator';
 
-export type EvalDimension = 'schema' | 'requiredFields' | 'citationGrounding' | 'length';
+export type EvalDimension =
+  | 'schema'
+  | 'requiredFields'
+  | 'citationGrounding'
+  | 'length'
+  | 'rankedCorpus'
+  | 'groundedSynthesis'
+  | 'pubmedQuery';
 
 export interface EvalCase {
   id: string;
   description: string;
-  /** Parsed model output (already JSON). */
+  /** Parsed model output (already JSON) or a query string for pubmedQuery dimension. */
   actual: unknown;
   /** Expected shape / constraints. */
   expect: {
@@ -18,6 +27,14 @@ export interface EvalCase {
     requiredKeys?: string[];
     /** PMIDs that must appear somewhere in JSON stringification when present. */
     mustCitePmids?: string[];
+    /** Corpus PMIDs every rankedArticles[].pmid must belong to. */
+    rankedCorpusPmids?: string[];
+    /** Minimum grounded claims with valid corpus PMIDs. */
+    minGroundedClaims?: number;
+    /** PubMed query string to validate structurally. */
+    pubmedQuery?: boolean;
+    /** When false, query must fail validation (default true). */
+    pubmedQueryValid?: boolean;
     minStringLength?: number;
     maxStringLength?: number;
     stringPath?: string;
@@ -70,6 +87,61 @@ export function evaluateCase(testCase: EvalCase): EvalCaseResult {
       dimension: 'requiredFields',
       passed: missing.length === 0,
       detail: missing.length ? `missing: ${missing.join(', ')}` : undefined,
+    });
+  }
+
+  if (exp.pubmedQuery) {
+    const query =
+      typeof actual === 'string' ? actual : ((actual as { query?: string })?.query ?? '');
+    const result = validatePubMedQuery(query);
+    const shouldBeValid = exp.pubmedQueryValid !== false;
+    const passed = result.valid === shouldBeValid;
+    dimensions.push({
+      dimension: 'pubmedQuery',
+      passed,
+      detail: passed ? undefined : result.errors.join(', ') || 'expected invalid query',
+    });
+  }
+
+  if (exp.rankedCorpusPmids?.length) {
+    const obj =
+      actual !== null && typeof actual === 'object' && !Array.isArray(actual)
+        ? (actual as Record<string, unknown>)
+        : null;
+    const ranked =
+      obj && Array.isArray(obj.rankedArticles) ? (obj.rankedArticles as { pmid?: string }[]) : [];
+    const corpus = new Set(exp.rankedCorpusPmids);
+    const invalid = ranked.filter((r) => r.pmid && !corpus.has(r.pmid));
+    dimensions.push({
+      dimension: 'rankedCorpus',
+      passed: invalid.length === 0,
+      detail: invalid.length
+        ? `out-of-corpus: ${invalid.map((r) => r.pmid).join(', ')}`
+        : undefined,
+    });
+  }
+
+  if (exp.minGroundedClaims != null) {
+    const obj =
+      actual !== null && typeof actual === 'object' && !Array.isArray(actual)
+        ? (actual as Record<string, unknown>)
+        : null;
+    const grounded = obj?.groundedSynthesis as GroundedSynthesis | undefined;
+    const ranked =
+      obj && Array.isArray(obj.rankedArticles) ? (obj.rankedArticles as { pmid?: string }[]) : [];
+    const corpus = new Set(ranked.map((r) => r.pmid).filter((id): id is string => !!id));
+    const claims = grounded?.claims ?? [];
+    const validClaims = claims.filter((c) => {
+      const { valid } = partitionCorpusCitations(corpus, c.pmids);
+      return valid.length > 0;
+    });
+    const passed = validClaims.length >= exp.minGroundedClaims;
+    dimensions.push({
+      dimension: 'groundedSynthesis',
+      passed,
+      detail: passed
+        ? undefined
+        : `validClaims=${validClaims.length} required>=${exp.minGroundedClaims}`,
     });
   }
 
@@ -144,4 +216,23 @@ export function runEvalSuite(cases: EvalCase[]): {
     results,
     passRate: cases.length === 0 ? 1 : passed / cases.length,
   };
+}
+
+/** CI gate: all fixtures must pass (used by check:agent-eval). */
+export function assertEvalSuitePasses(cases: EvalCase[]): void {
+  const { results, passRate } = runEvalSuite(cases);
+  if (passRate < 1) {
+    const failed = results.filter((r) => !r.passed);
+    throw new Error(
+      `agent-eval failed: ${failed
+        .map(
+          (f) =>
+            `${f.id} (${f.dimensions
+              .filter((d) => !d.passed)
+              .map((d) => d.dimension)
+              .join(',')})`,
+        )
+        .join('; ')}`,
+    );
+  }
 }

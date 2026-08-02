@@ -43,10 +43,17 @@ describe('resolveApprovedBaseUrl', () => {
     );
   });
 
+  it('throws when custom URL is set but not approved', () => {
+    expect(() => resolveApprovedBaseUrl('https://api.openai.com/v1', undefined)).toThrow(
+      /not approved/i,
+    );
+    expect(() => resolveApprovedBaseUrl('https://api.openai.com/v1', '')).toThrow(/not approved/i);
+  });
+
   it('throws when endpoint changed since approval', () => {
     expect(() =>
       resolveApprovedBaseUrl('https://openrouter.ai/api/v1', 'https://api.openai.com'),
-    ).toThrow(/changed since approval/);
+    ).toThrow(/not approved/i);
   });
 });
 

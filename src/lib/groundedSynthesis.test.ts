@@ -4,6 +4,7 @@ import {
   extractGroundedClaimsFromMarkdown,
   sanitizeGroundedClaims,
   sanitizeGroundedSynthesis,
+  sanitizeSynthesisForExport,
 } from './groundedSynthesis';
 
 describe('buildGroundedSynthesisFromExtractive', () => {
@@ -58,5 +59,20 @@ describe('sanitizeGroundedSynthesis', () => {
     );
     expect(groundedSynthesis).toBeUndefined();
     expect(metrics.droppedClaims).toBe(1);
+  });
+});
+
+describe('sanitizeSynthesisForExport', () => {
+  it('rebuilds synthesis from corpus-cited paragraphs only', () => {
+    const synthesis =
+      '## Findings\n\nDrug X reduced risk (PMID: 1).\n\nUncited speculation without PMID.';
+    const { synthesis: cleaned, uncitedParagraphsRemoved } = sanitizeSynthesisForExport(
+      synthesis,
+      undefined,
+      ['1'],
+    );
+    expect(cleaned).toContain('PMID: 1');
+    expect(cleaned).not.toContain('Uncited speculation');
+    expect(uncitedParagraphsRemoved).toBeGreaterThan(0);
   });
 });

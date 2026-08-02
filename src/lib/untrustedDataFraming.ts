@@ -16,10 +16,20 @@ export const UNTRUSTED_DATA_SYSTEM_RULE = [
 const BEGIN = '<<<UNTRUSTED_DATA';
 const END = '>>>END_UNTRUSTED_DATA';
 
+/** Strip delimiter-like sequences so adversarial payloads cannot break block boundaries. */
+export function escapeDelimiterPayload(text: string): string {
+  return text.replaceAll(BEGIN, '[DELIMITER_REMOVED]').replaceAll(END, '[DELIMITER_REMOVED]');
+}
+
+/** Append the untrusted-data system rule to a provider system preamble. */
+export function withUntrustedDataSystemRule(system: string): string {
+  return `${system} ${UNTRUSTED_DATA_SYSTEM_RULE}`;
+}
+
 /** Wrap sanitized text in explicit untrusted-data delimiters. */
 export function wrapUntrustedTextBlock(label: string, text: string, maxLen = 8000): string {
   const safeLabel = label.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 64);
-  const sanitized = sanitizePromptFragment(text, maxLen);
+  const sanitized = escapeDelimiterPayload(sanitizePromptFragment(text, maxLen));
   return `${BEGIN}:${safeLabel}\n${sanitized}\n${END}`;
 }
 

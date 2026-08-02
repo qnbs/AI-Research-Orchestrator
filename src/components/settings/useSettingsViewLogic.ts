@@ -9,6 +9,7 @@ import { useTranslation } from '../../hooks/useTranslation';
 import { exportHistoryToJson, exportKnowledgeBaseToJson } from '../../services/exportService';
 import { isKnowledgeBaseEntry } from '../../lib/knowledgeBaseValidation';
 import { safeLogError } from '../../lib/safeLog';
+import { validateCustomEndpointUrl, isOriginCspAllowed } from '../../lib/endpointPolicy';
 
 const isObject = (item: unknown): item is Record<string, unknown> => {
   return item !== null && typeof item === 'object' && !Array.isArray(item);
@@ -151,13 +152,23 @@ export const useSettingsViewLogic = (
   }, [isDirty]);
 
   // Purely derived from tempSettings - no need for its own state/effect.
-  const errors: { formDefaults?: string } = (() => {
+  const errors: { formDefaults?: string; endpoint?: string } = (() => {
     const maxScan = tempSettings.defaults.maxArticlesToScan;
     const topN = tempSettings.defaults.topNToSynthesize;
+    const next: { formDefaults?: string; endpoint?: string } = {};
     if (!Number.isFinite(maxScan) || !Number.isFinite(topN) || topN > maxScan) {
-      return { formDefaults: t('settings.error.form_defaults') };
+      next.formDefaults = t('settings.error.form_defaults');
     }
-    return {};
+    const customUrl = tempSettings.ai.customBaseUrl?.trim();
+    if (customUrl) {
+      const parsed = validateCustomEndpointUrl(customUrl);
+      if (parsed.ok && isOriginCspAllowed(parsed.origin)) {
+        if (tempSettings.ai.approvedEndpointOrigin !== parsed.origin) {
+          next.endpoint = t('settings.error.endpoint_not_approved');
+        }
+      }
+    }
+    return next;
   })();
 
   const hasErrors = useMemo(() => Object.keys(errors).length > 0, [errors]);

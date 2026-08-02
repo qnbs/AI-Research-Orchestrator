@@ -94,6 +94,44 @@ export function sanitizeGroundedClaims(
   return { claims: sanitized, metrics: { droppedClaims, invalidCitations } };
 }
 
+/** Rebuild markdown synthesis from corpus-bound claims (export-safe). */
+export function rebuildSynthesisFromClaims(claims: readonly GroundedClaim[]): string {
+  return claims.map((c) => c.text).join('\n\n');
+}
+
+/**
+ * Replace free-form synthesis with corpus-cited paragraphs only.
+ * Uses structured claims when present; otherwise extracts PMIDs from markdown.
+ */
+export function sanitizeSynthesisForExport(
+  synthesis: string,
+  groundedSynthesis: GroundedSynthesis | undefined,
+  corpusPmids: readonly string[],
+): { synthesis: string; uncitedParagraphsRemoved: number } {
+  const corpusIds = new Set(corpusPmids);
+  const claimResult = sanitizeGroundedSynthesis(groundedSynthesis, corpusPmids);
+  let claims = claimResult.groundedSynthesis?.claims;
+  if (!claims?.length) {
+    claims = sanitizeGroundedClaims(
+      extractGroundedClaimsFromMarkdown(synthesis, corpusPmids),
+      corpusIds,
+    ).claims;
+  }
+  if (!claims.length) {
+    return { synthesis, uncitedParagraphsRemoved: 0 };
+  }
+
+  const originalBlocks = synthesis
+    .split(/\n\n+/)
+    .map((b) => b.trim())
+    .filter(Boolean).length;
+  const rebuilt = rebuildSynthesisFromClaims(claims);
+  return {
+    synthesis: rebuilt,
+    uncitedParagraphsRemoved: Math.max(0, originalBlocks - claims.length),
+  };
+}
+
 /** Sanitize optional grounded synthesis against a retrieval corpus. */
 export function sanitizeGroundedSynthesis(
   grounded: GroundedSynthesis | undefined,

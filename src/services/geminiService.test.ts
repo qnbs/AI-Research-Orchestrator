@@ -185,6 +185,19 @@ describe('geminiService with mocked SDK', () => {
     hoisted.generateContent.mockResolvedValue({
       text: JSON.stringify([{ pmid: '1', title: 'x', reason: 'y' }]),
     });
+    mockPubMed.fetchArticleDetails.mockResolvedValueOnce([
+      {
+        pmid: '1',
+        title: 'x',
+        summary: 'S',
+        authors: 'A',
+        journal: 'J',
+        pubYear: '2020',
+        keywords: [],
+        relevanceScore: 0,
+        relevanceExplanation: '',
+      },
+    ]);
     const out = await findSimilarArticles({ title: 't', summary: 's' }, mockAi);
     expect(out).toHaveLength(1);
     expect(out[0].pmid).toBe('1');

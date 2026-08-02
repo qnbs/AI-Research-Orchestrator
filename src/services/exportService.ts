@@ -544,7 +544,14 @@ const createJsonExport = <T>(data: T, type: string, count: number) => {
 };
 
 export const exportHistoryToJson = (entries: KnowledgeBaseEntry[]): void => {
-  createJsonExport(entries, 'history', entries.length);
+  const sanitized = entries.map((entry) => {
+    if (entry.sourceType === 'research' && entry.report) {
+      const { report } = sanitizeReportForExport(entry.report);
+      return { ...entry, report };
+    }
+    return entry;
+  });
+  createJsonExport(sanitized, 'history', sanitized.length);
 };
 
 export const exportKnowledgeBaseToJson = (articles: AggregatedArticle[]): void => {
