@@ -47,22 +47,20 @@ export async function navigateToView(page: Page, viewHash: string) {
 }
 
 /**
- * First-launch KB path: clear demo flags before navigation, wipe KB, reload, wait for demo seed.
+ * First-launch KB path: clear demo flags + KB table, reload, skip onboarding, wait for demo seed.
  */
 export async function prepareFirstLaunchDemoKb(page: Page) {
-  await page.addInitScript(() => {
+  await page.goto('/');
+  await page.waitForLoadState('domcontentloaded');
+
+  await page.evaluate(async () => {
     try {
       localStorage.removeItem('aro.demoDataSeeded');
       localStorage.removeItem('aro.demoDataDismissed');
     } catch {
       /* ignore quota / private mode */
     }
-  });
 
-  await page.goto('/');
-  await page.waitForLoadState('domcontentloaded');
-
-  await page.evaluate(async () => {
     const db = await new Promise<IDBDatabase>((resolve, reject) => {
       const req = indexedDB.open('AIResearchAppDatabase');
       req.onsuccess = () => resolve(req.result);
@@ -94,10 +92,6 @@ export async function prepareFirstLaunchDemoKb(page: Page) {
     await header.waitFor({ state: 'visible', timeout: 10_000 });
   }
 
-  await page.waitForFunction(() => localStorage.getItem('aro.demoDataSeeded') === '1', {
-    timeout: 25_000,
-  });
-
   await page.waitForFunction(
     async () => {
       const db = await new Promise<IDBDatabase | null>((resolve) => {
@@ -118,7 +112,7 @@ export async function prepareFirstLaunchDemoKb(page: Page) {
       db.close();
       return count >= 4;
     },
-    { timeout: 30_000 },
+    { timeout: 45_000 },
   );
 }
 

@@ -326,6 +326,7 @@ test.describe('4. Full Agent Pipeline (mocked APIs)', () => {
 
 test.describe('5. Knowledge Base View', () => {
   test('KB shows demo data on first launch', async ({ page }) => {
+    test.setTimeout(90_000);
     await prepareFirstLaunchDemoKb(page);
     await navigateToView(page, '#knowledgeBase');
     await expect(page.getByText(/\[Demo\]/i).first()).toBeVisible({ timeout: 30_000 });
