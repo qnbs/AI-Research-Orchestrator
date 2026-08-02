@@ -32,6 +32,8 @@ export interface RetrievalResult {
   arxivCount: number;
   /** API calls made (for rate limiting awareness). */
   apiCalls: number;
+  /** Non-abort retrieval errors swallowed while attempting sources (P0 quarantine). */
+  retrievalErrorCount?: number;
 }
 
 /** Ranking feature weights for BM25/TF-IDF hybrid. */

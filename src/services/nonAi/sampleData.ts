@@ -1,10 +1,8 @@
 /**
- * Curated demo corpus and offline/empty-result fallback data for the
- * Non-AI Programmatic Research Engine. Relocated from `services/heuristics/`
- * during the nonAi/heuristics consolidation (ADR 0009) - real consumers:
- * `useDemoKnowledgeBaseSeed.ts`, `KnowledgeBaseContext.tsx` (storage-key
- * constants), and `geminiService.ts`'s `analyzeSingleArticle` heuristic
- * branch (`resolveHeuristicArticleByPmid`).
+ * Curated educational demo corpus for the Non-AI Programmatic Research Engine.
+ * Synthetic fixtures only — never substituted for empty/failed PubMed/arXiv
+ * retrieval (ADR 0016). Consumers: explicit `educationalDemoMode`, first-run
+ * KB seed (`useDemoKnowledgeBaseSeed`), and offline article analysis helpers.
  */
 import type {
   KnowledgeBaseEntry,
@@ -34,9 +32,9 @@ export const DEMO_KB_UNIQUE_ARTICLE_COUNT = 5;
 export const DEMO_KB_ENTRY_COUNT = 4;
 
 /**
- * Curated educational article corpus used offline / when PubMed returns empty.
+ * Raw educational article fixtures (stamped as demo-synthetic on export).
  */
-export const DEMO_CORPUS: RankedArticle[] = [
+const DEMO_CORPUS_RAW: RankedArticle[] = [
   {
     pmid: 'demo:aspirin-cv-sr-2023',
     title: 'Aspirin for primary prevention of cardiovascular disease: an updated systematic review',
@@ -152,6 +150,19 @@ export const DEMO_CORPUS: RankedArticle[] = [
   },
 ];
 
+/** Educational demo fixtures — always stamped as synthetic (never retrieved literature). */
+export const DEMO_CORPUS: RankedArticle[] = DEMO_CORPUS_RAW.map((article) => {
+  const value = article.pmid.startsWith('demo:')
+    ? article.pmid.slice('demo:'.length)
+    : article.pmid;
+  return {
+    ...article,
+    sourceClass: 'demo-synthetic' as const,
+    articleId: { type: 'demo' as const, value },
+    pmid: article.pmid.startsWith('demo:') ? article.pmid : `demo:${article.pmid}`,
+  };
+});
+
 /**
  * Select demo corpus articles most relevant to a topic (for offline research runs).
  * Optionally applies dateRange / articleTypes filters from the research input.
@@ -191,7 +202,11 @@ export function isDemoPmid(pmid: string): boolean {
  */
 export function buildDemoResearchReport(topic: string): ResearchReport {
   const topArticles = getTopArticles(rankArticles(DEMO_CORPUS, topic), 5);
-  return generateResearchReport(topArticles, topic);
+  return {
+    ...generateResearchReport(topArticles, topic),
+    corpusClass: 'demo-only',
+    retrievalOutcome: 'educational_demo',
+  };
 }
 
 /**
@@ -207,6 +222,7 @@ export function createDemoKnowledgeBaseEntries(): KnowledgeBaseEntry[] {
     synthesisFocus: 'clinical implications',
     maxArticlesToScan: 50,
     topNToSynthesize: 5,
+    educationalDemoMode: true,
   };
 
   const researchEntry: ResearchEntry = {

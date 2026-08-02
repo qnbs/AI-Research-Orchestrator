@@ -18,7 +18,7 @@ import {
 } from './sourceIdentifier';
 
 describe('parseLegacyArticleKey', () => {
-  it('parses pmid, arxiv, doi, and pmcid prefixes', () => {
+  it('parses pmid, arxiv, doi, pmcid, and demo prefixes', () => {
     expect(parseLegacyArticleKey('12345')).toEqual({ type: 'pmid', value: '12345' });
     expect(parseLegacyArticleKey('arxiv:2301.99999')).toEqual({
       type: 'arxiv',
@@ -31,6 +31,10 @@ describe('parseLegacyArticleKey', () => {
     expect(parseLegacyArticleKey('pmcid:PMC1234567')).toEqual({
       type: 'pmcid',
       value: '1234567',
+    });
+    expect(parseLegacyArticleKey('demo:aspirin-cv-sr-2023')).toEqual({
+      type: 'demo',
+      value: 'aspirin-cv-sr-2023',
     });
   });
 
@@ -45,6 +49,16 @@ describe('canonicalArticleKey', () => {
     const arxiv = { type: 'arxiv' as const, value: '2301.99999' };
     expect(canonicalArticleKey(arxiv)).toBe('arxiv:2301.99999');
     expect(parseLegacyArticleKey(canonicalArticleKey(arxiv))).toEqual(arxiv);
+  });
+
+  it('does not map demo ids to PubMed URLs', () => {
+    const demo = { type: 'demo' as const, value: 'aspirin-cv-sr-2023' };
+    expect(canonicalArticleKey(demo)).toBe('demo:aspirin-cv-sr-2023');
+    expect(sourceIdentifierExternalUrl(demo)).toBe('');
+    expect(formatLegacyArticleKeyLabel('demo:aspirin-cv-sr-2023')).toBe(
+      'Demo ID: aspirin-cv-sr-2023',
+    );
+    expect(sourceIdentifierLabelKey(demo)).toBe('article.identifier.demo');
   });
 });
 

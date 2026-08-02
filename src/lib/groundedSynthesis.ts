@@ -43,7 +43,13 @@ export function buildGroundedSynthesisFromExtractive(
 /** Build trust-assessed grounded synthesis from live-extracted or template claims. */
 export function buildAssessedGroundedSynthesis(
   claims: GroundedClaim[],
-  corpusArticles: readonly { pmid: string; title: string; summary?: string; aiSummary?: string }[],
+  corpusArticles: readonly {
+    pmid: string;
+    title: string;
+    summary?: string;
+    aiSummary?: string;
+    sourceClass?: import('../types').ArticleSourceClass;
+  }[],
   mode: GroundedSynthesis['mode'],
 ): GroundedSynthesis | undefined {
   if (!claims.length) return undefined;
@@ -59,6 +65,7 @@ export function buildAssessedGroundedSynthesis(
     keywords: [],
     isOpenAccess: false,
     aiSummary: a.aiSummary,
+    sourceClass: a.sourceClass,
   }));
   const assessment = assessSynthesisTrust(claims, ranked, mode);
   return {

@@ -114,6 +114,86 @@ db.version(5)
     });
   });
 
+// Version 6: stamp demo-synthetic sourceClass / corpusClass on persisted demo fixtures (P0 quarantine)
+db.version(6)
+  .stores({
+    knowledgeBaseEntries: 'id, timestamp, sourceType, title',
+    settings: 'id',
+    presets: 'id',
+    collections: 'id, name, createdAt, updatedAt',
+    researchCheckpoints: 'id, createdAt, topic, reason',
+  })
+  .upgrade(async (tx) => {
+    const stampDemoArticle = <
+      T extends { pmid?: string; sourceClass?: string; articleId?: unknown },
+    >(
+      article: T,
+    ): T => {
+      if (typeof article.pmid !== 'string' || !article.pmid.startsWith('demo:')) return article;
+      const value = article.pmid.slice('demo:'.length);
+      return {
+        ...article,
+        sourceClass: 'demo-synthetic',
+        articleId: { type: 'demo', value },
+      };
+    };
+
+    const kbTable = tx.table('knowledgeBaseEntries');
+    await kbTable.toCollection().modify((entry) => {
+      try {
+        const e = entry as KnowledgeBaseEntry;
+        if (Array.isArray(e.articles)) {
+          e.articles = e.articles.map((a) => stampDemoArticle(a));
+        }
+        if (e.sourceType === 'research' && e.report) {
+          if (Array.isArray(e.report.rankedArticles)) {
+            e.report.rankedArticles = e.report.rankedArticles.map((a) => stampDemoArticle(a));
+          }
+          const allDemo =
+            e.report.rankedArticles.length > 0 &&
+            e.report.rankedArticles.every(
+              (a) => a.sourceClass === 'demo-synthetic' || a.pmid.startsWith('demo:'),
+            );
+          if (allDemo) {
+            e.report.corpusClass = 'demo-only';
+            e.report.retrievalOutcome = 'educational_demo';
+            if (e.report.groundedSynthesis?.trustLevel === 'verified') {
+              e.report.groundedSynthesis = {
+                ...e.report.groundedSynthesis,
+                trustLevel: 'narrative-draft',
+              };
+            }
+          }
+          if (e.input && e.id.startsWith('demo-')) {
+            e.input = { ...e.input, educationalDemoMode: true };
+          }
+        }
+      } catch (err) {
+        safeLogError('Dexie v6: skip demo sourceClass stamp', err);
+      }
+    });
+
+    const checkpointTable = tx.table('researchCheckpoints');
+    await checkpointTable.toCollection().modify((checkpoint) => {
+      try {
+        const ckpt = checkpoint as ResearchCheckpoint;
+        if (!ckpt.report?.rankedArticles) return;
+        ckpt.report.rankedArticles = ckpt.report.rankedArticles.map((a) => stampDemoArticle(a));
+        const allDemo =
+          ckpt.report.rankedArticles.length > 0 &&
+          ckpt.report.rankedArticles.every(
+            (a) => a.sourceClass === 'demo-synthetic' || a.pmid.startsWith('demo:'),
+          );
+        if (allDemo) {
+          ckpt.report.corpusClass = 'demo-only';
+          ckpt.report.retrievalOutcome = 'educational_demo';
+        }
+      } catch (err) {
+        safeLogError('Dexie v6: skip checkpoint demo stamp', err);
+      }
+    });
+  });
+
 // --- KnowledgeBaseEntry Operations ---
 /** Newest-first list of all knowledge-base entries. */
 export const getAllEntries = () => db.knowledgeBaseEntries.orderBy('timestamp').reverse().toArray();

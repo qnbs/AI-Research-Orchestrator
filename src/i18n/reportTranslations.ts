@@ -53,7 +53,12 @@ export const reportTranslations = {
     'report.copyType.arxiv': 'arXiv ID',
     'report.copyType.doi': 'DOI',
     'report.copyType.pmcid': 'PMCID',
+    'report.copyType.demo': 'Demo ID',
     'report.copyType.citation': 'Citation',
+    'report.demoCorpus.banner':
+      'SYNTHETIC EDUCATIONAL DEMO — NOT RETRIEVED LITERATURE. These records are local fixtures, not PubMed or arXiv results.',
+    'report.emptyRetrieval.banner':
+      'No retrieved literature in this report. Empty or failed search — demo fixtures were not substituted.',
     'report.saveModal.title': 'Save Report',
     'report.saveModal.message': 'Are you sure you want to save this report to your Knowledge Base?',
     'report.saveModal.confirm': 'Save',
@@ -116,7 +121,12 @@ export const reportTranslations = {
     'report.copyType.arxiv': 'arXiv-ID',
     'report.copyType.doi': 'DOI',
     'report.copyType.pmcid': 'PMCID',
+    'report.copyType.demo': 'Demo-ID',
     'report.copyType.citation': 'Zitation',
+    'report.demoCorpus.banner':
+      'SYNTHETISCHE BILDUNGS-DEMO — KEINE ABGERUFENE LITERATUR. Diese Einträge sind lokale Fixtures, keine PubMed- oder arXiv-Ergebnisse.',
+    'report.emptyRetrieval.banner':
+      'Keine abgerufene Literatur in diesem Bericht. Leere oder fehlgeschlagene Suche — Demo-Fixtures wurden nicht substituiert.',
     'report.saveModal.title': 'Bericht speichern',
     'report.saveModal.message':
       'Möchten Sie diesen Bericht wirklich in Ihrer Knowledge Base speichern?',

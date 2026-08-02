@@ -17,8 +17,17 @@ export interface ExportProvenanceResult {
   uncitedParagraphsRemoved: number;
 }
 
+const DEMO_EXPORT_WATERMARK = 'SYNTHETIC EDUCATIONAL DEMO — NOT RETRIEVED LITERATURE.\n\n';
+
 /** Sanitize report citations against ranked-article corpus before export. */
 export const sanitizeReportForExport = (report: ResearchReport): ExportProvenanceResult => {
+  const isDemo =
+    report.corpusClass === 'demo-only' ||
+    report.retrievalOutcome === 'educational_demo' ||
+    report.rankedArticles.some(
+      (a) => a.sourceClass === 'demo-synthetic' || a.pmid.startsWith('demo:'),
+    );
+
   const corpusPmids = report.rankedArticles.map((a) => a.pmid);
   const grounded = applyCorpusCitationGrounding(
     corpusPmids,
@@ -27,11 +36,21 @@ export const sanitizeReportForExport = (report: ResearchReport): ExportProvenanc
   );
 
   const claimGrounding = sanitizeGroundedSynthesis(report.groundedSynthesis, corpusPmids);
+  let groundedSynthesis = claimGrounding.groundedSynthesis;
+  if (isDemo && groundedSynthesis?.trustLevel === 'verified') {
+    groundedSynthesis = { ...groundedSynthesis, trustLevel: 'narrative-draft' };
+  }
+
   const synthesisSanitized = sanitizeSynthesisForExport(
     report.synthesis,
-    claimGrounding.groundedSynthesis ?? report.groundedSynthesis,
+    groundedSynthesis ?? report.groundedSynthesis,
     corpusPmids,
   );
+
+  let synthesis = synthesisSanitized.synthesis;
+  if (isDemo && !synthesis.startsWith('SYNTHETIC EDUCATIONAL DEMO')) {
+    synthesis = `${DEMO_EXPORT_WATERMARK}${synthesis}`;
+  }
 
   const sanitized =
     grounded.metrics.invalidCitations > 0 ||
@@ -40,15 +59,18 @@ export const sanitizeReportForExport = (report: ResearchReport): ExportProvenanc
     claimGrounding.metrics.droppedClaims > 0 ||
     claimGrounding.metrics.invalidCitations > 0 ||
     synthesisSanitized.uncitedParagraphsRemoved > 0 ||
-    synthesisSanitized.synthesis !== report.synthesis;
+    synthesis !== report.synthesis ||
+    isDemo;
 
   return {
     report: {
       ...report,
-      synthesis: synthesisSanitized.synthesis,
+      synthesis,
       rankedArticles: grounded.rankedArticles,
       aiGeneratedInsights: grounded.insights,
-      groundedSynthesis: claimGrounding.groundedSynthesis,
+      groundedSynthesis,
+      corpusClass: isDemo ? 'demo-only' : report.corpusClass,
+      retrievalOutcome: isDemo ? 'educational_demo' : report.retrievalOutcome,
     },
     sanitized,
     droppedInsights: grounded.metrics.emptyInsights,

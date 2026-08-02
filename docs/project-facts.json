@@ -60,7 +60,7 @@
   "release": {
     "policyPath": "docs/release-policy.md",
     "packageVersion": "0.4.1",
-    "dexieSchemaVersion": 5,
+    "dexieSchemaVersion": 6,
     "swCacheVersion": "v1"
   },
   "sourceIdentifiers": ["pmid", "pmc", "doi", "arxiv"],

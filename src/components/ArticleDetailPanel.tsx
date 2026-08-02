@@ -245,14 +245,22 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({
                 ({article.pubYear})
               </p>
               <div className="mt-3 text-xs text-text-secondary flex items-center gap-4">
-                <a
-                  href={articleExternalUrl(article)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-brand-accent transition-colors"
-                >
-                  {t(sourceIdentifierLabelKey(articleId))}: {formatSourceIdentifierValue(articleId)}
-                </a>
+                {articleExternalUrl(article) ? (
+                  <a
+                    href={articleExternalUrl(article)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-brand-accent transition-colors"
+                  >
+                    {t(sourceIdentifierLabelKey(articleId))}:{' '}
+                    {formatSourceIdentifierValue(articleId)}
+                  </a>
+                ) : (
+                  <span>
+                    {t(sourceIdentifierLabelKey(articleId))}:{' '}
+                    {formatSourceIdentifierValue(articleId)}
+                  </span>
+                )}
                 {article.pmcId && articleId.type !== 'pmcid' && (
                   <a
                     href={sourceIdentifierExternalUrl({

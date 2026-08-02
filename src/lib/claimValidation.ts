@@ -128,6 +128,21 @@ export function assessSynthesisTrust(
   const validated = claims.map((c) => validateClaimAgainstCorpus(c, corpusArticles));
   const metrics = computeClaimTrustMetrics(validated, corpusArticles);
 
+  // Synthetic demo fixtures must never receive a UI "verified" trust label.
+  const demoCorpus = corpusArticles.some(
+    (a) => a.sourceClass === 'demo-synthetic' || a.pmid.startsWith('demo:'),
+  );
+  if (demoCorpus) {
+    const demoted = validated.map((c) =>
+      c.validationState === 'verified' ? { ...c, validationState: 'unverified' as const } : c,
+    );
+    return {
+      claims: demoted,
+      trustLevel: 'narrative-draft',
+      metrics: computeClaimTrustMetrics(demoted, corpusArticles),
+    };
+  }
+
   const allVerified =
     validated.length > 0 && validated.every((c) => c.validationState === 'verified');
   const trustLevel: SynthesisTrustLevel =
