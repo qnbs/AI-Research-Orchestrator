@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **CI hygiene:** removed SonarQube Cloud integration entirely; disabled DeepSource JavaScript analyzer (Docker/Shell advisory only).
+- **PR #161 follow-up:** stable React keys for author clusters and report insights; explicit `$` currency marker in orchestrator cost preflight strings (EN+DE); reconciled DeepSource JavaScript documentation with `.deepsource.toml`.
 
 - **DeepSource root causes:** i18n `{usd}`/`{tier}` placeholders, stable React list keys, removed deprecated install-prompt snapshot API, unnecessary `async` in vault helpers; tightened `.deepsource.toml` excludes (`docs/deepsource-disposition.md`).
 

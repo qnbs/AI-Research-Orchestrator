@@ -1,12 +1,13 @@
 # DeepSource setup notes
 
-## JavaScript analyzer (optional)
+## JavaScript analyzer
 
-If the **DeepSource: JavaScript** GitHub check stays red despite `.deepsource.toml`:
+The JavaScript analyzer is **enabled** in `.deepsource.toml` with excludes for:
 
-1. Open [DeepSource dashboard](https://app.deepsource.com/gh/qnbs/AI-Research-Orchestrator) → **Settings** → **Code Review**.
-2. **Disable the JavaScript analyzer** (or remove it from required checks in GitHub branch protection).
-3. Keep **Docker** and **Shell** if desired — both pass cleanly.
+- `scripts/**` — Node maintenance `.mjs` (parse as script, not ESM modules)
+- `public/**` — service-worker bundles (Workbox global false positives)
+
+If the **DeepSource: JavaScript** GitHub check stays red on excluded paths, verify excludes in the dashboard match `.deepsource.toml` before disabling the analyzer.
 
 ## Authoritative JS/TS gates
 

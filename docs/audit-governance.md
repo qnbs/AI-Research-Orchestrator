@@ -6,20 +6,20 @@ security gates so future PRs do not re-litigate the same trade-offs.
 
 ## Coverage and static analysis posture
 
-| Gate                                     | Where                                  | Blocking?      | Notes                                                                                |
-| ---------------------------------------- | -------------------------------------- | -------------- | ------------------------------------------------------------------------------------ |
-| Typecheck / lint / unit tests + coverage | `deploy.yml`                           | **Yes**        | `pnpm run test:coverage` — 80% lines/statements on `store`/`services`/`hooks`/`lib`  |
-| Critical-path coverage floors            | `deploy.yml` → `check:coverage-floors` | **Yes**        | Ratchet on `providers/`, `geminiService.ts`, `apiKeyService.ts`                      |
-| CodeQL                                   | `security.yml`                         | **Yes**        | `security-extended` query set                                                        |
-| DeepSource (Docker/Shell)                | GitHub App check                       | Advisory       | JavaScript analyzer disabled — ESLint + CI gates cover TS/TSX                        |
-| Deployment record pruning                | `deploy.yml` + `prune-deployments.yml` | **Yes** (main) | Keep latest 3 `github-pages` deployments per environment; weekly/dispatch safety net |
-| CodeAnt / Semgrep / gitleaks             | GitHub App checks                      | Mixed          | See workflow outputs per PR                                                          |
+| Gate                                     | Where                                  | Blocking?      | Notes                                                                                      |
+| ---------------------------------------- | -------------------------------------- | -------------- | ------------------------------------------------------------------------------------------ |
+| Typecheck / lint / unit tests + coverage | `deploy.yml`                           | **Yes**        | `pnpm run test:coverage` — 80% lines/statements on `store`/`services`/`hooks`/`lib`        |
+| Critical-path coverage floors            | `deploy.yml` → `check:coverage-floors` | **Yes**        | Ratchet on `providers/`, `geminiService.ts`, `apiKeyService.ts`                            |
+| CodeQL                                   | `security.yml`                         | **Yes**        | `security-extended` query set                                                              |
+| DeepSource (Docker/Shell/JS)             | GitHub App check                       | Advisory       | JS enabled with `scripts/**` + `public/**` excludes; ESLint + deploy.yml are authoritative |
+| Deployment record pruning                | `deploy.yml` + `prune-deployments.yml` | **Yes** (main) | Keep latest 3 `github-pages` deployments per environment; weekly/dispatch safety net       |
+| CodeAnt / Semgrep / gitleaks             | GitHub App checks                      | Mixed          | See workflow outputs per PR                                                                |
 
 **Coverage scope:** Vitest gates logic layers (`src/store`, `src/services`, `src/hooks`, `src/lib`). UI views are covered by Playwright E2E instead.
 
 ### Known false positives / external failures
 
-- **DeepSource JavaScript:** analyzer **disabled** in `.deepsource.toml` (persistent ESM/TS false positives). Docker/Shell remain advisory; ESLint + deploy.yml gates are authoritative.
+- **DeepSource JavaScript:** analyzer **enabled** in `.deepsource.toml` with excludes for Node maintenance scripts (`scripts/**`) and service-worker bundles (`public/**`) where ESM/Workbox parsing produces false positives. Treat as advisory; ESLint + `deploy.yml` gates are authoritative for TS/TSX. Docker/Shell remain advisory.
 - **Claude Code Review** workflow may fail on infrastructure — re-run or ignore if no actionable inline threads.
 
 ## `pnpm audit` governance
