@@ -55,26 +55,28 @@ describe('service worker integrity', () => {
     const messageListenerSites = [...swSource.matchAll(/addEventListener\('message',/g)];
     expect(messageListenerSites.length).toBeGreaterThan(0);
     const messageListenerBodies = messageListenerSites.map((site) =>
-      extractBalancedBody(swSource, site.index! + site[0].length),
+      extractBalancedBody(swSource, site.index != null ? site.index + site[0].length : 0),
     );
 
     const skipWaitingCalls = [...swSource.matchAll(/self\.skipWaiting\(\)/g)];
     expect(skipWaitingCalls.length).toBeGreaterThan(0);
     for (const call of skipWaitingCalls) {
       const enclosingBody = messageListenerBodies.find(
-        (b) => call.index! >= b.start && call.index! < b.end,
+        (b) => call.index != null && call.index >= b.start && call.index < b.end,
       );
       expect(enclosingBody).toBeDefined();
       // ...and still gated by an `if` within that same body, not fired as
       // soon as any message arrives regardless of type.
-      expect(enclosingBody!.body).toMatch(/if\s*\(/);
+      expect(enclosingBody ? enclosingBody.body : '').toMatch(/if\s*\(/);
     }
   });
 
   it('versions every runtime cache name', () => {
     const cacheNamesBlock = swSource.match(/const CACHE_NAMES = \{([\s\S]*?)\};/);
     expect(cacheNamesBlock).not.toBeNull();
-    const entries = [...cacheNamesBlock![1].matchAll(/:\s*`([^`]+)`/g)].map((m) => m[1]);
+    const entries = cacheNamesBlock
+      ? [...cacheNamesBlock[1].matchAll(/:\s*`([^`]+)`/g)].map((m) => m[1])
+      : [];
     expect(entries.length).toBeGreaterThan(0);
     for (const entry of entries) {
       expect(entry).toMatch(/\$\{CACHE_VERSION\}$/);
@@ -150,7 +152,7 @@ describe('service worker integrity', () => {
   it('CSP worker-src is free of external hosts', () => {
     const cspMatch = indexHtml.match(/worker-src\s+([^;]+);/);
     expect(cspMatch).not.toBeNull();
-    const sources = cspMatch![1].trim().split(/\s+/);
+    const sources = cspMatch ? cspMatch[1].trim().split(/\s+/) : [];
     for (const source of sources) {
       expect(source).not.toMatch(/^https?:\/\//);
     }
