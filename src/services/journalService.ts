@@ -18,7 +18,7 @@ import { safeLogError } from '../lib/safeLog';
 export const findArticlesInJournal = async (
   journalName: string,
   topic: string,
-  onlyOa: boolean = true,
+  onlyOa = true,
   signal?: AbortSignal,
 ): Promise<Article[]> => {
   let query = `"${journalName}"[Journal]`;

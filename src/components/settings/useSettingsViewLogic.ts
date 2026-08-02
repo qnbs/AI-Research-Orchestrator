@@ -88,7 +88,7 @@ export const useSettingsViewLogic = (
 
   useEffect(() => {
     const calculateUsage = async () => {
-      if (navigator.storage && navigator.storage.estimate) {
+      if (navigator.storage?.estimate) {
         const { usage, quota } = await navigator.storage.estimate();
         if (usage && quota && isMounted.current) {
           const totalMB = (usage / (1024 * 1024)).toFixed(2);

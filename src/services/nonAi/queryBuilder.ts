@@ -140,7 +140,7 @@ export function buildQuery(topic: string, options: QueryBuildOptions = {}): Buil
 /**
  * Build multiple queries for a research topic (for broader coverage).
  */
-export function buildMultipleQueries(topic: string, count: number = 3): BuiltQuery[] {
+export function buildMultipleQueries(topic: string, count = 3): BuiltQuery[] {
   const queries: BuiltQuery[] = [];
 
   // Primary query with MeSH
