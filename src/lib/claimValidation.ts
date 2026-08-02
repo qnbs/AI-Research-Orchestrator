@@ -10,6 +10,7 @@ import type {
   SynthesisTrustLevel,
 } from '../types';
 import { partitionCorpusCitations } from './citationGrounding';
+import { corpusKeysFromArticles } from './sourceIdentifier';
 
 export type ClaimTrustMetrics = {
   totalClaims: number;
@@ -68,7 +69,7 @@ export function validateClaimAgainstCorpus(
   claim: GroundedClaim,
   corpusArticles: readonly RankedArticle[],
 ): ValidatedClaimResult {
-  const corpusIds = new Set(corpusArticles.map((a) => a.pmid));
+  const corpusIds = corpusKeysFromArticles(corpusArticles);
   const { valid, invalid } = partitionCorpusCitations(corpusIds, claim.pmids);
   const id = claim.id ?? stableClaimId(claim.text, valid);
 
@@ -134,7 +135,7 @@ export function computeClaimTrustMetrics(
   claims: readonly ValidatedClaimResult[],
   corpusArticles: readonly RankedArticle[],
 ): ClaimTrustMetrics {
-  const corpusIds = new Set(corpusArticles.map((a) => a.pmid));
+  const corpusIds = corpusKeysFromArticles(corpusArticles);
   let invalidCitationCount = 0;
   let verifiedClaims = 0;
   let unverifiedClaims = 0;

@@ -22,6 +22,7 @@ import { ChatInterface } from './ChatInterface';
 import { ChatBubbleLeftRightIcon } from './icons/ChatBubbleLeftRightIcon';
 import { ReportArticleCard } from './ReportArticleCard';
 import { stableInsightKey } from '../lib/stableReactKeys';
+import { formatLegacyArticleKeyLabel, legacyArticleKeyUrl } from '../lib/sourceIdentifier';
 import {
   BarChart,
   Bar,
@@ -380,13 +381,13 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(function R
                     <div className="flex flex-wrap gap-x-3 gap-y-1 items-center">
                       {(insight.supportingArticles || []).map((pmid) => (
                         <a
-                          href={`https://pubmed.ncbi.nlm.nih.gov/${pmid}/`}
+                          href={legacyArticleKeyUrl(pmid)}
                           target="_blank"
                           rel="noopener noreferrer"
                           key={pmid}
                           className="text-xs text-text-secondary hover:text-brand-accent hover:underline"
                         >
-                          {pmid}
+                          {formatLegacyArticleKeyLabel(pmid)}
                         </a>
                       ))}
                     </div>

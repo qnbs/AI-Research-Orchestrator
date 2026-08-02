@@ -18,7 +18,12 @@ const isValidGroundedClaim = (claim: unknown): boolean =>
   isPlainObject(claim) &&
   typeof claim.text === 'string' &&
   Array.isArray(claim.pmids) &&
-  claim.pmids.every((id) => typeof id === 'string');
+  claim.pmids.every((id) => typeof id === 'string') &&
+  (claim.articleIds === undefined ||
+    (Array.isArray(claim.articleIds) &&
+      claim.articleIds.every(
+        (id) => isPlainObject(id) && typeof id.type === 'string' && typeof id.value === 'string',
+      )));
 
 const isValidGroundedSynthesis = (grounded: unknown): boolean =>
   isPlainObject(grounded) &&

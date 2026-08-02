@@ -1,6 +1,13 @@
 import Dexie, { type Table } from 'dexie';
-import type { KnowledgeBaseEntry, Settings, Preset, ResearchCollection } from '../types';
+import type {
+  KnowledgeBaseEntry,
+  Settings,
+  Preset,
+  ResearchCollection,
+  ResearchReport,
+} from '../types';
 import type { ResearchCheckpoint } from '../lib/researchCheckpoint';
+import { ensureArticleIdentifiers, ensureGroundedClaim } from '../lib/sourceIdentifier';
 
 export const db = new Dexie('AIResearchAppDatabase') as Dexie & {
   knowledgeBaseEntries: Table<KnowledgeBaseEntry, string>;
@@ -36,6 +43,53 @@ db.version(4)
     researchCheckpoints: 'id, createdAt, topic, reason',
   })
   .upgrade(() => Promise.resolve());
+
+const hydrateResearchReport = (report: ResearchReport): ResearchReport => ({
+  ...report,
+  rankedArticles: report.rankedArticles.map((article) => ensureArticleIdentifiers(article)),
+  groundedSynthesis: report.groundedSynthesis
+    ? {
+        ...report.groundedSynthesis,
+        claims: report.groundedSynthesis.claims.map((claim) => ensureGroundedClaim(claim)),
+      }
+    : undefined,
+});
+
+const hydrateKnowledgeBaseEntry = (entry: KnowledgeBaseEntry): KnowledgeBaseEntry => {
+  const articles = entry.articles.map((article) => ensureArticleIdentifiers(article));
+  if (entry.sourceType === 'research') {
+    return {
+      ...entry,
+      articles,
+      report: hydrateResearchReport(entry.report),
+    };
+  }
+  return { ...entry, articles };
+};
+
+// Version 5: hydrate typed articleId on persisted articles and grounded claims (P1-5)
+db.version(5)
+  .stores({
+    knowledgeBaseEntries: 'id, timestamp, sourceType, title',
+    settings: 'id',
+    presets: 'id',
+    collections: 'id, name, createdAt, updatedAt',
+    researchCheckpoints: 'id, createdAt, topic, reason',
+  })
+  .upgrade(async (tx) => {
+    const kbTable = tx.table('knowledgeBaseEntries');
+    await kbTable.toCollection().modify((entry) => {
+      const hydrated = hydrateKnowledgeBaseEntry(entry as KnowledgeBaseEntry);
+      Object.assign(entry, hydrated);
+    });
+
+    const checkpointTable = tx.table('researchCheckpoints');
+    await checkpointTable.toCollection().modify((checkpoint) => {
+      const ckpt = checkpoint as ResearchCheckpoint;
+      if (!ckpt.report) return;
+      ckpt.report = hydrateResearchReport(ckpt.report);
+    });
+  });
 
 // --- KnowledgeBaseEntry Operations ---
 /** Newest-first list of all knowledge-base entries. */

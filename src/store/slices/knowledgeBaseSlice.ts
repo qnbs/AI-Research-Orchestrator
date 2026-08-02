@@ -19,6 +19,7 @@ import {
   clearAllEntries,
   updateEntry,
 } from '../../services/databaseService';
+import { canonicalArticleKey, resolveArticleId } from '../../lib/sourceIdentifier';
 import type { RootState } from '../store';
 
 // --- Adapter for Normalized State ---
@@ -161,10 +162,11 @@ export const selectUniqueArticles = createSelector([selectAllEntries], (entries)
   const articleMap = new Map<string, AggregatedArticle>();
   entries.forEach((entry) => {
     entry.articles.forEach((article) => {
-      const existing = articleMap.get(article.pmid);
+      const key = canonicalArticleKey(resolveArticleId(article));
+      const existing = articleMap.get(key);
       // Keep the one with highest relevance
       if (!existing || article.relevanceScore > existing.relevanceScore) {
-        articleMap.set(article.pmid, { ...article, sourceId: entry.id, sourceTitle: entry.title });
+        articleMap.set(key, { ...article, sourceId: entry.id, sourceTitle: entry.title });
       }
     });
   });

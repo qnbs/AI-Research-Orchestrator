@@ -9,6 +9,12 @@ import { AcademicCapIcon } from './icons/AcademicCapIcon';
 import { RelevanceScoreDisplay } from './RelevanceScoreDisplay';
 import { useUI } from '../contexts/UIContext';
 import { useTranslation } from '../hooks/useTranslation';
+import {
+  articleExternalUrl,
+  canonicalArticleKey,
+  formatLegacyArticleKeyLabel,
+  resolveArticleId,
+} from '../lib/sourceIdentifier';
 
 const getSummaryLimit = () => {
   if (typeof window === 'undefined') return 250;
@@ -98,7 +104,10 @@ const ArticleExternalActions: React.FC<{
   const { t } = useTranslation();
   const googleScholarUrl = `https://scholar.google.com/scholar?q=${encodeURIComponent(article.title)}`;
   const semanticScholarUrl = `https://www.semanticscholar.org/search?q=${encodeURIComponent(article.title)}`;
-  const citation = `${article.authors}. (${article.pubYear}). ${article.title}. ${article.journal}. PMID: ${article.pmid}.`;
+  const identifierLabel = formatLegacyArticleKeyLabel(
+    canonicalArticleKey(resolveArticleId(article)),
+  );
+  const citation = `${article.authors}. (${article.pubYear}). ${article.title}. ${article.journal}. ${identifierLabel}.`;
 
   return (
     <div className="flex items-center gap-4 text-text-secondary">
@@ -122,7 +131,9 @@ const ArticleExternalActions: React.FC<{
       </a>
       <button
         type="button"
-        onClick={() => onCopy(article.pmid, t('report.copyType.pmid'))}
+        onClick={() =>
+          onCopy(canonicalArticleKey(resolveArticleId(article)), t('report.copyType.pmid'))
+        }
         className="flex items-center hover:text-brand-accent transition-colors"
         aria-label={t('report.article.copyPmidAria')}
       >
@@ -192,9 +203,7 @@ const resolveArticlePresentation = (
   summaryLabelAi: string,
   summaryLabelPlain: string,
 ) => {
-  const articleLink = article.pmcId
-    ? `https://www.ncbi.nlm.nih.gov/pmc/articles/${article.pmcId}/`
-    : `https://pubmed.ncbi.nlm.nih.gov/${article.pmid}/`;
+  const articleLink = articleExternalUrl(article);
   const summaryToDisplay = article.aiSummary || article.summary;
   const summaryLabel = article.aiSummary
     ? summaryLabelAi
