@@ -188,7 +188,7 @@ export function useResearchSession({
         const stream = generateResearchReportStream(data, aiSettings, streamSignal);
         let isFirstChunk = true;
 
-        for await (const { report: partialReport, synthesisChunk, phase } of stream) {
+        for await (const { report: partialReport, synthesisChunk, phase, promptBudget } of stream) {
           if (generationIdRef.current !== currentGenId) {
             streamAbortRef.current?.abort();
             return;
@@ -208,6 +208,7 @@ export function useResearchSession({
                 status: 'running',
                 message: phase,
                 startedAt: Date.now(),
+                metadata: promptBudget ? { promptBudget } : undefined,
               }),
             );
             prevAgent = currentAgent;

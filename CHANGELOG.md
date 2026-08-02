@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Service worker (P0-2):** NCBI requests with credential query params bypass Cache Storage; activate-time cleanup removes legacy keyed entries; documented in `SECURITY.md`.
+- **Prompt budget (P0-3):** lexical pre-filter + per-field bounding before JSON serialization; `wrapUntrustedJsonBlock` no longer truncates mid-JSON; Agent Debugger trace metadata records included/omitted corpus counts.
 
 - **DeepSource root causes:** i18n `{usd}`/`{tier}` placeholders, stable React list keys, removed deprecated install-prompt snapshot API, unnecessary `async` in vault helpers; tightened `.deepsource.toml` excludes (`docs/deepsource-disposition.md`).
 

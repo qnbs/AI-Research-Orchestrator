@@ -33,8 +33,8 @@ export function wrapUntrustedTextBlock(label: string, text: string, maxLen = 800
   return `${BEGIN}:${safeLabel}\n${sanitized}\n${END}`;
 }
 
-/** JSON-serialize and wrap structured untrusted data. */
-export function wrapUntrustedJsonBlock(label: string, data: unknown, maxLen = 12000): string {
+/** JSON-serialize and wrap structured untrusted data (caller must pre-bound payload size). */
+export function wrapUntrustedJsonBlock(label: string, data: unknown): string {
   const json = JSON.stringify(data) ?? '[]';
-  return wrapUntrustedTextBlock(label, json, maxLen);
+  return wrapUntrustedTextBlock(label, json, json.length + 256);
 }
