@@ -160,8 +160,8 @@ export function useResearchSession({
       });
       if (shouldWarnAboutResearchCost(costEstimate.estimatedUsd)) {
         const msg = t('orchestrator.cost_preflight')
-          .replace('${usd}', costEstimate.estimatedUsd.toFixed(3))
-          .replace('${tier}', costEstimate.tier);
+          .replace(`\${usd}`, costEstimate.estimatedUsd.toFixed(3))
+          .replace(`\${tier}`, costEstimate.tier);
         setNotification({
           id: Date.now(),
           type: 'success',

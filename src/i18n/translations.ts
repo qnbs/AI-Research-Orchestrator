@@ -116,7 +116,7 @@ export const translations = {
     'settings.cost.disclaimer':
       'Estimates use public list-price heuristics and typical prompt sizes. Actual usage varies.',
     'orchestrator.cost_preflight':
-      'Estimated Gemini usage ~${usd} (${tier}). This is an approximate pre-flight estimate.',
+      `Estimated Gemini usage ~${usd} (${tier}). This is an approximate pre-flight estimate.`,
     'charts.citations': 'Citations',
     'charts.no_citation_timeline': 'No citation timeline data available.',
     'charts.no_topic_data': 'No topic data available.',
@@ -410,7 +410,7 @@ export const translations = {
     'settings.cost.disclaimer':
       'Schätzungen nutzen öffentliche Listenpreise und typische Prompt-Größen. Der tatsächliche Verbrauch variiert.',
     'orchestrator.cost_preflight':
-      'Geschätzter Gemini-Verbrauch ~${usd} (${tier}). Ungefähre Pre-Flight-Schätzung.',
+      `Geschätzter Gemini-Verbrauch ~${usd} (${tier}). Ungefähre Pre-Flight-Schätzung.`,
     'charts.citations': 'Zitationen',
     'charts.no_citation_timeline': 'Keine Zitations-Zeitreihe verfügbar.',
     'charts.no_topic_data': 'Keine Themendaten verfügbar.',
