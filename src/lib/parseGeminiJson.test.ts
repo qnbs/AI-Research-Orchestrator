@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import * as safeLog from './safeLog';
 import { assertJsonRecord, GeminiJsonParseError, parseGeminiResponseJson } from './parseGeminiJson';
 
 describe('parseGeminiResponseJson', () => {
@@ -74,6 +75,16 @@ describe('parseGeminiResponseJson', () => {
   it('throws on truncated/interrupted JSON with no closing brace', () => {
     const text = 'Here is the JSON: { "a": 1, "b": { "c": 2';
     expect(() => parseGeminiResponseJson(text)).toThrow(GeminiJsonParseError);
+  });
+
+  it('logs critical parse failures in non-production environments', () => {
+    const safeLogErrorSpy = vi.spyOn(safeLog, 'safeLogError').mockImplementation(() => {});
+    expect(() => parseGeminiResponseJson('not json at all')).toThrow(GeminiJsonParseError);
+    expect(safeLogErrorSpy).toHaveBeenCalledWith(
+      'CRITICAL: Could not parse JSON from AI response.',
+      'not json at all',
+    );
+    safeLogErrorSpy.mockRestore();
   });
 
   it('attaches a truncated rawPreview on failure for long unparsable text', () => {
