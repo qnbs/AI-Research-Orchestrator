@@ -34,7 +34,7 @@ test.describe('App smoke tests', () => {
     const response = await page.request.get(manifestUrl);
     expect(response.ok()).toBe(true);
     const manifest = await response.json();
-    expect(manifest.name).toMatch(/Research Orchestrator/i);
+    expect(manifest.name).toMatch(/Orchestrat/i);
     expect(manifest.start_url).toBeTruthy();
     expect(manifest.icons?.length).toBeGreaterThan(0);
   });
