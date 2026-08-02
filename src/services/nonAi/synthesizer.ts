@@ -103,7 +103,7 @@ export async function* streamSynthesisChunks(
 export function generateExtractiveTldr(
   articles: RankedArticle[],
   query: string,
-  maxSentences: number = 5,
+  maxSentences = 5,
 ): ExtractiveSynthesis {
   const queryTokens = tokenize(query, 'en');
   const sentences: Array<{
