@@ -18,12 +18,12 @@ const MODULE_FLOORS = [
     id: 'providers',
     pathPattern: /\/src\/services\/providers\//,
     aggregate: true,
-    min: { lines: 61, statements: 58, branches: 51, functions: 60 },
+    min: { lines: 85, statements: 82, branches: 70, functions: 85 },
   },
   {
     id: 'geminiService',
     pathPattern: /\/src\/services\/geminiService\.ts$/,
-    min: { lines: 61, statements: 61, branches: 48, functions: 70 },
+    min: { lines: 68, statements: 68, branches: 50, functions: 70 },
   },
   {
     id: 'apiKeyService',
