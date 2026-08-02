@@ -6,15 +6,17 @@ security gates so future PRs do not re-litigate the same trade-offs.
 
 ## Coverage and static analysis posture
 
-| Gate                                     | Where                                  | Blocking?      | Notes                                                                                      |
-| ---------------------------------------- | -------------------------------------- | -------------- | ------------------------------------------------------------------------------------------ |
-| Typecheck / lint / unit tests + coverage | `deploy.yml`                           | **Yes**        | `pnpm run test:coverage` — 80% lines/statements on `store`/`services`/`hooks`/`lib`        |
-| Prettier `format:check`                  | `deploy.yml`                           | **Yes**        | `pnpm run format:check` on `src/**` and root markdown/json                                 |
-| Critical-path coverage floors            | `deploy.yml` → `check:coverage-floors` | **Yes**        | Ratchet on `providers/`, `geminiService.ts`, `apiKeyService.ts`                            |
-| CodeQL                                   | `security.yml`                         | **Yes**        | `security-extended` query set                                                              |
+| Gate                                     | Where                                  | Blocking?      | Notes                                                                                                        |
+| ---------------------------------------- | -------------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------ |
+| Typecheck / lint / unit tests + coverage | `deploy.yml`                           | **Yes**        | `pnpm run test:coverage` — 80% lines/statements on `store`/`services`/`hooks`/`lib`                          |
+| Prettier `format:check`                  | `deploy.yml`                           | **Yes**        | `pnpm run format:check` on `src/**` and root markdown/json                                                   |
+| Husky pre-commit                         | local `git commit`                     | **Yes**        | `lint-staged` + `pnpm run typecheck`                                                                         |
+| Husky pre-push                           | local `git push`                       | **Yes**        | `pnpm run check:fast` (`typecheck` + `lint` + `format:check`)                                                |
+| Critical-path coverage floors            | `deploy.yml` → `check:coverage-floors` | **Yes**        | Ratchet on `providers/`, `geminiService.ts`, `apiKeyService.ts`                                              |
+| CodeQL                                   | `security.yml`                         | **Yes**        | `security-extended` query set                                                                                |
 | DeepSource (Docker/Shell)                | GitHub App check                       | Advisory       | JavaScript analyzer **disabled** — see `docs/deepsource-javascript-ci.md`; ESLint + deploy.yml authoritative |
-| Deployment record pruning                | `deploy.yml` + `prune-deployments.yml` | **Yes** (main) | Keep latest 3 `github-pages` deployments per environment; weekly/dispatch safety net       |
-| CodeAnt / Semgrep / gitleaks             | GitHub App checks                      | Mixed          | See workflow outputs per PR                                                                |
+| Deployment record pruning                | `deploy.yml` + `prune-deployments.yml` | **Yes** (main) | Keep latest 3 `github-pages` deployments per environment; weekly/dispatch safety net                         |
+| CodeAnt / Semgrep / gitleaks             | GitHub App checks                      | Mixed          | See workflow outputs per PR                                                                                  |
 
 **Coverage scope:** Vitest gates logic layers (`src/store`, `src/services`, `src/hooks`, `src/lib`). UI views are covered by Playwright E2E instead.
 

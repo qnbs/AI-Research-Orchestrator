@@ -1,0 +1,4 @@
+# Mirror deploy.yml fast gates before push — catches TS/lint/format issues missed when commit used --no-verify.
+pnpm run typecheck
+pnpm run lint
+pnpm run format:check
