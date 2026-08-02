@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<PubmedArticleSet>
+  <PubmedArticle>
+    <MedlineCitation Status="Publisher" Owner="NLM">
+      <PMID Version="1">100003</PMID>
+      <Article PubModel="Electronic">
+        <ArticleTitle>No abstract article</ArticleTitle>
+      </Article>
+    </MedlineCitation>
+    <PubmedData>
+      <ArticleIdList>
+        <ArticleId IdType="pubmed">100003</ArticleId>
+      </ArticleIdList>
+      <PublicationTypeList>
+        <PublicationType UI="D016428">Journal Article</PublicationType>
+      </PublicationTypeList>
+    </PubmedData>
+  </PubmedArticle>
+</PubmedArticleSet>

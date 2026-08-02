@@ -287,7 +287,7 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({
               {t('article.abstract')}
             </h4>
             <div className="prose prose-sm prose-invert max-w-none text-text-secondary/90 leading-relaxed">
-              <p>{article.summary}</p>
+              <p>{article.summary ? article.summary : t('report.article.abstractMissing')}</p>
             </div>
           </div>
 

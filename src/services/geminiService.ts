@@ -398,7 +398,7 @@ Research Topic: ${wrapUntrustedTextBlock('research_topic', topicSafe)}
         jsonSchema: rankingSchema,
         thinkingBudget: defaultGeminiThinkingBudget(aiSettings.model),
         prompt: `From the provided list of articles, please perform the following analysis based on the original research topic: ${wrapUntrustedTextBlock('research_topic', topicSafe)}.
-            1.  Rank the top ${input.topNToSynthesize} articles based on their relevance to the topic. For each, provide its PMID, a relevance score (1-100), a brief explanation for the score, 3-5 keywords from its summary, classify its article type, and write a new, concise summary (as 'aiSummary') that extracts the core methodology, key findings, and limitations of the study. Ensure you ONLY use PMIDs from the provided list.
+            1.  Rank the top ${input.topNToSynthesize} articles based on their relevance to the topic. For each, provide its PMID, a relevance score (1-100), a brief explanation for the score, 3-5 keywords from title/abstract when present, classify its article type, and write a new, concise summary (as 'aiSummary') that extracts the core methodology, key findings, and limitations of the study. When abstractStatus is "missing", rank from title/metadata only and state that limitation in relevanceExplanation. Ensure you ONLY use PMIDs from the provided list.
             2.  Generate 3-5 AI-powered insights based on the provided articles. Each insight should be a question/answer pair. List the PMIDs from the provided list that support each insight.
             3.  Analyze the keywords from all ranked articles to identify overall themes. List the top 5-10 keywords and their frequency.
 
@@ -407,7 +407,8 @@ Research Topic: ${wrapUntrustedTextBlock('research_topic', topicSafe)}
               articleDetails.map((a) => ({
                 pmid: a.pmid,
                 title: a.title,
-                summary: a.summary,
+                sourceAbstract: a.summary,
+                abstractStatus: a.abstractStatus ?? (a.summary ? 'available' : 'missing'),
               })),
             )}
             `,
@@ -451,7 +452,8 @@ Research Topic: ${wrapUntrustedTextBlock('research_topic', topicSafe)}
           grounded.rankedArticles.map((a: RankedArticle) => ({
             pmid: a.pmid,
             title: a.title,
-            abstract: a.summary,
+            sourceAbstract: a.summary,
+            abstractStatus: a.abstractStatus ?? (a.summary ? 'available' : 'missing'),
             aiSummary: a.aiSummary,
             relevanceScore: a.relevanceScore,
             keywords: a.keywords,

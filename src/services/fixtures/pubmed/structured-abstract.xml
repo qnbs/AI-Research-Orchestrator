@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<PubmedArticleSet>
+  <PubmedArticle>
+    <MedlineCitation Status="MEDLINE" Owner="NLM">
+      <PMID Version="1">100002</PMID>
+      <Article PubModel="Print">
+        <ArticleTitle>Structured abstract article</ArticleTitle>
+        <Abstract>
+          <AbstractText Label="BACKGROUND">Background section text.</AbstractText>
+          <AbstractText Label="METHODS">Methods section text.</AbstractText>
+          <AbstractText Label="CONCLUSIONS">Conclusions section text.</AbstractText>
+        </Abstract>
+      </Article>
+    </MedlineCitation>
+    <PubmedData>
+      <ArticleIdList>
+        <ArticleId IdType="pubmed">100002</ArticleId>
+      </ArticleIdList>
+      <PublicationTypeList>
+        <PublicationType UI="D016428">Journal Article</PublicationType>
+        <PublicationType UI="D016449">Randomized Controlled Trial</PublicationType>
+      </PublicationTypeList>
+    </PubmedData>
+  </PubmedArticle>
+</PubmedArticleSet>

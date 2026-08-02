@@ -12,6 +12,7 @@ import type {
   FeaturedJournalCategory,
 } from '../../types';
 import { combineAbortSignals } from '../../lib/abortUtils';
+import { fetchArticleDetails } from '../../services/pubmedUtils';
 
 // ── PubMed E-utilities base URLs ──────────────────────────────────────────────
 const PUBMED_BASE = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils';
@@ -269,38 +270,7 @@ export const researchApi = createApi({
       queryFn: async ({ pmids }, api) => {
         if (!pmids.length) return { data: [] };
         try {
-          const formData = new FormData();
-          formData.append('id', pmids.join(','));
-          const url = `${PUBMED_BASE}/esummary.fcgi?db=pubmed&retmode=json`;
-          const response = await fetchWithBackoff(url, {
-            method: 'POST',
-            body: formData,
-            signal: api.signal,
-          });
-          const data = await response.json();
-          const articles: Partial<RankedArticle>[] = [];
-          for (const pmid of data.result?.uids ?? []) {
-            const art = data.result[pmid];
-            if (!art) continue;
-            const pmcEntry = (
-              (art.articleids ?? []) as Array<{ idtype: string; value: string }>
-            ).find((x) => x.idtype === 'pmc');
-            articles.push({
-              pmid,
-              pmcId: pmcEntry?.value,
-              title: art.title ?? '',
-              authors: ((art.authors ?? []) as Array<{ name: string }>)
-                .map((a) => a.name)
-                .join(', '),
-              journal: art.fulljournalname ?? '',
-              pubYear: (art.pubdate ?? '').split(' ')[0],
-              summary: art.abstract || 'No abstract available.',
-              isOpenAccess: !!pmcEntry?.value,
-              keywords: [],
-              relevanceScore: 0,
-              relevanceExplanation: '',
-            });
-          }
+          const articles = await fetchArticleDetails(pmids, api.signal);
           return { data: articles };
         } catch (error) {
           return { error: { status: 'CUSTOM_ERROR', error: String(error) } };

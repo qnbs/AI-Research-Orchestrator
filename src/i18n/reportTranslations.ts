@@ -30,7 +30,9 @@ export const reportTranslations = {
     'report.chart.empty': 'No data available for visualization.',
     'report.keywords.empty': 'No overall keywords were identified.',
     'report.article.aiSummary': 'AI Summary',
-    'report.article.summary': 'Summary',
+    'report.article.summary': 'Source abstract',
+    'report.article.abstractMissing':
+      'No PubMed abstract available for this record (metadata-only).',
     'report.article.openAccess': 'Open Access',
     'report.article.showMore': 'Show More',
     'report.article.showLess': 'Show Less',
@@ -83,7 +85,9 @@ export const reportTranslations = {
     'report.chart.empty': 'Keine Daten für die Visualisierung verfügbar.',
     'report.keywords.empty': 'Es wurden keine Gesamtschlüsselwörter identifiziert.',
     'report.article.aiSummary': 'KI-Zusammenfassung',
-    'report.article.summary': 'Zusammenfassung',
+    'report.article.summary': 'Quell-Abstract',
+    'report.article.abstractMissing':
+      'Kein PubMed-Abstract für diesen Eintrag verfügbar (nur Metadaten).',
     'report.article.openAccess': 'Open Access',
     'report.article.showMore': 'Mehr anzeigen',
     'report.article.showLess': 'Weniger anzeigen',

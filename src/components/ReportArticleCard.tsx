@@ -143,18 +143,31 @@ const ArticleExternalActions: React.FC<{
 const ArticleSummary: React.FC<{
   summaryLabel: string;
   displayedSummary: string;
+  isMetadataOnly: boolean;
   isLongSummary: boolean;
   isExpanded: boolean;
   onToggleExpand: () => void;
   rationale: string;
-}> = ({ summaryLabel, displayedSummary, isLongSummary, isExpanded, onToggleExpand, rationale }) => {
+}> = ({
+  summaryLabel,
+  displayedSummary,
+  isMetadataOnly,
+  isLongSummary,
+  isExpanded,
+  onToggleExpand,
+  rationale,
+}) => {
   const { t } = useTranslation();
   return (
     <>
       <p className="mt-3 text-sm text-text-secondary/90 leading-relaxed">
         <strong className="text-text-secondary">{summaryLabel}: </strong>
-        {displayedSummary}
-        {isLongSummary ? (
+        {isMetadataOnly ? (
+          <span className="italic">{t('report.article.abstractMissing')}</span>
+        ) : (
+          displayedSummary
+        )}
+        {isLongSummary && !isMetadataOnly ? (
           <button
             type="button"
             onClick={onToggleExpand}
@@ -183,13 +196,18 @@ const resolveArticlePresentation = (
     ? `https://www.ncbi.nlm.nih.gov/pmc/articles/${article.pmcId}/`
     : `https://pubmed.ncbi.nlm.nih.gov/${article.pmid}/`;
   const summaryToDisplay = article.aiSummary || article.summary;
-  const summaryLabel = article.aiSummary ? summaryLabelAi : summaryLabelPlain;
+  const summaryLabel = article.aiSummary
+    ? summaryLabelAi
+    : article.summary
+      ? summaryLabelPlain
+      : summaryLabelPlain;
+  const isMetadataOnly = !article.aiSummary && !article.summary;
   const isLongSummary = summaryToDisplay.length > summaryCharLimit;
   const displayedSummary =
     isLongSummary && !isExpanded
       ? `${summaryToDisplay.substring(0, summaryCharLimit)}...`
       : summaryToDisplay;
-  return { articleLink, summaryLabel, isLongSummary, displayedSummary };
+  return { articleLink, summaryLabel, isLongSummary, displayedSummary, isMetadataOnly };
 };
 
 export const ReportArticleCard: React.FC<{
@@ -224,13 +242,14 @@ export const ReportArticleCard: React.FC<{
     );
   };
 
-  const { articleLink, summaryLabel, isLongSummary, displayedSummary } = resolveArticlePresentation(
-    article,
-    summaryCharLimit,
-    isExpanded,
-    t('report.article.aiSummary'),
-    t('report.article.summary'),
-  );
+  const { articleLink, summaryLabel, isLongSummary, displayedSummary, isMetadataOnly } =
+    resolveArticlePresentation(
+      article,
+      summaryCharLimit,
+      isExpanded,
+      t('report.article.aiSummary'),
+      t('report.article.summary'),
+    );
 
   const handleCopy = (text: string, typeLabel: string) => {
     navigator.clipboard.writeText(text).then(() => {
@@ -249,6 +268,7 @@ export const ReportArticleCard: React.FC<{
       <ArticleSummary
         summaryLabel={summaryLabel}
         displayedSummary={displayedSummary}
+        isMetadataOnly={isMetadataOnly}
         isLongSummary={isLongSummary}
         isExpanded={isExpanded}
         onToggleExpand={() => setIsExpanded(!isExpanded)}
