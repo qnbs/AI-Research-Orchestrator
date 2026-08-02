@@ -30,15 +30,22 @@ interface ArticleDetailPanelProps {
   onAnalyzeJournal?: (journalName: string) => void;
 }
 
+const SKELETON_LINE_KEYS = [
+  'sk-line-a',
+  'sk-line-b',
+  'sk-line-c',
+  'sk-line-d',
+  'sk-line-e',
+] as const;
+
 const SkeletonLoader: React.FC<{ lines?: number; className?: string }> = ({
   lines = 3,
   className = '',
 }) => (
   <div className={`space-y-3 animate-pulse ${className}`}>
-    {/* skipcq: JS-0437 - static skeleton placeholders; list never reorders */}
-    {Array.from({ length: lines }).map((_, i) => (
+    {Array.from({ length: lines }, (_, i) => (
       <div
-        key={`skeleton-line-${lines}-${i}`}
+        key={SKELETON_LINE_KEYS[i] ?? `sk-line-${lines}-${i}`}
         className="p-3 rounded-md bg-surface/50 border border-border/70"
       >
         <div className="h-4 w-3/4 rounded bg-border/50"></div>

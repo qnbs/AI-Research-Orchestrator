@@ -50,6 +50,7 @@ export interface UseResearchSessionArgs {
 /**
  * Orchestrator research session: streaming generation, report state, and checkpoints.
  */
+// skipcq: JS-0067 - standard ESM exported React hook
 export function useResearchSession({
   aiSettings,
   autoSaveReports,
