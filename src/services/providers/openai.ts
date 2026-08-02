@@ -22,7 +22,7 @@ let client: import('openai').OpenAI | null = null;
 let clientKey: string | null = null;
 let clientBaseUrl: string | null = null;
 
-async function getClient(requestBaseURL?: string): Promise<import('openai').OpenAI> {
+export async function getClient(requestBaseURL?: string): Promise<import('openai').OpenAI> {
   const apiKey = (await getProviderApiKey('openai')) ?? '';
   if (apiKey === '') {
     throw new AppError({
@@ -41,14 +41,14 @@ async function getClient(requestBaseURL?: string): Promise<import('openai').Open
   return client;
 }
 
-function resetClient(): void {
+export function resetClient(): void {
   client = null;
   clientKey = null;
   clientBaseUrl = null;
 }
 
 /** Newer OpenAI models (gpt-5.x, o1/o3/o4, …) reject `max_tokens` in favor of `max_completion_tokens`. */
-function tokenLimitParams(
+export function tokenLimitParams(
   model: string,
   maxOutputTokens: number | undefined,
 ): { max_tokens?: number; max_completion_tokens?: number } {
@@ -61,7 +61,7 @@ function tokenLimitParams(
     : { max_tokens: maxOutputTokens };
 }
 
-function mapOpenAIError(error: unknown): AppError {
+export function mapOpenAIError(error: unknown): AppError {
   if (error instanceof AppError) return error;
 
   // AbortError must never be retried - user explicitly cancelled

@@ -16,11 +16,11 @@ export type FocusTrapOptions = {
   lockScroll?: boolean;
 };
 
-function cycleTabFocus(
+const cycleTabFocus = (
   e: KeyboardEvent,
   firstElement: HTMLElement,
   lastElement: HTMLElement,
-): void {
+): void => {
   if (e.key !== 'Tab') return;
 
   if (e.shiftKey && document.activeElement === firstElement) {
@@ -33,7 +33,7 @@ function cycleTabFocus(
     firstElement.focus();
     e.preventDefault();
   }
-}
+};
 
 /**
  * Trap focus within a designated container (modal / panel).

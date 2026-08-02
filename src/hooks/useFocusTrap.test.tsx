@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import { useFocusTrap } from './useFocusTrap';
 
-function TrapDemo({
+const TrapDemo = ({
   open,
   onEscape,
   lockScroll,
@@ -10,7 +10,7 @@ function TrapDemo({
   open: boolean;
   onEscape?: () => void;
   lockScroll?: boolean;
-}) {
+}) => {
   const ref = useFocusTrap<HTMLDivElement>(open, { onEscape, lockScroll });
   return (
     <div ref={ref} data-testid="trap" role="dialog" aria-modal="true">
@@ -22,7 +22,7 @@ function TrapDemo({
       )}
     </div>
   );
-}
+};
 
 describe('useFocusTrap', () => {
   beforeEach(() => {

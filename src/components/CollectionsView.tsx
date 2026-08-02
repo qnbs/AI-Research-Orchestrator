@@ -41,9 +41,9 @@ const COLLECTION_ICON_KEYS: Record<string, string> = {
   '📊': 'collections.icon.chart',
 };
 
-function generateId() {
+const generateId = () => {
   return `col_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
-}
+};
 
 // ── Collection Cover ──────────────────────────────────────────────────────────
 const CollectionCover: React.FC<{ color: string; icon: string }> = ({ color, icon }) => (

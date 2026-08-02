@@ -50,7 +50,7 @@ export function generateHeuristicTldr(abstract: string): string {
   return clipWords(tldr, 30);
 }
 
-function clipWords(text: string, maxWords: number): string {
+export function clipWords(text: string, maxWords: number): string {
   const words = text.replace(/\s+/g, ' ').trim().split(' ');
   if (words.length <= maxWords) return words.join(' ');
   return `${words.slice(0, maxWords).join(' ')}…`;
@@ -215,7 +215,7 @@ export function generateNarrativeSections(
 /**
  * Get year range from articles.
  */
-function getYearRange(articles: RankedArticle[]): string {
+export function getYearRange(articles: RankedArticle[]): string {
   const years = articles.map((a) => parseInt(a.pubYear, 10)).filter((y) => !isNaN(y));
 
   if (years.length === 0) return 'unknown years';
@@ -270,7 +270,7 @@ export function generateResearchReport(articles: RankedArticle[], query: string)
 /**
  * Generate heuristic insights from articles.
  */
-function generateInsights(
+export function generateInsights(
   articles: RankedArticle[],
   query: string,
 ): { question: string; answer: string; supportingArticles: string[] }[] {

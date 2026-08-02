@@ -29,7 +29,7 @@ import type {
 } from './types';
 import { providerCapabilities } from './types';
 
-function mapHeuristicError(error: unknown): AppError {
+export function mapHeuristicError(error: unknown): AppError {
   if (error instanceof AppError) return error;
   if (error instanceof Error) {
     return new AppError({
@@ -47,13 +47,13 @@ function mapHeuristicError(error: unknown): AppError {
   });
 }
 
-function inferTopicFromPrompt(prompt: string): string {
+export function inferTopicFromPrompt(prompt: string): string {
   // Extract a reasonable topic from the first user-facing line.
   const match = prompt.match(/topic[:\s]+([^\n]+)/i) ?? prompt.match(/"([^"]{5,120})"/);
   return (match?.[1] ?? prompt).slice(0, 160).trim();
 }
 
-function generateGenericHeuristicResponse(request: AIContentRequest): AIContentResponse {
+export function generateGenericHeuristicResponse(request: AIContentRequest): AIContentResponse {
   const topic = inferTopicFromPrompt(request.prompt);
 
   if (

@@ -23,7 +23,7 @@ let client: import('@anthropic-ai/sdk').Anthropic | null = null;
 let clientKey: string | null = null;
 let clientBaseUrl: string | null = null;
 
-async function getClient(requestBaseURL?: string): Promise<import('@anthropic-ai/sdk').Anthropic> {
+export async function getClient(requestBaseURL?: string): Promise<import('@anthropic-ai/sdk').Anthropic> {
   const apiKey = (await getProviderApiKey('anthropic')) ?? '';
   if (apiKey === '') {
     throw new AppError({
@@ -42,13 +42,13 @@ async function getClient(requestBaseURL?: string): Promise<import('@anthropic-ai
   return client;
 }
 
-function resetClient(): void {
+export function resetClient(): void {
   client = null;
   clientKey = null;
   clientBaseUrl = null;
 }
 
-function mapAnthropicError(error: unknown): AppError {
+export function mapAnthropicError(error: unknown): AppError {
   if (error instanceof AppError) return error;
 
   // AbortError must never be retried - user explicitly cancelled
@@ -210,7 +210,7 @@ export function createAnthropicProvider(): AIProvider {
   };
 }
 
-function extractText(content: unknown): string {
+export function extractText(content: unknown): string {
   if (!Array.isArray(content)) return '';
   return content
     .map((block) => {

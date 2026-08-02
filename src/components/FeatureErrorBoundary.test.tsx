@@ -3,9 +3,9 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { FeatureErrorBoundary } from './FeatureErrorBoundary';
 
-function Boom(): React.ReactElement {
+const Boom = (): React.ReactElement => {
   throw new Error('feature-boom');
-}
+};
 
 describe('FeatureErrorBoundary', () => {
   it('renders a local fallback without taking down the whole tree', () => {

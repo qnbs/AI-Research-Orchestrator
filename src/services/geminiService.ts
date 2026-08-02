@@ -55,7 +55,7 @@ import {
 } from './researchOrchestratorAdapter';
 import { safeLogError } from '../lib/safeLog';
 
-function throwIfAborted(signal?: AbortSignal): void {
+export function throwIfAborted(signal?: AbortSignal): void {
   if (signal?.aborted) {
     throw new AppError({
       code: 'STREAM_ABORTED',
@@ -75,7 +75,7 @@ export function resetAIInstance(): void {
 }
 
 /** Helper to call a single-shot provider generation with JSON parsing. */
-async function generateJson<T>(
+export async function generateJson<T>(
   aiSettings: Settings['ai'],
   request: Omit<AIContentRequest, 'json'>,
   signal?: AbortSignal,

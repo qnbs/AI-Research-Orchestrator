@@ -37,10 +37,10 @@ export interface UseSettingsValue {
   isSettingsLoading: boolean;
 }
 
-function mergeSettingsWithDefaults(
+const mergeSettingsWithDefaults = (
   storedSettings: Partial<Settings>,
   baseline: Settings,
-): Settings {
+): Settings => {
   const storedAi = storedSettings.ai as Partial<Settings['ai']> | undefined;
   // Resolve effective provider first; fall back to gemini for invalid values
   const effectiveProvider = isValidProvider(storedAi?.provider)
@@ -74,7 +74,7 @@ function mergeSettingsWithDefaults(
     ...storedSettings,
     ai: mergedAi,
   };
-}
+};
 
 /** Loads persisted settings into Redux once on mount (single source of truth: `settingsSlice`). */
 export function SettingsHydrator(): null {

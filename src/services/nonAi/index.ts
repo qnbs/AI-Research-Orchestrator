@@ -39,7 +39,7 @@ function phase(label: string): string {
 }
 
 /** Maps the user's form filters (date range, article types) onto query-builder options. */
-function queryOptionsFromInput(input: ResearchInput): QueryBuildOptions {
+export function queryOptionsFromInput(input: ResearchInput): QueryBuildOptions {
   const options: QueryBuildOptions = {};
   if (input.dateRange !== 'any') {
     options.minYear = new Date().getFullYear() - parseInt(input.dateRange, 10);

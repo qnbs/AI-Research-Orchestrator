@@ -43,7 +43,7 @@ export function __resetEncryptionKeyCacheForTests(): void {
  * When unavailable (older browsers / some test envs), falls through to the
  * in-tab promise memoization only.
  */
-async function withVaultLock<T>(fn: () => Promise<T>): Promise<T> {
+export async function withVaultLock<T>(fn: () => Promise<T>): Promise<T> {
   const locks = globalThis.navigator?.locks;
   if (!locks?.request) {
     return fn();
@@ -78,7 +78,7 @@ export function setVaultResetListener(listener: (() => void) | null): void {
   }
 }
 
-function notifyVaultReset(): void {
+export function notifyVaultReset(): void {
   if (vaultResetListener) {
     vaultResetListener();
   } else {
@@ -97,7 +97,7 @@ function notifyVaultReset(): void {
  * or a compromised third-party script can no longer read the master key that
  * protects every stored provider secret.
  */
-async function getOrCreateEncryptionKey(): Promise<CryptoKey> {
+export async function getOrCreateEncryptionKey(): Promise<CryptoKey> {
   // In-tab memoization first; Web Locks then serialize the IndexedDB read/
   // generate/save across tabs so a second tab waits and re-reads the key the
   // first tab just wrote instead of racing a second generateKey.
@@ -108,7 +108,7 @@ async function getOrCreateEncryptionKey(): Promise<CryptoKey> {
   return encryptionKeyPromise;
 }
 
-async function resolveEncryptionKey(): Promise<CryptoKey> {
+export async function resolveEncryptionKey(): Promise<CryptoKey> {
   const db = await openKeyDatabase();
 
   const existingKeyData = await getFromKeyStore<CryptoKey | Uint8Array>(db, ENCRYPTION_KEY_NAME);
@@ -156,7 +156,7 @@ async function resolveEncryptionKey(): Promise<CryptoKey> {
   return key;
 }
 
-async function deliverPendingResetNotification(db: IDBDatabase): Promise<void> {
+export async function deliverPendingResetNotification(db: IDBDatabase): Promise<void> {
   const pending = await getFromKeyStore<boolean>(db, PENDING_RESET_NOTIFICATION_KEY);
   if (!pending) return;
   await deleteFromKeyStore(db, PENDING_RESET_NOTIFICATION_KEY);
@@ -182,7 +182,7 @@ export function toRejectionError(error: DOMException | null): Error {
   return wrapped;
 }
 
-function openKeyDatabase(): Promise<IDBDatabase> {
+export function openKeyDatabase(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open('APIKeyVault', 1);
     request.onerror = () => reject(toRejectionError(request.error));
@@ -200,7 +200,7 @@ function openKeyDatabase(): Promise<IDBDatabase> {
 // commit), not the individual request's onsuccess: a request can succeed and
 // still have its transaction abort afterward, which would otherwise let
 // calling code proceed as if a write/clear had landed when it hadn't.
-function getFromKeyStore<T = Uint8Array>(db: IDBDatabase, key: string): Promise<T | null> {
+export function getFromKeyStore<T = Uint8Array>(db: IDBDatabase, key: string): Promise<T | null> {
   return new Promise((resolve, reject) => {
     const tx = db.transaction('keys', 'readonly');
     const store = tx.objectStore('keys');
@@ -215,7 +215,7 @@ function getFromKeyStore<T = Uint8Array>(db: IDBDatabase, key: string): Promise<
   });
 }
 
-function saveToKeyStore<T>(db: IDBDatabase, key: string, value: T): Promise<void> {
+export function saveToKeyStore<T>(db: IDBDatabase, key: string, value: T): Promise<void> {
   return new Promise((resolve, reject) => {
     const tx = db.transaction('keys', 'readwrite');
     const store = tx.objectStore('keys');
@@ -226,7 +226,7 @@ function saveToKeyStore<T>(db: IDBDatabase, key: string, value: T): Promise<void
   });
 }
 
-function deleteFromKeyStore(db: IDBDatabase, key: string): Promise<void> {
+export function deleteFromKeyStore(db: IDBDatabase, key: string): Promise<void> {
   return new Promise((resolve, reject) => {
     const tx = db.transaction('keys', 'readwrite');
     const store = tx.objectStore('keys');
@@ -241,7 +241,7 @@ function deleteFromKeyStore(db: IDBDatabase, key: string): Promise<void> {
 // transaction, so the two commit atomically: a later call always sees
 // either both (a legacy vault it hasn't reset yet) or neither (reset already
 // fully delivered), never a cleared vault with no record that it happened.
-function clearKeyStoreAndMarkPendingReset(db: IDBDatabase): Promise<void> {
+export function clearKeyStoreAndMarkPendingReset(db: IDBDatabase): Promise<void> {
   return new Promise((resolve, reject) => {
     const tx = db.transaction('keys', 'readwrite');
     const store = tx.objectStore('keys');
@@ -259,7 +259,7 @@ function clearKeyStoreAndMarkPendingReset(db: IDBDatabase): Promise<void> {
 /**
  * Encrypts the API key using AES-GCM.
  */
-async function encryptApiKey(apiKey: string): Promise<{ iv: Uint8Array; encrypted: Uint8Array }> {
+export async function encryptApiKey(apiKey: string): Promise<{ iv: Uint8Array; encrypted: Uint8Array }> {
   const key = await getOrCreateEncryptionKey();
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const encoder = new TextEncoder();
@@ -273,7 +273,7 @@ async function encryptApiKey(apiKey: string): Promise<{ iv: Uint8Array; encrypte
 /**
  * Decrypts the API key using AES-GCM.
  */
-async function decryptApiKey(iv: Uint8Array, encrypted: Uint8Array): Promise<string> {
+export async function decryptApiKey(iv: Uint8Array, encrypted: Uint8Array): Promise<string> {
   const key = await getOrCreateEncryptionKey();
 
   const decrypted = await crypto.subtle.decrypt(
@@ -289,7 +289,7 @@ async function decryptApiKey(iv: Uint8Array, encrypted: Uint8Array): Promise<str
 /**
  * Saves a secret securely to IndexedDB.
  */
-async function saveEncryptedSecret(storageKey: string, value: string): Promise<void> {
+export async function saveEncryptedSecret(storageKey: string, value: string): Promise<void> {
   const { iv, encrypted } = await encryptApiKey(value);
   const db = await openKeyDatabase();
 
@@ -305,7 +305,7 @@ async function saveEncryptedSecret(storageKey: string, value: string): Promise<v
  * Retrieves and decrypts a secret from IndexedDB.
  * Throws AppError on failure for proper error propagation.
  */
-async function getEncryptedSecret(
+export async function getEncryptedSecret(
   storageKey: string,
   label: string,
   throwOnError: boolean = false,

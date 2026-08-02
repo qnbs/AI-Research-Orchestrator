@@ -20,19 +20,21 @@ const indexHtml = readFileSync(join(process.cwd(), 'index.html'), 'utf-8');
  * for today's simple bodies but silently truncates at the first nested `}`
  * if one is ever added - this doesn't.
  */
-function extractBalancedBody(source: string, openBraceSearchFrom: number) {
-  const openIndex = source.indexOf('{', openBraceSearchFrom);
-  let depth = 0;
-  for (let i = openIndex; i < source.length; i += 1) {
-    if (source[i] === '{') depth += 1;
-    else if (source[i] === '}') {
-      depth -= 1;
-      if (depth === 0)
-        return { start: openIndex + 1, end: i, body: source.slice(openIndex + 1, i) };
+(function() {
+  function extractBalancedBody(source: string, openBraceSearchFrom: number) {
+    const openIndex = source.indexOf('{', openBraceSearchFrom);
+    let depth = 0;
+    for (let i = openIndex; i < source.length; i += 1) {
+      if (source[i] === '{') depth += 1;
+      else if (source[i] === '}') {
+        depth -= 1;
+        if (depth === 0)
+          return { start: openIndex + 1, end: i, body: source.slice(openIndex + 1, i) };
+      }
     }
+    throw new Error('Unbalanced braces while extracting body');
   }
-  throw new Error('Unbalanced braces while extracting body');
-}
+})();
 
 describe('service worker integrity', () => {
   it('never loads Workbox (or anything else) from a remote host', () => {

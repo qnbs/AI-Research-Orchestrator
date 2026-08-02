@@ -2,7 +2,6 @@
  * Retriever for the Non-AI Programmatic Research Engine.
  * Orchestrates PubMed E-utilities and arXiv retrieval with batching and rate limiting.
  */
-
 import type { RankedArticle } from '../../types';
 import type { RetrievalResult, BuiltQuery } from './types';
 import { searchPubMedForIds, fetchArticleDetails } from '../pubmedUtils';

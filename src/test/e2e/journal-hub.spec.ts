@@ -5,7 +5,7 @@
 import { test, expect, type Page, type Route } from '@playwright/test';
 import { navigateToView, skipOnboarding } from './e2eHelpers';
 
-function mockPubMedSearch(page: Page) {
+export function mockPubMedSearch(page: Page) {
   page.route(
     (url) => url.hostname === 'eutils.ncbi.nlm.nih.gov',
     async (route: Route) => {

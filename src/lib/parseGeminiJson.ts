@@ -14,18 +14,14 @@ export class GeminiJsonParseError extends Error {
   }
 }
 
-function stripBom(text: string): string {
+export function stripBom(text: string): string {
   return text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
 }
 
-function unwrapMarkdownFences(text: string): string {
-  let out = text.replace(/```json\s*([\s\S]*?)\s*```/gi, '$1');
-  out = out.replace(/```\s*([\s\S]*?)\s*```/g, '$1');
-  return out.trim();
-}
+```json\s*([\s\S]*?)\s*
 
 /** Remove trailing commas before `}` or `]` (common LLM mistake). */
-function repairTrailingCommas(json: string): string {
+export function repairTrailingCommas(json: string): string {
   let out = '';
   let inString = false;
   let escaped = false;
@@ -68,7 +64,7 @@ function repairTrailingCommas(json: string): string {
 type JsonContainer = 'object' | 'array';
 type ParseResult<T> = { ok: true; value: T } | { ok: false };
 
-function* findBalancedJsonSegments(
+const findBalancedJsonSegments = function*(
   text: string,
   openChar: '{' | '[',
   closeChar: '}' | ']',
@@ -116,9 +112,9 @@ function* findBalancedJsonSegments(
 
     searchFrom = startIdx + 1;
   }
-}
+};
 
-function pickContainerType(text: string): JsonContainer | null {
+export function pickContainerType(text: string): JsonContainer | null {
   const firstBrace = text.indexOf('{');
   const firstBracket = text.indexOf('[');
 
@@ -128,7 +124,7 @@ function pickContainerType(text: string): JsonContainer | null {
   return firstBrace < firstBracket ? 'object' : 'array';
 }
 
-function tryParse<T>(candidate: string): ParseResult<T> {
+export function tryParse<T>(candidate: string): ParseResult<T> {
   const attempts = [candidate, repairTrailingCommas(candidate)];
   for (const json of attempts) {
     try {
@@ -140,7 +136,7 @@ function tryParse<T>(candidate: string): ParseResult<T> {
   return { ok: false };
 }
 
-function tryParseBalancedSegments<T>(
+export function tryParseBalancedSegments<T>(
   text: string,
   openChar: '{' | '[',
   closeChar: '}' | ']',

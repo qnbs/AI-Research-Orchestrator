@@ -86,17 +86,17 @@ const CyberneticSpinner: React.FC = () => (
 );
 
 // ── Phase chip short label ────────────────────────────────────────────────────
-function shortLabel(phase: string): string {
+const shortLabel = (phase: string): string => {
   return phase
     .replace(/^Phase\s+[\d\w]+[:.]\s*/i, '')
     .replace(/\.\.\.$/, '')
     .replace(/\s+/g, ' ')
     .trim()
     .slice(0, 26);
-}
+};
 
 // Emojis for each pipeline stage
-function phaseIcon(index: number): string {
+export function phaseIcon(index: number): string {
   const icons = ['🧠', '🔍', '📡', '🧬', '⭐', '📝', '✨', '🔖'];
   return icons[index % icons.length];
 }

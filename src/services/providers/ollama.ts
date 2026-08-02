@@ -17,16 +17,16 @@ import type {
 } from './types';
 import { providerCapabilities } from './types';
 
-function getBaseUrl(requestBaseURL?: string): string {
+export function getBaseUrl(requestBaseURL?: string): string {
   if (requestBaseURL) return requestBaseURL.replace(/\/$/, '');
   return 'http://localhost:11434';
 }
 
-function resetClient(): void {
+export function resetClient(): void {
   // no-op: Ollama provider is stateless aside from the optional base URL
 }
 
-function mapOllamaError(error: unknown): AppError {
+export function mapOllamaError(error: unknown): AppError {
   if (error instanceof AppError) return error;
   if (error instanceof Error) {
     return new AppError({
@@ -44,7 +44,7 @@ function mapOllamaError(error: unknown): AppError {
   });
 }
 
-async function* streamNdjson<
+const streamNdjson = async function* <
   T extends { done?: boolean; response?: string; message?: { content?: string } },
 >(response: Response): AsyncGenerator<T> {
   if (!response.body) return;
@@ -73,7 +73,7 @@ async function* streamNdjson<
       // ignore trailing malformed line
     }
   }
-}
+};
 
 export function createOllamaProvider(): AIProvider {
   return {

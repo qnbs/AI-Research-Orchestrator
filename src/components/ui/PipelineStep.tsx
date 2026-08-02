@@ -37,17 +37,17 @@ export interface PipelineStepProps {
 
 // ─── Per-step status resolution ───────────────────────────────────────────────
 
-function resolveStepStatus(
+const resolveStepStatus = (
   index: number,
   currentStep: number,
   pipelineStatus: AgentStatus,
   stepOverride?: AgentStatus,
-): AgentStatus {
+): AgentStatus => {
   if (stepOverride) return stepOverride;
   if (index < currentStep) return 'done';
   if (index === currentStep) return pipelineStatus === 'error' ? 'error' : pipelineStatus;
   return 'idle';
-}
+};
 
 // ─── Node icon ────────────────────────────────────────────────────────────────
 

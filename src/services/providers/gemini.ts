@@ -15,7 +15,7 @@ import { providerCapabilities } from './types';
 let client: GoogleGenAI | null = null;
 let clientKey: string | null = null;
 
-async function getClient(): Promise<GoogleGenAI> {
+export async function getClient(): Promise<GoogleGenAI> {
   const apiKey = await getProviderApiKey('gemini');
   if (!apiKey) {
     throw new AppError({
@@ -32,7 +32,7 @@ async function getClient(): Promise<GoogleGenAI> {
   return client;
 }
 
-function resetClient(): void {
+export function resetClient(): void {
   client = null;
   clientKey = null;
 }
@@ -41,7 +41,7 @@ function resetClient(): void {
  * Recursively convert lowercase JSON Schema types into Gemini's uppercase Type
  * enum values (STRING, OBJECT, ARRAY, NUMBER, INTEGER, BOOLEAN).
  */
-function toGeminiSchema(schema: AIJsonSchema): Record<string, unknown> {
+export function toGeminiSchema(schema: AIJsonSchema): Record<string, unknown> {
   if (!schema || typeof schema !== 'object') return schema as Record<string, unknown>;
 
   const typeMap: Record<string, string> = {
@@ -73,7 +73,7 @@ function toGeminiSchema(schema: AIJsonSchema): Record<string, unknown> {
   return converted;
 }
 
-function buildConfig(request: AIContentRequest): Record<string, unknown> {
+export function buildConfig(request: AIContentRequest): Record<string, unknown> {
   const config: Record<string, unknown> = {};
   if (request.system !== undefined) config.systemInstruction = request.system;
   if (request.temperature !== undefined) config.temperature = request.temperature;
@@ -87,7 +87,7 @@ function buildConfig(request: AIContentRequest): Record<string, unknown> {
   return config;
 }
 
-function extractSources(response: unknown): Array<{ uri: string; title?: string }> | undefined {
+export function extractSources(response: unknown): Array<{ uri: string; title?: string }> | undefined {
   if (!response || typeof response !== 'object') return undefined;
   const candidates = (response as Record<string, unknown>).candidates as unknown[] | undefined;
   if (!Array.isArray(candidates) || candidates.length === 0) return undefined;
@@ -105,7 +105,7 @@ function extractSources(response: unknown): Array<{ uri: string; title?: string 
   return sources.length > 0 ? sources : undefined;
 }
 
-function getGeminiErrorMessage(error: unknown): string {
+export function getGeminiErrorMessage(error: unknown): string {
   if (!error || typeof error !== 'object') {
     return 'An unknown AI error occurred. Please check your network connection.';
   }
@@ -145,7 +145,7 @@ function getGeminiErrorMessage(error: unknown): string {
   return 'An unknown AI error occurred. Please check your network connection.';
 }
 
-function mapGeminiError(error: unknown): AppError {
+export function mapGeminiError(error: unknown): AppError {
   if (error instanceof AppError) return error;
 
   // AbortError must never be retried - user explicitly cancelled

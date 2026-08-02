@@ -16,7 +16,7 @@ let state: InstallPromptState = {
 };
 const listeners = new Set<() => void>();
 
-function notify(): void {
+export function notify(): void {
   listeners.forEach((listener) => listener());
 }
 

@@ -5,7 +5,7 @@
 import { test, expect } from '@playwright/test';
 import { navigateToView, skipOnboarding } from './e2eHelpers';
 
-async function openAiConfiguration(page: import('@playwright/test').Page) {
+export async function openAiConfiguration(page: import('@playwright/test').Page) {
   await navigateToView(page, '#settings');
   const aiTab = page.getByRole('tab', { name: /AI Configuration|KI-Konfiguration/i });
   await aiTab.waitFor({ state: 'visible', timeout: 10_000 });

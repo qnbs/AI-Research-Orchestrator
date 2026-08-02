@@ -19,31 +19,31 @@ import {
 
 const ENCRYPTION_KEY_NAME = 'ai-research-encryption-key';
 
-function openVaultDatabase(): Promise<IDBDatabase> {
+const openVaultDatabase = (): Promise<IDBDatabase> => {
   return new Promise((resolve, reject) => {
     const req = indexedDB.open('APIKeyVault', 1);
     req.onerror = () => reject(req.error);
     req.onsuccess = () => resolve(req.result);
   });
-}
+};
 
-function getVaultEntry(db: IDBDatabase, key: string): Promise<unknown> {
+const getVaultEntry = (db: IDBDatabase, key: string): Promise<unknown> => {
   return new Promise((resolve, reject) => {
     const tx = db.transaction('keys', 'readonly');
     const req = tx.objectStore('keys').get(key);
     req.onerror = () => reject(req.error);
     req.onsuccess = () => resolve(req.result);
   });
-}
+};
 
-function putVaultEntry(db: IDBDatabase, key: string, value: unknown): Promise<void> {
+const putVaultEntry = (db: IDBDatabase, key: string, value: unknown): Promise<void> => {
   return new Promise((resolve, reject) => {
     const tx = db.transaction('keys', 'readwrite');
     tx.objectStore('keys').put(value, key);
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
   });
-}
+};
 
 const VALID_KEY = `AIza${'1234567890123456789012345678901234a'}`; // test fixture — not a real secret
 
