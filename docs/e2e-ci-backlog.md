@@ -55,15 +55,19 @@ Track progress in this file when a browser is promoted.
 - `f6cdaed` (`30767766848`) — Firefox **53 + 1 flaky** (`networkidle` a11y)
 - `9202f50` / #197 (`30768598100`) — Firefox **53 + 1 flaky** (`skipOnboarding` header wait after Start Researching in heuristic suite) — fix in #199
 
-Completed **54/0, no flaky** after the `f6cdaed` Firefox reset (WebKit/mobile Chrome continue through that reset): `8ab0a26` → `278ff28` → `d314d1e` → (`9202f50` FF flaky) → `bdcc688` → `0cea8ef` / #199 (`30769050211`) → `a2663bef` / #196 (`30769381735`, docs closeout; all clean after `skipOnboarding` harden).
+Completed **54/0, no flaky** after the `f6cdaed` Firefox reset (WebKit/mobile Chrome continue through that reset): `8ab0a26` → `278ff28` → `d314d1e` → (`9202f50` FF flaky) → `bdcc688` → `0cea8ef` / #199 (`30769050211`) → `a2663bef` / #196 (`30769381735`).
 
-| Browser       | Latest clean run                      | Streak toward 10× clean (54/0, no flaky) |
-| ------------- | ------------------------------------- | ---------------------------------------- |
-| Firefox       | **54/0** (`a2663bef` / `30769381735`) | **3/10** (reset after `9202f50` flaky)   |
-| mobile Chrome | **54/0** (`a2663bef` / `30769381735`) | **9/10**                                 |
-| WebKit        | **54/0** (`a2663bef` / `30769381735`) | **9/10**                                 |
+Additional flake (not counted toward streak):
 
-Blocking Chromium `e2e.yml`: **54 passed / 0 failed** on #195 merge `8ab0a26`, #197/`9202f50` (`30768598057`), #199/`0cea8ef` (`30769050111`), and #196/`a2663bef` (`30769381737`).
+- `e92dd0f` / #196 (`30770215657`) — Firefox **53 + 1 flaky** (`agent-flow` Command Palette / local `skipOnboarding` 10s header wait on `main`; fixed on unmerged #199 shared helper). WebKit + mobile Chrome stayed **54/0** on that run → **10/10**.
+
+| Browser       | Latest clean run                      | Streak toward 10× clean (54/0, no flaky)                                       |
+| ------------- | ------------------------------------- | ------------------------------------------------------------------------------ |
+| Firefox       | **54/0** (`a2663bef` / `30769381735`) | **0/10** (reset after `e92dd0f` flaky; merge #199 to restore harden on `main`) |
+| mobile Chrome | **54/0** (`e92dd0f` / `30770215657`)  | **10/10**                                                                      |
+| WebKit        | **54/0** (`e92dd0f` / `30770215657`)  | **10/10**                                                                      |
+
+Blocking Chromium `e2e.yml`: **54 passed / 0 failed** on #195 merge `8ab0a26`, #197/`9202f50` (`30768598057`), #199/`0cea8ef` (`30769050111`), #196/`a2663bef` (`30769381737`), and #196/`e92dd0f` (`30770215660`).
 
 ## Historical note (fixed 2026-07-21)
 

@@ -22,26 +22,26 @@ Workstream A (E2E WebKit KB demo) was **already landed** as #195 before this ses
 
 ### A — Cross-browser E2E
 
-| Item                    | Evidence                                                                                          |
-| ----------------------- | ------------------------------------------------------------------------------------------------- |
-| #195 merged             | `8ab0a26` on `main`                                                                               |
-| Clean baseline          | run `30767470525` / `022475d` — **54/0, no flaky** all browsers                                   |
-| Firefox flaky (non-KB)  | `f6cdaed` / `30767766848` — Firefox **53 + 1 flaky** (`networkidle` a11y)                         |
-| Post-merge clean        | `8ab0a26` / `30768002841` — **54/0, no flaky** Firefox, WebKit, mobile Chrome                     |
-| Streak (job logs)       | WebKit/mobile Chrome **9/10**; Firefox **3/10** after #196 CB `30769381735` (post-#199 harden)    |
-| Firefox flake follow-up | #199 landed harden + `ensureAppShellReady` DRY; **54/0 no flaky** on Firefox/WebKit/mobile Chrome |
-| Blocking promotion      | **Not** flipped — advisory until 10× criterion + maintainer approval                              |
+| Item                    | Evidence                                                                                                                    |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| #195 merged             | `8ab0a26` on `main`                                                                                                         |
+| Clean baseline          | run `30767470525` / `022475d` — **54/0, no flaky** all browsers                                                             |
+| Firefox flaky (non-KB)  | `f6cdaed` / `30767766848` — Firefox **53 + 1 flaky** (`networkidle` a11y)                                                   |
+| Post-merge clean        | `8ab0a26` / `30768002841` — **54/0, no flaky** Firefox, WebKit, mobile Chrome                                               |
+| Streak (job logs)       | WebKit/mobile Chrome **10/10** (`e92dd0f` / `30770215657`); Firefox **0/10** (reset on that run’s FF flaky)                 |
+| Firefox flake follow-up | #199 hardens shared `skipOnboarding` (**54/0** on its branch); `main`/docs PRs still hit old local helper until #199 merges |
+| Blocking promotion      | WebKit/mobile Chrome streak criterion met; **not** flipped yet — Firefox still rebuilding + maintainer approval             |
 
 Tracked in `docs/e2e-ci-backlog.md` and `docs/audits/2026-08-02-p1-closeout.md` via #196.
 
 ### Multi-bot review gate (session PRs)
 
-| PR   | Unresolved threads | Notes                                                                                                       |
-| ---- | ------------------ | ----------------------------------------------------------------------------------------------------------- |
-| #196 | **0**              | Greptile P2 fixed/resolved; CR APPROVED earlier, rate-limited on latest; CodeAnt/DeepSource/Bugbot/CI green |
-| #197 | **0**              | CodeRabbit APPROVED on `9202f50`; CodeAnt/DeepSource/Bugbot green; Greptile no review (re-requested)        |
-| #198 | **0**              | CodeRabbit still rate-limited (re-requested); CodeAnt/DeepSource/Bugbot green; CI green                     |
-| #199 | **0**              | CodeRabbit still rate-limited (re-requested); CodeAnt/DeepSource/Bugbot green; CB **54/0** on `0cea8ef`     |
+| PR   | Unresolved threads | Notes                                                                                                                               |
+| ---- | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| #196 | **0**              | Greptile P2 resolved; CR APPROVED (earlier) + “Review completed” on latest; CodeAnt/DeepSource/Bugbot/CI green; FF flaky documented |
+| #197 | **0**              | CodeRabbit APPROVED on `9202f50`; CodeAnt/DeepSource/Bugbot green; Greptile no review (documented)                                  |
+| #198 | **0**              | CodeRabbit Fair Usage (re-requested); CodeAnt/DeepSource/Bugbot green; CI green                                                     |
+| #199 | **0**              | CodeRabbit Fair Usage (re-requested); CodeAnt/DeepSource/Bugbot green; CB **54/0** on `0cea8ef` — merge first                       |
 
 ### B — P1-9 test depth (#197)
 
