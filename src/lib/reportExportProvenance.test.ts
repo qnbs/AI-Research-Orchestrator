@@ -37,4 +37,13 @@ describe('sanitizeReportForExport', () => {
     const result = sanitizeReportForExport(report);
     expect(result.sanitized).toBe(false);
   });
+
+  it('drops insights with no valid supporting articles', () => {
+    const report = baseReport();
+    report.aiGeneratedInsights = [{ question: 'Q?', answer: 'A.', supportingArticles: ['99'] }];
+    const result = sanitizeReportForExport(report);
+    expect(result.sanitized).toBe(true);
+    expect(result.droppedInsights).toBe(1);
+    expect(result.report.aiGeneratedInsights).toEqual([]);
+  });
 });

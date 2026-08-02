@@ -37,7 +37,8 @@ async function main() {
   const indexMdc = await read('.cursor/index.mdc');
   const security = await read('SECURITY.md');
 
-  const viteMajor = majorOf(pkg.devDependencies?.vite ?? pkg.dependencies?.vite);
+  const viteSpec = pkg.devDependencies?.vite ?? pkg.dependencies?.vite;
+  const viteMajor = majorOf(viteSpec);
   const pnpmVersion = String(pkg.packageManager ?? '').replace(/^pnpm@/, '');
   const appVersion = pkg.version;
 
@@ -49,7 +50,7 @@ async function main() {
     `AGENTS.md must mention app version v${appVersion}`,
     errors,
   );
-  assertMatch(agents, new RegExp(`Vite ${viteMajor}\\b`), `AGENTS.md must reference Vite ${viteMajor} (package.json has vite@${pkg.devDependencies?.vite})`, errors);
+  assertMatch(agents, new RegExp(`Vite ${viteMajor}\\b`), `AGENTS.md must reference Vite ${viteMajor} (package.json has vite@${viteSpec})`, errors);
   assertNoMatch(agents, /src\/services\/heuristics\//, 'AGENTS.md must not reference deleted src/services/heuristics/', errors);
 
   assertNoMatch(claude, /src\/services\/heuristics\//, 'CLAUDE.md must not reference deleted src/services/heuristics/', errors);
