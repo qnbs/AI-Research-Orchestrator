@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- None yet.
+
+## [0.4.1] - 2026-08-02
+
+> P0 scientific integrity closeout (P0-A–F), prompt-budget debugger UI, and P1 backlog through cross-browser full-suite E2E expansion (#183–#192).
+
+### Added
+
+- **P1-9 orchestration routing tests:** `resolveActiveInferenceMode.test.ts` and `researchOrchestratorAdapter.test.ts` cover live vs heuristic delegation.
+- **P1 closeout audit:** `docs/audits/2026-08-02-p1-closeout.md` records P1 disposition at `3641108`.
+
 ### Changed
 
 - **Cross-browser E2E (P1-8):** Firefox/WebKit/mobile-Chrome workflow runs the full seven-spec parity list (still `continue-on-error`); mobile-chrome navigation E2E fixes; inference badge on mobile header.
@@ -123,10 +136,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Known gaps (tracked, not yet closed)
 
-- Broader i18n migration (#69) — Help through Collections, Knowledge Base, Article Detail, Dashboard, Scientometric Hub, residual shared chrome, and enum/chip labels landed; no known residual chrome or enum-label backlog remains outside future audit findings.
-- Playwright E2E job is **blocking** as of 2026-08-01 (10 consecutive clean CI runs verified); deferred `journal-hub` / `provider-flow` specs are now in the suite — see `docs/e2e-ci-backlog.md`.
-- Claude Code Review remains advisory (`continue-on-error: true`); `allowed_bots: cursor` unblocks Cloud Agent PR actors (separate from OAuth empty-tool failures).
-- Vite 8 / plugin-react 6 and Vitest 4 + coverage-v8 are on `main` (or this upgrade PR); no further Dependabot-class majors deferred from that set.
+- **Cross-browser E2E (P1-8 step 3):** full seven-spec matrix runs advisory on Firefox/WebKit/mobile Chrome — track 10× **54 passed / 0 failed** streak per browser in `docs/e2e-ci-backlog.md` (WebKit flaky on first post-#192 run).
+- **P1-9 test depth:** orchestration routing tests added; `providers/`, `databaseService.ts`, and `geminiService.ts` remain candidates for deeper coverage.
+- Broader i18n migration (#69) — no known residual chrome backlog outside future audit findings.
+- Opportunistic Dependabot minors — process per `docs/dependabot-disposition.md` when new PRs open.
 
 ## [0.4.0] - 2026-08-01
 

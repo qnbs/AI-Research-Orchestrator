@@ -59,7 +59,7 @@
   },
   "release": {
     "policyPath": "docs/release-policy.md",
-    "packageVersion": "0.4.0",
+    "packageVersion": "0.4.1",
     "dexieSchemaVersion": 5,
     "swCacheVersion": "v1"
   },
