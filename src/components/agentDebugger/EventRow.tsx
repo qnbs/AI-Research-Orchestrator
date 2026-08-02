@@ -43,7 +43,9 @@ export const EventRow: React.FC<{
   const hasOmittedPmids = (promptBudget?.omittedPmids?.length ?? 0) > 0;
   const hasFieldTruncation =
     promptBudget != null &&
-    (promptBudget.truncatedTitleCount > 0 || promptBudget.truncatedAbstractCount > 0);
+    (promptBudget.truncatedTitleCount > 0 ||
+      promptBudget.truncatedAbstractCount > 0 ||
+      (promptBudget.truncatedAiSummaryCount ?? 0) > 0);
   const hasPromptBudgetDetails = hasOmittedPmids || hasFieldTruncation;
   const hasDetails = !!(
     event.inputSummary ||
@@ -199,10 +201,16 @@ export const EventRow: React.FC<{
                         className={`text-text-secondary block ${hasOmittedPmids ? 'mt-1' : ''}`}
                       >
                         {t('debugger.promptBudget.fieldTruncation')}:{' '}
-                        {t('debugger.promptBudget.fieldTruncationSummary', {
-                          titleCount: promptBudget.truncatedTitleCount,
-                          abstractCount: promptBudget.truncatedAbstractCount,
-                        })}
+                        {promptBudget.stage === 'synthesis'
+                          ? t('debugger.promptBudget.fieldTruncationSummarySynthesis', {
+                              titleCount: promptBudget.truncatedTitleCount,
+                              abstractCount: promptBudget.truncatedAbstractCount,
+                              aiSummaryCount: promptBudget.truncatedAiSummaryCount ?? 0,
+                            })
+                          : t('debugger.promptBudget.fieldTruncationSummary', {
+                              titleCount: promptBudget.truncatedTitleCount,
+                              abstractCount: promptBudget.truncatedAbstractCount,
+                            })}
                       </span>
                     )}
                   </div>

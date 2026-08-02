@@ -40,6 +40,8 @@ export const debuggerTranslations = {
     'debugger.promptBudget.estTokens': 'est. prompt tokens',
     'debugger.promptBudget.fieldTruncation': 'field truncation',
     'debugger.promptBudget.fieldTruncationSummary': '{titleCount} title / {abstractCount} abstract',
+    'debugger.promptBudget.fieldTruncationSummarySynthesis':
+      '{titleCount} title / {abstractCount} abstract / {aiSummaryCount} AI summary',
     'debugger.promptBudget.omittedPmids': 'Omitted PMIDs',
     'debugger.promptBudget.mode.lexicalPrefilter': 'lexical pre-filter',
     'debugger.promptBudget.mode.fullCorpus': 'full corpus',
@@ -84,6 +86,8 @@ export const debuggerTranslations = {
     'debugger.promptBudget.estTokens': 'gesch. Prompt-Token',
     'debugger.promptBudget.fieldTruncation': 'Feld-Kürzung',
     'debugger.promptBudget.fieldTruncationSummary': '{titleCount} Titel / {abstractCount} Abstract',
+    'debugger.promptBudget.fieldTruncationSummarySynthesis':
+      '{titleCount} Titel / {abstractCount} Abstract / {aiSummaryCount} KI-Zusammenfassung',
     'debugger.promptBudget.omittedPmids': 'Ausgelassene PMIDs',
     'debugger.promptBudget.mode.lexicalPrefilter': 'lexikales Pre-Filtering',
     'debugger.promptBudget.mode.fullCorpus': 'voller Korpus',

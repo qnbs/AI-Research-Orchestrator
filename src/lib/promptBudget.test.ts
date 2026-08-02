@@ -152,6 +152,21 @@ describe('selectArticlesForSynthesisPrompt', () => {
     expect(selection.accounting.omittedFromPrompt).toBe(
       articles.length - selection.accounting.includedInPrompt,
     );
+    expect(selection.accounting.truncatedAiSummaryCount).toBeTypeOf('number');
+  });
+
+  it('tracks abstract and aiSummary truncation separately for synthesis', () => {
+    const articles = [
+      makeArticle('1', 't'.repeat(500), 'a'.repeat(2000)),
+      makeArticle('2', 'short', 'short abstract'),
+    ];
+    articles[0].aiSummary = 's'.repeat(2000);
+    articles[1].aiSummary = 'brief summary';
+
+    const selection = selectArticlesForSynthesisPrompt(articles, 'gemini', 'gemini-2.5-flash');
+
+    expect(selection.accounting.truncatedAbstractCount).toBe(1);
+    expect(selection.accounting.truncatedAiSummaryCount).toBe(1);
   });
 });
 

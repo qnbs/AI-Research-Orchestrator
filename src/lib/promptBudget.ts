@@ -51,6 +51,8 @@ export type PromptBudgetAccounting = {
   chunkCount: number;
   truncatedTitleCount: number;
   truncatedAbstractCount: number;
+  /** Synthesis-only: truncated `aiSummary` fields (separate from source abstract). */
+  truncatedAiSummaryCount?: number;
   selectionMode: 'lexical-prefilter' | 'full-corpus';
 };
 
@@ -194,6 +196,7 @@ export const selectArticlesForRankingPrompt = (
     chunkCount: 1,
     truncatedTitleCount,
     truncatedAbstractCount,
+    truncatedAiSummaryCount: 0,
     selectionMode: omittedPmids.length > 0 ? 'lexical-prefilter' : 'full-corpus',
   };
 
@@ -253,6 +256,7 @@ export const selectArticlesForSynthesisPrompt = (
   let bestPayloads: SynthesisArticlePromptPayload[] = [];
   let truncatedTitleCount = 0;
   let truncatedAbstractCount = 0;
+  let truncatedAiSummaryCount = 0;
 
   for (let count = articles.length; count >= 1; count -= 1) {
     const subset = articles.slice(0, count);
@@ -263,9 +267,8 @@ export const selectArticlesForSynthesisPrompt = (
       bestCount = count;
       bestPayloads = payloads;
       truncatedTitleCount = shaped.filter((s) => s.truncatedTitle).length;
-      truncatedAbstractCount = shaped.filter(
-        (s) => s.truncatedAbstract || s.truncatedAiSummary,
-      ).length;
+      truncatedAbstractCount = shaped.filter((s) => s.truncatedAbstract).length;
+      truncatedAiSummaryCount = shaped.filter((s) => s.truncatedAiSummary).length;
       break;
     }
   }
@@ -288,6 +291,7 @@ export const selectArticlesForSynthesisPrompt = (
       chunkCount: 1,
       truncatedTitleCount,
       truncatedAbstractCount,
+      truncatedAiSummaryCount,
       selectionMode: omittedPmids.length > 0 ? 'lexical-prefilter' : 'full-corpus',
     },
   };
@@ -342,6 +346,7 @@ export const parsePromptBudgetFromMetadata = (
   const chunkCount = raw.chunkCount;
   const truncatedTitleCount = raw.truncatedTitleCount;
   const truncatedAbstractCount = raw.truncatedAbstractCount;
+  const truncatedAiSummaryCount = raw.truncatedAiSummaryCount;
 
   return {
     stage,
@@ -358,6 +363,9 @@ export const parsePromptBudgetFromMetadata = (
     truncatedTitleCount: isValidNonNegativeFinite(truncatedTitleCount) ? truncatedTitleCount : 0,
     truncatedAbstractCount: isValidNonNegativeFinite(truncatedAbstractCount)
       ? truncatedAbstractCount
+      : 0,
+    truncatedAiSummaryCount: isValidNonNegativeFinite(truncatedAiSummaryCount)
+      ? truncatedAiSummaryCount
       : 0,
     selectionMode: normalizedSelectionMode,
   };
