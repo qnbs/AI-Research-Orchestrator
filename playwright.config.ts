@@ -4,6 +4,7 @@ import { defineConfig, devices } from '@playwright/test';
  * AI Research Orchestrator — Playwright E2E configuration
  *
  * Runs Chromium-only inside DevContainers / CI (headless, no sandbox).
+ * Set PLAYWRIGHT_MATRIX=1 for the non-blocking cross-browser smoke workflow (P1-6).
  * Browser binary is installed by .devcontainer/postCreate.sh.
  *
  * @see https://playwright.dev/docs/test-configuration
@@ -29,13 +30,30 @@ export default defineConfig({
     screenshot: 'only-on-failure',
   },
 
-  // Only Chromium in the container — add more browsers in local dev as needed
-  projects: [
-    {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
-    },
-  ],
+  // Chromium is the blocking CI default. Set PLAYWRIGHT_MATRIX=1 to enable the
+  // non-blocking cross-browser smoke workflow (audit P1-6).
+  projects:
+    process.env.PLAYWRIGHT_MATRIX === '1'
+      ? [
+          {
+            name: 'firefox',
+            use: { ...devices['Desktop Firefox'] },
+          },
+          {
+            name: 'webkit',
+            use: { ...devices['Desktop Safari'] },
+          },
+          {
+            name: 'mobile-chrome',
+            use: { ...devices['Pixel 5'] },
+          },
+        ]
+      : [
+          {
+            name: 'chromium',
+            use: { ...devices['Desktop Chrome'] },
+          },
+        ],
 
   // Automatically start Vite dev server before tests (only if not already running)
   webServer: {

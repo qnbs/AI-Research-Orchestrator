@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Audit governance (P1-7):** `docs/audit-governance.md` — Sonar way promotion path and `pnpm audit` moderate-severity procedure.
 
+- **Cross-browser E2E smoke matrix (P1-6):** non-blocking `.github/workflows/e2e-cross-browser.yml` for Firefox, WebKit, and mobile Chrome (`smoke.spec.ts` only); `PLAYWRIGHT_MATRIX=1` enables extra Playwright projects.
+
 - **Critical-path coverage floors (P1-3):** `check:coverage-floors` CI gate ratchets `providers/`, `geminiService.ts`, and `apiKeyService.ts` at current baselines.
 
 - **Grounded synthesis schema (P0-3 completion):** optional `ResearchReport.groundedSynthesis` with `GroundedClaim[]`; heuristic population from extractive templates, live narrative PMID extraction, export sanitization, and KB import validation. ADR [0015](docs/adr/0015-grounded-synthesis-schema.md).
