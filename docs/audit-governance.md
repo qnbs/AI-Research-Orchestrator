@@ -1,50 +1,24 @@
 # Audit governance — CI quality gates (P1-7)
 
 Governance notes from the 2026-08-02 full-scale audit follow-up. This document
-records **decisions** and **operating procedures** for SonarQube Cloud and
-`pnpm audit` so future PRs do not re-litigate the same trade-offs.
+records **decisions** and **operating procedures** for repository quality and
+security gates so future PRs do not re-litigate the same trade-offs.
 
-## SonarQube Cloud (built-in Sonar way gate)
+## Coverage and static analysis posture
 
-### Current posture (2026-08-02)
+| Gate | Where | Blocking? | Notes |
+| ---- | ----- | --------- | ----- |
+| Typecheck / lint / unit tests + coverage | `deploy.yml` | **Yes** | `pnpm run test:coverage` — 80% lines/statements on `store`/`services`/`hooks`/`lib` |
+| Critical-path coverage floors | `deploy.yml` → `check:coverage-floors` | **Yes** | Ratchet on `providers/`, `geminiService.ts`, `apiKeyService.ts` |
+| CodeQL | `security.yml` | **Yes** | `security-extended` query set |
+| DeepSource (Docker/Shell/JS) | GitHub App check | Advisory | JS analyzer tuned in `.deepsource.toml`; `scripts/**` excluded |
+| CodeAnt / Semgrep / gitleaks | GitHub App checks | Mixed | See workflow outputs per PR |
 
-| Aspect              | Setting                                                  | Rationale                                                                                             |
-| ------------------- | -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| CI job              | **Removed** (2026-08-02)                                 | Owner deactivating SonarCloud dashboard; coverage gate remains Vitest `test:coverage` in `deploy.yml` |
-| Organization key    | `qnbs-1`                                                 | See `docs/sonarcloud-setup-todo.md`                                                                   |
-| Coverage scope      | `src/store`, `src/services`, `src/hooks`, `src/lib` only | Matches Vitest coverage gate; UI/context paths are E2E-tested                                         |
-| Custom quality gate | **Not available** on Free                                | Sonar way is read-only                                                                                |
-
-### Sonar way conditions on new code
-
-1. Reliability rating A (0 new bugs)
-2. Security rating A (0 new vulnerabilities)
-3. Maintainability rating A
-4. **All new Security Hotspots reviewed** (manual in Sonar UI)
-5. **Coverage on new code ≥ 80%**
-6. Duplicated lines on new code ≤ 3%
-
-### Promotion path to blocking (recommended sequence)
-
-1. **Keep non-blocking** until `main` has zero unreviewed Security Hotspots.
-2. Add targeted unit tests for any new logic in covered layers before merging
-   (same lesson as P1-5 logging migration — touched catch blocks count as new code).
-3. Enable gate wait in `security.yml` when ready:
-
-```yaml
-with:
-  args: >-
-    -Dsonar.qualitygate.wait=true
-    -Dsonar.qualitygate.timeout=300
-```
-
-4. Remove implicit non-blocking behavior only after **three consecutive green**
-   `main` runs with `qualitygate.wait=true`.
+**Coverage scope:** Vitest gates logic layers (`src/store`, `src/services`, `src/hooks`, `src/lib`). UI views are covered by Playwright E2E instead.
 
 ### Known false positives / external failures
 
 - **DeepSource JavaScript:** use `module_system = "es-modules"` in `.deepsource.toml` and exclude `scripts/**` (Node `.mjs` maintenance). Core gates (typecheck/lint/tests/build) remain authoritative.
-- **SonarQube Cloud:** CI job removed 2026-08-02; dashboard deactivation is owner-managed (`docs/sonarcloud-setup-todo.md`).
 - **Claude Code Review** workflow may fail on infrastructure — re-run or ignore if no actionable inline threads.
 
 ## `pnpm audit` governance
@@ -81,7 +55,6 @@ Moderate findings are **tracked but not CI-blocking** because:
 
 ## Cross-references
 
-- Sonar setup: `docs/sonarcloud-setup-todo.md`
 - E2E promotion: `docs/e2e-ci-backlog.md`
 - Dependabot process: `.cursor/rules/012-dependabot-pr-gate.mdc`
 - Full audit: `docs/audits/2026-08-02-full-scale-audit.md`

@@ -1,12 +1,13 @@
 version = 1
 
-# Node maintenance scripts use ESM .mjs — ESLint/typecheck cover app code; exclude from JS analyzer.
+# Node maintenance scripts and the Vite entry live outside src/ — ESLint/typecheck cover app code.
 exclude_patterns = [
   "eslint-local-rules/**",
   "scripts/**",
   "public/**",
   "dist/**",
   "coverage/**",
+  "index.tsx",
 ]
 
 [[analyzers]]
@@ -16,8 +17,10 @@ name = "javascript"
   plugins = ["react"]
   module_system = "es-modules"
   dialect = "typescript"
+  dependency_file_paths = ["."]
   environment = ["browser", "nodejs", "vitest", "cypress"]
   cyclomatic_complexity_threshold = "high"
+  test_patterns = ["**/*.{test,spec}.{ts,tsx}"]
   skip_doc_coverage = [
     "function-declaration",
     "function-expression",

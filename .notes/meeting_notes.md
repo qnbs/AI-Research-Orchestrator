@@ -37,7 +37,6 @@
 ## Still open
 
 - No known residual chrome or enum-label i18n backlog; continue auditing any newly introduced surfaces with the ratchet.
-- SonarCloud Quality Gate wait / hotspot review remains free-tier dashboard work (`docs/sonarcloud-setup-todo.md`).
 
 ## 2026-08-01 — E2E promotion + deferred specs
 
@@ -168,7 +167,7 @@
 - **2026-08-01 — PR #109 (#95 Tailwind v4 `@theme`).** Native `@theme reference inline` + `@theme` blocks in `src/index.css`; legacy `tailwind.config.js` deleted. Custom utilities (`bg-surface`, `text-text-primary`, `border-border`, `animate-fadeIn`, …) now emit real CSS.
 - **2026-08-01 — PR #111 (#96 WS-D follow-ups).** Unquoted `ui-monospace` in `--font-mono`; contrast gate asserts border vs input-bg.
 - **2026-08-01 — #78 / #74 (App.tsx decomposition) on branch `cursor/app-tsx-decomposition-aa80`.** `src/App.tsx` reduced from 869 → ~20 lines (providers only). Split into `src/app/useAppLogic.ts` (composer) + domain hooks (`useResearchSession`, `useAppChromeEffects`, `useKbExports`), `AppLayout` / `AppViewRouter` (chrome + routing), plus `getAgentForPhase` / spinners / lazyViews. Vault-reset listener semantics preserved; review pass also fixed empty-stream guard, checkpoint delete error handling, stream abort on history open, spinner a11y, and modal/export i18n.
-- **PR #75** — SonarCloud CI workflow validation fix (invalid `secrets.*` in job-level `if:`) + wrong `sonar.organization` key.
+- **PR #75** — CI workflow validation fix (invalid `secrets.*` in job-level `if:`) on `security.yml`. *(Superseded: external static-analysis integration removed 2026-08-02.)*
 - **PR #76** (WS-A) — removed vestigial CDN import map (ADR 0011), new `check-no-cdn-scripts.mjs` gate.
 - **PR #77** (WS-B) — self-hosted Workbox (no more CDN `importScripts()`), versioned runtime caches, explicit update flow. Went through **4 review-correction waves** before merging; found and fixed real bugs along the way, notably: reload logic that only reloaded the tab that clicked "Reload" (other open tabs got silently taken over by the new SW while running old JS — fixed by gating reload on "was this tab already controlled at load," not "did this tab click the button"), a cache-prune predicate that would have deleted unrelated same-prefixed caches, a CodeQL missing-origin-check finding, and a self-inflicted syntax error in `copy-workbox.mjs` (a `*/` inside a comment string closed the block comment early — never caught by CI since that script isn't wired into any pipeline).
 - **14 Dependabot PRs** (#79–#92) — all triaged and merged. Found two "must move together" bugs Dependabot's per-package PRs don't know about: **react + react-dom** must share the exact same version (one PR bumped only `react`, breaking every test); **codeql-action's `init`/`autobuild`/`analyze`** must all three be pinned to the same version (3 separate Dependabot PRs each bumped only one, breaking CodeQL). Both fixed by consolidating onto one PR and closing the redundant others.
@@ -177,7 +176,7 @@
 
 ## Also fixed outside the PR-by-PR flow
 
-- **SonarCloud kept showing red on `main`** even though nothing broke: root cause was that `sonar.projectVersion` was never set on any scan, so its "new code = since previous version" period had no real previous version to diff against, and was resurfacing pre-existing bugs (in files untouched for days) as "new." Fixed in `security.yml` by versioning every scan with `${{ github.sha }}`. This job is still `continue-on-error: true` (advisory phase, not yet promoted to blocking) so it was never actually breaking CI, just noisy/misleading.
+- **External static-analysis noise on `main` (2026-08-01):** resolved at the time via CI versioning; integration fully removed 2026-08-02.
 
 ## Tracked follow-ups (GitHub issues)
 
