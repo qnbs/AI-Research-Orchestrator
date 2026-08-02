@@ -2,8 +2,12 @@ import { describe, expect, it } from 'vitest';
 import {
   boundTextField,
   DEFAULT_PROMPT_FIELD_LIMITS,
+  parsePromptBudgetFromMetadata,
   selectArticlesForRankingPrompt,
+  selectArticlesForSynthesisPrompt,
   shapeArticleForRankingPrompt,
+  getInputTokenBudget,
+  SYNTHESIS_PROMPT_OVERHEAD_TOKENS,
 } from './promptBudget';
 import { wrapUntrustedJsonBlock } from './untrustedDataFraming';
 import type { RankedArticle } from '../types';
@@ -122,5 +126,118 @@ describe('prompt budget boundaries', () => {
     const available = Math.max(1_000, 8_000 - 4_500);
     expect(selection.accounting.estimatedPromptTokens).toBeLessThanOrEqual(available);
     expect(selection.payloads.length).toBeGreaterThan(0);
+  });
+});
+
+describe('selectArticlesForSynthesisPrompt', () => {
+  it('bounds ranked articles within synthesis token budget', () => {
+    const articles = Array.from({ length: 40 }, (_, i) => {
+      const article = makeArticle(
+        String(i + 1),
+        `aspirin cardiovascular study ${i}`,
+        'x'.repeat(DEFAULT_PROMPT_FIELD_LIMITS.maxAbstractChars),
+      );
+      article.relevanceScore = 90 - i;
+      article.aiSummary = `Summary for ${article.pmid}`;
+      return article;
+    });
+
+    const selection = selectArticlesForSynthesisPrompt(articles, 'gemini', 'gemini-2.5-flash');
+    const inputBudget = getInputTokenBudget('gemini', 'gemini-2.5-flash');
+    const available = Math.max(800, inputBudget - SYNTHESIS_PROMPT_OVERHEAD_TOKENS);
+
+    expect(selection.accounting.stage).toBe('synthesis');
+    expect(selection.accounting.estimatedPromptTokens).toBeLessThanOrEqual(available);
+    expect(selection.payloads.length).toBeGreaterThan(0);
+    expect(selection.accounting.omittedFromPrompt).toBe(
+      articles.length - selection.accounting.includedInPrompt,
+    );
+    expect(selection.accounting.truncatedAiSummaryCount).toBeTypeOf('number');
+  });
+
+  it('tracks abstract and aiSummary truncation separately for synthesis', () => {
+    const articles = [
+      makeArticle('1', 't'.repeat(500), 'a'.repeat(2000)),
+      makeArticle('2', 'short', 'short abstract'),
+    ];
+    articles[0].aiSummary = 's'.repeat(2000);
+    articles[1].aiSummary = 'brief summary';
+
+    const selection = selectArticlesForSynthesisPrompt(articles, 'gemini', 'gemini-2.5-flash');
+
+    expect(selection.accounting.truncatedAbstractCount).toBe(1);
+    expect(selection.accounting.truncatedAiSummaryCount).toBe(1);
+  });
+});
+
+describe('parsePromptBudgetFromMetadata', () => {
+  it('returns undefined for invalid metadata', () => {
+    expect(parsePromptBudgetFromMetadata(undefined)).toBeUndefined();
+    expect(parsePromptBudgetFromMetadata({ promptBudget: null })).toBeUndefined();
+    expect(parsePromptBudgetFromMetadata({ promptBudget: { stage: 'invalid' } })).toBeUndefined();
+  });
+
+  it('parses ranking accounting from trace metadata', () => {
+    const accounting = selectArticlesForRankingPrompt(
+      [makeArticle('1', 'aspirin trial')],
+      'aspirin',
+      'gemini',
+      'gemini-2.5-flash',
+    ).accounting;
+
+    const parsed = parsePromptBudgetFromMetadata({ promptBudget: accounting });
+    expect(parsed).toEqual(accounting);
+  });
+
+  it('rejects non-finite and negative accounting numbers', () => {
+    const base = {
+      stage: 'ranking' as const,
+      provider: 'gemini' as const,
+      model: 'gemini-2.5-flash',
+      includedInPrompt: 1,
+      omittedFromPrompt: 0,
+      omittedPmids: [] as string[],
+      estimatedPromptTokens: 500,
+      inputTokenBudget: 14_000,
+      chunkIndex: 1,
+      chunkCount: 1,
+      truncatedTitleCount: 0,
+      truncatedAbstractCount: 0,
+      selectionMode: 'full-corpus' as const,
+    };
+
+    expect(
+      parsePromptBudgetFromMetadata({ promptBudget: { ...base, totalRetrieved: NaN } }),
+    ).toBeUndefined();
+    expect(
+      parsePromptBudgetFromMetadata({ promptBudget: { ...base, totalRetrieved: -1 } }),
+    ).toBeUndefined();
+    expect(
+      parsePromptBudgetFromMetadata({
+        promptBudget: { ...base, totalRetrieved: 5, estimatedPromptTokens: Infinity },
+      }),
+    ).toBeUndefined();
+  });
+
+  it('infers lexical-prefilter when omittedFromPrompt > 0 without omittedPmids', () => {
+    const parsed = parsePromptBudgetFromMetadata({
+      promptBudget: {
+        stage: 'ranking',
+        provider: 'gemini',
+        model: 'gemini-2.5-flash',
+        totalRetrieved: 10,
+        includedInPrompt: 5,
+        omittedFromPrompt: 5,
+        omittedPmids: [],
+        estimatedPromptTokens: 1000,
+        inputTokenBudget: 14_000,
+        chunkIndex: 1,
+        chunkCount: 1,
+        truncatedTitleCount: 0,
+        truncatedAbstractCount: 0,
+      },
+    });
+
+    expect(parsed?.selectionMode).toBe('lexical-prefilter');
   });
 });

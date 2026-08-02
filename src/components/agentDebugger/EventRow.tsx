@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import type { AgentTraceEvent } from '../../types';
 import { useTranslation } from '../../hooks/useTranslation';
 import type { TranslationKey } from '../../i18n/translations';
+import { parsePromptBudgetFromMetadata } from '../../lib/promptBudget';
 import { AGENT_ICONS, STATUS_RING, STATUS_TEXT } from './constants';
 import { StatusDot } from './StatusDot';
 
@@ -14,6 +15,16 @@ const STATUS_LABEL_KEYS: Record<AgentTraceEvent['status'], TranslationKey> = {
   skipped: 'debugger.status.skipped',
 };
 
+const PROMPT_BUDGET_STAGE_KEYS: Record<'ranking' | 'synthesis', TranslationKey> = {
+  ranking: 'debugger.promptBudget.stage.ranking',
+  synthesis: 'debugger.promptBudget.stage.synthesis',
+};
+
+const PROMPT_BUDGET_MODE_KEYS: Record<'lexical-prefilter' | 'full-corpus', TranslationKey> = {
+  'lexical-prefilter': 'debugger.promptBudget.mode.lexicalPrefilter',
+  'full-corpus': 'debugger.promptBudget.mode.fullCorpus',
+};
+
 export const EventRow: React.FC<{
   event: AgentTraceEvent;
   index: number;
@@ -22,13 +33,26 @@ export const EventRow: React.FC<{
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const detailsId = `event-details-${event.id}`;
+  const promptBudget = parsePromptBudgetFromMetadata(event.metadata);
   const dur =
     event.durationMs != null
       ? event.durationMs < 1000
         ? `${event.durationMs}ms`
         : `${(event.durationMs / 1000).toFixed(1)}s`
       : null;
-  const hasDetails = !!(event.inputSummary || event.outputSummary || event.error);
+  const hasOmittedPmids = (promptBudget?.omittedPmids?.length ?? 0) > 0;
+  const hasFieldTruncation =
+    promptBudget != null &&
+    (promptBudget.truncatedTitleCount > 0 ||
+      promptBudget.truncatedAbstractCount > 0 ||
+      (promptBudget.truncatedAiSummaryCount ?? 0) > 0);
+  const hasPromptBudgetDetails = hasOmittedPmids || hasFieldTruncation;
+  const hasDetails = !!(
+    event.inputSummary ||
+    event.outputSummary ||
+    event.error ||
+    hasPromptBudgetDetails
+  );
 
   return (
     <motion.div
@@ -77,6 +101,34 @@ export const EventRow: React.FC<{
             </span>
             <span className="text-accent-amber">
               ${event.tokenUsage.estimatedCostUsd.toFixed(5)}
+            </span>
+          </div>
+        )}
+
+        {promptBudget && (
+          <div
+            className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] font-mono text-text-secondary"
+            data-testid="prompt-budget-summary"
+          >
+            <span className="text-brand-accent/90">
+              {t(PROMPT_BUDGET_STAGE_KEYS[promptBudget.stage])}
+            </span>
+            <span>
+              {promptBudget.includedInPrompt}/{promptBudget.totalRetrieved}{' '}
+              {t('debugger.promptBudget.included')}
+            </span>
+            {promptBudget.omittedFromPrompt > 0 && (
+              <span className="text-accent-amber">
+                {promptBudget.omittedFromPrompt.toLocaleString()}{' '}
+                {t('debugger.promptBudget.omitted')}
+              </span>
+            )}
+            <span>
+              ~{promptBudget.estimatedPromptTokens.toLocaleString()}{' '}
+              {t('debugger.promptBudget.estTokens')}
+            </span>
+            <span className="text-text-secondary/80">
+              {t(PROMPT_BUDGET_MODE_KEYS[promptBudget.selectionMode])}
             </span>
           </div>
         )}
@@ -130,6 +182,37 @@ export const EventRow: React.FC<{
                     <span className="text-text-primary font-mono whitespace-pre-wrap break-words">
                       {event.outputSummary}
                     </span>
+                  </div>
+                )}
+                {hasPromptBudgetDetails && promptBudget && (
+                  <div className="bg-surface/50 rounded-lg p-2 border border-border/50">
+                    {hasOmittedPmids && (
+                      <>
+                        <span className="text-text-secondary font-semibold uppercase tracking-wide block mb-0.5">
+                          {t('debugger.promptBudget.omittedPmids')}
+                        </span>
+                        <span className="text-text-primary font-mono whitespace-pre-wrap break-words">
+                          {promptBudget.omittedPmids.join(', ')}
+                        </span>
+                      </>
+                    )}
+                    {hasFieldTruncation && (
+                      <span
+                        className={`text-text-secondary block ${hasOmittedPmids ? 'mt-1' : ''}`}
+                      >
+                        {t('debugger.promptBudget.fieldTruncation')}:{' '}
+                        {promptBudget.stage === 'synthesis'
+                          ? t('debugger.promptBudget.fieldTruncationSummarySynthesis', {
+                              titleCount: promptBudget.truncatedTitleCount,
+                              abstractCount: promptBudget.truncatedAbstractCount,
+                              aiSummaryCount: promptBudget.truncatedAiSummaryCount ?? 0,
+                            })
+                          : t('debugger.promptBudget.fieldTruncationSummary', {
+                              titleCount: promptBudget.truncatedTitleCount,
+                              abstractCount: promptBudget.truncatedAbstractCount,
+                            })}
+                      </span>
+                    )}
                   </div>
                 )}
                 {event.error && (

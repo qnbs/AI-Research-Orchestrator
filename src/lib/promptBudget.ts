@@ -51,6 +51,8 @@ export type PromptBudgetAccounting = {
   chunkCount: number;
   truncatedTitleCount: number;
   truncatedAbstractCount: number;
+  /** Synthesis-only: truncated `aiSummary` fields (separate from source abstract). */
+  truncatedAiSummaryCount?: number;
   selectionMode: 'lexical-prefilter' | 'full-corpus';
 };
 
@@ -194,6 +196,7 @@ export const selectArticlesForRankingPrompt = (
     chunkCount: 1,
     truncatedTitleCount,
     truncatedAbstractCount,
+    truncatedAiSummaryCount: 0,
     selectionMode: omittedPmids.length > 0 ? 'lexical-prefilter' : 'full-corpus',
   };
 
@@ -253,6 +256,7 @@ export const selectArticlesForSynthesisPrompt = (
   let bestPayloads: SynthesisArticlePromptPayload[] = [];
   let truncatedTitleCount = 0;
   let truncatedAbstractCount = 0;
+  let truncatedAiSummaryCount = 0;
 
   for (let count = articles.length; count >= 1; count -= 1) {
     const subset = articles.slice(0, count);
@@ -263,9 +267,8 @@ export const selectArticlesForSynthesisPrompt = (
       bestCount = count;
       bestPayloads = payloads;
       truncatedTitleCount = shaped.filter((s) => s.truncatedTitle).length;
-      truncatedAbstractCount = shaped.filter(
-        (s) => s.truncatedAbstract || s.truncatedAiSummary,
-      ).length;
+      truncatedAbstractCount = shaped.filter((s) => s.truncatedAbstract).length;
+      truncatedAiSummaryCount = shaped.filter((s) => s.truncatedAiSummary).length;
       break;
     }
   }
@@ -288,7 +291,82 @@ export const selectArticlesForSynthesisPrompt = (
       chunkCount: 1,
       truncatedTitleCount,
       truncatedAbstractCount,
+      truncatedAiSummaryCount,
       selectionMode: omittedPmids.length > 0 ? 'lexical-prefilter' : 'full-corpus',
     },
+  };
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const isValidNonNegativeFinite = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isFinite(value) && value >= 0;
+
+/** Parse prompt-budget accounting from Agent Debugger trace metadata. */
+export const parsePromptBudgetFromMetadata = (
+  metadata?: Record<string, unknown>,
+): PromptBudgetAccounting | undefined => {
+  if (!metadata) return undefined;
+  const raw = metadata.promptBudget;
+  if (!isRecord(raw)) return undefined;
+
+  const stage = raw.stage;
+  if (stage !== 'ranking' && stage !== 'synthesis') return undefined;
+
+  const totalRetrieved = raw.totalRetrieved;
+  const includedInPrompt = raw.includedInPrompt;
+  const omittedFromPrompt = raw.omittedFromPrompt;
+  const estimatedPromptTokens = raw.estimatedPromptTokens;
+  const inputTokenBudget = raw.inputTokenBudget;
+
+  if (
+    !isValidNonNegativeFinite(totalRetrieved) ||
+    !isValidNonNegativeFinite(includedInPrompt) ||
+    !isValidNonNegativeFinite(omittedFromPrompt) ||
+    !isValidNonNegativeFinite(estimatedPromptTokens) ||
+    !isValidNonNegativeFinite(inputTokenBudget)
+  ) {
+    return undefined;
+  }
+
+  const omittedPmids = Array.isArray(raw.omittedPmids)
+    ? raw.omittedPmids.filter((id): id is string => typeof id === 'string')
+    : [];
+
+  const selectionMode = raw.selectionMode;
+  const normalizedSelectionMode =
+    selectionMode === 'lexical-prefilter' || selectionMode === 'full-corpus'
+      ? selectionMode
+      : omittedFromPrompt > 0
+        ? 'lexical-prefilter'
+        : 'full-corpus';
+
+  const chunkIndex = raw.chunkIndex;
+  const chunkCount = raw.chunkCount;
+  const truncatedTitleCount = raw.truncatedTitleCount;
+  const truncatedAbstractCount = raw.truncatedAbstractCount;
+  const truncatedAiSummaryCount = raw.truncatedAiSummaryCount;
+
+  return {
+    stage,
+    provider: (typeof raw.provider === 'string' ? raw.provider : 'gemini') as AIProviderSelection,
+    model: typeof raw.model === 'string' ? raw.model : 'unknown',
+    totalRetrieved,
+    includedInPrompt,
+    omittedFromPrompt,
+    omittedPmids,
+    estimatedPromptTokens,
+    inputTokenBudget,
+    chunkIndex: isValidNonNegativeFinite(chunkIndex) && chunkIndex > 0 ? chunkIndex : 1,
+    chunkCount: isValidNonNegativeFinite(chunkCount) && chunkCount > 0 ? chunkCount : 1,
+    truncatedTitleCount: isValidNonNegativeFinite(truncatedTitleCount) ? truncatedTitleCount : 0,
+    truncatedAbstractCount: isValidNonNegativeFinite(truncatedAbstractCount)
+      ? truncatedAbstractCount
+      : 0,
+    truncatedAiSummaryCount: isValidNonNegativeFinite(truncatedAiSummaryCount)
+      ? truncatedAiSummaryCount
+      : 0,
+    selectionMode: normalizedSelectionMode,
   };
 };

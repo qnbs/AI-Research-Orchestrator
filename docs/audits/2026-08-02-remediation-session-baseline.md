@@ -46,11 +46,11 @@ Latest `main` push after DeepSource fixes: all above green on `fix(deepsource): 
 
 ## Deferred (not started this session)
 
-| ID                                   | Notes                                               |
-| ------------------------------------ | --------------------------------------------------- |
-| P0-3 Prompt budget / JSON truncation | `wrapUntrustedJsonBlock` still truncates at 12k     |
-| P0-6 Synthesis trust model           | Partial infra exists; live UI still narrative-first |
-| P1–P3 workstreams                    | Per master prompt                                   |
+| ID                                   | Notes                                                          |
+| ------------------------------------ | -------------------------------------------------------------- |
+| P0-3 Prompt budget / JSON truncation | **Fixed post-session** — `promptBudget.ts` + debugger trace UI |
+| P0-6 Synthesis trust model           | Partial infra exists; live UI still narrative-first            |
+| P1–P3 workstreams                    | Per master prompt                                              |
 
 ## PR stack
 
@@ -60,8 +60,8 @@ Latest `main` push after DeepSource fixes: all above green on `fix(deepsource): 
 
 ## Residual risks
 
-- Narrative synthesis trust (P0-6) unchanged.
-- Prompt corpus truncation (P0-3) unchanged.
+- Narrative synthesis trust (P0-6) unchanged at session end; later landed on `main`.
+- Prompt corpus truncation (P0-3) **fixed** after this baseline.
 - Cross-browser E2E remains advisory; verify logs before promotion.
 - DeepSource JavaScript advisory; ESLint/deploy gates authoritative.
 
