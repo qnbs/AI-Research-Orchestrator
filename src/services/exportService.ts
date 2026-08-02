@@ -17,7 +17,7 @@ import {
   normalizePmcidValue,
   resolveArticleId,
 } from '../lib/sourceIdentifier';
-import { formatReleaseLabel, getAppReleaseInfo } from '../lib/appReleaseInfo';
+import { formatReleaseLabel, formatReportReleaseLabel, getAppReleaseInfo } from '../lib/appReleaseInfo';
 
 // ===================================================================================
 //
@@ -277,7 +277,7 @@ class PdfExporter {
       this.doc.text(`Generated on ${new Date().toLocaleDateString()}`, this.pageWidth / 2, 95, {
         align: 'center',
       });
-      this.doc.text(formatReleaseLabel(), this.pageWidth / 2, 105, { align: 'center' });
+      this.doc.text(formatReportReleaseLabel(report), this.pageWidth / 2, 105, { align: 'center' });
       if (this.settings.preparedFor) {
         this.doc.text(`Prepared for: ${this.settings.preparedFor}`, this.pageWidth / 2, 115, {
           align: 'center',

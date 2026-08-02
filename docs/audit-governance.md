@@ -19,7 +19,7 @@ security gates so future PRs do not re-litigate the same trade-offs.
 
 ### Known false positives / external failures
 
-- **DeepSource JavaScript:** analyzer **disabled** in `.deepsource.toml` (2026-08-02). Persistent ESM false positives, `scripts/lib` parse errors, and quality-gate churn — see `docs/deepsource-javascript-ci.md`. Docker/Shell remain advisory; ESLint + `deploy.yml` are authoritative for TS/TSX.
+- **DeepSource JavaScript:** analyzer **off in the DeepSource dashboard** (Settings → Code Review → Analyzers); `.deepsource.toml` has no `javascript` block (2026-08-02). Persistent ESM false positives, `scripts/lib` parse errors, and quality-gate churn — see `docs/deepsource-javascript-ci.md` and `docs/deepsource-dashboard-off.md`. Docker/Shell remain advisory; ESLint + `deploy.yml` are authoritative for TS/TSX.
 - **Claude Code Review:** removed from CI (2026-08-02) — no blocking `review` job. On-demand `@claude` remains via `claude.yml`.
 
 ## `pnpm audit` governance

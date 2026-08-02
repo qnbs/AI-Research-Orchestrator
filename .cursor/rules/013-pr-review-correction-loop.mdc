@@ -69,7 +69,7 @@ Replace `N` with the PR number. After fixes, resolve threads via GraphQL `resolv
 - **i18n for all identifier types:** Copy toast and ARIA labels must not hard-code “PMID” when DOI/arXiv/PMCID are copied.
 - **DOI URLs:** Use `encodeURI` for `doi.org` paths (preserve `/`); do not `encodeURIComponent` the full DOI.
 - **CodeRabbit re-reviews** each push — expect 2–4 correction rounds on medium PRs; budget time for rate-limit delays.
-- **DeepSource noise:** Doc-coverage and function-declaration nits are gated off via `.deepsource.toml`; do not churn code solely for advisory DeepSource JavaScript unless policy flips to blocking.
+- **DeepSource noise:** JavaScript analyzer is off in the DeepSource dashboard; `.deepsource.toml` has no `javascript` block (`docs/deepsource-dashboard-off.md`). Do not churn code solely for advisory DeepSource JavaScript unless policy flips to blocking.
 
 ## Related docs
 

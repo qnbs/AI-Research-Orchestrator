@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildReportGenerationProvenance,
   formatReleaseLabel,
+  formatReportReleaseLabel,
   getAppReleaseInfo,
   stampReportWithProvenance,
 } from './appReleaseInfo';
@@ -22,6 +23,27 @@ describe('appReleaseInfo', () => {
     );
   });
 
+  it('prefers report provenance for export labels', () => {
+    const report = {
+      generatedQueries: [],
+      rankedArticles: [],
+      synthesis: '',
+      aiGeneratedInsights: [],
+      overallKeywords: [],
+      generationProvenance: {
+        appVersion: '0.3.9',
+        buildCommitSha: 'oldsha1',
+        dexieSchemaVersion: 4,
+        swCacheVersion: 'v0',
+        generatedAt: 1_700_000_000_000,
+      },
+    };
+    expect(formatReportReleaseLabel(report)).toBe('v0.3.9 (oldsha1)');
+    expect(formatReportReleaseLabel({ ...report, generationProvenance: undefined })).toMatch(
+      /^v\d+\.\d+\.\d+/,
+    );
+  });
+
   it('stamps generation provenance onto reports', () => {
     const report = stampReportWithProvenance(
       {
@@ -36,6 +58,8 @@ describe('appReleaseInfo', () => {
     expect(report.generationProvenance?.inferenceMode).toBe('heuristic');
     expect(report.generationProvenance?.providerId).toBe('heuristic');
     expect(report.generationProvenance?.dexieSchemaVersion).toBe(DEXIE_SCHEMA_VERSION);
-    expect(buildReportGenerationProvenance().generatedAt).toBeTypeOf('number');
+    expect(buildReportGenerationProvenance({ generatedAt: 1_700_000_000_000 }).generatedAt).toBe(
+      1_700_000_000_000,
+    );
   });
 });

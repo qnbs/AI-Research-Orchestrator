@@ -26,10 +26,11 @@ Tags are optional for every `main` deploy but **required** when promoting `[Unre
 |--------|----------------|
 | Help → About | `v{packageVersion} ({shortSha})` via `formatReleaseLabel()` |
 | JSON export `meta` | `appVersion`, `buildCommitSha`, `dexieSchemaVersion`, `swCacheVersion` |
-| PDF cover/footer | `formatReleaseLabel()` |
+| PDF cover | `formatReportReleaseLabel(report)` (report provenance when present) |
+| PDF footer | `formatReleaseLabel()` (current build) |
 | Research reports | `generationProvenance` on completed orchestrator runs |
 
-Build injection: `scripts/lib/buildMeta.mjs` → Vite/Vitest `define` (`__APP_VERSION__`, `__BUILD_COMMIT_SHA__`). CI uses `GITHUB_SHA`; local dev uses `git rev-parse --short HEAD` or `dev`.
+Build injection: `scripts/build-meta.mjs` → Vite/Vitest `define` (`__APP_VERSION__`, `__BUILD_COMMIT_SHA__`). CI uses `GITHUB_SHA`; local dev uses `git rev-parse --short HEAD` or `dev`.
 
 ## Report provenance
 
@@ -57,7 +58,7 @@ Legacy reports without provenance remain valid; exports still include current bu
 GitHub Pages rollback:
 
 1. Identify the last good commit on `main` (deploy SHA in Help → About or export meta).
-2. Revert or reset `main` to that commit (or cherry-pick fixes forward).
+2. Prefer `git revert` of the bad merge commit(s) on `main` — avoid force-push `reset` on the shared branch. Cherry-pick fixes forward when revert is impractical.
 3. Wait for `deploy.yml` to complete on the restored commit.
 4. Users with open tabs may need to accept the service-worker update prompt.
 

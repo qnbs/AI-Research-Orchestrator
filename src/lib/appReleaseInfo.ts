@@ -35,6 +35,18 @@ export const getAppReleaseInfo = (): AppReleaseInfo => ({
 export const formatReleaseLabel = (info: AppReleaseInfo = getAppReleaseInfo()): string =>
   `v${info.appVersion} (${info.buildCommitSha})`;
 
+/** Prefer report generation provenance for exports; fall back to current build. */
+export const formatReportReleaseLabel = (report: ResearchReport): string => {
+  const prov = report.generationProvenance;
+  if (!prov) return formatReleaseLabel();
+  return formatReleaseLabel({
+    appVersion: prov.appVersion,
+    buildCommitSha: prov.buildCommitSha,
+    dexieSchemaVersion: prov.dexieSchemaVersion,
+    swCacheVersion: prov.swCacheVersion,
+  });
+};
+
 export interface StampReportProvenanceOptions {
   inferenceMode?: InferenceMode;
   providerId?: AIProviderSelection;
