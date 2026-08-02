@@ -63,6 +63,7 @@ describe('export helpers', () => {
   const anchorMocks: { click: ReturnType<typeof vi.fn>; href: string }[] = [];
 
   beforeEach(() => {
+    vi.useRealTimers();
     anchorMocks.length = 0;
     pdfTextSpy.mockClear();
     vi.spyOn(document, 'createElement').mockImplementation((tag: string) => {
@@ -86,6 +87,7 @@ describe('export helpers', () => {
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
