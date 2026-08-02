@@ -84,7 +84,6 @@ const QuickAddModal: React.FC<QuickAddModalProps> = ({ onClose }) => {
             className="block w-full bg-input-bg border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent sm:text-sm"
             placeholder={t('quickAdd.placeholder')}
             // eslint-disable-next-line jsx-a11y/no-autofocus -- this is the sole input of a focus-trapped modal (useFocusTrap above); focusing it on open is expected, not page-load autofocus.
-            autoFocus
           />
           {error && <p className="text-xs text-red-400 mt-2">{error}</p>}
           <div className="mt-6 flex justify-end space-x-3">

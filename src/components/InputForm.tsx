@@ -478,7 +478,6 @@ const InputFormComponent: React.FC<InputFormProps> = ({
                 className="glass-input block w-full rounded-lg shadow-sm py-2 px-3 text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-accent sm:text-sm"
                 placeholder={t('preset.name_placeholder')}
                 // eslint-disable-next-line jsx-a11y/no-autofocus -- this is the sole input of a focus-trapped modal (useFocusTrap above); focusing it on open is expected, not page-load autofocus.
-                autoFocus
               />
             </div>
             <div className="mt-6 flex justify-end space-x-3">
