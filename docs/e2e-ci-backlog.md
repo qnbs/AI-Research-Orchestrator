@@ -50,15 +50,15 @@ Track progress in this file when a browser is promoted.
 
 **Full-suite expansion (step 2):** landed in PR [#192](https://github.com/qnbs/AI-Research-Orchestrator/pull/192) (`3641108`) — cross-browser workflow runs the seven-spec Chromium parity list (`continue-on-error: true`). Next gate: **10 consecutive** full-suite greens per browser (**54 passed / 0 failed** in job logs; no flaky retries counted) before considering blocking promotion for that browser.
 
-**Full-suite streak (step 3, updated 2026-08-02):** PR #195 (`022475d`, run `30767470525`) — **54 passed / 0 failed, no flaky** on Chromium (`30767470500`), Firefox, WebKit, and mobile Chrome in one cross-browser workflow. Streak reset baseline after flaky demo-KB fixes:
+**Full-suite streak (step 3, updated 2026-08-02):** PR #195 landed as `8ab0a26` on `main`. Clean baseline on branch head `022475d` (run `30767470525`) — **54 passed / 0 failed, no flaky** on Chromium (`30767470500`), Firefox, WebKit, and mobile Chrome. Intermediate `f6cdaed` (run `30767766848`) had Firefox **53 + 1 flaky** (`networkidle` a11y — not KB demo); WebKit/mobile Chrome stayed **54/0**. Post-merge `main` `8ab0a26` (run `30768002841`) — **54/0, no flaky** on all three advisory browsers again.
 
-| Browser       | Best recent run (#195 `022475d`) | Streak toward 10× clean (54/0, no flaky) |
-| ------------- | -------------------------------- | ---------------------------------------- |
-| Firefox       | **54 passed / 0 failed**         | **1/10**                                 |
-| mobile Chrome | **54 passed / 0 failed**         | **1/10**                                 |
-| WebKit        | **54 passed / 0 failed**         | **1/10**                                 |
+| Browser       | Latest clean run (`8ab0a26` / `30768002841`) | Streak toward 10× clean (54/0, no flaky) |
+| ------------- | -------------------------------------------- | ---------------------------------------- |
+| Firefox       | **54 passed / 0 failed**                     | **1/10** (reset after `f6cdaed` flaky)   |
+| mobile Chrome | **54 passed / 0 failed**                     | **3/10**                                 |
+| WebKit        | **54 passed / 0 failed**                     | **3/10**                                 |
 
-Blocking Chromium `e2e.yml`: **54 passed / 0 failed** on #195 `022475d` (`30767470500`).
+Blocking Chromium `e2e.yml`: **54 passed / 0 failed** on #195 `022475d` (`30767470500`) and merge `8ab0a26`.
 
 ## Historical note (fixed 2026-07-21)
 
