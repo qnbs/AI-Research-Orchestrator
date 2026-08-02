@@ -10,6 +10,7 @@ describe('normalizeBasePath', () => {
   it('normalizes root and subpaths', () => {
     expect(normalizeBasePath('/')).toBe('/');
     expect(normalizeBasePath('')).toBe('/');
+    expect(normalizeBasePath(undefined, '/fallback/')).toBe('/fallback/');
     expect(normalizeBasePath('repo')).toBe('/repo/');
     expect(normalizeBasePath('/repo')).toBe('/repo/');
     expect(normalizeBasePath('/repo/')).toBe('/repo/');

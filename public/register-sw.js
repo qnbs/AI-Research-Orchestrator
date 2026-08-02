@@ -34,6 +34,10 @@
 (function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) return;
 
+  var reloaded = false;
+  var hadControllerAtLoad = false;
+  var currentRegistration = null;
+
   function resolveAppScope() {
     var baseEl = document.querySelector('base[href]');
     if (!baseEl) return '/';
@@ -42,17 +46,15 @@
     try {
       var pathname = new URL(href, location.origin).pathname;
       if (!pathname || pathname === '/') return '/';
-      return pathname.endsWith('/') ? pathname : pathname + '/';
-    } catch (e) {
+      return pathname.endsWith('/') ? pathname : `${pathname}/`;
+    } catch {
       return '/';
     }
   }
+
   var scope = resolveAppScope();
   // Vite copies public/sw.js → dist/sw.js (or dist/<base>/ via base href).
-  var swUrl = scope + 'sw.js';
-  var reloaded = false;
-  var hadControllerAtLoad = false;
-  var currentRegistration = null;
+  var swUrl = `${scope}sw.js`;
 
   window.addEventListener('load', function () {
     hadControllerAtLoad = Boolean(navigator.serviceWorker.controller);

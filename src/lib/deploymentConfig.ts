@@ -7,9 +7,9 @@ export const DEFAULT_GH_PAGES_BASE = '/AI-Research-Orchestrator/';
 export const DEFAULT_SITE_ORIGIN = 'https://qnbs.github.io';
 
 /** Normalize to a leading-slash path; root stays `/`, subpaths end with `/`. */
-export function normalizeBasePath(raw: string, fallback = '/'): string {
-  const value = raw.trim() || fallback;
-  if (value === '/') return '/';
+export function normalizeBasePath(raw?: string, fallback = '/'): string {
+  const value = String(raw ?? fallback).trim();
+  if (!value || value === '/') return '/';
   let path = value.startsWith('/') ? value : `/${value}`;
   if (!path.endsWith('/')) path += '/';
   return path;
