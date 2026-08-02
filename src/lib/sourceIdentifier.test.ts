@@ -10,6 +10,7 @@ import {
   parseLegacyArticleKey,
   articleExternalUrl,
   resolveArticleId,
+  sourceIdentifierExternalUrl,
   sourceIdentifierLabelKey,
 } from './sourceIdentifier';
 
@@ -142,6 +143,12 @@ describe('articleExternalUrl', () => {
     };
     expect(articleExternalUrl(article)).toContain('/pmc/articles/PMC888/');
   });
+
+  it('preserves slashes in doi.org URLs', () => {
+    expect(sourceIdentifierExternalUrl({ type: 'doi', value: '10.1234/example' })).toBe(
+      'https://doi.org/10.1234/example',
+    );
+  });
 });
 
 describe('ensureGroundedClaim', () => {
@@ -196,6 +203,24 @@ describe('resolveArticleId validation', () => {
       isOpenAccess: true,
     };
     expect(resolveArticleId(article)).toEqual({ type: 'pmid', value: '12345' });
+    expect(ensureArticleIdentifiers(article).pmid).toBe('12345');
+  });
+
+  it('prefers canonical legacy pmid when articleId disagrees', () => {
+    const article: RankedArticle = {
+      pmid: '12345',
+      articleId: { type: 'arxiv', value: '9' },
+      title: 't',
+      authors: 'a',
+      journal: 'j',
+      pubYear: '2024',
+      summary: 's',
+      relevanceScore: 1,
+      relevanceExplanation: '',
+      keywords: [],
+      isOpenAccess: true,
+    };
+    expect(resolveArticleId(article).type).toBe('pmid');
     expect(ensureArticleIdentifiers(article).pmid).toBe('12345');
   });
 });

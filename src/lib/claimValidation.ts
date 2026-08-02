@@ -10,7 +10,11 @@ import type {
   SynthesisTrustLevel,
 } from '../types';
 import { partitionCorpusCitations } from './citationGrounding';
-import { corpusKeysFromArticles, findArticleByCorpusKey } from './sourceIdentifier';
+import {
+  corpusKeysFromArticles,
+  ensureGroundedClaim,
+  findArticleByCorpusKey,
+} from './sourceIdentifier';
 
 export type ClaimTrustMetrics = {
   totalClaims: number;
@@ -69,13 +73,14 @@ export function validateClaimAgainstCorpus(
   claim: GroundedClaim,
   corpusArticles: readonly RankedArticle[],
 ): ValidatedClaimResult {
+  const normalized = ensureGroundedClaim(claim);
   const corpusIds = corpusKeysFromArticles(corpusArticles);
-  const { valid, invalid } = partitionCorpusCitations(corpusIds, claim.pmids);
-  const id = claim.id ?? stableClaimId(claim.text, valid);
+  const { valid, invalid } = partitionCorpusCitations(corpusIds, normalized.pmids);
+  const id = normalized.id ?? stableClaimId(normalized.text, valid);
 
   if (valid.length === 0) {
     return {
-      ...claim,
+      ...normalized,
       id,
       pmids: [],
       validationState: 'rejected',
@@ -86,7 +91,7 @@ export function validateClaimAgainstCorpus(
   const supporting: string[] = [];
   for (const pmid of valid) {
     const article = findArticleByCorpusKey(corpusArticles, pmid);
-    if (article && articleSupportsClaim(claim.text, article)) {
+    if (article && articleSupportsClaim(normalized.text, article)) {
       const snippet = (article.summary ?? article.title).slice(0, 160);
       supporting.push(`${pmid}: ${snippet}`);
     }
@@ -100,7 +105,7 @@ export function validateClaimAgainstCorpus(
       : 'unverified';
 
   return {
-    ...claim,
+    ...normalized,
     id,
     pmids: valid,
     validationState,

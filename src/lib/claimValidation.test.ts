@@ -173,6 +173,22 @@ describe('validateClaimAgainstCorpus — adversarial fixtures', () => {
     );
     expect(result.validationState).toBe('verified');
   });
+
+  it('validates claims using typed articleIds when pmids is empty', () => {
+    const corpus = [
+      article('1', 'Aspirin cardiovascular trial', 'Aspirin reduced major cardiovascular events.'),
+    ];
+    const result = validateClaimAgainstCorpus(
+      {
+        text: 'Aspirin reduced major cardiovascular events.',
+        pmids: [],
+        articleIds: [{ type: 'pmid', value: '1' }],
+      },
+      corpus,
+    );
+    expect(result.validationState).toBe('verified');
+    expect(result.pmids).toEqual(['1']);
+  });
 });
 
 describe('assessSynthesisTrust', () => {

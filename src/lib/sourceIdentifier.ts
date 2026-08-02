@@ -73,10 +73,14 @@ export function canonicalArticleKey(id: SourceIdentifier): string {
 
 /** Resolve the typed identifier for a ranked article record. */
 export function resolveArticleId(article: RankedArticle): SourceIdentifier {
+  const fromPmid = parseLegacyArticleKey(article.pmid);
   if (isSourceIdentifier(article.articleId)) {
-    return article.articleId;
+    if (canonicalArticleKey(article.articleId) === canonicalArticleKey(fromPmid)) {
+      return article.articleId;
+    }
+    return fromPmid;
   }
-  return parseLegacyArticleKey(article.pmid);
+  return fromPmid;
 }
 
 /** Find a corpus article by its canonical legacy key. */
@@ -89,9 +93,7 @@ export function findArticleByCorpusKey(
 
 /** Ensure typed `articleId` and legacy `pmid` canonical key stay aligned. */
 export function ensureArticleIdentifiers(article: RankedArticle): RankedArticle {
-  const articleId = isSourceIdentifier(article.articleId)
-    ? article.articleId
-    : resolveArticleId(article);
+  const articleId = resolveArticleId(article);
   const pmid = canonicalArticleKey(articleId);
   const pmcId =
     article.pmcId ??
@@ -117,7 +119,7 @@ export function sourceIdentifierExternalUrl(id: SourceIdentifier): string {
     case 'arxiv':
       return `https://arxiv.org/abs/${id.value}`;
     case 'doi':
-      return `https://doi.org/${encodeURIComponent(id.value)}`;
+      return `https://doi.org/${encodeURI(id.value)}`;
     case 'pmcid':
       return `https://www.ncbi.nlm.nih.gov/pmc/articles/PMC${normalizePmcidValue(id.value)}/`;
     case 'pmid':

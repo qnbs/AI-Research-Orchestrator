@@ -1,5 +1,5 @@
 import type { KnowledgeBaseEntry } from '../types';
-import { isSourceIdentifier } from './sourceIdentifier';
+import { canonicalArticleKey, isSourceIdentifier, parseLegacyArticleKey } from './sourceIdentifier';
 
 const isPlainObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -15,13 +15,27 @@ const hasBaseEntryShape = (item: Record<string, unknown>): boolean =>
 // (e.g. OrchestratorDashboard's `entry.report.rankedArticles.length`), so an
 // import passing a report/profile/journalProfile with the right top-level
 // shape but a missing required field would crash the UI after being saved.
+const claimIdentifierFieldsAligned = (claim: Record<string, unknown>): boolean => {
+  const pmids = claim.pmids;
+  const articleIds = claim.articleIds;
+  if (!Array.isArray(articleIds) || articleIds.length === 0) return true;
+  if (!Array.isArray(pmids) || pmids.length === 0) return true;
+  if (pmids.length !== articleIds.length) return false;
+  return pmids.every((p, index) => {
+    const id = articleIds[index];
+    if (!isSourceIdentifier(id)) return false;
+    return canonicalArticleKey(parseLegacyArticleKey(p)) === canonicalArticleKey(id);
+  });
+};
+
 const isValidGroundedClaim = (claim: unknown): boolean =>
   isPlainObject(claim) &&
   typeof claim.text === 'string' &&
   Array.isArray(claim.pmids) &&
   claim.pmids.every((id) => typeof id === 'string') &&
   (claim.articleIds === undefined ||
-    (Array.isArray(claim.articleIds) && claim.articleIds.every(isSourceIdentifier)));
+    (Array.isArray(claim.articleIds) && claim.articleIds.every(isSourceIdentifier))) &&
+  claimIdentifierFieldsAligned(claim);
 
 const isValidGroundedSynthesis = (grounded: unknown): boolean =>
   isPlainObject(grounded) &&
