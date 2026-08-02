@@ -7,7 +7,10 @@ import { Settings, Preset, KnowledgeBaseEntry, CSV_EXPORT_COLUMNS } from '../../
 import { db } from '../../services/databaseService';
 import { useTranslation } from '../../hooks/useTranslation';
 import { exportHistoryToJson, exportKnowledgeBaseToJson } from '../../services/exportService';
-import { isKnowledgeBaseEntry } from '../../lib/knowledgeBaseValidation';
+import {
+  parseAndSanitizeKnowledgeBaseImport,
+  type KnowledgeBaseImportQuarantine,
+} from '../../lib/knowledgeBaseImport';
 import { safeLogError } from '../../lib/safeLog';
 import { deriveSettingsErrors } from './deriveSettingsErrors';
 
@@ -63,7 +66,7 @@ export const useSettingsViewLogic = (
   const [activeTab, setActiveTab] = useState<SettingsTab>('general');
   type ModalState =
     | { type: 'clear' | 'reset' | 'prune' | 'merge' | 'confirmModelChange' }
-    | { type: 'import'; data: KnowledgeBaseEntry[] }
+    | { type: 'import'; data: KnowledgeBaseEntry[]; quarantine: KnowledgeBaseImportQuarantine }
     | { type: 'deletePreset'; data: Preset };
   const [modalState, setModalState] = useState<ModalState | null>(null);
   const [pruneScore, setPruneScore] = useState(20);
@@ -224,10 +227,10 @@ export const useSettingsViewLogic = (
       reader.onload = (event) => {
         try {
           const importedData = JSON.parse(event.target?.result as string);
-          const dataToImport = importedData.data ? importedData.data : importedData;
+          const { accepted, quarantine } = parseAndSanitizeKnowledgeBaseImport(importedData);
 
-          if (Array.isArray(dataToImport) && dataToImport.every(isKnowledgeBaseEntry)) {
-            setModalState({ type: 'import', data: dataToImport });
+          if (accepted.length > 0) {
+            setModalState({ type: 'import', data: accepted, quarantine });
           } else {
             setNotification({
               id: Date.now(),
@@ -335,6 +338,21 @@ export const useSettingsViewLogic = (
     }
   }, [onPruneByRelevance, pruneScore]);
 
+  const handleConfirmKnowledgeBaseImport = useCallback(
+    async (entries: KnowledgeBaseEntry[], quarantine: KnowledgeBaseImportQuarantine) => {
+      await addKnowledgeBaseEntries(entries);
+      setModalState(null);
+      let message = t('settings.toast.kb_imported', { count: entries.length });
+      if (quarantine.trustDowngradedCount > 0) {
+        message += ` ${t('settings.toast.import_trust_downgraded', {
+          count: quarantine.trustDowngradedCount,
+        })}`;
+      }
+      setNotification({ id: Date.now(), message, type: 'success' });
+    },
+    [addKnowledgeBaseEntries, setNotification, t],
+  );
+
   const handleMergeDuplicates = useCallback(async () => {
     setIsProcessing(true);
     try {
@@ -416,6 +434,7 @@ export const useSettingsViewLogic = (
     handleExportHistory,
     handleExportKnowledgeBase,
     handleImport,
+    handleConfirmKnowledgeBaseImport,
     handleExportSettings,
     handleImportSettings,
     handlePrune,

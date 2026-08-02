@@ -133,6 +133,7 @@ describe('export helpers', () => {
         buildCommitSha: string;
         dexieSchemaVersion: number;
         swCacheVersion: string;
+        importEnvelopeVersion: number;
         type: string;
         exportDate: string;
       };
@@ -142,6 +143,7 @@ describe('export helpers', () => {
     expect(parsed.meta.buildCommitSha.length).toBeGreaterThan(0);
     expect(parsed.meta.dexieSchemaVersion).toBeGreaterThan(0);
     expect(parsed.meta.swCacheVersion).toBeTruthy();
+    expect(parsed.meta.importEnvelopeVersion).toBe(1);
     expect(parsed.meta.exportDate).toBe('2026-08-02T12:00:00.000Z');
     vi.useRealTimers();
   });

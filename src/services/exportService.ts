@@ -552,6 +552,7 @@ const createJsonExport = <T>(data: T, type: string, count: number) => {
       dexieSchemaVersion: release.dexieSchemaVersion,
       swCacheVersion: release.swCacheVersion,
       exportDate: new Date().toISOString(),
+      importEnvelopeVersion: 1,
       type,
       count,
     },

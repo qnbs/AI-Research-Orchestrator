@@ -206,7 +206,9 @@ export const settingsTranslations = {
     'settings.modal.reset.confirm': 'Yes, Reset All',
     'settings.modal.import.title': 'Import Knowledge Base',
     'settings.modal.import.message':
-      'You are about to import {count} new reports. This will be added to your existing knowledge base. Do you want to continue?',
+      'Import {count} sanitized knowledge-base entries? External files are re-validated on import; verified synthesis trust cannot be preserved.',
+    'settings.modal.import.quarantine':
+      'Trust downgraded: {trustDowngraded}. Invalid citations stripped: {invalidCitations}. Rejected before import: {rejected}.',
     'settings.modal.import.confirm': 'Yes, Import',
     'settings.modal.prune.title': 'Prune by Relevance Score',
     'settings.modal.prune.desc':
@@ -233,6 +235,9 @@ export const settingsTranslations = {
     'settings.toast.kb_empty': 'Knowledge Base is empty. Nothing to export.',
     'settings.toast.kb_exported':
       'Full Knowledge Base (all unique articles) exported successfully.',
+    'settings.toast.kb_imported': 'Imported {count} knowledge-base entries.',
+    'settings.toast.import_trust_downgraded':
+      'Synthesis trust downgraded on {count} imported report(s).',
     'settings.toast.import_failed': 'Import failed. Check the file format and try again.',
     'settings.toast.import_invalid_kb':
       'Invalid file format. The file must be an array of Knowledge Base entries.',
@@ -446,7 +451,9 @@ export const settingsTranslations = {
     'settings.modal.reset.confirm': 'Ja, alles zurücksetzen',
     'settings.modal.import.title': 'Knowledge Base importieren',
     'settings.modal.import.message':
-      'Sie sind dabei, {count} neue Berichte zu importieren. Diese werden Ihrer bestehenden Knowledge Base hinzugefügt. Fortfahren?',
+      '{count} bereinigte Knowledge-Base-Einträge importieren? Externe Dateien werden beim Import erneut validiert; verifizierter Synthese-Trust kann nicht erhalten bleiben.',
+    'settings.modal.import.quarantine':
+      'Trust herabgestuft: {trustDowngraded}. Ungültige Zitationen entfernt: {invalidCitations}. Vor Import abgelehnt: {rejected}.',
     'settings.modal.import.confirm': 'Ja, importieren',
     'settings.modal.prune.title': 'Nach Relevanz-Score bereinigen',
     'settings.modal.prune.desc':
@@ -472,6 +479,9 @@ export const settingsTranslations = {
     'settings.toast.kb_empty': 'Knowledge Base ist leer. Nichts zu exportieren.',
     'settings.toast.kb_exported':
       'Vollständige Knowledge Base (alle eindeutigen Artikel) erfolgreich exportiert.',
+    'settings.toast.kb_imported': '{count} Knowledge-Base-Einträge importiert.',
+    'settings.toast.import_trust_downgraded':
+      'Synthese-Trust bei {count} importiertem Bericht herabgestuft.',
     'settings.toast.import_failed':
       'Import fehlgeschlagen. Prüfen Sie das Dateiformat und versuchen Sie es erneut.',
     'settings.toast.import_invalid_kb':
