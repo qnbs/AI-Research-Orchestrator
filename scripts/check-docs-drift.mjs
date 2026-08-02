@@ -1,14 +1,22 @@
 #!/usr/bin/env node
 /**
- * Docs/config drift gate — keeps always-on agent instructions aligned with package.json.
- * Canonical runtime facts live in package.json; agent docs must not contradict them.
+ * Docs/config drift gate — keeps agent instructions aligned with package.json,
+ * workflows, and docs/project-facts.json (P1-1).
  */
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 
 const ROOT = new URL('..', import.meta.url).pathname;
 
 async function read(relPath) {
   return readFile(`${ROOT}/${relPath}`, 'utf8');
+}
+
+async function readOptional(relPath) {
+  try {
+    return await read(relPath);
+  } catch {
+    return null;
+  }
 }
 
 function majorOf(version) {
@@ -71,12 +79,182 @@ async function checkCspEndpointDrift(errors) {
   }
 }
 
+function extractE2eSpecPathsFromWorkflow(workflowYaml) {
+  const specs = [];
+  const re = /src\/test\/e2e\/[a-z0-9-]+\.spec\.ts/g;
+  let m;
+  while ((m = re.exec(workflowYaml)) !== null) {
+    specs.push(m[0]);
+  }
+  return [...new Set(specs)];
+}
+
+function workflowJobHasContinueOnError(workflowYaml, jobName) {
+  const jobBlock = new RegExp(
+    `${escapeRegExp(jobName)}:[\\s\\S]*?(?=^\\S|\\z)`,
+    'm',
+  ).exec(workflowYaml);
+  if (!jobBlock) return false;
+  return /continue-on-error:\s*true/.test(jobBlock[0]);
+}
+
+/** @param {string[]} errors @param {Record<string, unknown>} facts */
+async function checkProjectFacts(errors, facts) {
+  const readme = await read('README.md');
+  const agents = await read('AGENTS.md');
+  const deepsource = await read('.deepsource.toml');
+  const vitestConfig = await read('vitest.config.ts');
+  const coverageFloors = await read('scripts/check-coverage-floors.mjs');
+
+  for (const phrase of facts.forbiddenReadmePhrases ?? []) {
+    if (readme.includes(phrase)) {
+      errors.push(`README.md contains forbidden overstated claim: "${phrase}"`);
+    }
+  }
+
+  for (const phrase of facts.forbiddenAgentsPhrases ?? []) {
+    if (agents.includes(phrase)) {
+      errors.push(`AGENTS.md contains stale CI phrase: "${phrase}"`);
+    }
+  }
+
+  if (facts.e2e?.mainWorkflowPath) {
+    const e2eYaml = await read(facts.e2e.mainWorkflowPath);
+    const listed = extractE2eSpecPathsFromWorkflow(e2eYaml);
+    const expected = facts.e2e.ciSpecPaths ?? [];
+    for (const spec of expected) {
+      if (!listed.includes(spec)) {
+        errors.push(`${facts.e2e.mainWorkflowPath} missing CI spec: ${spec}`);
+      }
+    }
+    for (const spec of listed) {
+      if (!expected.includes(spec)) {
+        errors.push(
+          `${facts.e2e.mainWorkflowPath} lists ${spec} but docs/project-facts.json ciSpecPaths omits it`,
+        );
+      }
+    }
+    const blocking = facts.e2e.mainJobBlocking === true;
+    const hasContinue = workflowJobHasContinueOnError(e2eYaml, 'e2e:');
+    if (blocking && hasContinue) {
+      errors.push(`${facts.e2e.mainWorkflowPath} job must not use continue-on-error (blocking E2E)`);
+    }
+    if (!blocking && !hasContinue) {
+      errors.push(`${facts.e2e.mainWorkflowPath} expected continue-on-error for advisory E2E`);
+    }
+  }
+
+  if (facts.e2e?.crossBrowserWorkflowPath) {
+    const crossYaml = await read(facts.e2e.crossBrowserWorkflowPath);
+    const advisory = facts.e2e.crossBrowserAdvisory === true;
+    const hasContinue = /continue-on-error:\s*true/.test(crossYaml);
+    if (advisory && !hasContinue) {
+      errors.push(`${facts.e2e.crossBrowserWorkflowPath} should be advisory (continue-on-error: true)`);
+    }
+  }
+
+  for (const spec of facts.e2e?.ciSpecPaths ?? []) {
+    if (!agents.includes(spec.replace('src/test/e2e/', ''))) {
+      errors.push(`AGENTS.md should reference E2E spec inventory (${spec})`);
+    }
+  }
+
+  if (facts.ci?.claudeCodeReviewWorkflow === false) {
+    const claudeReview = await readOptional('.github/workflows/claude-code-review.yml');
+    if (claudeReview) {
+      errors.push('claude-code-review.yml must be removed (disabled in project-facts.json)');
+    }
+  }
+
+  if (facts.staticAnalysis?.deepsourceJavaScriptEnabled) {
+    if (!/name\s*=\s*"javascript"[\s\S]*enabled\s*=\s*true/.test(deepsource)) {
+      errors.push('.deepsource.toml must enable javascript analyzer');
+    }
+  }
+
+  const thresholds = facts.coverageThresholds ?? {};
+  for (const [metric, value] of Object.entries(thresholds)) {
+    const re = new RegExp(`${metric}:\\s*${value}`);
+    if (!re.test(vitestConfig)) {
+      errors.push(`vitest.config.ts thresholds.${metric} must be ${value} (project-facts.json)`);
+    }
+    const proseRe = new RegExp(`${value}%\\s*${metric}|${metric}[^\\n]*${value}%`, 'i');
+    if (!proseRe.test(agents)) {
+      errors.push(`AGENTS.md must document coverage threshold ${metric} ${value}%`);
+    }
+  }
+
+  for (const [moduleId, min] of Object.entries(facts.coverageModuleFloors ?? {})) {
+    for (const [metric, value] of Object.entries(min)) {
+      const re = new RegExp(`id:\\s*'${moduleId}'[\\s\\S]*?${metric}:\\s*${value}`);
+      if (!re.test(coverageFloors)) {
+        errors.push(`check-coverage-floors.mjs floor ${moduleId}.${metric} must be ${value}`);
+      }
+    }
+  }
+
+  const adrFiles = await readdir(`${ROOT}/docs/adr`);
+  const numbered = adrFiles.filter((f) => /^\d{4}-.*\.md$/.test(f));
+  const minAdr = facts.adr?.minNumberedRecords ?? 0;
+  if (numbered.length < minAdr) {
+    errors.push(`docs/adr has ${numbered.length} numbered ADRs; expected >= ${minAdr}`);
+  }
+  if (facts.adr?.indexPath) {
+    const adrIndex = await read(facts.adr.indexPath);
+    for (const file of numbered) {
+      const num = file.slice(0, 4);
+      if (!adrIndex.includes(`[${num}]`) && !adrIndex.includes(`(${num})`)) {
+        errors.push(`${facts.adr.indexPath} missing index entry for ${file}`);
+      }
+    }
+  }
+
+  for (const providerId of facts.providers?.ids ?? []) {
+    assertMatch(
+      agents,
+      new RegExp(`\\b${escapeRegExp(providerId)}\\b`, 'i'),
+      `AGENTS.md must mention provider "${providerId}"`,
+      errors,
+    );
+  }
+
+  const defaultModel = facts.providers?.defaultModels?.[facts.providers?.defaultId];
+  if (defaultModel) {
+    assertMatch(
+      agents,
+      new RegExp(escapeRegExp(defaultModel)),
+      `AGENTS.md should reference default model ${defaultModel}`,
+      errors,
+    );
+  }
+
+  if (facts.deployment?.basePath) {
+    assertMatch(
+      readme,
+      new RegExp(escapeRegExp(facts.deployment.basePath)),
+      `README.md must document base path ${facts.deployment.basePath}`,
+      errors,
+    );
+  }
+
+  for (const id of facts.sourceIdentifiers ?? []) {
+    const re =
+      id === 'pmid'
+        ? /\bPMID\b/i
+        : id === 'pmc'
+          ? /\bPMC\b/i
+          : new RegExp(`\\b${escapeRegExp(id)}\\b`, 'i');
+    assertMatch(agents, re, `AGENTS.md should mention source identifier "${id}"`, errors);
+  }
+}
+
 async function main() {
   const pkg = JSON.parse(await read('package.json'));
   const agents = await read('AGENTS.md');
   const claude = await read('CLAUDE.md');
   const indexMdc = await read('.cursor/index.mdc');
   const security = await read('SECURITY.md');
+  const facts = JSON.parse(await read('docs/project-facts.json'));
 
   const viteSpec = pkg.devDependencies?.vite ?? pkg.dependencies?.vite;
   const viteMajor = majorOf(viteSpec);
@@ -91,21 +269,73 @@ async function main() {
     `AGENTS.md must mention app version v${appVersion}`,
     errors,
   );
-  assertMatch(agents, new RegExp(`Vite ${viteMajor}\\b`), `AGENTS.md must reference Vite ${viteMajor} (package.json has vite@${viteSpec})`, errors);
-  assertNoMatch(agents, /src\/services\/heuristics\//, 'AGENTS.md must not reference deleted src/services/heuristics/', errors);
+  assertMatch(
+    agents,
+    new RegExp(`Vite ${viteMajor}\\b`),
+    `AGENTS.md must reference Vite ${viteMajor} (package.json has vite@${viteSpec})`,
+    errors,
+  );
+  assertNoMatch(
+    agents,
+    /src\/services\/heuristics\//,
+    'AGENTS.md must not reference deleted src/services/heuristics/',
+    errors,
+  );
 
-  assertNoMatch(claude, /src\/services\/heuristics\//, 'CLAUDE.md must not reference deleted src/services/heuristics/', errors);
-  assertMatch(claude, /src\/services\/nonAi\//, 'CLAUDE.md must reference consolidated src/services/nonAi/', errors);
+  assertNoMatch(
+    claude,
+    /src\/services\/heuristics\//,
+    'CLAUDE.md must not reference deleted src/services/heuristics/',
+    errors,
+  );
+  assertMatch(
+    claude,
+    /src\/services\/nonAi\//,
+    'CLAUDE.md must reference consolidated src/services/nonAi/',
+    errors,
+  );
+  assertNoMatch(
+    claude,
+    /claude-code-review\.yml/,
+    'CLAUDE.md must not reference removed claude-code-review workflow',
+    errors,
+  );
 
-  assertMatch(indexMdc, new RegExp(`Vite ${viteMajor}\\b`), `.cursor/index.mdc must reference Vite ${viteMajor}`, errors);
-  assertNoMatch(indexMdc, /src\/services\/heuristics\//, '.cursor/index.mdc must not reference deleted heuristics path', errors);
-  assertMatch(indexMdc, /src\/services\/nonAi\//, '.cursor/index.mdc must reference src/services/nonAi/', errors);
+  assertMatch(
+    indexMdc,
+    new RegExp(`Vite ${viteMajor}\\b`),
+    `.cursor/index.mdc must reference Vite ${viteMajor}`,
+    errors,
+  );
+  assertNoMatch(
+    indexMdc,
+    /src\/services\/heuristics\//,
+    '.cursor/index.mdc must not reference deleted heuristics path',
+    errors,
+  );
+  assertMatch(
+    indexMdc,
+    /src\/services\/nonAi\//,
+    '.cursor/index.mdc must reference src/services/nonAi/',
+    errors,
+  );
 
   assertMatch(security, /0\.4\.x/, 'SECURITY.md must list 0.4.x as supported', errors);
 
   if (pnpmVersion) {
-    assertMatch(agents, new RegExp(`pnpm ${pnpmVersion.split('.')[0]}\\b`), `AGENTS.md should reference pnpm ${pnpmVersion.split('.')[0]}`, errors);
+    assertMatch(
+      agents,
+      new RegExp(`pnpm ${pnpmVersion.split('.')[0]}\\b`),
+      `AGENTS.md should reference pnpm ${pnpmVersion.split('.')[0]}`,
+      errors,
+    );
   }
+
+  if (facts.appVersion && facts.appVersion !== appVersion) {
+    errors.push(`docs/project-facts.json appVersion ${facts.appVersion} != package.json ${appVersion}`);
+  }
+
+  await checkProjectFacts(errors, facts);
 
   if (process.argv.includes('--csp-endpoint')) {
     await checkCspEndpointDrift(errors);
@@ -126,7 +356,7 @@ async function main() {
   }
 
   console.log(
-    `check-docs-drift OK (v${appVersion}, Vite ${viteMajor}, pnpm ${pnpmVersion || 'n/a'}).`,
+    `check-docs-drift OK (v${appVersion}, Vite ${viteMajor}, pnpm ${pnpmVersion || 'n/a'}, facts v${facts.adr?.minNumberedRecords ?? '?'})`,
   );
 }
 
