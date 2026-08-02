@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **E2E Firefox onboarding flake:** `skipOnboarding` always waits for a stable `<header>` after Start Researching (retry click + longer timeout); `agent-flow` uses the shared helper; heuristic suite waits for the orchestrator form before assertions.
+
 ### Added
 
 - None yet.
