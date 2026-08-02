@@ -11,7 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Logging redaction audit (P1-5):** `safeLogError` / `safeLogWarn` with secret-pattern redaction; CI `check:log-redaction` blocks raw `console.*` in application source.
 
-- **Critical-path coverage floors (P1-3):**** `check:coverage-floors` CI gate ratchets `providers/`, `geminiService.ts`, and `apiKeyService.ts` at current baselines.
+- **Audit governance (P1-7):** `docs/audit-governance.md` — Sonar way promotion path and `pnpm audit` moderate-severity procedure.
+
+- **Critical-path coverage floors (P1-3):** `check:coverage-floors` CI gate ratchets `providers/`, `geminiService.ts`, and `apiKeyService.ts` at current baselines.
 
 - **Grounded synthesis schema (P0-3 completion):** optional `ResearchReport.groundedSynthesis` with `GroundedClaim[]`; heuristic population from extractive templates, live narrative PMID extraction, export sanitization, and KB import validation. ADR [0015](docs/adr/0015-grounded-synthesis-schema.md).
 
