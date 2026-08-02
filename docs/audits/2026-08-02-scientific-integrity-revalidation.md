@@ -145,7 +145,9 @@ These changes do **not** address P0-A–F scientific-integrity blockers below.
 
 ---
 
-## Ordered PR plan (from master spec §5)
+## Ordered PR plan (historical — completed 2026-08-02)
+
+> **Superseded:** All six PRs below merged (#183–#188 + #189 follow-up). See [`2026-08-02-p0-closeout.md`](./2026-08-02-p0-closeout.md).
 
 | PR  | Scope                                        | Depends on                   |
 | --- | -------------------------------------------- | ---------------------------- |
@@ -157,7 +159,7 @@ These changes do **not** address P0-A–F scientific-integrity blockers below.
 | 6   | P0-F Journal metadata / OA                   | —                            |
 | 7+  | P1 identifiers, cancellation, coverage, docs | After P0 complete            |
 
-**Next action:** Branch `cursor/p0-a-author-hub-integrity-5bc0` from `716696e` — PR 1 only after test strategy stub committed.
+**Next action (historical):** Branch `cursor/p0-a-author-hub-integrity-5bc0` from `716696e` — completed via #183.
 
 ---
 
@@ -169,17 +171,18 @@ pnpm run check:fast                      → PASS
 rg Math.random (authors)                 → useAuthorsViewLogic.ts L134
 ```
 
-## Review / CI posture at baseline
+## Review / CI posture at baseline (historical)
 
 - Husky hooks active (typecheck on commit, check:fast on push)
-- No open PRs for scientific-integrity workstreams yet
 - E2E blocking: 54 tests (incl. manifest smoke); cross-browser advisory streak 0/10 for 4-test smoke
 
 ---
 
-## Residual epistemic limitations (honest product boundary)
+## Residual epistemic limitations (updated at closeout)
 
-Until P0 work lands, the product **must not** claim:
+Until P0 work landed (now **closed** on `main` at `3a73707`), the product **must not** claim the items below. Post-closeout, P0-specific blockers are addressed; narrative/heuristic limits remain — see closeout doc §Residual risks and ADR 0012.
+
+Previously at baseline `716696e`, the product **must not** claim:
 
 - citation counts or h-index as factual in Author Hub;
 - verified synthesis from narrative LLM output alone;
