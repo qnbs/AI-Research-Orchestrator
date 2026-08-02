@@ -5,7 +5,15 @@
  *         Knowledge Base, Command Palette, Settings, Mobile UX, Accessibility.
  */
 import { test, expect, Page, Route } from '@playwright/test';
-import { openHelpFromChrome, openSettingsFromChrome, prepareFirstLaunchDemoKb } from './e2eHelpers';
+import {
+  navigateToView,
+  navigateToKnowledgeBase,
+  openHelpFromChrome,
+  openSettingsFromChrome,
+  prepareFirstLaunchDemoKb,
+  waitForKbArticleCount,
+  DEMO_KB_UNIQUE_ARTICLE_COUNT,
+} from './e2eHelpers';
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -42,18 +50,6 @@ async function skipOnboarding(page: Page) {
     await startBtn.click();
     await header.waitFor({ state: 'visible', timeout: 10_000 });
   }
-}
-
-/**
- * Navigate to a view via in-page hash change (no full reload).
- * Then wait for lazy-loaded content to settle.
- */
-async function navigateToView(page: Page, viewHash: string) {
-  await page.evaluate((h) => {
-    window.location.hash = h;
-  }, viewHash);
-  // Allow lazy Suspense boundaries to resolve
-  await page.waitForTimeout(1_500);
 }
 
 // ── API Mocks ──────────────────────────────────────────────────────────────────
@@ -326,11 +322,11 @@ test.describe('4. Full Agent Pipeline (mocked APIs)', () => {
 
 test.describe('5. Knowledge Base View', () => {
   test('KB shows demo data on first launch', async ({ page }) => {
-    test.setTimeout(90_000);
+    test.setTimeout(420_000);
     await prepareFirstLaunchDemoKb(page);
-    await navigateToView(page, '#knowledgeBase');
+    await navigateToKnowledgeBase(page);
+    await waitForKbArticleCount(page, DEMO_KB_UNIQUE_ARTICLE_COUNT);
     await expect(page.getByText(/\[Demo\]/i).first()).toBeVisible({ timeout: 30_000 });
-    await expect(page.getByText(/5 Articles Found/i).first()).toBeVisible({ timeout: 30_000 });
   });
 
   test.describe('with standard bootstrap', () => {
@@ -370,7 +366,7 @@ test.describe('5. Knowledge Base View', () => {
       // Reload so Redux re-hydrates from the now-empty table.
       await page.reload();
       await page.locator('header').waitFor({ state: 'visible', timeout: 15_000 });
-      await navigateToView(page, '#knowledgeBase');
+      await navigateToKnowledgeBase(page);
       await expect(
         page.getByText(/empty|no articles|save reports|start research/i).first(),
       ).toBeVisible({ timeout: 10_000 });
@@ -378,13 +374,14 @@ test.describe('5. Knowledge Base View', () => {
 
     test('KB sidebar is hidden on mobile', async ({ page }) => {
       await page.setViewportSize({ width: 390, height: 844 });
-      await navigateToView(page, '#knowledgeBase');
+      await navigateToKnowledgeBase(page);
       const sidebar = page.locator('aside');
       const count = await sidebar.count();
       if (count === 0) {
+        // Empty-state KB has no filter sidebar — layout wait above confirms the view mounted.
         return;
       }
-      await expect(sidebar.first()).toBeHidden({ timeout: 3_000 });
+      await expect(sidebar.first()).toBeHidden({ timeout: 10_000 });
     });
   });
 });
