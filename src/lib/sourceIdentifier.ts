@@ -206,9 +206,8 @@ export function formatLegacyArticleKeyLabel(key: string): string {
 
 /** Normalize grounded-claim identifier fields for persistence. */
 export function ensureGroundedClaim(claim: GroundedClaim): GroundedClaim {
-  const rawIds = claim.articleIds?.length
-    ? claim.articleIds.filter(isSourceIdentifier)
-    : claim.pmids.map((p) => parseLegacyArticleKey(p));
+  const validIds = claim.articleIds?.filter(isSourceIdentifier) ?? [];
+  const rawIds = validIds.length > 0 ? validIds : claim.pmids.map((p) => parseLegacyArticleKey(p));
   const articleIds = rawIds.map((id) => parseLegacyArticleKey(canonicalArticleKey(id)));
   const pmids = articleIds.map((id) => canonicalArticleKey(id));
   return { ...claim, articleIds, pmids };

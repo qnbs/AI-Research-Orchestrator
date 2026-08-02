@@ -185,6 +185,16 @@ describe('ensureGroundedClaim', () => {
     expect(claim.pmids).toEqual(['pmcid:555']);
     expect(claim.articleIds).toEqual([{ type: 'pmcid', value: '555' }]);
   });
+
+  it('falls back to pmids when articleIds are all malformed', () => {
+    const claim = ensureGroundedClaim({
+      text: 'Finding',
+      pmids: ['12345'],
+      articleIds: [{ type: 'bogus', value: 'x' } as unknown as import('../types').SourceIdentifier],
+    });
+    expect(claim.pmids).toEqual(['12345']);
+    expect(claim.articleIds).toEqual([{ type: 'pmid', value: '12345' }]);
+  });
 });
 
 describe('resolveArticleId validation', () => {
@@ -221,7 +231,9 @@ describe('resolveArticleId validation', () => {
       isOpenAccess: true,
     };
     expect(resolveArticleId(article).type).toBe('pmid');
-    expect(ensureArticleIdentifiers(article).pmid).toBe('12345');
+    const hydrated = ensureArticleIdentifiers(article);
+    expect(hydrated.articleId).toEqual({ type: 'pmid', value: '12345' });
+    expect(hydrated.pmid).toBe('12345');
   });
 });
 

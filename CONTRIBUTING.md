@@ -48,6 +48,19 @@ pnpm run test:e2e
 - Keep changes focused; avoid unrelated refactors
 - New user-visible strings: add keys in **English and German** in `src/i18n/translations.ts`
 
+### Automated review correction loop (required before merge)
+
+1. Push fixes; wait for **blocking CI** green on the latest commit (`deploy.yml`).
+2. Address **every** open inline thread from CodeRabbit, CodeAnt, Copilot, DeepSource (and any other bot reviewers listed in `.cursor/rules/013-pr-review-correction-loop.mdc`).
+3. Read latest bot **review summaries** — CodeRabbit out-of-diff items often appear only in the review body.
+4. Reply on each thread (cite fix commit) and **resolve** the conversation.
+5. Re-poll after bots finish on the new commit; wait through CodeRabbit rate limits if needed.
+6. Merge only when CI is green and no new actionable bot comments remain.
+
+DeepSource JavaScript and full E2E on PRs are **advisory** by default (`docs/project-facts.json`). Post a short disposition comment when closing a large review batch.
+
+See `.cursor/rules/011-coderabbit-pr-gate.mdc` and `.cursor/rules/013-pr-review-correction-loop.mdc` for agent/maintainer detail.
+
 ## Continuous integration
 
 GitHub Actions (`.github/workflows/deploy.yml`) on pushes and PRs to `main`:
