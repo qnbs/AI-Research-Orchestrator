@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Provider-aware cost estimator (P1-2):** `providerPricing` + `researchCostEstimate` use prompt-budget token sizing, per-provider list-price heuristics, unknown-pricing state (no guessed USD), and updated Settings/orchestrator UI strings.
 - **Docs drift gate (P1-1):** `docs/project-facts.json` + expanded `check:docs-drift` (E2E inventory, coverage floors, ADR index, providers, forbidden README claims).
 
 ### Removed

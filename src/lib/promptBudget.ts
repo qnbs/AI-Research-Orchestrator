@@ -31,8 +31,11 @@ const PROVIDER_INPUT_TOKEN_BUDGET: Partial<Record<AIProviderSelection, number>> 
 };
 
 /** Reserved tokens for system prompt, JSON schema overhead, and model output. */
-const RANKING_RESERVED_TOKENS = 4_500;
-const SYNTHESIS_RESERVED_TOKENS = 3_000;
+export const RANKING_PROMPT_OVERHEAD_TOKENS = 4_500;
+export const SYNTHESIS_PROMPT_OVERHEAD_TOKENS = 3_000;
+
+const RANKING_RESERVED_TOKENS = RANKING_PROMPT_OVERHEAD_TOKENS;
+const SYNTHESIS_RESERVED_TOKENS = SYNTHESIS_PROMPT_OVERHEAD_TOKENS;
 
 export type PromptBudgetAccounting = {
   stage: 'ranking' | 'synthesis';
