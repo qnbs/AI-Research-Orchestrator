@@ -2,7 +2,7 @@
 
 ## JavaScript analyzer — **disabled** (2026-08-02)
 
-The JavaScript analyzer is **disabled** in `.deepsource.toml`. See **`docs/deepsource-javascript-ci.md`** for the root-cause analysis (ESM false positives, `scripts/lib` parse errors, quality-gate churn).
+The JavaScript analyzer is **not declared** in `.deepsource.toml`. Disable it in the **DeepSource dashboard** — see **`docs/deepsource-dashboard-off.md`** and **`docs/deepsource-javascript-ci.md`**.
 
 **Authoritative JS/TS gates** in this repository:
 

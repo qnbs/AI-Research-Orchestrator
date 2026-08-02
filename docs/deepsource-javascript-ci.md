@@ -41,13 +41,15 @@ Ignore rules for specific issue types are configured in the **DeepSource dashboa
 
 ## Disposition (current)
 
-| Analyzer   | Status   | Role                                      |
-| ---------- | -------- | ----------------------------------------- |
-| JavaScript | **Off**  | Disabled in `.deepsource.toml`            |
-| Docker     | On       | Advisory infra lint                       |
-| Shell      | On       | Advisory workflow/shell lint              |
-| ESLint     | Blocking | `deploy.yml` — zero-warning TypeScript/TSX |
-| Typecheck  | Blocking | `tsc --noEmit` strict                     |
+| Analyzer   | TOML / dashboard | Role                                      |
+| ---------- | ---------------- | ----------------------------------------- |
+| JavaScript | **Off** (dashboard) | No TOML block; owner toggles in dashboard — `docs/deepsource-dashboard-off.md` |
+| Docker     | On in TOML       | Advisory infra lint                       |
+| Shell      | On in TOML       | Advisory workflow/shell lint              |
+| ESLint     | Blocking         | `deploy.yml` — zero-warning TypeScript/TSX |
+| Typecheck  | Blocking         | `tsc --noEmit` strict                     |
+
+**Important:** `enabled = false` in `.deepsource.toml` does **not** stop the GitHub `DeepSource: JavaScript` check if the dashboard analyzer is still on. Remove the TOML block and disable in **Settings → Code Review → Analyzers**.
 
 Re-enable JavaScript only after:
 

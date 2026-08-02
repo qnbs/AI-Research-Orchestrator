@@ -171,9 +171,9 @@ async function checkProjectFacts(errors, facts) {
       errors.push('.deepsource.toml must enable javascript analyzer');
     }
   } else if (facts.staticAnalysis?.deepsourceJavaScriptEnabled === false) {
-    if (/name\s*=\s*"javascript"[\s\S]*enabled\s*=\s*true/.test(deepsource)) {
+    if (/name\s*=\s*"javascript"/.test(deepsource)) {
       errors.push(
-        '.deepsource.toml javascript analyzer must stay disabled (see docs/deepsource-javascript-ci.md)',
+        '.deepsource.toml must not declare a javascript analyzer block — disable in DeepSource dashboard (docs/deepsource-dashboard-off.md)',
       );
     }
   }
