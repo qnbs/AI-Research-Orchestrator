@@ -131,6 +131,8 @@ jobs:
         run: pnpm run build
         env:
           NODE_ENV: production
+          VITE_BASE_PATH: /AI-Research-Orchestrator/
+          VITE_SITE_ORIGIN: https://qnbs.github.io
 
       - name: Bundle budget
         run: pnpm run bundle:budget
@@ -148,7 +150,11 @@ jobs:
         run: cp dist/index.html dist/404.html
 
       - name: Lighthouse CI
-        run: pnpm exec lhci autorun
+        run: node scripts/run-lighthouse.mjs
+        env:
+          NODE_ENV: production
+          VITE_BASE_PATH: /AI-Research-Orchestrator/
+          VITE_SITE_ORIGIN: https://qnbs.github.io
 
       - name: Setup Pages
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'

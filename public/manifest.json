@@ -1,8 +1,8 @@
 {
   "name": "AI Research Orchestration Author",
   "short_name": "AI Research",
-  "start_url": "/AI-Research-Orchestrator/",
-  "scope": "/AI-Research-Orchestrator/",
+  "start_url": "__DEPLOY_BASE_PATH__",
+  "scope": "__DEPLOY_BASE_PATH__",
   "display": "standalone",
   "background_color": "#070b12",
   "theme_color": "#070b12",
@@ -45,21 +45,21 @@
       "name": "Rapid Research",
       "short_name": "Research",
       "description": "Start a rapid literature search",
-      "url": "/AI-Research-Orchestrator/#research",
+      "url": "__DEPLOY_BASE_PATH__#research",
       "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
       "name": "Orchestrator",
       "short_name": "Orchestrator",
       "description": "Run the full agentic literature review pipeline",
-      "url": "/AI-Research-Orchestrator/#orchestrator",
+      "url": "__DEPLOY_BASE_PATH__#orchestrator",
       "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
       "name": "Knowledge Base",
       "short_name": "KB",
       "description": "Browse saved articles and reports",
-      "url": "/AI-Research-Orchestrator/#knowledgeBase",
+      "url": "__DEPLOY_BASE_PATH__#knowledgeBase",
       "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     }
   ]

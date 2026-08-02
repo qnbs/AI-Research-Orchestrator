@@ -52,8 +52,10 @@
     }
   },
   "deployment": {
-    "model": "github-pages-subpath",
-    "basePath": "/AI-Research-Orchestrator/"
+    "model": "configurable-base-path",
+    "defaultBasePath": "/AI-Research-Orchestrator/",
+    "defaultSiteOrigin": "https://qnbs.github.io",
+    "envVars": ["VITE_BASE_PATH", "VITE_SITE_ORIGIN"]
   },
   "sourceIdentifiers": ["pmid", "pmc", "doi", "arxiv"],
   "forbiddenReadmePhrases": ["Every AI assertion is inextricably linked to a verified PubMed ID"],

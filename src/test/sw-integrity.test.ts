@@ -163,6 +163,11 @@ describe('service worker integrity', () => {
     expect(registerSwSource).not.toMatch(/console\.(log|warn|error)\(/);
   });
 
+  it('derives service worker scope from base href, not a hardcoded repository path', () => {
+    expect(registerSwSource).not.toMatch(/AI-Research-Orchestrator/);
+    expect(registerSwSource).toMatch(/querySelector\('base\[href\]'/);
+  });
+
   it('registration script dispatches an update-available event, not an unconditional reload', () => {
     expect(registerSwSource).toMatch(/sw-update-available/);
     expect(registerSwSource).toMatch(/postMessage|SKIP_WAITING|controllerchange/);
@@ -319,6 +324,19 @@ describe('register-sw.js runtime behavior', () => {
     expect(() => window.dispatchEvent(new Event('sw-request-reload'))).not.toThrow();
     fireControllerChange();
     expect(reloadSpy).not.toHaveBeenCalled();
+  });
+
+  it('registers with scope from document base href on subpath hosts', async () => {
+    const base = document.createElement('base');
+    base.setAttribute('href', '/AI-Research-Orchestrator/');
+    document.head.appendChild(base);
+    const { cleanup } = await loadRegisterSw();
+    cleanupCurrent = cleanup;
+    expect(navigator.serviceWorker.register).toHaveBeenCalledWith(
+      '/AI-Research-Orchestrator/sw.js',
+      expect.objectContaining({ scope: '/AI-Research-Orchestrator/' }),
+    );
+    base.remove();
   });
 
   it('posts SKIP_WAITING on an explicit sw-request-reload when a worker is waiting', async () => {

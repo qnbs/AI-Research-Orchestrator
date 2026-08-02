@@ -16,7 +16,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "pnpm run icons && vite build && node scripts/patch-csp-hashes.mjs",
+    "build": "pnpm run icons && vite build && node scripts/generate-deployment-artifacts.mjs && node scripts/patch-csp-hashes.mjs",
     "preview": "vite preview",
     "test": "vitest",
     "test:run": "vitest run",
@@ -33,7 +33,7 @@
     "workbox:copy": "node scripts/copy-workbox.mjs",
     "prepare": "husky",
     "predeploy": "pnpm run build",
-    "analyze": "ANALYZE=1 vite build && node scripts/patch-csp-hashes.mjs",
+    "analyze": "ANALYZE=1 vite build && node scripts/generate-deployment-artifacts.mjs && node scripts/patch-csp-hashes.mjs",
     "bundle:budget": "node scripts/check-bundle-budget.mjs",
     "check:no-cdn-scripts": "node scripts/check-no-cdn-scripts.mjs",
     "check:workbox-vendor-drift": "node scripts/check-workbox-vendor-drift.mjs",
@@ -45,7 +45,7 @@
     "check:agent-eval": "vitest run src/lib/agentEval.test.ts src/lib/heuristicEval.test.ts src/lib/liveOrchestratorEval.test.ts",
     "i18n:ratchet": "node scripts/check-i18n-ratchet.mjs",
     "csp:hashes": "node scripts/patch-csp-hashes.mjs",
-    "test:lighthouse": "pnpm run build && pnpm exec lhci autorun"
+    "test:lighthouse": "pnpm run build && node scripts/run-lighthouse.mjs"
   },
   "lint-staged": {
     "*.{ts,tsx}": [

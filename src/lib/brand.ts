@@ -1,3 +1,5 @@
+import { buildAssetUrl, resolveSiteOrigin } from './deploymentConfig';
+
 /** Canonical product branding tokens (PWA, UI, metadata). */
 export const BRAND_EMOJI = '🔬';
 
@@ -15,9 +17,12 @@ export const BRAND_ICON_PATHS = {
   appleTouch: 'icons/apple-touch-icon.png',
 } as const;
 
-/** Absolute OG/Twitter image URL for GitHub Pages deployment. */
-export const BRAND_OG_IMAGE_URL =
-  'https://qnbs.github.io/AI-Research-Orchestrator/icons/icon-512.png';
+/** Absolute OG/Twitter image URL derived from VITE_SITE_ORIGIN + import.meta.env.BASE_URL. */
+export const BRAND_OG_IMAGE_URL = buildAssetUrl(
+  resolveSiteOrigin(),
+  import.meta.env.BASE_URL,
+  BRAND_ICON_PATHS.png512,
+);
 
 /** Gradient stops aligned with `src/index.css` dark theme tokens. */
 export const BRAND_GRADIENT_STOPS = {

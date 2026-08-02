@@ -2,9 +2,7 @@ import path from 'path';
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import { visualizer } from 'rollup-plugin-visualizer';
-
-// Repository name for GitHub Pages deployment
-const REPO_NAME = 'AI-Research-Orchestrator';
+import { DEFAULT_GH_PAGES_BASE, normalizeBasePath } from './src/lib/deploymentConfig';
 
 // Vendor chunk assignment by package name. Rolldown (Vite 8's default bundler) only supports
 // the function form of manualChunks, not the object-shorthand form Rollup itself accepts -
@@ -42,9 +40,13 @@ export default defineConfig(({ mode }) => {
   const isProduction = mode === 'production';
   const enableBundleReport = env.ANALYZE === '1' || process.env.ANALYZE === '1';
 
+  const basePath = isProduction
+    ? normalizeBasePath(env.VITE_BASE_PATH, DEFAULT_GH_PAGES_BASE)
+    : '/';
+
   return {
-    // Base path for GitHub Pages (https://username.github.io/REPO-NAME/)
-    base: isProduction ? `/${REPO_NAME}/` : '/',
+  // Configurable via VITE_BASE_PATH (default: GitHub Pages subpath in production)
+    base: basePath,
 
     server: {
       port: 3000,
