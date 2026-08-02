@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Critical-path coverage floors (P1-3):** `check:coverage-floors` CI gate ratchets `providers/`, `geminiService.ts`, and `apiKeyService.ts` at current baselines.
+
 - **Grounded synthesis schema (P0-3 completion):** optional `ResearchReport.groundedSynthesis` with `GroundedClaim[]`; heuristic population from extractive templates, live narrative PMID extraction, export sanitization, and KB import validation. ADR [0015](docs/adr/0015-grounded-synthesis-schema.md).
 
 - **Audit follow-up:** `check:docs-drift` CI gate; export-time citation sanitization (`reportExportProvenance.ts`); agent doc corrections (Vite 8, `nonAi/` path, calibrated grounding claim).

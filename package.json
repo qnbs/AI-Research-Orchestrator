@@ -39,6 +39,7 @@
     "check:workbox-vendor-drift": "node scripts/check-workbox-vendor-drift.mjs",
     "check:contrast": "node scripts/check-contrast.mjs",
     "check:docs-drift": "node scripts/check-docs-drift.mjs",
+    "check:coverage-floors": "node scripts/check-coverage-floors.mjs",
     "i18n:ratchet": "node scripts/check-i18n-ratchet.mjs",
     "csp:hashes": "node scripts/patch-csp-hashes.mjs",
     "test:lighthouse": "pnpm run build && pnpm exec lhci autorun"
