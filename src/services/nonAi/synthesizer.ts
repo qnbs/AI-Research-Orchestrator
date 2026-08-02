@@ -5,7 +5,10 @@
 
 import type { RankedArticle, ResearchReport } from '../../types';
 import type { ExtractiveSynthesis, NarrativeSection } from './types';
-import { buildGroundedSynthesisFromExtractive } from '../../lib/groundedSynthesis';
+import {
+  buildGroundedSynthesisFromExtractive,
+  buildAssessedGroundedSynthesis,
+} from '../../lib/groundedSynthesis';
 import { tokenize, jaccardSimilarity, splitSentences, stemmedTokens, cosineBag } from './utils';
 
 /**
@@ -257,13 +260,19 @@ export function generateResearchReport(articles: RankedArticle[], query: string)
   // Generate insights
   const aiGeneratedInsights = generateInsights(articles, query);
 
+  const rawGrounded = buildGroundedSynthesisFromExtractive(synthesis, sections);
+
   return {
     generatedQueries: [{ query, explanation: 'Non-AI MeSH-based query construction' }],
     rankedArticles: articles,
     synthesis: synthesisMarkdown,
     aiGeneratedInsights,
     overallKeywords,
-    groundedSynthesis: buildGroundedSynthesisFromExtractive(synthesis, sections),
+    groundedSynthesis: buildAssessedGroundedSynthesis(
+      rawGrounded.claims,
+      articles,
+      'extractive-template',
+    ),
   };
 }
 

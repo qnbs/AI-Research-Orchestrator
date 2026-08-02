@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Synthesis trust model (P0-6):** claim-level corpus + evidence validation, `trustLevel` on `groundedSynthesis`, live UI banner for unverified narrative drafts, adversarial claim tests, agent-eval unsupported-claim rate metric.
 - **Brand identity (🔬 microscope mark):** unified PWA icon set (`app-icon.svg`, maskable PNGs, favicons, apple-touch-icon), `AppLogo` / `AppBrandMark` microscope SVG with optional emoji badge, branded boot splash, loading spinners, PWA settings preview, manifest shortcuts/categories, and theme metadata (`#070b12`).
 
 ### Removed

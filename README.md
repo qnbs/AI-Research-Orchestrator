@@ -31,7 +31,7 @@ Unlike conventional summarization tools, this system employs a **multi-agent orc
 - **Local-First Sovereignty:** A zero-knowledge architecture where all data resides within the user's browser (IndexedDB).
 - **Progressive enhancement:** Live Gemini is the high-fidelity path; a first-class **heuristic inference layer** keeps every AI feature fully usable offline or without an API key (deterministic ranking, template synthesis, extractive TL;DR, report-grounded chat).
 - **Agentic Reasoning:** Autonomous query formulation, decision-making, and relevance scoring.
-- **Traceability & Grounding:** Every AI assertion is inextricably linked to a verified PubMed ID (PMID).
+- **Traceability & Grounding:** Ranked insights and exports are corpus-validated; live narrative synthesis is labeled **verified** or **unverified narrative draft** based on claim-level evidence checks (see ADR 0012).
 
 ### Offline / Heuristic mode
 
