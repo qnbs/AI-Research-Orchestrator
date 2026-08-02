@@ -81,6 +81,16 @@ describe('agentEval', () => {
     expect(result.passed).toBe(false);
   });
 
+  it('flags ranked articles with missing or empty pmid', () => {
+    const result = evaluateCase({
+      id: 'ranked-empty-pmid',
+      description: 'empty pmid in ranked list',
+      actual: { rankedArticles: [{ pmid: '' }, { pmid: '1' }] },
+      expect: { rankedCorpusPmids: ['1', '2'] },
+    });
+    expect(result.passed).toBe(false);
+  });
+
   it('rejects invalid PubMed queries when pubmedQueryValid is false', () => {
     const result = evaluateCase({
       id: 'query-bad',

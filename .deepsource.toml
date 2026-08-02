@@ -1,6 +1,5 @@
 version = 1
 
-# Node maintenance scripts and the Vite entry live outside src/ — ESLint/typecheck are authoritative.
 exclude_patterns = [
   "eslint-local-rules/**",
   "scripts/**",
@@ -10,8 +9,9 @@ exclude_patterns = [
   "index.tsx",
 ]
 
-# Docker + Shell only. JavaScript analyzer disabled: persistent false positives on TS ESM
-# exports and Node .mjs scripts despite module_system/dialect tuning; core CI gates cover JS/TS.
+# JavaScript/TypeScript quality is enforced by ESLint + deploy.yml (typecheck/lint/test:coverage).
+# Only infrastructure analyzers remain here; disable JavaScript in the DeepSource dashboard
+# (Settings → Code Review) if the GitHub check still appears.
 [[analyzers]]
 name = "docker"
 enabled = true
@@ -19,7 +19,3 @@ enabled = true
 [[analyzers]]
 name = "shell"
 enabled = true
-
-[[analyzers]]
-name = "javascript"
-enabled = false
