@@ -292,3 +292,64 @@ export const selectArticlesForSynthesisPrompt = (
     },
   };
 };
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+/** Parse prompt-budget accounting from Agent Debugger trace metadata. */
+export const parsePromptBudgetFromMetadata = (
+  metadata?: Record<string, unknown>,
+): PromptBudgetAccounting | undefined => {
+  if (!metadata) return undefined;
+  const raw = metadata.promptBudget;
+  if (!isRecord(raw)) return undefined;
+
+  const stage = raw.stage;
+  if (stage !== 'ranking' && stage !== 'synthesis') return undefined;
+
+  const totalRetrieved = raw.totalRetrieved;
+  const includedInPrompt = raw.includedInPrompt;
+  const omittedFromPrompt = raw.omittedFromPrompt;
+  const estimatedPromptTokens = raw.estimatedPromptTokens;
+  const inputTokenBudget = raw.inputTokenBudget;
+
+  if (
+    typeof totalRetrieved !== 'number' ||
+    typeof includedInPrompt !== 'number' ||
+    typeof omittedFromPrompt !== 'number' ||
+    typeof estimatedPromptTokens !== 'number' ||
+    typeof inputTokenBudget !== 'number'
+  ) {
+    return undefined;
+  }
+
+  const omittedPmids = Array.isArray(raw.omittedPmids)
+    ? raw.omittedPmids.filter((id): id is string => typeof id === 'string')
+    : [];
+
+  const selectionMode = raw.selectionMode;
+  const normalizedSelectionMode =
+    selectionMode === 'lexical-prefilter' || selectionMode === 'full-corpus'
+      ? selectionMode
+      : omittedPmids.length > 0
+        ? 'lexical-prefilter'
+        : 'full-corpus';
+
+  return {
+    stage,
+    provider: (typeof raw.provider === 'string' ? raw.provider : 'gemini') as AIProviderSelection,
+    model: typeof raw.model === 'string' ? raw.model : 'unknown',
+    totalRetrieved,
+    includedInPrompt,
+    omittedFromPrompt,
+    omittedPmids,
+    estimatedPromptTokens,
+    inputTokenBudget,
+    chunkIndex: typeof raw.chunkIndex === 'number' ? raw.chunkIndex : 1,
+    chunkCount: typeof raw.chunkCount === 'number' ? raw.chunkCount : 1,
+    truncatedTitleCount: typeof raw.truncatedTitleCount === 'number' ? raw.truncatedTitleCount : 0,
+    truncatedAbstractCount:
+      typeof raw.truncatedAbstractCount === 'number' ? raw.truncatedAbstractCount : 0,
+    selectionMode: normalizedSelectionMode,
+  };
+};

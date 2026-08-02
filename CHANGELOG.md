@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Journal metadata integrity (P0-F):** no LLM-estimated impact factor; OA PubMed filter uses `free full text[filter]` + PMC post-filter; metrics `source: computed` from corpus.
+- **Prompt budget UI (P0-3):** Agent Debugger `EventRow` surfaces trace `metadata.promptBudget` (included/omitted corpus, est. tokens, stage, selection mode).
+- **Journal metadata integrity (P0-F):**** no LLM-estimated impact factor; OA PubMed filter uses `free full text[filter]` + PMC post-filter; metrics `source: computed` from corpus.
 - **Quality gates:** `check:conflict-markers` blocks unresolved merge markers in CI, pre-commit, and `check:fast`; pre-commit also runs full `format:check` (closes rebase/amend bypass).
 - **P0 closeout audit:** `docs/audits/2026-08-02-p0-closeout.md` records P0-A–F disposition at `3a73707`.
 - **Claim validation integrity (P0-E):** evidence corpus excludes `aiSummary`; trust banner clarifies corpus-supported vs verified audit; Unicode tokenization for non-English claims.

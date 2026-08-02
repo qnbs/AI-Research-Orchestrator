@@ -2,8 +2,12 @@ import { describe, expect, it } from 'vitest';
 import {
   boundTextField,
   DEFAULT_PROMPT_FIELD_LIMITS,
+  parsePromptBudgetFromMetadata,
   selectArticlesForRankingPrompt,
+  selectArticlesForSynthesisPrompt,
   shapeArticleForRankingPrompt,
+  getInputTokenBudget,
+  SYNTHESIS_PROMPT_OVERHEAD_TOKENS,
 } from './promptBudget';
 import { wrapUntrustedJsonBlock } from './untrustedDataFraming';
 import type { RankedArticle } from '../types';
@@ -122,5 +126,51 @@ describe('prompt budget boundaries', () => {
     const available = Math.max(1_000, 8_000 - 4_500);
     expect(selection.accounting.estimatedPromptTokens).toBeLessThanOrEqual(available);
     expect(selection.payloads.length).toBeGreaterThan(0);
+  });
+});
+
+describe('selectArticlesForSynthesisPrompt', () => {
+  it('bounds ranked articles within synthesis token budget', () => {
+    const articles = Array.from({ length: 40 }, (_, i) => {
+      const article = makeArticle(
+        String(i + 1),
+        `aspirin cardiovascular study ${i}`,
+        'x'.repeat(DEFAULT_PROMPT_FIELD_LIMITS.maxAbstractChars),
+      );
+      article.relevanceScore = 90 - i;
+      article.aiSummary = `Summary for ${article.pmid}`;
+      return article;
+    });
+
+    const selection = selectArticlesForSynthesisPrompt(articles, 'gemini', 'gemini-2.5-flash');
+    const inputBudget = getInputTokenBudget('gemini', 'gemini-2.5-flash');
+    const available = Math.max(800, inputBudget - SYNTHESIS_PROMPT_OVERHEAD_TOKENS);
+
+    expect(selection.accounting.stage).toBe('synthesis');
+    expect(selection.accounting.estimatedPromptTokens).toBeLessThanOrEqual(available);
+    expect(selection.payloads.length).toBeGreaterThan(0);
+    expect(selection.accounting.omittedFromPrompt).toBe(
+      articles.length - selection.accounting.includedInPrompt,
+    );
+  });
+});
+
+describe('parsePromptBudgetFromMetadata', () => {
+  it('returns undefined for invalid metadata', () => {
+    expect(parsePromptBudgetFromMetadata(undefined)).toBeUndefined();
+    expect(parsePromptBudgetFromMetadata({ promptBudget: null })).toBeUndefined();
+    expect(parsePromptBudgetFromMetadata({ promptBudget: { stage: 'invalid' } })).toBeUndefined();
+  });
+
+  it('parses ranking accounting from trace metadata', () => {
+    const accounting = selectArticlesForRankingPrompt(
+      [makeArticle('1', 'aspirin trial')],
+      'aspirin',
+      'gemini',
+      'gemini-2.5-flash',
+    ).accounting;
+
+    const parsed = parsePromptBudgetFromMetadata({ promptBudget: accounting });
+    expect(parsed).toEqual(accounting);
   });
 });
