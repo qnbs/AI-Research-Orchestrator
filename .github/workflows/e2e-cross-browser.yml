@@ -25,9 +25,9 @@ concurrency:
 
 jobs:
   cross-browser-smoke:
-    name: "Smoke (${{ matrix.browser }})"
+    name: "Cross-browser (${{ matrix.browser }})"
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 30
     continue-on-error: true
     strategy:
       fail-fast: false
@@ -67,12 +67,18 @@ jobs:
           fi
           pnpm exec playwright install --with-deps "$target"
 
-      - name: Run smoke spec
+      - name: Run cross-browser E2E suite
         env:
           PLAYWRIGHT_MATRIX: "1"
         run: >-
           pnpm exec playwright test
           src/test/e2e/smoke.spec.ts
+          src/test/e2e/agent-flow.spec.ts
+          src/test/e2e/dialog-a11y.spec.ts
+          src/test/e2e/keyboard-focus.spec.ts
+          src/test/e2e/skip-to-content.spec.ts
+          src/test/e2e/journal-hub.spec.ts
+          src/test/e2e/provider-flow.spec.ts
           --project=${{ matrix.browser }}
 
       - name: Upload Playwright report

@@ -1,4 +1,4 @@
-# E2E-in-CI backlog (updated 2026-08-01)
+# E2E-in-CI backlog (updated 2026-08-02)
 
 `.github/workflows/e2e.yml` runs Playwright on every push/PR to `main`.
 
@@ -24,9 +24,9 @@ ignore the file list and run the entire `testDir` (including `a11y.spec.ts`).
 
 ## Cross-browser matrix — **non-blocking** (2026-08-02, audit P1-6)
 
-`.github/workflows/e2e-cross-browser.yml` runs `smoke.spec.ts` on **Firefox**,
-**WebKit (Safari)**, and **mobile Chrome (Pixel 5)** in parallel. The job uses
-`continue-on-error: true` until each browser meets promotion criteria below.
+`.github/workflows/e2e-cross-browser.yml` runs the **same seven-spec list** as blocking
+Chromium on **Firefox**, **WebKit (Safari)**, and **mobile Chrome (Pixel 5)** in parallel.
+The job uses `continue-on-error: true` until each browser meets promotion criteria below.
 
 `playwright.config.ts` exposes the extra projects only when `PLAYWRIGHT_MATRIX=1`
 (so the blocking Chromium workflow stays unchanged).
@@ -46,7 +46,9 @@ Track progress in this file when a browser is promoted.
 
 **Pre-manifest streak (3 smoke tests):** Firefox, WebKit, and mobile Chrome each succeeded on **8** consecutive workflow runs through merge of PR #174 (**3 passed / 0 failed** per browser job log).
 
-**Current streak (4 smoke tests, incl. manifest):** **0** — reset after E2E run `30753340012` (`622077a`) reported **3 passed / 1 failed** (manifest name assertion) before fix in `138f3b1`. Promotion requires **10 consecutive** workflow runs with **4 passed / 0 failed** per browser (read job logs — green `continue-on-error` badge is not enough). Next step after streak ≥10: expand that browser to the full seven-spec list while keeping `continue-on-error: true`.
+**Smoke streak (4 tests, incl. manifest):** **≥10 consecutive** green cross-browser workflow runs on `main` through merge of PR #191 (`6f756fa`), each browser job log reporting **4 passed / 0 failed** (verified on runs `30756417972`–`30761235740`).
+
+**Full-suite expansion (step 2):** landed in PR expanding cross-browser workflow to the seven-spec Chromium parity list (`continue-on-error: true`). Next gate: **10 consecutive** full-suite greens per browser (**51 passed / 0 failed** in job logs) before considering blocking promotion for that browser.
 
 ## Historical note (fixed 2026-07-21)
 
