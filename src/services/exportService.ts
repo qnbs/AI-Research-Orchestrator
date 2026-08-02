@@ -9,6 +9,7 @@ import {
   CSV_EXPORT_COLUMNS,
   KnowledgeBaseEntry,
 } from '../types';
+import { sanitizeReportForExport } from '../lib/reportExportProvenance';
 
 // ===================================================================================
 //
@@ -244,7 +245,8 @@ class PdfExporter {
     this.doc.save(filename);
   }
 
-  public exportResearchReport(report: ResearchReport, input: ResearchInput) {
+  public exportResearchReport(incoming: ResearchReport, input: ResearchInput) {
+    const { report } = sanitizeReportForExport(incoming);
     if (this.settings.includeCoverPage) {
       this.doc
         .setFontSize(PDF_CONSTANTS.FONT_SIZES.TITLE)

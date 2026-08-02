@@ -9,7 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Full-scale audit remediation (2026-08-02):** corpus-bound citation grounding (`citationGrounding.ts`), PubMed query structural validator, untrusted-data prompt framing, custom endpoint trust policy with origin approval, finer provider structured-output capability flags, and regression/property tests across MeSH dictionary entries.
+- **Audit follow-up:** `check:docs-drift` CI gate; export-time citation sanitization (`reportExportProvenance.ts`); agent doc corrections (Vite 8, `nonAi/` path, calibrated grounding claim).
+
+### Added (audit remediation 2026-08-02) corpus-bound citation grounding (`citationGrounding.ts`), PubMed query structural validator, untrusted-data prompt framing, custom endpoint trust policy with origin approval, finer provider structured-output capability flags, and regression/property tests across MeSH dictionary entries.
+
 - ADRs [0012](docs/adr/0012-corpus-citation-grounding.md), [0013](docs/adr/0013-custom-endpoint-trust-policy.md), [0014](docs/adr/0014-provider-structured-output-capabilities.md).
 - Audit report: `docs/audits/2026-08-02-full-scale-audit.md`.
 

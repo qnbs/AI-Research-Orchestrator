@@ -70,6 +70,9 @@ jobs:
       - name: I18n ratchet
         run: pnpm run i18n:ratchet
 
+      - name: Docs drift check
+        run: pnpm run check:docs-drift
+
       - name: Tests with coverage
         run: pnpm run test:coverage
 

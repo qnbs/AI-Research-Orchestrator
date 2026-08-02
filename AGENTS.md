@@ -8,7 +8,7 @@ Guidance for AI coding agents (Kimi, Cursor, Copilot) working in this repository
 
 - **Local-first / zero backend**: all user data (reports, history, settings, knowledge base, collections) lives in the browser's IndexedDB via Dexie 4. No server stores anything.
 - **Direct-to-API**: the browser talks directly to the selected AI provider, `eutils.ncbi.nlm.nih.gov`, and `export.arxiv.org` (see CSP in `index.html`).
-- **Grounding**: every AI assertion is linked to a verifiable PubMed ID (PMID).
+- **Grounding**: ranked insights and exports are corpus-validated where implemented; narrative synthesis may still contain uncited claims — see ADR 0012.
 - **Live demo / deployment**: GitHub Pages at `https://qnbs.github.io/AI-Research-Orchestrator/` (base path `/AI-Research-Orchestrator/`).
 
 Main features: Orchestrator pipeline, Knowledge Base (dedup, faceted filtering, charts), Rapid Research Assistant (TL;DR, similar articles, report chat), scientometric Author/Journal hubs, Collections, Agent Debugger (visual traces), Dashboard, History, and export to JSON/CSV/RIS/BibTeX/PDF.
@@ -25,7 +25,7 @@ Main features: Orchestrator pipeline, Knowledge Base (dedup, faceted filtering, 
 | Area                 | Technology                                                                                                           |
 | -------------------- | -------------------------------------------------------------------------------------------------------------------- |
 | Framework / Language | React 19 (Suspense, lazy views), TypeScript 5.8 **strict**                                                           |
-| Build                | Vite 6 (+ `rollup-plugin-visualizer`, terser)                                                                        |
+| Build                | Vite 8 (+ `rollup-plugin-visualizer`, terser)                                                                        |
 | State                | Redux Toolkit 2 + RTK Query (`apiSlice` = researchApi, `geminiApiSlice` = geminiApi)                                 |
 | Local DB             | Dexie 4 + dexie-react-hooks (IndexedDB), single entry `src/services/databaseService.ts`                              |
 | AI                   | `@google/genai`, `openai`, `@anthropic-ai/sdk` (lazy-loaded), Ollama `fetch`, **or** local heuristic inference layer |
@@ -40,7 +40,7 @@ Main features: Orchestrator pipeline, Knowledge Base (dedup, faceted filtering, 
 
 - **Agentic pipeline**: implemented in **`src/services/geminiService.ts`** (AsyncGenerator `generateResearchReportStream`): query generation → PubMed/optional arXiv fetch → ranking → streaming synthesis. `App.tsx` `getAgentForPhase()` maps phases to **conceptual agent roles** for the trace/debug UI (QueryGenerator, PubMedFetcher, ArxivFetcher, Ranker, Synthesizer) — these are prompt/phase roles, not separate SDK processes.
 - **AI provider layer**: transport adapters live in `src/services/providers/` (`gemini.ts`, `openai.ts`, `anthropic.ts`, `ollama.ts`, `heuristic.ts`) and are loaded lazily via `getProviderForSettings()` so SDKs do not inflate the initial bundle. `geminiService.ts` remains the feature façade and routes AI calls through the selected provider.
-- **InferenceMode** `live | heuristic`: derived from API-key presence, `navigator.onLine`, and an optional Force-Heuristic toggle (`src/services/inferenceMode.ts`, `resolveActiveInferenceMode.ts`, hook `useInferenceMode`). Without a key or offline, the app **never** throws `NO_API_KEY` into an empty UI — the consolidated deterministic engine (`src/services/nonAi/`: query formulation, lexical ranking, template synthesis, extractive TL;DR, report-grounded chat, author/journal tools, demo corpus) keeps every feature usable (ADR 0007, consolidated in ADR 0009 — `src/services/heuristics/` no longer exists, deleted in that consolidation).
+- **InferenceMode** `live | heuristic`: derived from API-key presence, `navigator.onLine`, and an optional Force-Heuristic toggle (`src/services/inferenceMode.ts`, `resolveActiveInferenceMode.ts`, hook `useInferenceMode`). Without a key or offline, the app **never** throws `NO_API_KEY` into an empty UI — the consolidated deterministic engine (`src/services/nonAi/`: query formulation, lexical ranking, template synthesis, extractive TL;DR, report-grounded chat, author/journal tools, demo corpus) keeps every feature usable (ADR 0007, consolidated in ADR 0009).
 - **State**: Redux is the single source of truth (slices: settings, ui, knowledgeBase, collections, theme, agentDebug + RTK Query slices). Contexts only hydrate/compose: `SettingsProvider` hydrates IndexedDB → Redux once; `KnowledgeBaseContext`/`PresetContext` compose Dexie + Redux actions; `UIContext` is a barrel. **Never duplicate** the same flags in Context and Redux.
 - **Resilience**: external calls use typed `AppError`/`toAppError` (`src/lib/errors.ts`), circuit breakers (`src/lib/circuitBreaker.ts` — never retry `AbortError`), exponential backoff honoring `Retry-After` (`src/lib/resilience.ts`, `pubmedUtils.ts`). See `.cursor/rules/102-resilience-external-calls.mdc`.
 - **Security model**: provider API keys (Gemini `AIza…`, OpenAI `sk-…`, Anthropic `sk-ant-…`) and the optional NCBI key are entered in Settings → AI Configuration and stored **AES-GCM encrypted** in IndexedDB via `apiKeyService.ts` (per-provider storage slot, legacy key migrates to Gemini slot). Keys are **not** env secrets — `.env.example` is documentation only; never put secrets in `VITE_*` (client-visible). Threat model: `SECURITY.md` + ADR 0003.
@@ -64,7 +64,7 @@ src/
   services/              # geminiService (feature façade), apiKeyService, databaseService, pubmedUtils,
                          # arxivUtils, exportService, journalService, inferenceMode,
                          # researchOrchestratorAdapter, providers/ (transport adapters),
-                         # heuristics/ (offline inference layer)
+                         # nonAi/ (deterministic offline inference engine)
   store/                 # store.ts, hooks.ts, slices/ (one slice per domain + *.test.ts)
   test/                  # setup.ts (IndexedDB + crypto mocks), e2e/ (agent-flow, smoke specs)
 scripts/                 # patch-csp-hashes, check-bundle-budget, generate-pwa-icons
