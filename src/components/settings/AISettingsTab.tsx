@@ -15,6 +15,7 @@ import type { AIProviderSelection } from '../../services/providers/types';
 import { isNonAiAvailable } from '../../services/nonAi';
 import type { TranslationKey } from '../../i18n/translations';
 import { validateCustomEndpointUrl, isOriginCspAllowed } from '../../lib/endpointPolicy';
+import { BaseUrlValidationAlerts } from './BaseUrlValidationAlerts';
 
 type AiPersona = Settings['ai']['aiPersona'];
 
@@ -179,41 +180,22 @@ const BaseUrlField: React.FC = () => {
         className="mt-1 block w-full bg-input-bg border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent"
       />
       <p className="text-xs text-text-secondary mt-1">{t('settings.ai.base_url_desc')}</p>
-      {validation.status === 'invalid' && (
-        <p className="text-xs text-red-500 mt-1" role="alert">
-          {t('settings.ai.base_url_invalid', { reason: validation.reason })}
-        </p>
-      )}
-      {validation.status === 'csp' && (
-        <p className="text-xs text-amber-600 dark:text-amber-400 mt-1" role="alert">
-          {t('settings.ai.base_url_csp_blocked', { origin: validation.origin })}
-        </p>
-      )}
-      {needsApproval && (
-        <button
-          type="button"
-          className="mt-2 text-sm text-brand-accent underline focus:outline-none focus:ring-2 focus:ring-brand-accent rounded"
-          onClick={() =>
-            setTempSettings((s) => ({
-              ...s,
-              ai: {
-                ...s.ai,
-                approvedEndpointOrigin:
-                  validation.status === 'ok' ? validation.origin : s.ai.approvedEndpointOrigin,
-              },
-            }))
-          }
-        >
-          {t('settings.ai.base_url_approve', {
-            origin: validation.status === 'ok' ? validation.origin : '',
-          })}
-        </button>
-      )}
-      {validation.status === 'ok' && approved === validation.origin && (
-        <p className="text-xs text-green-600 dark:text-green-400 mt-1">
-          {t('settings.ai.base_url_approved', { origin: approved })}
-        </p>
-      )}
+      <BaseUrlValidationAlerts
+        validation={validation}
+        approved={approved}
+        needsApproval={needsApproval}
+        onApprove={() =>
+          setTempSettings((s) => ({
+            ...s,
+            ai: {
+              ...s.ai,
+              approvedEndpointOrigin:
+                validation.status === 'ok' ? validation.origin : s.ai.approvedEndpointOrigin,
+            },
+          }))
+        }
+        t={t}
+      />
     </div>
   );
 };

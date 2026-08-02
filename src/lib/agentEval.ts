@@ -74,13 +74,16 @@ export function evaluateCase(testCase: EvalCase): EvalCaseResult {
   }
 
   if (exp.mustCitePmids?.length) {
-    const obj = actual as Record<string, unknown> | null;
-    const insights = Array.isArray(obj?.aiGeneratedInsights)
-      ? (obj!.aiGeneratedInsights as { supportingArticles?: string[] }[])
-      : [];
-    const ranked = Array.isArray(obj?.rankedArticles)
-      ? (obj!.rankedArticles as { pmid?: string }[])
-      : [];
+    const obj =
+      actual !== null && typeof actual === 'object' && !Array.isArray(actual)
+        ? (actual as Record<string, unknown>)
+        : null;
+    const insights =
+      obj && Array.isArray(obj.aiGeneratedInsights)
+        ? (obj.aiGeneratedInsights as { supportingArticles?: string[] }[])
+        : [];
+    const ranked =
+      obj && Array.isArray(obj.rankedArticles) ? (obj.rankedArticles as { pmid?: string }[]) : [];
     const corpus = new Set<string>([
       ...ranked.map((r) => r.pmid).filter((id): id is string => !!id),
       ...exp.mustCitePmids,
