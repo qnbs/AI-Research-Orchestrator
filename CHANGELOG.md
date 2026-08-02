@@ -9,13 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-<<<<<<< HEAD
+- **Journal metadata integrity (P0-F):** no LLM-estimated impact factor; OA PubMed filter uses `free full text[filter]` + PMC post-filter; metrics `source: computed` from corpus.
 - **Claim validation integrity (P0-E):** evidence corpus excludes `aiSummary`; trust banner clarifies corpus-supported vs verified audit; Unicode tokenization for non-English claims.
 - **KB dedup follow-up (P0-B):** research-only prune deletes from research entries only; harmonization preserves `report.rankedArticles`; prune count matches research-only predicate; per-entry prune preserves high-scoring PMID copies in other reports; i18n notifications; `bulkUpdateKbEntries` unwrap + transaction rollback on missing ids.
-=======
-- **Journal metadata integrity (P0-F):** no LLM-estimated impact factor; OA PubMed filter uses `free full text[filter]` + PMC post-filter; metrics `source: computed` from corpus.
-- **KB dedup follow-up (P0-B):** research-only prune deletes from research entries only; harmonization preserves `report.rankedArticles`; prune count matches research-only predicate; i18n notifications; `bulkUpdateKbEntries` unwrap + transaction rollback on missing ids.
->>>>>>> 6daa4bb (fix(journals): P0-F corpus-based OA filter and no LLM impact factor)
 - **Execution provenance (P0-D):** research reports stamp `inferenceMode` from `resolveActiveInferenceMode` at completion, not from settings provider alone.
 - **KB import trust boundary (P0-C):** versioned import envelope, strict validation, corpus re-sanitization, forced `narrative-draft` trust on import, quarantine reporting in Settings UI.
 - **KB snapshot safety (P0-B):** merge-duplicates harmonizes metadata without removing articles from historical entries; prune-by-relevance targets research reports only; Dexie transaction for bulk KB updates.
