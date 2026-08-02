@@ -3,6 +3,7 @@ import { BugAntIcon } from './icons/BugAntIcon';
 import { HomeIcon } from './icons/HomeIcon';
 import { ClipboardIcon } from './icons/ClipboardIcon';
 import { errorBoundaryCopy } from './errorBoundaryCopy';
+import { safeLogError } from '../lib/safeLog';
 
 // Inline Refresh Icon for self-containment
 const RefreshIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -44,7 +45,7 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Uncaught error:', error, errorInfo);
+    safeLogError('Uncaught error:', error, errorInfo);
     this.setState({ errorInfo });
   }
 
@@ -72,7 +73,7 @@ class ErrorBoundary extends Component<Props, State> {
     const text = `Error: ${error?.toString()}\n\n${errorBoundaryCopy.componentStackLabel}:\n${errorInfo?.componentStack || errorBoundaryCopy.fallbackStack}`;
     navigator.clipboard
       .writeText(text)
-      .catch((err) => console.error(errorBoundaryCopy.copyFailureLog, err));
+      .catch((err) => safeLogError(errorBoundaryCopy.copyFailureLog, err));
   };
 
   public render() {

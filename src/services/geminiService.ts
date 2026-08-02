@@ -53,6 +53,7 @@ import {
   generateResearchReportStreamWithMode,
   shouldUseHeuristic,
 } from './researchOrchestratorAdapter';
+import { safeLogError } from '../lib/safeLog';
 
 function throwIfAborted(signal?: AbortSignal): void {
   if (signal?.aborted) {
@@ -94,7 +95,7 @@ async function generateJson<T>(
     });
     return parseGeminiResponseJson<T>(response.text);
   } catch (error) {
-    console.error('Error generating content:', error);
+    safeLogError('Error generating content:', error);
     throw provider.mapError(error);
   }
 }
@@ -446,7 +447,7 @@ Research Topic: "${topicSafe}"
     }
     yield { phase: 'Finalizing Report...' };
   } catch (error) {
-    console.error('Error generating research report:', error);
+    safeLogError('Error generating research report:', error);
     throw provider.mapError(error);
   }
 }
@@ -489,7 +490,7 @@ export async function findSimilarArticles(
       signal,
     );
   } catch (error) {
-    console.error('Error finding similar articles:', error);
+    safeLogError('Error finding similar articles:', error);
     throw provider.mapError(error);
   }
 }
@@ -523,7 +524,7 @@ export async function findRelatedOnline(
     }));
     return { summary: response.text ?? '', sources };
   } catch (error) {
-    console.error('Error finding related online content:', error);
+    safeLogError('Error finding related online content:', error);
     throw provider.mapError(error);
   }
 }
@@ -550,7 +551,7 @@ export async function generateTldrSummary(
     });
     return response.text ?? '';
   } catch (error) {
-    console.error('Error generating TL;DR summary:', error);
+    safeLogError('Error generating TL;DR summary:', error);
     throw provider.mapError(error);
   }
 }
@@ -590,7 +591,7 @@ export async function generateResearchAnalysis(
       signal,
     );
   } catch (error) {
-    console.error('Error generating research analysis:', error);
+    safeLogError('Error generating research analysis:', error);
     throw provider.mapError(error);
   }
 }
@@ -643,7 +644,7 @@ export async function disambiguateAuthor(
       signal,
     );
   } catch (error) {
-    console.error('Error disambiguating author:', error);
+    safeLogError('Error disambiguating author:', error);
     throw provider.mapError(error);
   }
 }
@@ -708,7 +709,7 @@ export async function generateAuthorProfileAnalysis(
       signal,
     );
   } catch (error) {
-    console.error('Error generating author profile:', error);
+    safeLogError('Error generating author profile:', error);
     throw provider.mapError(error);
   }
 }
@@ -748,7 +749,7 @@ export async function suggestAuthors(
       signal,
     );
   } catch (error) {
-    console.error('Error suggesting authors:', error);
+    safeLogError('Error suggesting authors:', error);
     throw provider.mapError(error);
   }
 }
@@ -896,11 +897,11 @@ export async function analyzeSingleArticle(
         isOpenAccess: articleData.isOpenAccess ?? false,
       };
     } catch (error) {
-      console.error('Error analyzing single article:', error);
+      safeLogError('Error analyzing single article:', error);
       throw provider.mapError(error);
     }
   } catch (error) {
-    console.error('Error analyzing single article:', error);
+    safeLogError('Error analyzing single article:', error);
     throw toAppError(error, 'article_analysis');
   }
 }
@@ -962,7 +963,7 @@ export async function generateJournalProfileAnalysis(
       },
     };
   } catch (error) {
-    console.error('Error generating journal profile analysis:', error);
+    safeLogError('Error generating journal profile analysis:', error);
     throw provider.mapError(error);
   }
 }
@@ -1015,7 +1016,7 @@ export async function disambiguateJournal(
         : 'partial') as JournalCandidate['matchType'],
     }));
   } catch (error) {
-    console.error('Error disambiguating journal:', error);
+    safeLogError('Error disambiguating journal:', error);
     throw provider.mapError(error);
   }
 }
@@ -1059,7 +1060,7 @@ export async function suggestJournals(
       signal,
     );
   } catch (error) {
-    console.error('Error suggesting journals:', error);
+    safeLogError('Error suggesting journals:', error);
     throw provider.mapError(error);
   }
 }

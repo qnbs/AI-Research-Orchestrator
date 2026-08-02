@@ -8,6 +8,7 @@ import { CheckIcon } from './icons/CheckIcon';
 import { InputFormHeader } from './InputFormHeader';
 import { useTranslation } from '../hooks/useTranslation';
 import type { TranslationKey } from '../i18n/translations';
+import { safeLogError } from '../lib/safeLog';
 
 interface InputFormProps {
   onSubmit: (data: ResearchInput) => void;
@@ -109,7 +110,7 @@ const InputFormComponent: React.FC<InputFormProps> = ({
         return { includeArxiv: false, ...JSON.parse(savedState) };
       }
     } catch (e) {
-      console.error('Could not parse form state from sessionStorage', e);
+      safeLogError('Could not parse form state from sessionStorage', e);
     }
     return {
       researchTopic: '',
@@ -139,7 +140,7 @@ const InputFormComponent: React.FC<InputFormProps> = ({
     try {
       sessionStorage.setItem(FORM_STATE_KEY, JSON.stringify(formData));
     } catch (e) {
-      console.error('Could not save form state to sessionStorage', e);
+      safeLogError('Could not save form state to sessionStorage', e);
     }
   }, [formData]);
 

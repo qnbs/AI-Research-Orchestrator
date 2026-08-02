@@ -1,3 +1,4 @@
+import { safeLogError } from './safeLog';
 /**
  * Robust JSON extraction from Gemini / LLM text (markdown fences, chatter, truncated output).
  * String-aware brace counting avoids false positives when `{` appears inside JSON strings.
@@ -195,7 +196,7 @@ export function parseGeminiResponseJson<T>(text: string): T {
 
   const preview = cleanText.length > 200 ? `${cleanText.slice(0, 200)}…` : cleanText;
   if (process.env.NODE_ENV !== 'production') {
-    console.error('CRITICAL: Could not parse JSON from AI response.', cleanText);
+    safeLogError('CRITICAL: Could not parse JSON from AI response.', cleanText);
   }
   throw new GeminiJsonParseError(
     'AI response did not contain valid JSON. The model may have been interrupted or returned prose instead of structured data.',

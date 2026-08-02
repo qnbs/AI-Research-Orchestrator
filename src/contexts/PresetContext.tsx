@@ -13,6 +13,7 @@ import {
   addPreset as addPresetDb,
   removePreset as removePresetDb,
 } from '../services/databaseService';
+import { safeLogError } from '../lib/safeLog';
 
 interface PresetContextType {
   presets: Preset[];
@@ -34,7 +35,7 @@ export const PresetProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         const storedPresets = await getAllPresets();
         setPresets(storedPresets);
       } catch (error) {
-        console.error('Failed to load presets from IndexedDB', error);
+        safeLogError('Failed to load presets from IndexedDB', error);
       } finally {
         setArePresetsLoading(false);
       }
@@ -52,7 +53,7 @@ export const PresetProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       await addPresetDb(newPreset);
       setPresets((prev) => [...prev, newPreset]);
     } catch (error) {
-      console.error('Failed to save preset to IndexedDB', error);
+      safeLogError('Failed to save preset to IndexedDB', error);
     }
   }, []);
 
@@ -61,7 +62,7 @@ export const PresetProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       await removePresetDb(id);
       setPresets((prev) => prev.filter((p) => p.id !== id));
     } catch (error) {
-      console.error('Failed to remove preset from IndexedDB', error);
+      safeLogError('Failed to remove preset from IndexedDB', error);
     }
   }, []);
 

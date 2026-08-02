@@ -6,6 +6,7 @@ import {
 } from './geminiService';
 import { searchPubMedForIds, fetchArticleDetails } from './pubmedUtils';
 import type { Settings } from '../types';
+import { safeLogError } from '../lib/safeLog';
 
 /**
  * Searches for articles on a topic within a specific journal.
@@ -51,7 +52,7 @@ export const findArticlesInJournal = async (
         }) as Article,
     );
   } catch (error) {
-    console.error('Error finding articles in journal:', error);
+    safeLogError('Error finding articles in journal:', error);
     throw error;
   }
 };
@@ -73,7 +74,7 @@ export const generateJournalProfileAnalysis = async (
   try {
     return await generateProfileWithGemini(journalName, aiSettings, signal, articles);
   } catch (error) {
-    console.error('Error in journal profile generation service call:', error);
+    safeLogError('Error in journal profile generation service call:', error);
     throw error;
   }
 };
@@ -89,7 +90,7 @@ export const disambiguateJournal = async (
   try {
     return await disambiguateJournalWithAI(journalName, aiSettings, signal);
   } catch (error) {
-    console.error('Error in journal disambiguation service call:', error);
+    safeLogError('Error in journal disambiguation service call:', error);
     throw error;
   }
 };
@@ -105,7 +106,7 @@ export const suggestJournals = async (
   try {
     return await suggestJournalsWithAI(fieldOfStudy, aiSettings, signal);
   } catch (error) {
-    console.error('Error in journal suggestion service call:', error);
+    safeLogError('Error in journal suggestion service call:', error);
     throw error;
   }
 };

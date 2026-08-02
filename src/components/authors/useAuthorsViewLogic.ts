@@ -15,6 +15,7 @@ import {
   useLazyGetArticleDetailsFullQuery,
   useGetFeaturedAuthorsQuery,
 } from '../../store/slices/apiSlice';
+import { safeLogError } from '../../lib/safeLog';
 
 const authorPhaseKeys = [
   'authors.phase.search',
@@ -184,7 +185,7 @@ export const useAuthorsViewLogic = (
           setView('profile');
         }
       } catch (err) {
-        console.error('Failed to build author profile', err);
+        safeLogError('Failed to build author profile', err);
         if (isMounted.current) {
           setError(t('authors.error.profile_build'));
           setView('landing');
@@ -241,7 +242,7 @@ export const useAuthorsViewLogic = (
           setView('disambiguation');
         }
       } catch (err) {
-        console.error('Failed to search author profile', err);
+        safeLogError('Failed to search author profile', err);
         if (isMounted.current) {
           setError(t('authors.error.generic'));
           setView('landing');
@@ -267,7 +268,7 @@ export const useAuthorsViewLogic = (
           setSuggestedAuthors(result);
         }
       } catch (err) {
-        console.error('Failed to suggest authors', err);
+        safeLogError('Failed to suggest authors', err);
         if (isMounted.current) {
           setSuggestionError(t('authors.error.suggest'));
         }

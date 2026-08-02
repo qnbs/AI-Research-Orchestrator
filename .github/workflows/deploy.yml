@@ -79,6 +79,9 @@ jobs:
       - name: Critical-path coverage floors
         run: pnpm run check:coverage-floors
 
+      - name: Logging redaction gate
+        run: pnpm run check:log-redaction
+
       - name: Upload coverage artifact
         if: always()
         # actions/upload-artifact@v4

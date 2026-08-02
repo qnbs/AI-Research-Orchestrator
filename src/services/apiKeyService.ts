@@ -7,6 +7,7 @@
 import type { AIProviderId } from './providers/types';
 import { toAppError } from '../lib/errors';
 import { getProviderMeta } from './providers/provider';
+import { safeLogError, safeLogWarn } from '../lib/safeLog';
 
 const ENCRYPTION_KEY_NAME = 'ai-research-encryption-key';
 const LEGACY_GEMINI_STORAGE_KEY = 'encrypted-api-key';
@@ -133,7 +134,7 @@ async function resolveEncryptionKey(): Promise<CryptoKey> {
     // would find an already-empty store - indistinguishable from a fresh
     // install - and silently skip the notification even though this call's
     // clear already discarded the user's keys.
-    console.warn(
+    safeLogWarn(
       'API key vault used an outdated, extractable key format; resetting the local vault.',
     );
     await clearKeyStoreAndMarkPendingReset(db);
@@ -325,7 +326,7 @@ async function getEncryptedSecret(
     if (throwOnError) {
       throw toAppError(error, 'storage');
     }
-    console.error(`Failed to retrieve ${label}:`, error);
+    safeLogError(`Failed to retrieve ${label}:`, error);
     return null;
   }
 }

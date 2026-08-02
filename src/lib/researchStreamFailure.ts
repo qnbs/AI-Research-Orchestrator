@@ -5,6 +5,7 @@ import { completeTrace, setAgentStatus } from '../store/slices/agentDebugSlice';
 import { saveResearchCheckpoint } from '../services/databaseService';
 import { createResearchCheckpoint, isResumableCheckpoint } from './researchCheckpoint';
 import { isAbortError, isAppError, toAppError } from './errors';
+import { safeLogError } from './safeLog';
 
 export type ResearchReportStatus = 'idle' | 'generating' | 'streaming' | 'done' | 'error';
 
@@ -78,7 +79,7 @@ export async function handleResearchStreamFailure({
           : `Research failed — partial results saved locally. ${appErr.toUserMessage()}`,
       });
     } catch (saveErr) {
-      console.error('Failed to persist research checkpoint', saveErr);
+      safeLogError('Failed to persist research checkpoint', saveErr);
       setNotification({
         id: Date.now(),
         type: 'error',

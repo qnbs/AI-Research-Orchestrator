@@ -19,6 +19,7 @@ import { useKnowledgeBase } from '../contexts/KnowledgeBaseContext';
 import { useTranslation } from '../hooks/useTranslation';
 import type { TranslationKey } from '../hooks/useTranslation';
 import { ChevronUpIcon } from './icons/ChevronUpIcon';
+import { safeLogError } from '../lib/safeLog';
 
 interface ArticleDetailPanelProps {
   article: AggregatedArticle;
@@ -129,7 +130,7 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({
       );
       if (isMounted.current) setSimilarArticles(result);
     } catch (err) {
-      console.error('Failed to find similar articles', err);
+      safeLogError('Failed to find similar articles', err);
       if (isMounted.current) setFindError('article.error.similar');
     } finally {
       if (isMounted.current) setIsFindingSimilar(false);
@@ -143,7 +144,7 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({
       const result = await findRelatedOnline(article.title, settings.ai);
       if (isMounted.current) setOnlineFindings(result);
     } catch (err) {
-      console.error('Failed to find related online discussions', err);
+      safeLogError('Failed to find related online discussions', err);
       if (isMounted.current) {
         setOnlineFindings(null);
         setOnlineError('article.error.online');
@@ -160,7 +161,7 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({
       const result = await generateTldrSummary(article.summary, settings.ai);
       if (isMounted.current) setTldr(result);
     } catch (err) {
-      console.error('Failed to generate TL;DR summary', err);
+      safeLogError('Failed to generate TL;DR summary', err);
       if (isMounted.current) setTldrError('article.error.tldr');
     } finally {
       if (isMounted.current) setIsGeneratingTldr(false);

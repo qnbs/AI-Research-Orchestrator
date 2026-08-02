@@ -12,6 +12,7 @@ import {
 import { Article, JournalCandidate, JournalProfile } from '../../types';
 import { useGetFeaturedJournalsQuery } from '../../store/slices/apiSlice';
 import type { TranslationKey } from '../../hooks/useTranslation';
+import { safeLogWarn } from '../../lib/safeLog';
 
 const journalPhaseKeys = [
   'journals.phase.disambiguate',
@@ -133,7 +134,7 @@ export const useJournalsViewLogic = (
       } catch (fetchError) {
         // PubMed may be unreachable (offline / rate limit) — the profile still
         // works with curated or AI-estimated data, so degrade gracefully.
-        console.warn('Journal article fetch failed, continuing without articles:', fetchError);
+        safeLogWarn('Journal article fetch failed, continuing without articles:', fetchError);
       }
 
       if (!isMounted.current) return;

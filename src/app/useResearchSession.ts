@@ -25,6 +25,7 @@ import type { View } from '../types/ui';
 import type { TranslationKey } from '../i18n/translations';
 import type { HapticPreset } from '../hooks/useHaptic';
 import { getAgentForPhase } from './getAgentForPhase';
+import { safeLogError } from '../lib/safeLog';
 
 type ReportStatus = 'idle' | 'generating' | 'streaming' | 'done' | 'error';
 
@@ -91,7 +92,7 @@ export function useResearchSession({
         await deleteResearchCheckpoint(id);
         return true;
       } catch (err) {
-        console.error('Failed to delete research checkpoint', err);
+        safeLogError('Failed to delete research checkpoint', err);
         notifyCheckpointDeleteFailure(err);
         return false;
       }
