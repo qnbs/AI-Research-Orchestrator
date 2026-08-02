@@ -9,7 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Prompt budget UI (P0-3):** Agent Debugger `EventRow` surfaces trace `metadata.promptBudget` (included/omitted corpus, est. tokens, stage, selection mode).
+- **Cross-browser E2E (P1-8):** Firefox/WebKit/mobile-Chrome workflow runs the full seven-spec parity list (still `continue-on-error`); smoke streak ≥10 documented in `docs/e2e-ci-backlog.md`.
+- **Dependabot disposition:** Vitest 4.1.10 on `main` — tracking PR #10 closed.
+- **Prompt budget UI (P0-3):**** Agent Debugger `EventRow` surfaces trace `metadata.promptBudget` (included/omitted corpus, est. tokens, stage, selection mode).
 - **Journal metadata integrity (P0-F):** no LLM-estimated impact factor; OA PubMed filter uses `free full text[filter]` + PMC post-filter; metrics `source: computed` from corpus.
 - **Quality gates:** `check:conflict-markers` blocks unresolved merge markers in CI, pre-commit, and `check:fast`; pre-commit also runs full `format:check` (closes rebase/amend bypass).
 - **P0 closeout audit:** `docs/audits/2026-08-02-p0-closeout.md` records P0-A–F disposition at `3a73707`.

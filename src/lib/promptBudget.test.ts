@@ -240,4 +240,44 @@ describe('parsePromptBudgetFromMetadata', () => {
 
     expect(parsed?.selectionMode).toBe('lexical-prefilter');
   });
+
+  it('defaults truncatedAiSummaryCount to zero for legacy metadata', () => {
+    const parsed = parsePromptBudgetFromMetadata({
+      promptBudget: {
+        stage: 'synthesis',
+        provider: 'gemini',
+        model: 'gemini-2.5-flash',
+        totalRetrieved: 2,
+        includedInPrompt: 2,
+        omittedFromPrompt: 0,
+        omittedPmids: [],
+        estimatedPromptTokens: 400,
+        inputTokenBudget: 14_000,
+      },
+    });
+
+    expect(parsed?.truncatedAiSummaryCount).toBe(0);
+  });
+
+  it('rejects invalid chunk indices and uses safe defaults', () => {
+    const accounting = selectArticlesForRankingPrompt(
+      [makeArticle('1', 'aspirin')],
+      'aspirin',
+      'gemini',
+      'gemini-2.5-flash',
+    ).accounting;
+
+    const parsed = parsePromptBudgetFromMetadata({
+      promptBudget: {
+        ...accounting,
+        chunkIndex: -1,
+        chunkCount: NaN,
+        truncatedTitleCount: Infinity,
+      },
+    });
+
+    expect(parsed?.chunkIndex).toBe(1);
+    expect(parsed?.chunkCount).toBe(1);
+    expect(parsed?.truncatedTitleCount).toBe(0);
+  });
 });
