@@ -173,4 +173,56 @@ describe('parsePromptBudgetFromMetadata', () => {
     const parsed = parsePromptBudgetFromMetadata({ promptBudget: accounting });
     expect(parsed).toEqual(accounting);
   });
+
+  it('rejects non-finite and negative accounting numbers', () => {
+    const base = {
+      stage: 'ranking' as const,
+      provider: 'gemini' as const,
+      model: 'gemini-2.5-flash',
+      includedInPrompt: 1,
+      omittedFromPrompt: 0,
+      omittedPmids: [] as string[],
+      estimatedPromptTokens: 500,
+      inputTokenBudget: 14_000,
+      chunkIndex: 1,
+      chunkCount: 1,
+      truncatedTitleCount: 0,
+      truncatedAbstractCount: 0,
+      selectionMode: 'full-corpus' as const,
+    };
+
+    expect(
+      parsePromptBudgetFromMetadata({ promptBudget: { ...base, totalRetrieved: NaN } }),
+    ).toBeUndefined();
+    expect(
+      parsePromptBudgetFromMetadata({ promptBudget: { ...base, totalRetrieved: -1 } }),
+    ).toBeUndefined();
+    expect(
+      parsePromptBudgetFromMetadata({
+        promptBudget: { ...base, totalRetrieved: 5, estimatedPromptTokens: Infinity },
+      }),
+    ).toBeUndefined();
+  });
+
+  it('infers lexical-prefilter when omittedFromPrompt > 0 without omittedPmids', () => {
+    const parsed = parsePromptBudgetFromMetadata({
+      promptBudget: {
+        stage: 'ranking',
+        provider: 'gemini',
+        model: 'gemini-2.5-flash',
+        totalRetrieved: 10,
+        includedInPrompt: 5,
+        omittedFromPrompt: 5,
+        omittedPmids: [],
+        estimatedPromptTokens: 1000,
+        inputTokenBudget: 14_000,
+        chunkIndex: 1,
+        chunkCount: 1,
+        truncatedTitleCount: 0,
+        truncatedAbstractCount: 0,
+      },
+    });
+
+    expect(parsed?.selectionMode).toBe('lexical-prefilter');
+  });
 });

@@ -199,8 +199,10 @@ export const EventRow: React.FC<{
                         className={`text-text-secondary block ${hasOmittedPmids ? 'mt-1' : ''}`}
                       >
                         {t('debugger.promptBudget.fieldTruncation')}:{' '}
-                        {promptBudget.truncatedTitleCount} title /{' '}
-                        {promptBudget.truncatedAbstractCount} abstract
+                        {t('debugger.promptBudget.fieldTruncationSummary', {
+                          titleCount: promptBudget.truncatedTitleCount,
+                          abstractCount: promptBudget.truncatedAbstractCount,
+                        })}
                       </span>
                     )}
                   </div>

@@ -296,6 +296,9 @@ export const selectArticlesForSynthesisPrompt = (
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
 
+const isValidNonNegativeFinite = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isFinite(value) && value >= 0;
+
 /** Parse prompt-budget accounting from Agent Debugger trace metadata. */
 export const parsePromptBudgetFromMetadata = (
   metadata?: Record<string, unknown>,
@@ -314,11 +317,11 @@ export const parsePromptBudgetFromMetadata = (
   const inputTokenBudget = raw.inputTokenBudget;
 
   if (
-    typeof totalRetrieved !== 'number' ||
-    typeof includedInPrompt !== 'number' ||
-    typeof omittedFromPrompt !== 'number' ||
-    typeof estimatedPromptTokens !== 'number' ||
-    typeof inputTokenBudget !== 'number'
+    !isValidNonNegativeFinite(totalRetrieved) ||
+    !isValidNonNegativeFinite(includedInPrompt) ||
+    !isValidNonNegativeFinite(omittedFromPrompt) ||
+    !isValidNonNegativeFinite(estimatedPromptTokens) ||
+    !isValidNonNegativeFinite(inputTokenBudget)
   ) {
     return undefined;
   }
@@ -331,9 +334,14 @@ export const parsePromptBudgetFromMetadata = (
   const normalizedSelectionMode =
     selectionMode === 'lexical-prefilter' || selectionMode === 'full-corpus'
       ? selectionMode
-      : omittedPmids.length > 0
+      : omittedFromPrompt > 0
         ? 'lexical-prefilter'
         : 'full-corpus';
+
+  const chunkIndex = raw.chunkIndex;
+  const chunkCount = raw.chunkCount;
+  const truncatedTitleCount = raw.truncatedTitleCount;
+  const truncatedAbstractCount = raw.truncatedAbstractCount;
 
   return {
     stage,
@@ -345,11 +353,12 @@ export const parsePromptBudgetFromMetadata = (
     omittedPmids,
     estimatedPromptTokens,
     inputTokenBudget,
-    chunkIndex: typeof raw.chunkIndex === 'number' ? raw.chunkIndex : 1,
-    chunkCount: typeof raw.chunkCount === 'number' ? raw.chunkCount : 1,
-    truncatedTitleCount: typeof raw.truncatedTitleCount === 'number' ? raw.truncatedTitleCount : 0,
-    truncatedAbstractCount:
-      typeof raw.truncatedAbstractCount === 'number' ? raw.truncatedAbstractCount : 0,
+    chunkIndex: isValidNonNegativeFinite(chunkIndex) && chunkIndex > 0 ? chunkIndex : 1,
+    chunkCount: isValidNonNegativeFinite(chunkCount) && chunkCount > 0 ? chunkCount : 1,
+    truncatedTitleCount: isValidNonNegativeFinite(truncatedTitleCount) ? truncatedTitleCount : 0,
+    truncatedAbstractCount: isValidNonNegativeFinite(truncatedAbstractCount)
+      ? truncatedAbstractCount
+      : 0,
     selectionMode: normalizedSelectionMode,
   };
 };
