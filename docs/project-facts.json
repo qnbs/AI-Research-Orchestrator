@@ -1,0 +1,63 @@
+{
+  "$comment": "Canonical project facts for check-docs-drift.mjs — update when CI policy or documented inventory changes.",
+  "coverageThresholds": {
+    "lines": 80,
+    "statements": 80,
+    "branches": 55,
+    "functions": 55
+  },
+  "coverageModuleFloors": {
+    "providers": { "lines": 61, "statements": 58, "branches": 51, "functions": 60 },
+    "geminiService": { "lines": 61, "statements": 61, "branches": 48, "functions": 70 },
+    "apiKeyService": { "lines": 91, "statements": 86, "branches": 82, "functions": 80 }
+  },
+  "e2e": {
+    "mainWorkflowPath": ".github/workflows/e2e.yml",
+    "mainJobBlocking": true,
+    "crossBrowserWorkflowPath": ".github/workflows/e2e-cross-browser.yml",
+    "crossBrowserAdvisory": true,
+    "ciSpecPaths": [
+      "src/test/e2e/smoke.spec.ts",
+      "src/test/e2e/agent-flow.spec.ts",
+      "src/test/e2e/dialog-a11y.spec.ts",
+      "src/test/e2e/keyboard-focus.spec.ts",
+      "src/test/e2e/skip-to-content.spec.ts",
+      "src/test/e2e/journal-hub.spec.ts",
+      "src/test/e2e/provider-flow.spec.ts"
+    ],
+    "separateBlockingSpecs": ["src/test/e2e/a11y.spec.ts"]
+  },
+  "ci": {
+    "claudeCodeReviewWorkflow": false,
+    "claudeOnDemandWorkflow": true
+  },
+  "staticAnalysis": {
+    "eslintBlocking": true,
+    "deepsourceJavaScriptEnabled": true,
+    "deepsourceJavaScriptAdvisory": true
+  },
+  "adr": {
+    "indexPath": "docs/adr/README.md",
+    "minNumberedRecords": 15
+  },
+  "providers": {
+    "ids": ["gemini", "openai", "anthropic", "ollama", "heuristic"],
+    "defaultId": "gemini",
+    "defaultModels": {
+      "gemini": "gemini-2.5-flash",
+      "openai": "gpt-5",
+      "anthropic": "claude-sonnet-4-5",
+      "ollama": "llama3.1:8b",
+      "heuristic": "local"
+    }
+  },
+  "deployment": {
+    "model": "github-pages-subpath",
+    "basePath": "/AI-Research-Orchestrator/"
+  },
+  "sourceIdentifiers": ["pmid", "pmc", "doi", "arxiv"],
+  "forbiddenReadmePhrases": ["Every AI assertion is inextricably linked to a verified PubMed ID"],
+  "forbiddenAgentsPhrases": [
+    "That job is `continue-on-error: true`, so its green badge alone doesn't prove 0 failures"
+  ]
+}

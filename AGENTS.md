@@ -8,7 +8,7 @@ Guidance for AI coding agents (Kimi, Cursor, Copilot) working in this repository
 
 - **Local-first / zero backend**: all user data (reports, history, settings, knowledge base, collections) lives in the browser's IndexedDB via Dexie 4. No server stores anything.
 - **Direct-to-API**: the browser talks directly to the selected AI provider, `eutils.ncbi.nlm.nih.gov`, and `export.arxiv.org` (see CSP in `index.html`).
-- **Grounding**: ranked insights and exports are corpus-validated where implemented; narrative synthesis may still contain uncited claims — see ADR 0012.
+- **Grounding**: ranked insights and exports are corpus-validated where implemented; narrative synthesis is labeled verified vs. unverified narrative draft (ADR 0012, 0015). Source identifiers: PMID, PMC, DOI, arXiv.
 - **Live demo / deployment**: GitHub Pages at `https://qnbs.github.io/AI-Research-Orchestrator/` (base path `/AI-Research-Orchestrator/`).
 
 Main features: Orchestrator pipeline, Knowledge Base (dedup, faceted filtering, charts), Rapid Research Assistant (TL;DR, similar articles, report chat), scientometric Author/Journal hubs, Collections, Agent Debugger (visual traces), Dashboard, History, and export to JSON/CSV/RIS/BibTeX/PDF.
@@ -22,19 +22,19 @@ Main features: Orchestrator pipeline, Knowledge Base (dedup, faceted filtering, 
 
 ## Technology Stack
 
-| Area                 | Technology                                                                                                           |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| Framework / Language | React 19 (Suspense, lazy views), TypeScript 5.8 **strict**                                                           |
-| Build                | Vite 8 (+ `rollup-plugin-visualizer`, terser)                                                                        |
-| State                | Redux Toolkit 2 + RTK Query (`apiSlice` = researchApi, `geminiApiSlice` = geminiApi)                                 |
-| Local DB             | Dexie 4 + dexie-react-hooks (IndexedDB), single entry `src/services/databaseService.ts`                              |
-| AI                   | `@google/genai`, `openai`, `@anthropic-ai/sdk` (lazy-loaded), Ollama `fetch`, **or** local heuristic inference layer |
-| Styling              | Tailwind CSS v4 (`@tailwindcss/postcss`), "Cybernetic" glassmorphism design system                                   |
-| UI extras            | Framer Motion 12, lucide-react, cmdk (`⌘+K` palette), @tanstack/react-virtual                                        |
-| Charts               | Recharts (ADR 0005 — Recharts-only; do not re-add Chart.js)                                                          |
-| Export / sanitize    | jsPDF + marked, DOMPurify                                                                                            |
-| Tests                | Vitest + Testing Library (jsdom), Playwright (Chromium)                                                              |
-| Toolchain            | Node **≥22**, pnpm **11** (`packageManager: pnpm@11.13.1`), ESLint 9 + Prettier, husky + lint-staged                 |
+| Area                 | Technology                                                                                                                                                  |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Framework / Language | React 19 (Suspense, lazy views), TypeScript 5.8 **strict**                                                                                                  |
+| Build                | Vite 8 (+ `rollup-plugin-visualizer`, terser)                                                                                                               |
+| State                | Redux Toolkit 2 + RTK Query (`apiSlice` = researchApi, `geminiApiSlice` = geminiApi)                                                                        |
+| Local DB             | Dexie 4 + dexie-react-hooks (IndexedDB), single entry `src/services/databaseService.ts`                                                                     |
+| AI                   | `@google/genai`, `openai`, `@anthropic-ai/sdk` (lazy-loaded), Ollama `fetch`, **or** heuristic fallback. Default live model: **Gemini `gemini-2.5-flash`**. |
+| Styling              | Tailwind CSS v4 (`@tailwindcss/postcss`), "Cybernetic" glassmorphism design system                                                                          |
+| UI extras            | Framer Motion 12, lucide-react, cmdk (`⌘+K` palette), @tanstack/react-virtual                                                                               |
+| Charts               | Recharts (ADR 0005 — Recharts-only; do not re-add Chart.js)                                                                                                 |
+| Export / sanitize    | jsPDF + marked, DOMPurify                                                                                                                                   |
+| Tests                | Vitest + Testing Library (jsdom), Playwright (Chromium)                                                                                                     |
+| Toolchain            | Node **≥22**, pnpm **11** (`packageManager: pnpm@11.13.1`), ESLint 9 + Prettier, husky + lint-staged                                                        |
 
 ## Runtime Architecture
 
@@ -89,7 +89,7 @@ pnpm run test:lighthouse         # build + Lighthouse CI
 pnpm run format                  # Prettier write (src + root md/json)
 ```
 
-- **Coverage gate** (`vitest.config.ts`): scoped to logic layers (`src/store`, `src/services`, `src/hooks`, `src/lib`) — **80% lines/statements, 55% branches/functions**.
+- **Coverage gate** (`vitest.config.ts`): scoped to logic layers (`src/store`, `src/services`, `src/hooks`, `src/lib`) — **80% lines, 80% statements, 55% branches, 55% functions**.
 - **Pre-commit**: husky runs `lint-staged` (eslint --fix + prettier).
 - **Before touching the core flow** (orchestration, KB, services), run: `typecheck`, `lint`, `test:coverage` — same as CI.
 
@@ -109,13 +109,13 @@ pnpm run format                  # Prettier write (src + root md/json)
 - Accessibility: WCAG 2.2 AA — ARIA roles, keyboard navigation, focus management, `⌘+K` palette; honor jsx-a11y (no blanket eslint-disables).
 - **New feature checklist**: Redux slice or RTK Query endpoint → Dexie schema (if persisted) → i18n EN+DE → Framer Motion transition → ARIA/keyboard → unit test stub.
 - **PR gates**: resolve **all** automated review-bot comments (CodeRabbit, CodeAntai, …) including nitpicks and out-of-diff items — loop until clear before merging (rule `011`). PRs target `main`, focused changes, English description.
-- PRs additionally receive an automated Claude Code review (`.github/workflows/claude-code-review.yml`, alongside `.github/workflows/claude.yml` for on-demand `@claude` mentions). Its findings land as inline review threads the same way CodeRabbit's do — read both channels before merge. CodeRabbit's out-of-diff findings still only ever appear in the review body text, never as a thread; keep checking the paginated review body every pass, per the standing lesson already captured for CodeRabbit.
+- Optional on-demand `@claude` assistant via `.github/workflows/claude.yml` (not part of blocking CI). Automated Claude Code Review was removed from the pipeline — CodeRabbit + deploy gates are authoritative.
 
 ## Testing Strategy
 
 - **Unit/integration (Vitest, jsdom)**: colocated `*.test.ts(x)` next to sources (services, slices, hooks, lib, components). Setup `src/test/setup.ts` mocks IndexedDB and Web Crypto; `fake-indexeddb` available for DB tests. Tests must be **deterministic** — mock Gemini/PubMed/arXiv/network/crypto; never comment out or delete tests to pass CI; specs run in isolation (no shared mutable state).
-- **E2E (Playwright, Chromium only)**: `src/test/e2e/` (`agent-flow.spec.ts`, `smoke.spec.ts`). Config auto-starts the Vite dev server on port 3000 and uses a fake Gemini key; prefers stable `getByRole` selectors; `sleep` only with justification. One-time setup: `pnpm exec playwright install chromium`.
-  - **Run the full suite (`pnpm run test:e2e`, both spec files) only in CI, never on the local dev machine** — on constrained hardware (~3.7 GB RAM) it reliably gets OOM-killed regardless of whether the code under test is correct. Locally, scope to one spec file or a `-g "<pattern>"` subset. To confirm a genuine full-suite result, read the `.github/workflows/e2e.yml` "Playwright E2E" check's own log/artifact on the PR — it already runs on every push. That job is `continue-on-error: true`, so its green badge alone doesn't prove 0 failures; check the actual test output count.
+- **E2E (Playwright, Chromium only)**: blocking CI job in `.github/workflows/e2e.yml` runs seven specs: `smoke.spec.ts`, `agent-flow.spec.ts`, `dialog-a11y.spec.ts`, `keyboard-focus.spec.ts`, `skip-to-content.spec.ts`, `journal-hub.spec.ts`, `provider-flow.spec.ts`. Separate blocking `a11y.spec.ts` in `a11y.yml`. Cross-browser matrix (`e2e-cross-browser.yml`) is advisory (`continue-on-error: true`). Config auto-starts the Vite dev server on port 3000 and uses a fake Gemini key; prefers stable `getByRole` selectors; `sleep` only with justification. One-time setup: `pnpm exec playwright install chromium`.
+  - **Run the full blocking suite (`pnpm run test:e2e`) only in CI** on constrained hardware (~3.7 GB RAM) — locally scope to one spec file or `-g "<pattern>"`. Read the `.github/workflows/e2e.yml` "Playwright E2E" job log for authoritative pass/fail counts.
 - Every new external call path needs happy-path + failure + abort coverage (rule `102`).
 
 ## Security Considerations

@@ -20,7 +20,7 @@ security gates so future PRs do not re-litigate the same trade-offs.
 ### Known false positives / external failures
 
 - **DeepSource JavaScript:** analyzer **enabled** in `.deepsource.toml` with excludes for Node maintenance scripts (`scripts/**`) and service-worker bundles (`public/**`) where ESM/Workbox parsing produces false positives. Treat as advisory; ESLint + `deploy.yml` gates are authoritative for TS/TSX. Docker/Shell remain advisory.
-- **Claude Code Review** workflow may fail on infrastructure — re-run or ignore if no actionable inline threads.
+- **Claude Code Review:** removed from CI (2026-08-02) — no blocking `review` job. On-demand `@claude` remains via `claude.yml`.
 
 ## `pnpm audit` governance
 
