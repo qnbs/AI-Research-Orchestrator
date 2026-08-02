@@ -28,7 +28,8 @@ export const findArticlesInJournal = async (
   }
 
   if (onlyOa) {
-    query += ` AND (open access[filter])`;
+    // PMC-linked free full text — aligns with `isOpenAccess` (PMC id present), not the broad OA metadata filter.
+    query += ` AND (free full text[filter])`;
   } else {
     // If not strictly OA, we still prefer articles with abstracts
     query += ` AND (hasabstract[text])`;
@@ -41,8 +42,7 @@ export const findArticlesInJournal = async (
     }
     const articles = await fetchArticleDetails(pmids, signal);
 
-    // Map to Article type, providing defaults for missing RankedArticle fields
-    return articles.map(
+    const mapped = articles.map(
       (a) =>
         ({
           ...a,
@@ -51,6 +51,12 @@ export const findArticlesInJournal = async (
           keywords: [],
         }) as Article,
     );
+
+    if (onlyOa) {
+      return mapped.filter((a) => a.isOpenAccess);
+    }
+
+    return mapped;
   } catch (error) {
     safeLogError('Error finding articles in journal:', error);
     throw error;
