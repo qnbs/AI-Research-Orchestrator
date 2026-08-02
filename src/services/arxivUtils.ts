@@ -8,35 +8,10 @@
  * PubMed results only — never blocks the main research flow.
  */
 import type { RankedArticle } from '../types';
-import { combineAbortSignals } from '../lib/abortUtils';
+import { fetchWithExternalPolicy } from '../lib/externalFetch';
 
 const ARXIV_BASE = 'https://export.arxiv.org/api/query';
-
-async function fetchWithRetry(
-  url: string,
-  retries = 3,
-  backoff = 1200,
-  signal?: AbortSignal,
-): Promise<Response> {
-  try {
-    const res = await fetch(url, { signal: combineAbortSignals(18_000, signal) });
-    if (res.status === 429 && retries > 0) {
-      await new Promise((r) => setTimeout(r, backoff * 2));
-      return fetchWithRetry(url, retries - 1, backoff * 2, signal);
-    }
-    if (!res.ok && res.status >= 500 && retries > 0) {
-      await new Promise((r) => setTimeout(r, backoff));
-      return fetchWithRetry(url, retries - 1, backoff * 2, signal);
-    }
-    return res;
-  } catch (err) {
-    if (retries > 0) {
-      await new Promise((r) => setTimeout(r, backoff));
-      return fetchWithRetry(url, retries - 1, backoff * 2, signal);
-    }
-    throw err;
-  }
-}
+const ARXIV_TIMEOUT_MS = 18_000;
 
 /** Convert a single Atom <entry> element to a RankedArticle-compatible record. */
 function entryToRankedArticle(entry: Element): Partial<RankedArticle> {
@@ -100,7 +75,12 @@ export async function searchAndFetchArxiv(
       `&start=0&max_results=${maxResults}` +
       `&sortBy=relevance&sortOrder=descending`;
 
-    const res = await fetchWithRetry(url, 3, 1200, signal);
+    const res = await fetchWithExternalPolicy(url, {}, {
+      retries: 3,
+      baseMs: 1200,
+      timeoutMs: ARXIV_TIMEOUT_MS,
+      signal,
+    });
     if (!res.ok) return [];
 
     const xml = await res.text();

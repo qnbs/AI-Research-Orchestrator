@@ -11,7 +11,7 @@ import type {
   FeaturedAuthorCategory,
   FeaturedJournalCategory,
 } from '../../types';
-import { combineAbortSignals } from '../../lib/abortUtils';
+import { fetchWithExternalPolicy } from '../../lib/externalFetch';
 
 // ── PubMed E-utilities base URLs ──────────────────────────────────────────────
 const PUBMED_BASE = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils';
@@ -353,32 +353,13 @@ export const researchApi = createApi({
 });
 
 // ── Exponential backoff fetch ─────────────────────────────────────────────────
-async function fetchWithBackoff(
-  url: string,
-  init?: RequestInit,
-  retries = 3,
-  delay = 1000,
-): Promise<Response> {
-  try {
-    const signal = combineAbortSignals(15000, init?.signal);
-    const response = await fetch(url, { ...init, signal });
-    if (response.status === 429 && retries > 0) {
-      const wait = parseInt(response.headers.get('Retry-After') ?? '0', 10) * 1000 || delay * 2;
-      await new Promise((r) => setTimeout(r, wait));
-      return fetchWithBackoff(url, init, retries - 1, wait);
-    }
-    if (!response.ok && retries > 0 && response.status >= 500) {
-      await new Promise((r) => setTimeout(r, delay));
-      return fetchWithBackoff(url, init, retries - 1, delay * 2);
-    }
-    return response;
-  } catch (err) {
-    if (retries > 0) {
-      await new Promise((r) => setTimeout(r, delay));
-      return fetchWithBackoff(url, init, retries - 1, delay * 2);
-    }
-    throw err;
-  }
+async function fetchWithBackoff(url: string, init?: RequestInit): Promise<Response> {
+  return fetchWithExternalPolicy(url, init ?? {}, {
+    retries: 3,
+    baseMs: 1000,
+    timeoutMs: 15_000,
+    signal: init?.signal ?? undefined,
+  });
 }
 
 // ── Export hooks ──────────────────────────────────────────────────────────────

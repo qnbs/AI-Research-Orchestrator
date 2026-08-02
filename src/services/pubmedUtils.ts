@@ -7,10 +7,9 @@
  * `src/store/slices/apiSlice.ts` instead, which add caching and deduplication.
  */
 import type { AbstractStatus, RankedArticle } from '../types';
-import { combineAbortSignals } from '../lib/abortUtils';
 import { withCircuitBreaker, CircuitOpenError } from '../lib/circuitBreaker';
 import { AppError, isAbortError } from '../lib/errors';
-import { withExponentialBackoff } from '../lib/resilience';
+import { fetchWithExternalPolicy } from '../lib/externalFetch';
 import { batchPmids, parsePubMedEfetchXml } from './pubmedXmlParser';
 
 const PUBMED_BASE = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils';
@@ -27,34 +26,8 @@ export function withNcbiApiKey(url: string, apiKey?: string): string {
   return `${url}${sep}api_key=${encodeURIComponent(key)}`;
 }
 
-class RetryablePubMedResponseError extends Error {
-  constructor(
-    readonly response: Response,
-    readonly retryAfterMs?: number,
-  ) {
-    super(`Retryable PubMed response: ${response.status}`);
-    this.name = 'RetryablePubMedResponseError';
-  }
-}
-
 function isRetryablePubMedStatus(status: number): boolean {
   return status === 429 || status >= 500;
-}
-
-function parseRetryAfterMs(header: string | null): number | undefined {
-  if (!header) return undefined;
-
-  const seconds = Number(header);
-  if (Number.isFinite(seconds) && seconds >= 0) {
-    return seconds * 1000;
-  }
-
-  const dateMs = Date.parse(header);
-  if (Number.isFinite(dateMs)) {
-    return Math.max(0, dateMs - Date.now());
-  }
-
-  return undefined;
 }
 
 function pubMedHttpError(response: Response): AppError {
@@ -78,59 +51,14 @@ function pubMedHttpError(response: Response): AppError {
 }
 
 async function fetchWithRetry(url: string, init: RequestInit = {}): Promise<Response> {
-  let retryAfterMs: number | undefined;
-
-  return withExponentialBackoff(
-    async (attempt) => {
-      const response = await fetch(url, {
-        ...init,
-        signal: combineAbortSignals(PUBMED_TIMEOUT_MS, init.signal),
-      });
-
-      if (isRetryablePubMedStatus(response.status) && attempt < PUBMED_RETRIES) {
-        throw new RetryablePubMedResponseError(
-          response,
-          response.status === 429
-            ? parseRetryAfterMs(response.headers.get('Retry-After'))
-            : undefined,
-        );
-      }
-
-      return response;
-    },
-    {
-      retries: PUBMED_RETRIES,
-      baseMs: 1000,
-      maxMs: 15_000,
-      jitter: 0,
-      signal: init.signal ?? undefined,
-      shouldRetry: (error) => {
-        if (isAbortError(error)) return false;
-        if (error instanceof RetryablePubMedResponseError) {
-          retryAfterMs = error.retryAfterMs;
-          return true;
-        }
-        return true;
-      },
-      sleep: (ms) => {
-        const delay = retryAfterMs ?? ms;
-        retryAfterMs = undefined;
-        const signal = init.signal ?? undefined;
-        return new Promise((resolve, reject) => {
-          if (signal?.aborted) {
-            reject(new DOMException('Aborted', 'AbortError'));
-            return;
-          }
-          const timer = setTimeout(resolve, delay);
-          const onAbort = () => {
-            clearTimeout(timer);
-            reject(new DOMException('Aborted', 'AbortError'));
-          };
-          signal?.addEventListener('abort', onAbort, { once: true });
-        });
-      },
-    },
-  );
+  return fetchWithExternalPolicy(url, init, {
+    retries: PUBMED_RETRIES,
+    baseMs: 1000,
+    maxMs: 15_000,
+    jitter: 0,
+    timeoutMs: PUBMED_TIMEOUT_MS,
+    signal: init.signal ?? undefined,
+  });
 }
 
 async function pubmedFetch(url: string, init: RequestInit = {}): Promise<Response> {

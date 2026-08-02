@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Portable deployment base path (P1-3):** `VITE_BASE_PATH` + `VITE_SITE_ORIGIN` drive Vite `base`, generated manifest/canonical/OG URLs, and service-worker scope via `<base href>`; self-hosting matrix in README.
+- **External fetch retry policy (P1-4):** `fetchWithExternalPolicy` centralizes abort-aware backoff, Retry-After, jitter, and elapsed budget for PubMed, arXiv, and RTK Query fetches.
 - **Provider-aware cost estimator (P1-2):** `providerPricing` + `researchCostEstimate` use prompt-budget token sizing, per-provider list-price heuristics, unknown-pricing state (no guessed USD), and updated Settings/orchestrator UI strings.
 - **Docs drift gate (P1-1):** `docs/project-facts.json` + expanded `check:docs-drift` (E2E inventory, coverage floors, ADR index, providers, forbidden README claims).
 

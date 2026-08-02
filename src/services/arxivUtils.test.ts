@@ -1,4 +1,15 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
+const sleepAbortableMock = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
+
+vi.mock('../lib/resilience', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../lib/resilience')>();
+  return {
+    ...actual,
+    sleepAbortable: sleepAbortableMock,
+  };
+});
+
 import { searchAndFetchArxiv } from './arxivUtils';
 
 const atom = `<?xml version="1.0"?>
@@ -17,6 +28,8 @@ describe('arxivUtils', () => {
   const originalFetch = globalThis.fetch;
 
   beforeEach(() => {
+    sleepAbortableMock.mockReset();
+    sleepAbortableMock.mockResolvedValue(undefined);
     vi.spyOn(AbortSignal, 'timeout').mockImplementation(() => new AbortController().signal);
   });
 
@@ -40,5 +53,17 @@ describe('arxivUtils', () => {
   it('returns empty array on non-OK HTTP without long retry', async () => {
     globalThis.fetch = vi.fn().mockResolvedValue({ ok: false, status: 404 });
     await expect(searchAndFetchArxiv('x', 1)).resolves.toEqual([]);
+  });
+
+  it('aborts during backoff without further fetch attempts', async () => {
+    const ac = new AbortController();
+    globalThis.fetch = vi.fn().mockRejectedValue(new Error('network'));
+    sleepAbortableMock.mockImplementation(() => new Promise<void>(() => {}));
+
+    const promise = searchAndFetchArxiv('topic', 1, ac.signal);
+    await Promise.resolve();
+    ac.abort();
+    await expect(promise).resolves.toEqual([]);
+    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
   });
 });
