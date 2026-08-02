@@ -5,7 +5,13 @@
  *         Knowledge Base, Command Palette, Settings, Mobile UX, Accessibility.
  */
 import { test, expect, Page, Route } from '@playwright/test';
-import { openHelpFromChrome, openSettingsFromChrome, prepareFirstLaunchDemoKb } from './e2eHelpers';
+import {
+  openHelpFromChrome,
+  openSettingsFromChrome,
+  prepareFirstLaunchDemoKb,
+  waitForKbArticleCount,
+  DEMO_KB_UNIQUE_ARTICLE_COUNT,
+} from './e2eHelpers';
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -329,8 +335,8 @@ test.describe('5. Knowledge Base View', () => {
     test.setTimeout(90_000);
     await prepareFirstLaunchDemoKb(page);
     await navigateToView(page, '#knowledgeBase');
-    await expect(page.getByText(/\[Demo\]/i).first()).toBeVisible({ timeout: 30_000 });
-    await expect(page.getByText(/5 Articles Found/i).first()).toBeVisible({ timeout: 30_000 });
+    await waitForKbArticleCount(page, DEMO_KB_UNIQUE_ARTICLE_COUNT);
+    await expect(page.getByText(/\[Demo\]/i).first()).toBeVisible({ timeout: 15_000 });
   });
 
   test.describe('with standard bootstrap', () => {

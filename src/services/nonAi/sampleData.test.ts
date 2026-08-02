@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   DEMO_CORPUS,
   DEMO_ENTRY_PREFIX,
+  DEMO_KB_UNIQUE_ARTICLE_COUNT,
   selectDemoArticlesForTopic,
   isDemoPmid,
   buildDemoResearchReport,
@@ -92,6 +93,15 @@ describe('createDemoKnowledgeBaseEntries', () => {
       expect(authorEntry.profile.name).toBe('Chen L');
       expect(authorEntry.profile.coreConcepts.length).toBeGreaterThan(0);
     }
+  });
+
+  it('flattens to five unique demo articles for the KB article header', () => {
+    const entries = createDemoKnowledgeBaseEntries();
+    const pmids = new Set<string>();
+    for (const entry of entries) {
+      for (const article of entry.articles) pmids.add(article.pmid);
+    }
+    expect(pmids.size).toBe(DEMO_KB_UNIQUE_ARTICLE_COUNT);
   });
 });
 

@@ -27,6 +27,9 @@ export const DEMO_DISMISS_STORAGE_KEY = 'aro.demoDataDismissed';
 /** Persisted once demo content has been seeded (prevents reseed after intentional clear). */
 export const DEMO_SEEDED_STORAGE_KEY = 'aro.demoDataSeeded';
 
+/** Unique article count after flattening `createDemoKnowledgeBaseEntries()` (KB header). */
+export const DEMO_KB_UNIQUE_ARTICLE_COUNT = 5;
+
 /**
  * Curated educational article corpus used offline / when PubMed returns empty.
  */

@@ -35,6 +35,9 @@ export async function skipOnboarding(page: Page) {
   }
 }
 
+/** Demo KB seed produces five deduplicated articles across four entries. */
+export const DEMO_KB_UNIQUE_ARTICLE_COUNT = 5;
+
 /**
  * Navigate to a view via in-page hash change (no full reload).
  */
@@ -42,8 +45,22 @@ export async function navigateToView(page: Page, viewHash: string) {
   await page.evaluate((h) => {
     window.location.hash = h;
   }, viewHash);
+  await page.waitForFunction((hash) => window.location.hash === hash, viewHash, {
+    timeout: 15_000,
+  });
   // Allow lazy Suspense boundaries to resolve
-  await page.waitForTimeout(1_500);
+  await page.waitForTimeout(750);
+}
+
+/**
+ * Wait until the Knowledge Base article-count heading shows the expected total.
+ */
+export async function waitForKbArticleCount(page: Page, count: number) {
+  const pattern = new RegExp(`${count} Articles Found`, 'i');
+  await page.getByRole('heading', { level: 2, name: pattern }).waitFor({
+    state: 'visible',
+    timeout: 45_000,
+  });
 }
 
 /**
@@ -91,6 +108,10 @@ export async function prepareFirstLaunchDemoKb(page: Page) {
     await startBtn.click();
     await header.waitFor({ state: 'visible', timeout: 10_000 });
   }
+
+  await page.waitForFunction(() => localStorage.getItem('aro.demoDataSeeded') === '1', {
+    timeout: 45_000,
+  });
 
   await page.waitForFunction(
     async () => {
