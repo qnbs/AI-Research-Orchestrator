@@ -169,6 +169,35 @@ describe('ensureGroundedClaim', () => {
     expect(claim.pmids).toEqual(['doi:10.1/xyz', 'pmcid:999']);
     expect(claim.articleIds?.[0]).toEqual({ type: 'doi', value: '10.1/xyz' });
   });
+
+  it('canonicalizes legacy pmcid keys with PMC prefix', () => {
+    const claim = ensureGroundedClaim({
+      text: 'Finding',
+      pmids: ['pmcid:PMC555'],
+    });
+    expect(claim.pmids).toEqual(['pmcid:555']);
+    expect(claim.articleIds).toEqual([{ type: 'pmcid', value: '555' }]);
+  });
+});
+
+describe('resolveArticleId validation', () => {
+  it('falls back when persisted articleId is malformed', () => {
+    const article: RankedArticle = {
+      pmid: '12345',
+      articleId: { type: 'bogus', value: 'x' } as unknown as RankedArticle['articleId'],
+      title: 't',
+      authors: 'a',
+      journal: 'j',
+      pubYear: '2024',
+      summary: 's',
+      relevanceScore: 1,
+      relevanceExplanation: '',
+      keywords: [],
+      isOpenAccess: true,
+    };
+    expect(resolveArticleId(article)).toEqual({ type: 'pmid', value: '12345' });
+    expect(ensureArticleIdentifiers(article).pmid).toBe('12345');
+  });
 });
 
 describe('corpusKeysFromArticles', () => {

@@ -73,7 +73,7 @@ export function canonicalArticleKey(id: SourceIdentifier): string {
 
 /** Resolve the typed identifier for a ranked article record. */
 export function resolveArticleId(article: RankedArticle): SourceIdentifier {
-  if (article.articleId) {
+  if (isSourceIdentifier(article.articleId)) {
     return article.articleId;
   }
   return parseLegacyArticleKey(article.pmid);
@@ -89,7 +89,9 @@ export function findArticleByCorpusKey(
 
 /** Ensure typed `articleId` and legacy `pmid` canonical key stay aligned. */
 export function ensureArticleIdentifiers(article: RankedArticle): RankedArticle {
-  const articleId = article.articleId ?? resolveArticleId(article);
+  const articleId = isSourceIdentifier(article.articleId)
+    ? article.articleId
+    : resolveArticleId(article);
   const pmid = canonicalArticleKey(articleId);
   const pmcId =
     article.pmcId ??
@@ -202,8 +204,10 @@ export function formatLegacyArticleKeyLabel(key: string): string {
 
 /** Normalize grounded-claim identifier fields for persistence. */
 export function ensureGroundedClaim(claim: GroundedClaim): GroundedClaim {
-  const articleIds = claim.articleIds ?? claim.pmids.map((p) => parseLegacyArticleKey(p));
-  const pmids =
-    claim.pmids.length > 0 ? claim.pmids : articleIds.map((id) => canonicalArticleKey(id));
+  const rawIds = claim.articleIds?.length
+    ? claim.articleIds.filter(isSourceIdentifier)
+    : claim.pmids.map((p) => parseLegacyArticleKey(p));
+  const articleIds = rawIds.map((id) => parseLegacyArticleKey(canonicalArticleKey(id)));
+  const pmids = articleIds.map((id) => canonicalArticleKey(id));
   return { ...claim, articleIds, pmids };
 }

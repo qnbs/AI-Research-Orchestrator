@@ -26,7 +26,7 @@ export const reportTranslations = {
       'Unverified narrative draft — only claims with corpus evidence are validated. Verify against source abstracts before citing.',
     'report.synthesis.verifiedBanner':
       'Verified synthesis — claims are bound to retrieved corpus evidence.',
-    'report.insights.supportingEvidence': 'Supporting Evidence (PMIDs):',
+    'report.insights.supportingEvidence': 'Supporting evidence:',
     'report.sources.intro':
       'The following web pages were consulted by the AI to generate this report. This provides traceability for the AI’s findings.',
     'report.chart.timelineTitle': 'Publication Timeline',
@@ -89,7 +89,7 @@ export const reportTranslations = {
       'Unverifizierter Narrativ-Entwurf — nur Behauptungen mit Korpus-Evidenz sind validiert. Vor Zitieren die Quellabstracts prüfen.',
     'report.synthesis.verifiedBanner':
       'Verifizierte Synthese — Behauptungen sind an den abgerufenen Korpus gebunden.',
-    'report.insights.supportingEvidence': 'Belege (PMIDs):',
+    'report.insights.supportingEvidence': 'Belege:',
     'report.sources.intro':
       'Die folgenden Webseiten wurden von der KI zur Erstellung dieses Berichts konsultiert. Das ermöglicht die Nachvollziehbarkeit der KI-Ergebnisse.',
     'report.chart.timelineTitle': 'Publikationszeitachse',
