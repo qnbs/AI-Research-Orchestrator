@@ -41,7 +41,7 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
   return (
     <div className="max-w-4xl mx-auto text-center py-8 animate-fadeIn">
       <div className="inline-block relative mb-6">
-        <AppBrandMark size="xl" showEmoji idPrefix="home-logo" aria-label={t('app.name')} />
+        <AppBrandMark size="xl" showEmoji idPrefix="home-logo" aria-hidden />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-10">
           <div
             className="w-20 h-20 rounded-full bg-brand-accent/10 animate-pulseGlow"

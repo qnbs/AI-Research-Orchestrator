@@ -37,7 +37,7 @@ const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete }) => {
       ></div>
       <div className="w-full max-w-4xl mx-auto text-center relative z-10 bg-surface/50 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-8 sm:p-12">
         <div className="mb-6 flex items-center justify-center">
-          <AppBrandMark size="lg" showEmoji idPrefix="onboarding-logo" aria-label={t('app.name')} />
+          <AppBrandMark size="lg" showEmoji idPrefix="onboarding-logo" aria-hidden />
         </div>
         <h1 className="text-4xl sm:text-5xl font-bold text-text-primary mb-3">
           {t('onboarding.welcome_prefix')}{' '}
