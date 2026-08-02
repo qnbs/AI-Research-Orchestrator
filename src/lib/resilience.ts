@@ -2,7 +2,7 @@
  * Shared retry / backoff helpers for external service calls.
  */
 
-import { isAbortError } from './errors';
+import { isAbortLikeError } from './abortUtils';
 
 export interface BackoffOptions {
   retries?: number;
@@ -30,6 +30,14 @@ function throwIfAborted(signal?: AbortSignal): void {
   if (signal?.aborted) {
     throw createAbortError();
   }
+}
+
+export function sleepAbortable(
+  ms: number,
+  signal?: AbortSignal,
+  sleep: (ms: number) => Promise<void> = defaultSleep,
+): Promise<void> {
+  return sleepWithAbort(ms, sleep, signal);
 }
 
 function sleepWithAbort(
@@ -87,7 +95,7 @@ export async function withExponentialBackoff<T>(
       return await fn(attempt);
     } catch (error) {
       lastError = error;
-      if (isAbortError(error)) throw error;
+      if (isAbortLikeError(error)) throw error;
       if (attempt >= retries || !shouldRetry(error, attempt)) throw error;
       await sleepWithAbort(computeDelay(attempt, baseMs, maxMs, jitter), sleep, options.signal);
     }

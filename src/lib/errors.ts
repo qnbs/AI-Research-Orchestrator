@@ -5,6 +5,7 @@
 
 import { translateSync } from '../i18n/translate';
 import type { TranslationKey } from '../i18n/translations';
+import { isAbortLikeError } from './abortUtils';
 
 export type AppErrorCode =
   | 'NO_API_KEY'
@@ -88,9 +89,7 @@ export function isAppError(error: unknown): error is AppError {
 }
 
 export function isAbortError(error: unknown): boolean {
-  if (!error || typeof error !== 'object') return false;
-  if (error instanceof DOMException && error.name === 'AbortError') return true;
-  if (error instanceof Error && error.name === 'AbortError') return true;
+  if (isAbortLikeError(error)) return true;
   if (isAppError(error) && error.code === 'STREAM_ABORTED') return true;
   return false;
 }
