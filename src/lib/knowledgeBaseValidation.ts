@@ -14,13 +14,26 @@ const hasBaseEntryShape = (item: Record<string, unknown>): boolean =>
 // (e.g. OrchestratorDashboard's `entry.report.rankedArticles.length`), so an
 // import passing a report/profile/journalProfile with the right top-level
 // shape but a missing required field would crash the UI after being saved.
+const isValidGroundedClaim = (claim: unknown): boolean =>
+  isPlainObject(claim) &&
+  typeof claim.text === 'string' &&
+  Array.isArray(claim.pmids) &&
+  claim.pmids.every((id) => typeof id === 'string');
+
+const isValidGroundedSynthesis = (grounded: unknown): boolean =>
+  isPlainObject(grounded) &&
+  (grounded.mode === 'extractive-template' || grounded.mode === 'narrative-extracted') &&
+  Array.isArray(grounded.claims) &&
+  grounded.claims.every(isValidGroundedClaim);
+
 const isValidReport = (report: unknown): boolean =>
   isPlainObject(report) &&
   Array.isArray(report.rankedArticles) &&
   Array.isArray(report.generatedQueries) &&
   typeof report.synthesis === 'string' &&
   Array.isArray(report.aiGeneratedInsights) &&
-  Array.isArray(report.overallKeywords);
+  Array.isArray(report.overallKeywords) &&
+  (report.groundedSynthesis === undefined || isValidGroundedSynthesis(report.groundedSynthesis));
 
 const isValidProfile = (profile: unknown): boolean =>
   isPlainObject(profile) &&

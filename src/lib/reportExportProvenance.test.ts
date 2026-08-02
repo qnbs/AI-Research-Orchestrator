@@ -46,4 +46,21 @@ describe('sanitizeReportForExport', () => {
     expect(result.droppedInsights).toBe(1);
     expect(result.report.aiGeneratedInsights).toEqual([]);
   });
+
+  it('sanitizes grounded synthesis claims against corpus', () => {
+    const report = baseReport();
+    report.groundedSynthesis = {
+      mode: 'narrative-extracted',
+      claims: [
+        { text: 'Valid claim', pmids: ['1', '99'] },
+        { text: 'Invalid claim', pmids: ['88'] },
+      ],
+    };
+    const result = sanitizeReportForExport(report);
+    expect(result.sanitized).toBe(true);
+    expect(result.droppedClaims).toBe(1);
+    expect(result.report.groundedSynthesis?.claims).toEqual([
+      { text: 'Valid claim', pmids: ['1'] },
+    ]);
+  });
 });
