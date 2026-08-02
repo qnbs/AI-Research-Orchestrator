@@ -228,11 +228,17 @@ async function checkProjectFacts(errors, facts) {
     );
   }
 
-  if (facts.deployment?.basePath) {
+  if (facts.deployment?.defaultBasePath) {
     assertMatch(
       readme,
-      new RegExp(escapeRegExp(facts.deployment.basePath)),
-      `README.md must document base path ${facts.deployment.basePath}`,
+      new RegExp(escapeRegExp(facts.deployment.defaultBasePath)),
+      `README.md must document default base path ${facts.deployment.defaultBasePath}`,
+      errors,
+    );
+    assertMatch(
+      readme,
+      /VITE_BASE_PATH/,
+      'README.md must document VITE_BASE_PATH for self-hosting',
       errors,
     );
   }

@@ -1,7 +1,8 @@
 /**
- * Registers the Workbox service worker with the correct GitHub Pages scope.
- * Kept as an external file so CSP can drop script-src 'unsafe-inline'.
- * Scope must match public/sw.js BASE_PATH derivation from the worker URL.
+ * Registers the Workbox service worker with scope derived from the document
+ * <base href> (set by Vite from VITE_BASE_PATH). Kept as an external file so
+ * CSP can drop script-src 'unsafe-inline'. Scope must match public/sw.js
+ * BASE_PATH derivation from the worker URL.
  *
  * Update flow: dispatches a window "sw-update-available" CustomEvent once a
  * new worker has installed alongside an already-active one (i.e. this is a
@@ -33,8 +34,20 @@
 (function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) return;
 
-  var path = location.pathname;
-  var scope = path.indexOf('/AI-Research-Orchestrator') === 0 ? '/AI-Research-Orchestrator/' : '/';
+  function resolveAppScope() {
+    var baseEl = document.querySelector('base[href]');
+    if (!baseEl) return '/';
+    var href = baseEl.getAttribute('href');
+    if (!href) return '/';
+    try {
+      var pathname = new URL(href, location.origin).pathname;
+      if (!pathname || pathname === '/') return '/';
+      return pathname.endsWith('/') ? pathname : pathname + '/';
+    } catch (e) {
+      return '/';
+    }
+  }
+  var scope = resolveAppScope();
   // Vite copies public/sw.js → dist/sw.js (or dist/<base>/ via base href).
   var swUrl = scope + 'sw.js';
   var reloaded = false;

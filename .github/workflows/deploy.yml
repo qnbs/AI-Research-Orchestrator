@@ -131,6 +131,8 @@ jobs:
         run: pnpm run build
         env:
           NODE_ENV: production
+          VITE_BASE_PATH: /AI-Research-Orchestrator/
+          VITE_SITE_ORIGIN: https://qnbs.github.io
 
       - name: Bundle budget
         run: pnpm run bundle:budget

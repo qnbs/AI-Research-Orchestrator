@@ -228,13 +228,28 @@ The repository includes `.github/workflows/deploy.yml` that:
 
 #### Self-Hosting
 
+Build output is portable static assets. Configure deployment with `VITE_BASE_PATH` and optional `VITE_SITE_ORIGIN` before `pnpm run build`:
+
+| Host scenario | `VITE_BASE_PATH` | `VITE_SITE_ORIGIN` (canonical/OG) | Example URL |
+| --- | --- | --- | --- |
+| GitHub Pages (default CI) | `/AI-Research-Orchestrator/` | `https://qnbs.github.io` | `https://qnbs.github.io/AI-Research-Orchestrator/` |
+| Root static host (custom domain) | `/` | `https://your-domain.example` | `https://your-domain.example/` |
+| Subpath on static host | `/my-app/` | `https://your-domain.example` | `https://your-domain.example/my-app/` |
+
 ```bash
-pnpm run build
-# Deploy dist/ folder to any static hosting:
+# Root host (Netlify/Vercel custom domain, nginx at site root)
+VITE_BASE_PATH=/ VITE_SITE_ORIGIN=https://your-domain.example pnpm run build
+
+# GitHub Pages subpath (same as CI — default when unset in production)
+VITE_BASE_PATH=/AI-Research-Orchestrator/ VITE_SITE_ORIGIN=https://qnbs.github.io pnpm run build
+
+# Deploy dist/ to any static hosting:
 # - Netlify, Vercel, Cloudflare Pages
 # - AWS S3 + CloudFront
 # - Any web server (nginx, Apache)
 ```
+
+For subpath hosts, configure the static server to serve `dist/` under that path and copy `dist/index.html` to `dist/404.html` for SPA deep-link recovery (GitHub Actions does this automatically).
 
 ---
 
