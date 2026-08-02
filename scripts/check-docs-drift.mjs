@@ -16,6 +16,10 @@ function majorOf(version) {
   return match ? match[1] : null;
 }
 
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 /** @param {string} text @param {RegExp} pattern */
 function assertMatch(text, pattern, message, errors) {
   if (!pattern.test(text)) errors.push(message);
@@ -39,7 +43,12 @@ async function main() {
 
   const errors = [];
 
-  assertMatch(agents, new RegExp(`v${appVersion.replace(/\./g, '\\.')}`), `AGENTS.md must mention app version v${appVersion}`, errors);
+  assertMatch(
+    agents,
+    new RegExp(`v${escapeRegExp(appVersion)}`),
+    `AGENTS.md must mention app version v${appVersion}`,
+    errors,
+  );
   assertMatch(agents, new RegExp(`Vite ${viteMajor}\\b`), `AGENTS.md must reference Vite ${viteMajor} (package.json has vite@${pkg.devDependencies?.vite})`, errors);
   assertNoMatch(agents, /src\/services\/heuristics\//, 'AGENTS.md must not reference deleted src/services/heuristics/', errors);
 

@@ -245,8 +245,7 @@ class PdfExporter {
     this.doc.save(filename);
   }
 
-  public exportResearchReport(incoming: ResearchReport, input: ResearchInput) {
-    const { report } = sanitizeReportForExport(incoming);
+  public exportResearchReport(report: ResearchReport, input: ResearchInput) {
     if (this.settings.includeCoverPage) {
       this.doc
         .setFontSize(PDF_CONSTANTS.FONT_SIZES.TITLE)
@@ -424,8 +423,9 @@ export const exportToPdf = (
   input: ResearchInput,
   settings: Settings['export']['pdf'],
 ): void => {
+  const { report: sanitizedReport } = sanitizeReportForExport(report);
   const exporter = new PdfExporter(input.researchTopic, settings);
-  exporter.exportResearchReport(report, input);
+  exporter.exportResearchReport(sanitizedReport, input);
 };
 
 /** Export knowledge-base articles (and related insights) as PDF. */
