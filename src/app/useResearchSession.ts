@@ -16,7 +16,7 @@ import {
 } from '../types';
 import { generateResearchReportStream } from '../services/geminiService';
 import { handleResearchStreamFailure } from '../lib/researchStreamFailure';
-import { estimateResearchRunCostUsd, shouldWarnAboutResearchCost } from '../lib/resilience';
+import { estimateResearchRunCost, shouldWarnAboutResearchCost } from '../lib/researchCostEstimate';
 import { reportFromCheckpoint, type ResearchCheckpoint } from '../lib/researchCheckpoint';
 import {
   extractGroundedClaimsFromMarkdown,
@@ -156,16 +156,18 @@ export function useResearchSession({
       setCurrentView('orchestrator');
       setIsCurrentReportSaved(false);
 
-      const costEstimate = estimateResearchRunCostUsd({
+      const costEstimate = estimateResearchRunCost({
+        provider: aiSettings.provider ?? 'gemini',
+        model: aiSettings.model,
         topic: data.researchTopic,
         maxArticlesToScan: data.maxArticlesToScan,
         topNToSynthesize: data.topNToSynthesize,
-        model: aiSettings.model,
       });
-      if (shouldWarnAboutResearchCost(costEstimate.estimatedUsd)) {
+      if (shouldWarnAboutResearchCost(costEstimate)) {
         const msg = t('orchestrator.cost_preflight', {
-          usd: costEstimate.estimatedUsd.toFixed(3),
-          tier: costEstimate.tier,
+          usd: costEstimate.estimatedUsd?.toFixed(3) ?? '0',
+          provider: costEstimate.providerLabel,
+          tier: costEstimate.pricingTierLabel,
         });
         setNotification({
           id: Date.now(),

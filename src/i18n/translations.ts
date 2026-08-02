@@ -105,20 +105,24 @@ export const translations = {
     // ── Cost estimator ──
     'settings.cost.title': 'Estimated run cost',
     'settings.cost.desc':
-      'Approximate Gemini usage for one orchestrator run with your current defaults. Not a billing guarantee.',
+      'Approximate vendor API usage for one orchestrator run with your current provider, model, and defaults. Not a billing guarantee.',
     'settings.cost.estimate': 'Est. USD',
+    'settings.cost.provider': 'Provider',
     'settings.cost.tier': 'Pricing tier',
     'settings.cost.input_tokens': 'Est. input tokens',
     'settings.cost.output_tokens': 'Est. output tokens',
     'settings.cost.based_on': 'Based on',
     'settings.cost.scan': 'articles to scan',
     'settings.cost.top_n': 'to synthesize',
+    'settings.cost.unknown_pricing': 'Unknown',
+    'settings.cost.unknown_pricing_hint':
+      'No public list-price heuristic for this provider/model pair. Token estimates are shown; USD total is not guessed.',
     'settings.cost.warn':
       'This configuration may exceed the soft pre-flight cost warning threshold (~$0.05).',
     'settings.cost.disclaimer':
-      'Estimates use public list-price heuristics and typical prompt sizes. Actual usage varies.',
+      'Estimates use public list-price heuristics, prompt-budget sizing, and typical output lengths. Actual usage varies.',
     'orchestrator.cost_preflight':
-      'Estimated Gemini usage ~$ {usd} ({tier}). This is an approximate pre-flight estimate.',
+      'Estimated {provider} usage ~$ {usd} ({tier}). Approximate pre-flight estimate — not billing.',
     'charts.citations': 'Citations',
     'charts.no_citation_timeline': 'No citation timeline data available.',
     'charts.no_topic_data': 'No topic data available.',
@@ -401,20 +405,24 @@ export const translations = {
     // ── Cost estimator ──
     'settings.cost.title': 'Geschätzte Laufkosten',
     'settings.cost.desc':
-      'Ungefährer Gemini-Verbrauch für einen Orchestrator-Lauf mit Ihren aktuellen Defaults. Keine Abrechnungsgarantie.',
+      'Ungefährer API-Verbrauch des gewählten Anbieters/Modells für einen Orchestrator-Lauf mit Ihren Defaults. Keine Abrechnungsgarantie.',
     'settings.cost.estimate': 'Geschätzte USD',
+    'settings.cost.provider': 'Anbieter',
     'settings.cost.tier': 'Preisstufe',
     'settings.cost.input_tokens': 'Geschätzte Input-Token',
     'settings.cost.output_tokens': 'Geschätzte Output-Token',
     'settings.cost.based_on': 'Basierend auf',
     'settings.cost.scan': 'zu scannenden Artikeln',
     'settings.cost.top_n': 'zur Synthese',
+    'settings.cost.unknown_pricing': 'Unbekannt',
+    'settings.cost.unknown_pricing_hint':
+      'Keine öffentliche Listenpreis-Heuristik für dieses Anbieter/Modell-Paar. Token-Schätzungen werden gezeigt; USD-Gesamtbetrag wird nicht erfunden.',
     'settings.cost.warn':
       'Diese Konfiguration kann die Soft-Warnschwelle für Pre-Flight-Kosten (~0,05 $) überschreiten.',
     'settings.cost.disclaimer':
-      'Schätzungen nutzen öffentliche Listenpreise und typische Prompt-Größen. Der tatsächliche Verbrauch variiert.',
+      'Schätzungen nutzen öffentliche Listenpreise, Prompt-Budget-Größen und typische Output-Längen. Der tatsächliche Verbrauch variiert.',
     'orchestrator.cost_preflight':
-      'Geschätzter Gemini-Verbrauch ~$ {usd} ({tier}). Ungefähre Pre-Flight-Schätzung.',
+      'Geschätzter {provider}-Verbrauch ~$ {usd} ({tier}). Ungefähre Pre-Flight-Schätzung — keine Abrechnung.',
     'charts.citations': 'Zitationen',
     'charts.no_citation_timeline': 'Keine Zitations-Zeitreihe verfügbar.',
     'charts.no_topic_data': 'Keine Themendaten verfügbar.',

@@ -1,12 +1,15 @@
 /**
- * Pre-flight Gemini cost estimator for Settings → AI (P0-11).
- * Shows $0 when heuristic / force-heuristic mode applies.
+ * Pre-flight cost estimator for Settings → AI (P1-2).
+ * Provider-aware; shows $0 for heuristic / local inference.
  */
 import React from 'react';
 import { SettingCard } from '../SettingCard';
 import { SparklesIcon } from '../icons/SparklesIcon';
 import { useSettingsView } from './SettingsViewContext';
-import { estimateResearchRunCostUsd, shouldWarnAboutResearchCost } from '../../lib/resilience';
+import {
+  estimateResearchRunCost,
+  shouldWarnAboutResearchCost,
+} from '../../lib/researchCostEstimate';
 import { useTranslation } from '../../hooks/useTranslation';
 import { useInferenceMode } from '../../hooks/useInferenceMode';
 
@@ -16,15 +19,18 @@ export const CostEstimateCard: React.FC = () => {
   const { isZeroCost, mode } = useInferenceMode();
   const forcedHeuristic = Boolean(tempSettings.ai.forceHeuristicMode);
   const showZero = isZeroCost || forcedHeuristic || mode === 'heuristic';
+  const provider = tempSettings.ai.provider ?? 'gemini';
 
-  const estimate = estimateResearchRunCostUsd({
+  const estimate = estimateResearchRunCost({
+    provider,
+    model: tempSettings.ai.model,
     topic: 'sample research topic for cost estimation',
     maxArticlesToScan: tempSettings.defaults.maxArticlesToScan,
     topNToSynthesize: tempSettings.defaults.topNToSynthesize,
-    model: tempSettings.ai.model,
   });
 
-  const warn = !showZero && shouldWarnAboutResearchCost(estimate.estimatedUsd);
+  const warn = !showZero && shouldWarnAboutResearchCost(estimate);
+  const unknownPricing = !showZero && estimate.estimatedUsd == null;
 
   return (
     <SettingCard
@@ -41,7 +47,17 @@ export const CostEstimateCard: React.FC = () => {
             <dd className="mt-1 font-mono text-lg text-text-primary">
               {showZero
                 ? t('settings.cost.heuristic_zero')
-                : `$${estimate.estimatedUsd.toFixed(4)}`}
+                : estimate.estimatedUsd != null
+                  ? `$${estimate.estimatedUsd.toFixed(4)}`
+                  : t('settings.cost.unknown_pricing')}
+            </dd>
+          </div>
+          <div className="rounded-lg border border-border bg-surface/40 px-3 py-2">
+            <dt className="text-[11px] uppercase tracking-wide text-text-secondary">
+              {t('settings.cost.provider')}
+            </dt>
+            <dd className="mt-1 font-medium text-text-primary">
+              {showZero ? t('settings.cost.tier_heuristic') : estimate.providerLabel}
             </dd>
           </div>
           <div className="rounded-lg border border-border bg-surface/40 px-3 py-2">
@@ -49,7 +65,7 @@ export const CostEstimateCard: React.FC = () => {
               {t('settings.cost.tier')}
             </dt>
             <dd className="mt-1 font-medium text-text-primary capitalize">
-              {showZero ? t('settings.cost.tier_heuristic') : estimate.tier}
+              {showZero ? t('settings.cost.tier_heuristic') : estimate.pricingTierLabel}
             </dd>
           </div>
           <div className="rounded-lg border border-border bg-surface/40 px-3 py-2">
@@ -76,6 +92,14 @@ export const CostEstimateCard: React.FC = () => {
           <span className="font-mono">{tempSettings.defaults.topNToSynthesize}</span>{' '}
           {t('settings.cost.top_n')} · <span className="font-mono">{tempSettings.ai.model}</span>
         </p>
+        {unknownPricing && (
+          <p
+            className="text-xs text-text-secondary border border-border bg-surface/30 rounded-md px-3 py-2"
+            role="status"
+          >
+            {t('settings.cost.unknown_pricing_hint')}
+          </p>
+        )}
         {warn && (
           <p
             className="text-xs text-accent-amber border border-accent-amber/30 bg-accent-amber/10 rounded-md px-3 py-2"
