@@ -50,15 +50,20 @@ Track progress in this file when a browser is promoted.
 
 **Full-suite expansion (step 2):** landed in PR [#192](https://github.com/qnbs/AI-Research-Orchestrator/pull/192) (`3641108`) — cross-browser workflow runs the seven-spec Chromium parity list (`continue-on-error: true`). Next gate: **10 consecutive** full-suite greens per browser (**54 passed / 0 failed** in job logs; no flaky retries counted) before considering blocking promotion for that browser.
 
-**Full-suite streak (step 3, updated 2026-08-02):** PR #195 landed as `8ab0a26` on `main`. Clean baseline on branch head `022475d` (run `30767470525`) — **54 passed / 0 failed, no flaky** on Chromium (`30767470500`), Firefox, WebKit, and mobile Chrome. Intermediate `f6cdaed` (run `30767766848`) had Firefox **53 + 1 flaky** (`networkidle` a11y — not KB demo); WebKit/mobile Chrome stayed **54/0**. Post-merge `main` `8ab0a26` (run `30768002841`) — **54/0, no flaky** on all three advisory browsers again.
+**Full-suite streak (step 3, updated 2026-08-02 evening):** PR #195 landed as `8ab0a26` on `main`. Clean baseline on branch head `022475d` (run `30767470525`) — **54/0, no flaky**. Intermediate flakes (not counted toward streak):
 
-| Browser       | Latest clean run (`8ab0a26` / `30768002841`) | Streak toward 10× clean (54/0, no flaky) |
-| ------------- | -------------------------------------------- | ---------------------------------------- |
-| Firefox       | **54 passed / 0 failed**                     | **1/10** (reset after `f6cdaed` flaky)   |
-| mobile Chrome | **54 passed / 0 failed**                     | **3/10**                                 |
-| WebKit        | **54 passed / 0 failed**                     | **3/10**                                 |
+- `f6cdaed` (`30767766848`) — Firefox **53 + 1 flaky** (`networkidle` a11y)
+- `9202f50` / #197 (`30768598100`) — Firefox **53 + 1 flaky** (`skipOnboarding` header wait after Start Researching in heuristic suite) — fix in #199
 
-Blocking Chromium `e2e.yml`: **54 passed / 0 failed** on #195 `022475d` (`30767470500`) and merge `8ab0a26`.
+Completed **54/0, no flaky** after the `f6cdaed` Firefox reset (WebKit/mobile Chrome continue through that reset): `8ab0a26` → `278ff28` → `d314d1e` → (`9202f50` FF flaky) → `bdcc688` (all clean again).
+
+| Browser       | Latest clean run                     | Streak toward 10× clean (54/0, no flaky) |
+| ------------- | ------------------------------------ | ---------------------------------------- |
+| Firefox       | **54/0** (`bdcc688` / `30768634951`) | **1/10** (reset after `9202f50` flaky)   |
+| mobile Chrome | **54/0** (`bdcc688` / `30768634951`) | **7/10**                                 |
+| WebKit        | **54/0** (`bdcc688` / `30768634951`) | **7/10**                                 |
+
+Blocking Chromium `e2e.yml`: **54 passed / 0 failed** on #195 merge `8ab0a26` and on #197/`9202f50` (`30768598057`).
 
 ## Historical note (fixed 2026-07-21)
 

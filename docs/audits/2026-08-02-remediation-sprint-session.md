@@ -2,12 +2,12 @@
 
 ## Metadata
 
-| Field                     | Value                                                                |
-| ------------------------- | -------------------------------------------------------------------- |
-| Session start `main` HEAD | `8ab0a26` (merge #195)                                               |
-| Auditor baseline prompt   | Post-v0.4.1 full-scale remediation (audit cut-off assumed `efd9406`) |
-| Package version           | `0.4.1`                                                              |
-| Open PRs produced         | #196 (docs), #197 (P1-9 tests), #198 (EventRow tests)                |
+| Field                     | Value                                                                           |
+| ------------------------- | ------------------------------------------------------------------------------- |
+| Session start `main` HEAD | `8ab0a26` (merge #195)                                                          |
+| Auditor baseline prompt   | Post-v0.4.1 full-scale remediation (audit cut-off assumed `efd9406`)            |
+| Package version           | `0.4.1`                                                                         |
+| Open PRs produced         | #196 (docs), #197 (P1-9 tests), #198 (EventRow tests), #199 (Firefox E2E flake) |
 
 ## Executive status
 
