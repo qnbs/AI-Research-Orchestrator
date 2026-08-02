@@ -18,6 +18,7 @@ import {
   deleteEntries,
   clearAllEntries,
   updateEntry,
+  bulkUpdateEntriesInTransaction,
 } from '../../services/databaseService';
 import { canonicalArticleKey, resolveArticleId } from '../../lib/sourceIdentifier';
 import type { RootState } from '../store';
@@ -69,6 +70,14 @@ export const updateKbEntry = createAsyncThunk(
   async ({ id, changes }: { id: string; changes: Partial<KnowledgeBaseEntry> }) => {
     await updateEntry(id, changes);
     return { id, changes };
+  },
+);
+
+export const bulkUpdateKbEntries = createAsyncThunk(
+  'knowledgeBase/bulkUpdateEntries',
+  async (updates: Array<{ id: string; changes: Partial<KnowledgeBaseEntry> }>) => {
+    await bulkUpdateEntriesInTransaction(updates);
+    return updates;
   },
 );
 
@@ -146,6 +155,11 @@ export const knowledgeBaseSlice = createSlice({
       })
       .addCase(updateKbEntry.fulfilled, (state, action) => {
         entriesAdapter.updateOne(state, action.payload);
+      })
+      .addCase(bulkUpdateKbEntries.fulfilled, (state, action) => {
+        for (const { id, changes } of action.payload) {
+          entriesAdapter.updateOne(state, { id, changes });
+        }
       });
   },
 });

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **KB snapshot safety (P0-B):** merge-duplicates harmonizes metadata without removing articles from historical entries; prune-by-relevance targets research reports only; Dexie transaction for bulk KB updates.
+
 ### Added
 
 - **Release and version discipline (P1-6):** `docs/release-policy.md`, build-time `appVersion` + `buildCommitSha`, `ResearchReport.generationProvenance`, Help/About + JSON/PDF export release labels, `appReleaseInfo` module.

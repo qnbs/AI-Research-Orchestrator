@@ -119,10 +119,10 @@ export const settingsTranslations = {
       'Perform powerful maintenance actions. Merge duplicate articles to keep your library clean, or prune low-relevance articles to focus on the highest quality data.',
     'settings.kb.merge.title': 'Merge Duplicates',
     'settings.kb.merge.desc':
-      'Scan the knowledge base for duplicate articles (by PMID) and keep only the version with the highest relevance score.',
+      'Harmonize tags and relevance scores for duplicate PMIDs across saved entries. Historical report snapshots stay intact; the library view already deduplicates by PMID.',
     'settings.kb.prune.title': 'Prune by Relevance Score',
     'settings.kb.prune.desc':
-      'Permanently remove all articles from the knowledge base that are below a certain relevance score.',
+      'Permanently remove low-scoring articles from saved research reports only. Author and journal profiles are not pruned.',
     'settings.kb.presets.title': 'Research Presets',
     'settings.kb.presets.desc': 'Manage your saved research form settings for quick access.',
     'settings.kb.presets.empty': 'You have no saved presets. Save one from the Orchestrator form.',
@@ -217,7 +217,7 @@ export const settingsTranslations = {
     'settings.modal.prune.processing': 'Pruning...',
     'settings.modal.merge.title': 'Merge Duplicates',
     'settings.modal.merge.message':
-      'This will scan for duplicate articles and keep only the highest-scored version of each. This helps clean your data. Proceed?',
+      'This harmonizes duplicate PMIDs by copying tags and relevance from the highest-scored copy. Saved report snapshots are not deleted. Proceed?',
     'settings.modal.merge.confirm': 'Yes, Merge',
     'settings.modal.merge.processing': 'Merging...',
     'settings.modal.delete_preset.title': 'Delete Preset "{name}"?',
@@ -360,10 +360,10 @@ export const settingsTranslations = {
       'Wartungsaktionen ausführen. Duplikate zusammenführen oder Artikel mit niedriger Relevanz entfernen, um die Bibliothek sauber zu halten.',
     'settings.kb.merge.title': 'Duplikate zusammenführen',
     'settings.kb.merge.desc':
-      'Knowledge Base nach Duplikaten (per PMID) durchsuchen und nur die Version mit dem höchsten Relevanz-Score behalten.',
+      'Tags und Relevanz-Scores für doppelte PMIDs über gespeicherte Einträge harmonisieren. Bericht-Snapshots bleiben erhalten; die Bibliothek dedupliziert bereits per PMID.',
     'settings.kb.prune.title': 'Nach Relevanz-Score bereinigen',
     'settings.kb.prune.desc':
-      'Alle Artikel dauerhaft entfernen, die unter einem bestimmten Relevanz-Score liegen.',
+      'Artikel mit niedrigem Score nur aus gespeicherten Rechercheberichten dauerhaft entfernen. Autoren- und Journalprofile werden nicht bereinigt.',
     'settings.kb.presets.title': 'Recherche-Presets',
     'settings.kb.presets.desc':
       'Gespeicherte Rechercheformular-Einstellungen für schnellen Zugriff verwalten.',
@@ -457,7 +457,7 @@ export const settingsTranslations = {
     'settings.modal.prune.processing': 'Bereinigung…',
     'settings.modal.merge.title': 'Duplikate zusammenführen',
     'settings.modal.merge.message':
-      'Es wird nach Duplikaten gesucht und nur die höchstbewertete Version jedes Artikels behalten. Daten bereinigen und fortfahren?',
+      'Dies harmonisiert doppelte PMIDs durch Kopieren von Tags und Relevanz vom höchstbewerteten Exemplar. Gespeicherte Bericht-Snapshots werden nicht gelöscht. Fortfahren?',
     'settings.modal.merge.confirm': 'Ja, zusammenführen',
     'settings.modal.merge.processing': 'Zusammenführen…',
     'settings.modal.delete_preset.title': 'Preset „{name}“ löschen?',
