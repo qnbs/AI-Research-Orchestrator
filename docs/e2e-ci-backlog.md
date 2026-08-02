@@ -22,6 +22,26 @@ Shared helpers live in `src/test/e2e/e2eHelpers.ts`.
 `pnpm run test:e2e -- <files>` — the bare `--` forwarded to Playwright causes it to
 ignore the file list and run the entire `testDir` (including `a11y.spec.ts`).
 
+## Cross-browser matrix — **non-blocking** (2026-08-02, audit P1-6)
+
+`.github/workflows/e2e-cross-browser.yml` runs `smoke.spec.ts` on **Firefox**,
+**WebKit (Safari)**, and **mobile Chrome (Pixel 5)** in parallel. The job uses
+`continue-on-error: true` until each browser meets promotion criteria below.
+
+`playwright.config.ts` exposes the extra projects only when `PLAYWRIGHT_MATRIX=1`
+(so the blocking Chromium workflow stays unchanged).
+
+### Promotion criteria (per browser)
+
+1. **10 consecutive workflow runs** where the browser job reports **3 passed / 0 failed**
+   smoke tests (read counts from the job log — the green badge alone is not enough).
+2. After promotion: expand that browser to the full seven-spec list (same files as
+   blocking Chromium) while keeping `continue-on-error: true`.
+3. After **10 consecutive full-suite greens** per browser: consider flipping that
+   browser to blocking (separate decision — do not bulk-promote all browsers at once).
+
+Track progress in this file when a browser is promoted.
+
 ## Historical note (fixed 2026-07-21)
 
 Two early CI failures were fixed before promotion:

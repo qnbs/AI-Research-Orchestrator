@@ -91,7 +91,7 @@
 1. **P0-3 completion:** structured `GroundedSynthesis` schema + export/persistence validation.
 2. **P1-3:** per-directory coverage floors for `providers/`, `geminiService.ts`, `apiKeyService.ts` — **landed** (`check:coverage-floors`).
 3. **P1-5:** logging redaction — **landed** (`safeLog`, `check:log-redaction`).
-4. **P1-6:** Firefox/WebKit/mobile Playwright matrix with promotion criteria — in PR.
+4. **P1-6:** Firefox/WebKit/mobile Playwright matrix with promotion criteria — **landed** (`e2e-cross-browser.yml`).
 5. **P1-7:** SonarQube blocking gate evaluation; moderate `pnpm audit` governance — **landed** (`docs/audit-governance.md`).
 6. **P1-2:** automated docs/config drift check — **landed** (`check:docs-drift`).
 
