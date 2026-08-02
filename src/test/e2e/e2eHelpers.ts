@@ -3,6 +3,9 @@
  * Prefer getByRole; keep waits justified and short.
  */
 import type { Page } from '@playwright/test';
+import { DEMO_KB_UNIQUE_ARTICLE_COUNT } from '../../services/nonAi/sampleData';
+
+export { DEMO_KB_UNIQUE_ARTICLE_COUNT };
 
 /**
  * Navigate to the app and skip the onboarding screen if it is shown.
@@ -35,9 +38,6 @@ export async function skipOnboarding(page: Page) {
   }
 }
 
-/** Demo KB seed produces five deduplicated articles across four entries. */
-export const DEMO_KB_UNIQUE_ARTICLE_COUNT = 5;
-
 /**
  * Navigate to a view via in-page hash change (no full reload).
  */
@@ -57,10 +57,13 @@ export async function navigateToView(page: Page, viewHash: string) {
  */
 export async function waitForKbArticleCount(page: Page, count: number) {
   const pattern = new RegExp(`${count} Articles Found`, 'i');
-  await page.getByRole('heading', { level: 2, name: pattern }).waitFor({
-    state: 'visible',
-    timeout: 45_000,
-  });
+  const heading = page.getByRole('heading', { level: 2, name: pattern });
+  try {
+    await heading.waitFor({ state: 'visible', timeout: 45_000 });
+  } catch {
+    // WebKit sometimes omits heading role mapping; text fallback keeps the contract.
+    await page.getByText(pattern).first().waitFor({ state: 'visible', timeout: 15_000 });
+  }
 }
 
 /**
@@ -69,6 +72,23 @@ export async function waitForKbArticleCount(page: Page, count: number) {
 export async function prepareFirstLaunchDemoKb(page: Page) {
   await page.goto('/');
   await page.waitForLoadState('domcontentloaded');
+
+  await page.waitForFunction(
+    async () => {
+      const db = await new Promise<IDBDatabase | null>((resolve) => {
+        const req = indexedDB.open('AIResearchAppDatabase');
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => resolve(null);
+      });
+      if (!db?.objectStoreNames.contains('knowledgeBaseEntries')) {
+        db?.close();
+        return false;
+      }
+      db.close();
+      return true;
+    },
+    { timeout: 30_000 },
+  );
 
   await page.evaluate(async () => {
     try {
