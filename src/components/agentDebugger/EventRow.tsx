@@ -40,7 +40,7 @@ export const EventRow: React.FC<{
         ? `${event.durationMs}ms`
         : `${(event.durationMs / 1000).toFixed(1)}s`
       : null;
-  const hasOmittedPmids = (promptBudget?.omittedPmids.length ?? 0) > 0;
+  const hasOmittedPmids = (promptBudget?.omittedPmids?.length ?? 0) > 0;
   const hasFieldTruncation =
     promptBudget != null &&
     (promptBudget.truncatedTitleCount > 0 || promptBudget.truncatedAbstractCount > 0);
