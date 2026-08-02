@@ -1,0 +1,112 @@
+# ==============================================================================
+# Prune stale GitHub deployment records (keep latest 3 per environment).
+#
+# GitHub Pages creates a new deployment on every main push; without pruning the
+# Deployments UI accumulates indefinitely. Deployments must be marked inactive
+# before deletion (GitHub API requirement).
+#
+# Triggers:
+# - Weekly safety net (Sundays 03:00 UTC)
+# - Manual one-shot cleanup (workflow_dispatch) — use after enabling this workflow
+#   to drain an existing backlog (e.g. 80+ github-pages deployments).
+#
+# Post-deploy pruning runs inline in deploy.yml (prune-deployments job).
+# ==============================================================================
+
+name: Prune old deployments
+
+on:
+  schedule:
+    - cron: '0 3 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: prune-deployments
+  cancel-in-progress: false
+
+jobs:
+  prune:
+    name: Keep latest 3 deployments
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      deployments: write
+    steps:
+      - name: Delete stale deployments — keep latest 3 per environment
+        # actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
+        with:
+          script: |
+            const KEEP = 3;
+
+            const allDeployments = await github.paginate(
+              github.rest.repos.listDeployments,
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                per_page: 100,
+              },
+            );
+
+            const byEnv = {};
+            for (const dep of allDeployments) {
+              const env = dep.environment || 'unknown';
+              (byEnv[env] ??= []).push(dep);
+            }
+
+            let totalDeleted = 0;
+            let totalFailed = 0;
+
+            for (const [env, deps] of Object.entries(byEnv)) {
+              const sorted = deps.sort((a, b) => b.id - a.id);
+              const toDelete = sorted.slice(KEEP);
+
+              if (toDelete.length === 0) {
+                core.info(`[${env}] Nothing to prune — only ${deps.length} deployment(s).`);
+                continue;
+              }
+
+              core.info(
+                `[${env}] ${deps.length} total → pruning ${toDelete.length}, keeping ${KEEP} latest.`,
+              );
+
+              let deleted = 0;
+              let failed = 0;
+              for (const dep of toDelete) {
+                try {
+                  await github.rest.repos.createDeploymentStatus({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    deployment_id: dep.id,
+                    state: 'inactive',
+                  });
+                } catch (e) {
+                  core.warning(`[${env}] Could not inactivate ${dep.id}: ${e.message}`);
+                }
+
+                try {
+                  await github.rest.repos.deleteDeployment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    deployment_id: dep.id,
+                  });
+                  deleted++;
+                } catch (e) {
+                  core.warning(`[${env}] Could not delete ${dep.id}: ${e.message}`);
+                  failed++;
+                }
+              }
+
+              core.info(`[${env}] Done: ${deleted} deleted, ${failed} failed.`);
+              totalDeleted += deleted;
+              totalFailed += failed;
+            }
+
+            core.info(`All environments: ${totalDeleted} deleted, ${totalFailed} failed.`);
+
+            if (totalFailed > 0) {
+              core.setFailed(`${totalFailed} deployment deletion(s) failed — see logs above.`);
+            }
