@@ -36,12 +36,12 @@ Tracked in `docs/e2e-ci-backlog.md` and `docs/audits/2026-08-02-p1-closeout.md` 
 
 ### Multi-bot review gate (session PRs)
 
-| PR   | Unresolved threads         | Notes                                                                                                       |
-| ---- | -------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| #196 | **0**                      | Greptile P2 fixed; CodeRabbit rate-limited on latest; CodeAnt/DeepSource/Bugbot green                       |
-| #197 | **0**                      | CodeRabbit APPROVED on `9202f50` after 4-thread fix; CodeAnt/DeepSource/Bugbot green; CI 54 E2E + floors OK |
-| #198 | **0**                      | CodeRabbit rate-limited (documented); CodeAnt/DeepSource/Bugbot green; CI green                             |
-| #199 | pending first review cycle | Opened for Firefox `skipOnboarding` flake                                                                   |
+| PR   | Unresolved threads | Notes                                                                                                       |
+| ---- | ------------------ | ----------------------------------------------------------------------------------------------------------- |
+| #196 | **0**              | Greptile P2 fixed; CodeRabbit rate-limited on latest; CodeAnt/DeepSource/Bugbot green                       |
+| #197 | **0**              | CodeRabbit APPROVED on `9202f50` after 4-thread fix; CodeAnt/DeepSource/Bugbot green; CI 54 E2E + floors OK |
+| #198 | **0**              | CodeRabbit rate-limited (documented); CodeAnt/DeepSource/Bugbot green; CI green                             |
+| #199 | **0**              | CodeRabbit rate-limited; CodeAnt/DeepSource/Bugbot green; CB **54/0** all browsers on `0cea8ef`             |
 
 ### B — P1-9 test depth (#197)
 

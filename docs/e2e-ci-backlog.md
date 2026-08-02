@@ -55,15 +55,15 @@ Track progress in this file when a browser is promoted.
 - `f6cdaed` (`30767766848`) — Firefox **53 + 1 flaky** (`networkidle` a11y)
 - `9202f50` / #197 (`30768598100`) — Firefox **53 + 1 flaky** (`skipOnboarding` header wait after Start Researching in heuristic suite) — fix in #199
 
-Completed **54/0, no flaky** after the `f6cdaed` Firefox reset (WebKit/mobile Chrome continue through that reset): `8ab0a26` → `278ff28` → `d314d1e` → (`9202f50` FF flaky) → `bdcc688` (all clean again).
+Completed **54/0, no flaky** after the `f6cdaed` Firefox reset (WebKit/mobile Chrome continue through that reset): `8ab0a26` → `278ff28` → `d314d1e` → (`9202f50` FF flaky) → `bdcc688` → `0cea8ef` / #199 (`30769050211`, all clean after `skipOnboarding` harden).
 
 | Browser       | Latest clean run                     | Streak toward 10× clean (54/0, no flaky) |
 | ------------- | ------------------------------------ | ---------------------------------------- |
-| Firefox       | **54/0** (`bdcc688` / `30768634951`) | **1/10** (reset after `9202f50` flaky)   |
-| mobile Chrome | **54/0** (`bdcc688` / `30768634951`) | **7/10**                                 |
-| WebKit        | **54/0** (`bdcc688` / `30768634951`) | **7/10**                                 |
+| Firefox       | **54/0** (`0cea8ef` / `30769050211`) | **2/10** (reset after `9202f50` flaky)   |
+| mobile Chrome | **54/0** (`0cea8ef` / `30769050211`) | **8/10**                                 |
+| WebKit        | **54/0** (`0cea8ef` / `30769050211`) | **8/10**                                 |
 
-Blocking Chromium `e2e.yml`: **54 passed / 0 failed** on #195 merge `8ab0a26` and on #197/`9202f50` (`30768598057`).
+Blocking Chromium `e2e.yml`: **54 passed / 0 failed** on #195 merge `8ab0a26`, #197/`9202f50` (`30768598057`), and #199/`0cea8ef` (`30769050111`).
 
 ## Historical note (fixed 2026-07-21)
 
