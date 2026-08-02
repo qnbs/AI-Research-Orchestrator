@@ -11,14 +11,14 @@ security gates so future PRs do not re-litigate the same trade-offs.
 | Typecheck / lint / unit tests + coverage | `deploy.yml` | **Yes** | `pnpm run test:coverage` — 80% lines/statements on `store`/`services`/`hooks`/`lib` |
 | Critical-path coverage floors | `deploy.yml` → `check:coverage-floors` | **Yes** | Ratchet on `providers/`, `geminiService.ts`, `apiKeyService.ts` |
 | CodeQL | `security.yml` | **Yes** | `security-extended` query set |
-| DeepSource (Docker/Shell/JS) | GitHub App check | Advisory | JS analyzer tuned in `.deepsource.toml`; `scripts/**` excluded |
+| DeepSource (Docker/Shell) | GitHub App check | Advisory | JavaScript analyzer disabled — ESLint + CI gates cover TS/TSX |
 | CodeAnt / Semgrep / gitleaks | GitHub App checks | Mixed | See workflow outputs per PR |
 
 **Coverage scope:** Vitest gates logic layers (`src/store`, `src/services`, `src/hooks`, `src/lib`). UI views are covered by Playwright E2E instead.
 
 ### Known false positives / external failures
 
-- **DeepSource JavaScript:** use `module_system = "es-modules"` in `.deepsource.toml` and exclude `scripts/**` (Node `.mjs` maintenance). Core gates (typecheck/lint/tests/build) remain authoritative.
+- **DeepSource JavaScript:** analyzer **disabled** in `.deepsource.toml` (persistent ESM/TS false positives). Docker/Shell remain advisory; ESLint + deploy.yml gates are authoritative.
 - **Claude Code Review** workflow may fail on infrastructure — re-run or ignore if no actionable inline threads.
 
 ## `pnpm audit` governance

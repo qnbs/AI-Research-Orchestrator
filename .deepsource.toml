@@ -1,6 +1,6 @@
 version = 1
 
-# Node maintenance scripts and the Vite entry live outside src/ — ESLint/typecheck cover app code.
+# Node maintenance scripts and the Vite entry live outside src/ — ESLint/typecheck are authoritative.
 exclude_patterns = [
   "eslint-local-rules/**",
   "scripts/**",
@@ -10,22 +10,16 @@ exclude_patterns = [
   "index.tsx",
 ]
 
+# Docker + Shell only. JavaScript analyzer disabled: persistent false positives on TS ESM
+# exports and Node .mjs scripts despite module_system/dialect tuning; core CI gates cover JS/TS.
+[[analyzers]]
+name = "docker"
+enabled = true
+
+[[analyzers]]
+name = "shell"
+enabled = true
+
 [[analyzers]]
 name = "javascript"
-
-  [analyzers.meta]
-  plugins = ["react"]
-  module_system = "es-modules"
-  dialect = "typescript"
-  dependency_file_paths = ["."]
-  environment = ["browser", "nodejs", "vitest", "cypress"]
-  cyclomatic_complexity_threshold = "high"
-  test_patterns = ["**/*.{test,spec}.{ts,tsx}"]
-  skip_doc_coverage = [
-    "function-declaration",
-    "function-expression",
-    "arrow-function-expression",
-    "class-declaration",
-    "class-expression",
-    "method-definition",
-  ]
+enabled = false

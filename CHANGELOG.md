@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **CI hygiene:** removed SonarQube Cloud integration entirely (`security.yml` job, `sonar-project.properties`, setup doc); fixed DeepSource JavaScript analyzer config (`module_system`, `dialect`, `scripts/**` exclude).
+- **CI hygiene:** removed SonarQube Cloud integration entirely; disabled DeepSource JavaScript analyzer (Docker/Shell advisory only).
 
 - **Audit P0/P1 completion:** mandatory custom-endpoint approval, CSP drift gate (`check:csp-endpoint-drift`), untrusted-data framing on all live AI prompts, capability-aware `generateJson`, export/history synthesis sanitization, PubMed query validation in orchestrator, `check:agent-eval` CI gate with `liveOrchestratorEval` fixtures.
 
