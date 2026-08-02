@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { buildQuery, buildMultipleQueries, extractPhrases } from './queryBuilder';
-import { findMeshTermsInQuery } from './meshDictionary';
+import { findMeshTermsInQuery, MESH_DICTIONARY, formatMeshClause } from './meshDictionary';
+import { validatePubMedQuery } from '../../lib/pubmedQueryValidator';
 
 describe('buildQuery', () => {
   it('builds a basic query with an explanation', () => {
@@ -17,6 +18,37 @@ describe('buildQuery', () => {
     });
     expect(query.query).toContain('Date - Publication');
     expect(query.query).toContain('Publication Type');
+  });
+
+  it('applies the PubMed free full text filter when openAccessOnly is set', () => {
+    const query = buildQuery('diabetes', { openAccessOnly: true });
+    expect(query.query).toContain('free full text[filter]');
+    expect(query.explanation).toContain('Free full text filter');
+  });
+
+  it('never produces malformed boolean syntax for MeSH-heavy topics', () => {
+    const query = buildQuery('aspirin cardiovascular disease prevention');
+    const validation = validatePubMedQuery(query.query);
+    expect(validation.valid).toBe(true);
+    expect(query.query).not.toMatch(/\bOR\s+OR\b/i);
+  });
+});
+
+describe('MeSH dictionary query property', () => {
+  it('every dictionary entry produces a non-empty MeSH clause', () => {
+    for (const entry of Object.values(MESH_DICTIONARY)) {
+      const clause = formatMeshClause(entry);
+      expect(clause.length).toBeGreaterThan(0);
+      expect(clause).toMatch(/\[MeSH Terms\]$/);
+    }
+  });
+
+  it('every dictionary key builds a structurally valid query', () => {
+    for (const key of Object.keys(MESH_DICTIONARY)) {
+      const built = buildQuery(key);
+      const validation = validatePubMedQuery(built.query);
+      expect(validation.valid, `invalid query for key ${key}: ${validation.errors}`).toBe(true);
+    }
   });
 });
 

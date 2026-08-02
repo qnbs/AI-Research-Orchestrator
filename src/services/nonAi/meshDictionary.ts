@@ -276,9 +276,25 @@ export function getMeshSynonyms(heading: string): string[] {
   return entry ? [...entry.synonyms] : [];
 }
 
-/** Build MeSH field tag for PubMed query. */
+/** Format a validated MeSH entry as a PubMed field clause (never empty). */
+export function formatMeshClause(entry: MeshEntry): string {
+  const heading = entry.heading.trim();
+  if (heading.length === 0) {
+    throw new Error('MeSH entry has empty heading');
+  }
+  return `"${heading}"[MeSH Terms]`;
+}
+
+/** Build MeSH field tag for PubMed query from a heading or dictionary key/synonym. */
 export function meshFieldTag(heading: string): string {
   const entry = getMeshEntry(heading);
-  if (!entry) return '';
-  return `"${entry.heading}"[MeSH Terms]`;
+  if (entry) return formatMeshClause(entry);
+
+  const normalizedHeading = heading.trim().toLowerCase();
+  for (const dictEntry of Object.values(MESH_DICTIONARY)) {
+    if (dictEntry.heading.toLowerCase() === normalizedHeading) {
+      return formatMeshClause(dictEntry);
+    }
+  }
+  return '';
 }

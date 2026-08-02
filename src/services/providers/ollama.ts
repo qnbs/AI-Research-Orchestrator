@@ -15,6 +15,7 @@ import type {
   AIStreamChunk,
   ProviderChatSession,
 } from './types';
+import { providerCapabilities } from './types';
 
 function getBaseUrl(requestBaseURL?: string): string {
   if (requestBaseURL) return requestBaseURL.replace(/\/$/, '');
@@ -77,13 +78,11 @@ async function* streamNdjson<
 export function createOllamaProvider(): AIProvider {
   return {
     id: 'ollama',
-    capabilities: {
-      streaming: true,
-      jsonMode: true,
-      webGrounding: false,
-      chat: true,
+    capabilities: providerCapabilities({
       requiresApiKey: false,
-    },
+      supportsCustomBaseUrl: true,
+      structuredOutput: { jsonObjectMode: true, nativeJsonSchema: false },
+    }),
 
     async generateContent(request: AIContentRequest): Promise<AIContentResponse> {
       const baseURL = getBaseUrl(request.baseURL);

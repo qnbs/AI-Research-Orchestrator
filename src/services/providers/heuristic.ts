@@ -27,6 +27,7 @@ import type {
   AIStreamChunk,
   ProviderChatSession,
 } from './types';
+import { providerCapabilities } from './types';
 
 function mapHeuristicError(error: unknown): AppError {
   if (error instanceof AppError) return error;
@@ -88,13 +89,7 @@ function generateGenericHeuristicResponse(request: AIContentRequest): AIContentR
 export function createHeuristicProvider(): AIProvider {
   return {
     id: 'heuristic',
-    capabilities: {
-      streaming: true,
-      jsonMode: true,
-      webGrounding: false,
-      chat: true,
-      requiresApiKey: false,
-    },
+    capabilities: providerCapabilities({ requiresApiKey: false }),
 
     async generateContent(request: AIContentRequest): Promise<AIContentResponse> {
       return generateGenericHeuristicResponse(request);

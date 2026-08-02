@@ -258,6 +258,50 @@ describe('geminiService with mocked SDK', () => {
     );
   });
 
+  it('generateResearchReportStream passes AbortSignal to synthesis stream', async () => {
+    const rankingPayload = {
+      rankedArticles: [
+        {
+          pmid: '123',
+          relevanceScore: 95,
+          relevanceExplanation: 'r',
+          keywords: ['k'],
+          articleType: 'Study',
+          aiSummary: 'sum',
+        },
+      ],
+      aiGeneratedInsights: [{ question: 'Q?', answer: 'A.', supportingArticles: ['123'] }],
+      overallKeywords: [],
+    };
+
+    hoisted.generateContent
+      .mockResolvedValueOnce({
+        text: JSON.stringify({
+          generatedQueries: [{ query: 'cancer[Title]', explanation: 'e' }],
+        }),
+      })
+      .mockResolvedValueOnce({
+        text: JSON.stringify(rankingPayload),
+      });
+
+    hoisted.generateContentStream.mockImplementation(async () =>
+      (async function* () {
+        yield { text: 'syn ' };
+      })(),
+    );
+
+    const ac = new AbortController();
+    for await (const _chunk of generateResearchReportStream(mockInput, mockAi, ac.signal)) {
+      // drain
+    }
+
+    expect(hoisted.generateContentStream).toHaveBeenCalledWith(
+      expect.objectContaining({
+        config: expect.objectContaining({ abortSignal: ac.signal }),
+      }),
+    );
+  });
+
   it('generateResearchReportStream aborts when signal is aborted early', async () => {
     const ac = new AbortController();
     ac.abort();

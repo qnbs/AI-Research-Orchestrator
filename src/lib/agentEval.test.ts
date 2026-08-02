@@ -4,18 +4,17 @@ import { evaluateCase, runEvalSuite, type EvalCase } from './agentEval';
 describe('agentEval', () => {
   const golden: EvalCase = {
     id: 'synthesis-grounded',
-    description: 'Synthesis must cite PMIDs and include rankedArticles',
+    description: 'Insights must cite corpus PMIDs',
     actual: {
-      synthesis: 'Findings support therapy [PMID:12345678].',
+      aiGeneratedInsights: [
+        { question: 'Q?', answer: 'Supported.', supportingArticles: ['12345678'] },
+      ],
       rankedArticles: [{ pmid: '12345678' }],
     },
     expect: {
       type: 'object',
-      requiredKeys: ['synthesis', 'rankedArticles'],
+      requiredKeys: ['aiGeneratedInsights', 'rankedArticles'],
       mustCitePmids: ['12345678'],
-      stringPath: 'synthesis',
-      minStringLength: 10,
-      maxStringLength: 5000,
     },
   };
 
@@ -28,7 +27,10 @@ describe('agentEval', () => {
     const result = evaluateCase({
       ...golden,
       id: 'missing-cite',
-      actual: { synthesis: 'No ids here.', rankedArticles: [] },
+      actual: {
+        aiGeneratedInsights: [{ question: 'Q?', answer: 'No ids.', supportingArticles: [] }],
+        rankedArticles: [],
+      },
     });
     expect(result.passed).toBe(false);
     expect(result.dimensions.find((d) => d.dimension === 'citationGrounding')?.passed).toBe(false);

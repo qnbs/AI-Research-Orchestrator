@@ -34,20 +34,32 @@ export function heuristicEvalFixtures(): EvalCase[] {
     {
       id: 'heuristic-ranked-schema',
       description: 'Ranked articles include scores and PMIDs',
-      actual: { articles: ranked },
+      actual: {
+        rankedArticles: ranked,
+        aiGeneratedInsights: ranked.slice(0, 1).map((a) => ({
+          question: 'Relevance?',
+          answer: 'High.',
+          supportingArticles: [a.pmid],
+        })),
+      },
       expect: {
         type: 'object',
-        requiredKeys: ['articles'],
+        requiredKeys: ['rankedArticles', 'aiGeneratedInsights'],
         mustCitePmids: ranked.slice(0, 1).map((a) => a.pmid),
       },
     },
     {
       id: 'heuristic-report-synthesis',
-      description: 'Demo report synthesis cites PMIDs and has structure',
-      actual: report,
+      description: 'Demo report insights cite corpus PMIDs',
+      actual: {
+        rankedArticles: report.rankedArticles,
+        aiGeneratedInsights: report.aiGeneratedInsights,
+        synthesis: report.synthesis,
+        generatedQueries: report.generatedQueries,
+      },
       expect: {
         type: 'object',
-        requiredKeys: ['synthesis', 'rankedArticles', 'generatedQueries'],
+        requiredKeys: ['synthesis', 'rankedArticles', 'generatedQueries', 'aiGeneratedInsights'],
         mustCitePmids: report.rankedArticles.slice(0, 1).map((a) => a.pmid),
         minStringLength: 100,
         stringPath: 'synthesis',

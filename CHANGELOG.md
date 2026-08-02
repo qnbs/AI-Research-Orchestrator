@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Full-scale audit remediation (2026-08-02):** corpus-bound citation grounding (`citationGrounding.ts`), PubMed query structural validator, untrusted-data prompt framing, custom endpoint trust policy with origin approval, finer provider structured-output capability flags, and regression/property tests across MeSH dictionary entries.
+- ADRs [0012](docs/adr/0012-corpus-citation-grounding.md), [0013](docs/adr/0013-custom-endpoint-trust-policy.md), [0014](docs/adr/0014-provider-structured-output-capabilities.md).
+- Audit report: `docs/audits/2026-08-02-full-scale-audit.md`.
+
+### Changed
+
+- `SECURITY.md` updated for 0.4.x support, multi-provider assets, data-flow table, and calibrated residual risks.
+- `openAccessOnly` heuristic query option now applies PubMed `free full text[filter]` (documented limitation vs. all OA definitions).
+- `agentEval` citation grounding now measures corpus validity/completeness on `aiGeneratedInsights`, not substring presence in serialized output.
+
+### Fixed
+
+- **P0 MeSH query builder:** `formatMeshClause` prevents empty MeSH fragments when resolving by canonical heading (e.g. aspirin + cardiovascular topics).
+- **P0 synthesis abort:** `AbortSignal` propagated to `generateContentStream` for the synthesis phase.
+- **P0 custom endpoints:** connection tests use the configured `baseURL`; requests require CSP-permitted, user-approved origins.
+- **P0 citation grounding:** hallucinated PMIDs filtered from `supportingArticles` and ranked articles before report yield.
+
+### Added (prior sprint)
+
 - **WS-E focus visibility:** `.focus-ring-aa` utility (`src/index.css`), ESLint rule `local/no-bare-outline-none`, and Playwright keyboard-walk smoke (`keyboard-focus.spec.ts`).
 - **WS-F skip link + touch targets:** `SkipToContentLink` (hash-router-safe focus to `#main-content`), `.touch-target-aa` (44×44) on header/chrome controls and bottom nav, Playwright `skip-to-content.spec.ts`.
 - **WS-G dialog a11y:** `useFocusTrap` Escape dismiss + optional body scroll lock; wired into ConfirmationModal, QuickAddModal, Settings shared Modal, and InputForm preset dialog; Playwright `dialog-a11y.spec.ts`.
