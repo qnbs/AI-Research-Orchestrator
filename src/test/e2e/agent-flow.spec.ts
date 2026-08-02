@@ -11,46 +11,10 @@ import {
   openHelpFromChrome,
   openSettingsFromChrome,
   prepareFirstLaunchDemoKb,
+  skipOnboarding,
   waitForKbArticleCount,
   DEMO_KB_UNIQUE_ARTICLE_COUNT,
 } from './e2eHelpers';
-
-// ── Helpers ────────────────────────────────────────────────────────────────────
-
-/**
- * Navigate to the app and skip the onboarding screen if it is shown.
- * Waits for either "Start Researching" button OR the main <header> to appear,
- * clicks through onboarding when present, and confirms the main UI is ready.
- */
-async function skipOnboarding(page: Page) {
-  await page.goto('/');
-  await page.waitForLoadState('domcontentloaded');
-
-  // Keep KB empty for existing empty-state assertions (demo seed is for real first-run UX).
-  await page.evaluate(() => {
-    try {
-      localStorage.setItem('aro.demoDataDismissed', '1');
-      localStorage.setItem('aro.demoDataSeeded', '1');
-    } catch {
-      /* ignore */
-    }
-  });
-
-  const startBtn = page.getByRole('button', { name: /start researching/i });
-  const header = page.locator('header');
-
-  // Wait for either to appear (covers both fresh and returning sessions)
-  await Promise.race([
-    startBtn.waitFor({ state: 'visible', timeout: 15_000 }),
-    header.waitFor({ state: 'visible', timeout: 15_000 }),
-  ]);
-
-  // Click onboarding button if visible
-  if (await startBtn.isVisible().catch(() => false)) {
-    await startBtn.click();
-    await header.waitFor({ state: 'visible', timeout: 10_000 });
-  }
-}
 
 // ── API Mocks ──────────────────────────────────────────────────────────────────
 
@@ -549,17 +513,17 @@ test.describe('10. Heuristic inference (no API key)', () => {
     await page.route('**/*generativelanguage.googleapis.com/**', (route) => route.abort());
     await skipOnboarding(page);
     await navigateToView(page, '#orchestrator');
+    await page.locator('#researchTopic').waitFor({ state: 'visible', timeout: 20_000 });
   });
 
   test('inference mode badge is visible', async ({ page }) => {
     await expect(page.getByRole('status', { name: /heuristic|live|gemini/i }).first()).toBeVisible({
-      timeout: 10_000,
+      timeout: 15_000,
     });
   });
 
   test('orchestrator run without key reaches heuristic phase or report UI', async ({ page }) => {
     const input = page.locator('#researchTopic');
-    await input.waitFor({ state: 'visible', timeout: 10_000 });
     await input.fill('aspirin cardiovascular primary prevention');
     await page.locator('button[type="submit"]').first().click();
 

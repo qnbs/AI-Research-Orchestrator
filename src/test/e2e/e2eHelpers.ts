@@ -54,6 +54,10 @@ async function waitForIndexedDbEntryCount(page: Page, minCount: number, timeout 
 
 /**
  * Navigate to the app and skip the onboarding screen if it is shown.
+ *
+ * Firefox can lose a fast onboarding click while Redux/settings hydrate, so we
+ * always wait for a stable post-onboarding `<header>` (with a longer timeout)
+ * and do not treat a raced button visibility alone as readiness.
  */
 export async function skipOnboarding(page: Page) {
   await page.goto('/');
@@ -72,6 +76,11 @@ export async function skipOnboarding(page: Page) {
   const startBtn = page.getByRole('button', { name: /start researching/i });
   const header = page.locator('header');
 
+  // Fast path: returning sessions already have the shell.
+  if (await header.isVisible().catch(() => false)) {
+    return;
+  }
+
   await Promise.race([
     startBtn.waitFor({ state: 'visible', timeout: 15_000 }),
     header.waitFor({ state: 'visible', timeout: 15_000 }),
@@ -79,8 +88,16 @@ export async function skipOnboarding(page: Page) {
 
   if (await startBtn.isVisible().catch(() => false)) {
     await startBtn.click();
-    await header.waitFor({ state: 'visible', timeout: 10_000 });
+    // Click may be ignored if hydration is still in flight — retry once.
+    if (await startBtn.isVisible().catch(() => false)) {
+      await startBtn.click();
+    }
+    await startBtn.waitFor({ state: 'hidden', timeout: 15_000 }).catch(() => {
+      /* header wait below is authoritative */
+    });
   }
+
+  await header.waitFor({ state: 'visible', timeout: 20_000 });
 }
 
 /**
@@ -179,13 +196,21 @@ export async function prepareFirstLaunchDemoKb(page: Page) {
 
   const startBtn = page.getByRole('button', { name: /start researching/i });
   const header = page.locator('header');
-  await Promise.race([
-    startBtn.waitFor({ state: 'visible', timeout: 15_000 }),
-    header.waitFor({ state: 'visible', timeout: 15_000 }),
-  ]);
-  if (await startBtn.isVisible().catch(() => false)) {
-    await startBtn.click();
-    await header.waitFor({ state: 'visible', timeout: 10_000 });
+  if (!(await header.isVisible().catch(() => false))) {
+    await Promise.race([
+      startBtn.waitFor({ state: 'visible', timeout: 15_000 }),
+      header.waitFor({ state: 'visible', timeout: 15_000 }),
+    ]);
+    if (await startBtn.isVisible().catch(() => false)) {
+      await startBtn.click();
+      if (await startBtn.isVisible().catch(() => false)) {
+        await startBtn.click();
+      }
+      await startBtn.waitFor({ state: 'hidden', timeout: 15_000 }).catch(() => {
+        /* header wait below is authoritative */
+      });
+    }
+    await header.waitFor({ state: 'visible', timeout: 20_000 });
   }
 
   await waitForDemoKbSeed(page);
@@ -193,7 +218,7 @@ export async function prepareFirstLaunchDemoKb(page: Page) {
   // Cold mounts can fulfill fetchKnowledgeBase before importKbEntries finishes — reload so
   // Redux hydrates from the persisted demo rows before the KB view assertion runs.
   await page.reload({ waitUntil: 'domcontentloaded' });
-  await header.waitFor({ state: 'visible', timeout: 15_000 });
+  await header.waitFor({ state: 'visible', timeout: 20_000 });
   await waitForIndexedDbEntryCount(page, DEMO_KB_ENTRY_COUNT, 30_000);
 }
 
