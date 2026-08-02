@@ -62,10 +62,33 @@ export function heuristicEvalFixtures(): EvalCase[] {
         type: 'object',
         requiredKeys: ['synthesis', 'rankedArticles', 'generatedQueries', 'aiGeneratedInsights'],
         mustCitePmids: report.rankedArticles.slice(0, 1).map((a) => a.pmid),
-        rankedCorpusPmids: report.rankedArticles.map((a) => a.pmid),
+        rankedCorpusPmids: DEMO_CORPUS.map((a) => a.pmid),
         minGroundedClaims: 1,
         minStringLength: 100,
         stringPath: 'synthesis',
+      },
+    },
+  ];
+}
+
+/** Negative fixture — out-of-corpus grounded claim must fail eval. */
+export function heuristicEvalNegativeFixtures(): EvalCase[] {
+  const ranked = getTopArticles(rankArticles(DEMO_CORPUS, 'aspirin'), 2);
+  return [
+    {
+      id: 'heuristic-grounded-corpus-bound',
+      description: 'Grounded claims outside demo corpus fail validation',
+      actual: {
+        rankedArticles: ranked,
+        groundedSynthesis: {
+          mode: 'narrative-extracted',
+          claims: [{ text: 'Out of corpus.', pmids: ['99999999'] }],
+        },
+      },
+      expect: {
+        type: 'object',
+        rankedCorpusPmids: DEMO_CORPUS.map((a) => a.pmid),
+        minGroundedClaims: 1,
       },
     },
   ];

@@ -39,7 +39,8 @@ export const sanitizeReportForExport = (report: ResearchReport): ExportProvenanc
     grounded.metrics.emptyInsights > 0 ||
     claimGrounding.metrics.droppedClaims > 0 ||
     claimGrounding.metrics.invalidCitations > 0 ||
-    synthesisSanitized.uncitedParagraphsRemoved > 0;
+    synthesisSanitized.uncitedParagraphsRemoved > 0 ||
+    synthesisSanitized.synthesis !== report.synthesis;
 
   return {
     report: {

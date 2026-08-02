@@ -53,6 +53,7 @@ export function extractGroundedClaimsFromMarkdown(
   const claims: GroundedClaim[] = [];
 
   for (const block of blocks) {
+    if (isHeadingOnlyBlock(block)) continue;
     const pmids: string[] = [];
     const seen = new Set<string>();
     PMID_INLINE_PATTERN.lastIndex = 0;
@@ -99,6 +100,27 @@ export function rebuildSynthesisFromClaims(claims: readonly GroundedClaim[]): st
   return claims.map((c) => c.text).join('\n\n');
 }
 
+const HEADING_ONLY_PATTERN = /^#{1,6}\s+\S/;
+
+/** Whether a markdown block is a heading line without body content. */
+export function isHeadingOnlyBlock(block: string): boolean {
+  const trimmed = block.trim();
+  if (!trimmed) return false;
+  const lines = trimmed
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean);
+  return lines.length === 1 && HEADING_ONLY_PATTERN.test(lines[0]);
+}
+
+/** Count non-empty synthesis blocks, excluding heading-only lines. */
+export function countSubstantiveBlocks(synthesis: string): number {
+  return synthesis
+    .split(/\n\n+/)
+    .map((b) => b.trim())
+    .filter((b) => b.length > 0 && !isHeadingOnlyBlock(b)).length;
+}
+
 /**
  * Replace free-form synthesis with corpus-cited paragraphs only.
  * Uses structured claims when present; otherwise extracts PMIDs from markdown.
@@ -118,13 +140,11 @@ export function sanitizeSynthesisForExport(
     ).claims;
   }
   if (!claims.length) {
-    return { synthesis, uncitedParagraphsRemoved: 0 };
+    const removed = countSubstantiveBlocks(synthesis);
+    return { synthesis: '', uncitedParagraphsRemoved: removed };
   }
 
-  const originalBlocks = synthesis
-    .split(/\n\n+/)
-    .map((b) => b.trim())
-    .filter(Boolean).length;
+  const originalBlocks = countSubstantiveBlocks(synthesis);
   const rebuilt = rebuildSynthesisFromClaims(claims);
   return {
     synthesis: rebuilt,

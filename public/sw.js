@@ -173,6 +173,10 @@ if (workbox) {
             `${BASE_PATH}/register-sw.js`,
             `${BASE_PATH}/icons/icon-192.png`,
             `${BASE_PATH}/icons/icon-512.png`,
+            `${BASE_PATH}/icons/maskable-512.png`,
+            `${BASE_PATH}/icons/apple-touch-icon.png`,
+            `${BASE_PATH}/icons/favicon.svg`,
+            `${BASE_PATH}/icons/app-icon.svg`,
         ];
         event.waitUntil(
             caches.open(CACHE_NAMES.pages).then(async (cache) => {

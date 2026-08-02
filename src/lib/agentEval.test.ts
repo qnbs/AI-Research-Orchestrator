@@ -91,6 +91,16 @@ describe('agentEval', () => {
     expect(result.passed).toBe(true);
   });
 
+  it('fails pubmedQuery check when actual is not a string', () => {
+    const result = evaluateCase({
+      id: 'query-not-string',
+      description: 'object instead of query',
+      actual: { query: 'aspirin' },
+      expect: { pubmedQuery: true },
+    });
+    expect(result.passed).toBe(false);
+  });
+
   it('requires minimum grounded claims tied to corpus', () => {
     const result = evaluateCase({
       id: 'grounded-min',

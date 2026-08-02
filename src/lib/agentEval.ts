@@ -91,16 +91,22 @@ export function evaluateCase(testCase: EvalCase): EvalCaseResult {
   }
 
   if (exp.pubmedQuery) {
-    const query =
-      typeof actual === 'string' ? actual : ((actual as { query?: string })?.query ?? '');
-    const result = validatePubMedQuery(query);
-    const shouldBeValid = exp.pubmedQueryValid !== false;
-    const passed = result.valid === shouldBeValid;
-    dimensions.push({
-      dimension: 'pubmedQuery',
-      passed,
-      detail: passed ? undefined : result.errors.join(', ') || 'expected invalid query',
-    });
+    if (typeof actual !== 'string') {
+      dimensions.push({
+        dimension: 'pubmedQuery',
+        passed: exp.pubmedQueryValid === false,
+        detail: 'expected string query',
+      });
+    } else {
+      const result = validatePubMedQuery(actual);
+      const shouldBeValid = exp.pubmedQueryValid !== false;
+      const passed = result.valid === shouldBeValid;
+      dimensions.push({
+        dimension: 'pubmedQuery',
+        passed,
+        detail: passed ? undefined : result.errors.join(', ') || 'expected invalid query',
+      });
+    }
   }
 
   if (exp.rankedCorpusPmids?.length) {
@@ -111,7 +117,9 @@ export function evaluateCase(testCase: EvalCase): EvalCaseResult {
     const ranked =
       obj && Array.isArray(obj.rankedArticles) ? (obj.rankedArticles as { pmid?: string }[]) : [];
     const corpus = new Set(exp.rankedCorpusPmids);
-    const invalid = ranked.filter((r) => r.pmid && !corpus.has(r.pmid));
+    const invalid = ranked.filter(
+      (r) => !r || typeof r.pmid !== 'string' || r.pmid.trim().length === 0 || !corpus.has(r.pmid),
+    );
     dimensions.push({
       dimension: 'rankedCorpus',
       passed: invalid.length === 0,
@@ -129,7 +137,11 @@ export function evaluateCase(testCase: EvalCase): EvalCaseResult {
     const grounded = obj?.groundedSynthesis as GroundedSynthesis | undefined;
     const ranked =
       obj && Array.isArray(obj.rankedArticles) ? (obj.rankedArticles as { pmid?: string }[]) : [];
-    const corpus = new Set(ranked.map((r) => r.pmid).filter((id): id is string => !!id));
+    const corpus = new Set(
+      exp.rankedCorpusPmids?.length
+        ? exp.rankedCorpusPmids
+        : ranked.map((r) => r.pmid).filter((id): id is string => Boolean(id)),
+    );
     const claims = grounded?.claims ?? [];
     const validClaims = claims.filter((c) => {
       const { valid } = partitionCorpusCitations(corpus, c.pmids);
