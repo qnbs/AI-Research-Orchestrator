@@ -31,9 +31,9 @@ const TOKEN_MIN_LEN = 3;
 const MIN_EVIDENCE_TOKENS = 2;
 
 function tokenize(text: string): Set<string> {
-  const tokens = text
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, ' ')
+  const normalized = text.toLowerCase().normalize('NFD').replace(/\p{M}/gu, '');
+  const tokens = normalized
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
     .split(/\s+/)
     .filter((t) => t.length >= TOKEN_MIN_LEN);
   return new Set(tokens);

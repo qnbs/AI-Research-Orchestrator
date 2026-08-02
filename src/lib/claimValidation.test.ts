@@ -232,4 +232,9 @@ describe('articleSupportsClaim', () => {
     art.aiSummary = 'Quantum entanglement breakthrough in unrelated field.';
     expect(articleSupportsClaim('Quantum entanglement breakthrough.', art)).toBe(false);
   });
+
+  it('matches non-English claims via Unicode letter tokenization', () => {
+    const art = article('1', 'Herzinfarkt', 'Behandlung von Herzinfarkt mit Aspirin.');
+    expect(articleSupportsClaim('Aspirin bei Herzinfarkt.', art)).toBe(true);
+  });
 });

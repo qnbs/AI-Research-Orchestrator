@@ -114,25 +114,49 @@ export const buildHarmonizeDuplicateUpdates = (
   return { updates, harmonizedCopies };
 };
 
-/** Count research articles below pruneScore across all research entries. */
+/** Count research article copies below pruneScore (per-entry, not deduped by PMID). */
 export const countResearchPruneCandidates = (
   entries: readonly KnowledgeBaseEntry[],
   pruneScore: number,
-): number => selectResearchPrunePmids(entries, pruneScore).length;
+): number => buildResearchPrunePlan(entries, pruneScore).pruneCount;
 
-/** Prune only research-sourced articles — author/journal profiles are not relevance-pruned. */
-export const selectResearchPrunePmids = (
+export type ResearchPrunePlan = {
+  updates: EntryUpdate[];
+  deleteEntryIds: string[];
+  pruneCount: number;
+};
+
+/**
+ * Build per-entry research prune updates: only copies below pruneScore are removed
+ * within each report. High-scoring copies of the same PMID in other entries stay.
+ */
+export const buildResearchPrunePlan = (
   entries: readonly KnowledgeBaseEntry[],
   pruneScore: number,
-): string[] => {
-  const pmids: string[] = [];
+): ResearchPrunePlan => {
+  const updates: EntryUpdate[] = [];
+  const deleteEntryIds: string[] = [];
+  let pruneCount = 0;
+
   for (const entry of entries) {
     if (entry.sourceType !== 'research') continue;
-    for (const article of entry.articles) {
-      if (article.relevanceScore < pruneScore) {
-        pmids.push(article.pmid);
-      }
+    const keptArticles = entry.articles.filter((a) => a.relevanceScore >= pruneScore);
+    const removedCount = entry.articles.length - keptArticles.length;
+    if (removedCount === 0) continue;
+
+    pruneCount += removedCount;
+    if (keptArticles.length === 0) {
+      deleteEntryIds.push(entry.id);
+    } else {
+      updates.push({
+        id: entry.id,
+        changes: {
+          articles: keptArticles,
+          report: { ...entry.report, rankedArticles: keptArticles },
+        },
+      });
     }
   }
-  return pmids;
+
+  return { updates, deleteEntryIds, pruneCount };
 };
