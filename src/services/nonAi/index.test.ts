@@ -149,6 +149,7 @@ describe('generateNonAiResearchReportStream', () => {
     expect(events.some((e) => e.phase.includes('Offline'))).toBe(true);
     const reportEvent = events.find((e) => e.report);
     expect(reportEvent?.report?.rankedArticles).toEqual([]);
+    expect(reportEvent?.report?.corpusClass).toBe('empty-retrieval');
     expect(reportEvent?.report?.retrievalOutcome).toBe('offline_without_demo');
   });
 

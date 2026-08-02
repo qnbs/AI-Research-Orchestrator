@@ -319,6 +319,9 @@ describe('labels', () => {
     expect(sourceIdentifierCopyLabelKey({ type: 'pmcid', value: '1' })).toBe(
       'report.copyType.pmcid',
     );
+    expect(sourceIdentifierCopyLabelKey({ type: 'demo', value: 'aspirin' })).toBe(
+      'report.copyType.demo',
+    );
     expect(
       sourceIdentifierCopyLabelKey({
         type: 'bogus',

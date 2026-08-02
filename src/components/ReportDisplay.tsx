@@ -22,6 +22,7 @@ import { ChatInterface } from './ChatInterface';
 import { ChatBubbleLeftRightIcon } from './icons/ChatBubbleLeftRightIcon';
 import { ReportArticleCard } from './ReportArticleCard';
 import { stableInsightKey } from '../lib/stableReactKeys';
+import { isDemoSyntheticArticle } from '../lib/articleSourceClass';
 import {
   legacyArticleKeyUrl,
   parseLegacyArticleKey,
@@ -225,9 +226,7 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(function R
     report.corpusClass === 'demo-only' ||
     report.retrievalOutcome === 'educational_demo' ||
     (report.rankedArticles.length > 0 &&
-      report.rankedArticles.every(
-        (a) => a.sourceClass === 'demo-synthetic' || a.pmid.startsWith('demo:'),
-      ));
+      report.rankedArticles.every((a) => isDemoSyntheticArticle(a)));
   const isEmptyRetrieval =
     report.corpusClass === 'empty-retrieval' ||
     report.retrievalOutcome === 'zero_results' ||

@@ -9,6 +9,7 @@ import type {
   RankedArticle,
   SynthesisTrustLevel,
 } from '../types';
+import { corpusContainsDemo } from './articleSourceClass';
 import { partitionCorpusCitations } from './citationGrounding';
 import {
   corpusKeysFromArticles,
@@ -129,9 +130,7 @@ export function assessSynthesisTrust(
   const metrics = computeClaimTrustMetrics(validated, corpusArticles);
 
   // Synthetic demo fixtures must never receive a UI "verified" trust label.
-  const demoCorpus = corpusArticles.some(
-    (a) => a.sourceClass === 'demo-synthetic' || a.pmid.startsWith('demo:'),
-  );
+  const demoCorpus = corpusContainsDemo(corpusArticles);
   if (demoCorpus) {
     const demoted = validated.map((c) =>
       c.validationState === 'verified' ? { ...c, validationState: 'unverified' as const } : c,

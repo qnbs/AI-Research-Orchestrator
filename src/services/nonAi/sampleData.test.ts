@@ -125,5 +125,6 @@ describe('resolveHeuristicArticleByPmid', () => {
     expect(resolved.pmid).toBe('99999999');
     expect(resolved.title).toContain('Unavailable offline');
     expect(resolved.relevanceExplanation).toContain('Placeholder');
+    expect(resolved.sourceClass).toBe('offline-placeholder');
   });
 });

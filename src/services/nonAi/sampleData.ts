@@ -13,6 +13,7 @@ import type {
   JournalEntry,
   AuthorProfileEntry,
 } from '../../types';
+import { stampDemoArticle } from '../../lib/articleSourceClass';
 import { rankArticles, getTopArticles } from './ranker';
 import { generateResearchReport } from './synthesizer';
 
@@ -151,17 +152,9 @@ const DEMO_CORPUS_RAW: RankedArticle[] = [
 ];
 
 /** Educational demo fixtures — always stamped as synthetic (never retrieved literature). */
-export const DEMO_CORPUS: RankedArticle[] = DEMO_CORPUS_RAW.map((article) => {
-  const value = article.pmid.startsWith('demo:')
-    ? article.pmid.slice('demo:'.length)
-    : article.pmid;
-  return {
-    ...article,
-    sourceClass: 'demo-synthetic' as const,
-    articleId: { type: 'demo' as const, value },
-    pmid: article.pmid.startsWith('demo:') ? article.pmid : `demo:${article.pmid}`,
-  };
-});
+export const DEMO_CORPUS: RankedArticle[] = DEMO_CORPUS_RAW.map((article) =>
+  stampDemoArticle(article),
+);
 
 /**
  * Select demo corpus articles most relevant to a topic (for offline research runs).
@@ -328,5 +321,6 @@ export function resolveHeuristicArticleByPmid(pmid: string): RankedArticle {
     relevanceExplanation: 'Placeholder — identifier not present in the local demo corpus.',
     keywords: ['non-ai', 'offline', 'placeholder'],
     articleType: 'Other',
+    sourceClass: 'offline-placeholder',
   };
 }

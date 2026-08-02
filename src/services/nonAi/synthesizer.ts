@@ -9,7 +9,7 @@ import {
   buildGroundedSynthesisFromExtractive,
   buildAssessedGroundedSynthesis,
 } from '../../lib/groundedSynthesis';
-import { corpusContainsDemo, isDemoSyntheticArticle } from '../../lib/articleSourceClass';
+import { corpusContainsDemo } from '../../lib/articleSourceClass';
 import { formatLegacyArticleKeyLabel } from '../../lib/sourceIdentifier';
 import { tokenize, jaccardSimilarity, splitSentences, stemmedTokens, cosineBag } from './utils';
 
@@ -182,9 +182,7 @@ export function generateNarrativeSections(
   const findingsContent = articles
     .slice(0, 5)
     .map((a) => {
-      const idLabel = isDemoSyntheticArticle(a)
-        ? formatLegacyArticleKeyLabel(a.pmid)
-        : `PMID: ${a.pmid}`;
+      const idLabel = formatLegacyArticleKeyLabel(a.pmid);
       return `• ${a.title} (${a.pubYear}) [${idLabel}]`;
     })
     .join('\n');

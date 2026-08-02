@@ -19,8 +19,8 @@ import { AppError } from '../../lib/errors';
 import { throwIfAborted } from './utils';
 import { safeLogWarn } from '../../lib/safeLog';
 import {
+  inferArticleSourceClass,
   resolveReportCorpusClass,
-  stampArticlesSourceClass,
   stampDemoArticle,
 } from '../../lib/articleSourceClass';
 
@@ -55,12 +55,10 @@ function queryOptionsFromInput(input: ResearchInput): QueryBuildOptions {
 }
 
 function stampRetrievedArticles(articles: CuratedArticle[]): CuratedArticle[] {
-  return articles.map((a) => {
-    if (a.pmid.startsWith('arxiv:')) {
-      return { ...a, sourceClass: a.sourceClass ?? 'arxiv-retrieved' };
-    }
-    return { ...a, sourceClass: a.sourceClass ?? 'pubmed-retrieved' };
-  });
+  return articles.map((a) => ({
+    ...a,
+    sourceClass: a.sourceClass ?? inferArticleSourceClass(a),
+  }));
 }
 
 function buildEmptyRetrievalReport(
@@ -219,14 +217,10 @@ export async function* generateNonAiResearchReportStream(
   throwIfAborted(signal, 'Aborted');
   yield { phase: phase('Phase 4: Ranking with BM25/TF-IDF hybrid...') };
   const ranked = rankArticles(curated, input.researchTopic);
-  const topRanked = stampArticlesSourceClass(
-    getTopArticles(ranked, input.topNToSynthesize),
-    'pubmed-retrieved',
-  ).map((a) =>
-    a.pmid.startsWith('arxiv:')
-      ? { ...a, sourceClass: 'arxiv-retrieved' as const }
-      : { ...a, sourceClass: a.sourceClass ?? ('pubmed-retrieved' as const) },
-  );
+  const topRanked = getTopArticles(ranked, input.topNToSynthesize).map((a) => ({
+    ...a,
+    sourceClass: a.sourceClass ?? inferArticleSourceClass(a),
+  }));
 
   throwIfAborted(signal, 'Aborted');
   yield { phase: phase('Phase 5: Generating extractive synthesis...') };

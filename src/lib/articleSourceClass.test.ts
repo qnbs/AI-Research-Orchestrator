@@ -11,6 +11,16 @@ describe('articleSourceClass', () => {
     expect(inferArticleSourceClass({ pmid: 'demo:aspirin' })).toBe('demo-synthetic');
   });
 
+  it('infers arxiv, imported, and pubmed fallback classes', () => {
+    expect(inferArticleSourceClass({ pmid: 'arxiv:2301.12345' })).toBe('arxiv-retrieved');
+    expect(inferArticleSourceClass({ pmid: 'doi:10.1234/x' })).toBe('user-imported');
+    expect(inferArticleSourceClass({ pmid: 'pmcid:PMC1' })).toBe('user-imported');
+    expect(inferArticleSourceClass({ pmid: '12345678' })).toBe('pubmed-retrieved');
+    expect(inferArticleSourceClass({ pmid: '12345678', sourceClass: 'offline-placeholder' })).toBe(
+      'offline-placeholder',
+    );
+  });
+
   it('stamps typed demo ids', () => {
     const stamped = stampDemoArticle({
       pmid: 'demo:x',

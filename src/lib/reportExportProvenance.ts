@@ -4,6 +4,7 @@
  */
 
 import type { ResearchReport } from '../types';
+import { corpusContainsDemo, isDemoSyntheticArticle } from './articleSourceClass';
 import { applyCorpusCitationGrounding } from './citationGrounding';
 import { isAllDemoCorpus } from './demoCorpusMigration';
 import { sanitizeGroundedSynthesis, sanitizeSynthesisForExport } from './groundedSynthesis';
@@ -20,10 +21,6 @@ export interface ExportProvenanceResult {
 
 const DEMO_EXPORT_WATERMARK = 'SYNTHETIC EDUCATIONAL DEMO — NOT RETRIEVED LITERATURE.\n\n';
 
-function articleLooksDemo(article: { sourceClass?: string; pmid: string }): boolean {
-  return article.sourceClass === 'demo-synthetic' || article.pmid.startsWith('demo:');
-}
-
 function isEmptyRetrievalReport(report: ResearchReport): boolean {
   return (
     report.corpusClass === 'empty-retrieval' ||
@@ -36,10 +33,11 @@ function isEmptyRetrievalReport(report: ResearchReport): boolean {
 /** Sanitize report citations against ranked-article corpus before export. */
 export const sanitizeReportForExport = (report: ResearchReport): ExportProvenanceResult => {
   const ranked = Array.isArray(report.rankedArticles) ? report.rankedArticles : [];
-  const containsDemo = ranked.some(articleLooksDemo);
+  const containsDemo = corpusContainsDemo(ranked);
   const isDemoOnly =
     report.corpusClass === 'demo-only' ||
     report.retrievalOutcome === 'educational_demo' ||
+    (ranked.length > 0 && ranked.every(isDemoSyntheticArticle)) ||
     isAllDemoCorpus(ranked);
 
   // Empty-retrieval explanations are intentional UX copy, not uncited narrative claims.
