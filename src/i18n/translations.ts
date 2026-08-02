@@ -124,6 +124,7 @@ export const translations = {
     'orchestrator.cost_preflight':
       'Estimated {provider} usage ~$ {usd} ({tier}). Approximate pre-flight estimate — not billing.',
     'charts.citations': 'Citations',
+    'charts.publications': 'Publications',
     'charts.no_citation_timeline': 'No citation timeline data available.',
     'charts.no_topic_data': 'No topic data available.',
     'charts.no_publication_years': 'No publication years available.',
@@ -424,6 +425,7 @@ export const translations = {
     'orchestrator.cost_preflight':
       'Geschätzter {provider}-Verbrauch ~$ {usd} ({tier}). Ungefähre Pre-Flight-Schätzung — keine Abrechnung.',
     'charts.citations': 'Zitationen',
+    'charts.publications': 'Publikationen',
     'charts.no_citation_timeline': 'Keine Zitations-Zeitreihe verfügbar.',
     'charts.no_topic_data': 'Keine Themendaten verfügbar.',
     'charts.no_publication_years': 'Keine Erscheinungsjahre verfügbar.',

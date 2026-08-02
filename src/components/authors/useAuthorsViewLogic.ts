@@ -16,6 +16,7 @@ import {
   useGetFeaturedAuthorsQuery,
 } from '../../store/slices/apiSlice';
 import { safeLogError } from '../../lib/safeLog';
+import { buildAuthorMetricsFromCorpus } from '../../lib/authorIdentity';
 
 const authorPhaseKeys = [
   'authors.phase.search',
@@ -88,11 +89,29 @@ export const useAuthorsViewLogic = (
   const [triggerGetDetails] = useLazyGetArticleDetailsFullQuery();
 
   const isMounted = useRef(true);
+  const profileAbortRef = useRef<AbortController | null>(null);
+  const searchAbortRef = useRef<AbortController | null>(null);
+
+  const beginProfileRequest = useCallback(() => {
+    profileAbortRef.current?.abort();
+    const controller = new AbortController();
+    profileAbortRef.current = controller;
+    return controller.signal;
+  }, []);
+
+  const beginSearchRequest = useCallback(() => {
+    searchAbortRef.current?.abort();
+    const controller = new AbortController();
+    searchAbortRef.current = controller;
+    return controller.signal;
+  }, []);
 
   useEffect(() => {
     isMounted.current = true;
     return () => {
       isMounted.current = false;
+      profileAbortRef.current?.abort();
+      searchAbortRef.current?.abort();
     };
   }, []);
 
@@ -107,6 +126,7 @@ export const useAuthorsViewLogic = (
 
   const handleSelectCluster = useCallback(
     async (cluster: AuthorCluster) => {
+      const signal = beginProfileRequest();
       setIsLoading(true);
       setError(null);
       setView('landing');
@@ -115,66 +135,29 @@ export const useAuthorsViewLogic = (
         setLoadingPhase(authorLoadingPhases[3]);
         const allArticleDetails = await triggerGetDetails({ pmids: cluster.pmids }).unwrap();
 
-        if (!isMounted.current) return;
+        if (!isMounted.current || signal.aborted) return;
 
         setLoadingPhase(authorLoadingPhases[4]);
-        const { careerSummary, coreConcepts, estimatedMetrics } =
-          await generateAuthorProfileAnalysis(cluster.nameVariant, allArticleDetails, settings.ai);
+        const { careerSummary, coreConcepts } = await generateAuthorProfileAnalysis(
+          cluster.nameVariant,
+          allArticleDetails,
+          settings.ai,
+          signal,
+        );
 
-        if (!isMounted.current) return;
+        if (!isMounted.current || signal.aborted) return;
 
         setLoadingPhase(authorLoadingPhases[5]);
-        const citationsPerYear: { [key: string]: number } = {};
-        const publicationYears: number[] = allArticleDetails
-          .map((a) => parseInt(a.pubYear || '0'))
-          .filter((y) => y > 0);
-
-        publicationYears.forEach((year) => {
-          const age = new Date().getFullYear() - year;
-          const citations = Math.floor(Math.random() * (age * 5) + 5);
-          citationsPerYear[year] = (citationsPerYear[year] || 0) + citations;
-        });
-
-        let firstAuthorCount = 0;
-        let lastAuthorCount = 0;
-
-        const isFuzzy = (authorName: string, targetName: string): boolean => {
-          const normalize = (s: string) =>
-            s
-              .toLowerCase()
-              .replace(/[^a-z\s]/g, '')
-              .trim()
-              .split(/\s+/)
-              .filter(Boolean);
-          const partsA = normalize(authorName);
-          const partsB = normalize(targetName);
-          return (
-            partsA.length > 0 &&
-            partsB.length > 0 &&
-            partsA[partsA.length - 1] === partsB[partsB.length - 1]
-          );
-        };
-
-        allArticleDetails.forEach((article) => {
-          const authors = article.authors?.split(', ') || [];
-          if (authors.length > 0) {
-            if (isFuzzy(authors[0], cluster.nameVariant)) firstAuthorCount++;
-            if (authors.length > 1 && isFuzzy(authors[authors.length - 1], cluster.nameVariant))
-              lastAuthorCount++;
-          }
-        });
+        const metrics = buildAuthorMetricsFromCorpus(
+          allArticleDetails,
+          cluster.nameVariant,
+          cluster.publicationCount,
+        );
 
         const profile: AuthorProfile = {
           name: cluster.nameVariant,
           affiliations: [cluster.primaryAffiliation],
-          metrics: {
-            hIndex: estimatedMetrics.hIndex,
-            totalCitations: estimatedMetrics.totalCitations,
-            publicationCount: cluster.publicationCount,
-            citationsPerYear: citationsPerYear,
-            publicationsAsFirstAuthor: firstAuthorCount,
-            publicationsAsLastAuthor: lastAuthorCount,
-          },
+          metrics,
           careerSummary,
           coreConcepts,
           publications: allArticleDetails as RankedArticle[],
@@ -182,27 +165,37 @@ export const useAuthorsViewLogic = (
 
         await saveAuthorProfile({ authorName: profile.name }, profile);
 
-        if (isMounted.current) {
+        if (isMounted.current && !signal.aborted) {
           setAuthorProfile(profile);
           setView('profile');
         }
       } catch (err) {
+        if (signal.aborted) return;
         safeLogError('Failed to build author profile', err);
         if (isMounted.current) {
           setError(t('authors.error.profile_build'));
           setView('landing');
         }
       } finally {
-        if (isMounted.current) {
+        if (isMounted.current && !signal.aborted) {
           setIsLoading(false);
         }
       }
     },
-    [settings.ai, saveAuthorProfile, triggerGetDetails, authorLoadingPhases, t],
+    [
+      settings.ai,
+      saveAuthorProfile,
+      triggerGetDetails,
+      authorLoadingPhases,
+      t,
+      beginProfileRequest,
+    ],
   );
 
   const handleSearch = useCallback(
     async (name: string) => {
+      const signal = beginSearchRequest();
+      profileAbortRef.current?.abort();
       setIsLoading(true);
       setError(null);
       setAuthorQuery(name);
@@ -218,24 +211,24 @@ export const useAuthorsViewLogic = (
           maxResults: settings.ai.researchAssistant.authorSearchLimit,
         }).unwrap();
         if (pmids.length === 0) {
-          if (isMounted.current) {
+          if (isMounted.current && !signal.aborted) {
             setError(t('authors.error.no_publications'));
             setView('landing');
           }
           return;
         }
 
-        if (!isMounted.current) return;
+        if (!isMounted.current || signal.aborted) return;
 
         setLoadingPhase(authorLoadingPhases[1]);
         const articleDetails = await triggerGetDetails({ pmids: pmids.slice(0, 50) }).unwrap();
 
-        if (!isMounted.current) return;
+        if (!isMounted.current || signal.aborted) return;
 
         setLoadingPhase(authorLoadingPhases[2]);
-        const clusters = await disambiguateAuthor(name, articleDetails, settings.ai);
+        const clusters = await disambiguateAuthor(name, articleDetails, settings.ai, signal);
 
-        if (!isMounted.current) return;
+        if (!isMounted.current || signal.aborted) return;
 
         if (clusters.length === 1) {
           await handleSelectCluster(clusters[0]);
@@ -244,18 +237,27 @@ export const useAuthorsViewLogic = (
           setView('disambiguation');
         }
       } catch (err) {
+        if (signal.aborted) return;
         safeLogError('Failed to search author profile', err);
         if (isMounted.current) {
           setError(t('authors.error.generic'));
           setView('landing');
         }
       } finally {
-        if (isMounted.current) {
+        if (isMounted.current && !signal.aborted) {
           setIsLoading(false);
         }
       }
     },
-    [settings.ai, handleSelectCluster, triggerSearchIds, triggerGetDetails, authorLoadingPhases, t],
+    [
+      settings.ai,
+      handleSelectCluster,
+      triggerSearchIds,
+      triggerGetDetails,
+      authorLoadingPhases,
+      t,
+      beginSearchRequest,
+    ],
   );
 
   const handleSuggestAuthors = useCallback(

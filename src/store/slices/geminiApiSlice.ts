@@ -86,7 +86,6 @@ export interface AuthorProfileArgs {
 export interface AuthorProfileResult {
   careerSummary: string;
   coreConcepts: { concept: string; frequency: number }[];
-  estimatedMetrics: { hIndex: number | null; totalCitations: number | null };
 }
 
 export interface SuggestAuthorsArgs {

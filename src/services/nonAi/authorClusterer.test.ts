@@ -67,10 +67,10 @@ describe('disambiguateAuthorHeuristic', () => {
 });
 
 describe('generateAuthorProfileHeuristic', () => {
-  it('generates a career summary with null citation metrics', () => {
+  it('generates a career summary without citation metrics', () => {
     const profile = generateAuthorProfileHeuristic('Chen L', [makeArticle()]);
     expect(profile.careerSummary).toContain('Chen L');
-    expect(profile.estimatedMetrics).toEqual({ hIndex: null, totalCitations: null });
+    expect(profile.coreConcepts.length).toBeGreaterThan(0);
   });
 
   it('extracts core concepts from titles and summaries', () => {
