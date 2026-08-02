@@ -60,4 +60,90 @@ describe('agentEval', () => {
     expect(results).toHaveLength(2);
     expect(passRate).toBe(0.5);
   });
+
+  it('validates PubMed query structure', () => {
+    const result = evaluateCase({
+      id: 'query-ok',
+      description: 'valid query',
+      actual: '(aspirin[Title]) AND ("RCT"[Publication Type])',
+      expect: { pubmedQuery: true },
+    });
+    expect(result.passed).toBe(true);
+  });
+
+  it('flags ranked articles outside corpus', () => {
+    const result = evaluateCase({
+      id: 'ranked-bad',
+      description: 'hallucinated pmid',
+      actual: { rankedArticles: [{ pmid: '999' }] },
+      expect: { rankedCorpusPmids: ['1', '2'] },
+    });
+    expect(result.passed).toBe(false);
+  });
+
+  it('flags ranked articles with missing or empty pmid', () => {
+    const result = evaluateCase({
+      id: 'ranked-empty-pmid',
+      description: 'empty pmid in ranked list',
+      actual: { rankedArticles: [{ pmid: '' }, { pmid: '1' }] },
+      expect: { rankedCorpusPmids: ['1', '2'] },
+    });
+    expect(result.passed).toBe(false);
+  });
+
+  it('rejects invalid PubMed queries when pubmedQueryValid is false', () => {
+    const result = evaluateCase({
+      id: 'query-bad',
+      description: 'malformed boolean',
+      actual: 'cancer OR OR therapy',
+      expect: { pubmedQuery: true, pubmedQueryValid: false },
+    });
+    expect(result.passed).toBe(true);
+  });
+
+  it('fails pubmedQuery check when actual is not a string', () => {
+    const result = evaluateCase({
+      id: 'query-not-string',
+      description: 'object instead of query',
+      actual: { query: 'aspirin' },
+      expect: { pubmedQuery: true },
+    });
+    expect(result.passed).toBe(false);
+  });
+
+  it('requires minimum grounded claims tied to corpus', () => {
+    const result = evaluateCase({
+      id: 'grounded-min',
+      description: 'needs two valid claims',
+      actual: {
+        rankedArticles: [{ pmid: '1' }, { pmid: '2' }],
+        groundedSynthesis: {
+          mode: 'narrative-extracted',
+          claims: [
+            { text: 'One', pmids: ['1'] },
+            { text: 'Two', pmids: ['88'] },
+          ],
+        },
+      },
+      expect: { minGroundedClaims: 2 },
+    });
+    expect(result.passed).toBe(false);
+    expect(result.dimensions.find((d) => d.dimension === 'groundedSynthesis')?.passed).toBe(false);
+  });
+
+  it('rejects grounded claims with non-array pmids', () => {
+    const result = evaluateCase({
+      id: 'grounded-bad-pmids',
+      description: 'malformed claim pmids',
+      actual: {
+        rankedArticles: [{ pmid: '1' }],
+        groundedSynthesis: {
+          mode: 'narrative-extracted',
+          claims: [{ text: 'Bad', pmids: '1' as unknown as string[] }],
+        },
+      },
+      expect: { minGroundedClaims: 1 },
+    });
+    expect(result.passed).toBe(false);
+  });
 });

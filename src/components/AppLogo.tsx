@@ -1,5 +1,6 @@
 import React from 'react';
 
+/** Stylized microscope mark — matches `public/icons/app-icon.svg` (🔬 product identity). */
 export const AppLogo: React.FC<React.SVGProps<SVGSVGElement> & { idPrefix?: string }> = ({
   idPrefix = 'logo',
   ...props
@@ -7,79 +8,40 @@ export const AppLogo: React.FC<React.SVGProps<SVGSVGElement> & { idPrefix?: stri
   <svg
     width="28"
     height="28"
-    viewBox="0 0 24 24"
+    viewBox="0 0 100 100"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
+    role="img"
+    aria-hidden={props['aria-label'] ? undefined : true}
     {...props}
   >
     <defs>
-      <linearGradient id={`${idPrefix}-gradient`} x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" style={{ stopColor: 'var(--color-brand-accent)', stopOpacity: 1 }} />
-        <stop offset="100%" style={{ stopColor: 'var(--color-accent-cyan)', stopOpacity: 1 }} />
+      <linearGradient id={`${idPrefix}-gradient`} x1="15%" y1="8%" x2="85%" y2="92%">
+        <stop offset="0%" style={{ stopColor: 'var(--color-brand-primary)', stopOpacity: 1 }} />
+        <stop offset="55%" style={{ stopColor: 'var(--color-brand-accent)', stopOpacity: 1 }} />
+        <stop offset="100%" style={{ stopColor: 'var(--color-brand-secondary)', stopOpacity: 1 }} />
       </linearGradient>
     </defs>
-    <path
-      d="M12 2L8 4V8L12 10L16 8V4L12 2Z"
+    <g
       stroke={`url(#${idPrefix}-gradient)`}
-      strokeWidth="1.5"
+      strokeWidth="4.5"
       strokeLinecap="round"
       strokeLinejoin="round"
-    />
-    <path
-      d="M12 22L8 20V16L12 14L16 16V20L12 22Z"
-      stroke={`url(#${idPrefix}-gradient)`}
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <path
-      d="M22 12L20 8L16 10L14 12L16 14L20 16L22 12Z"
-      stroke={`url(#${idPrefix}-gradient)`}
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <path
-      d="M2 12L4 8L8 10L10 12L8 14L4 16L2 12Z"
-      stroke={`url(#${idPrefix}-gradient)`}
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <path
-      d="M12 10V14"
-      stroke={`url(#${idPrefix}-gradient)`}
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <path
-      d="M8 8L4 8"
-      stroke={`url(#${idPrefix}-gradient)`}
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <path
-      d="M16 8L20 8"
-      stroke={`url(#${idPrefix}-gradient)`}
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <path
-      d="M8 16L4 16"
-      stroke={`url(#${idPrefix}-gradient)`}
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <path
-      d="M16 16L20 16"
-      stroke={`url(#${idPrefix}-gradient)`}
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
+    >
+      <path d="M24 76 H76" />
+      <path d="M36 76 V67" />
+      <path d="M64 76 V67" />
+      <path d="M50 67 V58" />
+      <path d="M50 58 C42 52 38 44 42 36" />
+      <path d="M42 36 V20" />
+      <path d="M34 52 H66" />
+      <path d="M50 52 V46" />
+    </g>
+    <g fill={`url(#${idPrefix}-gradient)`}>
+      <circle cx="42" cy="16" r="6" />
+      <circle cx="50" cy="46" r="4.5" />
+      <circle cx="58" cy="52" r="3.5" />
+      <circle cx="50" cy="67" r="5" />
+    </g>
   </svg>
 );

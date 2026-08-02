@@ -53,6 +53,7 @@ export function extractGroundedClaimsFromMarkdown(
   const claims: GroundedClaim[] = [];
 
   for (const block of blocks) {
+    if (isHeadingOnlyBlock(block)) continue;
     const pmids: string[] = [];
     const seen = new Set<string>();
     PMID_INLINE_PATTERN.lastIndex = 0;
@@ -92,6 +93,76 @@ export function sanitizeGroundedClaims(
   }
 
   return { claims: sanitized, metrics: { droppedClaims, invalidCitations } };
+}
+
+/** Rebuild markdown synthesis from corpus-bound claims (export-safe). */
+export function rebuildSynthesisFromClaims(
+  claims: readonly GroundedClaim[],
+  preservedHeadings?: readonly string[],
+): string {
+  const body = claims.map((c) => c.text).join('\n\n');
+  if (!preservedHeadings?.length) return body;
+  return [...preservedHeadings, body].join('\n\n');
+}
+
+function extractHeadingOnlyBlocks(synthesis: string): string[] {
+  return synthesis
+    .split(/\n\n+/)
+    .map((b) => b.trim())
+    .filter((b) => b.length > 0 && isHeadingOnlyBlock(b));
+}
+
+const HEADING_ONLY_PATTERN = /^#{1,6}\s+\S/;
+
+/** Whether a markdown block is a heading line without body content. */
+export function isHeadingOnlyBlock(block: string): boolean {
+  const trimmed = block.trim();
+  if (!trimmed) return false;
+  const lines = trimmed
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean);
+  return lines.length === 1 && HEADING_ONLY_PATTERN.test(lines[0]);
+}
+
+/** Count non-empty synthesis blocks, excluding heading-only lines. */
+export function countSubstantiveBlocks(synthesis: string): number {
+  return synthesis
+    .split(/\n\n+/)
+    .map((b) => b.trim())
+    .filter((b) => b.length > 0 && !isHeadingOnlyBlock(b)).length;
+}
+
+/**
+ * Replace free-form synthesis with corpus-cited paragraphs only.
+ * Uses structured claims when present; otherwise extracts PMIDs from markdown.
+ */
+export function sanitizeSynthesisForExport(
+  synthesis: string,
+  groundedSynthesis: GroundedSynthesis | undefined,
+  corpusPmids: readonly string[],
+): { synthesis: string; uncitedParagraphsRemoved: number } {
+  const corpusIds = new Set(corpusPmids);
+  const claimResult = sanitizeGroundedSynthesis(groundedSynthesis, corpusPmids);
+  let claims = claimResult.groundedSynthesis?.claims;
+  if (!claims?.length) {
+    claims = sanitizeGroundedClaims(
+      extractGroundedClaimsFromMarkdown(synthesis, corpusPmids),
+      corpusIds,
+    ).claims;
+  }
+  if (!claims.length) {
+    const removed = countSubstantiveBlocks(synthesis);
+    return { synthesis: '', uncitedParagraphsRemoved: removed };
+  }
+
+  const originalBlocks = countSubstantiveBlocks(synthesis);
+  const headings = extractHeadingOnlyBlocks(synthesis);
+  const rebuilt = rebuildSynthesisFromClaims(claims, headings);
+  return {
+    synthesis: rebuilt,
+    uncitedParagraphsRemoved: Math.max(0, originalBlocks - claims.length),
+  };
 }
 
 /** Sanitize optional grounded synthesis against a retrieval corpus. */

@@ -242,6 +242,7 @@ export const AuthorProfileView: React.FC = () => {
               <h3 className="text-xl font-bold text-text-primary mb-4">
                 {t('authors.profile.career_synthesis')}
               </h3>
+              {/* skipcq: JS-0337 - sanitized via secureMarkdownToHtml */}
               <div
                 className="prose prose-sm prose-invert max-w-none text-text-secondary/90 leading-relaxed bg-background p-6 rounded-lg border border-border shadow-inner"
                 dangerouslySetInnerHTML={{ __html: secureMarkdownToHtml(profile.careerSummary) }}

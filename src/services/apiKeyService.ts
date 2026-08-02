@@ -308,7 +308,7 @@ async function saveEncryptedSecret(storageKey: string, value: string): Promise<v
 async function getEncryptedSecret(
   storageKey: string,
   label: string,
-  throwOnError: boolean = false,
+  throwOnError = false,
 ): Promise<string | null> {
   try {
     const db = await openKeyDatabase();

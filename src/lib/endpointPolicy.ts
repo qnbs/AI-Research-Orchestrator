@@ -85,9 +85,9 @@ export function resolveApprovedBaseUrl(
     throw new Error(result.reason);
   }
 
-  if (approvedOrigin && approvedOrigin !== result.origin) {
+  if (!approvedOrigin || approvedOrigin !== result.origin) {
     throw new Error(
-      'Custom endpoint changed since approval. Re-confirm the destination in Settings.',
+      'Custom endpoint not approved. Confirm the destination in Settings before connecting.',
     );
   }
 

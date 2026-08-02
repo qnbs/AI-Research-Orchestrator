@@ -148,9 +148,11 @@ export const useAuthorsViewLogic = (
               .filter(Boolean);
           const partsA = normalize(authorName);
           const partsB = normalize(targetName);
-          if (partsA.length === 0 || partsB.length === 0) return false;
-          if (partsA[partsA.length - 1] !== partsB[partsB.length - 1]) return false;
-          return true; // Simplified for brevity in this hook context
+          return (
+            partsA.length > 0 &&
+            partsB.length > 0 &&
+            partsA[partsA.length - 1] === partsB[partsB.length - 1]
+          );
         };
 
         allArticleDetails.forEach((article) => {

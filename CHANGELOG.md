@@ -9,9 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Brand identity (🔬 microscope mark):** unified PWA icon set (`app-icon.svg`, maskable PNGs, favicons, apple-touch-icon), `AppLogo` / `AppBrandMark` microscope SVG with optional emoji badge, branded boot splash, loading spinners, PWA settings preview, manifest shortcuts/categories, and theme metadata (`#070b12`).
+
+### Removed
+
+- **SonarQube Cloud:** deleted `sonar-project.properties`, `docs/sonarcloud-setup-todo.md`, and all active CI/docs references (dashboard removed by owner).
+
+### Changed
+
+- **CI hygiene:** removed SonarQube Cloud integration entirely; disabled DeepSource JavaScript analyzer (Docker/Shell advisory only).
+
+- **Audit P0/P1 completion:** mandatory custom-endpoint approval, CSP drift gate (`check:csp-endpoint-drift`), untrusted-data framing on all live AI prompts, capability-aware `generateJson`, export/history synthesis sanitization, PubMed query validation in orchestrator, `check:agent-eval` CI gate with `liveOrchestratorEval` fixtures.
+
 - **Logging redaction audit (P1-5):** `safeLogError` / `safeLogWarn` with secret-pattern redaction; CI `check:log-redaction` blocks raw `console.*` in application source.
 
-- **Audit governance (P1-7):** `docs/audit-governance.md` — Sonar way promotion path and `pnpm audit` moderate-severity procedure.
+- **Audit governance (P1-7):** `docs/audit-governance.md` — `pnpm audit` moderate-severity procedure and CI gate map.
 
 - **Cross-browser E2E smoke matrix (P1-6):** non-blocking `.github/workflows/e2e-cross-browser.yml` for Firefox, WebKit, and mobile Chrome (`smoke.spec.ts` only); `PLAYWRIGHT_MATRIX=1` enables extra Playwright projects.
 

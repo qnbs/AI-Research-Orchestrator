@@ -2,6 +2,7 @@ import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { BugAntIcon } from './icons/BugAntIcon';
 import { HomeIcon } from './icons/HomeIcon';
 import { ClipboardIcon } from './icons/ClipboardIcon';
+import { AppBrandMark } from './AppBrandMark';
 import { errorBoundaryCopy } from './errorBoundaryCopy';
 import { safeLogError } from '../lib/safeLog';
 
@@ -56,7 +57,7 @@ class ErrorBoundary extends Component<Props, State> {
   private handleHomeReset = () => {
     try {
       window.history.pushState(null, '', '#home');
-    } catch (e) {
+    } catch (_e) {
       window.location.hash = '#home';
     }
     // Dispatch a hashchange event to ensure routers pick it up if they rely on listeners
@@ -93,9 +94,10 @@ class ErrorBoundary extends Component<Props, State> {
           </div>
 
           <div className="max-w-xl w-full bg-surface/80 backdrop-blur-xl border border-red-500/30 rounded-2xl shadow-[0_0_50px_rgba(239,68,68,0.15)] p-8 text-center relative z-10">
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-red-500/10 border border-red-500/20 mb-6 shadow-[0_0_15px_rgba(239,68,68,0.2)]">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-red-500/10 border border-red-500/20 mb-4 shadow-[0_0_15px_rgba(239,68,68,0.2)]">
               <BugAntIcon className="h-10 w-10 text-red-400 animate-pulse" />
             </div>
+            <AppBrandMark size="sm" showEmoji className="mx-auto mb-6 opacity-80" aria-hidden />
 
             <h1 className="text-3xl font-bold text-text-primary mb-2 tracking-tight">
               {errorBoundaryCopy.title}

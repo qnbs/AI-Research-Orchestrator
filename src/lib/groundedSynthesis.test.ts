@@ -2,8 +2,10 @@ import { describe, it, expect } from 'vitest';
 import {
   buildGroundedSynthesisFromExtractive,
   extractGroundedClaimsFromMarkdown,
+  rebuildSynthesisFromClaims,
   sanitizeGroundedClaims,
   sanitizeGroundedSynthesis,
+  sanitizeSynthesisForExport,
 } from './groundedSynthesis';
 
 describe('buildGroundedSynthesisFromExtractive', () => {
@@ -58,5 +60,69 @@ describe('sanitizeGroundedSynthesis', () => {
     );
     expect(groundedSynthesis).toBeUndefined();
     expect(metrics.droppedClaims).toBe(1);
+  });
+});
+
+describe('sanitizeSynthesisForExport', () => {
+  it('rebuilds synthesis from corpus-cited paragraphs only', () => {
+    const synthesis =
+      '## Findings\nDrug X reduced risk (PMID: 1).\n\nUncited speculation without PMID.';
+    const { synthesis: cleaned, uncitedParagraphsRemoved } = sanitizeSynthesisForExport(
+      synthesis,
+      undefined,
+      ['1'],
+    );
+    expect(cleaned).toContain('## Findings');
+    expect(cleaned).toContain('PMID: 1');
+    expect(cleaned).not.toContain('Uncited speculation');
+    expect(uncitedParagraphsRemoved).toBe(1);
+  });
+
+  it('prefers structured grounded claims over markdown extraction', () => {
+    const grounded = {
+      mode: 'narrative-extracted' as const,
+      claims: [{ text: 'Structured claim (PMID: 1).', pmids: ['1'] }],
+    };
+    const { synthesis: cleaned } = sanitizeSynthesisForExport(
+      'Uncited paragraph.\n\nAnother uncited block.',
+      grounded,
+      ['1'],
+    );
+    expect(cleaned).toBe('Structured claim (PMID: 1).');
+  });
+
+  it('returns original synthesis when no corpus-cited blocks exist', () => {
+    const synthesis = 'No citations here.';
+    const result = sanitizeSynthesisForExport(synthesis, undefined, ['1']);
+    expect(result.synthesis).toBe('');
+    expect(result.uncitedParagraphsRemoved).toBe(1);
+  });
+
+  it('ignores heading-only blocks when counting uncited paragraphs', () => {
+    const synthesis = '## Findings\n\n## Methods';
+    const result = sanitizeSynthesisForExport(synthesis, undefined, ['1']);
+    expect(result.synthesis).toBe('');
+    expect(result.uncitedParagraphsRemoved).toBe(0);
+  });
+
+  it('preserves standalone heading blocks in rebuilt export synthesis', () => {
+    const synthesis =
+      '## Findings\n\nDrug X reduced risk (PMID: 1).\n\n## Methods\n\nUncited methods text.';
+    const { synthesis: cleaned } = sanitizeSynthesisForExport(synthesis, undefined, ['1']);
+    expect(cleaned).toContain('## Findings');
+    expect(cleaned).toContain('## Methods');
+    expect(cleaned).toContain('PMID: 1');
+    expect(cleaned).not.toContain('Uncited methods');
+  });
+});
+
+describe('rebuildSynthesisFromClaims', () => {
+  it('joins claim text with blank lines', () => {
+    expect(
+      rebuildSynthesisFromClaims([
+        { text: 'First.', pmids: ['1'] },
+        { text: 'Second.', pmids: ['2'] },
+      ]),
+    ).toBe('First.\n\nSecond.');
   });
 });

@@ -45,23 +45,23 @@
 
 ## Remediation matrix
 
-| ID        | Severity | Domain               | Finding                                                                                   | Status       | Fix                                                                          | Tests                                                                      |
-| --------- | -------- | -------------------- | ----------------------------------------------------------------------------------------- | ------------ | ---------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| P0-1      | P0       | PubMed queries       | `meshFieldTag(heading)` re-lookup failed for canonical headings → empty clauses / `OR OR` | **Fixed**    | `formatMeshClause`, dedupe, `validatePubMedQuery`                            | `queryBuilder.test.ts`, `meshDictionary.test.ts`, property over dictionary |
-| P0-2      | P0       | Filters              | `openAccessOnly` explanation-only                                                         | **Fixed**    | `free full text[filter]` + aligned explanation                               | `queryBuilder.test.ts`                                                     |
-| P0-3      | P0       | Scientific integrity | Weak citation grounding / substring eval                                                  | **Partial**  | `applyCorpusCitationGrounding`, improved `agentEval`                         | `citationGrounding.test.ts`, `agentEval.test.ts`                           |
-| P0-4      | P0       | Prompt injection     | `sanitizePromptFragment` only strips controls                                             | **Partial**  | `untrustedDataFraming.ts`, system rule, delimited article blocks             | `untrustedDataFraming.test.ts`                                             |
-| P0-5      | P0       | Cancellation         | Synthesis stream omitted `AbortSignal`                                                    | **Fixed**    | `signal` on `generateContentStream`                                          | `geminiService.test.ts`                                                    |
-| P0-6      | P0       | Endpoints            | CSP / approval / testConnection mismatch                                                  | **Partial**  | `endpointPolicy.ts`, approval UI, `testConnection(baseURL)`                  | `endpointPolicy.test.ts`                                                   |
-| P0-7      | P0       | Providers            | Single `jsonMode` boolean                                                                 | **Partial**  | `structuredOutput` capability flags + contract tests                         | `providerCapabilities.test.ts`                                             |
-| P1-1      | P1       | Docs                 | `SECURITY.md` stale (0.1–0.2 only, Gemini-only assets)                                    | **Fixed**    | Updated `SECURITY.md`                                                        | Manual review                                                              |
-| P1-2      | P1       | Agent docs           | Version/path drift                                                                        | **Deferred** | ADRs + audit; canonical manifest still `AGENTS.md`                           | Follow-up                                                                  |
-| P1-3      | P1       | Coverage             | Critical-path thresholds                                                                  | **Fixed**    | `check:coverage-floors` ratchet for providers/, geminiService, apiKeyService | `scripts/check-coverage-floors.mjs`                                        |
-<<<<<<< HEAD
-| P1-4–P1-8 | P1       | Various              | Retrieval validation, logging, PWA matrix, CI, governance                                 | **Partial**  | P1-3/P1-5 landed; P1-6/P1-7 open                                             | —                                                                          |
-=======
-| P1-4–P1-8 | P1       | Various              | Retrieval validation, logging, PWA matrix, CI, governance                                 | **Partial**  | P1-3/P1-7 landed; P1-5/P1-6 in flight; P1-4 open              | —                                                                          |
->>>>>>> 527b207 (docs(governance): Sonar and pnpm audit procedures (P1-7))
+| ID   | Severity | Domain               | Finding                                                                                   | Status       | Fix                                                                                                            | Tests                                                                         |
+| ---- | -------- | -------------------- | ----------------------------------------------------------------------------------------- | ------------ | -------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| P0-1 | P0       | PubMed queries       | `meshFieldTag(heading)` re-lookup failed for canonical headings → empty clauses / `OR OR` | **Fixed**    | `formatMeshClause`, dedupe, `validatePubMedQuery`                                                              | `queryBuilder.test.ts`, `meshDictionary.test.ts`, property over dictionary    |
+| P0-2 | P0       | Filters              | `openAccessOnly` explanation-only                                                         | **Fixed**    | `free full text[filter]` + aligned explanation                                                                 | `queryBuilder.test.ts`                                                        |
+| P0-3 | P0       | Scientific integrity | Weak citation grounding / substring eval                                                  | **Fixed**    | `applyCorpusCitationGrounding`, `groundedSynthesis`, export synthesis sanitization, `agentEval` dimensions     | `citationGrounding.test.ts`, `groundedSynthesis.test.ts`, `agentEval.test.ts` |
+| P0-4 | P0       | Prompt injection     | `sanitizePromptFragment` only strips controls                                             | **Fixed**    | `untrustedDataFraming` on all live prompts + chat; delimiter escape                                            | `untrustedDataFraming.test.ts`                                                |
+| P0-5 | P0       | Cancellation         | Synthesis stream omitted `AbortSignal`                                                    | **Fixed**    | `signal` on `generateContentStream`                                                                            | `geminiService.test.ts`                                                       |
+| P0-6 | P0       | Endpoints            | CSP / approval / testConnection mismatch                                                  | **Fixed**    | Mandatory `approvedEndpointOrigin`, save gate, `check:csp-endpoint-drift`                                      | `endpointPolicy.test.ts`                                                      |
+| P0-7 | P0       | Providers            | Single `jsonMode` boolean                                                                 | **Fixed**    | Capability-aware `generateJson`, schema-in-prompt fallback                                                     | `providerCapabilities.test.ts`, `geminiService.test.ts`                       |
+| P1-1 | P1       | Docs                 | `SECURITY.md` stale (0.1–0.2 only, Gemini-only assets)                                    | **Fixed**    | Updated `SECURITY.md`                                                                                          | Manual review                                                                 |
+| P1-2 | P1       | Agent docs           | Version/path drift                                                                        | **Deferred** | ADRs + audit; canonical manifest still `AGENTS.md`                                                             | Follow-up                                                                     |
+| P1-3 | P1       | Coverage             | Critical-path thresholds                                                                  | **Fixed**    | `check:coverage-floors` ratchet for providers/, geminiService, apiKeyService                                   | `scripts/check-coverage-floors.mjs`                                           |
+| P1-4 | P1       | Retrieval validation | Offline harness for query/corpus grounding                                                | **Fixed**    | `check:agent-eval`, `liveOrchestratorEval`, PubMed query gate in orchestrator                                  | `liveOrchestratorEval.test.ts`, `agentEval.test.ts`                           |
+| P1-5 | P1       | Logging              | Raw console logging in application source                                                 | **Fixed**    | `safeLog`, `check:log-redaction`                                                                               | `scripts/check-log-redaction.mjs`                                             |
+| P1-6 | P1       | PWA / E2E            | Cross-browser smoke matrix                                                                | **Fixed**    | `.github/workflows/e2e-cross-browser.yml` (Firefox, WebKit, mobile Chrome)                                     | `smoke.spec.ts` in matrix job                                                 |
+| P1-7 | P1       | CI governance        | `pnpm audit` / coverage gate documentation                                                | **Fixed**    | `docs/audit-governance.md`                                                                                     | Manual review                                                                 |
+| P1-8 | P1       | Static analysis      | DeepSource / Sonar posture for client-only PWA                                            | **Fixed**    | Sonar removed; DeepSource Docker/Shell advisory; `docs/deepsource-setup.md`; ESLint + deploy.yml authoritative | `.deepsource.toml`, `docs/deepsource-setup.md`                                |
 
 ## Deep-review answers (verified scope)
 
@@ -79,28 +79,29 @@
 
 ## Residual risks
 
-- Narrative synthesis may still contain uncited or hallucinated claims.
-- No atomic `GroundedClaim` schema persisted yet.
+- Narrative synthesis may still contain uncited prose until export sanitization runs; live UI still shows full model output.
+- Client-side prompt injection cannot be fully eliminated (defense-in-depth only).
 - Custom endpoints outside CSP allowlist require self-hosted deployment.
 - `free full text[filter]` ≠ all open-access definitions.
-- Full E2E / cross-browser / mobile matrix not expanded in this PR.
-- Client-side prompt injection cannot be fully eliminated.
 
 ## Follow-up issues (recommended)
 
-1. **P0-3 completion:** structured `GroundedSynthesis` schema + export/persistence validation.
-2. **P1-3:** per-directory coverage floors for `providers/`, `geminiService.ts`, `apiKeyService.ts` — **landed** (`check:coverage-floors`).
-3. **P1-5:** logging redaction — **landed** (`safeLog`, `check:log-redaction`).
-4. **P1-6:** Firefox/WebKit/mobile Playwright matrix with promotion criteria — **landed** (`e2e-cross-browser.yml`).
-5. **P1-7:** SonarQube blocking gate evaluation; moderate `pnpm audit` governance — **landed** (`docs/audit-governance.md`).
-6. **P1-2:** automated docs/config drift check — **landed** (`check:docs-drift`).
+1. **P0-3 completion:** structured `GroundedSynthesis` + export synthesis sanitization — **landed**.
+2. **P1-3:** per-directory coverage floors — **landed** (`check:coverage-floors`).
+3. **P1-4:** retrieval validation offline harness — **landed** (`check:agent-eval`, `liveOrchestratorEval`).
+4. **P1-5:** logging redaction — **landed** (`safeLog`, `check:log-redaction`).
+5. **P1-6:** cross-browser E2E matrix — **landed** (`e2e-cross-browser.yml`).
+6. **P1-7:** governance docs — **landed** (`docs/audit-governance.md`).
+7. **P1-8:** static-analysis posture — **landed** (Sonar removed; `docs/deepsource-setup.md`; DeepSource JS advisory).
+8. **P1-2:** automated docs/config drift — **deferred** (partial via `check:docs-drift`; ADR follow-up for full agent-doc manifest sync).
 
 ## Commands for maintainer re-verification
 
 ```bash
-git checkout cursor/full-scale-audit-remediation-0b69
+git checkout cursor/p0-p1-audit-completion-0b69
 pnpm install --frozen-lockfile
 pnpm run typecheck && pnpm run lint && pnpm run i18n:ratchet
+pnpm run check:docs-drift && pnpm run check:csp-endpoint-drift && pnpm run check:agent-eval
 pnpm run test:coverage && pnpm run build && pnpm run bundle:budget
 pnpm run check:no-cdn-scripts && pnpm run check:workbox-vendor-drift && pnpm run check:contrast
 pnpm audit --audit-level=high

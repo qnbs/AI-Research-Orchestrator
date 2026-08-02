@@ -185,9 +185,99 @@ describe('geminiService with mocked SDK', () => {
     hoisted.generateContent.mockResolvedValue({
       text: JSON.stringify([{ pmid: '1', title: 'x', reason: 'y' }]),
     });
+    mockPubMed.fetchArticleDetails.mockResolvedValueOnce([
+      {
+        pmid: '1',
+        title: 'x',
+        summary: 'S',
+        authors: 'A',
+        journal: 'J',
+        pubYear: '2020',
+        keywords: [],
+        relevanceScore: 0,
+        relevanceExplanation: '',
+      },
+    ]);
     const out = await findSimilarArticles({ title: 't', summary: 's' }, mockAi);
     expect(out).toHaveLength(1);
     expect(out[0].pmid).toBe('1');
+  });
+
+  it('findSimilarArticles drops PMIDs not returned by PubMed validation', async () => {
+    hoisted.generateContent.mockResolvedValue({
+      text: JSON.stringify([
+        { pmid: '1', title: 'valid', reason: 'a' },
+        { pmid: '999', title: 'hallucinated', reason: 'b' },
+      ]),
+    });
+    mockPubMed.fetchArticleDetails.mockResolvedValueOnce([
+      {
+        pmid: '1',
+        title: 'valid',
+        summary: 'S',
+        authors: 'A',
+        journal: 'J',
+        pubYear: '2020',
+        keywords: [],
+        relevanceScore: 0,
+        relevanceExplanation: '',
+      },
+    ]);
+    const out = await findSimilarArticles({ title: 't', summary: 's' }, mockAi);
+    expect(out).toHaveLength(1);
+    expect(out[0].pmid).toBe('1');
+  });
+
+  it('findSimilarArticles passes vault NCBI key to PubMed validation', async () => {
+    hoisted.generateContent.mockResolvedValue({
+      text: JSON.stringify([{ pmid: '1', title: 'x', reason: 'y' }]),
+    });
+    mockPubMed.fetchArticleDetails.mockResolvedValueOnce([
+      {
+        pmid: '1',
+        title: 'x',
+        summary: 'S',
+        authors: 'A',
+        journal: 'J',
+        pubYear: '2020',
+        keywords: [],
+        relevanceScore: 0,
+        relevanceExplanation: '',
+      },
+    ]);
+    await findSimilarArticles({ title: 't', summary: 's' }, mockAi);
+    expect(mockPubMed.fetchArticleDetails).toHaveBeenCalledWith(['1'], undefined, 'ncbi-vault-key');
+  });
+
+  it('findSimilarArticles rethrows STREAM_ABORTED when signal is already aborted', async () => {
+    const controller = new AbortController();
+    controller.abort();
+    await expect(
+      findSimilarArticles({ title: 't', summary: 's' }, mockAi, controller.signal),
+    ).rejects.toMatchObject({ code: 'STREAM_ABORTED' });
+  });
+
+  it('findSimilarArticles rethrows STREAM_ABORTED when PubMed fetch aborts', async () => {
+    hoisted.generateContent.mockResolvedValue({
+      text: JSON.stringify([{ pmid: '1', title: 'x', reason: 'y' }]),
+    });
+    const controller = new AbortController();
+    mockPubMed.fetchArticleDetails.mockImplementationOnce((_pmids, signal) => {
+      controller.abort();
+      void signal;
+      return Promise.reject(new DOMException('Aborted', 'AbortError'));
+    });
+    await expect(
+      findSimilarArticles({ title: 't', summary: 's' }, mockAi, controller.signal),
+    ).rejects.toMatchObject({ code: 'STREAM_ABORTED' });
+  });
+
+  it('findSimilarArticles propagates PubMed validation failures', async () => {
+    hoisted.generateContent.mockResolvedValue({
+      text: JSON.stringify([{ pmid: '1', title: 'x', reason: 'y' }]),
+    });
+    mockPubMed.fetchArticleDetails.mockRejectedValueOnce(new Error('PubMed unavailable'));
+    await expect(findSimilarArticles({ title: 't', summary: 's' }, mockAi)).rejects.toThrow();
   });
 
   it('generateResearchAnalysis returns structured analysis', async () => {
@@ -308,6 +398,18 @@ describe('geminiService with mocked SDK', () => {
     ac.abort();
     const gen = generateResearchReportStream(mockInput, mockAi, ac.signal);
     await expect(gen.next()).rejects.toMatchObject({ code: 'STREAM_ABORTED' });
+  });
+
+  it('generateResearchReportStream rejects invalid PubMed queries before search', async () => {
+    hoisted.generateContent.mockResolvedValueOnce({
+      text: JSON.stringify({
+        generatedQueries: [{ query: 'cancer OR OR therapy', explanation: 'bad' }],
+      }),
+    });
+    const gen = generateResearchReportStream(mockInput, mockAi);
+    await expect(gen.next()).resolves.toBeDefined();
+    await expect(gen.next()).rejects.toThrow(/PubMed query/i);
+    expect(mockPubMed.searchPubMedForIds).not.toHaveBeenCalled();
   });
 
   it('uses heuristic TL;DR when API key is missing (no NO_API_KEY throw)', async () => {
@@ -525,10 +627,7 @@ describe('geminiService with mocked SDK', () => {
     it('logs and maps findSimilarArticles errors', async () => {
       hoisted.generateContent.mockRejectedValueOnce(new Error('similar fail'));
       await expect(findSimilarArticles({ title: 't', summary: 's' }, mockAi)).rejects.toThrow();
-      expect(safeLogErrorSpy).toHaveBeenCalledWith(
-        'Error finding similar articles:',
-        expect.any(Error),
-      );
+      expect(safeLogErrorSpy).toHaveBeenCalledWith('Error generating content:', expect.any(Error));
     });
 
     it('logs and maps generateResearchAnalysis errors', async () => {

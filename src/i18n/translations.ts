@@ -63,6 +63,8 @@ export const translations = {
     'settings.save': 'Save Changes',
     'settings.cancel': 'Cancel',
     'settings.error.form_defaults': 'Default synthesize count cannot exceed scan count.',
+    'settings.error.endpoint_not_approved':
+      'Approve the custom API endpoint before saving settings.',
     'orchestrator.error.topn_exceeds_max': 'Cannot synthesize more articles than are scanned.',
     'orchestrator.title': 'Orchestrator AI',
     'orchestrator.start': 'Start Research',
@@ -355,6 +357,8 @@ export const translations = {
     'settings.cancel': 'Abbrechen',
     'settings.error.form_defaults':
       'Die Standardanzahl der Synthesen darf die Scananzahl nicht überschreiten.',
+    'settings.error.endpoint_not_approved':
+      'Genehmigen Sie den benutzerdefinierten API-Endpunkt, bevor Sie die Einstellungen speichern.',
     'orchestrator.error.topn_exceeds_max':
       'Es können nicht mehr Artikel synthetisiert werden, als gescannt wurden.',
     'orchestrator.title': 'Orchestrator KI',

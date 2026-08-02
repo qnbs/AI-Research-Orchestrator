@@ -4,7 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AI Research Orchestrator - Redirecting...</title>
-    
+    <link rel="icon" type="image/svg+xml" href="/AI-Research-Orchestrator/icons/app-icon.svg" />
+    <meta name="theme-color" content="#070b12" />
     <!-- SPA Redirect Script for GitHub Pages -->
     <!-- This handles client-side routing for Single Page Applications -->
     <script type="text/javascript">
@@ -45,16 +46,16 @@
         padding: 20px;
       }
       .spinner {
-        width: 40px;
-        height: 40px;
-        border: 3px solid rgba(47, 129, 247, 0.3);
-        border-top-color: #2f81f7;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-        margin: 0 auto 20px;
+        width: 48px;
+        height: 48px;
+        margin: 0 auto 16px;
+        font-size: 40px;
+        line-height: 48px;
+        animation: pulse 1.6s ease-in-out infinite;
       }
-      @keyframes spin {
-        to { transform: rotate(360deg); }
+      @keyframes pulse {
+        0%, 100% { opacity: 0.55; transform: scale(0.96); }
+        50% { opacity: 1; transform: scale(1); }
       }
       a {
         color: #2f81f7;
@@ -67,7 +68,7 @@
   </head>
   <body>
     <div class="container">
-      <div class="spinner"></div>
+      <div class="spinner" aria-hidden="true">🔬</div>
       <p>Redirecting to AI Research Orchestrator...</p>
       <p><small>If you are not redirected, <a href="/AI-Research-Orchestrator/">click here</a>.</small></p>
     </div>

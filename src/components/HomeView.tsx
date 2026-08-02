@@ -4,7 +4,7 @@ import { DocumentIcon } from './icons/DocumentIcon';
 import { BeakerIcon } from './icons/BeakerIcon';
 import { AuthorIcon } from './icons/AuthorIcon';
 import { BookOpenIcon } from './icons/BookOpenIcon';
-import { AppLogo } from './AppLogo';
+import { AppBrandMark } from './AppBrandMark';
 import { useTranslation } from '../hooks/useTranslation';
 
 interface HomeViewProps {
@@ -41,7 +41,7 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
   return (
     <div className="max-w-4xl mx-auto text-center py-8 animate-fadeIn">
       <div className="inline-block relative mb-6">
-        <AppLogo className="h-24 w-24" idPrefix="home-logo" />
+        <AppBrandMark size="xl" showEmoji idPrefix="home-logo" aria-hidden />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-10">
           <div
             className="w-20 h-20 rounded-full bg-brand-accent/10 animate-pulseGlow"

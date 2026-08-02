@@ -366,25 +366,24 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({
                 <div className="space-y-3">
                   {isFindingSimilar && <SkeletonLoader lines={2} />}
                   {findError && <p className="text-red-400 text-sm">{t(findError)}</p>}
-                  {similarArticles &&
-                    similarArticles.map((similar) => (
-                      <div
-                        key={similar.pmid}
-                        className="bg-background/50 p-3 rounded-md border border-border"
+                  {similarArticles?.map((similar) => (
+                    <div
+                      key={similar.pmid}
+                      className="bg-background/50 p-3 rounded-md border border-border"
+                    >
+                      <a
+                        href={`https://pubmed.ncbi.nlm.nih.gov/${similar.pmid}/`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm font-medium text-text-primary hover:text-brand-accent block mb-1"
                       >
-                        <a
-                          href={`https://pubmed.ncbi.nlm.nih.gov/${similar.pmid}/`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-sm font-medium text-text-primary hover:text-brand-accent block mb-1"
-                        >
-                          {similar.title}
-                        </a>
-                        <p className="text-xs text-text-secondary">
-                          <strong>{t('article.why')}</strong> {similar.reason}
-                        </p>
-                      </div>
-                    ))}
+                        {similar.title}
+                      </a>
+                      <p className="text-xs text-text-secondary">
+                        <strong>{t('article.why')}</strong> {similar.reason}
+                      </p>
+                    </div>
+                  ))}
                 </div>
               </div>
 

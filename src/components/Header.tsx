@@ -16,7 +16,7 @@ import { DocumentPlusIcon } from './icons/DocumentPlusIcon';
 import { SearchIcon } from './icons/SearchIcon';
 import { EllipsisHorizontalIcon } from './icons/EllipsisHorizontalIcon';
 import { BookOpenIcon } from './icons/BookOpenIcon';
-import { AppLogo } from './AppLogo';
+import { AppBrandMark } from './AppBrandMark';
 import { useTranslation } from '../hooks/useTranslation';
 import { GlobeAltIcon } from './icons/GlobeAltIcon';
 import { AgentDebuggerToggle } from './agentDebugger/AgentDebuggerToggle';
@@ -149,9 +149,11 @@ const HeaderComponent: React.FC<HeaderProps> = ({
               className="flex items-center gap-3 focus-ring-aa rounded-md group"
               aria-label={t('chrome.aria.go_home')}
             >
-              <AppLogo
+              <AppBrandMark
+                size="sm"
                 idPrefix="header-logo"
-                className="w-8 h-8 drop-shadow-lg group-hover:scale-105 transition-transform duration-300"
+                className="drop-shadow-lg group-hover:scale-105 transition-transform duration-300"
+                aria-hidden
               />
               <span className="font-bold text-lg tracking-tight text-text-primary">
                 {t('chrome.brand.research')}
@@ -305,7 +307,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
             className="flex items-center gap-3 focus-ring-aa rounded-md touch-target-aa"
             aria-label={t('chrome.aria.go_home')}
           >
-            <AppLogo idPrefix="mobile-header-logo" />
+            <AppBrandMark size="sm" idPrefix="mobile-header-logo" aria-hidden />
             <span className="font-bold text-lg text-text-primary truncate max-w-[140px] brand-gradient-text">
               {viewTitles[currentView]}
             </span>

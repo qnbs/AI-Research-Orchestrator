@@ -34,6 +34,7 @@ describe('sanitizeReportForExport', () => {
   it('returns unsanitized when all citations are valid', () => {
     const report = baseReport();
     report.aiGeneratedInsights = [{ question: 'Q?', answer: 'A.', supportingArticles: ['1'] }];
+    report.synthesis = 'Supported finding (PMID: 1).';
     const result = sanitizeReportForExport(report);
     expect(result.sanitized).toBe(false);
   });
@@ -62,5 +63,27 @@ describe('sanitizeReportForExport', () => {
     expect(result.report.groundedSynthesis?.claims).toEqual([
       { text: 'Valid claim', pmids: ['1'] },
     ]);
+  });
+
+  it('strips uncited synthesis paragraphs on export', () => {
+    const report = baseReport();
+    report.aiGeneratedInsights = [{ question: 'Q?', answer: 'A.', supportingArticles: ['1'] }];
+    report.synthesis =
+      'Cited finding (PMID: 1).\n\nUncited speculation without any PMID reference.';
+    const result = sanitizeReportForExport(report);
+    expect(result.sanitized).toBe(true);
+    expect(result.uncitedParagraphsRemoved).toBe(1);
+    expect(result.report.synthesis).toContain('PMID: 1');
+    expect(result.report.synthesis).not.toContain('Uncited speculation');
+  });
+
+  it('clears synthesis when no corpus citations remain', () => {
+    const report = baseReport();
+    report.aiGeneratedInsights = [{ question: 'Q?', answer: 'A.', supportingArticles: ['1'] }];
+    report.synthesis = 'Pure speculation with no PMID references at all.';
+    const result = sanitizeReportForExport(report);
+    expect(result.sanitized).toBe(true);
+    expect(result.report.synthesis).toBe('');
+    expect(result.uncitedParagraphsRemoved).toBe(1);
   });
 });

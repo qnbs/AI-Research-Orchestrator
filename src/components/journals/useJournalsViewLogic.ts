@@ -184,7 +184,7 @@ export const useJournalsViewLogic = (
           // Exactly one confident candidate (or none — unknown journal): analyze directly.
           await runAnalysis(found.length === 1 ? found[0].name : trimmed);
         }
-      } catch (err) {
+      } catch (_err) {
         if (isMounted.current) {
           const errorMessage = t('journals.error.generic');
           setError(errorMessage);
@@ -209,7 +209,7 @@ export const useJournalsViewLogic = (
       setJournalName(candidate.name);
       try {
         await runAnalysis(candidate.name);
-      } catch (err) {
+      } catch (_err) {
         if (isMounted.current) {
           const errorMessage = t('journals.error.generic');
           setError(errorMessage);
@@ -253,7 +253,7 @@ export const useJournalsViewLogic = (
         if (isMounted.current) {
           setSuggestedJournals(result);
         }
-      } catch (err) {
+      } catch {
         if (isMounted.current) {
           setSuggestionError(t('journals.error.generic'));
         }

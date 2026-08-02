@@ -11,6 +11,8 @@ import { InstallIcon } from '../icons/InstallIcon';
 import { CheckCircleIcon } from '../icons/CheckCircleIcon';
 import { BellIcon } from '../icons/BellIcon';
 import { CogIcon } from '../icons/CogIcon';
+import { AppBrandMark } from '../AppBrandMark';
+import { BRAND_APP_NAME } from '../../lib/brand';
 import type { Settings } from '../../types';
 
 type Lang = Settings['appLanguage'];
@@ -284,6 +286,19 @@ const AppearanceSettingsCard: React.FC = () => {
   );
 };
 
+const PwaBrandPreview: React.FC = () => {
+  const { t } = useSettingsView();
+  return (
+    <div className="flex items-center gap-4 mb-4 p-4 rounded-lg border border-border bg-background/50">
+      <AppBrandMark size="md" showEmoji aria-label={BRAND_APP_NAME} />
+      <div className="text-left">
+        <p className="font-semibold text-text-primary">{BRAND_APP_NAME}</p>
+        <p className="text-xs text-text-secondary">{t('settings.pwa.brand_status')}</p>
+      </div>
+    </div>
+  );
+};
+
 const PwaInstalledBody: React.FC = () => {
   const { t } = useSettingsView();
   return (
@@ -337,6 +352,7 @@ const PwaSettingsCard: React.FC = () => {
       title={t('settings.pwa.title')}
       description={t('settings.pwa.desc')}
     >
+      <PwaBrandPreview />
       {body}
     </SettingCard>
   );
