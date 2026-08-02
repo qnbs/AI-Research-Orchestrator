@@ -8,6 +8,7 @@ import type { ResearchCheckpoint } from '../lib/researchCheckpoint';
 import type { View, BeforeInstallPromptEvent } from '../types/ui';
 import type { TranslationKey } from '../i18n/translations';
 import { useUrlSync } from '../hooks/useUrlSync';
+import { safeLogError } from '../lib/safeLog';
 
 interface UseAppChromeEffectsArgs {
   currentView: View;
@@ -145,12 +146,12 @@ export function useAppChromeEffects({
         const latest = await getLatestResearchCheckpoints(10);
         if (!cancelled) setResumeCheckpoints(latest);
       } catch (err) {
-        console.error('Failed to load research checkpoints', err);
+        safeLogError('Failed to load research checkpoints', err);
         if (!cancelled) setResumeCheckpoints([]);
       }
     };
     loadCheckpoints().catch((err) => {
-      console.error('Failed to load research checkpoints', err);
+      safeLogError('Failed to load research checkpoints', err);
     });
     return () => {
       cancelled = true;

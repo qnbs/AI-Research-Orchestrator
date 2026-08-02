@@ -17,6 +17,7 @@ import { KeyIcon } from '../icons/KeyIcon';
 import { useTranslation } from '../../hooks/useTranslation';
 import { useSettingsView } from './SettingsViewContext';
 import { getProviderMeta } from '../../services/providers/provider';
+import { safeLogError } from '../../lib/safeLog';
 
 interface ApiKeySettingsProps {
   onKeyChange?: (hasKey: boolean) => void;
@@ -66,7 +67,7 @@ export const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({ onKeyChange }) =
     } catch (err) {
       // Guard against stale responses from previous provider selections
       if (requestIdRef.current === requestId) {
-        console.error('Error checking API key:', err);
+        safeLogError('Error checking API key', err);
       }
     } finally {
       if (requestIdRef.current === requestId) {
@@ -110,7 +111,7 @@ export const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({ onKeyChange }) =
       onKeyChange?.(true);
     } catch (err) {
       setError(t('apikey.save_failed'));
-      console.error(err);
+      safeLogError('Failed to save provider API key', err);
     } finally {
       setIsSaving(false);
     }
@@ -127,7 +128,7 @@ export const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({ onKeyChange }) =
       onKeyChange?.(false);
     } catch (err) {
       setError(t('apikey.remove_failed'));
-      console.error(err);
+      safeLogError('Failed to remove provider API key', err);
     } finally {
       setIsSaving(false);
     }
@@ -158,7 +159,7 @@ export const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({ onKeyChange }) =
       setNcbiSuccess(trimmed.length > 0 ? t('apikey.ncbi.saved') : t('apikey.ncbi.removed'));
     } catch (err) {
       setNcbiError(t('apikey.ncbi.save_failed'));
-      console.error(err);
+      safeLogError('Failed to save NCBI API key', err);
     } finally {
       setIsNcbiSaving(false);
     }
@@ -175,7 +176,7 @@ export const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({ onKeyChange }) =
       setNcbiSuccess(t('apikey.ncbi.removed'));
     } catch (err) {
       setNcbiError(t('apikey.ncbi.remove_failed'));
-      console.error(err);
+      safeLogError('Failed to remove NCBI API key', err);
     } finally {
       setIsNcbiSaving(false);
     }

@@ -14,6 +14,7 @@ import themeReducer, { setTheme, cycleTheme } from './slices/themeSlice';
 import { researchApi } from './slices/apiSlice';
 import { geminiApi } from './slices/geminiApiSlice';
 import { saveSettings } from '../services/databaseService';
+import { safeLogError } from '../lib/safeLog';
 
 // --- Listener Middleware ---
 // Reacts to actions to trigger side effects (logging, notifications, etc.)
@@ -99,7 +100,7 @@ const persistenceMiddleware: Middleware<object, PersistedSettingsState> =
     ) {
       const state = store.getState();
       saveSettings(state.settings.data).catch((err) =>
-        console.error('Failed to persist settings:', err),
+        safeLogError('Failed to persist settings:', err),
       );
     }
     return result;

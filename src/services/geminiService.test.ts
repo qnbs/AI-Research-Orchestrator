@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { ResearchInput, Settings } from '../types';
+import * as safeLog from '../lib/safeLog';
 import {
   generateAuthorQuery,
   parseGeminiResponseJson,
@@ -508,5 +509,79 @@ describe('geminiService with mocked SDK', () => {
     });
     const profile = await generateJournalProfileAnalysis('Journal X', mockAi);
     expect(profile.issn).toBe('1234-5678');
+  });
+
+  describe('safeLogError on provider failures (P1-5)', () => {
+    let safeLogErrorSpy: ReturnType<typeof vi.spyOn>;
+
+    beforeEach(() => {
+      safeLogErrorSpy = vi.spyOn(safeLog, 'safeLogError').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      safeLogErrorSpy.mockRestore();
+    });
+
+    it('logs and maps findSimilarArticles errors', async () => {
+      hoisted.generateContent.mockRejectedValueOnce(new Error('similar fail'));
+      await expect(findSimilarArticles({ title: 't', summary: 's' }, mockAi)).rejects.toThrow();
+      expect(safeLogErrorSpy).toHaveBeenCalledWith(
+        'Error finding similar articles:',
+        expect.any(Error),
+      );
+    });
+
+    it('logs and maps generateResearchAnalysis errors', async () => {
+      hoisted.generateContent.mockRejectedValueOnce(new Error('analysis fail'));
+      await expect(generateResearchAnalysis('text', mockAi)).rejects.toThrow();
+      expect(safeLogErrorSpy).toHaveBeenCalledWith(
+        'Error generating research analysis:',
+        expect.any(Error),
+      );
+    });
+
+    it('logs and maps generateTldrSummary errors when live', async () => {
+      hoisted.generateContent.mockRejectedValueOnce(new Error('tldr fail'));
+      await expect(generateTldrSummary('abstract', mockAi)).rejects.toThrow();
+      expect(safeLogErrorSpy).toHaveBeenCalledWith(
+        'Error generating TL;DR summary:',
+        expect.any(Error),
+      );
+    });
+
+    it('logs and maps findRelatedOnline errors', async () => {
+      hoisted.generateContent.mockRejectedValueOnce(new Error('online fail'));
+      await expect(findRelatedOnline('topic', mockAi)).rejects.toThrow();
+      expect(safeLogErrorSpy).toHaveBeenCalledWith(
+        'Error finding related online content:',
+        expect.any(Error),
+      );
+    });
+
+    it('logs and maps disambiguateAuthor errors', async () => {
+      hoisted.generateContent.mockRejectedValueOnce(new Error('author fail'));
+      await expect(
+        disambiguateAuthor('Name', [{ pmid: '1', title: 'T' }], mockAi),
+      ).rejects.toThrow();
+      expect(safeLogErrorSpy).toHaveBeenCalledWith(
+        'Error disambiguating author:',
+        expect.any(Error),
+      );
+    });
+
+    it('logs and maps suggestAuthors errors', async () => {
+      hoisted.generateContent.mockRejectedValueOnce(new Error('suggest fail'));
+      await expect(suggestAuthors('biology', mockAi)).rejects.toThrow();
+      expect(safeLogErrorSpy).toHaveBeenCalledWith('Error suggesting authors:', expect.any(Error));
+    });
+
+    it('logs and maps generateJournalProfileAnalysis errors', async () => {
+      hoisted.generateContent.mockRejectedValueOnce(new Error('journal fail'));
+      await expect(generateJournalProfileAnalysis('Journal X', mockAi)).rejects.toThrow();
+      expect(safeLogErrorSpy).toHaveBeenCalledWith(
+        'Error generating journal profile analysis:',
+        expect.any(Error),
+      );
+    });
   });
 });

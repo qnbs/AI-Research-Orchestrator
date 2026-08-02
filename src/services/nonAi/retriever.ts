@@ -10,6 +10,7 @@ import { searchAndFetchArxiv } from '../arxivUtils';
 import { getNcbiApiKey } from '../apiKeyService';
 import { AppError, toAppError, isAbortError } from '../../lib/errors';
 import { withCircuitBreaker } from '../../lib/circuitBreaker';
+import { safeLogWarn } from '../../lib/safeLog';
 
 /** Retrieval options. */
 export interface RetrievalOptions {
@@ -68,7 +69,7 @@ export async function retrieveArticles(
     } catch (error) {
       if (isAbortError(error)) throw toAppError(error, 'pubmed');
       // Continue with other queries on failure
-      console.warn(`Query failed: ${builtQuery.query}`, error);
+      safeLogWarn(`Query failed: ${builtQuery.query}`, error);
     }
   }
 
@@ -102,7 +103,7 @@ export async function retrieveArticles(
       // Isolate this failure like the per-query search failures above — a details-fetch
       // error must not block arXiv retrieval; the caller falls back to demo data only
       // once every source (PubMed + arXiv) has come back empty.
-      console.warn('PubMed article-detail fetch failed:', error);
+      safeLogWarn('PubMed article-detail fetch failed:', error);
     }
   }
 
@@ -131,7 +132,7 @@ export async function retrieveArticles(
       }));
     } catch (error) {
       if (isAbortError(error)) throw toAppError(error, 'arxiv');
-      console.warn('arXiv search failed:', error);
+      safeLogWarn('arXiv search failed:', error);
     }
   }
 

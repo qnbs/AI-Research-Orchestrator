@@ -2,6 +2,7 @@ import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { ExclamationTriangleIcon } from './icons/ExclamationTriangleIcon';
 import { translateSync } from '../i18n/translate';
 import type { TranslationKey } from '../i18n/translations';
+import { safeLogError } from '../lib/safeLog';
 
 interface Props {
   children: ReactNode;
@@ -26,7 +27,7 @@ export class FeatureErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    console.error(`[${translateSync(this.props.featureNameKey)}]`, error, errorInfo);
+    safeLogError(`[${translateSync(this.props.featureNameKey)}]`, error, errorInfo);
   }
 
   private handleRetry = (): void => {

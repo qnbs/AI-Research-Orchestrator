@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import type { ChatMessage, ResearchReport, Settings } from '../types';
 import { startChatWithReport, type ReportChatSession } from '../services/geminiService';
 import { useUI } from '../contexts/UIContext';
+import { safeLogError } from '../lib/safeLog';
 
 /**
  * Report-grounded chat session: initializes when a report reaches `done`,
@@ -52,7 +53,7 @@ export const useChat = (
           chatSessionRef.current = session;
         }
       } catch (error) {
-        console.error('Failed to initialize chat:', error);
+        safeLogError('Failed to initialize chat:', error);
         if (isMounted.current && !cancelled) {
           setNotification({
             id: Date.now(),

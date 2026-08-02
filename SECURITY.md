@@ -55,6 +55,7 @@ Custom endpoints require explicit user approval of the destination **origin** an
 - CSV formula-injection sanitization on export.
 - `AbortSignal` propagated to provider network requests.
 - CI: `pnpm audit`, CodeQL, Dependency Review, secret scanning (gitleaks).
+- Application logging uses `safeLogError` / `safeLogWarn` (`src/lib/safeLog.ts`) with automatic redaction of API-key-shaped strings; CI `check:log-redaction` blocks raw `console.*` in `src/`.
 
 ### Residual Risks
 

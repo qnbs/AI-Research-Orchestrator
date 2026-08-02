@@ -30,6 +30,7 @@ import {
   Tooltip as RechartsTooltip,
   ResponsiveContainer,
 } from 'recharts';
+import { safeLogError } from '../lib/safeLog';
 
 interface ReportDisplayProps {
   report: ResearchReport;
@@ -169,7 +170,7 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(function R
       try {
         exportToPdf(report, input, settings.export.pdf);
       } catch (e) {
-        console.error('PDF Export failed', e);
+        safeLogError('PDF Export failed', e);
       } finally {
         setIsExporting(false);
         setModalState(null);
@@ -188,7 +189,7 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(function R
         }));
         exportToCsv(aggregatedArticles, input.researchTopic, settings.export.csv);
       } catch (e) {
-        console.error('CSV Export failed', e);
+        safeLogError('CSV Export failed', e);
       } finally {
         setIsExporting(false);
         setModalState(null);
@@ -202,7 +203,7 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(function R
       try {
         exportInsightsToCsv(report.aiGeneratedInsights, input.researchTopic);
       } catch (e) {
-        console.error('Insights CSV Export failed', e);
+        safeLogError('Insights CSV Export failed', e);
       } finally {
         setIsExporting(false);
         setModalState(null);

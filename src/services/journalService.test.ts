@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import * as safeLog from '../lib/safeLog';
 import {
   disambiguateJournal,
   findArticlesInJournal,
@@ -90,9 +91,45 @@ describe('journalService', () => {
   });
 
   it('rethrows service errors for disambiguation and suggestions', async () => {
+    const safeLogErrorSpy = vi.spyOn(safeLog, 'safeLogError').mockImplementation(() => {});
     vi.mocked(gemini.disambiguateJournal).mockRejectedValue(new Error('boom'));
     await expect(disambiguateJournal('X', mockAiSettings)).rejects.toThrow('boom');
+    expect(safeLogErrorSpy).toHaveBeenCalledWith(
+      'Error in journal disambiguation service call:',
+      expect.any(Error),
+    );
     vi.mocked(gemini.suggestJournals).mockRejectedValue(new Error('boom'));
     await expect(suggestJournals('X', mockAiSettings)).rejects.toThrow('boom');
+    expect(safeLogErrorSpy).toHaveBeenCalledWith(
+      'Error in journal suggestion service call:',
+      expect.any(Error),
+    );
+    safeLogErrorSpy.mockRestore();
+  });
+
+  it('logs PubMed failures from findArticlesInJournal', async () => {
+    const safeLogErrorSpy = vi.spyOn(safeLog, 'safeLogError').mockImplementation(() => {});
+    vi.mocked(pubmed.searchPubMedForIds).mockRejectedValueOnce(new Error('pubmed down'));
+    await expect(findArticlesInJournal('Nature', 'crispr', true)).rejects.toThrow('pubmed down');
+    expect(safeLogErrorSpy).toHaveBeenCalledWith(
+      'Error finding articles in journal:',
+      expect.any(Error),
+    );
+    safeLogErrorSpy.mockRestore();
+  });
+
+  it('logs profile generation failures', async () => {
+    const safeLogErrorSpy = vi.spyOn(safeLog, 'safeLogError').mockImplementation(() => {});
+    vi.mocked(gemini.generateJournalProfileAnalysis).mockRejectedValueOnce(
+      new Error('profile fail'),
+    );
+    await expect(generateJournalProfileAnalysis('Nature', mockAiSettings)).rejects.toThrow(
+      'profile fail',
+    );
+    expect(safeLogErrorSpy).toHaveBeenCalledWith(
+      'Error in journal profile generation service call:',
+      expect.any(Error),
+    );
+    safeLogErrorSpy.mockRestore();
   });
 });

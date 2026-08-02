@@ -16,6 +16,7 @@ import {
 import { saveNcbiApiKey } from '../services/apiKeyService';
 import type { AIProviderSelection } from '../services/providers/types';
 import { getProviderMeta } from '../services/providers/provider';
+import { safeLogError } from '../lib/safeLog';
 
 const VALID_PROVIDERS: AIProviderSelection[] = [
   'gemini',
@@ -97,7 +98,7 @@ export function SettingsHydrator(): null {
           await saveSettingsToDb(mergedSettings);
         }
       } catch (error) {
-        console.error('Failed to load settings from IndexedDB', error);
+        safeLogError('Failed to load settings from IndexedDB', error);
       } finally {
         if (!cancelled) dispatch(setLoading(false));
       }

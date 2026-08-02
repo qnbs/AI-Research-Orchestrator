@@ -8,6 +8,7 @@ import { db } from '../../services/databaseService';
 import { useTranslation } from '../../hooks/useTranslation';
 import { exportHistoryToJson, exportKnowledgeBaseToJson } from '../../services/exportService';
 import { isKnowledgeBaseEntry } from '../../lib/knowledgeBaseValidation';
+import { safeLogError } from '../../lib/safeLog';
 
 const isObject = (item: unknown): item is Record<string, unknown> => {
   return item !== null && typeof item === 'object' && !Array.isArray(item);
@@ -241,7 +242,7 @@ export const useSettingsViewLogic = (
             });
           }
         } catch (error) {
-          console.error('Knowledge Base import failed:', error);
+          safeLogError('Knowledge Base import failed:', error);
           setNotification({
             id: Date.now(),
             message: t('settings.toast.import_failed'),
@@ -313,7 +314,7 @@ export const useSettingsViewLogic = (
           }
           handleConfirmImportSettings(importedSettings);
         } catch (error) {
-          console.error('Settings import failed:', error);
+          safeLogError('Settings import failed:', error);
           setNotification({
             id: Date.now(),
             message: t('settings.toast.import_failed'),

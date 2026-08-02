@@ -57,7 +57,7 @@
 | P1-1      | P1       | Docs                 | `SECURITY.md` stale (0.1–0.2 only, Gemini-only assets)                                    | **Fixed**    | Updated `SECURITY.md`                                                        | Manual review                                                              |
 | P1-2      | P1       | Agent docs           | Version/path drift                                                                        | **Deferred** | ADRs + audit; canonical manifest still `AGENTS.md`                           | Follow-up                                                                  |
 | P1-3      | P1       | Coverage             | Critical-path thresholds                                                                  | **Fixed**    | `check:coverage-floors` ratchet for providers/, geminiService, apiKeyService | `scripts/check-coverage-floors.mjs`                                        |
-| P1-4–P1-8 | P1       | Various              | Retrieval validation, logging, PWA matrix, CI, governance                                 | **Deferred** | Tracked below                                                                | —                                                                          |
+| P1-4–P1-8 | P1       | Various              | Retrieval validation, logging, PWA matrix, CI, governance                                 | **Partial**  | P1-3/P1-5 landed; P1-6/P1-7 open                                             | —                                                                          |
 
 ## Deep-review answers (verified scope)
 
@@ -86,9 +86,10 @@
 
 1. **P0-3 completion:** structured `GroundedSynthesis` schema + export/persistence validation.
 2. **P1-3:** per-directory coverage floors for `providers/`, `geminiService.ts`, `apiKeyService.ts` — **landed** (`check:coverage-floors`).
-3. **P1-6:** Firefox/WebKit/mobile Playwright matrix with promotion criteria.
-4. **P1-7:** SonarQube blocking gate evaluation; moderate `pnpm audit` governance doc.
-5. **P1-2:** automated docs/config drift check (Node, pnpm, Vite, blocking E2E status).
+3. **P1-5:** logging redaction — **landed** (`safeLog`, `check:log-redaction`).
+4. **P1-6:** Firefox/WebKit/mobile Playwright matrix with promotion criteria.
+5. **P1-7:** SonarQube blocking gate evaluation; moderate `pnpm audit` governance doc.
+6. **P1-2:** automated docs/config drift check — **landed** (`check:docs-drift`).
 
 ## Commands for maintainer re-verification
 

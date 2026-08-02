@@ -18,6 +18,7 @@ import { generateResearchReport, streamSynthesisChunks } from './synthesizer';
 import { selectDemoArticlesForTopic } from './sampleData';
 import { AppError } from '../../lib/errors';
 import { throwIfAborted } from './utils';
+import { safeLogWarn } from '../../lib/safeLog';
 
 export type NonAiStreamEvent = {
   report?: ResearchReport;
@@ -81,7 +82,7 @@ export async function* generateNonAiResearchReportStream(
       curated = enrichArticles(mergeAndCurate(retrieval.pubmedArticles, retrieval.arxivArticles));
     } catch (error) {
       if (error instanceof AppError && error.code === 'STREAM_ABORTED') throw error;
-      console.warn('Non-AI retrieval failed, falling back to demo corpus:', error);
+      safeLogWarn('Non-AI retrieval failed, falling back to demo corpus:', error);
       yield { phase: phase('PubMed/arXiv unavailable — using local demo corpus...') };
     }
   } else {
