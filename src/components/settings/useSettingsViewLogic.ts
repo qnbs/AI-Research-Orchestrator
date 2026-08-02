@@ -162,10 +162,12 @@ export const useSettingsViewLogic = (
     const customUrl = tempSettings.ai.customBaseUrl?.trim();
     if (customUrl) {
       const parsed = validateCustomEndpointUrl(customUrl);
-      if (parsed.ok && isOriginCspAllowed(parsed.origin)) {
-        if (tempSettings.ai.approvedEndpointOrigin !== parsed.origin) {
-          next.endpoint = t('settings.error.endpoint_not_approved');
-        }
+      if (!parsed.ok) {
+        next.endpoint = t('settings.ai.base_url_invalid', { reason: parsed.reason });
+      } else if (!isOriginCspAllowed(parsed.origin)) {
+        next.endpoint = t('settings.ai.base_url_csp_blocked', { origin: parsed.origin });
+      } else if (tempSettings.ai.approvedEndpointOrigin !== parsed.origin) {
+        next.endpoint = t('settings.error.endpoint_not_approved');
       }
     }
     return next;

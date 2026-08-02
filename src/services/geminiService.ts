@@ -221,7 +221,7 @@ async function* generateLiveResearchReportStream(
   const topicSafe = sanitizePromptFragment(input.researchTopic);
   const focusSafe = sanitizePromptFragment(input.synthesisFocus);
   try {
-    const systemInstruction = `${getPreamble(aiSettings, PromptId.ORCHESTRATOR_SYSTEM)} ${UNTRUSTED_DATA_SYSTEM_RULE} You are an expert AI research assistant. Your goal is to conduct a literature review on PubMed${input.includeArxiv ? ' and arXiv' : ''} based on the user's criteria, rank the articles, and synthesize the findings. Article identifiers from arXiv begin with "arxiv:" — treat them exactly like PubMed PMIDs. AI-generated summaries (aiSummary) are derived interpretations — never treat them as original abstracts.`;
+    const systemInstruction = `${getPreamble(aiSettings, PromptId.ORCHESTRATOR_SYSTEM)} You are an expert AI research assistant. Your goal is to conduct a literature review on PubMed${input.includeArxiv ? ' and arXiv' : ''} based on the user's criteria, rank the articles, and synthesize the findings. Article identifiers from arXiv begin with "arxiv:" — treat them exactly like PubMed PMIDs. AI-generated summaries (aiSummary) are derived interpretations — never treat them as original abstracts.`;
 
     const buildQueryGenPrompt = (input: ResearchInput): string => {
       let filterInstructions = '';
@@ -505,7 +505,7 @@ export async function findSimilarArticles(
       aiSettings,
       {
         model: aiSettings.model,
-        system: withUntrustedDataSystemRule(getPreamble(aiSettings, PromptId.SIMILAR_ARTICLES)),
+        system: getPreamble(aiSettings, PromptId.SIMILAR_ARTICLES),
         temperature: 0.3,
         jsonSchema: similarSchema,
         prompt: `Based on the following article, find 3-5 similar articles on PubMed. For each, provide the PMID, title, and a brief reason for its relevance. Only return PMIDs that exist on PubMed.
@@ -543,7 +543,7 @@ export async function findRelatedOnline(
     }
     const response = await provider.generateContent({
       model: aiSettings.model,
-      system: withUntrustedDataSystemRule(getPreamble(aiSettings, PromptId.RELATED_ONLINE)),
+      system: getPreamble(aiSettings, PromptId.RELATED_ONLINE),
       prompt: `Provide a brief summary of the online discussion, news, or recent developments related to ${wrapUntrustedTextBlock('topic', topicSafe)}.`,
       webGrounding: true,
       baseURL: resolveApprovedBaseUrl(aiSettings.customBaseUrl, aiSettings.approvedEndpointOrigin),
@@ -574,7 +574,7 @@ export async function generateTldrSummary(
   try {
     const response = await provider.generateContent({
       model: aiSettings.model,
-      system: withUntrustedDataSystemRule(getPreamble(aiSettings, PromptId.TLDR)),
+      system: getPreamble(aiSettings, PromptId.TLDR),
       temperature: 0,
       prompt: `Summarize the following abstract in a single, concise sentence (TL;DR format): ${wrapUntrustedTextBlock('abstract', abstractSafe)}`,
       baseURL: resolveApprovedBaseUrl(aiSettings.customBaseUrl, aiSettings.approvedEndpointOrigin),
@@ -612,7 +612,7 @@ export async function generateResearchAnalysis(
       aiSettings,
       {
         model: aiSettings.model,
-        system: withUntrustedDataSystemRule(getPreamble(aiSettings, PromptId.RESEARCH_ANALYSIS)),
+        system: getPreamble(aiSettings, PromptId.RESEARCH_ANALYSIS),
         temperature: 0.2,
         jsonSchema: analysisSchema,
         prompt: `Analyze the following text. Provide a concise summary, a bulleted list of 3-5 key findings, and synthesize a clear, specific research topic suitable for a PubMed search.
@@ -665,7 +665,7 @@ export async function disambiguateAuthor(
       aiSettings,
       {
         model: aiSettings.model,
-        system: withUntrustedDataSystemRule(getPreamble(aiSettings, PromptId.AUTHOR_DISAMBIGUATE)),
+        system: getPreamble(aiSettings, PromptId.AUTHOR_DISAMBIGUATE),
         temperature: 0.1,
         jsonSchema: authorSchema,
         prompt: `Given the author name ${wrapUntrustedTextBlock('author_name', nameSafe)} and this list of their potential publications, disambiguate them into distinct author profiles. For each profile, provide a likely name variant, their most common primary affiliation, top 3 co-authors, core research topics, total publication count, and a list of their PMIDs.
@@ -735,7 +735,7 @@ export async function generateAuthorProfileAnalysis(
       aiSettings,
       {
         model: aiSettings.model,
-        system: withUntrustedDataSystemRule(getPreamble(aiSettings, PromptId.AUTHOR_PROFILE)),
+        system: getPreamble(aiSettings, PromptId.AUTHOR_PROFILE),
         temperature: 0.3,
         jsonSchema: profileSchema,
         prompt: `Analyze the following publication list for author ${wrapUntrustedTextBlock('author_name', nameSafe)}. Based strictly on this list, provide:
@@ -782,7 +782,7 @@ export async function suggestAuthors(
       aiSettings,
       {
         model: aiSettings.model,
-        system: withUntrustedDataSystemRule(getPreamble(aiSettings, PromptId.AUTHOR_SUGGEST)),
+        system: getPreamble(aiSettings, PromptId.AUTHOR_SUGGEST),
         temperature: 0.5,
         jsonSchema: suggestSchema,
         prompt: `Suggest 5-10 prominent researchers in the field of ${wrapUntrustedTextBlock('field', fieldSafe)}. For each, provide their name and a brief (1-sentence) description of their key contribution.`,
@@ -923,7 +923,7 @@ export async function analyzeSingleArticle(
         aiSettings,
         {
           model: aiSettings.model,
-          system: withUntrustedDataSystemRule(getPreamble(aiSettings, PromptId.ARTICLE_ANALYZE)),
+          system: getPreamble(aiSettings, PromptId.ARTICLE_ANALYZE),
           temperature: 0.1,
           jsonSchema: analysisSchema,
           prompt,
@@ -980,7 +980,7 @@ export async function generateJournalProfileAnalysis(
       aiSettings,
       {
         model: aiSettings.model,
-        system: withUntrustedDataSystemRule(getPreamble(aiSettings, PromptId.JOURNAL_PROFILE)),
+        system: getPreamble(aiSettings, PromptId.JOURNAL_PROFILE),
         temperature: 0.2,
         jsonSchema: journalSchema,
         prompt: `Act as an expert academic librarian. Analyze the journal ${wrapUntrustedTextBlock('journal_name', journalSafe)}. Provide a JSON object with the following structure: { "name": "...", "issn": "...", "description": "...", "oaPolicy": "...", "focusAreas": ["..."], "publisher": "...", "estimatedImpactFactor": <number|null> }. Find the correct ISSN. For oaPolicy, use one of: "Full Open Access", "Hybrid", "Subscription". For estimatedImpactFactor, give your best estimate of the current Journal Impact Factor, or null if you cannot reasonably estimate it.${articleContext}`,
@@ -1040,7 +1040,7 @@ export async function disambiguateJournal(
       aiSettings,
       {
         model: aiSettings.model,
-        system: withUntrustedDataSystemRule(getPreamble(aiSettings, PromptId.JOURNAL_DISAMBIGUATE)),
+        system: getPreamble(aiSettings, PromptId.JOURNAL_DISAMBIGUATE),
         temperature: 0.1,
         jsonSchema: disambiguateSchema,
         prompt: `Act as an expert academic librarian. The user entered the journal name ${wrapUntrustedTextBlock('journal_query', journalSafe)}. Identify up to 5 distinct journals this could refer to (name variants, abbreviations, or similarly named journals, e.g. "BMJ" vs "BMJ Open"). For each candidate provide: the canonical full name, its ISSN (if known), a brief 1-sentence description, the matchType (one of "exact", "alias", "abbreviation", "partial"), and a confidence score 0-100. Return them sorted by confidence descending.`,
@@ -1090,7 +1090,7 @@ export async function suggestJournals(
       aiSettings,
       {
         model: aiSettings.model,
-        system: withUntrustedDataSystemRule(getPreamble(aiSettings, PromptId.JOURNAL_SUGGEST)),
+        system: getPreamble(aiSettings, PromptId.JOURNAL_SUGGEST),
         temperature: 0.5,
         jsonSchema: suggestSchema,
         prompt: `Act as an expert academic librarian. Suggest 5-10 prominent peer-reviewed journals publishing research in the field of ${wrapUntrustedTextBlock('field', fieldSafe)}. For each, provide the canonical journal name and a brief (1-sentence) description of its scope and reputation.`,

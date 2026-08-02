@@ -57,7 +57,8 @@
 | P1-1      | P1       | Docs                 | `SECURITY.md` stale (0.1–0.2 only, Gemini-only assets)                                    | **Fixed**    | Updated `SECURITY.md`                                                                                      | Manual review                                                                 |
 | P1-2      | P1       | Agent docs           | Version/path drift                                                                        | **Deferred** | ADRs + audit; canonical manifest still `AGENTS.md`                                                         | Follow-up                                                                     |
 | P1-3      | P1       | Coverage             | Critical-path thresholds                                                                  | **Fixed**    | `check:coverage-floors` ratchet for providers/, geminiService, apiKeyService                               | `scripts/check-coverage-floors.mjs`                                           |
-| P1-4–P1-8 | P1       | Various              | Retrieval validation, logging, PWA matrix, CI, governance                                 | **Partial**  | P1-3/P1-4/P1-5/P1-6/P1-7 landed; P1-2 deferred (docs drift via ADR)                                        | `check:agent-eval`, `liveOrchestratorEval.ts`                                 |
+| P1-4      | P1       | Retrieval validation | Offline harness for query/corpus grounding                                                | **Fixed**    | `check:agent-eval`, `liveOrchestratorEval`, PubMed query gate in orchestrator                              | `liveOrchestratorEval.test.ts`, `agentEval.test.ts`                           |
+| P1-5–P1-8 | P1       | Various              | Logging, PWA matrix, CI, governance                                                       | **Fixed**    | P1-5/P1-6/P1-7 landed; P1-2 deferred (docs drift via ADR)                                                  | `check:log-redaction`, `e2e-cross-browser.yml`                                |
 
 ## Deep-review answers (verified scope)
 
@@ -88,14 +89,15 @@
 4. **P1-5:** logging redaction — **landed** (`safeLog`, `check:log-redaction`).
 5. **P1-6:** cross-browser E2E matrix — **landed** (`e2e-cross-browser.yml`).
 6. **P1-7:** governance docs — **landed** (`docs/audit-governance.md`).
-7. **P1-2:** automated docs/config drift — **landed** (`check:docs-drift`).
+7. **P1-2:** automated docs/config drift — **deferred** (partial via `check:docs-drift`; ADR follow-up).
 
 ## Commands for maintainer re-verification
 
 ```bash
-git checkout cursor/full-scale-audit-remediation-0b69
+git checkout cursor/p0-p1-audit-completion-0b69
 pnpm install --frozen-lockfile
 pnpm run typecheck && pnpm run lint && pnpm run i18n:ratchet
+pnpm run check:docs-drift && pnpm run check:csp-endpoint-drift && pnpm run check:agent-eval
 pnpm run test:coverage && pnpm run build && pnpm run bundle:budget
 pnpm run check:no-cdn-scripts && pnpm run check:workbox-vendor-drift && pnpm run check:contrast
 pnpm audit --audit-level=high
