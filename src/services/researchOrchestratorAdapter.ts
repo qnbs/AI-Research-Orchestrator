@@ -31,6 +31,8 @@ type LiveStream = (
 
 /**
  * Mode-aware research stream: heuristic when no key / offline / forced; otherwise live.
+ * Explicit educational demo always routes to the Non-AI engine (ADR 0016) so the
+ * synthetic corpus is never mixed with a live PubMed/arXiv provider run.
  */
 export async function* generateResearchReportStreamWithMode(
   input: ResearchInput,
@@ -38,7 +40,7 @@ export async function* generateResearchReportStreamWithMode(
   liveStream: LiveStream,
   signal?: AbortSignal,
 ): AsyncGenerator<ResearchStreamEvent> {
-  if (await shouldUseHeuristic(aiSettings)) {
+  if (input.educationalDemoMode || (await shouldUseHeuristic(aiSettings))) {
     yield* generateNonAiResearchReportStream(input, signal);
     return;
   }

@@ -146,13 +146,14 @@ db.version(6)
           e.articles = e.articles.map((a) => stampDemoArticle(a));
         }
         if (e.sourceType === 'research' && e.report) {
-          if (Array.isArray(e.report.rankedArticles)) {
-            e.report.rankedArticles = e.report.rankedArticles.map((a) => stampDemoArticle(a));
-          }
+          const ranked = Array.isArray(e.report.rankedArticles) ? e.report.rankedArticles : [];
+          e.report.rankedArticles = ranked.map((a) => stampDemoArticle(a));
           const allDemo =
             e.report.rankedArticles.length > 0 &&
             e.report.rankedArticles.every(
-              (a) => a.sourceClass === 'demo-synthetic' || a.pmid.startsWith('demo:'),
+              (a) =>
+                a.sourceClass === 'demo-synthetic' ||
+                (typeof a.pmid === 'string' && a.pmid.startsWith('demo:')),
             );
           if (allDemo) {
             e.report.corpusClass = 'demo-only';
@@ -177,16 +178,25 @@ db.version(6)
     await checkpointTable.toCollection().modify((checkpoint) => {
       try {
         const ckpt = checkpoint as ResearchCheckpoint;
-        if (!ckpt.report?.rankedArticles) return;
-        ckpt.report.rankedArticles = ckpt.report.rankedArticles.map((a) => stampDemoArticle(a));
+        if (!ckpt.report) return;
+        const ranked = Array.isArray(ckpt.report.rankedArticles) ? ckpt.report.rankedArticles : [];
+        ckpt.report.rankedArticles = ranked.map((a) => stampDemoArticle(a));
         const allDemo =
           ckpt.report.rankedArticles.length > 0 &&
           ckpt.report.rankedArticles.every(
-            (a) => a.sourceClass === 'demo-synthetic' || a.pmid.startsWith('demo:'),
+            (a) =>
+              a.sourceClass === 'demo-synthetic' ||
+              (typeof a.pmid === 'string' && a.pmid.startsWith('demo:')),
           );
         if (allDemo) {
           ckpt.report.corpusClass = 'demo-only';
           ckpt.report.retrievalOutcome = 'educational_demo';
+          if (ckpt.report.groundedSynthesis?.trustLevel === 'verified') {
+            ckpt.report.groundedSynthesis = {
+              ...ckpt.report.groundedSynthesis,
+              trustLevel: 'narrative-draft',
+            };
+          }
         }
       } catch (err) {
         safeLogError('Dexie v6: skip checkpoint demo stamp', err);

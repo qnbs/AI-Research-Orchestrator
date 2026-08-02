@@ -14,6 +14,8 @@ That path made educational fixtures indistinguishable from retrieved literature 
 
 1. Introduce `ArticleSourceClass` and `ReportCorpusClass` on articles/reports.
 2. Require explicit `ResearchInput.educationalDemoMode` to load the synthetic demo corpus.
+   The orchestrator adapter always routes educational-demo runs through the Non-AI engine
+   (never a live provider), regardless of API-key / online status.
 3. Empty retrieval, retrieval failure, and offline-without-demo produce an `empty-retrieval` report — never silent demo substitution.
 4. Demo reports use honest synthesis language, `Demo ID` labels (no PubMed URLs), permanent UI/export watermark, and never a `verified` trust label.
 5. Dexie schema v6 migrates persisted `demo:*` rows to `sourceClass: demo-synthetic` / `corpusClass: demo-only`.
