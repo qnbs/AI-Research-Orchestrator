@@ -132,6 +132,7 @@ describe('export helpers', () => {
         dexieSchemaVersion: number;
         swCacheVersion: string;
         type: string;
+        exportDate: string;
       };
     };
     expect(parsed.meta.type).toBe('history');
