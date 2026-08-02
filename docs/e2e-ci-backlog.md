@@ -50,13 +50,13 @@ Track progress in this file when a browser is promoted.
 
 **Full-suite expansion (step 2):** landed in PR [#192](https://github.com/qnbs/AI-Research-Orchestrator/pull/192) (`3641108`) — cross-browser workflow runs the seven-spec Chromium parity list (`continue-on-error: true`). Next gate: **10 consecutive** full-suite greens per browser (**54 passed / 0 failed** in job logs; no flaky retries counted) before considering blocking promotion for that browser.
 
-**Full-suite streak (step 3, updated 2026-08-02):** first run after #192 merge (workflow `30763017376`):
+**Full-suite streak (step 3, updated 2026-08-02):** first run after #192 merge (`30763017376`), second on `998c408` push (`30763829012`):
 
-| Browser       | Run 1                                              | Streak toward 10×        |
-| ------------- | -------------------------------------------------- | ------------------------ |
-| Firefox       | 54 passed / 0 failed                               | 1/10                     |
-| mobile Chrome | 54 passed / 0 failed                               | 1/10                     |
-| WebKit        | 53 passed, **1 flaky** (`agent-flow` KB demo-data) | 0/10 — needs clean rerun |
+| Browser       | Run 1 (#192)                                       | Run 2 (`998c408`)             | Streak toward 10×      |
+| ------------- | -------------------------------------------------- | ----------------------------- | ---------------------- |
+| Firefox       | 54 passed / 0 failed                               | 54 passed / 0 failed          | **2/10**               |
+| mobile Chrome | 54 passed / 0 failed                               | 54 passed / 0 failed          | **2/10**               |
+| WebKit        | 53 passed, **1 flaky** (`agent-flow` KB demo-data) | 53 passed, **1 flaky** (same) | **0/10** — fix in #194 |
 
 Blocking Chromium `e2e.yml` remains **51 passed / 0 failed** per run.
 

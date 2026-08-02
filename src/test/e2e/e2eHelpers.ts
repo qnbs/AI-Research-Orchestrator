@@ -46,6 +46,57 @@ export async function navigateToView(page: Page, viewHash: string) {
   await page.waitForTimeout(1_500);
 }
 
+/**
+ * First-launch KB path: clear demo flags + KB table, reload, skip onboarding, wait for demo seed.
+ */
+export async function prepareFirstLaunchDemoKb(page: Page) {
+  await page.goto('/');
+  await page.waitForLoadState('domcontentloaded');
+
+  await page.evaluate(async () => {
+    try {
+      localStorage.removeItem('aro.demoDataSeeded');
+      localStorage.removeItem('aro.demoDataDismissed');
+    } catch {
+      /* ignore */
+    }
+
+    const db = await new Promise<IDBDatabase | null>((resolve) => {
+      const req = indexedDB.open('AIResearchAppDatabase');
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => resolve(null);
+    });
+    if (db?.objectStoreNames.contains('knowledgeBaseEntries')) {
+      await new Promise<void>((resolve) => {
+        const tx = db.transaction('knowledgeBaseEntries', 'readwrite');
+        tx.objectStore('knowledgeBaseEntries').clear();
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => resolve();
+      });
+    }
+    db?.close();
+  });
+
+  await page.reload({ waitUntil: 'domcontentloaded' });
+
+  const startBtn = page.getByRole('button', { name: /start researching/i });
+  const header = page.locator('header');
+  await Promise.race([
+    startBtn.waitFor({ state: 'visible', timeout: 15_000 }),
+    header.waitFor({ state: 'visible', timeout: 15_000 }),
+  ]);
+  if (await startBtn.isVisible().catch(() => false)) {
+    await startBtn.click();
+    await header.waitFor({ state: 'visible', timeout: 10_000 });
+  }
+
+  await page
+    .waitForFunction(() => localStorage.getItem('aro.demoDataSeeded') === '1', {
+      timeout: 20_000,
+    })
+    .catch(() => undefined);
+}
+
 /** Open Settings from header chrome (desktop icons or mobile overflow menu). */
 export async function openSettingsFromChrome(page: Page) {
   const viewport = page.viewportSize();

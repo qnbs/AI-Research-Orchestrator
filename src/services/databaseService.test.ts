@@ -10,8 +10,19 @@ import {
   deleteResearchCheckpoint,
   clearResearchCheckpoints,
   addEntry,
+  bulkAddEntries,
+  updateEntry,
+  deleteEntries,
+  clearAllEntries,
   bulkUpdateEntriesInTransaction,
   getAllEntries,
+  getAllPresets,
+  addPreset,
+  removePreset,
+  getAllCollections,
+  addCollection,
+  updateCollection,
+  deleteCollection,
 } from './databaseService';
 import { defaultSettings } from '../store/slices/settingsSlice';
 import { createResearchCheckpoint } from '../lib/researchCheckpoint';
@@ -122,5 +133,110 @@ describe('bulkUpdateEntriesInTransaction', () => {
 
     const entries = await getAllEntries();
     expect(entries.find((e) => e.id === 'a')?.title).toBe('Before');
+  });
+});
+
+describe('databaseService presets and collections', () => {
+  beforeEach(async () => {
+    await db.delete();
+    await db.open();
+  });
+
+  it('persists presets', async () => {
+    const preset = {
+      id: 'preset-1',
+      name: 'Cardio scan',
+      settings: {
+        researchTopic: 'heart failure',
+        dateRange: '5y' as const,
+        articleTypes: [],
+        synthesisFocus: 'overview' as const,
+        maxArticlesToScan: 10,
+        topNToSynthesize: 5,
+      },
+    };
+    await addPreset(preset);
+    const presets = await getAllPresets();
+    expect(presets).toHaveLength(1);
+    expect(presets[0]?.name).toBe('Cardio scan');
+    await removePreset('preset-1');
+    await expect(getAllPresets()).resolves.toEqual([]);
+  });
+
+  it('persists collections with updates and deletes', async () => {
+    const col = {
+      id: 'col-1',
+      name: 'Trial set',
+      description: 'Phase II',
+      color: '#336699',
+      icon: '📚',
+      entryIds: [],
+      articlePmids: [],
+      createdAt: 1,
+      updatedAt: 1,
+      tags: ['oncology'],
+    };
+    await addCollection(col);
+    await updateCollection('col-1', { name: 'Trial set v2', updatedAt: 2 });
+    const listed = await getAllCollections();
+    expect(listed[0]?.name).toBe('Trial set v2');
+    await deleteCollection('col-1');
+    await expect(getAllCollections()).resolves.toEqual([]);
+  });
+});
+
+describe('databaseService knowledge-base bulk ops', () => {
+  const makeEntry = (id: string, title: string) => ({
+    id,
+    timestamp: 1,
+    title,
+    sourceType: 'research' as const,
+    articles: [],
+    input: {
+      researchTopic: title,
+      dateRange: 'any' as const,
+      articleTypes: [],
+      synthesisFocus: 'overview' as const,
+      maxArticlesToScan: 10,
+      topNToSynthesize: 5,
+    },
+    report: {
+      generatedQueries: [],
+      rankedArticles: [],
+      synthesis: '',
+      aiGeneratedInsights: [],
+      overallKeywords: [],
+    },
+  });
+
+  beforeEach(async () => {
+    await db.delete();
+    await db.open();
+  });
+
+  it('bulkAddEntries inserts multiple rows', async () => {
+    await bulkAddEntries([makeEntry('x', 'X'), makeEntry('y', 'Y')]);
+    const entries = await getAllEntries();
+    expect(entries.map((e) => e.id).sort()).toEqual(['x', 'y']);
+  });
+
+  it('updateEntry patches a single entry', async () => {
+    await addEntry(makeEntry('u', 'Before'));
+    await updateEntry('u', { title: 'After' });
+    const entry = await getAllEntries();
+    expect(entry[0]?.title).toBe('After');
+  });
+
+  it('deleteEntries removes selected ids', async () => {
+    await bulkAddEntries([makeEntry('keep', 'Keep'), makeEntry('drop', 'Drop')]);
+    await deleteEntries(['drop']);
+    const ids = await getAllEntries().then((rows) => rows.map((r) => r.id));
+    expect(ids).toEqual(['keep']);
+  });
+
+  it('clearAllEntries wipes the table', async () => {
+    await addEntry(makeEntry('wipe', 'Wipe'));
+    await clearAllEntries();
+    await expect(getAllEntries()).resolves.toEqual([]);
   });
 });

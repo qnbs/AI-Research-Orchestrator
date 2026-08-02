@@ -5,7 +5,7 @@
  *         Knowledge Base, Command Palette, Settings, Mobile UX, Accessibility.
  */
 import { test, expect, Page, Route } from '@playwright/test';
-import { openHelpFromChrome, openSettingsFromChrome } from './e2eHelpers';
+import { openHelpFromChrome, openSettingsFromChrome, prepareFirstLaunchDemoKb } from './e2eHelpers';
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -325,70 +325,68 @@ test.describe('4. Full Agent Pipeline (mocked APIs)', () => {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 test.describe('5. Knowledge Base View', () => {
-  test.beforeEach(async ({ page }) => {
-    await skipOnboarding(page);
-  });
-
   test('KB shows demo data on first launch', async ({ page }) => {
+    await prepareFirstLaunchDemoKb(page);
     await navigateToView(page, '#knowledgeBase');
-    // Demo data seeds 5 articles on first launch. Service worker registration
-    // (register-sw.js, on window 'load') races this on a first-ever page
-    // load in CI; 20s gives IndexedDB hydration + demo seeding room without
-    // masking a real regression (the 60s budget below is for a heavier,
-    // multi-step test, not needed for this single assertion).
-    await expect(page.getByText(/5 Articles Found/i).first()).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText(/5 Articles Found/i).first()).toBeVisible({ timeout: 30_000 });
   });
 
-  test('KB shows empty-state message when no data saved', async ({ page }) => {
-    // Full reload + IndexedDB re-hydration is slower than this suite's other
-    // tests; the default 30s budget is too tight for that plus the waits below.
-    test.setTimeout(60_000);
-    // Clear seeded demo entries from IndexedDB and block re-seeding so the KB
-    // renders the true empty state (localStorage flags alone are not enough —
-    // demo entries were already persisted during app bootstrap).
-    await page.evaluate(async () => {
-      try {
-        localStorage.setItem('aro.demoDataSeeded', '1');
-        localStorage.setItem('aro.demoDataDismissed', '1');
-        const db = await new Promise<IDBDatabase | null>((resolve) => {
-          const req = indexedDB.open('AIResearchAppDatabase');
-          req.onsuccess = () => resolve(req.result);
-          req.onerror = () => resolve(null);
-        });
-        if (db && db.objectStoreNames.contains('knowledgeBaseEntries')) {
-          await new Promise<void>((resolve) => {
-            const tx = db.transaction('knowledgeBaseEntries', 'readwrite');
-            tx.objectStore('knowledgeBaseEntries').clear();
-            tx.oncomplete = () => resolve();
-            tx.onerror = () => resolve();
+  test.describe('with standard bootstrap', () => {
+    test.beforeEach(async ({ page }) => {
+      await skipOnboarding(page);
+    });
+
+    test('KB shows empty-state message when no data saved', async ({ page }) => {
+      // Full reload + IndexedDB re-hydration is slower than this suite's other
+      // tests; the default 30s budget is too tight for that plus the waits below.
+      test.setTimeout(60_000);
+      // Clear seeded demo entries from IndexedDB and block re-seeding so the KB
+      // renders the true empty state (localStorage flags alone are not enough —
+      // demo entries were already persisted during app bootstrap).
+      await page.evaluate(async () => {
+        try {
+          localStorage.setItem('aro.demoDataSeeded', '1');
+          localStorage.setItem('aro.demoDataDismissed', '1');
+          const db = await new Promise<IDBDatabase | null>((resolve) => {
+            const req = indexedDB.open('AIResearchAppDatabase');
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => resolve(null);
           });
+          if (db && db.objectStoreNames.contains('knowledgeBaseEntries')) {
+            await new Promise<void>((resolve) => {
+              const tx = db.transaction('knowledgeBaseEntries', 'readwrite');
+              tx.objectStore('knowledgeBaseEntries').clear();
+              tx.oncomplete = () => resolve();
+              tx.onerror = () => resolve();
+            });
+          }
+          db?.close();
+        } catch {
+          /* ignore */
         }
-        db?.close();
-      } catch {
-        /* ignore */
+      });
+      // Reload so Redux re-hydrates from the now-empty table.
+      await page.reload();
+      await page.locator('header').waitFor({ state: 'visible', timeout: 15_000 });
+      await navigateToView(page, '#knowledgeBase');
+      await expect(
+        page.getByText(/empty|no articles|save reports|start research/i).first(),
+      ).toBeVisible({ timeout: 10_000 });
+    });
+
+    test('KB sidebar is hidden on mobile', async ({ page }) => {
+      await page.setViewportSize({ width: 390, height: 844 });
+      await navigateToView(page, '#knowledgeBase');
+      const sidebar = page.locator('aside');
+      const count = await sidebar.count();
+      if (count > 0) {
+        await expect(sidebar.first())
+          .toBeHidden({ timeout: 3_000 })
+          .catch(() => {
+            // Soft pass — sidebar might not exist on mobile layout
+          });
       }
     });
-    // Reload so Redux re-hydrates from the now-empty table.
-    await page.reload();
-    await page.locator('header').waitFor({ state: 'visible', timeout: 15_000 });
-    await navigateToView(page, '#knowledgeBase');
-    await expect(
-      page.getByText(/empty|no articles|save reports|start research/i).first(),
-    ).toBeVisible({ timeout: 10_000 });
-  });
-
-  test('KB sidebar is hidden on mobile', async ({ page }) => {
-    await page.setViewportSize({ width: 390, height: 844 });
-    await navigateToView(page, '#knowledgeBase');
-    const sidebar = page.locator('aside');
-    const count = await sidebar.count();
-    if (count > 0) {
-      await expect(sidebar.first())
-        .toBeHidden({ timeout: 3_000 })
-        .catch(() => {
-          // Soft pass — sidebar might not exist on mobile layout
-        });
-    }
   });
 });
 
