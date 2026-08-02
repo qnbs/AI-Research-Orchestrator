@@ -44,9 +44,7 @@ describe('resolveApprovedBaseUrl', () => {
   });
 
   it('throws when custom URL is set but not approved', () => {
-    expect(() => resolveApprovedBaseUrl('https://api.openai.com/v1', undefined)).toThrow(
-      /not approved/i,
-    );
+    expect(() => resolveApprovedBaseUrl('https://api.openai.com/v1')).toThrow(/not approved/i);
     expect(() => resolveApprovedBaseUrl('https://api.openai.com/v1', '')).toThrow(/not approved/i);
   });
 

@@ -63,4 +63,15 @@ describe('sanitizeReportForExport', () => {
       { text: 'Valid claim', pmids: ['1'] },
     ]);
   });
+
+  it('strips uncited synthesis paragraphs on export', () => {
+    const report = baseReport();
+    report.synthesis =
+      'Cited finding (PMID: 1).\n\nUncited speculation without any PMID reference.';
+    const result = sanitizeReportForExport(report);
+    expect(result.sanitized).toBe(true);
+    expect(result.uncitedParagraphsRemoved).toBeGreaterThan(0);
+    expect(result.report.synthesis).toContain('PMID: 1');
+    expect(result.report.synthesis).not.toContain('Uncited speculation');
+  });
 });

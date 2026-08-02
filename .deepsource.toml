@@ -9,6 +9,5 @@ name = "javascript"
   module = "esm"
   exclude_patterns = [
     "eslint-local-rules/**",
-    "scripts/check-docs-drift.mjs",
-    "scripts/check-csp-endpoint-drift.mjs",
+    "scripts/**",
   ]

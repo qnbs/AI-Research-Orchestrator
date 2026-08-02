@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   buildGroundedSynthesisFromExtractive,
   extractGroundedClaimsFromMarkdown,
+  rebuildSynthesisFromClaims,
   sanitizeGroundedClaims,
   sanitizeGroundedSynthesis,
   sanitizeSynthesisForExport,
@@ -74,5 +75,36 @@ describe('sanitizeSynthesisForExport', () => {
     expect(cleaned).toContain('PMID: 1');
     expect(cleaned).not.toContain('Uncited speculation');
     expect(uncitedParagraphsRemoved).toBeGreaterThan(0);
+  });
+
+  it('prefers structured grounded claims over markdown extraction', () => {
+    const grounded = {
+      mode: 'narrative-extracted' as const,
+      claims: [{ text: 'Structured claim (PMID: 1).', pmids: ['1'] }],
+    };
+    const { synthesis: cleaned } = sanitizeSynthesisForExport(
+      'Uncited paragraph.\n\nAnother uncited block.',
+      grounded,
+      ['1'],
+    );
+    expect(cleaned).toBe('Structured claim (PMID: 1).');
+  });
+
+  it('returns original synthesis when no corpus-cited blocks exist', () => {
+    const synthesis = 'No citations here.';
+    const result = sanitizeSynthesisForExport(synthesis, undefined, ['1']);
+    expect(result.synthesis).toBe(synthesis);
+    expect(result.uncitedParagraphsRemoved).toBe(0);
+  });
+});
+
+describe('rebuildSynthesisFromClaims', () => {
+  it('joins claim text with blank lines', () => {
+    expect(
+      rebuildSynthesisFromClaims([
+        { text: 'First.', pmids: ['1'] },
+        { text: 'Second.', pmids: ['2'] },
+      ]),
+    ).toBe('First.\n\nSecond.');
   });
 });
