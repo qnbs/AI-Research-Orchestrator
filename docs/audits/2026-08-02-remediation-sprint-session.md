@@ -22,15 +22,15 @@ Workstream A (E2E WebKit KB demo) was **already landed** as #195 before this ses
 
 ### A — Cross-browser E2E
 
-| Item                    | Evidence                                                                                                                    |
-| ----------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| #195 merged             | `8ab0a26` on `main`                                                                                                         |
-| Clean baseline          | run `30767470525` / `022475d` — **54/0, no flaky** all browsers                                                             |
-| Firefox flaky (non-KB)  | `f6cdaed` / `30767766848` — Firefox **53 + 1 flaky** (`networkidle` a11y)                                                   |
-| Post-merge clean        | `8ab0a26` / `30768002841` — **54/0, no flaky** Firefox, WebKit, mobile Chrome                                               |
-| Streak (job logs)       | WebKit/mobile Chrome **10/10**; Firefox **1/10** after `e92dd0f` flaky then clean `f719553` / `30770674248`                 |
-| Firefox flake follow-up | #199 hardens shared `skipOnboarding` (**54/0** on its branch); `main`/docs PRs still hit old local helper until #199 merges |
-| Blocking promotion      | WebKit/mobile Chrome streak criterion met; **not** flipped yet — Firefox still rebuilding + maintainer approval             |
+| Item                    | Evidence                                                                                                                             |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| #195 merged             | `8ab0a26` on `main`                                                                                                                  |
+| Clean baseline          | run `30767470525` / `022475d` — **54/0, no flaky** all browsers                                                                      |
+| Firefox flaky (non-KB)  | `f6cdaed` / `30767766848` — Firefox **53 + 1 flaky** (`networkidle` a11y)                                                            |
+| Post-merge clean        | `8ab0a26` / `30768002841` — **54/0, no flaky** Firefox, WebKit, mobile Chrome                                                        |
+| Streak (job logs)       | WebKit/mobile Chrome **10/10**; Firefox **1/10** after `e92dd0f` flaky then clean `f719553` / `30770674248`                          |
+| Firefox flake follow-up | #199 hardens shared `skipOnboarding` (**54/0** on its branch); `main`/docs PRs still hit old local helper — #199 merged as `291acb7` |
+| Blocking promotion      | WebKit/mobile Chrome streak criterion met; **not** flipped yet — Firefox still rebuilding + maintainer approval                      |
 
 Tracked in `docs/e2e-ci-backlog.md` and `docs/audits/2026-08-02-p1-closeout.md` via #196.
 
@@ -41,7 +41,7 @@ Tracked in `docs/e2e-ci-backlog.md` and `docs/audits/2026-08-02-p1-closeout.md` 
 | #196 | **0**              | Greptile P2 resolved; CR APPROVED (earlier) + “Review completed” on latest; CodeAnt/DeepSource/Bugbot/CI green; FF flaky documented |
 | #197 | **0**              | CodeRabbit APPROVED on `9202f50`; CodeAnt/DeepSource/Bugbot green; Greptile no review (documented)                                  |
 | #198 | **0**              | CodeRabbit Fair Usage (re-requested); CodeAnt/DeepSource/Bugbot green; CI green                                                     |
-| #199 | **0**              | CodeRabbit Fair Usage (re-requested); CodeAnt/DeepSource/Bugbot green; CB **54/0** on `0cea8ef` — merge first                       |
+| #199 | **0**              | CodeRabbit Fair Usage (re-requested); CodeAnt/DeepSource/Bugbot green; CB **54/0** on `0cea8ef` — **merged** `291acb7`              |
 
 ### B — P1-9 test depth (#197)
 
@@ -77,7 +77,7 @@ CodeRabbit findings on #197 addressed in `9202f50` (hoisted mocks, exact checkpo
 ## Residual risks / next priorities
 
 1. **Cross-browser streak** — continue toward 10/10; watch Firefox `networkidle` a11y flake separately from KB demo.
-2. **Merge #196–#199** after review quiescence on latest commits (CR Fair Usage may delay #198/#199).
+2. **Merged** #199 → #197 → #198 → (this PR #196).
 3. **geminiService.ts file size** — still over the 700-line hard max (pre-existing); split in a dedicated PR.
 4. **Narrative synthesis epistemic limits** — unchanged (ADR 0012 / 0015); do not claim fully verified live UI synthesis.
 5. **Dependabot** — process opportunistic minors per rule 012 when new PRs open.
