@@ -1000,32 +1000,30 @@ export async function generateJournalProfileAnalysis(
         oaPolicy: { type: 'string' },
         focusAreas: { type: 'array', items: { type: 'string' } },
         publisher: { type: 'string' },
-        estimatedImpactFactor: { type: 'number', nullable: true },
       },
       required: ['name', 'issn', 'description', 'oaPolicy', 'focusAreas'],
     };
-    const parsed = await generateJson<JournalProfile & { estimatedImpactFactor?: number | null }>(
+    const profile = await generateJson<JournalProfile>(
       aiSettings,
       {
         model: aiSettings.model,
         system: getPreamble(aiSettings, PromptId.JOURNAL_PROFILE),
         temperature: 0.2,
         jsonSchema: journalSchema,
-        prompt: `Act as an expert academic librarian. Analyze the journal ${wrapUntrustedTextBlock('journal_name', journalSafe)}. Provide a JSON object with the following structure: { "name": "...", "issn": "...", "description": "...", "oaPolicy": "...", "focusAreas": ["..."], "publisher": "...", "estimatedImpactFactor": <number|null> }. Find the correct ISSN. For oaPolicy, use one of: "Full Open Access", "Hybrid", "Subscription". For estimatedImpactFactor, give your best estimate of the current Journal Impact Factor, or null if you cannot reasonably estimate it.${articleContext}`,
+        prompt: `Act as an expert academic librarian. Analyze the journal ${wrapUntrustedTextBlock('journal_name', journalSafe)}. Provide a JSON object with: name, issn, description, oaPolicy, focusAreas, publisher. Find the correct ISSN when possible. For oaPolicy, use one of: "Full Open Access", "Hybrid", "Subscription". Do not estimate Journal Impact Factor — external citation indexes are unavailable in this app.${articleContext}`,
       },
       signal,
     );
-    const { estimatedImpactFactor, ...profile } = parsed;
     return {
       ...profile,
       metrics: {
-        impactFactor: estimatedImpactFactor ?? null,
+        impactFactor: null,
         analyzedArticleCount: articles.length > 0 ? articles.length : null,
         openAccessRate:
           articles.length > 0
             ? Math.round((articles.filter((a) => a.isOpenAccess).length / articles.length) * 100)
             : null,
-        source: 'ai-estimated',
+        source: 'computed',
       },
     };
   } catch (error) {

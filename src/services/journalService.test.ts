@@ -37,6 +37,8 @@ describe('journalService', () => {
         keywords: [],
         relevanceScore: 0,
         relevanceExplanation: '',
+        isOpenAccess: true,
+        pmcId: 'PMC123',
       },
     ]);
   });
@@ -45,7 +47,30 @@ describe('journalService', () => {
     const articles = await findArticlesInJournal('Nature', 'crispr', true);
     expect(articles).toHaveLength(1);
     expect(articles[0].pmid).toBe('1');
-    expect(pubmed.searchPubMedForIds).toHaveBeenCalled();
+    expect(pubmed.searchPubMedForIds).toHaveBeenCalledWith(
+      expect.stringContaining('free full text[filter]'),
+      50,
+      undefined,
+    );
+  });
+
+  it('post-filters non-PMC OA articles when onlyOa is true', async () => {
+    vi.mocked(pubmed.fetchArticleDetails).mockResolvedValueOnce([
+      {
+        pmid: '2',
+        title: 'Closed',
+        summary: 'S',
+        authors: 'A',
+        journal: 'J',
+        pubYear: '2020',
+        keywords: [],
+        relevanceScore: 0,
+        relevanceExplanation: '',
+        isOpenAccess: false,
+      },
+    ]);
+    const articles = await findArticlesInJournal('Nature', 'crispr', true);
+    expect(articles).toHaveLength(0);
   });
 
   it('propagates AbortSignal to PubMed helpers', async () => {
