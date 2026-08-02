@@ -31,6 +31,8 @@ const MODULE_FLOORS = [
     min: { lines: 91, statements: 86, branches: 82, functions: 80 },
   },
 ];
+  },
+];
 
 const METRICS = ['lines', 'statements', 'branches', 'functions'];
 

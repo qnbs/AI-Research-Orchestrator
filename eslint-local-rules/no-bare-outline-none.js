@@ -129,6 +129,7 @@ const rule = {
   create(context) {
     function checkAttr(node) {
       if (node.name?.name !== 'className') return;
+    const checkAttr = (node) => {
       // Fast path: attribute text must mention outline-none somewhere
       const raw = context.sourceCode.getText(node.value);
       if (!raw.includes('outline-none')) return;
@@ -147,7 +148,7 @@ const rule = {
           return;
         }
       }
-    }
+    };
     return {
       JSXAttribute: checkAttr,
     };

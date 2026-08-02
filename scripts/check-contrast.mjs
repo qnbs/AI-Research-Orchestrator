@@ -29,7 +29,7 @@ const htmlPath = resolve(process.cwd(), 'index.html');
 // declaration regex would otherwise misparse as a real (fake) declaration,
 // swallowing the actual next real declaration as its "value" up to that
 // declaration's own terminating semicolon.
-const stripComments = (source) => source.replace(/\/\*[\s\S]*?\*\//g, '');
+const stripComments = (source) => { return source.replace(/\/\*[\s\S]*?\*\//g, ''); };
 const cssSource = stripComments(readFileSync(cssPath, 'utf-8'));
 const htmlSource = stripComments(readFileSync(htmlPath, 'utf-8'));
 
@@ -44,6 +44,7 @@ function hexToRgb(hex) {
   const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h;
   const num = parseInt(full, 16);
   return [(num >> 16) & 255, (num >> 8) & 255, num & 255];
+}
 }
 
 function parseColor(str) {
