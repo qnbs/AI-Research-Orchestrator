@@ -262,7 +262,7 @@ export function createDemoKnowledgeBaseEntries(): KnowledgeBaseEntry[] {
         hIndex: null,
         totalCitations: null,
         publicationCount: authorArticles.length,
-        citationsPerYear: {},
+        publicationsPerYear: { '2022': 1, '2023': 1 },
         publicationsAsFirstAuthor: 1,
         publicationsAsLastAuthor: 0,
       },

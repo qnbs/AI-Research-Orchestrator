@@ -17,6 +17,7 @@ import { useSettings } from '../../contexts/SettingsContext';
 import { useTranslation } from '../../hooks/useTranslation';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
+import { computePublicationsPerYear, isSameAuthorIdentity } from '../../lib/authorIdentity';
 
 const secureMarkdownToHtml = (text: string): string => {
   if (!text) return '';
@@ -73,14 +74,12 @@ export const AuthorProfileView: React.FC = () => {
   const topCoAuthors = useMemo(() => {
     if (!profile) return [];
     const authorCounts: Record<string, number> = {};
-    const mainNameParts = profile.name.toLowerCase().split(' ');
-    const mainLastName = mainNameParts[mainNameParts.length - 1];
 
     profile.publications.forEach((pub) => {
       const authors = pub.authors.split(', ');
       authors.forEach((auth) => {
         const cleanAuth = auth.trim();
-        if (cleanAuth && !cleanAuth.toLowerCase().includes(mainLastName)) {
+        if (cleanAuth && !isSameAuthorIdentity(cleanAuth, profile.name)) {
           authorCounts[cleanAuth] = (authorCounts[cleanAuth] || 0) + 1;
         }
       });
@@ -92,18 +91,25 @@ export const AuthorProfileView: React.FC = () => {
       .map(([name, count]) => ({ name, count }));
   }, [profile]);
 
+  const publicationTimeline = useMemo(() => {
+    if (!profile) return [];
+    const perYear =
+      Object.keys(profile.metrics.publicationsPerYear ?? {}).length > 0
+        ? profile.metrics.publicationsPerYear
+        : computePublicationsPerYear(profile.publications);
+    return Object.keys(perYear)
+      .sort()
+      .map((year) => ({
+        year,
+        publications: perYear[year],
+      }));
+  }, [profile]);
+
   if (!profile) return null;
 
   const isDarkMode = settings.theme === 'dark';
   const textColor = isDarkMode ? '#7d8590' : '#57606a';
   const gridColor = isDarkMode ? 'rgba(125, 133, 144, 0.1)' : 'rgba(87, 96, 106, 0.1)';
-
-  const citationTimeline = Object.keys(profile.metrics.citationsPerYear)
-    .sort()
-    .map((year) => ({
-      year,
-      citations: profile.metrics.citationsPerYear[year],
-    }));
 
   return (
     <div className="animate-fadeIn space-y-8 pt-2">
@@ -153,9 +159,11 @@ export const AuthorProfileView: React.FC = () => {
                 </div>
               </div>
               <div className="p-4 bg-background rounded-lg border border-border text-center">
-                <div className="text-3xl font-bold text-brand-accent">
-                  {profile.metrics.hIndex ?? t('authors.na')}
-                </div>
+                <Tooltip content={t('authors.profile.metrics.h_index_hint')}>
+                  <div className="text-3xl font-bold text-brand-accent">
+                    {profile.metrics.hIndex ?? t('authors.na')}
+                  </div>
+                </Tooltip>
                 <div className="text-xs font-medium text-text-secondary uppercase tracking-wide mt-1">
                   {t('authors.profile.metrics.h_index')}
                 </div>
@@ -251,13 +259,13 @@ export const AuthorProfileView: React.FC = () => {
 
             <div>
               <h3 className="text-xl font-bold text-text-primary mb-4">
-                {t('authors.profile.citation_timeline')}
+                {t('authors.profile.publication_timeline')}
               </h3>
               <div className="h-64 bg-background p-4 rounded-lg border border-border">
-                {citationTimeline.length > 0 ? (
+                {publicationTimeline.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
-                      data={citationTimeline}
+                      data={publicationTimeline}
                       margin={{ top: 8, right: 8, left: 0, bottom: 24 }}
                     >
                       <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
@@ -271,7 +279,7 @@ export const AuthorProfileView: React.FC = () => {
                       <YAxis
                         tick={{ fill: textColor, fontSize: 12 }}
                         label={{
-                          value: t('charts.citations'),
+                          value: t('charts.publications'),
                           angle: -90,
                           position: 'insideLeft',
                           fill: textColor,
@@ -279,15 +287,15 @@ export const AuthorProfileView: React.FC = () => {
                       />
                       <RechartsTooltip />
                       <Bar
-                        dataKey="citations"
-                        name={t('charts.citations')}
+                        dataKey="publications"
+                        name={t('charts.publications')}
                         fill="rgba(31, 111, 235, 0.75)"
                       />
                     </BarChart>
                   </ResponsiveContainer>
                 ) : (
                   <p className="h-full flex items-center justify-center text-sm text-text-secondary">
-                    {t('charts.no_citation_timeline')}
+                    {t('charts.no_publication_years')}
                   </p>
                 )}
               </div>

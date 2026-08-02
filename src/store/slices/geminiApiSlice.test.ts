@@ -17,7 +17,6 @@ const geminiMocks = vi.hoisted(() => ({
   generateAuthorProfileAnalysis: vi.fn().mockResolvedValue({
     careerSummary: '',
     coreConcepts: [],
-    estimatedMetrics: { hIndex: null, totalCitations: null },
   }),
   suggestAuthors: vi.fn().mockResolvedValue([]),
 }));

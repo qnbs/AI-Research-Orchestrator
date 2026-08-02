@@ -7,6 +7,7 @@
  */
 
 import type { AuthorCluster, RankedArticle } from '../../types';
+import { isSameAuthorIdentity } from '../../lib/authorIdentity';
 import { tokenize, ngrams, jaccardSets, throwIfAborted } from './utils';
 import { extractKeywordsFromText } from './keywordExtractor';
 
@@ -18,28 +19,11 @@ function parseAuthorList(authors: string | undefined): string[] {
     .filter((a) => a.length > 1 && !/^et\s+al/i.test(a));
 }
 
-function normalizeAuthorKey(name: string): string {
-  return name.trim().toLowerCase().replace(/\./g, '').replace(/\s+/g, ' ');
-}
-
 /**
  * Exact identity check for excluding the searched author from co-author lists.
- * Avoids substring `includes` false positives (e.g. initial "L" matching "Alvarez").
  */
-function isSameAuthorIdentity(candidate: string, targetName: string): boolean {
-  const c = normalizeAuthorKey(candidate);
-  const t = normalizeAuthorKey(targetName);
-  if (!c || !t) return false;
-  if (c === t) return true;
-
-  const cParts = c.split(' ');
-  const tParts = t.split(' ');
-  // PubMed-style "Last I" / "Last First": compare surname (first token) + optional initial
-  const cSurname = cParts[0];
-  const tSurname = tParts[0];
-  if (cSurname !== tSurname) return false;
-  if (tParts.length === 1 || cParts.length === 1) return true;
-  return cParts[1][0] === tParts[1][0];
+function isExcludedCoauthor(candidate: string, targetName: string): boolean {
+  return isSameAuthorIdentity(candidate, targetName);
 }
 
 function affiliationTokens(article: Partial<RankedArticle>): Set<string> {
@@ -73,7 +57,7 @@ export function disambiguateAuthorHeuristic(
 
   for (const article of articles) {
     const coAuthors = parseAuthorList(article.authors).filter(
-      (a) => !isSameAuthorIdentity(a, authorName),
+      (a) => !isExcludedCoauthor(a, authorName),
     );
     const titleGrams = new Set(ngrams(article.title ?? '', 2));
     const aff = affiliationTokens(article);
@@ -102,7 +86,7 @@ export function disambiguateAuthorHeuristic(
     const topicBag = new Map<string, number>();
     for (const a of c.articles) {
       for (const co of parseAuthorList(a.authors)) {
-        if (isSameAuthorIdentity(co, authorName)) continue;
+        if (isExcludedCoauthor(co, authorName)) continue;
         coFreq.set(co, (coFreq.get(co) ?? 0) + 1);
       }
       for (const kw of extractKeywordsFromText(`${a.title ?? ''} ${a.summary ?? ''}`, 4)) {
@@ -141,7 +125,6 @@ export function generateAuthorProfileHeuristic(
 ): {
   careerSummary: string;
   coreConcepts: { concept: string; frequency: number }[];
-  estimatedMetrics: { hIndex: number | null; totalCitations: number | null };
 } {
   throwIfAborted(signal);
   const years = articles
@@ -184,7 +167,6 @@ export function generateAuthorProfileHeuristic(
   return {
     careerSummary,
     coreConcepts,
-    estimatedMetrics: { hIndex: null, totalCitations: null },
   };
 }
 
