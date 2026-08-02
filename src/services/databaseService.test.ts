@@ -28,6 +28,29 @@ import { defaultSettings } from '../store/slices/settingsSlice';
 import { createResearchCheckpoint } from '../lib/researchCheckpoint';
 import type { ResearchInput } from '../types';
 
+const makeKbEntry = (id: string, title: string) => ({
+  id,
+  timestamp: 1,
+  title,
+  sourceType: 'research' as const,
+  articles: [],
+  input: {
+    researchTopic: title,
+    dateRange: 'any' as const,
+    articleTypes: [],
+    synthesisFocus: 'overview' as const,
+    maxArticlesToScan: 10,
+    topNToSynthesize: 5,
+  },
+  report: {
+    generatedQueries: [],
+    rankedArticles: [],
+    synthesis: '',
+    aiGeneratedInsights: [],
+    overallKeywords: [],
+  },
+});
+
 describe('databaseService settings IO', () => {
   beforeEach(async () => {
     await db.delete();
@@ -73,37 +96,14 @@ describe('databaseService settings IO', () => {
 });
 
 describe('bulkUpdateEntriesInTransaction', () => {
-  const makeEntry = (id: string, title: string) => ({
-    id,
-    timestamp: 1,
-    title,
-    sourceType: 'research' as const,
-    articles: [],
-    input: {
-      researchTopic: title,
-      dateRange: 'any' as const,
-      articleTypes: [],
-      synthesisFocus: 'overview' as const,
-      maxArticlesToScan: 10,
-      topNToSynthesize: 5,
-    },
-    report: {
-      generatedQueries: [],
-      rankedArticles: [],
-      synthesis: '',
-      aiGeneratedInsights: [],
-      overallKeywords: [],
-    },
-  });
-
   beforeEach(async () => {
     await db.delete();
     await db.open();
   });
 
   it('applies multiple updates in one transaction', async () => {
-    await addEntry(makeEntry('a', 'Old A'));
-    await addEntry(makeEntry('b', 'Old B'));
+    await addEntry(makeKbEntry('a', 'Old A'));
+    await addEntry(makeKbEntry('b', 'Old B'));
 
     await bulkUpdateEntriesInTransaction([
       { id: 'a', changes: { title: 'New A' } },
@@ -116,14 +116,14 @@ describe('bulkUpdateEntriesInTransaction', () => {
   });
 
   it('no-ops on empty updates array', async () => {
-    await addEntry(makeEntry('a', 'Stable'));
+    await addEntry(makeKbEntry('a', 'Stable'));
     await bulkUpdateEntriesInTransaction([]);
     const entries = await getAllEntries();
     expect(entries[0]?.title).toBe('Stable');
   });
 
   it('rolls back when a later update fails', async () => {
-    await addEntry(makeEntry('a', 'Before'));
+    await addEntry(makeKbEntry('a', 'Before'));
     await expect(
       bulkUpdateEntriesInTransaction([
         { id: 'a', changes: { title: 'After' } },
@@ -186,56 +186,33 @@ describe('databaseService presets and collections', () => {
 });
 
 describe('databaseService knowledge-base bulk ops', () => {
-  const makeEntry = (id: string, title: string) => ({
-    id,
-    timestamp: 1,
-    title,
-    sourceType: 'research' as const,
-    articles: [],
-    input: {
-      researchTopic: title,
-      dateRange: 'any' as const,
-      articleTypes: [],
-      synthesisFocus: 'overview' as const,
-      maxArticlesToScan: 10,
-      topNToSynthesize: 5,
-    },
-    report: {
-      generatedQueries: [],
-      rankedArticles: [],
-      synthesis: '',
-      aiGeneratedInsights: [],
-      overallKeywords: [],
-    },
-  });
-
   beforeEach(async () => {
     await db.delete();
     await db.open();
   });
 
   it('bulkAddEntries inserts multiple rows', async () => {
-    await bulkAddEntries([makeEntry('x', 'X'), makeEntry('y', 'Y')]);
+    await bulkAddEntries([makeKbEntry('x', 'X'), makeKbEntry('y', 'Y')]);
     const entries = await getAllEntries();
     expect(entries.map((e) => e.id).sort()).toEqual(['x', 'y']);
   });
 
   it('updateEntry patches a single entry', async () => {
-    await addEntry(makeEntry('u', 'Before'));
+    await addEntry(makeKbEntry('u', 'Before'));
     await updateEntry('u', { title: 'After' });
     const entry = await getAllEntries();
     expect(entry[0]?.title).toBe('After');
   });
 
   it('deleteEntries removes selected ids', async () => {
-    await bulkAddEntries([makeEntry('keep', 'Keep'), makeEntry('drop', 'Drop')]);
+    await bulkAddEntries([makeKbEntry('keep', 'Keep'), makeKbEntry('drop', 'Drop')]);
     await deleteEntries(['drop']);
     const ids = await getAllEntries().then((rows) => rows.map((r) => r.id));
     expect(ids).toEqual(['keep']);
   });
 
   it('clearAllEntries wipes the table', async () => {
-    await addEntry(makeEntry('wipe', 'Wipe'));
+    await addEntry(makeKbEntry('wipe', 'Wipe'));
     await clearAllEntries();
     await expect(getAllEntries()).resolves.toEqual([]);
   });

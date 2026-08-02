@@ -380,13 +380,10 @@ test.describe('5. Knowledge Base View', () => {
       await navigateToView(page, '#knowledgeBase');
       const sidebar = page.locator('aside');
       const count = await sidebar.count();
-      if (count > 0) {
-        await expect(sidebar.first())
-          .toBeHidden({ timeout: 3_000 })
-          .catch(() => {
-            // Soft pass — sidebar might not exist on mobile layout
-          });
+      if (count === 0) {
+        return;
       }
+      await expect(sidebar.first()).toBeHidden({ timeout: 3_000 });
     });
   });
 });

@@ -32,7 +32,11 @@ vi.mock('../apiKeyService', () => ({
 }));
 
 describe('createGeminiProvider', () => {
+  let provider: ReturnType<typeof createGeminiProvider>;
+
   beforeEach(() => {
+    provider = createGeminiProvider();
+    provider.reset?.();
     generateContentMock.mockReset();
     generateContentStreamMock.mockReset();
     sendMessageStreamMock.mockReset();
@@ -47,7 +51,6 @@ describe('createGeminiProvider', () => {
   it('generates content with JSON schema config', async () => {
     generateContentMock.mockResolvedValueOnce({ text: '{"topic":"aspirin"}' });
 
-    const provider = createGeminiProvider();
     const response = await provider.generateContent({
       model: 'gemini-2.5-flash',
       prompt: 'rank these',
@@ -80,7 +83,6 @@ describe('createGeminiProvider', () => {
       },
     });
 
-    const provider = createGeminiProvider();
     const chunks: string[] = [];
     for await (const chunk of provider.generateContentStream({
       model: 'gemini-2.5-flash',
@@ -99,7 +101,6 @@ describe('createGeminiProvider', () => {
       },
     });
 
-    const provider = createGeminiProvider();
     const session = await provider.createChatSession({
       model: 'gemini-2.5-flash',
       system: 'You are helpful',
@@ -127,7 +128,6 @@ describe('createGeminiProvider', () => {
   });
 
   it('maps auth errors from provider responses', () => {
-    const provider = createGeminiProvider();
     const mapped = provider.mapError({ status: 401, message: 'invalid key' });
     expect(mapped).toBeInstanceOf(AppError);
     expect(mapped.code).toBe('PROVIDER_AUTH');
@@ -136,7 +136,6 @@ describe('createGeminiProvider', () => {
 
   it('throws NO_API_KEY when vault is empty', async () => {
     getProviderApiKey.mockResolvedValueOnce(null);
-    const provider = createGeminiProvider();
 
     await expect(
       provider.generateContent({ model: 'gemini-2.5-flash', prompt: 'ping' }),
@@ -145,7 +144,6 @@ describe('createGeminiProvider', () => {
 
   it('testConnection pings the model', async () => {
     generateContentMock.mockResolvedValueOnce({ text: 'p' });
-    const provider = createGeminiProvider();
     expect(provider.testConnection).toBeDefined();
     await expect(provider.testConnection!()).resolves.toBe(true);
     expect(generateContentMock).toHaveBeenCalledWith(
