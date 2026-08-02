@@ -56,7 +56,7 @@ export async function navigateToView(page: Page, viewHash: string) {
  * Wait until the Knowledge Base article-count heading shows the expected total.
  */
 export async function waitForKbArticleCount(page: Page, count: number) {
-  const pattern = new RegExp(`${count} Articles Found`, 'i');
+  const pattern = new RegExp(`^${count} Articles Found$`, 'i');
   const heading = page.getByRole('heading', { level: 2, name: pattern });
   try {
     await heading.waitFor({ state: 'visible', timeout: 45_000 });
