@@ -56,7 +56,7 @@ class ErrorBoundary extends Component<Props, State> {
   private handleHomeReset = () => {
     try {
       window.history.pushState(null, '', '#home');
-    } catch (e) {
+    } catch (_e) {
       window.location.hash = '#home';
     }
     // Dispatch a hashchange event to ensure routers pick it up if they rely on listeners

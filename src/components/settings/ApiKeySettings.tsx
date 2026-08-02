@@ -142,7 +142,7 @@ export const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({ onKeyChange }) =
         setApiKey(key);
         setShowKey(true);
       }
-    } catch (err) {
+    } catch (_err) {
       setError(t('apikey.get_failed'));
     }
   };
