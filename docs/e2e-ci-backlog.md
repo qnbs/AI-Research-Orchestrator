@@ -50,15 +50,26 @@ Track progress in this file when a browser is promoted.
 
 **Full-suite expansion (step 2):** landed in PR [#192](https://github.com/qnbs/AI-Research-Orchestrator/pull/192) (`3641108`) — cross-browser workflow runs the seven-spec Chromium parity list (`continue-on-error: true`). Next gate: **10 consecutive** full-suite greens per browser (**54 passed / 0 failed** in job logs; no flaky retries counted) before considering blocking promotion for that browser.
 
-**Full-suite streak (step 3, updated 2026-08-02):** PR #195 (`022475d`, run `30767470525`) — **54 passed / 0 failed, no flaky** on Chromium (`30767470500`), Firefox, WebKit, and mobile Chrome in one cross-browser workflow. Streak reset baseline after flaky demo-KB fixes:
+**Full-suite streak (step 3, updated 2026-08-02 evening):** PR #195 landed as `8ab0a26` on `main`. Clean baseline on branch head `022475d` (run `30767470525`) — **54/0, no flaky**. Intermediate flakes (not counted toward streak):
 
-| Browser       | Best recent run (#195 `022475d`) | Streak toward 10× clean (54/0, no flaky) |
-| ------------- | -------------------------------- | ---------------------------------------- |
-| Firefox       | **54 passed / 0 failed**         | **1/10**                                 |
-| mobile Chrome | **54 passed / 0 failed**         | **1/10**                                 |
-| WebKit        | **54 passed / 0 failed**         | **1/10**                                 |
+- `f6cdaed` (`30767766848`) — Firefox **53 + 1 flaky** (`networkidle` a11y)
+- `9202f50` / #197 (`30768598100`) — Firefox **53 + 1 flaky** (`skipOnboarding` header wait after Start Researching in heuristic suite) — fix in #199
 
-Blocking Chromium `e2e.yml`: **54 passed / 0 failed** on #195 `022475d` (`30767470500`).
+Completed **54/0, no flaky** after the `f6cdaed` Firefox reset (WebKit/mobile Chrome continue through that reset): `8ab0a26` → `278ff28` → `d314d1e` → (`9202f50` FF flaky) → `bdcc688` → `0cea8ef` / #199 (`30769050211`) → `a2663bef` / #196 (`30769381735`).
+
+Additional flake (not counted toward streak):
+
+- `e92dd0f` / #196 (`30770215657`) — Firefox **53 + 1 flaky** (`agent-flow` Command Palette / local `skipOnboarding` 10s header wait on `main`; fixed in merged #199 (`291acb7`) shared helper). WebKit + mobile Chrome stayed **54/0** on that run → **10/10**.
+
+Post-reset clean: `f719553` / #196 (`30770674248`) — **54/0, no flaky** all browsers (Firefox streak rebuild starts at **1/10**; WebKit/mobile remain **10/10**). Merged #199 (`291acb7`) so `main` uses the shared helper.
+
+| Browser       | Latest clean run                     | Streak toward 10× clean (54/0, no flaky)                      |
+| ------------- | ------------------------------------ | ------------------------------------------------------------- |
+| Firefox       | **54/0** (`f719553` / `30770674248`) | **1/10** (reset after `e92dd0f` flaky; #199 merged `291acb7`) |
+| mobile Chrome | **54/0** (`f719553` / `30770674248`) | **10/10**                                                     |
+| WebKit        | **54/0** (`f719553` / `30770674248`) | **10/10**                                                     |
+
+Blocking Chromium `e2e.yml`: **54 passed / 0 failed** on #195 merge `8ab0a26`, #197/`9202f50` (`30768598057`), #199/`0cea8ef` (`30769050111`), #196/`a2663bef` (`30769381737`), #196/`e92dd0f` (`30770215660`), and #196/`f719553` (`30770674211`).
 
 ## Historical note (fixed 2026-07-21)
 
