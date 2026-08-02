@@ -194,7 +194,8 @@ test.describe('2. Navigation', () => {
 
   test('clicking settings opens settings view', async ({ page }) => {
     await openSettingsFromChrome(page);
-    await expect(page.getByText(/API|Appearance|settings/i).first()).toBeVisible({
+    await expect(page).toHaveURL(/#settings/i, { timeout: 8_000 });
+    await expect(page.getByRole('tab', { name: /general/i })).toBeVisible({
       timeout: 8_000,
     });
   });
