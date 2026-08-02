@@ -105,14 +105,14 @@ describe('inferenceModeBadgeKey', () => {
     ).toBe('force');
   });
 
-  it('falls back to heuristic key for unknown heuristic reason', () => {
+  it('falls back to heuristic key for unrecognized reason', () => {
     const snap = resolveInferenceMode({
       forceHeuristic: false,
       hasApiKey: true,
       isOnline: true,
       provider: 'heuristic',
     });
-    snap.reason = 'live' as typeof snap.reason;
+    snap.reason = 'unknown' as typeof snap.reason;
     expect(inferenceModeBadgeKey(snap)).toBe('heuristic');
     expect(inferenceModeBadgeLabel(snap)).toBe('Heuristic mode');
   });

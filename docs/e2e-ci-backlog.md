@@ -1,4 +1,4 @@
-# E2E-in-CI backlog (updated 2026-08-01)
+# E2E-in-CI backlog (updated 2026-08-02)
 
 `.github/workflows/e2e.yml` runs Playwright on every push/PR to `main`.
 
@@ -22,7 +22,7 @@ Shared helpers live in `src/test/e2e/e2eHelpers.ts`.
 `pnpm run test:e2e -- <files>` — the bare `--` forwarded to Playwright causes it to
 ignore the file list and run the entire `testDir` (including `a11y.spec.ts`).
 
-# Cross-browser matrix — **non-blocking** (2026-08-02, audit P1-6)
+## Cross-browser matrix — **non-blocking** (2026-08-02, audit P1-6)
 
 `.github/workflows/e2e-cross-browser.yml` runs the **same seven-spec list** as blocking
 Chromium on **Firefox**, **WebKit (Safari)**, and **mobile Chrome (Pixel 5)** in parallel.

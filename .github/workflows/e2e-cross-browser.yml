@@ -25,7 +25,7 @@ concurrency:
 
 jobs:
   cross-browser-smoke:
-    name: "Smoke (${{ matrix.browser }})"
+    name: "Cross-browser (${{ matrix.browser }})"
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     continue-on-error: true
