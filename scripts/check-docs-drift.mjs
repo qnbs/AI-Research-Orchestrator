@@ -45,7 +45,7 @@ async function main() {
 
   assertMatch(
     agents,
-    new RegExp(`v${escapeRegExp(appVersion)}`),
+    new RegExp(`v${escapeRegExp(appVersion)}(?![0-9A-Za-z.+-])`),
     `AGENTS.md must mention app version v${appVersion}`,
     errors,
   );

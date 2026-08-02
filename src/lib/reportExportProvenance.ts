@@ -15,7 +15,7 @@ export interface ExportProvenanceResult {
 }
 
 /** Sanitize report citations against ranked-article corpus before export. */
-export function sanitizeReportForExport(report: ResearchReport): ExportProvenanceResult {
+export const sanitizeReportForExport = (report: ResearchReport): ExportProvenanceResult => {
   const corpusPmids = report.rankedArticles.map((a) => a.pmid);
   const grounded = applyCorpusCitationGrounding(
     corpusPmids,
@@ -39,4 +39,4 @@ export function sanitizeReportForExport(report: ResearchReport): ExportProvenanc
     droppedRankedArticles: grounded.metrics.droppedRankedArticles,
     invalidCitations: grounded.metrics.invalidCitations,
   };
-}
+};
