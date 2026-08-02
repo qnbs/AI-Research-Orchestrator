@@ -230,11 +230,11 @@ The repository includes `.github/workflows/deploy.yml` that:
 
 Build output is portable static assets. Configure deployment with `VITE_BASE_PATH` and optional `VITE_SITE_ORIGIN` before `pnpm run build`:
 
-| Host scenario | `VITE_BASE_PATH` | `VITE_SITE_ORIGIN` (canonical/OG) | Example URL |
-| --- | --- | --- | --- |
-| GitHub Pages (default CI) | `/AI-Research-Orchestrator/` | `https://qnbs.github.io` | `https://qnbs.github.io/AI-Research-Orchestrator/` |
-| Root static host (custom domain) | `/` | `https://your-domain.example` | `https://your-domain.example/` |
-| Subpath on static host | `/my-app/` | `https://your-domain.example` | `https://your-domain.example/my-app/` |
+| Host scenario                    | `VITE_BASE_PATH`             | `VITE_SITE_ORIGIN` (canonical/OG) | Example URL                                        |
+| -------------------------------- | ---------------------------- | --------------------------------- | -------------------------------------------------- |
+| GitHub Pages (default CI)        | `/AI-Research-Orchestrator/` | `https://qnbs.github.io`          | `https://qnbs.github.io/AI-Research-Orchestrator/` |
+| Root static host (custom domain) | `/`                          | `https://your-domain.example`     | `https://your-domain.example/`                     |
+| Subpath on static host           | `/my-app/`                   | `https://your-domain.example`     | `https://your-domain.example/my-app/`              |
 
 ```bash
 # Root host (Netlify/Vercel custom domain, nginx at site root)

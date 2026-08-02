@@ -28,11 +28,21 @@ Copy `.env.example` if you use local env vars; **never** commit API keys.
 ## Quality checks (run before opening a PR)
 
 ```bash
+pnpm run check:fast   # typecheck + lint + format:check (same subset as Husky pre-push)
 pnpm run typecheck    # TypeScript --noEmit
-pnpm run lint         # ESLint (warnings budget — see package.json)
+pnpm run lint         # ESLint (zero-warning gate)
 pnpm run test:coverage # Vitest + coverage thresholds (logic layers — vitest.config.ts)
 pnpm run build        # Production build
 ```
+
+### Git hooks (Husky)
+
+| Hook           | Runs                                                                                |
+| -------------- | ----------------------------------------------------------------------------------- |
+| **pre-commit** | `lint-staged` (ESLint + Prettier on staged files) then **full-project `typecheck`** |
+| **pre-push**   | `typecheck`, `lint`, `format:check` (deploy.yml fast gates)                         |
+
+Do **not** use `git commit --no-verify` or `git push --no-verify` to bypass hooks unless a hook is broken and you document the reason in the PR. Bypassing hooks is how TypeScript errors (e.g. incomplete test types) reach CI after push.
 
 Optional E2E (requires browsers once):
 

@@ -25,4 +25,22 @@ test.describe('App smoke tests', () => {
     await page.goto('/');
     await expectNoCriticalAxeViolations(page);
   });
+
+  test('exposes a valid web app manifest', async ({ page }) => {
+    await page.goto('/');
+    const manifestHref = await page.locator('link[rel="manifest"]').getAttribute('href');
+    expect(manifestHref).toBeTruthy();
+    const manifestUrl = new URL(manifestHref!, page.url()).href;
+    const response = await page.request.get(manifestUrl);
+    expect(response.ok()).toBe(true);
+    const manifest = await response.json();
+    expect(manifest.name).toMatch(/Orchestrat/i);
+    expect(manifest.start_url).toBeTruthy();
+    const iconSizes = (manifest.icons ?? []).map((icon: { sizes: string }) => icon.sizes);
+    const iconPurposes = (manifest.icons ?? []).map(
+      (icon: { purpose?: string }) => icon.purpose ?? 'any',
+    );
+    expect(iconSizes).toEqual(expect.arrayContaining(['192x192', '512x512']));
+    expect(iconPurposes).toContain('maskable');
+  });
 });

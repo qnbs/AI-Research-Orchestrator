@@ -10,9 +10,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Release and version discipline (P1-6):** `docs/release-policy.md`, build-time `appVersion` + `buildCommitSha`, `ResearchReport.generationProvenance`, Help/About + JSON/PDF export release labels, `appReleaseInfo` module.
+- **PWA manifest smoke (P1-8):** `smoke.spec.ts` validates manifest link, JSON shape, and required icon entries.
 
 ### Changed
 
+- **CI format gate (P1-7):** `pnpm run format:check` is blocking in `deploy.yml`; documented in `docs/audit-governance.md`.
+- **Local git hooks (P1-7):** Husky pre-commit runs `typecheck`; pre-push runs `check:fast` — avoids TS errors reaching CI when commits bypass review.
+- **Export provenance tests (P1-9):** JSON export release `meta` and PDF cover `generationProvenance` label coverage in `exportService.test.ts`.
+- **Cross-browser E2E tracking (P1-8):** `docs/e2e-ci-backlog.md` records pre-manifest streak and resets current 4-test streak after manifest failure.
 - **DeepSource JavaScript analyzer disabled (dashboard):** root cause in `docs/deepsource-javascript-ci.md`; TOML has no JS block; ESLint + `deploy.yml` authoritative; `scripts/build-meta.mjs` at scripts root.
 - **Portable deployment base path (P1-3):** `VITE_BASE_PATH` + `VITE_SITE_ORIGIN` drive Vite `base`, generated manifest/canonical/OG URLs, and service-worker scope via `<base href>`; self-hosting matrix in README.
 - **External fetch retry policy (P1-4):** `fetchWithExternalPolicy` centralizes abort-aware backoff, Retry-After, jitter, and elapsed budget for PubMed, arXiv, and RTK Query fetches.

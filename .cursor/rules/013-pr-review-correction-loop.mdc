@@ -34,6 +34,8 @@ Human review comments requesting concrete fixes are in scope while open.
 
 Do **not** merge on stale bot approval from an older commit while newer commits are untested or unreviewed.
 
+Do **not** use `git commit --no-verify` / `git push --no-verify` to skip Husky — pre-commit runs `typecheck`; pre-push runs `check:fast`. Bypassing hooks lets TypeScript errors reach CI after push.
+
 ## Correction loop (per finding)
 
 1. Verify against **current** code on the PR branch (bots often comment on superseded commits).

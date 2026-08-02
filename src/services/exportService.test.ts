@@ -1,11 +1,18 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
+const pdfTextSpy = vi.hoisted(() => vi.fn());
 const pdfDocMock = vi.hoisted(() => {
   const chain = new Proxy({} as Record<string, unknown>, {
     get(_target, prop: string) {
       if (prop === 'internal') return { pageSize: { getHeight: () => 842, getWidth: () => 595 } };
       if (prop === 'splitTextToSize') return vi.fn((s: string) => [String(s)]);
       if (prop === 'save') return vi.fn();
+      if (prop === 'text') {
+        return (...args: unknown[]) => {
+          pdfTextSpy(...args);
+          return chain;
+        };
+      }
       return vi.fn(() => chain);
     },
   });
@@ -56,7 +63,9 @@ describe('export helpers', () => {
   const anchorMocks: { click: ReturnType<typeof vi.fn>; href: string }[] = [];
 
   beforeEach(() => {
+    vi.useRealTimers();
     anchorMocks.length = 0;
+    pdfTextSpy.mockClear();
     vi.spyOn(document, 'createElement').mockImplementation((tag: string) => {
       if (tag === 'a') {
         const mock = { click: vi.fn(), href: '', download: '' };
@@ -78,6 +87,7 @@ describe('export helpers', () => {
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
@@ -85,6 +95,94 @@ describe('export helpers', () => {
     exportInsightsToCsv([{ question: 'Q', answer: 'A', supportingArticles: ['1'] }], 'topic');
     expect(anchorMocks.length).toBe(1);
     expect(anchorMocks[0].click).toHaveBeenCalled();
+  });
+
+  it('exportHistoryToJson includes build release meta in wrapper', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-02T12:00:00.000Z'));
+    const entries = [
+      {
+        id: '1',
+        title: 'Entry',
+        timestamp: Date.now(),
+        articles: [],
+        sourceType: 'research' as const,
+        input: {
+          researchTopic: 't',
+          dateRange: 'any',
+          articleTypes: [],
+          synthesisFocus: 'x',
+          maxArticlesToScan: 10,
+          topNToSynthesize: 3,
+        },
+        report: {
+          synthesis: '',
+          rankedArticles: [],
+          generatedQueries: [],
+          aiGeneratedInsights: [],
+          overallKeywords: [],
+        },
+      },
+    ] as KnowledgeBaseEntry[];
+    exportHistoryToJson(entries);
+    const href = anchorMocks[0].href;
+    const payload = decodeURIComponent(href.replace('data:text/json;charset=utf-8,', ''));
+    const parsed = JSON.parse(payload) as {
+      meta: {
+        appVersion: string;
+        buildCommitSha: string;
+        dexieSchemaVersion: number;
+        swCacheVersion: string;
+        type: string;
+        exportDate: string;
+      };
+    };
+    expect(parsed.meta.type).toBe('history');
+    expect(parsed.meta.appVersion).toMatch(/^\d+\.\d+\.\d+/);
+    expect(parsed.meta.buildCommitSha.length).toBeGreaterThan(0);
+    expect(parsed.meta.dexieSchemaVersion).toBeGreaterThan(0);
+    expect(parsed.meta.swCacheVersion).toBeTruthy();
+    expect(parsed.meta.exportDate).toBe('2026-08-02T12:00:00.000Z');
+    vi.useRealTimers();
+  });
+
+  it('exportToPdf cover uses report generation provenance label', () => {
+    const pdfSettings: Settings['export']['pdf'] = {
+      includeCoverPage: true,
+      preparedFor: 'Reviewer',
+      includeSynthesis: false,
+      includeInsights: false,
+      includeQueries: false,
+      includeToc: false,
+      includeHeader: false,
+      includeFooter: false,
+    };
+    const report: ResearchReport = {
+      synthesis: '',
+      rankedArticles: [],
+      generatedQueries: [],
+      aiGeneratedInsights: [],
+      overallKeywords: [],
+      generationProvenance: {
+        appVersion: '0.3.9',
+        buildCommitSha: 'legacysha',
+        dexieSchemaVersion: 4,
+        swCacheVersion: 'v0',
+        generatedAt: 1_700_000_000_000,
+      },
+    };
+    const input: ResearchInput = {
+      researchTopic: 'Topic',
+      dateRange: 'any',
+      articleTypes: [],
+      synthesisFocus: 'outcomes',
+      maxArticlesToScan: 10,
+      topNToSynthesize: 3,
+    };
+    exportToPdf(report, input, pdfSettings);
+    expect(pdfTextSpy).toHaveBeenCalledWith('v0.3.9 (legacysha)', expect.any(Number), 105, {
+      align: 'center',
+    });
   });
 
   it('exportHistoryToJson triggers download', () => {

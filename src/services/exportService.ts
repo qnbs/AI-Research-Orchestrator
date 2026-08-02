@@ -17,7 +17,11 @@ import {
   normalizePmcidValue,
   resolveArticleId,
 } from '../lib/sourceIdentifier';
-import { formatReleaseLabel, formatReportReleaseLabel, getAppReleaseInfo } from '../lib/appReleaseInfo';
+import {
+  formatReleaseLabel,
+  formatReportReleaseLabel,
+  getAppReleaseInfo,
+} from '../lib/appReleaseInfo';
 
 // ===================================================================================
 //

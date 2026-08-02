@@ -30,11 +30,7 @@ describe('buildSiteUrl', () => {
 describe('buildAssetUrl', () => {
   it('builds icon URLs under the deployment base', () => {
     expect(
-      buildAssetUrl(
-        'https://qnbs.github.io',
-        '/AI-Research-Orchestrator/',
-        'icons/icon-512.png',
-      ),
+      buildAssetUrl('https://qnbs.github.io', '/AI-Research-Orchestrator/', 'icons/icon-512.png'),
     ).toBe('https://qnbs.github.io/AI-Research-Orchestrator/icons/icon-512.png');
     expect(buildAssetUrl('https://example.com', '/', 'icons/icon-512.png')).toBe(
       'https://example.com/icons/icon-512.png',

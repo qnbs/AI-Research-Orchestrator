@@ -33,7 +33,7 @@ ignore the file list and run the entire `testDir` (including `a11y.spec.ts`).
 
 ### Promotion criteria (per browser)
 
-1. **10 consecutive workflow runs** where the browser job reports **3 passed / 0 failed**
+1. **10 consecutive workflow runs** where the browser job reports **4 passed / 0 failed**
    smoke tests (read counts from the job log — the green badge alone is not enough).
 2. After promotion: expand that browser to the full seven-spec list (same files as
    blocking Chromium) while keeping `continue-on-error: true`.
@@ -41,6 +41,12 @@ ignore the file list and run the entire `testDir` (including `a11y.spec.ts`).
    browser to blocking (separate decision — do not bulk-promote all browsers at once).
 
 Track progress in this file when a browser is promoted.
+
+### Streak (updated 2026-08-02)
+
+**Pre-manifest streak (3 smoke tests):** Firefox, WebKit, and mobile Chrome each succeeded on **8** consecutive workflow runs through merge of PR #174 (**3 passed / 0 failed** per browser job log).
+
+**Current streak (4 smoke tests, incl. manifest):** **0** — reset after E2E run `30753340012` (`622077a`) reported **3 passed / 1 failed** (manifest name assertion) before fix in `138f3b1`. Promotion requires **10 consecutive** workflow runs with **4 passed / 0 failed** per browser (read job logs — green `continue-on-error` badge is not enough). Next step after streak ≥10: expand that browser to the full seven-spec list while keeping `continue-on-error: true`.
 
 ## Historical note (fixed 2026-07-21)
 

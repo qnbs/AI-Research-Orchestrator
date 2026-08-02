@@ -91,6 +91,7 @@ pnpm run format                  # Prettier write (src + root md/json)
 
 - **Coverage gate** (`vitest.config.ts`): scoped to logic layers (`src/store`, `src/services`, `src/hooks`, `src/lib`) — **80% lines, 80% statements, 55% branches, 55% functions**.
 - **Pre-commit**: husky runs `lint-staged` (eslint --fix + prettier).
+- **Pre-commit / pre-push**: Husky runs `typecheck` on commit and `check:fast` (`typecheck` + `lint` + `format:check`) on push — do not use `--no-verify` except for documented hook failures.
 - **Before touching the core flow** (orchestration, KB, services), run: `typecheck`, `lint`, `test:coverage` — same as CI.
 
 ## CI / CD
