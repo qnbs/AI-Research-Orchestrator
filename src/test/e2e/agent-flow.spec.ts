@@ -328,6 +328,7 @@ test.describe('5. Knowledge Base View', () => {
   test('KB shows demo data on first launch', async ({ page }) => {
     await prepareFirstLaunchDemoKb(page);
     await navigateToView(page, '#knowledgeBase');
+    await expect(page.getByText(/\[Demo\]/i).first()).toBeVisible({ timeout: 30_000 });
     await expect(page.getByText(/5 Articles Found/i).first()).toBeVisible({ timeout: 30_000 });
   });
 

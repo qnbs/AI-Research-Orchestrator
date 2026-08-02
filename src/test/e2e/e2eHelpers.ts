@@ -95,6 +95,31 @@ export async function prepareFirstLaunchDemoKb(page: Page) {
       timeout: 20_000,
     })
     .catch(() => undefined);
+
+  await page
+    .waitForFunction(
+      async () => {
+        const db = await new Promise<IDBDatabase | null>((resolve) => {
+          const req = indexedDB.open('AIResearchAppDatabase');
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => resolve(null);
+        });
+        if (!db?.objectStoreNames.contains('knowledgeBaseEntries')) {
+          db?.close();
+          return false;
+        }
+        const count = await new Promise<number>((resolve) => {
+          const tx = db.transaction('knowledgeBaseEntries', 'readonly');
+          const req = tx.objectStore('knowledgeBaseEntries').count();
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => resolve(0);
+        });
+        db.close();
+        return count >= 4;
+      },
+      { timeout: 25_000 },
+    )
+    .catch(() => undefined);
 }
 
 /** Open Settings from header chrome (desktop icons or mobile overflow menu). */
