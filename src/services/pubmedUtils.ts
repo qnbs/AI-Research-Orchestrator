@@ -208,27 +208,27 @@ type ESummaryArticle = {
   articleids?: Array<{ idtype: string; value: string }>;
 };
 
-function mapEsummaryMetadata(pmid: string, art: ESummaryArticle): Partial<RankedArticle> {
-  const pmcEntry = (art.articleids ?? []).find((x) => x.idtype === 'pmc');
+const mapEsummaryMetadata = (pmid: string, art: ESummaryArticle): Partial<RankedArticle> => {
+  const pmcEntry = (art.articleids ?? []).find((entry) => entry.idtype === 'pmc');
   const yearRaw = (art.pubdate ?? '').split(' ')[0];
   const pubYear = /^\d{4}$/.test(yearRaw) ? yearRaw : '0000';
   return {
     pmid,
     pmcId: pmcEntry?.value,
     title: art.title ?? '',
-    authors: (art.authors ?? []).map((a) => a.name).join(', '),
+    authors: (art.authors ?? []).map((author) => author.name).join(', '),
     journal: art.fulljournalname ?? '',
     pubYear,
     summary: '',
     abstractStatus: 'missing' as AbstractStatus,
-    isOpenAccess: !!pmcEntry?.value,
+    isOpenAccess: Boolean(pmcEntry?.value),
     keywords: [],
     relevanceScore: 0,
     relevanceExplanation: '',
   };
-}
+};
 
-async function fetchPubMedAbstractsByEfetch(
+const fetchPubMedAbstractsByEfetch = async (
   pmids: string[],
   signal?: AbortSignal,
   apiKey?: string,
@@ -237,7 +237,7 @@ async function fetchPubMedAbstractsByEfetch(
     string,
     { abstract?: string; abstractStatus: AbstractStatus; publicationTypes: string[]; doi?: string }
   >
-> {
+> => {
   const merged = new Map<
     string,
     { abstract?: string; abstractStatus: AbstractStatus; publicationTypes: string[]; doi?: string }
@@ -270,17 +270,17 @@ async function fetchPubMedAbstractsByEfetch(
   }
 
   return merged;
-}
+};
 
 /**
  * Fetch article metadata (ESummary) and source abstracts (EFetch XML).
  * Never writes placeholder text into `summary` when an abstract is absent.
  */
-export async function fetchArticleDetails(
+export const fetchArticleDetails = async (
   pmids: string[],
   signal?: AbortSignal,
   apiKey?: string,
-): Promise<Partial<RankedArticle>[]> {
+): Promise<Partial<RankedArticle>[]> => {
   if (!pmids.length) return [];
 
   const retrievedAt = Date.now();
@@ -337,4 +337,4 @@ export async function fetchArticleDetails(
   }
 
   return articles;
-}
+};

@@ -17,6 +17,15 @@ const mockResponse = (overrides: {
     json: overrides.json ?? (async () => ({})),
   }) as unknown as Response;
 
+const EFETCH_WITH_ABSTRACT_XML =
+  '<?xml version="1.0"?><PubmedArticleSet><PubmedArticle><MedlineCitation><PMID>1</PMID><Article><Abstract><AbstractText>Abs</AbstractText></Abstract></Article></MedlineCitation></PubmedArticle></PubmedArticleSet>';
+
+const EFETCH_BODY_XML =
+  '<?xml version="1.0"?><PubmedArticleSet><PubmedArticle><MedlineCitation><PMID>1</PMID><Article><Abstract><AbstractText>Body</AbstractText></Abstract></Article></MedlineCitation></PubmedArticle></PubmedArticleSet>';
+
+const EFETCH_NO_ABSTRACT_XML =
+  '<?xml version="1.0"?><PubmedArticleSet><PubmedArticle><MedlineCitation><PMID>9</PMID><Article><ArticleTitle>No abs</ArticleTitle></Article></MedlineCitation></PubmedArticle></PubmedArticleSet>';
+
 describe('pubmedUtils', () => {
   const originalFetch = globalThis.fetch;
 
@@ -189,11 +198,11 @@ describe('pubmedUtils', () => {
         },
       },
     };
-    const efetchXml = `<?xml version="1.0"?><PubmedArticleSet><PubmedArticle><MedlineCitation><PMID>1</PMID><Article><Abstract><AbstractText>Abs</AbstractText></Abstract></Article></MedlineCitation></PubmedArticle></PubmedArticleSet>`;
+    const efetchXml = EFETCH_WITH_ABSTRACT_XML;
 
     globalThis.fetch = vi.fn().mockImplementation((url: string, init?: RequestInit) => {
       if (init?.method === 'POST') {
-        return Promise.resolve(mockResponse({ json: async () => esummaryJson }));
+        return Promise.resolve(mockResponse({ json: () => Promise.resolve(esummaryJson) }));
       }
       if (String(url).includes('efetch.fcgi')) {
         return Promise.resolve({
@@ -201,10 +210,10 @@ describe('pubmedUtils', () => {
           status: 200,
           statusText: 'OK',
           headers: { get: () => null },
-          text: async () => efetchXml,
+          text: () => Promise.resolve(efetchXml),
         } as unknown as Response);
       }
-      return Promise.resolve(mockResponse({ json: async () => ({}) }));
+      return Promise.resolve(mockResponse({ json: () => Promise.resolve({}) }));
     });
 
     const rows = await fetchArticleDetails(['1']);
@@ -235,11 +244,11 @@ describe('pubmedUtils', () => {
         },
       },
     };
-    const efetchXml = `<?xml version="1.0"?><PubmedArticleSet><PubmedArticle><MedlineCitation><PMID>1</PMID><Article><Abstract><AbstractText>Body</AbstractText></Abstract></Article></MedlineCitation></PubmedArticle></PubmedArticleSet>`;
+    const efetchXml = EFETCH_BODY_XML;
 
     globalThis.fetch = vi.fn().mockImplementation((url: string, init?: RequestInit) => {
       if (init?.method === 'POST') {
-        return Promise.resolve(mockResponse({ json: async () => esummaryJson }));
+        return Promise.resolve(mockResponse({ json: () => Promise.resolve(esummaryJson) }));
       }
       if (String(url).includes('efetch.fcgi')) {
         return Promise.resolve({
@@ -247,10 +256,10 @@ describe('pubmedUtils', () => {
           status: 200,
           statusText: 'OK',
           headers: { get: () => null },
-          text: async () => efetchXml,
+          text: () => Promise.resolve(efetchXml),
         } as unknown as Response);
       }
-      return Promise.resolve(mockResponse({ json: async () => ({}) }));
+      return Promise.resolve(mockResponse({ json: () => Promise.resolve({}) }));
     });
 
     const rows = await fetchArticleDetails(['1', '2']);
@@ -272,11 +281,11 @@ describe('pubmedUtils', () => {
         },
       },
     };
-    const efetchXml = `<?xml version="1.0"?><PubmedArticleSet><PubmedArticle><MedlineCitation><PMID>9</PMID><Article><ArticleTitle>No abs</ArticleTitle></Article></MedlineCitation></PubmedArticle></PubmedArticleSet>`;
+    const efetchXml = EFETCH_NO_ABSTRACT_XML;
 
     globalThis.fetch = vi.fn().mockImplementation((url: string, init?: RequestInit) => {
       if (init?.method === 'POST') {
-        return Promise.resolve(mockResponse({ json: async () => esummaryJson }));
+        return Promise.resolve(mockResponse({ json: () => Promise.resolve(esummaryJson) }));
       }
       if (String(url).includes('efetch.fcgi')) {
         return Promise.resolve({
@@ -284,10 +293,10 @@ describe('pubmedUtils', () => {
           status: 200,
           statusText: 'OK',
           headers: { get: () => null },
-          text: async () => efetchXml,
+          text: () => Promise.resolve(efetchXml),
         } as unknown as Response);
       }
-      return Promise.resolve(mockResponse({ json: async () => ({}) }));
+      return Promise.resolve(mockResponse({ json: () => Promise.resolve({}) }));
     });
 
     const rows = await fetchArticleDetails(['9']);

@@ -12,46 +12,62 @@ describe('stableAuthorClusterKey', () => {
   };
 
   it('differs when PMIDs differ but display fields match', () => {
-    const a = stableAuthorClusterKey(base);
-    const b = stableAuthorClusterKey({ ...base, pmids: ['300', '400'] });
-    expect(a).not.toBe(b);
+    const firstKey = stableAuthorClusterKey(base);
+    const secondKey = stableAuthorClusterKey({ ...base, pmids: ['300', '400'] });
+    expect(firstKey).not.toBe(secondKey);
   });
 
   it('is stable regardless of PMID order', () => {
-    const a = stableAuthorClusterKey(base);
-    const b = stableAuthorClusterKey({ ...base, pmids: ['200', '100'] });
-    expect(a).toBe(b);
+    const firstKey = stableAuthorClusterKey(base);
+    const secondKey = stableAuthorClusterKey({ ...base, pmids: ['200', '100'] });
+    expect(firstKey).toBe(secondKey);
+  });
+
+  it('does not collide when affiliation contains pipe characters', () => {
+    const pipeAffiliation = stableAuthorClusterKey({
+      ...base,
+      nameVariant: 'A|B',
+      primaryAffiliation: 'C',
+      pmids: ['1'],
+    });
+    const splitAffiliation = stableAuthorClusterKey({
+      ...base,
+      nameVariant: 'A',
+      primaryAffiliation: 'B|C',
+      pmids: ['1'],
+    });
+    expect(pipeAffiliation).not.toBe(splitAffiliation);
   });
 });
 
 describe('stableInsightKey', () => {
   it('differs for duplicate questions with different supporting articles', () => {
     const question = 'What is the effect?';
-    const a = stableInsightKey({
+    const firstKey = stableInsightKey({
       question,
       answer: 'Answer A.',
       supportingArticles: ['1'],
     });
-    const b = stableInsightKey({
+    const secondKey = stableInsightKey({
       question,
       answer: 'Answer B.',
       supportingArticles: ['2'],
     });
-    expect(a).not.toBe(b);
+    expect(firstKey).not.toBe(secondKey);
   });
 
   it('differs for duplicate questions with different answers and same PMIDs', () => {
     const question = 'What is the effect?';
-    const a = stableInsightKey({
+    const firstKey = stableInsightKey({
       question,
       answer: 'Answer A.',
       supportingArticles: ['1'],
     });
-    const b = stableInsightKey({
+    const secondKey = stableInsightKey({
       question,
       answer: 'Answer B.',
       supportingArticles: ['1'],
     });
-    expect(a).not.toBe(b);
+    expect(firstKey).not.toBe(secondKey);
   });
 });

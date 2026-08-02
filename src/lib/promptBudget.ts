@@ -59,7 +59,7 @@ export type RankingArticlePromptPayload = {
   lexicalRankScore?: number;
 };
 
-export function getInputTokenBudget(provider: AIProviderSelection, model: string): number {
+export const getInputTokenBudget = (provider: AIProviderSelection, model: string): number => {
   const modelKey = model.toLowerCase();
   if (/pro|opus|gpt-5|o3/i.test(modelKey)) {
     return 28_000;
@@ -68,23 +68,27 @@ export function getInputTokenBudget(provider: AIProviderSelection, model: string
     return 16_000;
   }
   return PROVIDER_INPUT_TOKEN_BUDGET[provider] ?? MODEL_INPUT_TOKEN_BUDGET.default;
-}
+};
 
-export function boundTextField(
+export const boundTextField = (
   text: string,
   maxChars: number,
-): { text: string; truncated: boolean } {
+): { text: string; truncated: boolean } => {
   const normalized = text ?? '';
   if (normalized.length <= maxChars) {
     return { text: normalized, truncated: false };
   }
   return { text: `${normalized.slice(0, maxChars)}…`, truncated: true };
-}
+};
 
-export function shapeArticleForRankingPrompt(
+export const shapeArticleForRankingPrompt = (
   article: Partial<RankedArticle>,
   limits: PromptFieldLimits = DEFAULT_PROMPT_FIELD_LIMITS,
-): { payload: RankingArticlePromptPayload; truncatedTitle: boolean; truncatedAbstract: boolean } {
+): {
+  payload: RankingArticlePromptPayload;
+  truncatedTitle: boolean;
+  truncatedAbstract: boolean;
+} => {
   const titleBound = boundTextField(article.title ?? '', limits.maxTitleChars);
   const abstractBound = boundTextField(article.summary ?? '', limits.maxAbstractChars);
   const abstractStatus: AbstractStatus =
@@ -101,28 +105,26 @@ export function shapeArticleForRankingPrompt(
     truncatedTitle: titleBound.truncated,
     truncatedAbstract: abstractBound.truncated,
   };
-}
+};
 
-function toRankableArticle(article: Partial<RankedArticle>): RankedArticle {
-  return {
-    pmid: article.pmid ?? '',
-    title: article.title ?? '',
-    authors: article.authors ?? '',
-    journal: article.journal ?? '',
-    pubYear: article.pubYear ?? '0000',
-    summary: article.summary ?? '',
-    relevanceScore: article.relevanceScore ?? 0,
-    relevanceExplanation: article.relevanceExplanation ?? '',
-    keywords: article.keywords ?? [],
-    isOpenAccess: article.isOpenAccess ?? false,
-    abstractStatus: article.abstractStatus,
-  };
-}
+const toRankableArticle = (article: Partial<RankedArticle>): RankedArticle => ({
+  pmid: article.pmid ?? '',
+  title: article.title ?? '',
+  authors: article.authors ?? '',
+  journal: article.journal ?? '',
+  pubYear: article.pubYear ?? '0000',
+  summary: article.summary ?? '',
+  relevanceScore: article.relevanceScore ?? 0,
+  relevanceExplanation: article.relevanceExplanation ?? '',
+  keywords: article.keywords ?? [],
+  isOpenAccess: article.isOpenAccess ?? false,
+  abstractStatus: article.abstractStatus,
+});
 
-function payloadFitsTokenBudget(payload: unknown[], maxTokens: number): boolean {
+const payloadFitsTokenBudget = (payload: unknown[], maxTokens: number): boolean => {
   const json = JSON.stringify(payload);
   return estimateTokensFromText(json) <= maxTokens;
-}
+};
 
 export type RankingPromptSelection = {
   payloads: RankingArticlePromptPayload[];
@@ -135,13 +137,13 @@ export type RankingPromptSelection = {
  * Deterministic lexical pre-rank, then include the maximum prefix that fits the token budget.
  * Articles omitted from the LLM prompt remain lexically scored and listed in accounting.
  */
-export function selectArticlesForRankingPrompt(
+export const selectArticlesForRankingPrompt = (
   articles: Partial<RankedArticle>[],
   topic: string,
   provider: AIProviderSelection,
   model: string,
   limits: PromptFieldLimits = DEFAULT_PROMPT_FIELD_LIMITS,
-): RankingPromptSelection {
+): RankingPromptSelection => {
   const rankable = articles.filter((a) => a.pmid).map(toRankableArticle);
   const lexicallyRanked = rankArticles(rankable, topic).sort(
     (a, b) => b.relevanceScore - a.relevanceScore,
@@ -198,7 +200,7 @@ export function selectArticlesForRankingPrompt(
     omittedPmids,
     accounting,
   };
-}
+};
 
 export type SynthesisArticlePromptPayload = RankingArticlePromptPayload & {
   aiSummary?: string;
@@ -211,7 +213,7 @@ export type SynthesisPromptSelection = {
   accounting: PromptBudgetAccounting;
 };
 
-function shapeArticleForSynthesisPrompt(
+const shapeArticleForSynthesisPrompt = (
   article: RankedArticle,
   limits: PromptFieldLimits = DEFAULT_PROMPT_FIELD_LIMITS,
 ): {
@@ -219,7 +221,7 @@ function shapeArticleForSynthesisPrompt(
   truncatedTitle: boolean;
   truncatedAbstract: boolean;
   truncatedAiSummary: boolean;
-} {
+} => {
   const base = shapeArticleForRankingPrompt(article, limits);
   const aiBound = boundTextField(article.aiSummary ?? '', limits.maxAbstractChars);
   return {
@@ -232,15 +234,15 @@ function shapeArticleForSynthesisPrompt(
     },
     truncatedAiSummary: aiBound.truncated,
   };
-}
+};
 
 /** Bound ranked articles for synthesis JSON blocks. */
-export function selectArticlesForSynthesisPrompt(
+export const selectArticlesForSynthesisPrompt = (
   articles: RankedArticle[],
   provider: AIProviderSelection,
   model: string,
   limits: PromptFieldLimits = DEFAULT_PROMPT_FIELD_LIMITS,
-): SynthesisPromptSelection {
+): SynthesisPromptSelection => {
   const inputBudget = getInputTokenBudget(provider, model);
   const availableTokens = Math.max(800, inputBudget - SYNTHESIS_RESERVED_TOKENS);
 
@@ -286,4 +288,4 @@ export function selectArticlesForSynthesisPrompt(
       selectionMode: omittedPmids.length > 0 ? 'lexical-prefilter' : 'full-corpus',
     },
   };
-}
+};

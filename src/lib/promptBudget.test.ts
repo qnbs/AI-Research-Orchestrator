@@ -8,21 +8,19 @@ import {
 import { wrapUntrustedJsonBlock } from './untrustedDataFraming';
 import type { RankedArticle } from '../types';
 
-function makeArticle(pmid: string, title: string, summary = 'Abstract text.'): RankedArticle {
-  return {
-    pmid,
-    title,
-    authors: 'A',
-    journal: 'J',
-    pubYear: '2024',
-    summary,
-    relevanceScore: 0,
-    relevanceExplanation: '',
-    keywords: [],
-    isOpenAccess: false,
-    abstractStatus: 'available',
-  };
-}
+const makeArticle = (pmid: string, title: string, summary = 'Abstract text.'): RankedArticle => ({
+  pmid,
+  title,
+  authors: 'A',
+  journal: 'J',
+  pubYear: '2024',
+  summary,
+  relevanceScore: 0,
+  relevanceExplanation: '',
+  keywords: [],
+  isOpenAccess: false,
+  abstractStatus: 'available',
+});
 
 describe('wrapUntrustedJsonBlock', () => {
   it('never produces syntactically truncated JSON', () => {
