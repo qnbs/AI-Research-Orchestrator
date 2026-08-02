@@ -7,8 +7,8 @@
     "functions": 55
   },
   "coverageModuleFloors": {
-    "providers": { "lines": 61, "statements": 58, "branches": 51, "functions": 60 },
-    "geminiService": { "lines": 61, "statements": 61, "branches": 48, "functions": 70 },
+    "providers": { "lines": 85, "statements": 82, "branches": 70, "functions": 85 },
+    "geminiService": { "lines": 68, "statements": 68, "branches": 50, "functions": 70 },
     "apiKeyService": { "lines": 91, "statements": 86, "branches": 82, "functions": 80 }
   },
   "e2e": {
