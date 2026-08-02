@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **KB snapshot safety (P0-B):** merge-duplicates harmonizes metadata without removing articles from historical entries; prune-by-relevance targets research reports only; Dexie transaction for bulk KB updates.
 - **Author Hub integrity (P0-A):** corpus-bound metrics only — no `Math.random()` citation timelines or LLM-estimated h-index; `authorIdentity` matching; publications-per-year chart; abort/stale-request safety in author search flow.
 
 ### Added

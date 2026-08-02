@@ -31,9 +31,15 @@ import {
   selectUniqueArticles,
   selectAllEntries,
   updateKbEntry,
+  bulkUpdateKbEntries,
 } from '../store/slices/knowledgeBaseSlice';
 import { isDemoEntryId, DEMO_DISMISS_STORAGE_KEY } from '../services/nonAi';
 import { markDemoSeedConsumed, useDemoKnowledgeBaseSeed } from '../hooks/useDemoKnowledgeBaseSeed';
+import {
+  buildHarmonizeDuplicateUpdates,
+  countDuplicateArticleGroups,
+  selectResearchPrunePmids,
+} from '../lib/knowledgeBaseDedup';
 
 interface KnowledgeBaseContextType {
   knowledgeBase: KnowledgeBaseEntry[];
@@ -272,64 +278,24 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
   );
 
   const onMergeDuplicates = useCallback(async () => {
-    // This logic is heavy and should probably be in a Thunk or Worker,
-    // keeping in Context for compatibility but invoking refreshes via Redux
     try {
-      const articleMap = new Map<string, { article: RankedArticle; entryId: string }>();
-      let duplicatesFound = 0;
-      const pmidsToDelete: { entryId: string; pmid: string }[] = [];
-
-      knowledgeBase.forEach((entry) => {
-        entry.articles.forEach((article) => {
-          const existing = articleMap.get(article.pmid);
-          if (existing) {
-            duplicatesFound++;
-            if (article.relevanceScore > existing.article.relevanceScore) {
-              pmidsToDelete.push({ entryId: existing.entryId, pmid: article.pmid });
-              articleMap.set(article.pmid, { article, entryId: entry.id });
-            } else {
-              pmidsToDelete.push({ entryId: entry.id, pmid: article.pmid });
-            }
-          } else {
-            articleMap.set(article.pmid, { article, entryId: entry.id });
-          }
-        });
-      });
-
-      if (duplicatesFound === 0) {
+      const duplicateGroups = countDuplicateArticleGroups(knowledgeBase);
+      if (duplicateGroups === 0) {
         showNotification('No duplicate articles found to merge.');
         return;
       }
 
-      const updates: { id: string; changes: Partial<KnowledgeBaseEntry> }[] = [];
-      const entriesToDelete = new Set<string>();
+      const { updates, harmonizedCopies } = buildHarmonizeDuplicateUpdates(knowledgeBase);
+      if (updates.length === 0) {
+        showNotification('Duplicate articles already share canonical metadata.');
+        return;
+      }
 
-      knowledgeBase.forEach((entry) => {
-        const pmidsInThisEntryToDelete = pmidsToDelete
-          .filter((d) => d.entryId === entry.id)
-          .map((d) => d.pmid);
-        if (pmidsInThisEntryToDelete.length > 0) {
-          const keptArticles = entry.articles.filter(
-            (a) => !pmidsInThisEntryToDelete.includes(a.pmid),
-          );
-          if (keptArticles.length === 0) {
-            entriesToDelete.add(entry.id);
-          } else {
-            const changes: KnowledgeBaseEntryChanges = { articles: keptArticles };
-            if (entry.sourceType === 'research')
-              changes.report = { ...entry.report, rankedArticles: keptArticles };
-            else if (entry.sourceType === 'author')
-              changes.profile = { ...entry.profile, publications: keptArticles };
-            updates.push({ id: entry.id, changes });
-          }
-        }
-      });
-
-      if (updates.length > 0) await Promise.all(updates.map((u) => dispatch(updateKbEntry(u))));
-      if (entriesToDelete.size > 0) await deleteEntriesFromDb(Array.from(entriesToDelete));
-
+      await dispatch(bulkUpdateKbEntries(updates));
       dispatch(fetchKnowledgeBase());
-      showNotification(`Merged ${duplicatesFound} duplicate article entries.`);
+      showNotification(
+        `Harmonized metadata for ${harmonizedCopies} duplicate article copy(ies). Historical snapshots were preserved.`,
+      );
     } catch (error) {
       showNotification('Failed to merge duplicates.', 'error');
     }
@@ -368,19 +334,19 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
     async (pruneScore: number) => {
       try {
         const toPrunePmids = new Set<string>(
-          uniqueArticles.filter((a) => a.relevanceScore < pruneScore).map((a) => a.pmid),
+          selectResearchPrunePmids(uniqueArticles, knowledgeBase, pruneScore),
         );
         if (toPrunePmids.size > 0) {
           await deleteArticles(Array.from(toPrunePmids));
-          showNotification(`${toPrunePmids.size} article(s) pruned.`);
+          showNotification(`${toPrunePmids.size} research article(s) pruned.`);
         } else {
-          showNotification(`No articles found with a score below ${pruneScore}.`, 'error');
+          showNotification(`No research articles found with a score below ${pruneScore}.`, 'error');
         }
       } catch (error) {
         showNotification('Failed to prune articles.', 'error');
       }
     },
-    [uniqueArticles, deleteArticles, showNotification],
+    [uniqueArticles, knowledgeBase, deleteArticles, showNotification],
   );
 
   const getRecentResearchEntries = useCallback(

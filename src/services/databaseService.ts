@@ -125,6 +125,17 @@ export const bulkAddEntries = (entries: KnowledgeBaseEntry[]) =>
 /** Patch fields on an existing KB entry. */
 export const updateEntry = (id: string, changes: Partial<KnowledgeBaseEntry>) =>
   db.knowledgeBaseEntries.update(id, changes);
+/** Apply multiple KB entry patches atomically (P0-B snapshot safety). */
+export const bulkUpdateEntriesInTransaction = async (
+  updates: Array<{ id: string; changes: Partial<KnowledgeBaseEntry> }>,
+): Promise<void> => {
+  if (updates.length === 0) return;
+  await db.transaction('rw', db.knowledgeBaseEntries, async () => {
+    for (const { id, changes } of updates) {
+      await db.knowledgeBaseEntries.update(id, changes);
+    }
+  });
+};
 /** Delete one or more KB entries by id. */
 export const deleteEntries = (ids: string[]) => db.knowledgeBaseEntries.bulkDelete(ids);
 /** Wipe the entire knowledge base table. */
