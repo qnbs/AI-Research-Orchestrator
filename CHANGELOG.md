@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **PubMed abstracts (P0-1):** `fetchArticleDetails` uses ESummary for metadata plus batched EFetch XML for source abstracts; `abstractStatus` / empty `summary` when absent (no placeholder text); fixtures and parser tests; ranking prompts label `sourceAbstract` vs `aiSummary`.
+- **Service worker (P0-2):** NCBI requests with credential query params bypass Cache Storage; activate-time cleanup removes legacy keyed entries; documented in `SECURITY.md`.
 
 - **DeepSource root causes:** i18n `{usd}`/`{tier}` placeholders, stable React list keys, removed deprecated install-prompt snapshot API, unnecessary `async` in vault helpers; tightened `.deepsource.toml` excludes (`docs/deepsource-disposition.md`).
 
