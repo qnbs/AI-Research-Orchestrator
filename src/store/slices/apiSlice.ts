@@ -12,7 +12,6 @@ import type {
   FeaturedJournalCategory,
 } from '../../types';
 import { combineAbortSignals } from '../../lib/abortUtils';
-import { fetchArticleDetails } from '../../services/pubmedUtils';
 
 // ── PubMed E-utilities base URLs ──────────────────────────────────────────────
 const PUBMED_BASE = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils';
@@ -270,6 +269,7 @@ export const researchApi = createApi({
       queryFn: async ({ pmids }, api) => {
         if (!pmids.length) return { data: [] };
         try {
+          const { fetchArticleDetails } = await import('../../services/pubmedUtils');
           const articles = await fetchArticleDetails(pmids, api.signal);
           return { data: articles };
         } catch (error) {
