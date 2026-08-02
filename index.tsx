@@ -7,7 +7,7 @@ import { Provider } from 'react-redux';
 import { store } from './src/store/store';
 
 /** Fade out and remove the static boot splash from index.html. */
-function dismissBootSplash(): void {
+const dismissBootSplash = (): void => {
   const splash = document.getElementById('boot-splash');
   if (!splash) return;
   splash.classList.add('boot-splash--hide');
@@ -15,7 +15,7 @@ function dismissBootSplash(): void {
   splash.addEventListener('transitionend', remove, { once: true });
   // Fallback if transition is disabled (prefers-reduced-motion)
   window.setTimeout(remove, 500);
-}
+};
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {

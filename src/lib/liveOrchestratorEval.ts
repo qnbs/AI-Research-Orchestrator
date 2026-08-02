@@ -80,7 +80,7 @@ export function liveOrchestratorEvalFixtures(): EvalCase[] {
   ];
 }
 
-/** Run live orchestrator eval fixtures; throws on failure (CI gate). */
+/** Run live orchestrator eval fixtures; returns pass flag and per-case results. */
 export function runLiveOrchestratorEvalHarness(): {
   passed: boolean;
   results: ReturnType<typeof evaluateCase>[];
@@ -88,4 +88,13 @@ export function runLiveOrchestratorEvalHarness(): {
   const cases = liveOrchestratorEvalFixtures();
   const { results, passRate } = runEvalSuite(cases);
   return { passed: passRate === 1, results };
+}
+
+/** CI gate: all live orchestrator fixtures must pass (used by check:agent-eval). */
+export function assertLiveOrchestratorEvalPasses(): void {
+  const { passed, results } = runLiveOrchestratorEvalHarness();
+  if (!passed) {
+    const failed = results.filter((r) => !r.passed);
+    throw new Error(`live-orchestrator-eval failed: ${failed.map((f) => f.id).join(', ')}`);
+  }
 }

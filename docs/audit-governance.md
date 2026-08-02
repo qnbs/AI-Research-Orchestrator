@@ -8,13 +8,12 @@ records **decisions** and **operating procedures** for SonarQube Cloud and
 
 ### Current posture (2026-08-02)
 
-| Aspect | Setting | Rationale |
-| ------ | ------- | --------- |
-| CI job | `security.yml` → `sonarcloud` | Runs after `pnpm run test:coverage`; uploads `coverage/lcov.info` |
-| Blocking? | **No** (`continue-on-error` not set on job, but no `qualitygate.wait`) | Free tier: hotspots must be reviewed manually; gate failures on UI-only PRs were blocking merges before scope tuning |
-| Organization key | `qnbs-1` | See `docs/sonarcloud-setup-todo.md` |
-| Coverage scope | `src/store`, `src/services`, `src/hooks`, `src/lib` only | Matches Vitest coverage gate; UI/context paths are E2E-tested |
-| Custom quality gate | **Not available** on Free | Sonar way is read-only |
+| Aspect              | Setting                                                  | Rationale                                                                                             |
+| ------------------- | -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| CI job              | **Removed** (2026-08-02)                                 | Owner deactivating SonarCloud dashboard; coverage gate remains Vitest `test:coverage` in `deploy.yml` |
+| Organization key    | `qnbs-1`                                                 | See `docs/sonarcloud-setup-todo.md`                                                                   |
+| Coverage scope      | `src/store`, `src/services`, `src/hooks`, `src/lib` only | Matches Vitest coverage gate; UI/context paths are E2E-tested                                         |
+| Custom quality gate | **Not available** on Free                                | Sonar way is read-only                                                                                |
 
 ### Sonar way conditions on new code
 
@@ -44,20 +43,19 @@ with:
 
 ### Known false positives / external failures
 
-- **DeepSource JavaScript** may fail on `scripts/*.mjs` parser config — also fails on
-  `main`; not a merge blocker for this repo today.
-- **Claude Code Review** workflow may fail on infrastructure — re-run or ignore if
-  no actionable inline threads.
+- **DeepSource JavaScript:** use `module_system = "es-modules"` in `.deepsource.toml` and exclude `scripts/**` (Node `.mjs` maintenance). Core gates (typecheck/lint/tests/build) remain authoritative.
+- **SonarQube Cloud:** CI job removed 2026-08-02; dashboard deactivation is owner-managed (`docs/sonarcloud-setup-todo.md`).
+- **Claude Code Review** workflow may fail on infrastructure — re-run or ignore if no actionable inline threads.
 
 ## `pnpm audit` governance
 
 ### Current posture
 
-| Context | Command | Threshold | Blocking? |
-| ------- | ------- | --------- | --------- |
-| CI (`deploy.yml`, `security.yml`) | `pnpm audit --audit-level=high` | high+ | **Yes** |
-| Weekly schedule (`security.yml`) | same | high+ | Alert only (workflow still fails) |
-| Maintainer local | `pnpm audit` (no flag) | informational | No |
+| Context                           | Command                         | Threshold     | Blocking?                         |
+| --------------------------------- | ------------------------------- | ------------- | --------------------------------- |
+| CI (`deploy.yml`, `security.yml`) | `pnpm audit --audit-level=high` | high+         | **Yes**                           |
+| Weekly schedule (`security.yml`)  | same                            | high+         | Alert only (workflow still fails) |
+| Maintainer local                  | `pnpm audit` (no flag)          | informational | No                                |
 
 ### Moderate-severity advisories
 

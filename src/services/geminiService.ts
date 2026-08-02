@@ -99,6 +99,10 @@ async function generateJson<T>(
     prompt = `${prompt}\n\nRespond with valid JSON matching this schema:\n${JSON.stringify(schema)}`;
   }
 
+  const schemaRootIsArray = schema?.type === 'array';
+  const useJsonObjectMode = caps.jsonObjectMode && !schemaRootIsArray;
+  const useStructuredJson = useJsonObjectMode || caps.nativeJsonSchema;
+
   if (schema && !caps.nativeJsonSchema && !caps.jsonObjectMode) {
     throw new AppError({
       code: 'VALIDATION',
@@ -112,7 +116,7 @@ async function generateJson<T>(
       ...request,
       system,
       prompt,
-      json: caps.jsonObjectMode || caps.nativeJsonSchema,
+      json: useStructuredJson,
       jsonSchema: caps.nativeJsonSchema ? schema : undefined,
       baseURL,
       signal,

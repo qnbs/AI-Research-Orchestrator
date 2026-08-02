@@ -272,6 +272,14 @@ describe('geminiService with mocked SDK', () => {
     ).rejects.toMatchObject({ code: 'STREAM_ABORTED' });
   });
 
+  it('findSimilarArticles propagates PubMed validation failures', async () => {
+    hoisted.generateContent.mockResolvedValue({
+      text: JSON.stringify([{ pmid: '1', title: 'x', reason: 'y' }]),
+    });
+    mockPubMed.fetchArticleDetails.mockRejectedValueOnce(new Error('PubMed unavailable'));
+    await expect(findSimilarArticles({ title: 't', summary: 's' }, mockAi)).rejects.toThrow();
+  });
+
   it('generateResearchAnalysis returns structured analysis', async () => {
     hoisted.generateContent.mockResolvedValue({
       text: JSON.stringify({

@@ -120,4 +120,20 @@ describe('agentEval', () => {
     expect(result.passed).toBe(false);
     expect(result.dimensions.find((d) => d.dimension === 'groundedSynthesis')?.passed).toBe(false);
   });
+
+  it('rejects grounded claims with non-array pmids', () => {
+    const result = evaluateCase({
+      id: 'grounded-bad-pmids',
+      description: 'malformed claim pmids',
+      actual: {
+        rankedArticles: [{ pmid: '1' }],
+        groundedSynthesis: {
+          mode: 'narrative-extracted',
+          claims: [{ text: 'Bad', pmids: '1' as unknown as string[] }],
+        },
+      },
+      expect: { minGroundedClaims: 1 },
+    });
+    expect(result.passed).toBe(false);
+  });
 });

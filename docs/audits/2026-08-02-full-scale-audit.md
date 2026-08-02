@@ -89,7 +89,7 @@
 4. **P1-5:** logging redaction — **landed** (`safeLog`, `check:log-redaction`).
 5. **P1-6:** cross-browser E2E matrix — **landed** (`e2e-cross-browser.yml`).
 6. **P1-7:** governance docs — **landed** (`docs/audit-governance.md`).
-7. **P1-2:** automated docs/config drift — **deferred** (partial via `check:docs-drift`; ADR follow-up).
+7. **P1-2:** automated docs/config drift — **deferred** (partial via `check:docs-drift`; ADR follow-up for full agent-doc manifest sync).
 
 ## Commands for maintainer re-verification
 

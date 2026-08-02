@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Brand identity (🔬 microscope mark):** unified PWA icon set (`app-icon.svg`, maskable PNGs, favicons, apple-touch-icon), `AppLogo` / `AppBrandMark` microscope SVG with optional emoji badge, branded boot splash, loading spinners, PWA settings preview, manifest shortcuts/categories, and theme metadata (`#070b12`).
 
+### Changed
+
+- **CI hygiene:** removed SonarQube Cloud job from `security.yml` (owner-managed dashboard deactivation); fixed DeepSource JavaScript analyzer config (`module_system`, `dialect`, `scripts/**` exclude).
+
 - **Audit P0/P1 completion:** mandatory custom-endpoint approval, CSP drift gate (`check:csp-endpoint-drift`), untrusted-data framing on all live AI prompts, capability-aware `generateJson`, export/history synthesis sanitization, PubMed query validation in orchestrator, `check:agent-eval` CI gate with `liveOrchestratorEval` fixtures.
 
 - **Logging redaction audit (P1-5):** `safeLogError` / `safeLogWarn` with secret-pattern redaction; CI `check:log-redaction` blocks raw `console.*` in application source.

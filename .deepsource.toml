@@ -1,13 +1,28 @@
 version = 1
 
+# Node maintenance scripts use ESM .mjs — ESLint/typecheck cover app code; exclude from JS analyzer.
+exclude_patterns = [
+  "eslint-local-rules/**",
+  "scripts/**",
+  "public/**",
+  "dist/**",
+  "coverage/**",
+]
+
 [[analyzers]]
 name = "javascript"
 
   [analyzers.meta]
   plugins = ["react"]
-  # Treat sources as ES modules so `import`/`export` parse cleanly.
-  module = "esm"
-  exclude_patterns = [
-    "eslint-local-rules/**",
-    "scripts/check-docs-drift.mjs",
+  module_system = "es-modules"
+  dialect = "typescript"
+  environment = ["browser", "nodejs", "vitest", "cypress"]
+  cyclomatic_complexity_threshold = "high"
+  skip_doc_coverage = [
+    "function-declaration",
+    "function-expression",
+    "arrow-function-expression",
+    "class-declaration",
+    "class-expression",
+    "method-definition",
   ]

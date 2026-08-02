@@ -144,6 +144,7 @@ export function evaluateCase(testCase: EvalCase): EvalCaseResult {
     );
     const claims = grounded?.claims ?? [];
     const validClaims = claims.filter((c) => {
+      if (!c || !Array.isArray(c.pmids)) return false;
       const { valid } = partitionCorpusCitations(corpus, c.pmids);
       return valid.length > 0;
     });
@@ -169,7 +170,7 @@ export function evaluateCase(testCase: EvalCase): EvalCaseResult {
     const ranked =
       obj && Array.isArray(obj.rankedArticles) ? (obj.rankedArticles as { pmid?: string }[]) : [];
     const corpus = new Set<string>([
-      ...ranked.map((r) => r.pmid).filter((id): id is string => !!id),
+      ...ranked.map((r) => r.pmid).filter((id): id is string => Boolean(id)),
       ...exp.mustCitePmids,
     ]);
 
