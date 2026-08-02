@@ -41,7 +41,10 @@ const isValidGroundedSynthesis = (grounded: unknown): boolean =>
   isPlainObject(grounded) &&
   (grounded.mode === 'extractive-template' || grounded.mode === 'narrative-extracted') &&
   Array.isArray(grounded.claims) &&
-  grounded.claims.every(isValidGroundedClaim);
+  grounded.claims.every(isValidGroundedClaim) &&
+  (grounded.trustLevel === undefined ||
+    grounded.trustLevel === 'verified' ||
+    grounded.trustLevel === 'narrative-draft');
 
 const isValidReport = (report: unknown): boolean =>
   isPlainObject(report) &&

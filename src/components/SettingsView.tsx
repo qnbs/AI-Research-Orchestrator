@@ -38,7 +38,7 @@ const SettingsViewLayout: React.FC = () => {
     onClearKnowledgeBase,
     uniqueArticles,
     handleResetAllSettings,
-    addKnowledgeBaseEntries,
+    handleConfirmKnowledgeBaseImport,
     pruneScore,
     setPruneScore,
     isProcessing,
@@ -206,14 +206,20 @@ const SettingsViewLayout: React.FC = () => {
           {modalState.type === 'import' && (
             <ConfirmationModal
               title={t('settings.modal.import.title')}
-              message={t('settings.modal.import.message', { count: modalState.data.length })}
+              message={`${t('settings.modal.import.message', { count: modalState.data.length })} ${t(
+                'settings.modal.import.quarantine',
+                {
+                  trustDowngraded: modalState.quarantine.trustDowngradedCount,
+                  invalidCitations: modalState.quarantine.invalidCitations,
+                  rejected: modalState.quarantine.rejectedCount,
+                },
+              )}`}
               confirmText={t('settings.modal.import.confirm')}
               confirmButtonClass="bg-brand-accent hover:bg-opacity-90"
               titleClass="text-brand-accent"
-              onConfirm={() => {
-                addKnowledgeBaseEntries(modalState.data);
-                setModalState(null);
-              }}
+              onConfirm={() =>
+                handleConfirmKnowledgeBaseImport(modalState.data, modalState.quarantine)
+              }
               onCancel={() => setModalState(null)}
             />
           )}
