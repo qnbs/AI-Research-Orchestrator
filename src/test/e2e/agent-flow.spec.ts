@@ -366,7 +366,7 @@ test.describe('5. Knowledge Base View', () => {
       // Reload so Redux re-hydrates from the now-empty table.
       await page.reload();
       await page.locator('header').waitFor({ state: 'visible', timeout: 15_000 });
-      await navigateToView(page, '#knowledgeBase');
+      await navigateToKnowledgeBase(page);
       await expect(
         page.getByText(/empty|no articles|save reports|start research/i).first(),
       ).toBeVisible({ timeout: 10_000 });
@@ -374,13 +374,14 @@ test.describe('5. Knowledge Base View', () => {
 
     test('KB sidebar is hidden on mobile', async ({ page }) => {
       await page.setViewportSize({ width: 390, height: 844 });
-      await navigateToView(page, '#knowledgeBase');
+      await navigateToKnowledgeBase(page);
       const sidebar = page.locator('aside');
       const count = await sidebar.count();
       if (count === 0) {
+        // Empty-state KB has no filter sidebar — layout wait above confirms the view mounted.
         return;
       }
-      await expect(sidebar.first()).toBeHidden({ timeout: 3_000 });
+      await expect(sidebar.first()).toBeHidden({ timeout: 10_000 });
     });
   });
 });

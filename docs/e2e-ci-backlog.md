@@ -50,15 +50,15 @@ Track progress in this file when a browser is promoted.
 
 **Full-suite expansion (step 2):** landed in PR [#192](https://github.com/qnbs/AI-Research-Orchestrator/pull/192) (`3641108`) — cross-browser workflow runs the seven-spec Chromium parity list (`continue-on-error: true`). Next gate: **10 consecutive** full-suite greens per browser (**54 passed / 0 failed** in job logs; no flaky retries counted) before considering blocking promotion for that browser.
 
-**Full-suite streak (step 3, updated 2026-08-02):** runs on `main` after #192 (`30763017376`), `998c408` (`30763829012`), and #194 (`30765443279`):
+**Full-suite streak (step 3, updated 2026-08-02):** PR #195 (`022475d`, run `30767470525`) — **54 passed / 0 failed, no flaky** on Chromium (`30767470500`), Firefox, WebKit, and mobile Chrome in one cross-browser workflow. Streak reset baseline after flaky demo-KB fixes:
 
-| Browser       | Best recent run                   | Streak toward 10× clean (54/0, no flaky) |
-| ------------- | --------------------------------- | ---------------------------------------- |
-| Firefox       | 53 + 1 flaky (#194) → fix in #195 | **0/10**                                 |
-| mobile Chrome | **54 passed / 0 failed** (#194)   | **3/10**                                 |
-| WebKit        | 53 + 1 flaky (#194) → fix in #195 | **0/10**                                 |
+| Browser       | Best recent run (#195 `022475d`) | Streak toward 10× clean (54/0, no flaky) |
+| ------------- | -------------------------------- | ---------------------------------------- |
+| Firefox       | **54 passed / 0 failed**         | **1/10**                                 |
+| mobile Chrome | **54 passed / 0 failed**         | **1/10**                                 |
+| WebKit        | **54 passed / 0 failed**         | **1/10**                                 |
 
-Blocking Chromium `e2e.yml`: **54 passed / 0 failed** per run since #194.
+Blocking Chromium `e2e.yml`: **54 passed / 0 failed** on #195 `022475d` (`30767470500`).
 
 ## Historical note (fixed 2026-07-21)
 
