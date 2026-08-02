@@ -11,31 +11,48 @@ export type EntryUpdate = { id: string; changes: Partial<KnowledgeBaseEntry> };
 const articleKey = (article: RankedArticle): string =>
   canonicalArticleKey(resolveArticleId(article));
 
+const tagsEqual = (a: string[] | undefined, b: string[] | undefined): boolean => {
+  const left = a ?? [];
+  const right = b ?? [];
+  if (left.length !== right.length) return false;
+  for (let i = 0; i < left.length; i += 1) {
+    if (left[i] !== right[i]) return false;
+  }
+  return true;
+};
+
 /** Pick the highest-relevance copy as canonical metadata for a duplicate group. */
 export const pickCanonicalArticle = (articles: RankedArticle[]): RankedArticle =>
   articles.reduce((best, current) =>
     current.relevanceScore > best.relevanceScore ? current : best,
   );
 
-/** Count PMID groups that appear in more than one entry. */
+/** Count PMID groups that appear in more than one entry (not intra-entry duplicates). */
 export const countDuplicateArticleGroups = (entries: readonly KnowledgeBaseEntry[]): number => {
-  const byKey = new Map<string, number>();
+  const entryIdsByKey = new Map<string, Set<string>>();
   for (const entry of entries) {
+    const seenInEntry = new Set<string>();
     for (const article of entry.articles) {
       const key = articleKey(article);
-      byKey.set(key, (byKey.get(key) ?? 0) + 1);
+      if (seenInEntry.has(key)) continue;
+      seenInEntry.add(key);
+      const bucket = entryIdsByKey.get(key) ?? new Set<string>();
+      bucket.add(entry.id);
+      entryIdsByKey.set(key, bucket);
     }
   }
-  return [...byKey.values()].filter((count) => count > 1).length;
+  return [...entryIdsByKey.values()].filter((ids) => ids.size > 1).length;
 };
 
 /**
  * Harmonize duplicate copies: sync tags and relevance from the canonical winner
  * without removing articles from any historical snapshot.
+ * Research `report.rankedArticles` stays unchanged; only library-level `articles` updates.
  */
 export const buildHarmonizeDuplicateUpdates = (
   entries: readonly KnowledgeBaseEntry[],
 ): { updates: EntryUpdate[]; harmonizedCopies: number } => {
+  const entryById = new Map(entries.map((e) => [e.id, e]));
   const copiesByKey = new Map<string, Array<{ entryId: string; article: RankedArticle }>>();
 
   for (const entry of entries) {
@@ -56,12 +73,12 @@ export const buildHarmonizeDuplicateUpdates = (
     const canonicalTags = canonical.customTags ?? [];
 
     for (const { entryId, article } of copies) {
-      const tagsMatch = JSON.stringify(article.customTags ?? []) === JSON.stringify(canonicalTags);
+      const tagsMatch = tagsEqual(article.customTags, canonicalTags);
       const scoreMatch = article.relevanceScore === canonical.relevanceScore;
       if (tagsMatch && scoreMatch) continue;
 
       harmonizedCopies += 1;
-      const entry = entryChanges.get(entryId) ?? entries.find((e) => e.id === entryId)!;
+      const entry = entryChanges.get(entryId) ?? entryById.get(entryId)!;
       const currentArticles = entryChanges.get(entryId)?.articles ?? [...entry.articles];
 
       const updatedArticles = currentArticles.map((a) => {
@@ -78,9 +95,7 @@ export const buildHarmonizeDuplicateUpdates = (
         articles: updatedArticles,
       };
 
-      if (patched.sourceType === 'research') {
-        patched.report = { ...patched.report, rankedArticles: updatedArticles };
-      } else if (patched.sourceType === 'author') {
+      if (patched.sourceType === 'author') {
         patched.profile = { ...patched.profile, publications: updatedArticles };
       }
 
@@ -92,7 +107,6 @@ export const buildHarmonizeDuplicateUpdates = (
     id,
     changes: {
       articles: entry.articles,
-      ...(entry.sourceType === 'research' && { report: entry.report }),
       ...(entry.sourceType === 'author' && { profile: entry.profile }),
     },
   }));
@@ -100,21 +114,25 @@ export const buildHarmonizeDuplicateUpdates = (
   return { updates, harmonizedCopies };
 };
 
+/** Count research articles below pruneScore across all research entries. */
+export const countResearchPruneCandidates = (
+  entries: readonly KnowledgeBaseEntry[],
+  pruneScore: number,
+): number => selectResearchPrunePmids(entries, pruneScore).length;
+
 /** Prune only research-sourced articles — author/journal profiles are not relevance-pruned. */
 export const selectResearchPrunePmids = (
-  articles: readonly { pmid: string; relevanceScore: number; sourceId?: string }[],
   entries: readonly KnowledgeBaseEntry[],
   pruneScore: number,
 ): string[] => {
-  const researchEntryIds = new Set(
-    entries.filter((e) => e.sourceType === 'research').map((e) => e.id),
-  );
-  return articles
-    .filter(
-      (a) =>
-        a.relevanceScore < pruneScore &&
-        a.sourceId !== undefined &&
-        researchEntryIds.has(a.sourceId),
-    )
-    .map((a) => a.pmid);
+  const pmids: string[] = [];
+  for (const entry of entries) {
+    if (entry.sourceType !== 'research') continue;
+    for (const article of entry.articles) {
+      if (article.relevanceScore < pruneScore) {
+        pmids.push(article.pmid);
+      }
+    }
+  }
+  return pmids;
 };

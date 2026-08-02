@@ -132,7 +132,10 @@ export const bulkUpdateEntriesInTransaction = async (
   if (updates.length === 0) return;
   await db.transaction('rw', db.knowledgeBaseEntries, async () => {
     for (const { id, changes } of updates) {
-      await db.knowledgeBaseEntries.update(id, changes);
+      const updated = await db.knowledgeBaseEntries.update(id, changes);
+      if (updated === 0) {
+        throw new Error(`Knowledge base entry not found: ${id}`);
+      }
     }
   });
 };
