@@ -80,4 +80,34 @@ describe('agentEval', () => {
     });
     expect(result.passed).toBe(false);
   });
+
+  it('rejects invalid PubMed queries when pubmedQueryValid is false', () => {
+    const result = evaluateCase({
+      id: 'query-bad',
+      description: 'malformed boolean',
+      actual: 'cancer OR OR therapy',
+      expect: { pubmedQuery: true, pubmedQueryValid: false },
+    });
+    expect(result.passed).toBe(true);
+  });
+
+  it('requires minimum grounded claims tied to corpus', () => {
+    const result = evaluateCase({
+      id: 'grounded-min',
+      description: 'needs two valid claims',
+      actual: {
+        rankedArticles: [{ pmid: '1' }, { pmid: '2' }],
+        groundedSynthesis: {
+          mode: 'narrative-extracted',
+          claims: [
+            { text: 'One', pmids: ['1'] },
+            { text: 'Two', pmids: ['88'] },
+          ],
+        },
+      },
+      expect: { minGroundedClaims: 2 },
+    });
+    expect(result.passed).toBe(false);
+    expect(result.dimensions.find((d) => d.dimension === 'groundedSynthesis')?.passed).toBe(false);
+  });
 });

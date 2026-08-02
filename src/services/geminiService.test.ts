@@ -203,6 +203,31 @@ describe('geminiService with mocked SDK', () => {
     expect(out[0].pmid).toBe('1');
   });
 
+  it('findSimilarArticles drops PMIDs not returned by PubMed validation', async () => {
+    hoisted.generateContent.mockResolvedValue({
+      text: JSON.stringify([
+        { pmid: '1', title: 'valid', reason: 'a' },
+        { pmid: '999', title: 'hallucinated', reason: 'b' },
+      ]),
+    });
+    mockPubMed.fetchArticleDetails.mockResolvedValueOnce([
+      {
+        pmid: '1',
+        title: 'valid',
+        summary: 'S',
+        authors: 'A',
+        journal: 'J',
+        pubYear: '2020',
+        keywords: [],
+        relevanceScore: 0,
+        relevanceExplanation: '',
+      },
+    ]);
+    const out = await findSimilarArticles({ title: 't', summary: 's' }, mockAi);
+    expect(out).toHaveLength(1);
+    expect(out[0].pmid).toBe('1');
+  });
+
   it('generateResearchAnalysis returns structured analysis', async () => {
     hoisted.generateContent.mockResolvedValue({
       text: JSON.stringify({
@@ -321,6 +346,18 @@ describe('geminiService with mocked SDK', () => {
     ac.abort();
     const gen = generateResearchReportStream(mockInput, mockAi, ac.signal);
     await expect(gen.next()).rejects.toMatchObject({ code: 'STREAM_ABORTED' });
+  });
+
+  it('generateResearchReportStream rejects invalid PubMed queries before search', async () => {
+    hoisted.generateContent.mockResolvedValueOnce({
+      text: JSON.stringify({
+        generatedQueries: [{ query: 'cancer OR OR therapy', explanation: 'bad' }],
+      }),
+    });
+    const gen = generateResearchReportStream(mockInput, mockAi);
+    await expect(gen.next()).resolves.toBeDefined();
+    await expect(gen.next()).rejects.toThrow(/PubMed query/i);
+    expect(mockPubMed.searchPubMedForIds).not.toHaveBeenCalled();
   });
 
   it('uses heuristic TL;DR when API key is missing (no NO_API_KEY throw)', async () => {

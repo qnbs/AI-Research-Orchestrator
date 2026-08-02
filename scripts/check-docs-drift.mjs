@@ -30,6 +30,47 @@ function assertNoMatch(text, pattern, message, errors) {
   if (pattern.test(text)) errors.push(message);
 }
 
+function extractConnectOrigins(html) {
+  const match = /connect-src\s+([^;]+)/i.exec(html);
+  if (!match) return [];
+  return match[1]
+    .split(/\s+/)
+    .map((t) => t.replace(/'/g, ''))
+    .filter((t) => t.startsWith('http'));
+}
+
+function extractPolicyOrigins(ts) {
+  const block = /CSP_ALLOWED_ORIGINS\s*=\s*new Set\(\[([\s\S]*?)\]\)/.exec(ts);
+  if (!block) return [];
+  const origins = [];
+  const re = /'([^']+)'/g;
+  let m;
+  while ((m = re.exec(block[1])) !== null) {
+    origins.push(m[1]);
+  }
+  return origins;
+}
+
+/** @param {string[]} errors */
+async function checkCspEndpointDrift(errors) {
+  const html = await read('index.html');
+  const policy = await read('src/lib/endpointPolicy.ts');
+  const htmlOrigins = new Set(extractConnectOrigins(html));
+  const codeOrigins = new Set(extractPolicyOrigins(policy));
+
+  for (const origin of codeOrigins) {
+    if (!htmlOrigins.has(origin)) {
+      errors.push(`index.html connect-src missing origin from endpointPolicy: ${origin}`);
+    }
+  }
+
+  for (const origin of htmlOrigins) {
+    if (!codeOrigins.has(origin)) {
+      errors.push(`endpointPolicy CSP_ALLOWED_ORIGINS missing origin from index.html: ${origin}`);
+    }
+  }
+}
+
 async function main() {
   const pkg = JSON.parse(await read('package.json'));
   const agents = await read('AGENTS.md');
@@ -66,10 +107,22 @@ async function main() {
     assertMatch(agents, new RegExp(`pnpm ${pnpmVersion.split('.')[0]}\\b`), `AGENTS.md should reference pnpm ${pnpmVersion.split('.')[0]}`, errors);
   }
 
+  if (process.argv.includes('--csp-endpoint')) {
+    await checkCspEndpointDrift(errors);
+  }
+
   if (errors.length > 0) {
-    console.error('check-docs-drift FAILED:\n');
+    const label = process.argv.includes('--csp-endpoint')
+      ? 'check-csp-endpoint-drift'
+      : 'check-docs-drift';
+    console.error(`${label} FAILED:\n`);
     for (const err of errors) console.error(`  - ${err}`);
     process.exit(1);
+  }
+
+  if (process.argv.includes('--csp-endpoint')) {
+    console.log('check-csp-endpoint-drift OK (connect-src aligned with endpointPolicy).');
+    return;
   }
 
   console.log(
