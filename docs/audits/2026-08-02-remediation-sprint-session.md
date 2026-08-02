@@ -22,16 +22,26 @@ Workstream A (E2E WebKit KB demo) was **already landed** as #195 before this ses
 
 ### A — Cross-browser E2E
 
-| Item                   | Evidence                                                                          |
-| ---------------------- | --------------------------------------------------------------------------------- |
-| #195 merged            | `8ab0a26` on `main`                                                               |
-| Clean baseline         | run `30767470525` / `022475d` — **54/0, no flaky** all browsers                   |
-| Firefox flaky (non-KB) | `f6cdaed` / `30767766848` — Firefox **53 + 1 flaky** (`networkidle` a11y)         |
-| Post-merge clean       | `8ab0a26` / `30768002841` — **54/0, no flaky** Firefox, WebKit, mobile Chrome     |
-| Streak (job logs)      | WebKit **3/10**, mobile Chrome **3/10**, Firefox **1/10** (reset after `f6cdaed`) |
-| Blocking promotion     | **Not** flipped — advisory until 10× criterion + maintainer approval              |
+| Item                    | Evidence                                                                                                 |
+| ----------------------- | -------------------------------------------------------------------------------------------------------- |
+| #195 merged             | `8ab0a26` on `main`                                                                                      |
+| Clean baseline          | run `30767470525` / `022475d` — **54/0, no flaky** all browsers                                          |
+| Firefox flaky (non-KB)  | `f6cdaed` / `30767766848` — Firefox **53 + 1 flaky** (`networkidle` a11y)                                |
+| Post-merge clean        | `8ab0a26` / `30768002841` — **54/0, no flaky** Firefox, WebKit, mobile Chrome                            |
+| Streak (job logs)       | WebKit/mobile Chrome **7/10**; Firefox **1/10** (reset after `9202f50` heuristic/`skipOnboarding` flaky) |
+| Firefox flake follow-up | #199 hardens shared `skipOnboarding` (header wait + click retry)                                         |
+| Blocking promotion      | **Not** flipped — advisory until 10× criterion + maintainer approval                                     |
 
 Tracked in `docs/e2e-ci-backlog.md` and `docs/audits/2026-08-02-p1-closeout.md` via #196.
+
+### Multi-bot review gate (session PRs)
+
+| PR   | Unresolved threads         | Notes                                                                                                       |
+| ---- | -------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| #196 | **0**                      | Greptile P2 fixed; CodeRabbit rate-limited on latest; CodeAnt/DeepSource/Bugbot green                       |
+| #197 | **0**                      | CodeRabbit APPROVED on `9202f50` after 4-thread fix; CodeAnt/DeepSource/Bugbot green; CI 54 E2E + floors OK |
+| #198 | **0**                      | CodeRabbit rate-limited (documented); CodeAnt/DeepSource/Bugbot green; CI green                             |
+| #199 | pending first review cycle | Opened for Firefox `skipOnboarding` flake                                                                   |
 
 ### B — P1-9 test depth (#197)
 
