@@ -3,9 +3,13 @@
  * Constructs PubMed E-utilities queries using MeSH terms and Boolean logic.
  */
 
+import { assertValidPubMedQuery } from '../../lib/pubmedQueryValidator';
 import type { BuiltQuery } from './types';
-import { getMeshEntry, meshFieldTag } from './meshDictionary';
+import { formatMeshClause, getMeshEntry } from './meshDictionary';
 import { tokenize, normalizeText } from './utils';
+
+/** PubMed filter for articles with free full text (PMC or publisher). Not identical to all OA definitions. */
+export const FREE_FULL_TEXT_FILTER = 'free full text[filter]';
 
 /** Query building options. */
 export interface QueryBuildOptions {
@@ -34,14 +38,23 @@ export function buildQuery(topic: string, options: QueryBuildOptions = {}): Buil
   const queryParts: string[] = [];
 
   // Find MeSH terms in the topic
+  const seenMeshHeadings = new Set<string>();
   for (const token of tokens) {
     const entry = getMeshEntry(token);
-    if (entry) {
+    if (entry && !seenMeshHeadings.has(entry.heading)) {
+      seenMeshHeadings.add(entry.heading);
       meshTerms.push(entry.heading);
       expandedTerms.push(...entry.synonyms);
-      queryParts.push(meshFieldTag(entry.heading));
+      queryParts.push(formatMeshClause(entry));
     }
   }
+
+  // Deduplicate and drop empty clauses
+  const uniqueQueryParts = [
+    ...new Set(queryParts.map((p) => p.trim()).filter((p) => p.length > 0)),
+  ];
+  queryParts.length = 0;
+  queryParts.push(...uniqueQueryParts);
 
   // If no MeSH terms found, use title/abstract search
   if (queryParts.length === 0) {
@@ -82,6 +95,11 @@ export function buildQuery(topic: string, options: QueryBuildOptions = {}): Buil
     filters.push(`(${ptParts.join(' OR ')})`);
   }
 
+  // Free full text filter (closest supported PubMed semantics for "open access")
+  if (options.openAccessOnly) {
+    filters.push(FREE_FULL_TEXT_FILTER);
+  }
+
   // Combine query with filters
   if (filters.length > 0) {
     query = `(${query}) AND (${filters.join(' AND ')})`;
@@ -101,8 +119,12 @@ export function buildQuery(topic: string, options: QueryBuildOptions = {}): Buil
     );
   }
   if (options.openAccessOnly) {
-    explanationParts.push('Open access only');
+    explanationParts.push(
+      'Free full text filter (PubMed: articles with free full text on PMC or publisher)',
+    );
   }
+
+  assertValidPubMedQuery(query);
 
   return {
     query,

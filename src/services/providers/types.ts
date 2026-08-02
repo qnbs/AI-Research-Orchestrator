@@ -17,14 +17,60 @@ export type AIProviderSelection = AIProviderId | 'heuristic';
 export interface ProviderCapabilities {
   /** Supports streaming token generation. */
   streaming: boolean;
-  /** Supports deterministic JSON output (via native mode or prompt discipline). */
+  /**
+   * Supports JSON-object output mode (provider may ignore supplied JSON schema).
+   * @deprecated Prefer structuredOutput.jsonObjectMode for precise semantics.
+   */
   jsonMode: boolean;
+  /** Fine-grained structured output guarantees. */
+  structuredOutput: {
+    /** Provider can return a generic JSON object (schema may be prompt-only). */
+    jsonObjectMode: boolean;
+    /** Provider enforces a native JSON schema (e.g. Gemini responseSchema). */
+    nativeJsonSchema: boolean;
+    /** Streaming structured output is available. */
+    streamingStructuredOutput: boolean;
+  };
   /** Supports live web search / retrieval-augmented generation. */
   webGrounding: boolean;
   /** Supports multi-turn chat sessions. */
   chat: boolean;
   /** Requires an API key (false for local-only backends such as Ollama). */
   requiresApiKey: boolean;
+  /** Honors AbortSignal on network requests. */
+  supportsAbort: boolean;
+  /** Settings UI may expose a custom base URL field. */
+  supportsCustomBaseUrl: boolean;
+}
+
+/** Build a consistent capability object for provider adapters. */
+export function providerCapabilities(
+  opts: {
+    streaming?: boolean;
+    jsonMode?: boolean;
+    webGrounding?: boolean;
+    chat?: boolean;
+    requiresApiKey?: boolean;
+    supportsAbort?: boolean;
+    supportsCustomBaseUrl?: boolean;
+    structuredOutput?: Partial<ProviderCapabilities['structuredOutput']>;
+  } = {},
+): ProviderCapabilities {
+  const structured = {
+    jsonObjectMode: opts.structuredOutput?.jsonObjectMode ?? opts.jsonMode ?? true,
+    nativeJsonSchema: opts.structuredOutput?.nativeJsonSchema ?? false,
+    streamingStructuredOutput: opts.structuredOutput?.streamingStructuredOutput ?? false,
+  };
+  return {
+    streaming: opts.streaming ?? true,
+    jsonMode: opts.jsonMode ?? structured.jsonObjectMode,
+    structuredOutput: structured,
+    webGrounding: opts.webGrounding ?? false,
+    chat: opts.chat ?? true,
+    requiresApiKey: opts.requiresApiKey ?? true,
+    supportsAbort: opts.supportsAbort ?? true,
+    supportsCustomBaseUrl: opts.supportsCustomBaseUrl ?? false,
+  };
 }
 
 /** JSON Schema subset used for structured responses. */

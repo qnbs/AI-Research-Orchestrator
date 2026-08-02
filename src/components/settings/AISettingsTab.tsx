@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useSettingsView } from './SettingsViewContext';
 import { ApiKeySettings } from './ApiKeySettings';
 import { CostEstimateCard } from './CostEstimateCard';
@@ -14,6 +14,7 @@ import { AI_PROVIDERS, getProviderMeta } from '../../services/providers/provider
 import type { AIProviderSelection } from '../../services/providers/types';
 import { isNonAiAvailable } from '../../services/nonAi';
 import type { TranslationKey } from '../../i18n/translations';
+import { validateCustomEndpointUrl, isOriginCspAllowed } from '../../lib/endpointPolicy';
 
 type AiPersona = Settings['ai']['aiPersona'];
 
@@ -130,7 +131,23 @@ const ModelField: React.FC = () => {
 const BaseUrlField: React.FC = () => {
   const { tempSettings, setTempSettings, t } = useSettingsView();
   const providerMeta = getProviderMeta(tempSettings.ai.provider ?? 'gemini');
+  const urlValue = tempSettings.ai.customBaseUrl ?? '';
+
+  const validation = useMemo(() => {
+    if (!urlValue.trim()) return { status: 'empty' as const };
+    const parsed = validateCustomEndpointUrl(urlValue);
+    if (!parsed.ok) return { status: 'invalid' as const, reason: parsed.reason };
+    if (!isOriginCspAllowed(parsed.origin)) {
+      return { status: 'csp' as const, origin: parsed.origin };
+    }
+    return { status: 'ok' as const, origin: parsed.origin };
+  }, [urlValue]);
+
   if (!providerMeta.supportsBaseUrl) return null;
+
+  const approved = tempSettings.ai.approvedEndpointOrigin;
+  const needsApproval = validation.status === 'ok' && approved !== validation.origin;
+
   return (
     <div>
       <label htmlFor="ai-base-url" className="font-medium text-text-primary">
@@ -139,17 +156,64 @@ const BaseUrlField: React.FC = () => {
       <input
         id="ai-base-url"
         type="url"
-        value={tempSettings.ai.customBaseUrl ?? ''}
-        onChange={(e) =>
-          setTempSettings((s) => ({
-            ...s,
-            ai: { ...s.ai, customBaseUrl: e.target.value },
-          }))
-        }
+        value={urlValue}
+        onChange={(e) => {
+          const next = e.target.value;
+          setTempSettings((s) => {
+            const parsed = next.trim() ? validateCustomEndpointUrl(next) : null;
+            const keepApproval =
+              parsed?.ok &&
+              s.ai.approvedEndpointOrigin &&
+              parsed.origin === s.ai.approvedEndpointOrigin;
+            return {
+              ...s,
+              ai: {
+                ...s.ai,
+                customBaseUrl: next,
+                approvedEndpointOrigin: keepApproval ? s.ai.approvedEndpointOrigin : '',
+              },
+            };
+          });
+        }}
         placeholder={providerMeta.defaultBaseUrl}
         className="mt-1 block w-full bg-input-bg border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent"
       />
       <p className="text-xs text-text-secondary mt-1">{t('settings.ai.base_url_desc')}</p>
+      {validation.status === 'invalid' && (
+        <p className="text-xs text-red-500 mt-1" role="alert">
+          {t('settings.ai.base_url_invalid', { reason: validation.reason })}
+        </p>
+      )}
+      {validation.status === 'csp' && (
+        <p className="text-xs text-amber-600 dark:text-amber-400 mt-1" role="alert">
+          {t('settings.ai.base_url_csp_blocked', { origin: validation.origin })}
+        </p>
+      )}
+      {needsApproval && (
+        <button
+          type="button"
+          className="mt-2 text-sm text-brand-accent underline focus:outline-none focus:ring-2 focus:ring-brand-accent rounded"
+          onClick={() =>
+            setTempSettings((s) => ({
+              ...s,
+              ai: {
+                ...s.ai,
+                approvedEndpointOrigin:
+                  validation.status === 'ok' ? validation.origin : s.ai.approvedEndpointOrigin,
+              },
+            }))
+          }
+        >
+          {t('settings.ai.base_url_approve', {
+            origin: validation.status === 'ok' ? validation.origin : '',
+          })}
+        </button>
+      )}
+      {validation.status === 'ok' && approved === validation.origin && (
+        <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+          {t('settings.ai.base_url_approved', { origin: approved })}
+        </p>
+      )}
     </div>
   );
 };

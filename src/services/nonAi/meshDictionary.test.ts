@@ -91,8 +91,13 @@ describe('getMeshSynonyms', () => {
 });
 
 describe('meshFieldTag', () => {
-  it('builds a MeSH Terms field tag for a known heading', () => {
+  it('builds a MeSH Terms field tag for a known dictionary key', () => {
     expect(meshFieldTag('aspirin')).toBe('"Aspirin"[MeSH Terms]');
+  });
+
+  it('builds a MeSH Terms field tag when given the canonical heading', () => {
+    expect(meshFieldTag('Aspirin')).toBe('"Aspirin"[MeSH Terms]');
+    expect(meshFieldTag('Myocardial Infarction')).toBe('"Myocardial Infarction"[MeSH Terms]');
   });
 
   it('returns an empty string for an unknown heading', () => {

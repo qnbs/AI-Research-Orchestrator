@@ -218,7 +218,12 @@ export const translations = {
     'settings.ai.model_desc': 'Enter any model identifier supported by {provider}.',
     'settings.ai.base_url': 'Base URL',
     'settings.ai.base_url_desc':
-      'Optional. Change this to use a proxy, OpenRouter-compatible endpoint, or a different Ollama host.',
+      'Optional. Change this to use a proxy, OpenRouter-compatible endpoint, or a different Ollama host. You must approve the destination origin before requests are sent.',
+    'settings.ai.base_url_invalid': 'Invalid base URL: {reason}',
+    'settings.ai.base_url_csp_blocked':
+      'Origin {origin} is not permitted by the application CSP. Use a listed preset or self-host with a tailored CSP.',
+    'settings.ai.base_url_approve': 'Approve sending API keys and research data to {origin}',
+    'settings.ai.base_url_approved': 'Approved endpoint: {origin}',
     'settings.ai.nonai_available_desc':
       'Powered by the Non-AI Programmatic Research Engine — deterministic, works fully offline, and costs nothing.',
     'settings.ai.nonai_unavailable_desc':
@@ -512,7 +517,13 @@ export const translations = {
       'Geben Sie eine beliebige Modellkennung ein, die {provider} unterstützt.',
     'settings.ai.base_url': 'Basis-URL',
     'settings.ai.base_url_desc':
-      'Optional. Ändern Sie dies, um einen Proxy, einen OpenRouter-kompatiblen Endpunkt oder einen anderen Ollama-Host zu verwenden.',
+      'Optional. Ändern Sie dies, um einen Proxy, einen OpenRouter-kompatiblen Endpunkt oder einen anderen Ollama-Host zu verwenden. Sie müssen den Ziel-Origin genehmigen, bevor Anfragen gesendet werden.',
+    'settings.ai.base_url_invalid': 'Ungültige Basis-URL: {reason}',
+    'settings.ai.base_url_csp_blocked':
+      'Origin {origin} ist durch die Anwendungs-CSP nicht erlaubt. Verwenden Sie ein gelistetes Preset oder hosten Sie selbst mit angepasster CSP.',
+    'settings.ai.base_url_approve':
+      'Senden von API-Schlüsseln und Forschungsdaten an {origin} genehmigen',
+    'settings.ai.base_url_approved': 'Genehmigter Endpunkt: {origin}',
     'settings.ai.nonai_available_desc':
       'Angetrieben von der Non-AI Programmatic Research Engine — deterministisch, funktioniert vollständig offline und kostenlos.',
     'settings.ai.nonai_unavailable_desc':

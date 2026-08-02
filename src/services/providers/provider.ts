@@ -10,6 +10,7 @@ import type {
   ProviderChatSession,
   ProviderMeta,
 } from './types';
+import { providerCapabilities } from './types';
 
 /**
  * Transport-level abstraction for an AI backend.
@@ -62,13 +63,10 @@ export const AI_PROVIDERS: Record<AIProviderSelection, ProviderMeta> = {
       'gemini-2.5-pro',
       'gemini-2.0-flash',
     ],
-    capabilities: {
-      streaming: true,
-      jsonMode: true,
+    capabilities: providerCapabilities({
       webGrounding: true,
-      chat: true,
-      requiresApiKey: true,
-    },
+      structuredOutput: { nativeJsonSchema: true },
+    }),
     keyHint: 'AIza...',
     keyPlaceholder: 'AIza...',
     keyDocsUrl: 'https://aistudio.google.com/apikey',
@@ -78,14 +76,10 @@ export const AI_PROVIDERS: Record<AIProviderSelection, ProviderMeta> = {
     label: 'OpenAI',
     defaultModel: 'gpt-5',
     modelSuggestions: ['gpt-5', 'gpt-5-mini', 'gpt-4.1', 'gpt-4.1-mini', 'o3', 'o4-mini'],
-    capabilities: {
-      streaming: true,
-      jsonMode: true,
-      webGrounding: false,
-      chat: true,
-      requiresApiKey: true,
-    },
-    keyHint: 'sk-...',
+    capabilities: providerCapabilities({
+      supportsCustomBaseUrl: true,
+      structuredOutput: { jsonObjectMode: true, nativeJsonSchema: false },
+    }),
     keyPlaceholder: 'sk-...',
     keyDocsUrl: 'https://platform.openai.com/api-keys',
     supportsBaseUrl: true,
@@ -96,13 +90,10 @@ export const AI_PROVIDERS: Record<AIProviderSelection, ProviderMeta> = {
     label: 'Anthropic',
     defaultModel: 'claude-sonnet-4-5',
     modelSuggestions: ['claude-sonnet-4-5', 'claude-opus-4-1', 'claude-haiku-4-5'],
-    capabilities: {
-      streaming: true,
-      jsonMode: true,
-      webGrounding: false,
-      chat: true,
-      requiresApiKey: true,
-    },
+    capabilities: providerCapabilities({
+      supportsCustomBaseUrl: true,
+      structuredOutput: { jsonObjectMode: true, nativeJsonSchema: false },
+    }),
     keyHint: 'sk-ant-...',
     keyPlaceholder: 'sk-ant-...',
     keyDocsUrl: 'https://console.anthropic.com/settings/keys',
@@ -114,14 +105,11 @@ export const AI_PROVIDERS: Record<AIProviderSelection, ProviderMeta> = {
     label: 'Ollama (local)',
     defaultModel: 'llama3.1:8b',
     modelSuggestions: ['llama3.1:8b', 'llama3.3', 'qwen2.5:14b', 'mistral:7b'],
-    capabilities: {
-      streaming: true,
-      jsonMode: true,
-      webGrounding: false,
-      chat: true,
+    capabilities: providerCapabilities({
       requiresApiKey: false,
-    },
-    keyHint: 'none',
+      supportsCustomBaseUrl: true,
+      structuredOutput: { jsonObjectMode: true, nativeJsonSchema: false },
+    }),
     keyPlaceholder: 'No key required',
     supportsBaseUrl: true,
     defaultBaseUrl: 'http://localhost:11434',
@@ -131,13 +119,7 @@ export const AI_PROVIDERS: Record<AIProviderSelection, ProviderMeta> = {
     label: 'Heuristic (local)',
     defaultModel: 'local',
     modelSuggestions: ['local'],
-    capabilities: {
-      streaming: true,
-      jsonMode: true,
-      webGrounding: false,
-      chat: true,
-      requiresApiKey: false,
-    },
+    capabilities: providerCapabilities({ requiresApiKey: false }),
   },
 };
 

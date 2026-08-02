@@ -2,11 +2,14 @@
 
 ## Supported Versions
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 0.2.x   | :white_check_mark: |
-| 0.1.x   | :white_check_mark: |
-| < 0.1   | :x:                |
+| Version | Supported                                |
+| ------- | ---------------------------------------- |
+| 0.4.x   | :white_check_mark:                       |
+| 0.2.x   | :white_check_mark: (security fixes only) |
+| 0.1.x   | :x:                                      |
+| < 0.1   | :x:                                      |
+
+Production deploys track `main` on GitHub Pages; the live commit SHA is embedded in the built bundle metadata when available.
 
 ## Threat Model (Client-Side PWA)
 
@@ -14,34 +17,52 @@ This application is a **local-first, zero-backend PWA**. There is no application
 
 ### Assets
 
-- Gemini API key (user-supplied)
+- Provider API keys (Gemini `AIza…`, OpenAI `sk-…`, Anthropic `sk-ant-…`) — encrypted vault
 - Optional NCBI API key (Settings → AI Configuration, encrypted vault)
-- Local research reports, knowledge base, collections (IndexedDB / Dexie)
+- Custom provider base URLs and user-approved endpoint origins
+- LLM prompts containing research topics, article metadata, abstracts, and report context
+- Local research reports, knowledge base, collections, presets, checkpoints (IndexedDB / Dexie)
+- Exported JSON/CSV/RIS/BibTeX/PDF artifacts
 - Session UI state (Redux)
+
+### Data Flows (what leaves the device)
+
+| Destination         | Data sent                                    | Credential            |
+| ------------------- | -------------------------------------------- | --------------------- |
+| Google Gemini       | Prompts, article metadata, synthesis context | Gemini API key        |
+| OpenAI / OpenRouter | Same                                         | OpenAI-format API key |
+| Anthropic           | Same                                         | Anthropic API key     |
+| Ollama (loopback)   | Same                                         | None (local)          |
+| NCBI E-utilities    | PubMed queries, PMID lookups                 | Optional NCBI key     |
+| arXiv               | Search queries                               | None                  |
+
+Custom endpoints require explicit user approval of the destination **origin** and must match the static CSP `connect-src` allowlist unless the app is self-hosted with a tailored CSP.
 
 ### Trust Boundaries
 
-1. **Browser process** — fully trusted by the user; XSS or malicious extensions can read IndexedDB and memory.
-2. **External APIs** — Google Gemini, NCBI E-utilities, arXiv. Payloads that leave the device include: the user’s research topic/query, PubMed/arXiv article metadata and abstracts, generated report context used for ranking/synthesis/chat, plus the user’s Gemini (and optional NCBI) credentials.
+1. **Browser process** — fully trusted by the user; XSS or malicious extensions can read IndexedDB and memory. Vault encryption mitigates **offline** key theft, not active in-session XSS.
+2. **External APIs** — treat all responses as untrusted; article metadata may contain prompt-injection payloads.
 3. **GitHub Pages origin** — static assets only; CSP restricts script sources.
 
 ### Mitigations
 
-- API keys encrypted with AES-GCM via Web Crypto before IndexedDB persistence (`apiKeyService`). The master encryption key is generated **non-extractable** and persisted as a `CryptoKey` object (never raw exported bytes) — `crypto.subtle.exportKey` is never called, so no JavaScript, including this app's own, can read the raw key material.
-- Keys never committed; `.env` is documentation-only (see `.env.example`).
-- DOMPurify for rendered Markdown/HTML; prompt fragment sanitization.
-- CSP baseline in `index.html`.
+- API keys encrypted with AES-GCM via Web Crypto before IndexedDB persistence (`apiKeyService`). Master key is **non-extractable** (`CryptoKey`).
+- Keys never committed; `.env` is documentation-only.
+- DOMPurify for rendered Markdown/HTML; untrusted prompt data wrapped in explicit delimiters (`untrustedDataFraming.ts`).
+- Corpus-bound citation validation before persisting ranked insights (`citationGrounding.ts`).
+- Custom endpoint URL validation + origin approval + CSP coherence (`endpointPolicy.ts`).
+- PubMed query structural validation before execution (`pubmedQueryValidator.ts`).
 - CSV formula-injection sanitization on export.
-- AbortSignal + typed `AppError` / circuit breakers for external calls.
+- `AbortSignal` propagated to provider network requests.
 - CI: `pnpm audit`, CodeQL, Dependency Review, secret scanning (gitleaks).
 
 ### Residual Risks
 
-- Encryption key material lives in the same browser origin as ciphertext. The master key is non-extractable, so a compromised script cannot exfiltrate raw key bytes for offline reuse — but a **live, in-session** XSS payload can still call this app's own encrypt/decrypt functions while it runs, since it shares the same JS execution context. This closes offline key theft, not active in-session abuse.
-- Persisting the master key as a `CryptoKey` object relies on the browser's structured-clone algorithm supporting it (solid in evergreen Chrome/Firefox, Safari since v14) — a narrower compatibility surface than the old raw-bytes storage, with no fallback if an unsupported engine ever rejects the write.
-- Cross-tab vault initialization is serialized with the Web Locks API (`navigator.locks.request('ai-research-api-key-vault', …)` around key resolve/generate/save). Environments without Web Locks fall back to the in-tab promise memoization only. Residual: if two tabs somehow bypass locks (unsupported engine) against a fresh or pre-hardening vault, they can still race — same failure mode as before, but only on that narrow path.
-- Broad `connect-src` needed for PubMed/Gemini/other AI providers; tighten further when self-hosting with known hosts.
-- CSP `script-src` uses a SHA-256 hash for the inline JSON-LD block only (no `unsafe-inline` scripts, no CDN import map — removed in ADR 0011, guarded by `scripts/check-no-cdn-scripts.mjs`). Residual `style-src 'unsafe-inline'` remains for React inline `style={}` attributes and the FOUC theme `<style>` block in `index.html`.
+- Client-side prompt injection cannot be eliminated by string sanitization alone; output validation and corpus checks reduce but do not remove hallucination risk.
+- Encryption does not protect against active XSS in the same session.
+- Static CSP cannot safely enumerate arbitrary runtime custom hosts; unsupported origins are blocked by design.
+- `free full text[filter]` is not identical to all definitions of “open access”.
+- AI-generated `aiSummary` fields are derived interpretations, not source abstracts.
 
 ## Reporting a Vulnerability
 
@@ -60,8 +81,9 @@ We aim to acknowledge reports within **7 days** and ship fixes as soon as practi
 
 ## API Key Handling Best Practices (Users)
 
-1. Create a dedicated Gemini key with usage quotas / billing alerts.
-2. Enter the key only via **Settings → AI Configuration**.
-3. Revoke keys that may have been exposed (browser compromise, shared machine).
-4. Prefer a personal device; avoid untrusted browser extensions on research machines.
-5. For higher PubMed rate limits, enter an NCBI API key under **Settings → AI Configuration** (encrypted like the Gemini key) — never paste keys into prompts or issue trackers.
+1. Create dedicated provider keys with usage quotas / billing alerts.
+2. Enter keys only via **Settings → AI Configuration**.
+3. Approve custom endpoint origins explicitly before use.
+4. Revoke keys that may have been exposed (browser compromise, shared machine).
+5. Prefer a personal device; avoid untrusted browser extensions on research machines.
+6. For higher PubMed rate limits, enter an NCBI API key under **Settings → AI Configuration** (encrypted like provider keys).

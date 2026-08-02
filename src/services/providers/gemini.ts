@@ -10,6 +10,7 @@ import type {
   AIStreamChunk,
   ProviderChatSession,
 } from './types';
+import { providerCapabilities } from './types';
 
 let client: GoogleGenAI | null = null;
 let clientKey: string | null = null;
@@ -207,13 +208,10 @@ function mapGeminiError(error: unknown): AppError {
 export function createGeminiProvider(): AIProvider {
   return {
     id: 'gemini',
-    capabilities: {
-      streaming: true,
-      jsonMode: true,
+    capabilities: providerCapabilities({
       webGrounding: true,
-      chat: true,
-      requiresApiKey: true,
-    },
+      structuredOutput: { nativeJsonSchema: true },
+    }),
 
     async generateContent(request: AIContentRequest): Promise<AIContentResponse> {
       const ai = await getClient();

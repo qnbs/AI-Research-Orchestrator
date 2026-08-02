@@ -16,6 +16,7 @@ import type {
   AIStreamChunk,
   ProviderChatSession,
 } from './types';
+import { providerCapabilities } from './types';
 
 let client: import('openai').OpenAI | null = null;
 let clientKey: string | null = null;
@@ -121,13 +122,10 @@ function mapOpenAIError(error: unknown): AppError {
 export function createOpenAIProvider(): AIProvider {
   return {
     id: 'openai',
-    capabilities: {
-      streaming: true,
-      jsonMode: true,
-      webGrounding: false,
-      chat: true,
-      requiresApiKey: true,
-    },
+    capabilities: providerCapabilities({
+      supportsCustomBaseUrl: true,
+      structuredOutput: { jsonObjectMode: true, nativeJsonSchema: false },
+    }),
 
     async generateContent(request: AIContentRequest): Promise<AIContentResponse> {
       const openai = await getClient(request.baseURL);
@@ -215,13 +213,16 @@ export function createOpenAIProvider(): AIProvider {
 
     mapError: mapOpenAIError,
 
-    async testConnection(): Promise<boolean> {
-      const openai = await getClient();
-      await openai.chat.completions.create({
-        model: 'gpt-5',
-        messages: [{ role: 'user', content: 'ping' }],
-        ...tokenLimitParams('gpt-5', 1),
-      });
+    async testConnection(baseURL?: string): Promise<boolean> {
+      const openai = await getClient(baseURL);
+      await openai.chat.completions.create(
+        {
+          model: 'gpt-4.1-mini',
+          messages: [{ role: 'user', content: 'ping' }],
+          ...tokenLimitParams('gpt-4.1-mini', 1),
+        },
+        { signal: AbortSignal.timeout(15_000) },
+      );
       return true;
     },
 

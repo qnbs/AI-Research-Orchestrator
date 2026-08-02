@@ -39,6 +39,7 @@ export const defaultSettings: Settings = {
     ncbiApiKey: '',
     forceHeuristicMode: false,
     customBaseUrl: '',
+    approvedEndpointOrigin: '',
   },
   defaults: {
     maxArticlesToScan: 50,

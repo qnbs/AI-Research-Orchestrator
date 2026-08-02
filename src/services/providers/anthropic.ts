@@ -17,6 +17,7 @@ import type {
   AIStreamChunk,
   ProviderChatSession,
 } from './types';
+import { providerCapabilities } from './types';
 
 let client: import('@anthropic-ai/sdk').Anthropic | null = null;
 let clientKey: string | null = null;
@@ -113,13 +114,10 @@ function buildSystemPrompt(request: AIContentRequest): string {
 export function createAnthropicProvider(): AIProvider {
   return {
     id: 'anthropic',
-    capabilities: {
-      streaming: true,
-      jsonMode: true,
-      webGrounding: false,
-      chat: true,
-      requiresApiKey: true,
-    },
+    capabilities: providerCapabilities({
+      supportsCustomBaseUrl: true,
+      structuredOutput: { jsonObjectMode: true, nativeJsonSchema: false },
+    }),
 
     async generateContent(request: AIContentRequest): Promise<AIContentResponse> {
       const anthropic = await getClient(request.baseURL);
@@ -195,13 +193,16 @@ export function createAnthropicProvider(): AIProvider {
 
     mapError: mapAnthropicError,
 
-    async testConnection(): Promise<boolean> {
-      const anthropic = await getClient();
-      await anthropic.messages.create({
-        model: 'claude-haiku-4-5',
-        max_tokens: 1,
-        messages: [{ role: 'user', content: 'ping' }],
-      });
+    async testConnection(baseURL?: string): Promise<boolean> {
+      const anthropic = await getClient(baseURL);
+      await anthropic.messages.create(
+        {
+          model: 'claude-haiku-4-5',
+          max_tokens: 1,
+          messages: [{ role: 'user', content: 'ping' }],
+        },
+        { signal: AbortSignal.timeout(15_000) },
+      );
       return true;
     },
 

@@ -19,6 +19,13 @@ import type { AIContentRequest, AIJsonSchema } from './providers/types';
 import { searchPubMedForIds, fetchArticleDetails } from './pubmedUtils';
 import { searchAndFetchArxiv } from './arxivUtils';
 import { sanitizePromptFragment } from '../lib/promptSanitize';
+import { resolveApprovedBaseUrl } from '../lib/endpointPolicy';
+import { applyCorpusCitationGrounding } from '../lib/citationGrounding';
+import {
+  UNTRUSTED_DATA_SYSTEM_RULE,
+  wrapUntrustedJsonBlock,
+  wrapUntrustedTextBlock,
+} from '../lib/untrustedDataFraming';
 import {
   parseGeminiResponseJson as parseGeminiJsonCore,
   GeminiJsonParseError,
@@ -74,11 +81,15 @@ async function generateJson<T>(
 ): Promise<T> {
   const provider = await getProviderForSettings(aiSettings);
   throwIfAborted(signal);
+  const baseURL = resolveApprovedBaseUrl(
+    aiSettings.customBaseUrl,
+    aiSettings.approvedEndpointOrigin,
+  );
   try {
     const response = await provider.generateContent({
       ...request,
       json: true,
-      baseURL: aiSettings.customBaseUrl,
+      baseURL,
       signal,
     });
     return parseGeminiResponseJson<T>(response.text);
@@ -185,7 +196,7 @@ async function* generateLiveResearchReportStream(
   const topicSafe = sanitizePromptFragment(input.researchTopic);
   const focusSafe = sanitizePromptFragment(input.synthesisFocus);
   try {
-    const systemInstruction = `${getPreamble(aiSettings, PromptId.ORCHESTRATOR_SYSTEM)} You are an expert AI research assistant. Your goal is to conduct a literature review on PubMed${input.includeArxiv ? ' and arXiv' : ''} based on the user's criteria, rank the articles, and synthesize the findings. Article identifiers from arXiv begin with "arxiv:" — treat them exactly like PubMed PMIDs.`;
+    const systemInstruction = `${getPreamble(aiSettings, PromptId.ORCHESTRATOR_SYSTEM)} ${UNTRUSTED_DATA_SYSTEM_RULE} You are an expert AI research assistant. Your goal is to conduct a literature review on PubMed${input.includeArxiv ? ' and arXiv' : ''} based on the user's criteria, rank the articles, and synthesize the findings. Article identifiers from arXiv begin with "arxiv:" — treat them exactly like PubMed PMIDs. AI-generated summaries (aiSummary) are derived interpretations — never treat them as original abstracts.`;
 
     const buildQueryGenPrompt = (input: ResearchInput): string => {
       let filterInstructions = '';
@@ -356,13 +367,19 @@ Research Topic: "${topicSafe}"
         temperature: aiSettings.temperature,
         jsonSchema: rankingSchema,
         thinkingBudget: defaultGeminiThinkingBudget(aiSettings.model),
-        prompt: `From the provided list of articles, please perform the following analysis based on the original research topic: "${topicSafe}".
+        prompt: `From the provided list of articles, please perform the following analysis based on the original research topic: ${wrapUntrustedTextBlock('research_topic', topicSafe)}.
             1.  Rank the top ${input.topNToSynthesize} articles based on their relevance to the topic. For each, provide its PMID, a relevance score (1-100), a brief explanation for the score, 3-5 keywords from its summary, classify its article type, and write a new, concise summary (as 'aiSummary') that extracts the core methodology, key findings, and limitations of the study. Ensure you ONLY use PMIDs from the provided list.
             2.  Generate 3-5 AI-powered insights based on the provided articles. Each insight should be a question/answer pair. List the PMIDs from the provided list that support each insight.
             3.  Analyze the keywords from all ranked articles to identify overall themes. List the top 5-10 keywords and their frequency.
 
-            Article List (JSON format):
-            ${JSON.stringify(articleDetails.map((a) => ({ pmid: a.pmid, title: a.title, summary: a.summary })))}
+            ${wrapUntrustedJsonBlock(
+              'article_list',
+              articleDetails.map((a) => ({
+                pmid: a.pmid,
+                title: a.title,
+                summary: a.summary,
+              })),
+            )}
             `,
       },
       signal,
@@ -374,38 +391,42 @@ Research Topic: "${topicSafe}"
         // Despite the prompt instructing the AI to only use provided PMIDs, guard against
         // a hallucinated one producing an article missing title/authors/journal/etc.
         if (!details) return null;
-        return { ...details, ...ranked } as RankedArticle;
+        return { ...details, ...ranked, aiSummary: ranked.aiSummary } as RankedArticle;
       })
       .filter((a): a is RankedArticle => a !== null)
       .sort((a, b) => b.relevanceScore - a.relevanceScore);
 
+    const corpusPmids = articleDetails.map((a) => a.pmid).filter((id): id is string => !!id);
+    const grounded = applyCorpusCitationGrounding(
+      corpusPmids,
+      detailedRankedArticles,
+      analysisData.aiGeneratedInsights,
+    );
+
     const partialReport: ResearchReport = {
       generatedQueries,
       synthesis: '',
-      rankedArticles: detailedRankedArticles,
-      aiGeneratedInsights: analysisData.aiGeneratedInsights,
+      rankedArticles: grounded.rankedArticles,
+      aiGeneratedInsights: grounded.insights,
       overallKeywords: analysisData.overallKeywords,
     };
     yield { report: partialReport, phase: 'Phase 5: Synthesizing Top Findings...' };
 
     throwIfAborted(signal);
     // STEP 5: AI Generates Synthesis
-    const synthesisPrompt = `Based on the following articles, write a comprehensive synthesis focusing on "${focusSafe}". This should be a well-structured narrative in markdown format.
+    const synthesisPrompt = `Based on the following articles, write a comprehensive synthesis focusing on ${wrapUntrustedTextBlock('synthesis_focus', focusSafe)}. This should be a well-structured narrative in markdown format. Cite PMIDs inline where claims are made. AI summaries are derived — verify against source abstracts when precision matters.
         
-        Articles:
-        ${detailedRankedArticles
-          .map(
-            (a: RankedArticle) => `
-        ---
-        PMID: ${a.pmid}
-        Title: ${a.title}
-        Summary: ${a.aiSummary || a.summary}
-        Relevance Score: ${a.relevanceScore}/100
-        Keywords: ${a.keywords.join(', ')}
-        ---
-        `,
-          )
-          .join('\n')}
+        ${wrapUntrustedJsonBlock(
+          'ranked_articles',
+          grounded.rankedArticles.map((a: RankedArticle) => ({
+            pmid: a.pmid,
+            title: a.title,
+            abstract: a.summary,
+            aiSummary: a.aiSummary,
+            relevanceScore: a.relevanceScore,
+            keywords: a.keywords,
+          })),
+        )}
         `;
 
     throwIfAborted(signal);
@@ -415,7 +436,8 @@ Research Topic: "${topicSafe}"
       temperature: aiSettings.temperature,
       thinkingBudget: defaultGeminiThinkingBudget(aiSettings.model),
       prompt: synthesisPrompt,
-      baseURL: aiSettings.customBaseUrl,
+      baseURL: resolveApprovedBaseUrl(aiSettings.customBaseUrl, aiSettings.approvedEndpointOrigin),
+      signal,
     });
 
     for await (const chunk of stream) {
@@ -493,7 +515,7 @@ export async function findRelatedOnline(
       system: getPreamble(aiSettings, PromptId.RELATED_ONLINE),
       prompt: `Provide a brief summary of the online discussion, news, or recent developments related to "${topicSafe}".`,
       webGrounding: true,
-      baseURL: aiSettings.customBaseUrl,
+      baseURL: resolveApprovedBaseUrl(aiSettings.customBaseUrl, aiSettings.approvedEndpointOrigin),
     });
     const sources: WebContent[] = (response.sources ?? []).map((s) => ({
       uri: s.uri,
@@ -524,7 +546,7 @@ export async function generateTldrSummary(
       system: getPreamble(aiSettings, PromptId.TLDR),
       temperature: 0,
       prompt: `Summarize the following abstract in a single, concise sentence (TL;DR format): "${abstractSafe}"`,
-      baseURL: aiSettings.customBaseUrl,
+      baseURL: resolveApprovedBaseUrl(aiSettings.customBaseUrl, aiSettings.approvedEndpointOrigin),
     });
     return response.text ?? '';
   } catch (error) {

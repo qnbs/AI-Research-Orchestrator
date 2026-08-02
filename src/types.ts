@@ -124,9 +124,7 @@ export type AggregatedArticle = RankedArticle & {
 
 // Omit 'sourceId' as it's an internal identifier not meant for export.
 export const CSV_EXPORT_COLUMNS: (
-  | keyof Omit<AggregatedArticle, 'sourceId'>
-  | 'URL'
-  | 'PMCID_URL'
+  keyof Omit<AggregatedArticle, 'sourceId'> | 'URL' | 'PMCID_URL'
 )[] = [
   'pmid',
   'pmcId',
@@ -201,6 +199,11 @@ export interface Settings {
     forceHeuristicMode: boolean;
     /** Optional custom base URL for OpenAI-compatible or Ollama backends. */
     customBaseUrl?: string;
+    /**
+     * Origin explicitly approved by the user for custom endpoints (scheme + host + port).
+     * Must match the parsed origin of customBaseUrl before requests are sent.
+     */
+    approvedEndpointOrigin?: string;
   };
   defaults: {
     maxArticlesToScan: number;

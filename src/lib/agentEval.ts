@@ -3,6 +3,8 @@
  * Scores structured Gemini-like outputs against golden fixtures without network calls.
  */
 
+import { measureCitationGrounding } from './citationGrounding';
+
 export type EvalDimension = 'schema' | 'requiredFields' | 'citationGrounding' | 'length';
 
 export interface EvalCase {
@@ -72,14 +74,41 @@ export function evaluateCase(testCase: EvalCase): EvalCaseResult {
   }
 
   if (exp.mustCitePmids?.length) {
-    // JSON.stringify(undefined) === undefined; keep includes() safe
-    const blob = JSON.stringify(actual) ?? '';
-    const missing = exp.mustCitePmids.filter((pmid) => !blob.includes(pmid));
-    dimensions.push({
-      dimension: 'citationGrounding',
-      passed: missing.length === 0,
-      detail: missing.length ? `uncited: ${missing.join(', ')}` : undefined,
-    });
+    const obj = actual as Record<string, unknown> | null;
+    const insights = Array.isArray(obj?.aiGeneratedInsights)
+      ? (obj!.aiGeneratedInsights as { supportingArticles?: string[] }[])
+      : [];
+    const ranked = Array.isArray(obj?.rankedArticles)
+      ? (obj!.rankedArticles as { pmid?: string }[])
+      : [];
+    const corpus = new Set<string>([
+      ...ranked.map((r) => r.pmid).filter((id): id is string => !!id),
+      ...exp.mustCitePmids,
+    ]);
+
+    if (insights.length === 0) {
+      dimensions.push({
+        dimension: 'citationGrounding',
+        passed: false,
+        detail: 'no insights with supportingArticles',
+      });
+    } else {
+      const { citationValidity, citationCompleteness } = measureCitationGrounding(
+        corpus,
+        insights as { question: string; answer: string; supportingArticles: string[] }[],
+      );
+      const requiredPresent = exp.mustCitePmids.every((pmid) =>
+        insights.some((i) => (i.supportingArticles ?? []).includes(pmid)),
+      );
+      const passed = citationValidity === 1 && citationCompleteness === 1 && requiredPresent;
+      dimensions.push({
+        dimension: 'citationGrounding',
+        passed,
+        detail: passed
+          ? undefined
+          : `validity=${citationValidity.toFixed(2)} completeness=${citationCompleteness.toFixed(2)} required=${requiredPresent}`,
+      });
+    }
   }
 
   if (exp.stringPath && (exp.minStringLength != null || exp.maxStringLength != null)) {
