@@ -125,9 +125,14 @@ export interface ResearchReport {
   generationProvenance?: ReportGenerationProvenance;
   /** Aggregate corpus class (retrieved vs educational demo vs empty). */
   corpusClass?: ReportCorpusClass;
-  /** Machine-readable reason when retrieval produced no scientific corpus. */
+  /** Machine-readable retrieval completeness / empty-corpus reason. */
   retrievalOutcome?:
-    'ok' | 'zero_results' | 'retrieval_failed' | 'offline_without_demo' | 'educational_demo';
+    | 'ok'
+    | 'partial_failure'
+    | 'zero_results'
+    | 'retrieval_failed'
+    | 'offline_without_demo'
+    | 'educational_demo';
 }
 
 /** Identifies the app build that produced a research report. */

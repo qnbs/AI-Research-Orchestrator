@@ -5,6 +5,7 @@
 
 import type { ResearchReport } from '../types';
 import { applyCorpusCitationGrounding } from './citationGrounding';
+import { isAllDemoCorpus } from './demoCorpusMigration';
 import { sanitizeGroundedSynthesis, sanitizeSynthesisForExport } from './groundedSynthesis';
 
 export interface ExportProvenanceResult {
@@ -19,25 +20,51 @@ export interface ExportProvenanceResult {
 
 const DEMO_EXPORT_WATERMARK = 'SYNTHETIC EDUCATIONAL DEMO — NOT RETRIEVED LITERATURE.\n\n';
 
+function articleLooksDemo(article: { sourceClass?: string; pmid: string }): boolean {
+  return article.sourceClass === 'demo-synthetic' || article.pmid.startsWith('demo:');
+}
+
+function isEmptyRetrievalReport(report: ResearchReport): boolean {
+  return (
+    report.corpusClass === 'empty-retrieval' ||
+    report.retrievalOutcome === 'zero_results' ||
+    report.retrievalOutcome === 'retrieval_failed' ||
+    report.retrievalOutcome === 'offline_without_demo'
+  );
+}
+
 /** Sanitize report citations against ranked-article corpus before export. */
 export const sanitizeReportForExport = (report: ResearchReport): ExportProvenanceResult => {
-  const isDemo =
+  const ranked = Array.isArray(report.rankedArticles) ? report.rankedArticles : [];
+  const containsDemo = ranked.some(articleLooksDemo);
+  const isDemoOnly =
     report.corpusClass === 'demo-only' ||
     report.retrievalOutcome === 'educational_demo' ||
-    report.rankedArticles.some(
-      (a) => a.sourceClass === 'demo-synthetic' || a.pmid.startsWith('demo:'),
-    );
+    isAllDemoCorpus(ranked);
 
-  const corpusPmids = report.rankedArticles.map((a) => a.pmid);
-  const grounded = applyCorpusCitationGrounding(
-    corpusPmids,
-    report.rankedArticles,
-    report.aiGeneratedInsights,
-  );
+  // Empty-retrieval explanations are intentional UX copy, not uncited narrative claims.
+  if (isEmptyRetrievalReport(report) && ranked.length === 0) {
+    return {
+      report: {
+        ...report,
+        rankedArticles: ranked,
+        corpusClass: report.corpusClass ?? 'empty-retrieval',
+      },
+      sanitized: false,
+      droppedInsights: 0,
+      droppedRankedArticles: 0,
+      droppedClaims: 0,
+      invalidCitations: 0,
+      uncitedParagraphsRemoved: 0,
+    };
+  }
+
+  const corpusPmids = ranked.map((a) => a.pmid);
+  const grounded = applyCorpusCitationGrounding(corpusPmids, ranked, report.aiGeneratedInsights);
 
   const claimGrounding = sanitizeGroundedSynthesis(report.groundedSynthesis, corpusPmids);
   let groundedSynthesis = claimGrounding.groundedSynthesis;
-  if (isDemo && groundedSynthesis?.trustLevel === 'verified') {
+  if ((isDemoOnly || containsDemo) && groundedSynthesis?.trustLevel === 'verified') {
     groundedSynthesis = { ...groundedSynthesis, trustLevel: 'narrative-draft' };
   }
 
@@ -48,9 +75,16 @@ export const sanitizeReportForExport = (report: ResearchReport): ExportProvenanc
   );
 
   let synthesis = synthesisSanitized.synthesis;
-  if (isDemo && !synthesis.startsWith('SYNTHETIC EDUCATIONAL DEMO')) {
+  if (containsDemo && !synthesis.startsWith('SYNTHETIC EDUCATIONAL DEMO')) {
     synthesis = `${DEMO_EXPORT_WATERMARK}${synthesis}`;
   }
+
+  const nextCorpusClass = isDemoOnly
+    ? 'demo-only'
+    : containsDemo
+      ? (report.corpusClass ?? 'mixed-retrieved')
+      : report.corpusClass;
+  const nextRetrievalOutcome = isDemoOnly ? 'educational_demo' : report.retrievalOutcome;
 
   const sanitized =
     grounded.metrics.invalidCitations > 0 ||
@@ -60,7 +94,8 @@ export const sanitizeReportForExport = (report: ResearchReport): ExportProvenanc
     claimGrounding.metrics.invalidCitations > 0 ||
     synthesisSanitized.uncitedParagraphsRemoved > 0 ||
     synthesis !== report.synthesis ||
-    isDemo;
+    isDemoOnly ||
+    containsDemo;
 
   return {
     report: {
@@ -69,8 +104,8 @@ export const sanitizeReportForExport = (report: ResearchReport): ExportProvenanc
       rankedArticles: grounded.rankedArticles,
       aiGeneratedInsights: grounded.insights,
       groundedSynthesis,
-      corpusClass: isDemo ? 'demo-only' : report.corpusClass,
-      retrievalOutcome: isDemo ? 'educational_demo' : report.retrievalOutcome,
+      corpusClass: nextCorpusClass,
+      retrievalOutcome: nextRetrievalOutcome,
     },
     sanitized,
     droppedInsights: grounded.metrics.emptyInsights,

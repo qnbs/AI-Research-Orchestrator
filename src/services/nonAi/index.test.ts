@@ -94,6 +94,28 @@ describe('generateNonAiResearchReportStream', () => {
     expect(finalPhase).toMatch(/Finalizing report/);
   });
 
+  it('marks partial_failure when arXiv errors but PubMed returns articles', async () => {
+    mockPubMed.searchPubMedForIds.mockResolvedValue(['1']);
+    mockPubMed.fetchArticleDetails.mockResolvedValue([
+      {
+        pmid: '1',
+        title: 'Aspirin for cardiovascular prevention',
+        summary: 'Aspirin reduces cardiovascular events.',
+        authors: 'Chen L',
+        journal: 'The Lancet',
+        pubYear: '2023',
+        isOpenAccess: true,
+      },
+    ]);
+    mockArxiv.searchAndFetchArxiv.mockRejectedValue(new Error('arxiv down'));
+
+    const events = await collectEvents(makeInput({ includeArxiv: true }));
+    const reportEvent = events.find((e) => e.report);
+    expect(reportEvent?.report?.rankedArticles.length).toBeGreaterThan(0);
+    expect(reportEvent?.report?.retrievalOutcome).toBe('partial_failure');
+    expect(events.some((e) => e.phase.includes('Partial retrieval'))).toBe(true);
+  });
+
   it('keeps a genuine zero-result report when PubMed returns nothing (no demo substitution)', async () => {
     mockPubMed.searchPubMedForIds.mockResolvedValue([]);
     mockPubMed.fetchArticleDetails.mockResolvedValue([]);

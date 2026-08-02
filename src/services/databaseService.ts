@@ -7,6 +7,10 @@ import type {
   ResearchReport,
 } from '../types';
 import type { ResearchCheckpoint } from '../lib/researchCheckpoint';
+import {
+  migrateKnowledgeBaseEntryDemoProvenance,
+  stampDemoReportProvenance,
+} from '../lib/demoCorpusMigration';
 import { ensureArticleIdentifiers, ensureGroundedClaim } from '../lib/sourceIdentifier';
 import { safeLogError } from '../lib/safeLog';
 
@@ -124,51 +128,11 @@ db.version(6)
     researchCheckpoints: 'id, createdAt, topic, reason',
   })
   .upgrade(async (tx) => {
-    const stampDemoArticle = <
-      T extends { pmid?: string; sourceClass?: string; articleId?: unknown },
-    >(
-      article: T,
-    ): T => {
-      if (typeof article.pmid !== 'string' || !article.pmid.startsWith('demo:')) return article;
-      const value = article.pmid.slice('demo:'.length);
-      return {
-        ...article,
-        sourceClass: 'demo-synthetic',
-        articleId: { type: 'demo', value },
-      };
-    };
-
     const kbTable = tx.table('knowledgeBaseEntries');
     await kbTable.toCollection().modify((entry) => {
       try {
-        const e = entry as KnowledgeBaseEntry;
-        if (Array.isArray(e.articles)) {
-          e.articles = e.articles.map((a) => stampDemoArticle(a));
-        }
-        if (e.sourceType === 'research' && e.report) {
-          const ranked = Array.isArray(e.report.rankedArticles) ? e.report.rankedArticles : [];
-          e.report.rankedArticles = ranked.map((a) => stampDemoArticle(a));
-          const allDemo =
-            e.report.rankedArticles.length > 0 &&
-            e.report.rankedArticles.every(
-              (a) =>
-                a.sourceClass === 'demo-synthetic' ||
-                (typeof a.pmid === 'string' && a.pmid.startsWith('demo:')),
-            );
-          if (allDemo) {
-            e.report.corpusClass = 'demo-only';
-            e.report.retrievalOutcome = 'educational_demo';
-            if (e.report.groundedSynthesis?.trustLevel === 'verified') {
-              e.report.groundedSynthesis = {
-                ...e.report.groundedSynthesis,
-                trustLevel: 'narrative-draft',
-              };
-            }
-          }
-          if (e.input && e.id.startsWith('demo-')) {
-            e.input = { ...e.input, educationalDemoMode: true };
-          }
-        }
+        const migrated = migrateKnowledgeBaseEntryDemoProvenance(entry as KnowledgeBaseEntry);
+        Object.assign(entry, migrated);
       } catch (err) {
         safeLogError('Dexie v6: skip demo sourceClass stamp', err);
       }
@@ -179,25 +143,7 @@ db.version(6)
       try {
         const ckpt = checkpoint as ResearchCheckpoint;
         if (!ckpt.report) return;
-        const ranked = Array.isArray(ckpt.report.rankedArticles) ? ckpt.report.rankedArticles : [];
-        ckpt.report.rankedArticles = ranked.map((a) => stampDemoArticle(a));
-        const allDemo =
-          ckpt.report.rankedArticles.length > 0 &&
-          ckpt.report.rankedArticles.every(
-            (a) =>
-              a.sourceClass === 'demo-synthetic' ||
-              (typeof a.pmid === 'string' && a.pmid.startsWith('demo:')),
-          );
-        if (allDemo) {
-          ckpt.report.corpusClass = 'demo-only';
-          ckpt.report.retrievalOutcome = 'educational_demo';
-          if (ckpt.report.groundedSynthesis?.trustLevel === 'verified') {
-            ckpt.report.groundedSynthesis = {
-              ...ckpt.report.groundedSynthesis,
-              trustLevel: 'narrative-draft',
-            };
-          }
-        }
+        ckpt.report = stampDemoReportProvenance(ckpt.report);
       } catch (err) {
         safeLogError('Dexie v6: skip checkpoint demo stamp', err);
       }

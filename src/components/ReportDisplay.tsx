@@ -224,9 +224,10 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(function R
   const isDemoCorpus =
     report.corpusClass === 'demo-only' ||
     report.retrievalOutcome === 'educational_demo' ||
-    report.rankedArticles.some(
-      (a) => a.sourceClass === 'demo-synthetic' || a.pmid.startsWith('demo:'),
-    );
+    (report.rankedArticles.length > 0 &&
+      report.rankedArticles.every(
+        (a) => a.sourceClass === 'demo-synthetic' || a.pmid.startsWith('demo:'),
+      ));
   const isEmptyRetrieval =
     report.corpusClass === 'empty-retrieval' ||
     report.retrievalOutcome === 'zero_results' ||

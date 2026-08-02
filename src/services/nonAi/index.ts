@@ -135,6 +135,7 @@ export async function* generateNonAiResearchReportStream(
 
   let curated: CuratedArticle[] = [];
   let retrievalFailed = false;
+  let retrievalErrorCount = 0;
 
   if (isOnline) {
     yield { phase: phase('Phase 2: Retrieving articles from PubMed and arXiv...') };
@@ -145,15 +146,22 @@ export async function* generateNonAiResearchReportStream(
         signal,
       });
       throwIfAborted(signal, 'Aborted');
+      retrievalErrorCount = retrieval.retrievalErrorCount ?? 0;
       yield { phase: phase('Phase 3: Curating and deduplicating results...') };
       curated = stampRetrievedArticles(
         enrichArticles(mergeAndCurate(retrieval.pubmedArticles, retrieval.arxivArticles)),
       );
-      if (curated.length === 0 && (retrieval.retrievalErrorCount ?? 0) > 0) {
+      if (curated.length === 0 && retrievalErrorCount > 0) {
         retrievalFailed = true;
         yield {
           phase: phase(
             'PubMed/arXiv unavailable — empty result (enable Educational Demo to practice offline).',
+          ),
+        };
+      } else if (curated.length > 0 && retrievalErrorCount > 0) {
+        yield {
+          phase: phase(
+            'Partial retrieval — one or more literature providers failed; synthesizing from available results.',
           ),
         };
       }
@@ -161,6 +169,7 @@ export async function* generateNonAiResearchReportStream(
       if (error instanceof AppError && error.code === 'STREAM_ABORTED') throw error;
       safeLogWarn('Non-AI retrieval failed; not substituting demo corpus:', error);
       retrievalFailed = true;
+      retrievalErrorCount += 1;
       yield {
         phase: phase(
           'PubMed/arXiv unavailable — empty result (enable Educational Demo to practice offline).',
@@ -225,7 +234,7 @@ export async function* generateNonAiResearchReportStream(
     ...generateResearchReport(topRanked, input.researchTopic),
     generatedQueries: [{ query: primaryQuery.query, explanation: primaryQuery.explanation }],
     corpusClass: resolveReportCorpusClass(topRanked, 'retrieved'),
-    retrievalOutcome: 'ok',
+    retrievalOutcome: retrievalErrorCount > 0 ? 'partial_failure' : 'ok',
   };
   yield { report, phase: phase('Phase 5: Generating extractive synthesis...') };
 
