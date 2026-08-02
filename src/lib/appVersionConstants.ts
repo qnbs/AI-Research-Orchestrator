@@ -5,7 +5,7 @@
  */
 
 /** Latest Dexie schema version declared in databaseService.ts. */
-export const DEXIE_SCHEMA_VERSION = 5;
+export const DEXIE_SCHEMA_VERSION = 6;
 
 /** Runtime cache suffix in public/sw.js CACHE_VERSION — keep in sync manually. */
 export const SW_CACHE_VERSION = 'v1';

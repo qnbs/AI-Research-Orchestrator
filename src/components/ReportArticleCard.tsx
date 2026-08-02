@@ -34,15 +34,22 @@ const ArticleHeader: React.FC<{
   return (
     <div className="flex justify-between items-start gap-4">
       <div className="flex-1 pr-4">
-        <a
-          href={articleLink}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-lg font-semibold text-text-primary hover:text-brand-accent transition-colors"
-        >
-          <span className="text-text-secondary">{rank}. </span>
-          {article.title}
-        </a>
+        {articleLink ? (
+          <a
+            href={articleLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-lg font-semibold text-text-primary hover:text-brand-accent transition-colors"
+          >
+            <span className="text-text-secondary">{rank}. </span>
+            {article.title}
+          </a>
+        ) : (
+          <h3 className="text-lg font-semibold text-text-primary">
+            <span className="text-text-secondary">{rank}. </span>
+            {article.title}
+          </h3>
+        )}
         <div className="mt-1 text-xs text-text-secondary">
           <span>{article.authors}</span> &mdash;{' '}
           <span className="italic">

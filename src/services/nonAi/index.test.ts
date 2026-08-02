@@ -94,35 +94,82 @@ describe('generateNonAiResearchReportStream', () => {
     expect(finalPhase).toMatch(/Finalizing report/);
   });
 
-  it('falls back to the demo corpus when PubMed returns nothing', async () => {
+  it('marks partial_failure when arXiv errors but PubMed returns articles', async () => {
+    mockPubMed.searchPubMedForIds.mockResolvedValue(['1']);
+    mockPubMed.fetchArticleDetails.mockResolvedValue([
+      {
+        pmid: '1',
+        title: 'Aspirin for cardiovascular prevention',
+        summary: 'Aspirin reduces cardiovascular events.',
+        authors: 'Chen L',
+        journal: 'The Lancet',
+        pubYear: '2023',
+        isOpenAccess: true,
+      },
+    ]);
+    mockArxiv.searchAndFetchArxiv.mockRejectedValue(new Error('arxiv down'));
+
+    const events = await collectEvents(makeInput({ includeArxiv: true }));
+    const reportEvent = events.find((e) => e.report);
+    expect(reportEvent?.report?.rankedArticles.length).toBeGreaterThan(0);
+    expect(reportEvent?.report?.retrievalOutcome).toBe('partial_failure');
+    expect(events.some((e) => e.phase.includes('Partial retrieval'))).toBe(true);
+  });
+
+  it('keeps a genuine zero-result report when PubMed returns nothing (no demo substitution)', async () => {
     mockPubMed.searchPubMedForIds.mockResolvedValue([]);
     mockPubMed.fetchArticleDetails.mockResolvedValue([]);
 
     const events = await collectEvents(makeInput());
 
-    expect(events.some((e) => e.phase.includes('Selecting educational demo articles'))).toBe(true);
     const reportEvent = events.find((e) => e.report);
-    expect(reportEvent?.report?.rankedArticles.length).toBeGreaterThan(0);
-    // Demo articles use the demo: pmid namespace.
-    expect(reportEvent?.report?.rankedArticles.every((a) => a.pmid.startsWith('demo:'))).toBe(true);
+    expect(reportEvent?.report?.rankedArticles).toEqual([]);
+    expect(reportEvent?.report?.corpusClass).toBe('empty-retrieval');
+    expect(reportEvent?.report?.retrievalOutcome).toBe('zero_results');
+    expect(reportEvent?.report?.synthesis).toMatch(/zero-result|No PubMed/i);
+    expect(reportEvent?.report?.synthesis).not.toMatch(/using PubMed and arXiv sources/);
+    expect(reportEvent?.synthesisChunk).toBe(reportEvent?.report?.synthesis);
   });
 
-  it('falls back to the demo corpus when PubMed search itself fails', async () => {
+  it('does not substitute demo corpus when PubMed search itself fails', async () => {
     mockPubMed.searchPubMedForIds.mockRejectedValue(new Error('network down'));
 
     const events = await collectEvents(makeInput());
 
     const reportEvent = events.find((e) => e.report);
-    expect(reportEvent?.report?.rankedArticles.length).toBeGreaterThan(0);
+    expect(reportEvent?.report?.rankedArticles).toEqual([]);
+    expect(reportEvent?.report?.retrievalOutcome).toBe('retrieval_failed');
+    expect(reportEvent?.report?.corpusClass).toBe('empty-retrieval');
   });
 
-  it('skips PubMed/arXiv entirely and uses the demo corpus when offline', async () => {
+  it('does not auto-load demo corpus when offline without educationalDemoMode', async () => {
     const events = await collectEvents(makeInput(), undefined, { getOnline: () => false });
 
     expect(mockPubMed.searchPubMedForIds).not.toHaveBeenCalled();
     expect(events.some((e) => e.phase.includes('Offline'))).toBe(true);
     const reportEvent = events.find((e) => e.report);
+    expect(reportEvent?.report?.rankedArticles).toEqual([]);
+    expect(reportEvent?.report?.corpusClass).toBe('empty-retrieval');
+    expect(reportEvent?.report?.retrievalOutcome).toBe('offline_without_demo');
+  });
+
+  it('uses stamped synthetic demo corpus only when educationalDemoMode is explicit', async () => {
+    const events = await collectEvents(makeInput({ educationalDemoMode: true }), undefined, {
+      getOnline: () => false,
+    });
+
+    expect(mockPubMed.searchPubMedForIds).not.toHaveBeenCalled();
+    const reportEvent = events.find((e) => e.report);
     expect(reportEvent?.report?.rankedArticles.length).toBeGreaterThan(0);
+    expect(reportEvent?.report?.rankedArticles.every((a) => a.pmid.startsWith('demo:'))).toBe(true);
+    expect(
+      reportEvent?.report?.rankedArticles.every((a) => a.sourceClass === 'demo-synthetic'),
+    ).toBe(true);
+    expect(reportEvent?.report?.corpusClass).toBe('demo-only');
+    expect(reportEvent?.report?.retrievalOutcome).toBe('educational_demo');
+    expect(reportEvent?.report?.synthesis).toMatch(/EDUCATIONAL SYNTHETIC DEMO|synthetic demo/i);
+    expect(reportEvent?.report?.synthesis).not.toMatch(/using PubMed and arXiv sources/);
+    expect(reportEvent?.report?.groundedSynthesis?.trustLevel).toBe('narrative-draft');
   });
 
   it('throws STREAM_ABORTED when the signal is already aborted', async () => {

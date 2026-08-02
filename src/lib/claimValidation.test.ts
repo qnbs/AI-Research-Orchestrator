@@ -218,6 +218,31 @@ describe('assessSynthesisTrust', () => {
     expect(assessment.trustLevel).toBe('narrative-draft');
     expect(assessment.metrics.unsupportedClaimRate).toBeGreaterThan(0);
   });
+
+  it('never marks synthetic demo corpora as verified', () => {
+    const corpus = [
+      {
+        ...article(
+          'demo:aspirin-cv-sr-2023',
+          'Aspirin for primary prevention',
+          'Aspirin reduced major adverse cardiovascular events but increased major bleeding.',
+        ),
+        sourceClass: 'demo-synthetic' as const,
+      },
+    ];
+    const assessment = assessSynthesisTrust(
+      [
+        {
+          text: 'Aspirin reduced major adverse cardiovascular events.',
+          pmids: ['demo:aspirin-cv-sr-2023'],
+        },
+      ],
+      corpus,
+      'extractive-template',
+    );
+    expect(assessment.trustLevel).toBe('narrative-draft');
+    expect(assessment.metrics.verifiedClaims).toBe(0);
+  });
 });
 
 describe('articleSupportsClaim', () => {

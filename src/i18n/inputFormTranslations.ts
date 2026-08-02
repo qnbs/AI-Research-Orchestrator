@@ -24,6 +24,9 @@ export const inputFormTranslations = {
     'inputForm.sources.arxiv': 'arXiv Preprints',
     'inputForm.sources.arxiv_hint':
       'Searches cs, q-bio, physics, and other arXiv categories. Preprints are not peer-reviewed.',
+    'inputForm.sources.educationalDemo': 'Educational Demo (synthetic)',
+    'inputForm.sources.educationalDemo_hint':
+      'Forces the Non-AI path with local synthetic fixtures only — not PubMed/arXiv or live providers. Required for offline practice.',
     'inputForm.workload.legend': 'Agent Workload',
     'inputForm.workload.max_scan': 'Max Articles to Scan',
     'inputForm.workload.top_n': 'Top Articles to Synthesize',
@@ -55,6 +58,9 @@ export const inputFormTranslations = {
     'inputForm.sources.arxiv': 'arXiv-Preprints',
     'inputForm.sources.arxiv_hint':
       'Durchsucht cs, q-bio, physics und weitere arXiv-Kategorien. Preprints sind nicht peer-reviewed.',
+    'inputForm.sources.educationalDemo': 'Bildungs-Demo (synthetisch)',
+    'inputForm.sources.educationalDemo_hint':
+      'Erzwingt den Non-AI-Pfad mit lokalen synthetischen Fixtures — keine PubMed/arXiv- oder Live-Provider. Für Offline-Übung erforderlich.',
     'inputForm.workload.legend': 'Agenten-Workload',
     'inputForm.workload.max_scan': 'Max. zu scannende Artikel',
     'inputForm.workload.top_n': 'Top-Artikel für die Synthese',

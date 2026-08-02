@@ -22,6 +22,7 @@ import { ChatInterface } from './ChatInterface';
 import { ChatBubbleLeftRightIcon } from './icons/ChatBubbleLeftRightIcon';
 import { ReportArticleCard } from './ReportArticleCard';
 import { stableInsightKey } from '../lib/stableReactKeys';
+import { isDemoSyntheticArticle } from '../lib/articleSourceClass';
 import {
   legacyArticleKeyUrl,
   parseLegacyArticleKey,
@@ -221,7 +222,19 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(function R
   const synthesisTrustLevel =
     report.groundedSynthesis?.trustLevel ??
     (report.groundedSynthesis?.mode === 'extractive-template' ? 'verified' : 'narrative-draft');
-  const showNarrativeDraftBanner = synthesisTrustLevel === 'narrative-draft';
+  const isDemoCorpus =
+    report.corpusClass === 'demo-only' ||
+    report.retrievalOutcome === 'educational_demo' ||
+    (report.rankedArticles.length > 0 &&
+      report.rankedArticles.every((a) => isDemoSyntheticArticle(a)));
+  const isEmptyRetrieval =
+    report.corpusClass === 'empty-retrieval' ||
+    report.retrievalOutcome === 'zero_results' ||
+    report.retrievalOutcome === 'retrieval_failed' ||
+    report.retrievalOutcome === 'offline_without_demo';
+  // Demo corpora must never show the green "verified" trust chrome.
+  const showNarrativeDraftBanner =
+    !isDemoCorpus && !isEmptyRetrieval && synthesisTrustLevel === 'narrative-draft';
 
   const handleCopySynthesis = useCallback(() => {
     const plainText = stripMarkdown(report.synthesis);
@@ -238,6 +251,22 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(function R
     <>
       <div className="animate-fadeIn bg-surface rounded-lg border border-border flex flex-col shadow-lg">
         <div className="flex-shrink-0 border-b border-border p-4 sm:p-6">
+          {isDemoCorpus && (
+            <div
+              role="status"
+              className="mb-4 rounded-md border border-amber-500/60 bg-amber-500/10 px-3 py-2 text-sm font-semibold text-amber-900 dark:text-amber-100"
+            >
+              {t('report.demoCorpus.banner')}
+            </div>
+          )}
+          {isEmptyRetrieval && !isDemoCorpus && (
+            <div
+              role="status"
+              className="mb-4 rounded-md border border-border bg-surface-hover px-3 py-2 text-sm text-text-secondary"
+            >
+              {t('report.emptyRetrieval.banner')}
+            </div>
+          )}
           <div className="flex justify-between items-start flex-wrap gap-4">
             <div>
               <h2 className="text-2xl font-bold text-text-primary">{t('report.title')}</h2>
@@ -352,7 +381,9 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(function R
               >
                 {t('report.synthesis.narrativeDraftBanner')}
               </p>
-            ) : report.groundedSynthesis?.trustLevel === 'verified' ? (
+            ) : !isDemoCorpus &&
+              !isEmptyRetrieval &&
+              report.groundedSynthesis?.trustLevel === 'verified' ? (
               <p
                 className="mb-3 rounded-md border border-green-500/30 bg-green-500/10 px-3 py-2 text-sm text-green-200"
                 role="status"
@@ -386,16 +417,22 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(function R
                     <div className="flex flex-wrap gap-x-3 gap-y-1 items-center">
                       {(insight.supportingArticles || []).map((pmid) => {
                         const id = parseLegacyArticleKey(pmid);
-                        return (
+                        const href = legacyArticleKeyUrl(pmid);
+                        const label = `${t(sourceIdentifierLabelKey(id))}: ${formatSourceIdentifierValue(id)}`;
+                        return href ? (
                           <a
-                            href={legacyArticleKeyUrl(pmid)}
+                            href={href}
                             target="_blank"
                             rel="noopener noreferrer"
                             key={pmid}
                             className="text-xs text-text-secondary hover:text-brand-accent hover:underline"
                           >
-                            {t(sourceIdentifierLabelKey(id))}: {formatSourceIdentifierValue(id)}
+                            {label}
                           </a>
+                        ) : (
+                          <span key={pmid} className="text-xs text-text-secondary">
+                            {label}
+                          </span>
                         );
                       })}
                     </div>

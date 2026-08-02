@@ -115,4 +115,32 @@ describe('researchOrchestratorAdapter', () => {
     expect(events[0]).toMatch(/Phase 1/i);
     expect(events.at(-1)).toMatch(/Finalizing/i);
   });
+
+  it('routes educationalDemoMode through Non-AI even when live inference is available', async () => {
+    vi.mocked(resolveActiveInferenceMode).mockResolvedValue({
+      mode: 'live',
+      reason: 'live',
+      hasApiKey: true,
+      isOnline: true,
+      forceHeuristic: false,
+      provider: 'gemini',
+    });
+
+    const liveStream = vi.fn(async function* () {
+      yield { phase: 'should-not-run' };
+    });
+
+    const events: string[] = [];
+    for await (const event of generateResearchReportStreamWithMode(
+      { ...baseInput, educationalDemoMode: true },
+      baseAiSettings,
+      liveStream,
+    )) {
+      events.push(event.phase);
+    }
+
+    expect(liveStream).not.toHaveBeenCalled();
+    expect(resolveActiveInferenceMode).not.toHaveBeenCalled();
+    expect(events[0]).toMatch(/Phase 1/i);
+  });
 });

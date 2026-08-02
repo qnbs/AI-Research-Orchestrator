@@ -8,12 +8,14 @@ import type { GroundedClaim, RankedArticle, SourceIdentifier } from '../types';
 const ARXIV_PREFIX = 'arxiv:';
 const DOI_PREFIX = 'doi:';
 const PMCID_PREFIX = 'pmcid:';
+const DEMO_PREFIX = 'demo:';
 
 const SOURCE_IDENTIFIER_TYPES: ReadonlySet<SourceIdentifier['type']> = new Set([
   'pmid',
   'pmcid',
   'doi',
   'arxiv',
+  'demo',
 ]);
 
 /** Runtime guard for persisted or imported identifier objects. */
@@ -46,6 +48,9 @@ export const parseLegacyArticleKey = (key: string | unknown): SourceIdentifier =
   if (trimmed.startsWith(PMCID_PREFIX)) {
     return { type: 'pmcid', value: normalizePmcidValue(trimmed.slice(PMCID_PREFIX.length)) };
   }
+  if (trimmed.startsWith(DEMO_PREFIX)) {
+    return { type: 'demo', value: trimmed.slice(DEMO_PREFIX.length) };
+  }
   if (/^\d+$/.test(trimmed)) {
     return { type: 'pmid', value: trimmed };
   }
@@ -63,6 +68,8 @@ export const canonicalArticleKey = (id: SourceIdentifier): string => {
       return `${DOI_PREFIX}${id.value}`;
     case 'pmcid':
       return `${PMCID_PREFIX}${normalizePmcidValue(id.value)}`;
+    case 'demo':
+      return `${DEMO_PREFIX}${id.value}`;
     default: {
       const fallback = id as SourceIdentifier;
       return fallback.value;
@@ -121,6 +128,9 @@ export const sourceIdentifierExternalUrl = (id: SourceIdentifier): string => {
       return `https://www.ncbi.nlm.nih.gov/pmc/articles/PMC${normalizePmcidValue(id.value)}/`;
     case 'pmid':
       return `https://pubmed.ncbi.nlm.nih.gov/${id.value}/`;
+    case 'demo':
+      // Synthetic fixtures must never resolve to PubMed/arXiv URLs.
+      return '';
     default: {
       const fallback = id as SourceIdentifier;
       return `https://pubmed.ncbi.nlm.nih.gov/${fallback.value}/`;
@@ -136,7 +146,8 @@ export type SourceIdentifierLabelKey =
   | 'article.identifier.pmid'
   | 'article.identifier.arxiv'
   | 'article.identifier.doi'
-  | 'article.identifier.pmcid';
+  | 'article.identifier.pmcid'
+  | 'article.identifier.demo';
 
 /** i18n key for the identifier type label in UI. */
 export const sourceIdentifierLabelKey = (id: SourceIdentifier): SourceIdentifierLabelKey => {
@@ -147,6 +158,8 @@ export const sourceIdentifierLabelKey = (id: SourceIdentifier): SourceIdentifier
       return 'article.identifier.doi';
     case 'pmcid':
       return 'article.identifier.pmcid';
+    case 'demo':
+      return 'article.identifier.demo';
     case 'pmid':
       return 'article.identifier.pmid';
     default:
@@ -158,7 +171,8 @@ export type SourceIdentifierCopyLabelKey =
   | 'report.copyType.pmid'
   | 'report.copyType.arxiv'
   | 'report.copyType.doi'
-  | 'report.copyType.pmcid';
+  | 'report.copyType.pmcid'
+  | 'report.copyType.demo';
 
 /** i18n key for copy-to-clipboard toast labels. */
 export const sourceIdentifierCopyLabelKey = (
@@ -171,6 +185,8 @@ export const sourceIdentifierCopyLabelKey = (
       return 'report.copyType.doi';
     case 'pmcid':
       return 'report.copyType.pmcid';
+    case 'demo':
+      return 'report.copyType.demo';
     case 'pmid':
       return 'report.copyType.pmid';
     default:
@@ -204,7 +220,9 @@ export const formatLegacyArticleKeyLabel = (key: string): string => {
         ? 'arXiv'
         : id.type === 'doi'
           ? 'DOI'
-          : 'PMCID';
+          : id.type === 'demo'
+            ? 'Demo ID'
+            : 'PMCID';
   return `${prefix}: ${formatSourceIdentifierValue(id)}`;
 };
 

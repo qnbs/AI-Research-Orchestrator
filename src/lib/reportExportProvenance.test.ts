@@ -86,4 +86,44 @@ describe('sanitizeReportForExport', () => {
     expect(result.report.synthesis).toBe('');
     expect(result.uncitedParagraphsRemoved).toBe(1);
   });
+
+  it('preserves empty-retrieval explanatory synthesis on export', () => {
+    const report: ResearchReport = {
+      generatedQueries: [],
+      rankedArticles: [],
+      synthesis:
+        'No PubMed/arXiv articles matched "topic". This is a genuine zero-result retrieval.',
+      aiGeneratedInsights: [],
+      overallKeywords: [],
+      corpusClass: 'empty-retrieval',
+      retrievalOutcome: 'zero_results',
+    };
+    const result = sanitizeReportForExport(report);
+    expect(result.sanitized).toBe(false);
+    expect(result.report.synthesis).toContain('zero-result');
+  });
+
+  it('does not relabel mixed corpora as demo-only on export', () => {
+    const report = baseReport();
+    report.rankedArticles = [
+      {
+        ...report.rankedArticles[0],
+        pmid: '123',
+        sourceClass: 'pubmed-retrieved',
+      },
+      {
+        ...report.rankedArticles[0],
+        pmid: 'demo:x',
+        sourceClass: 'demo-synthetic',
+      },
+    ];
+    report.corpusClass = 'mixed-retrieved';
+    report.retrievalOutcome = 'ok';
+    report.synthesis = 'Cited (PMID: 123).';
+    report.aiGeneratedInsights = [{ question: 'Q?', answer: 'A.', supportingArticles: ['123'] }];
+    const result = sanitizeReportForExport(report);
+    expect(result.report.corpusClass).toBe('mixed-retrieved');
+    expect(result.report.retrievalOutcome).toBe('ok');
+    expect(result.report.synthesis).toMatch(/SYNTHETIC EDUCATIONAL DEMO/);
+  });
 });

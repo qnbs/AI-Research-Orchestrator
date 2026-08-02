@@ -107,7 +107,7 @@ const InputFormComponent: React.FC<InputFormProps> = ({
     try {
       const savedState = sessionStorage.getItem(FORM_STATE_KEY);
       if (savedState) {
-        return { includeArxiv: false, ...JSON.parse(savedState) };
+        return { includeArxiv: false, educationalDemoMode: false, ...JSON.parse(savedState) };
       }
     } catch (e) {
       safeLogError('Could not parse form state from sessionStorage', e);
@@ -120,6 +120,7 @@ const InputFormComponent: React.FC<InputFormProps> = ({
       maxArticlesToScan: defaultSettings.maxArticlesToScan,
       topNToSynthesize: defaultSettings.topNToSynthesize,
       includeArxiv: false,
+      educationalDemoMode: false,
     };
   });
   const { t } = useTranslation();
@@ -373,6 +374,20 @@ const InputFormComponent: React.FC<InputFormProps> = ({
               {formData.includeArxiv && (
                 <p className="text-[11px] text-text-secondary pl-2 leading-relaxed">
                   {t('inputForm.sources.arxiv_hint')}
+                </p>
+              )}
+              <CustomCheckbox
+                id="educationalDemoMode"
+                value="educationalDemo"
+                checked={formData.educationalDemoMode ?? false}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, educationalDemoMode: e.target.checked }))
+                }
+                label={t('inputForm.sources.educationalDemo')}
+              />
+              {formData.educationalDemoMode && (
+                <p className="text-[11px] text-amber-700 dark:text-amber-300 pl-2 leading-relaxed">
+                  {t('inputForm.sources.educationalDemo_hint')}
                 </p>
               )}
             </div>

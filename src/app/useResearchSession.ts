@@ -225,13 +225,17 @@ export function useResearchSession({
             );
           }
 
-          if (isFirstChunk && partialReport) {
+          if (partialReport) {
             finalReport = partialReport;
-            setReport(finalReport);
-            setReportStatus('streaming');
-            isFirstChunk = false;
+            if (isFirstChunk) {
+              setReport(finalReport);
+              setReportStatus('streaming');
+              isFirstChunk = false;
+            }
           }
 
+          // Accumulate chunks only — never seed from report.synthesis mid-stream
+          // (Non-AI emits full synthesis on the report and again as chunks).
           if (synthesisChunk) {
             finalSynthesis += synthesisChunk;
             setReport((prev) => (prev ? { ...prev, synthesis: finalSynthesis } : null));
@@ -255,15 +259,31 @@ export function useResearchSession({
         }
         dispatch(completeTrace({ status: 'done' }));
 
-        const modeSnapshot = await resolveActiveInferenceMode({
-          forceHeuristic: Boolean(aiSettings.forceHeuristicMode),
-          provider: aiSettings.provider ?? 'gemini',
-        });
+        // Educational demo always executed via Non-AI — never stamp as live provider.
+        const educationalDemoRun =
+          Boolean(data.educationalDemoMode) ||
+          finalReport.corpusClass === 'demo-only' ||
+          finalReport.retrievalOutcome === 'educational_demo';
+        const modeSnapshot = educationalDemoRun
+          ? {
+              mode: 'heuristic' as const,
+              reason: 'force' as const,
+              hasApiKey: true,
+              isOnline: true,
+              forceHeuristic: true,
+              provider: 'heuristic' as const,
+            }
+          : await resolveActiveInferenceMode({
+              forceHeuristic: Boolean(aiSettings.forceHeuristicMode),
+              provider: aiSettings.provider ?? 'gemini',
+            });
         const executedProviderId =
           modeSnapshot.mode === 'heuristic' ? 'heuristic' : (aiSettings.provider ?? 'gemini');
 
+        // Prefer streamed chunks; fall back to report.synthesis for report-only events.
+        const synthesisText = finalSynthesis || finalReport.synthesis || '';
         const completeReport = stampReportWithProvenance(
-          { ...finalReport, synthesis: finalSynthesis },
+          { ...finalReport, synthesis: synthesisText },
           {
             inferenceMode: modeSnapshot.mode,
             providerId: executedProviderId,
@@ -271,7 +291,7 @@ export function useResearchSession({
           },
         );
         const corpusPmids = completeReport.rankedArticles.map((a) => a.pmid);
-        const extractedClaims = extractGroundedClaimsFromMarkdown(finalSynthesis, corpusPmids);
+        const extractedClaims = extractGroundedClaimsFromMarkdown(synthesisText, corpusPmids);
         if (extractedClaims.length > 0) {
           completeReport.groundedSynthesis = buildAssessedGroundedSynthesis(
             extractedClaims,

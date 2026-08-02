@@ -7,6 +7,10 @@ import type {
   ResearchReport,
 } from '../types';
 import type { ResearchCheckpoint } from '../lib/researchCheckpoint';
+import {
+  migrateKnowledgeBaseEntryDemoProvenance,
+  stampDemoReportProvenance,
+} from '../lib/demoCorpusMigration';
 import { ensureArticleIdentifiers, ensureGroundedClaim } from '../lib/sourceIdentifier';
 import { safeLogError } from '../lib/safeLog';
 
@@ -110,6 +114,38 @@ db.version(5)
         ckpt.report = hydrateResearchReport(ckpt.report);
       } catch (err) {
         safeLogError('Dexie v5: skip checkpoint hydration', err);
+      }
+    });
+  });
+
+// Version 6: stamp demo-synthetic sourceClass / corpusClass on persisted demo fixtures (P0 quarantine)
+db.version(6)
+  .stores({
+    knowledgeBaseEntries: 'id, timestamp, sourceType, title',
+    settings: 'id',
+    presets: 'id',
+    collections: 'id, name, createdAt, updatedAt',
+    researchCheckpoints: 'id, createdAt, topic, reason',
+  })
+  .upgrade(async (tx) => {
+    const kbTable = tx.table('knowledgeBaseEntries');
+    await kbTable.toCollection().modify((entry) => {
+      try {
+        const migrated = migrateKnowledgeBaseEntryDemoProvenance(entry as KnowledgeBaseEntry);
+        Object.assign(entry, migrated);
+      } catch (err) {
+        safeLogError('Dexie v6: skip demo sourceClass stamp', err);
+      }
+    });
+
+    const checkpointTable = tx.table('researchCheckpoints');
+    await checkpointTable.toCollection().modify((checkpoint) => {
+      try {
+        const ckpt = checkpoint as ResearchCheckpoint;
+        if (!ckpt.report) return;
+        ckpt.report = stampDemoReportProvenance(ckpt.report);
+      } catch (err) {
+        safeLogError('Dexie v6: skip checkpoint demo stamp', err);
       }
     });
   });

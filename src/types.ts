@@ -14,6 +14,11 @@ export interface ResearchInput {
   topNToSynthesize: number;
   /** When true, arXiv preprints are fetched in addition to PubMed articles */
   includeArxiv?: boolean;
+  /**
+   * When true, run the educational synthetic demo corpus (explicit opt-in).
+   * Never implied by offline mode, empty retrieval, or network failure.
+   */
+  educationalDemoMode?: boolean;
 }
 
 export interface GeneratedQuery {
@@ -30,10 +35,23 @@ export type SourceIdentifier =
   | { type: 'pmid'; value: string }
   | { type: 'pmcid'; value: string }
   | { type: 'doi'; value: string }
-  | { type: 'arxiv'; value: string };
+  | { type: 'arxiv'; value: string }
+  | { type: 'demo'; value: string };
+
+/** How an article entered the corpus (P0 synthetic-demo quarantine). */
+export type ArticleSourceClass =
+  | 'pubmed-retrieved'
+  | 'arxiv-retrieved'
+  | 'user-imported'
+  | 'demo-synthetic'
+  | 'offline-placeholder';
+
+/** Aggregate corpus provenance for a research report. */
+export type ReportCorpusClass =
+  'retrieved' | 'mixed-retrieved' | 'demo-only' | 'placeholder-only' | 'empty-retrieval';
 
 export interface RankedArticle {
-  /** Canonical legacy key (numeric PMID, `arxiv:…`, `doi:…`, `pmcid:…`). */
+  /** Canonical legacy key (numeric PMID, `arxiv:…`, `doi:…`, `pmcid:…`, `demo:…`). */
   pmid: string;
   /** Typed identifier; hydrated on read when absent. */
   articleId?: SourceIdentifier;
@@ -50,6 +68,8 @@ export interface RankedArticle {
   retrievalSource?: PubMedRetrievalSource;
   /** Epoch ms when this record was fetched from NCBI. */
   retrievedAt?: number;
+  /** Provenance class — required for scientific honesty on demo vs retrieved. */
+  sourceClass?: ArticleSourceClass;
   relevanceScore: number;
   relevanceExplanation: string;
   keywords: string[];
@@ -103,6 +123,16 @@ export interface ResearchReport {
   sources?: WebContent[];
   /** Build/runtime provenance stamped at report completion (P1-6). */
   generationProvenance?: ReportGenerationProvenance;
+  /** Aggregate corpus class (retrieved vs educational demo vs empty). */
+  corpusClass?: ReportCorpusClass;
+  /** Machine-readable retrieval completeness / empty-corpus reason. */
+  retrievalOutcome?:
+    | 'ok'
+    | 'partial_failure'
+    | 'zero_results'
+    | 'retrieval_failed'
+    | 'offline_without_demo'
+    | 'educational_demo';
 }
 
 /** Identifies the app build that produced a research report. */

@@ -9,6 +9,8 @@ import {
   buildGroundedSynthesisFromExtractive,
   buildAssessedGroundedSynthesis,
 } from '../../lib/groundedSynthesis';
+import { corpusContainsDemo } from '../../lib/articleSourceClass';
+import { formatLegacyArticleKeyLabel } from '../../lib/sourceIdentifier';
 import { tokenize, jaccardSimilarity, splitSentences, stemmedTokens, cosineBag } from './utils';
 
 /**
@@ -158,14 +160,20 @@ export function generateNarrativeSections(
 ): NarrativeSection[] {
   const sections: NarrativeSection[] = [];
 
+  const isDemoCorpus = corpusContainsDemo(articles);
+
   // Background section
   const backgroundPmids = articles.slice(0, 3).map((a) => a.pmid);
   sections.push({
     title: 'Background',
-    content:
-      `This report synthesizes literature on "${query}" using PubMed and arXiv sources. ` +
-      `The search identified ${articles.length} relevant articles published between ` +
-      `${getYearRange(articles)}.`,
+    content: isDemoCorpus
+      ? `This report is an EDUCATIONAL SYNTHETIC DEMO for "${query}". ` +
+        `It uses locally curated demo fixtures — NOT retrieved PubMed or arXiv literature. ` +
+        `The demo corpus contributed ${articles.length} synthetic articles dated ` +
+        `${getYearRange(articles)}.`
+      : `This report synthesizes literature on "${query}" using PubMed and arXiv sources. ` +
+        `The search identified ${articles.length} relevant articles published between ` +
+        `${getYearRange(articles)}.`,
     pmids: backgroundPmids,
   });
 
@@ -173,7 +181,10 @@ export function generateNarrativeSections(
   const findingsPmids = articles.slice(0, 5).map((a) => a.pmid);
   const findingsContent = articles
     .slice(0, 5)
-    .map((a) => `• ${a.title} (${a.pubYear}) [PMID: ${a.pmid}]`)
+    .map((a) => {
+      const idLabel = formatLegacyArticleKeyLabel(a.pmid);
+      return `• ${a.title} (${a.pubYear}) [${idLabel}]`;
+    })
     .join('\n');
   sections.push({
     title: 'Key Findings',
@@ -290,7 +301,9 @@ function generateInsights(
   if (topArticles.length > 0) {
     insights.push({
       question: `What are the highest-scoring articles for "${query}"?`,
-      answer: topArticles.map((a) => `${a.title} (PMID: ${a.pmid})`).join('; '),
+      answer: topArticles
+        .map((a) => `${a.title} (${formatLegacyArticleKeyLabel(a.pmid)})`)
+        .join('; '),
       supportingArticles: topArticles.map((a) => a.pmid),
     });
   }

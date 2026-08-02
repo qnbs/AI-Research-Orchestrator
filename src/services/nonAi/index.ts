@@ -2,13 +2,12 @@
  * Non-AI Programmatic Research Engine public façade.
  * Provides the same interface as geminiService for seamless integration.
  *
- * Uses PubMed/arXiv when online; falls back to the curated demo corpus when
- * offline or when the live search returns nothing - ported from
- * `services/heuristics/researchStream.ts` during the nonAi/heuristics
- * consolidation (ADR 0009).
+ * Uses PubMed/arXiv when online. Empty results and retrieval failures stay empty
+ * unless the user explicitly opts into educational demo mode (P0 quarantine;
+ * supersedes the silent demo fallback documented in ADR 0007 / 0009).
  */
 
-import type { ResearchInput, ResearchReport } from '../../types';
+import type { ResearchInput, ResearchReport, ReportCorpusClass } from '../../types';
 import { HEURISTIC_BADGE } from './types';
 import { buildQuery, type QueryBuildOptions } from './queryBuilder';
 import { retrieveArticles } from './retriever';
@@ -19,6 +18,11 @@ import { selectDemoArticlesForTopic } from './sampleData';
 import { AppError } from '../../lib/errors';
 import { throwIfAborted } from './utils';
 import { safeLogWarn } from '../../lib/safeLog';
+import {
+  inferArticleSourceClass,
+  resolveReportCorpusClass,
+  stampDemoArticle,
+} from '../../lib/articleSourceClass';
 
 export type NonAiStreamEvent = {
   report?: ResearchReport;
@@ -50,6 +54,32 @@ function queryOptionsFromInput(input: ResearchInput): QueryBuildOptions {
   return options;
 }
 
+function stampRetrievedArticles(articles: CuratedArticle[]): CuratedArticle[] {
+  return articles.map((a) => ({
+    ...a,
+    sourceClass: a.sourceClass ?? inferArticleSourceClass(a),
+  }));
+}
+
+function buildEmptyRetrievalReport(
+  topic: string,
+  primaryQuery: { query: string; explanation: string },
+  outcome: NonNullable<ResearchReport['retrievalOutcome']>,
+  message: string,
+): ResearchReport {
+  const corpusClass: ReportCorpusClass = 'empty-retrieval';
+  return {
+    generatedQueries: [{ query: primaryQuery.query, explanation: primaryQuery.explanation }],
+    rankedArticles: [],
+    synthesis: message,
+    aiGeneratedInsights: [],
+    overallKeywords: [],
+    groundedSynthesis: undefined,
+    corpusClass,
+    retrievalOutcome: outcome,
+  };
+}
+
 /**
  * Execute a full Non-AI research pipeline.
  * Returns a complete ResearchReport with deterministic, extractive synthesis.
@@ -63,11 +93,47 @@ export async function* generateNonAiResearchReportStream(
   throwIfAborted(signal, 'Aborted');
 
   const primaryQuery = buildQuery(input.researchTopic, queryOptionsFromInput(input));
+  const educationalDemo = Boolean(input.educationalDemoMode);
 
   const isOnline =
     options.getOnline?.() ?? (typeof navigator === 'undefined' ? true : navigator.onLine);
 
+  // Explicit educational demo — never implied by offline/empty/failure.
+  if (educationalDemo) {
+    yield { phase: phase('Educational demo mode — loading synthetic demo corpus...') };
+    const curated = enrichArticles(
+      selectDemoArticlesForTopic(
+        input.researchTopic,
+        Math.min(input.maxArticlesToScan, 12),
+        input,
+      ).map(stampDemoArticle),
+    );
+    throwIfAborted(signal, 'Aborted');
+    yield { phase: phase('Phase 4: Ranking with BM25/TF-IDF hybrid...') };
+    const ranked = rankArticles(curated, input.researchTopic);
+    const topRanked = getTopArticles(ranked, input.topNToSynthesize).map(stampDemoArticle);
+
+    throwIfAborted(signal, 'Aborted');
+    yield { phase: phase('Phase 5: Generating extractive synthesis...') };
+    const report: ResearchReport = {
+      ...generateResearchReport(topRanked, input.researchTopic),
+      generatedQueries: [{ query: primaryQuery.query, explanation: primaryQuery.explanation }],
+      corpusClass: 'demo-only',
+      retrievalOutcome: 'educational_demo',
+    };
+    yield { report, phase: phase('Phase 5: Generating extractive synthesis...') };
+
+    for await (const chunk of streamSynthesisChunks(report.synthesis, signal)) {
+      yield { synthesisChunk: chunk, phase: phase('Streaming synthesis...') };
+    }
+
+    yield { phase: phase('Phase 6: Finalizing report...') };
+    return;
+  }
+
   let curated: CuratedArticle[] = [];
+  let retrievalFailed = false;
+  let retrievalErrorCount = 0;
 
   if (isOnline) {
     yield { phase: phase('Phase 2: Retrieving articles from PubMed and arXiv...') };
@@ -78,34 +144,91 @@ export async function* generateNonAiResearchReportStream(
         signal,
       });
       throwIfAborted(signal, 'Aborted');
+      retrievalErrorCount = retrieval.retrievalErrorCount ?? 0;
       yield { phase: phase('Phase 3: Curating and deduplicating results...') };
-      curated = enrichArticles(mergeAndCurate(retrieval.pubmedArticles, retrieval.arxivArticles));
+      curated = stampRetrievedArticles(
+        enrichArticles(mergeAndCurate(retrieval.pubmedArticles, retrieval.arxivArticles)),
+      );
+      if (curated.length === 0 && retrievalErrorCount > 0) {
+        retrievalFailed = true;
+        yield {
+          phase: phase(
+            'PubMed/arXiv unavailable — empty result (enable Educational Demo to practice offline).',
+          ),
+        };
+      } else if (curated.length > 0 && retrievalErrorCount > 0) {
+        yield {
+          phase: phase(
+            'Partial retrieval — one or more literature providers failed; synthesizing from available results.',
+          ),
+        };
+      }
     } catch (error) {
       if (error instanceof AppError && error.code === 'STREAM_ABORTED') throw error;
-      safeLogWarn('Non-AI retrieval failed, falling back to demo corpus:', error);
-      yield { phase: phase('PubMed/arXiv unavailable — using local demo corpus...') };
+      safeLogWarn('Non-AI retrieval failed; not substituting demo corpus:', error);
+      retrievalFailed = true;
+      retrievalErrorCount += 1;
+      yield {
+        phase: phase(
+          'PubMed/arXiv unavailable — empty result (enable Educational Demo to practice offline).',
+        ),
+      };
     }
   } else {
-    yield { phase: phase('Offline — loading curated demo corpus...') };
+    yield {
+      phase: phase(
+        'Offline — empty result (enable Educational Demo for synthetic practice corpus).',
+      ),
+    };
   }
 
   if (curated.length === 0) {
-    yield { phase: phase('Selecting educational demo articles for topic...') };
-    curated = enrichArticles(
-      selectDemoArticlesForTopic(input.researchTopic, Math.min(input.maxArticlesToScan, 12), input),
+    const outcome = retrievalFailed
+      ? 'retrieval_failed'
+      : isOnline
+        ? 'zero_results'
+        : 'offline_without_demo';
+    const message =
+      outcome === 'retrieval_failed'
+        ? `Retrieval failed for "${input.researchTopic}". No synthetic demo articles were substituted. ` +
+          `Retry when PubMed/arXiv are available, or enable Educational Demo mode for synthetic practice fixtures.`
+        : outcome === 'offline_without_demo'
+          ? `Browser is offline. No retrieved literature is available for "${input.researchTopic}". ` +
+            `Enable Educational Demo mode for synthetic practice fixtures, or reconnect to run a live search.`
+          : `No PubMed/arXiv articles matched "${input.researchTopic}" with the current filters. ` +
+            `This is a genuine zero-result retrieval — not a demo corpus. Broaden the query or enable Educational Demo mode.`;
+
+    const emptyReport = buildEmptyRetrievalReport(
+      input.researchTopic,
+      primaryQuery,
+      outcome,
+      message,
     );
+    yield {
+      report: emptyReport,
+      // Emit as a chunk so orchestrator session accumulation keeps the explanation.
+      synthesisChunk: emptyReport.synthesis,
+      phase: phase('Empty retrieval — no scientific corpus assembled.'),
+    };
+    yield { phase: phase('Phase 6: Finalizing report...') };
+    return;
   }
 
   throwIfAborted(signal, 'Aborted');
   yield { phase: phase('Phase 4: Ranking with BM25/TF-IDF hybrid...') };
   const ranked = rankArticles(curated, input.researchTopic);
-  const topRanked = getTopArticles(ranked, input.topNToSynthesize);
+  const topRanked = getTopArticles(ranked, input.topNToSynthesize).map((a) => ({
+    ...a,
+    sourceClass: a.sourceClass ?? inferArticleSourceClass(a),
+  }));
 
   throwIfAborted(signal, 'Aborted');
   yield { phase: phase('Phase 5: Generating extractive synthesis...') };
   const report: ResearchReport = {
     ...generateResearchReport(topRanked, input.researchTopic),
     generatedQueries: [{ query: primaryQuery.query, explanation: primaryQuery.explanation }],
+    corpusClass: resolveReportCorpusClass(topRanked, 'retrieved'),
+    retrievalOutcome: retrievalErrorCount > 0 ? 'partial_failure' : 'ok',
   };
   yield { report, phase: phase('Phase 5: Generating extractive synthesis...') };
 

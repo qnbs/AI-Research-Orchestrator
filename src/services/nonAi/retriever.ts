@@ -36,6 +36,7 @@ export async function retrieveArticles(
   const allPmids = new Set<string>();
   const allArticles: RankedArticle[] = [];
   let apiCalls = 0;
+  let retrievalErrorCount = 0;
 
   // Get NCBI API key if available
   let ncbiApiKey: string | null = null;
@@ -69,6 +70,7 @@ export async function retrieveArticles(
     } catch (error) {
       if (isAbortError(error)) throw toAppError(error, 'pubmed');
       // Continue with other queries on failure
+      retrievalErrorCount += 1;
       safeLogWarn(`Query failed: ${builtQuery.query}`, error);
     }
   }
@@ -101,8 +103,9 @@ export async function retrieveArticles(
     } catch (error) {
       if (isAbortError(error)) throw toAppError(error, 'pubmed');
       // Isolate this failure like the per-query search failures above — a details-fetch
-      // error must not block arXiv retrieval; the caller falls back to demo data only
-      // once every source (PubMed + arXiv) has come back empty.
+      // error must not block arXiv retrieval; the caller records empty retrieval without
+      // substituting synthetic demo fixtures (ADR 0016).
+      retrievalErrorCount += 1;
       safeLogWarn('PubMed article-detail fetch failed:', error);
     }
   }
@@ -132,6 +135,7 @@ export async function retrieveArticles(
       }));
     } catch (error) {
       if (isAbortError(error)) throw toAppError(error, 'arxiv');
+      retrievalErrorCount += 1;
       safeLogWarn('arXiv search failed:', error);
     }
   }
@@ -142,5 +146,6 @@ export async function retrieveArticles(
     pubmedCount: allArticles.length,
     arxivCount: arxivArticles.length,
     apiCalls,
+    retrievalErrorCount,
   };
 }
