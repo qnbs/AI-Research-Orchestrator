@@ -2,10 +2,19 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AppError } from '../../lib/errors';
 import { createGeminiProvider } from './gemini';
 
-const generateContentMock = vi.fn();
-const generateContentStreamMock = vi.fn();
-const sendMessageStreamMock = vi.fn();
-const chatCreateMock = vi.fn();
+const {
+  generateContentMock,
+  generateContentStreamMock,
+  sendMessageStreamMock,
+  chatCreateMock,
+  getProviderApiKey,
+} = vi.hoisted(() => ({
+  generateContentMock: vi.fn(),
+  generateContentStreamMock: vi.fn(),
+  sendMessageStreamMock: vi.fn(),
+  chatCreateMock: vi.fn(),
+  getProviderApiKey: vi.fn(),
+}));
 
 vi.mock('@google/genai', () => ({
   GoogleGenAI: vi.fn().mockImplementation(function MockGoogleGenAI(this: {
@@ -24,8 +33,6 @@ vi.mock('@google/genai', () => ({
     };
   }),
 }));
-
-const getProviderApiKey = vi.fn();
 
 vi.mock('../apiKeyService', () => ({
   getProviderApiKey: (...args: unknown[]) => getProviderApiKey(...args),
@@ -262,14 +269,20 @@ describe('createGeminiProvider', () => {
       }).message,
     ).toMatch(/token limit/i);
 
+    // Provider adapters map AbortError → PROVIDER_UNAVAILABLE (non-retryable).
+    // STREAM_ABORTED is stamped at the geminiService façade, not in mapError.
     const abortDom = new DOMException('Aborted', 'AbortError');
-    const mappedAbort = provider.mapError(abortDom);
-    expect(mappedAbort.code).toBe('PROVIDER_UNAVAILABLE');
-    expect(mappedAbort.retryable).toBe(false);
+    expect(provider.mapError(abortDom)).toMatchObject({
+      code: 'PROVIDER_UNAVAILABLE',
+      retryable: false,
+    });
 
     const abortErr = new Error('aborted');
     abortErr.name = 'AbortError';
-    expect(provider.mapError(abortErr).retryable).toBe(false);
+    expect(provider.mapError(abortErr)).toMatchObject({
+      code: 'PROVIDER_UNAVAILABLE',
+      retryable: false,
+    });
 
     const existing = new AppError({ code: 'PROVIDER_AUTH', message: 'keep', retryable: false });
     expect(provider.mapError(existing)).toBe(existing);

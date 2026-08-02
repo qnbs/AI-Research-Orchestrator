@@ -263,6 +263,6 @@ describe('databaseService checkpoint ordering', () => {
     }
     const latest = await getLatestResearchCheckpoints(2);
     expect(latest).toHaveLength(2);
-    expect(latest[0]?.createdAt).toBeGreaterThan(latest[1]?.createdAt ?? 0);
+    expect(latest.map((checkpoint) => checkpoint.createdAt)).toEqual([300, 200]);
   });
 });

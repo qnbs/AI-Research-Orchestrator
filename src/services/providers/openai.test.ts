@@ -2,8 +2,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AppError } from '../../lib/errors';
 import { createOpenAIProvider } from './openai';
 
-const createMock = vi.fn();
-const getProviderApiKey = vi.fn();
+const { createMock, getProviderApiKey } = vi.hoisted(() => ({
+  createMock: vi.fn(),
+  getProviderApiKey: vi.fn(),
+}));
 
 vi.mock('openai', () => ({
   // Vitest 4: mocks used with `new` must be function/class, not arrow implementations.
@@ -151,8 +153,13 @@ describe('createOpenAIProvider', () => {
     expect(provider.mapError({ error: { code: 'rate_limit_exceeded' } }).code).toBe(
       'PROVIDER_RATE_LIMIT',
     );
+    // Provider adapters map AbortError → PROVIDER_UNAVAILABLE (non-retryable).
+    // STREAM_ABORTED is stamped at the geminiService façade, not in mapError.
     const abort = new DOMException('Aborted', 'AbortError');
-    expect(provider.mapError(abort).retryable).toBe(false);
+    expect(provider.mapError(abort)).toMatchObject({
+      code: 'PROVIDER_UNAVAILABLE',
+      retryable: false,
+    });
     const existing = new AppError({ code: 'PROVIDER_AUTH', message: 'x', retryable: false });
     expect(provider.mapError(existing)).toBe(existing);
   });
