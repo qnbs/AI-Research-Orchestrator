@@ -9,6 +9,9 @@ import {
   getLatestResearchCheckpoints,
   deleteResearchCheckpoint,
   clearResearchCheckpoints,
+  addEntry,
+  bulkUpdateEntriesInTransaction,
+  getAllEntries,
 } from './databaseService';
 import { defaultSettings } from '../store/slices/settingsSlice';
 import { createResearchCheckpoint } from '../lib/researchCheckpoint';
@@ -55,5 +58,69 @@ describe('databaseService settings IO', () => {
     await saveResearchCheckpoint(ckpt);
     await clearResearchCheckpoints();
     await expect(getLatestResearchCheckpoints()).resolves.toEqual([]);
+  });
+});
+
+describe('bulkUpdateEntriesInTransaction', () => {
+  const makeEntry = (id: string, title: string) => ({
+    id,
+    timestamp: 1,
+    title,
+    sourceType: 'research' as const,
+    articles: [],
+    input: {
+      researchTopic: title,
+      dateRange: 'any' as const,
+      articleTypes: [],
+      synthesisFocus: 'overview' as const,
+      maxArticlesToScan: 10,
+      topNToSynthesize: 5,
+    },
+    report: {
+      generatedQueries: [],
+      rankedArticles: [],
+      synthesis: '',
+      aiGeneratedInsights: [],
+      overallKeywords: [],
+    },
+  });
+
+  beforeEach(async () => {
+    await db.delete();
+    await db.open();
+  });
+
+  it('applies multiple updates in one transaction', async () => {
+    await addEntry(makeEntry('a', 'Old A'));
+    await addEntry(makeEntry('b', 'Old B'));
+
+    await bulkUpdateEntriesInTransaction([
+      { id: 'a', changes: { title: 'New A' } },
+      { id: 'b', changes: { title: 'New B' } },
+    ]);
+
+    const entries = await getAllEntries();
+    expect(entries.find((e) => e.id === 'a')?.title).toBe('New A');
+    expect(entries.find((e) => e.id === 'b')?.title).toBe('New B');
+  });
+
+  it('no-ops on empty updates array', async () => {
+    await addEntry(makeEntry('a', 'Stable'));
+    await bulkUpdateEntriesInTransaction([]);
+    const entries = await getAllEntries();
+    expect(entries[0]?.title).toBe('Stable');
+  });
+
+  it('rolls back when a later update fails', async () => {
+    await addEntry(makeEntry('a', 'Before'));
+    await expect(
+      bulkUpdateEntriesInTransaction([
+        { id: 'a', changes: { title: 'After' } },
+        { id: 'missing', changes: { title: 'Ghost' } },
+      ]),
+    ).rejects.toThrow();
+
+    const entries = await getAllEntries();
+    expect(entries.find((e) => e.id === 'a')?.title).toBe('Before');
   });
 });

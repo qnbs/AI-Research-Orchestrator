@@ -12,6 +12,7 @@ import {
   type KnowledgeBaseImportQuarantine,
 } from '../../lib/knowledgeBaseImport';
 import { safeLogError } from '../../lib/safeLog';
+import { countResearchPruneCandidates } from '../../lib/knowledgeBaseDedup';
 import { deriveSettingsErrors } from './deriveSettingsErrors';
 
 const isObject = (item: unknown): item is Record<string, unknown> => {
@@ -116,9 +117,9 @@ export const useSettingsViewLogic = (
   }, [knowledgeBase, presets]);
 
   const articlesToPruneCount = useMemo(() => {
-    if (!uniqueArticles) return 0;
-    return uniqueArticles.filter((a) => a.relevanceScore < pruneScore).length;
-  }, [pruneScore, uniqueArticles]);
+    if (!knowledgeBase) return 0;
+    return countResearchPruneCandidates(knowledgeBase, pruneScore);
+  }, [pruneScore, knowledgeBase]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- syncs the locally-editable draft when the canonical settings change externally.

@@ -123,6 +123,16 @@ export const settingsTranslations = {
     'settings.kb.prune.title': 'Prune by Relevance Score',
     'settings.kb.prune.desc':
       'Permanently remove low-scoring articles from saved research reports only. Author and journal profiles are not pruned.',
+    'settings.kb.notification.no_duplicates': 'No duplicate articles found to merge.',
+    'settings.kb.notification.already_canonical':
+      'Duplicate articles already share canonical metadata.',
+    'settings.kb.notification.harmonized':
+      'Harmonized metadata for {count} duplicate article copy(ies). Historical report snapshots were preserved.',
+    'settings.kb.notification.merge_failed': 'Failed to merge duplicates.',
+    'settings.kb.notification.pruned': '{count} research article(s) pruned.',
+    'settings.kb.notification.no_prune_candidates':
+      'No research articles found with a score below {score}.',
+    'settings.kb.notification.prune_failed': 'Failed to prune articles.',
     'settings.kb.presets.title': 'Research Presets',
     'settings.kb.presets.desc': 'Manage your saved research form settings for quick access.',
     'settings.kb.presets.empty': 'You have no saved presets. Save one from the Orchestrator form.',
@@ -369,6 +379,17 @@ export const settingsTranslations = {
     'settings.kb.prune.title': 'Nach Relevanz-Score bereinigen',
     'settings.kb.prune.desc':
       'Artikel mit niedrigem Score nur aus gespeicherten Rechercheberichten dauerhaft entfernen. Autoren- und Journalprofile werden nicht bereinigt.',
+    'settings.kb.notification.no_duplicates':
+      'Keine doppelten Artikel zum Zusammenführen gefunden.',
+    'settings.kb.notification.already_canonical':
+      'Doppelte Artikel haben bereits identische kanonische Metadaten.',
+    'settings.kb.notification.harmonized':
+      'Metadaten für {count} doppelte Artikelkopie(n) harmonisiert. Bericht-Snapshots blieben erhalten.',
+    'settings.kb.notification.merge_failed': 'Zusammenführen der Duplikate fehlgeschlagen.',
+    'settings.kb.notification.pruned': '{count} Recherche-Artikel bereinigt.',
+    'settings.kb.notification.no_prune_candidates':
+      'Keine Recherche-Artikel mit einem Score unter {score} gefunden.',
+    'settings.kb.notification.prune_failed': 'Bereinigung der Artikel fehlgeschlagen.',
     'settings.kb.presets.title': 'Recherche-Presets',
     'settings.kb.presets.desc':
       'Gespeicherte Rechercheformular-Einstellungen für schnellen Zugriff verwalten.',

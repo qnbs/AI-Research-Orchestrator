@@ -159,9 +159,7 @@ export const knowledgeBaseSlice = createSlice({
         entriesAdapter.updateOne(state, action.payload);
       })
       .addCase(bulkUpdateKbEntries.fulfilled, (state, action) => {
-        for (const { id, changes } of action.payload) {
-          entriesAdapter.updateOne(state, { id, changes });
-        }
+        entriesAdapter.updateMany(state, action.payload);
       });
   },
 });
