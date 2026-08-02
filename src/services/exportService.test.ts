@@ -96,6 +96,8 @@ describe('export helpers', () => {
   });
 
   it('exportHistoryToJson includes build release meta in wrapper', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-02T12:00:00.000Z'));
     const entries = [
       {
         id: '1',
@@ -137,6 +139,8 @@ describe('export helpers', () => {
     expect(parsed.meta.buildCommitSha.length).toBeGreaterThan(0);
     expect(parsed.meta.dexieSchemaVersion).toBeGreaterThan(0);
     expect(parsed.meta.swCacheVersion).toBeTruthy();
+    expect(parsed.meta.exportDate).toBe('2026-08-02T12:00:00.000Z');
+    vi.useRealTimers();
   });
 
   it('exportToPdf cover uses report generation provenance label', () => {

@@ -36,6 +36,11 @@ test.describe('App smoke tests', () => {
     const manifest = await response.json();
     expect(manifest.name).toMatch(/Orchestrat/i);
     expect(manifest.start_url).toBeTruthy();
-    expect(manifest.icons?.length).toBeGreaterThan(0);
+    const iconSizes = (manifest.icons ?? []).map((icon: { sizes: string }) => icon.sizes);
+    const iconPurposes = (manifest.icons ?? []).map(
+      (icon: { purpose?: string }) => icon.purpose ?? 'any',
+    );
+    expect(iconSizes).toEqual(expect.arrayContaining(['192x192', '512x512']));
+    expect(iconPurposes).toContain('maskable');
   });
 });

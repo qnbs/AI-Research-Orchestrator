@@ -44,7 +44,9 @@ Track progress in this file when a browser is promoted.
 
 ### Streak (updated 2026-08-02)
 
-Smoke matrix jobs on **Firefox**, **WebKit**, and **mobile Chrome** each reported **success** on the last **8** consecutive workflow runs (including merge of PR #174). Promotion threshold: **10 consecutive** runs with **3 passed / 0 failed** per browser (read job logs). Next step after streak ≥10: expand that browser to the full seven-spec list while keeping `continue-on-error: true`.
+**Pre-manifest streak (3 smoke tests):** Firefox, WebKit, and mobile Chrome each succeeded on **8** consecutive workflow runs through merge of PR #174 (**3 passed / 0 failed** per browser job log).
+
+**Current streak (4 smoke tests, incl. manifest):** **0** — reset after E2E run `30753340012` (`622077a`) reported **3 passed / 1 failed** (manifest name assertion) before fix in `138f3b1`. Promotion requires **10 consecutive** workflow runs with **4 passed / 0 failed** per browser (read job logs — green `continue-on-error` badge is not enough). Next step after streak ≥10: expand that browser to the full seven-spec list while keeping `continue-on-error: true`.
 
 ## Historical note (fixed 2026-07-21)
 
