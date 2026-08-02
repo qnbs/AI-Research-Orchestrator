@@ -53,11 +53,39 @@ async function waitForIndexedDbEntryCount(page: Page, minCount: number, timeout 
 }
 
 /**
- * Navigate to the app and skip the onboarding screen if it is shown.
+ * Dismiss onboarding if present and wait for a stable app `<header>`.
  *
  * Firefox can lose a fast onboarding click while Redux/settings hydrate, so we
- * always wait for a stable post-onboarding `<header>` (with a longer timeout)
- * and do not treat a raced button visibility alone as readiness.
+ * always wait for the shell (with a longer timeout) and retry the click once.
+ */
+async function ensureAppShellReady(page: Page) {
+  const startBtn = page.getByRole('button', { name: /start researching/i });
+  const header = page.locator('header');
+
+  if (await header.isVisible().catch(() => false)) {
+    return;
+  }
+
+  await Promise.race([
+    startBtn.waitFor({ state: 'visible', timeout: 15_000 }),
+    header.waitFor({ state: 'visible', timeout: 15_000 }),
+  ]);
+
+  if (await startBtn.isVisible().catch(() => false)) {
+    await startBtn.click();
+    if (await startBtn.isVisible().catch(() => false)) {
+      await startBtn.click();
+    }
+    await startBtn.waitFor({ state: 'hidden', timeout: 15_000 }).catch(() => {
+      /* header wait below is authoritative */
+    });
+  }
+
+  await header.waitFor({ state: 'visible', timeout: 20_000 });
+}
+
+/**
+ * Navigate to the app and skip the onboarding screen if it is shown.
  */
 export async function skipOnboarding(page: Page) {
   await page.goto('/');
@@ -73,31 +101,7 @@ export async function skipOnboarding(page: Page) {
     }
   });
 
-  const startBtn = page.getByRole('button', { name: /start researching/i });
-  const header = page.locator('header');
-
-  // Fast path: returning sessions already have the shell.
-  if (await header.isVisible().catch(() => false)) {
-    return;
-  }
-
-  await Promise.race([
-    startBtn.waitFor({ state: 'visible', timeout: 15_000 }),
-    header.waitFor({ state: 'visible', timeout: 15_000 }),
-  ]);
-
-  if (await startBtn.isVisible().catch(() => false)) {
-    await startBtn.click();
-    // Click may be ignored if hydration is still in flight — retry once.
-    if (await startBtn.isVisible().catch(() => false)) {
-      await startBtn.click();
-    }
-    await startBtn.waitFor({ state: 'hidden', timeout: 15_000 }).catch(() => {
-      /* header wait below is authoritative */
-    });
-  }
-
-  await header.waitFor({ state: 'visible', timeout: 20_000 });
+  await ensureAppShellReady(page);
 }
 
 /**
