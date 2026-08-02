@@ -10,6 +10,7 @@ import type { AbstractStatus, RankedArticle } from '../types';
 import { withCircuitBreaker, CircuitOpenError } from '../lib/circuitBreaker';
 import { AppError, isAbortError } from '../lib/errors';
 import { fetchWithExternalPolicy } from '../lib/externalFetch';
+import { ensureArticleIdentifiers } from '../lib/sourceIdentifier';
 import { batchPmids, parsePubMedEfetchXml } from './pubmedXmlParser';
 
 const PUBMED_BASE = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils';
@@ -142,6 +143,7 @@ const mapEsummaryMetadata = (pmid: string, art: ESummaryArticle): Partial<Ranked
   const pubYear = /^\d{4}$/.test(yearRaw) ? yearRaw : '0000';
   return {
     pmid,
+    articleId: { type: 'pmid', value: pmid },
     pmcId: pmcEntry?.value,
     title: art.title ?? '',
     authors: (art.authors ?? []).map((author) => author.name).join(', '),
@@ -264,5 +266,5 @@ export const fetchArticleDetails = async (
     });
   }
 
-  return articles;
+  return articles.map((article) => ensureArticleIdentifiers(article as RankedArticle));
 };

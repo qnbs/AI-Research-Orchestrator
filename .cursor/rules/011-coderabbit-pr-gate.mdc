@@ -7,12 +7,16 @@ alwaysApply: true
 
 Before merging any PR to `main`, **trigger and fully resolve all automated review feedback** on that PR.
 
+**Workflow detail:** follow the correction loop in `@.cursor/rules/013-pr-review-correction-loop.mdc` (CI quiescence, all bots, thread reply/resolve, rate-limit patience).
+
 ## Bots / sources in scope
 
 Address findings from **all** of these when present:
 
 - **CodeRabbit** (`coderabbitai`)
-- **CodeAntai** / Code Antai (and similarly named AI reviewers)
+- **CodeAnt** / Code Antai (`codeant-ai`)
+- **GitHub Copilot** (`copilot-pull-request-reviewer`)
+- **DeepSource** (`deepsource-io`) — advisory JavaScript per `docs/project-facts.json` unless policy changes
 - Other automated PR reviewers that post inline or summary comments (e.g. Socket Security actionable items when they block merge, Cursor Bugbot when requested)
 
 Human review comments that request concrete fixes are also in scope when they are open on the PR.

@@ -25,6 +25,7 @@ import { DocumentPlusIcon } from './icons/DocumentPlusIcon';
 import { DatabaseIcon } from './icons/DatabaseIcon';
 import { useKnowledgeBase } from '../contexts/KnowledgeBaseContext';
 import { useTranslation } from '../hooks/useTranslation';
+import { isArxivArticle } from '../lib/sourceIdentifier';
 import { DASHBOARD_ACCENT, dashboardAccentFill } from './dashboardChartTheme';
 import {
   ChartCard,
@@ -96,7 +97,7 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({ onFilterChange, 
       { name: t('dashboard.oa.closed'), value: articles.length - oaCount },
     ];
 
-    const arxivCount = articles.filter((a) => (a.pmid ?? '').startsWith('arxiv:')).length;
+    const arxivCount = articles.filter((a) => isArxivArticle(a)).length;
     const source = [
       { name: t('dashboard.source.pubmed'), value: articles.length - arxivCount },
       { name: t('dashboard.source.arxiv'), value: arxivCount },

@@ -25,8 +25,18 @@ export type AbstractStatus = 'available' | 'missing' | 'structured';
 
 export type PubMedRetrievalSource = 'pubmed_efetch' | 'pubmed_esummary';
 
+/** Typed article source id (P1-5) — legacy `pmid` string remains the canonical map key. */
+export type SourceIdentifier =
+  | { type: 'pmid'; value: string }
+  | { type: 'pmcid'; value: string }
+  | { type: 'doi'; value: string }
+  | { type: 'arxiv'; value: string };
+
 export interface RankedArticle {
+  /** Canonical legacy key (numeric PMID, `arxiv:…`, `doi:…`, `pmcid:…`). */
   pmid: string;
+  /** Typed identifier; hydrated on read when absent. */
+  articleId?: SourceIdentifier;
   pmcId?: string; // PubMed Central ID, often available for open access articles
   title: string;
   authors: string;
@@ -61,6 +71,8 @@ export interface GroundedClaim {
   id?: string;
   text: string;
   pmids: string[];
+  /** Typed citation ids parallel to `pmids` when persisted (P1-5). */
+  articleIds?: SourceIdentifier[];
   validationState?: ClaimValidationState;
   evidenceSnippets?: string[];
   provenanceMode?: 'extractive-template' | 'narrative-extracted' | 'structured-schema';

@@ -9,6 +9,14 @@ import { AcademicCapIcon } from './icons/AcademicCapIcon';
 import { RelevanceScoreDisplay } from './RelevanceScoreDisplay';
 import { useUI } from '../contexts/UIContext';
 import { useTranslation } from '../hooks/useTranslation';
+import {
+  articleExternalUrl,
+  canonicalArticleKey,
+  formatLegacyArticleKeyLabel,
+  resolveArticleId,
+  sourceIdentifierCopyLabelKey,
+  sourceIdentifierLabelKey,
+} from '../lib/sourceIdentifier';
 
 const getSummaryLimit = () => {
   if (typeof window === 'undefined') return 250;
@@ -96,9 +104,15 @@ const ArticleExternalActions: React.FC<{
   onCopy: (text: string, typeLabel: string) => void;
 }> = ({ article, onCopy }) => {
   const { t } = useTranslation();
+  const articleId = resolveArticleId(article);
+  const identifierCopyLabel = t(sourceIdentifierCopyLabelKey(articleId));
+  const identifierTypeLabel = t(sourceIdentifierLabelKey(articleId));
   const googleScholarUrl = `https://scholar.google.com/scholar?q=${encodeURIComponent(article.title)}`;
   const semanticScholarUrl = `https://www.semanticscholar.org/search?q=${encodeURIComponent(article.title)}`;
-  const citation = `${article.authors}. (${article.pubYear}). ${article.title}. ${article.journal}. PMID: ${article.pmid}.`;
+  const identifierLabel = formatLegacyArticleKeyLabel(
+    canonicalArticleKey(resolveArticleId(article)),
+  );
+  const citation = `${article.authors}. (${article.pubYear}). ${article.title}. ${article.journal}. ${identifierLabel}.`;
 
   return (
     <div className="flex items-center gap-4 text-text-secondary">
@@ -122,9 +136,9 @@ const ArticleExternalActions: React.FC<{
       </a>
       <button
         type="button"
-        onClick={() => onCopy(article.pmid, t('report.copyType.pmid'))}
+        onClick={() => onCopy(canonicalArticleKey(articleId), identifierCopyLabel)}
         className="flex items-center hover:text-brand-accent transition-colors"
-        aria-label={t('report.article.copyPmidAria')}
+        aria-label={t('report.article.copyIdentifierAria', { type: identifierTypeLabel })}
       >
         <ClipboardIcon className="h-4 w-4" />
       </button>
@@ -192,9 +206,7 @@ const resolveArticlePresentation = (
   summaryLabelAi: string,
   summaryLabelPlain: string,
 ) => {
-  const articleLink = article.pmcId
-    ? `https://www.ncbi.nlm.nih.gov/pmc/articles/${article.pmcId}/`
-    : `https://pubmed.ncbi.nlm.nih.gov/${article.pmid}/`;
+  const articleLink = articleExternalUrl(article);
   const summaryToDisplay = article.aiSummary || article.summary;
   const summaryLabel = article.aiSummary
     ? summaryLabelAi

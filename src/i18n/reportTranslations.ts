@@ -26,7 +26,7 @@ export const reportTranslations = {
       'Unverified narrative draft — only claims with corpus evidence are validated. Verify against source abstracts before citing.',
     'report.synthesis.verifiedBanner':
       'Verified synthesis — claims are bound to retrieved corpus evidence.',
-    'report.insights.supportingEvidence': 'Supporting Evidence (PMIDs):',
+    'report.insights.supportingEvidence': 'Supporting evidence:',
     'report.sources.intro':
       'The following web pages were consulted by the AI to generate this report. This provides traceability for the AI’s findings.',
     'report.chart.timelineTitle': 'Publication Timeline',
@@ -46,9 +46,13 @@ export const reportTranslations = {
     'report.article.googleScholarAria': 'Search on Google Scholar',
     'report.article.semanticScholarAria': 'Search on Semantic Scholar',
     'report.article.copyPmidAria': 'Copy PMID',
+    'report.article.copyIdentifierAria': 'Copy {type}',
     'report.article.copyCitationAria': 'Copy Citation',
     'report.article.copiedToast': '{type} copied to clipboard!',
     'report.copyType.pmid': 'PMID',
+    'report.copyType.arxiv': 'arXiv ID',
+    'report.copyType.doi': 'DOI',
+    'report.copyType.pmcid': 'PMCID',
     'report.copyType.citation': 'Citation',
     'report.saveModal.title': 'Save Report',
     'report.saveModal.message': 'Are you sure you want to save this report to your Knowledge Base?',
@@ -85,7 +89,7 @@ export const reportTranslations = {
       'Unverifizierter Narrativ-Entwurf — nur Behauptungen mit Korpus-Evidenz sind validiert. Vor Zitieren die Quellabstracts prüfen.',
     'report.synthesis.verifiedBanner':
       'Verifizierte Synthese — Behauptungen sind an den abgerufenen Korpus gebunden.',
-    'report.insights.supportingEvidence': 'Belege (PMIDs):',
+    'report.insights.supportingEvidence': 'Belege:',
     'report.sources.intro':
       'Die folgenden Webseiten wurden von der KI zur Erstellung dieses Berichts konsultiert. Das ermöglicht die Nachvollziehbarkeit der KI-Ergebnisse.',
     'report.chart.timelineTitle': 'Publikationszeitachse',
@@ -105,9 +109,13 @@ export const reportTranslations = {
     'report.article.googleScholarAria': 'Auf Google Scholar suchen',
     'report.article.semanticScholarAria': 'Auf Semantic Scholar suchen',
     'report.article.copyPmidAria': 'PMID kopieren',
+    'report.article.copyIdentifierAria': '{type} kopieren',
     'report.article.copyCitationAria': 'Zitation kopieren',
     'report.article.copiedToast': '{type} in die Zwischenablage kopiert!',
     'report.copyType.pmid': 'PMID',
+    'report.copyType.arxiv': 'arXiv-ID',
+    'report.copyType.doi': 'DOI',
+    'report.copyType.pmcid': 'PMCID',
     'report.copyType.citation': 'Zitation',
     'report.saveModal.title': 'Bericht speichern',
     'report.saveModal.message':

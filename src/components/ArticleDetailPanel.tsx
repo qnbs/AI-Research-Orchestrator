@@ -21,6 +21,15 @@ import type { TranslationKey } from '../hooks/useTranslation';
 import { ChevronUpIcon } from './icons/ChevronUpIcon';
 import { safeLogError } from '../lib/safeLog';
 import { stableInsightKey } from '../lib/stableReactKeys';
+import {
+  articleExternalUrl,
+  formatSourceIdentifierValue,
+  normalizePmcidValue,
+  resolveArticleId,
+  sourceIdentifierExternalUrl,
+  legacyArticleKeyUrl,
+  sourceIdentifierLabelKey,
+} from '../lib/sourceIdentifier';
 
 interface ArticleDetailPanelProps {
   article: AggregatedArticle;
@@ -84,6 +93,7 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({
   const [showGoToTop, setShowGoToTop] = useState(false);
   const isMounted = useRef(true);
 
+  const articleId = resolveArticleId(article);
   const relatedInsights = findRelatedInsights(article.pmid);
 
   useEffect(() => {
@@ -236,21 +246,24 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({
               </p>
               <div className="mt-3 text-xs text-text-secondary flex items-center gap-4">
                 <a
-                  href={`https://pubmed.ncbi.nlm.nih.gov/${article.pmid}/`}
+                  href={articleExternalUrl(article)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-brand-accent transition-colors"
                 >
-                  PMID: {article.pmid}
+                  {t(sourceIdentifierLabelKey(articleId))}: {formatSourceIdentifierValue(articleId)}
                 </a>
-                {article.pmcId && (
+                {article.pmcId && articleId.type !== 'pmcid' && (
                   <a
-                    href={`https://www.ncbi.nlm.nih.gov/pmc/articles/${article.pmcId}/`}
+                    href={sourceIdentifierExternalUrl({
+                      type: 'pmcid',
+                      value: normalizePmcidValue(article.pmcId),
+                    })}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="hover:text-brand-accent transition-colors"
                   >
-                    PMCID: {article.pmcId}
+                    {t('article.identifier.pmcid')}: PMC{normalizePmcidValue(article.pmcId)}
                   </a>
                 )}
                 <a
@@ -384,7 +397,7 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({
                       className="bg-background/50 p-3 rounded-md border border-border"
                     >
                       <a
-                        href={`https://pubmed.ncbi.nlm.nih.gov/${similar.pmid}/`}
+                        href={legacyArticleKeyUrl(similar.pmid)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-sm font-medium text-text-primary hover:text-brand-accent block mb-1"

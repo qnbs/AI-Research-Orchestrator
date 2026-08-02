@@ -10,6 +10,13 @@ import {
   KnowledgeBaseEntry,
 } from '../types';
 import { sanitizeReportForExport } from '../lib/reportExportProvenance';
+import {
+  articleExternalUrl,
+  canonicalArticleKey,
+  formatLegacyArticleKeyLabel,
+  normalizePmcidValue,
+  resolveArticleId,
+} from '../lib/sourceIdentifier';
 
 // ===================================================================================
 //
@@ -203,9 +210,13 @@ class PdfExporter {
 
   /** Renders an article entry in the PDF. */
   private addArticle(article: RankedArticle, index: number) {
-    const articleLink = article.pmcId
-      ? `https://www.ncbi.nlm.nih.gov/pmc/articles/${article.pmcId}/`
-      : `https://pubmed.ncbi.nlm.nih.gov/${article.pmid}/`;
+    const articleId = resolveArticleId(article);
+    const articleLink = articleExternalUrl(article);
+    const idLabel = formatLegacyArticleKeyLabel(canonicalArticleKey(articleId));
+    const alternatePmcid =
+      article.pmcId && articleId.type !== 'pmcid'
+        ? ` / PMCID: PMC${normalizePmcidValue(article.pmcId)}`
+        : '';
     this.checkPageBreak(80);
     this.doc
       .setFontSize(PDF_CONSTANTS.FONT_SIZES.H2)
@@ -221,7 +232,7 @@ class PdfExporter {
 
     this.addKeyValue('Authors:', `${article.authors} (${article.pubYear})`);
     this.addKeyValue('Journal:', article.journal);
-    this.addKeyValue('PMID:', article.pmid + (article.pmcId ? ` / PMCID: ${article.pmcId}` : ''));
+    this.addKeyValue('Identifier:', idLabel + alternatePmcid);
     this.addKeyValue(
       'Relevance:',
       `${article.relevanceScore}/100 - ${article.relevanceExplanation}`,
@@ -457,9 +468,9 @@ export const exportToCsv = (
 
   const headers = settings.columns;
   const rows = articlesToExport.map((article) => {
-    const articleUrl = `https://pubmed.ncbi.nlm.nih.gov/${article.pmid}/`;
+    const articleUrl = articleExternalUrl(article);
     const pmcidUrl = article.pmcId
-      ? `https://www.ncbi.nlm.nih.gov/pmc/articles/${article.pmcId}/`
+      ? `https://www.ncbi.nlm.nih.gov/pmc/articles/PMC${article.pmcId.replace(/^PMC/i, '')}/`
       : '';
 
     const rowData: Record<CsvExportColumn, string | number | boolean> = {

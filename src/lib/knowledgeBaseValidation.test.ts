@@ -91,6 +91,52 @@ describe('isKnowledgeBaseEntry', () => {
     expect(isKnowledgeBaseEntry([])).toBe(false);
   });
 
+  it('rejects grounded claims with unknown articleId types', () => {
+    expect(
+      isKnowledgeBaseEntry({
+        ...baseFields,
+        sourceType: 'research',
+        input: {},
+        report: {
+          ...validReport,
+          groundedSynthesis: {
+            mode: 'extractive-template',
+            claims: [
+              {
+                text: 'claim',
+                pmids: ['1'],
+                articleIds: [{ type: 'unknown', value: 'x' }],
+              },
+            ],
+          },
+        },
+      }),
+    ).toBe(false);
+  });
+
+  it('rejects grounded claims with misaligned pmids and articleIds', () => {
+    expect(
+      isKnowledgeBaseEntry({
+        ...baseFields,
+        sourceType: 'research',
+        input: {},
+        report: {
+          ...validReport,
+          groundedSynthesis: {
+            mode: 'extractive-template',
+            claims: [
+              {
+                text: 'claim',
+                pmids: ['123'],
+                articleIds: [{ type: 'arxiv', value: '9' }],
+              },
+            ],
+          },
+        },
+      }),
+    ).toBe(false);
+  });
+
   // Regression: a shallow check previously accepted an empty {} for
   // report/profile/journalProfile, which crashed views reading e.g.
   // entry.report.rankedArticles.length with no fallback.

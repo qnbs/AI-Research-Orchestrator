@@ -9,6 +9,7 @@
  */
 import type { RankedArticle } from '../types';
 import { fetchWithExternalPolicy } from '../lib/externalFetch';
+import { ensureArticleIdentifiers } from '../lib/sourceIdentifier';
 
 const ARXIV_BASE = 'https://export.arxiv.org/api/query';
 const ARXIV_TIMEOUT_MS = 18_000;
@@ -42,6 +43,7 @@ function entryToRankedArticle(entry: Element): Partial<RankedArticle> {
 
   return {
     pmid: `arxiv:${arxivId}`, // synthetic PMID keeps the pipeline unified
+    articleId: { type: 'arxiv', value: arxivId },
     title: getText('title').replace(/\s+/g, ' '),
     authors,
     journal: journalRef ?? (categories[0] ? `arXiv [${categories[0]}]` : 'arXiv Preprint'),
@@ -75,12 +77,16 @@ export async function searchAndFetchArxiv(
       `&start=0&max_results=${maxResults}` +
       `&sortBy=relevance&sortOrder=descending`;
 
-    const res = await fetchWithExternalPolicy(url, {}, {
-      retries: 3,
-      baseMs: 1200,
-      timeoutMs: ARXIV_TIMEOUT_MS,
-      signal,
-    });
+    const res = await fetchWithExternalPolicy(
+      url,
+      {},
+      {
+        retries: 3,
+        baseMs: 1200,
+        timeoutMs: ARXIV_TIMEOUT_MS,
+        signal,
+      },
+    );
     if (!res.ok) return [];
 
     const xml = await res.text();
@@ -90,7 +96,9 @@ export async function searchAndFetchArxiv(
     // Detect XML parse errors
     if (doc.querySelector('parsererror')) return [];
 
-    return Array.from(doc.getElementsByTagName('entry')).map(entryToRankedArticle);
+    return Array.from(doc.getElementsByTagName('entry')).map((entry) =>
+      ensureArticleIdentifiers(entryToRankedArticle(entry) as RankedArticle),
+    );
   } catch {
     // Network error, CORS block, timeout, etc. — continue with PubMed only
     return [];
