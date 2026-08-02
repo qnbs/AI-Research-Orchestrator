@@ -47,9 +47,9 @@ export const CostEstimateCard: React.FC = () => {
             <dd className="mt-1 font-mono text-lg text-text-primary">
               {showZero
                 ? t('settings.cost.heuristic_zero')
-                : unknownPricing
-                  ? t('settings.cost.unknown_pricing')
-                  : `$${estimate.estimatedUsd!.toFixed(4)}`}
+                : estimate.estimatedUsd != null
+                  ? `$${estimate.estimatedUsd.toFixed(4)}`
+                  : t('settings.cost.unknown_pricing')}
             </dd>
           </div>
           <div className="rounded-lg border border-border bg-surface/40 px-3 py-2">

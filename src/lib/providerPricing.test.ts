@@ -42,7 +42,10 @@ describe('computeUsdFromRates', () => {
   it('computes USD from per-million rates', () => {
     const rate = resolveProviderRateQuote('gemini', 'gemini-2.5-flash');
     expect(rate).not.toBeNull();
-    const usd = computeUsdFromRates(1_000_000, 1_000_000, rate!);
+    if (!rate) {
+      throw new Error('expected gemini flash rate quote');
+    }
+    const usd = computeUsdFromRates(1_000_000, 1_000_000, rate);
     expect(usd).toBeCloseTo(2.8, 5);
   });
 });

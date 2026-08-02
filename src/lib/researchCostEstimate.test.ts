@@ -17,7 +17,7 @@ describe('estimateResearchRunCost', () => {
     expect(est.providerLabel).toContain('Gemini');
     expect(est.pricingTierLabel).toBe('gemini-flash');
     expect(est.estimatedUsd).not.toBeNull();
-    expect(est.estimatedUsd!).toBeGreaterThan(0);
+    expect(est.estimatedUsd ?? 0).toBeGreaterThan(0);
     expect(est.estimatedInputTokens).toBeGreaterThan(1000);
   });
 
