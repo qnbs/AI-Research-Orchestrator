@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **P1-9 orchestration routing tests:** `resolveActiveInferenceMode.test.ts` and `researchOrchestratorAdapter.test.ts` cover live vs heuristic delegation.
-- **P1 closeout audit:** `docs/audits/2026-08-02-p1-closeout.md` records P1 disposition at `3641108`.
+- **P1 closeout audit:** `docs/audits/2026-08-02-p1-closeout.md` records P1 disposition at the #193 merge commit.
 
 ### Changed
 
