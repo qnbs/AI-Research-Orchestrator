@@ -8,6 +8,7 @@ import type {
 } from '../types';
 import type { ResearchCheckpoint } from '../lib/researchCheckpoint';
 import { ensureArticleIdentifiers, ensureGroundedClaim } from '../lib/sourceIdentifier';
+import { safeLogError } from '../lib/safeLog';
 
 export const db = new Dexie('AIResearchAppDatabase') as Dexie & {
   knowledgeBaseEntries: Table<KnowledgeBaseEntry, string>;
@@ -46,11 +47,25 @@ db.version(4)
 
 const hydrateResearchReport = (report: ResearchReport): ResearchReport => ({
   ...report,
-  rankedArticles: report.rankedArticles.map((article) => ensureArticleIdentifiers(article)),
+  rankedArticles: report.rankedArticles.map((article) => {
+    try {
+      return ensureArticleIdentifiers(article);
+    } catch (err) {
+      safeLogError('Dexie v5: skip article hydration', err);
+      return article;
+    }
+  }),
   groundedSynthesis: report.groundedSynthesis
     ? {
         ...report.groundedSynthesis,
-        claims: report.groundedSynthesis.claims.map((claim) => ensureGroundedClaim(claim)),
+        claims: report.groundedSynthesis.claims.map((claim) => {
+          try {
+            return ensureGroundedClaim(claim);
+          } catch (err) {
+            safeLogError('Dexie v5: skip claim hydration', err);
+            return claim;
+          }
+        }),
       }
     : undefined,
 });
@@ -79,15 +94,23 @@ db.version(5)
   .upgrade(async (tx) => {
     const kbTable = tx.table('knowledgeBaseEntries');
     await kbTable.toCollection().modify((entry) => {
-      const hydrated = hydrateKnowledgeBaseEntry(entry as KnowledgeBaseEntry);
-      Object.assign(entry, hydrated);
+      try {
+        const hydrated = hydrateKnowledgeBaseEntry(entry as KnowledgeBaseEntry);
+        Object.assign(entry, hydrated);
+      } catch (err) {
+        safeLogError('Dexie v5: skip knowledge-base entry hydration', err);
+      }
     });
 
     const checkpointTable = tx.table('researchCheckpoints');
     await checkpointTable.toCollection().modify((checkpoint) => {
-      const ckpt = checkpoint as ResearchCheckpoint;
-      if (!ckpt.report) return;
-      ckpt.report = hydrateResearchReport(ckpt.report);
+      try {
+        const ckpt = checkpoint as ResearchCheckpoint;
+        if (!ckpt.report) return;
+        ckpt.report = hydrateResearchReport(ckpt.report);
+      } catch (err) {
+        safeLogError('Dexie v5: skip checkpoint hydration', err);
+      }
     });
   });
 

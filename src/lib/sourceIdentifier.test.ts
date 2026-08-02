@@ -4,6 +4,7 @@ import {
   canonicalArticleKey,
   corpusKeysFromArticles,
   ensureArticleIdentifiers,
+  ensureGroundedClaim,
   formatSourceIdentifierValue,
   isArxivArticle,
   parseLegacyArticleKey,
@@ -27,6 +28,11 @@ describe('parseLegacyArticleKey', () => {
       type: 'pmcid',
       value: '1234567',
     });
+  });
+
+  it('returns safe empty pmid for non-string keys', () => {
+    expect(parseLegacyArticleKey(undefined)).toEqual({ type: 'pmid', value: '' });
+    expect(parseLegacyArticleKey(42)).toEqual({ type: 'pmid', value: '' });
   });
 });
 
@@ -103,7 +109,7 @@ describe('articleExternalUrl', () => {
     expect(articleExternalUrl(pubmed)).toBe('https://pubmed.ncbi.nlm.nih.gov/12345/');
   });
 
-  it('prefers PMC URL when pmcId is present', () => {
+  it('uses primary identifier URL even when supplemental pmcId exists', () => {
     const article: RankedArticle = {
       pmid: '12345',
       pmcId: 'PMC888',
@@ -117,7 +123,51 @@ describe('articleExternalUrl', () => {
       keywords: [],
       isOpenAccess: true,
     };
+    expect(articleExternalUrl(article)).toBe('https://pubmed.ncbi.nlm.nih.gov/12345/');
+  });
+
+  it('links pmcid-primary articles to PMC', () => {
+    const article: RankedArticle = {
+      pmid: 'pmcid:888',
+      articleId: { type: 'pmcid', value: '888' },
+      title: 't',
+      authors: 'a',
+      journal: 'j',
+      pubYear: '2024',
+      summary: 's',
+      relevanceScore: 1,
+      relevanceExplanation: '',
+      keywords: [],
+      isOpenAccess: true,
+    };
     expect(articleExternalUrl(article)).toContain('/pmc/articles/PMC888/');
+  });
+});
+
+describe('ensureGroundedClaim', () => {
+  it('derives articleIds from legacy pmids', () => {
+    const claim = ensureGroundedClaim({
+      text: 'Finding',
+      pmids: ['12345', 'arxiv:2301.99999'],
+    });
+    expect(claim.articleIds).toEqual([
+      { type: 'pmid', value: '12345' },
+      { type: 'arxiv', value: '2301.99999' },
+    ]);
+    expect(claim.pmids).toEqual(['12345', 'arxiv:2301.99999']);
+  });
+
+  it('derives pmids from articleIds when pmids is empty', () => {
+    const claim = ensureGroundedClaim({
+      text: 'Finding',
+      pmids: [],
+      articleIds: [
+        { type: 'doi', value: '10.1/xyz' },
+        { type: 'pmcid', value: '999' },
+      ],
+    });
+    expect(claim.pmids).toEqual(['doi:10.1/xyz', 'pmcid:999']);
+    expect(claim.articleIds?.[0]).toEqual({ type: 'doi', value: '10.1/xyz' });
   });
 });
 

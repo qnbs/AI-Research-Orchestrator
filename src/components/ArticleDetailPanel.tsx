@@ -24,8 +24,10 @@ import { stableInsightKey } from '../lib/stableReactKeys';
 import {
   articleExternalUrl,
   formatSourceIdentifierValue,
-  legacyArticleKeyUrl,
+  normalizePmcidValue,
   resolveArticleId,
+  sourceIdentifierExternalUrl,
+  legacyArticleKeyUrl,
   sourceIdentifierLabelKey,
 } from '../lib/sourceIdentifier';
 
@@ -253,12 +255,15 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({
                 </a>
                 {article.pmcId && articleId.type !== 'pmcid' && (
                   <a
-                    href={`https://www.ncbi.nlm.nih.gov/pmc/articles/PMC${article.pmcId.replace(/^PMC/i, '')}/`}
+                    href={sourceIdentifierExternalUrl({
+                      type: 'pmcid',
+                      value: normalizePmcidValue(article.pmcId),
+                    })}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="hover:text-brand-accent transition-colors"
                   >
-                    {t('article.identifier.pmcid')}: PMC{article.pmcId.replace(/^PMC/i, '')}
+                    {t('article.identifier.pmcid')}: PMC{normalizePmcidValue(article.pmcId)}
                   </a>
                 )}
                 <a

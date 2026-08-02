@@ -14,6 +14,8 @@ import {
   canonicalArticleKey,
   formatLegacyArticleKeyLabel,
   resolveArticleId,
+  sourceIdentifierCopyLabelKey,
+  sourceIdentifierLabelKey,
 } from '../lib/sourceIdentifier';
 
 const getSummaryLimit = () => {
@@ -102,6 +104,9 @@ const ArticleExternalActions: React.FC<{
   onCopy: (text: string, typeLabel: string) => void;
 }> = ({ article, onCopy }) => {
   const { t } = useTranslation();
+  const articleId = resolveArticleId(article);
+  const identifierCopyLabel = t(sourceIdentifierCopyLabelKey(articleId));
+  const identifierTypeLabel = t(sourceIdentifierLabelKey(articleId));
   const googleScholarUrl = `https://scholar.google.com/scholar?q=${encodeURIComponent(article.title)}`;
   const semanticScholarUrl = `https://www.semanticscholar.org/search?q=${encodeURIComponent(article.title)}`;
   const identifierLabel = formatLegacyArticleKeyLabel(
@@ -131,11 +136,9 @@ const ArticleExternalActions: React.FC<{
       </a>
       <button
         type="button"
-        onClick={() =>
-          onCopy(canonicalArticleKey(resolveArticleId(article)), t('report.copyType.pmid'))
-        }
+        onClick={() => onCopy(canonicalArticleKey(articleId), identifierCopyLabel)}
         className="flex items-center hover:text-brand-accent transition-colors"
-        aria-label={t('report.article.copyPmidAria')}
+        aria-label={t('report.article.copyIdentifierAria', { type: identifierTypeLabel })}
       >
         <ClipboardIcon className="h-4 w-4" />
       </button>

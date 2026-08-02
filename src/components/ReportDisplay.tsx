@@ -22,7 +22,12 @@ import { ChatInterface } from './ChatInterface';
 import { ChatBubbleLeftRightIcon } from './icons/ChatBubbleLeftRightIcon';
 import { ReportArticleCard } from './ReportArticleCard';
 import { stableInsightKey } from '../lib/stableReactKeys';
-import { formatLegacyArticleKeyLabel, legacyArticleKeyUrl } from '../lib/sourceIdentifier';
+import {
+  legacyArticleKeyUrl,
+  parseLegacyArticleKey,
+  sourceIdentifierLabelKey,
+  formatSourceIdentifierValue,
+} from '../lib/sourceIdentifier';
 import {
   BarChart,
   Bar,
@@ -379,17 +384,20 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(function R
                       {t('report.insights.supportingEvidence')}
                     </p>
                     <div className="flex flex-wrap gap-x-3 gap-y-1 items-center">
-                      {(insight.supportingArticles || []).map((pmid) => (
-                        <a
-                          href={legacyArticleKeyUrl(pmid)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          key={pmid}
-                          className="text-xs text-text-secondary hover:text-brand-accent hover:underline"
-                        >
-                          {formatLegacyArticleKeyLabel(pmid)}
-                        </a>
-                      ))}
+                      {(insight.supportingArticles || []).map((pmid) => {
+                        const id = parseLegacyArticleKey(pmid);
+                        return (
+                          <a
+                            href={legacyArticleKeyUrl(pmid)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            key={pmid}
+                            className="text-xs text-text-secondary hover:text-brand-accent hover:underline"
+                          >
+                            {t(sourceIdentifierLabelKey(id))}: {formatSourceIdentifierValue(id)}
+                          </a>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>

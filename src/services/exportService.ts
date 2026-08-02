@@ -12,7 +12,9 @@ import {
 import { sanitizeReportForExport } from '../lib/reportExportProvenance';
 import {
   articleExternalUrl,
-  formatSourceIdentifierValue,
+  canonicalArticleKey,
+  formatLegacyArticleKeyLabel,
+  normalizePmcidValue,
   resolveArticleId,
 } from '../lib/sourceIdentifier';
 
@@ -208,9 +210,13 @@ class PdfExporter {
 
   /** Renders an article entry in the PDF. */
   private addArticle(article: RankedArticle, index: number) {
+    const articleId = resolveArticleId(article);
     const articleLink = articleExternalUrl(article);
-    const id = resolveArticleId(article);
-    const idLabel = `${id.type === 'pmid' ? 'PMID' : id.type === 'arxiv' ? 'arXiv' : id.type === 'doi' ? 'DOI' : 'PMCID'}: ${formatSourceIdentifierValue(id)}`;
+    const idLabel = formatLegacyArticleKeyLabel(canonicalArticleKey(articleId));
+    const alternatePmcid =
+      article.pmcId && articleId.type !== 'pmcid'
+        ? ` / PMCID: PMC${normalizePmcidValue(article.pmcId)}`
+        : '';
     this.checkPageBreak(80);
     this.doc
       .setFontSize(PDF_CONSTANTS.FONT_SIZES.H2)
@@ -226,10 +232,7 @@ class PdfExporter {
 
     this.addKeyValue('Authors:', `${article.authors} (${article.pubYear})`);
     this.addKeyValue('Journal:', article.journal);
-    this.addKeyValue(
-      'Identifier:',
-      idLabel + (article.pmcId && id.type === 'pmid' ? ` / PMCID: ${article.pmcId}` : ''),
-    );
+    this.addKeyValue('Identifier:', idLabel + alternatePmcid);
     this.addKeyValue(
       'Relevance:',
       `${article.relevanceScore}/100 - ${article.relevanceExplanation}`,

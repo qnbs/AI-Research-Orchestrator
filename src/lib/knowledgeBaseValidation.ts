@@ -1,4 +1,5 @@
 import type { KnowledgeBaseEntry } from '../types';
+import { isSourceIdentifier } from './sourceIdentifier';
 
 const isPlainObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -20,10 +21,7 @@ const isValidGroundedClaim = (claim: unknown): boolean =>
   Array.isArray(claim.pmids) &&
   claim.pmids.every((id) => typeof id === 'string') &&
   (claim.articleIds === undefined ||
-    (Array.isArray(claim.articleIds) &&
-      claim.articleIds.every(
-        (id) => isPlainObject(id) && typeof id.type === 'string' && typeof id.value === 'string',
-      )));
+    (Array.isArray(claim.articleIds) && claim.articleIds.every(isSourceIdentifier)));
 
 const isValidGroundedSynthesis = (grounded: unknown): boolean =>
   isPlainObject(grounded) &&

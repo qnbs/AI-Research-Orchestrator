@@ -107,6 +107,72 @@ describe('validateClaimAgainstCorpus — adversarial fixtures', () => {
     );
     expect(result.validationState).toBe('unverified');
   });
+
+  it('resolves arxiv corpus keys via articleId', () => {
+    const arxivArticle: RankedArticle = {
+      pmid: 'arxiv:2301.00001',
+      articleId: { type: 'arxiv', value: '2301.00001' },
+      title: 'Neural network preprint',
+      authors: 'A',
+      journal: 'arXiv',
+      pubYear: '2024',
+      summary: 'Neural network preprint on transformer architectures.',
+      relevanceScore: 80,
+      relevanceExplanation: '',
+      keywords: [],
+      isOpenAccess: true,
+    };
+    const result = validateClaimAgainstCorpus(
+      {
+        text: 'Neural network preprint on transformer architectures.',
+        pmids: ['arxiv:2301.00001'],
+      },
+      [arxivArticle],
+    );
+    expect(result.validationState).toBe('verified');
+  });
+
+  it('resolves doi corpus keys via canonical key', () => {
+    const doiArticle: RankedArticle = {
+      pmid: 'doi:10.1234/example',
+      articleId: { type: 'doi', value: '10.1234/example' },
+      title: 'Open dataset paper',
+      authors: 'A',
+      journal: 'J',
+      pubYear: '2024',
+      summary: 'Open dataset for biomedical benchmarking.',
+      relevanceScore: 70,
+      relevanceExplanation: '',
+      keywords: [],
+      isOpenAccess: true,
+    };
+    const result = validateClaimAgainstCorpus(
+      { text: 'Open dataset for biomedical benchmarking.', pmids: ['doi:10.1234/example'] },
+      [doiArticle],
+    );
+    expect(result.validationState).toBe('verified');
+  });
+
+  it('resolves pmcid corpus keys via canonical key', () => {
+    const pmcArticle: RankedArticle = {
+      pmid: 'pmcid:555',
+      articleId: { type: 'pmcid', value: '555' },
+      title: 'PMC full text study',
+      authors: 'A',
+      journal: 'J',
+      pubYear: '2024',
+      summary: 'PMC full text cardiovascular outcomes study.',
+      relevanceScore: 75,
+      relevanceExplanation: '',
+      keywords: [],
+      isOpenAccess: true,
+    };
+    const result = validateClaimAgainstCorpus(
+      { text: 'PMC full text cardiovascular outcomes study.', pmids: ['pmcid:555'] },
+      [pmcArticle],
+    );
+    expect(result.validationState).toBe('verified');
+  });
 });
 
 describe('assessSynthesisTrust', () => {

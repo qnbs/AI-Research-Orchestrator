@@ -9,13 +9,35 @@ const ARXIV_PREFIX = 'arxiv:';
 const DOI_PREFIX = 'doi:';
 const PMCID_PREFIX = 'pmcid:';
 
+const SOURCE_IDENTIFIER_TYPES: ReadonlySet<SourceIdentifier['type']> = new Set([
+  'pmid',
+  'pmcid',
+  'doi',
+  'arxiv',
+]);
+
+/** Runtime guard for persisted or imported identifier objects. */
+export function isSourceIdentifier(value: unknown): value is SourceIdentifier {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'type' in value &&
+    'value' in value &&
+    SOURCE_IDENTIFIER_TYPES.has((value as SourceIdentifier).type) &&
+    typeof (value as SourceIdentifier).value === 'string'
+  );
+}
+
 /** Normalize PMCID value (strip leading PMC). */
 export function normalizePmcidValue(raw: string): string {
   return raw.trim().replace(/^PMC/i, '');
 }
 
 /** Parse legacy canonical keys and typed ids into a SourceIdentifier. */
-export function parseLegacyArticleKey(key: string): SourceIdentifier {
+export function parseLegacyArticleKey(key: string | unknown): SourceIdentifier {
+  if (typeof key !== 'string') {
+    return { type: 'pmid', value: '' };
+  }
   const trimmed = key.trim();
   if (!trimmed) {
     return { type: 'pmid', value: '' };
@@ -49,11 +71,20 @@ export function canonicalArticleKey(id: SourceIdentifier): string {
   }
 }
 
+/** Resolve the typed identifier for a ranked article record. */
 export function resolveArticleId(article: RankedArticle): SourceIdentifier {
   if (article.articleId) {
     return article.articleId;
   }
   return parseLegacyArticleKey(article.pmid);
+}
+
+/** Find a corpus article by its canonical legacy key. */
+export function findArticleByCorpusKey(
+  articles: readonly RankedArticle[],
+  corpusKey: string,
+): RankedArticle | undefined {
+  return articles.find((a) => canonicalArticleKey(resolveArticleId(a)) === corpusKey);
 }
 
 /** Ensure typed `articleId` and legacy `pmid` canonical key stay aligned. */
@@ -73,16 +104,13 @@ export function ensureArticleIdentifiers(article: RankedArticle): RankedArticle 
   };
 }
 
+/** Whether the article's primary identifier is arXiv. */
 export function isArxivArticle(article: RankedArticle): boolean {
   return resolveArticleId(article).type === 'arxiv';
 }
 
-/** Primary external link for an article record. */
-export function articleExternalUrl(article: RankedArticle): string {
-  const id = resolveArticleId(article);
-  if (article.pmcId) {
-    return `https://www.ncbi.nlm.nih.gov/pmc/articles/PMC${normalizePmcidValue(article.pmcId)}/`;
-  }
+/** External URL for a typed source identifier. */
+export function sourceIdentifierExternalUrl(id: SourceIdentifier): string {
   switch (id.type) {
     case 'arxiv':
       return `https://arxiv.org/abs/${id.value}`;
@@ -91,9 +119,13 @@ export function articleExternalUrl(article: RankedArticle): string {
     case 'pmcid':
       return `https://www.ncbi.nlm.nih.gov/pmc/articles/PMC${normalizePmcidValue(id.value)}/`;
     case 'pmid':
-    default:
       return `https://pubmed.ncbi.nlm.nih.gov/${id.value}/`;
   }
+}
+
+/** Primary external link for an article record (matches resolved primary identifier). */
+export function articleExternalUrl(article: RankedArticle): string {
+  return sourceIdentifierExternalUrl(resolveArticleId(article));
 }
 
 export type SourceIdentifierLabelKey =
@@ -102,6 +134,7 @@ export type SourceIdentifierLabelKey =
   | 'article.identifier.doi'
   | 'article.identifier.pmcid';
 
+/** i18n key for the identifier type label in UI. */
 export function sourceIdentifierLabelKey(id: SourceIdentifier): SourceIdentifierLabelKey {
   switch (id.type) {
     case 'arxiv':
@@ -111,11 +144,31 @@ export function sourceIdentifierLabelKey(id: SourceIdentifier): SourceIdentifier
     case 'pmcid':
       return 'article.identifier.pmcid';
     case 'pmid':
-    default:
       return 'article.identifier.pmid';
   }
 }
 
+export type SourceIdentifierCopyLabelKey =
+  | 'report.copyType.pmid'
+  | 'report.copyType.arxiv'
+  | 'report.copyType.doi'
+  | 'report.copyType.pmcid';
+
+/** i18n key for copy-to-clipboard toast labels. */
+export function sourceIdentifierCopyLabelKey(id: SourceIdentifier): SourceIdentifierCopyLabelKey {
+  switch (id.type) {
+    case 'arxiv':
+      return 'report.copyType.arxiv';
+    case 'doi':
+      return 'report.copyType.doi';
+    case 'pmcid':
+      return 'report.copyType.pmcid';
+    case 'pmid':
+      return 'report.copyType.pmid';
+  }
+}
+
+/** Display value for an identifier (PMCID values include the PMC prefix). */
 export function formatSourceIdentifierValue(id: SourceIdentifier): string {
   if (id.type === 'pmcid') {
     return `PMC${normalizePmcidValue(id.value)}`;
@@ -123,25 +176,17 @@ export function formatSourceIdentifierValue(id: SourceIdentifier): string {
   return id.value;
 }
 
+/** Collect canonical corpus keys from ranked articles. */
 export function corpusKeysFromArticles(articles: readonly RankedArticle[]): Set<string> {
   return new Set(articles.map((a) => canonicalArticleKey(resolveArticleId(a))));
 }
 
+/** External URL for a legacy canonical key string. */
 export function legacyArticleKeyUrl(key: string): string {
-  const id = parseLegacyArticleKey(key);
-  switch (id.type) {
-    case 'arxiv':
-      return `https://arxiv.org/abs/${id.value}`;
-    case 'doi':
-      return `https://doi.org/${encodeURIComponent(id.value)}`;
-    case 'pmcid':
-      return `https://www.ncbi.nlm.nih.gov/pmc/articles/PMC${normalizePmcidValue(id.value)}/`;
-    case 'pmid':
-    default:
-      return `https://pubmed.ncbi.nlm.nih.gov/${id.value}/`;
-  }
+  return sourceIdentifierExternalUrl(parseLegacyArticleKey(key));
 }
 
+/** English label for exports/PDF where i18n is unavailable. */
 export function formatLegacyArticleKeyLabel(key: string): string {
   const id = parseLegacyArticleKey(key);
   const prefix =
@@ -155,8 +200,9 @@ export function formatLegacyArticleKeyLabel(key: string): string {
   return `${prefix}: ${formatSourceIdentifierValue(id)}`;
 }
 
+/** Normalize grounded-claim identifier fields for persistence. */
 export function ensureGroundedClaim(claim: GroundedClaim): GroundedClaim {
-  const articleIds = claim.articleIds ?? claim.pmids.map(parseLegacyArticleKey);
+  const articleIds = claim.articleIds ?? claim.pmids.map((p) => parseLegacyArticleKey(p));
   const pmids =
     claim.pmids.length > 0 ? claim.pmids : articleIds.map((id) => canonicalArticleKey(id));
   return { ...claim, articleIds, pmids };

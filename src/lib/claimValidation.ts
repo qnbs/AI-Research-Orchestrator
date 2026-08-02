@@ -10,7 +10,7 @@ import type {
   SynthesisTrustLevel,
 } from '../types';
 import { partitionCorpusCitations } from './citationGrounding';
-import { corpusKeysFromArticles } from './sourceIdentifier';
+import { corpusKeysFromArticles, findArticleByCorpusKey } from './sourceIdentifier';
 
 export type ClaimTrustMetrics = {
   totalClaims: number;
@@ -85,7 +85,7 @@ export function validateClaimAgainstCorpus(
 
   const supporting: string[] = [];
   for (const pmid of valid) {
-    const article = corpusArticles.find((a) => a.pmid === pmid);
+    const article = findArticleByCorpusKey(corpusArticles, pmid);
     if (article && articleSupportsClaim(claim.text, article)) {
       const snippet = (article.summary ?? article.title).slice(0, 160);
       supporting.push(`${pmid}: ${snippet}`);
@@ -153,7 +153,7 @@ export function computeClaimTrustMetrics(
 
     for (const pmid of claim.pmids) {
       citedPmids += 1;
-      const article = corpusArticles.find((a) => a.pmid === pmid);
+      const article = findArticleByCorpusKey(corpusArticles, pmid);
       if (article && !articleSupportsClaim(claim.text, article)) {
         irrelevantPmids += 1;
       }
