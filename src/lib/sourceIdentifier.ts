@@ -17,24 +17,19 @@ const SOURCE_IDENTIFIER_TYPES: ReadonlySet<SourceIdentifier['type']> = new Set([
 ]);
 
 /** Runtime guard for persisted or imported identifier objects. */
-export function isSourceIdentifier(value: unknown): value is SourceIdentifier {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'type' in value &&
-    'value' in value &&
-    SOURCE_IDENTIFIER_TYPES.has((value as SourceIdentifier).type) &&
-    typeof (value as SourceIdentifier).value === 'string'
-  );
-}
+export const isSourceIdentifier = (value: unknown): value is SourceIdentifier =>
+  typeof value === 'object' &&
+  value !== null &&
+  'type' in value &&
+  'value' in value &&
+  SOURCE_IDENTIFIER_TYPES.has((value as SourceIdentifier).type) &&
+  typeof (value as SourceIdentifier).value === 'string';
 
 /** Normalize PMCID value (strip leading PMC). */
-export function normalizePmcidValue(raw: string): string {
-  return raw.trim().replace(/^PMC/i, '');
-}
+export const normalizePmcidValue = (raw: string): string => raw.trim().replace(/^PMC/i, '');
 
 /** Parse legacy canonical keys and typed ids into a SourceIdentifier. */
-export function parseLegacyArticleKey(key: string | unknown): SourceIdentifier {
+export const parseLegacyArticleKey = (key: string | unknown): SourceIdentifier => {
   if (typeof key !== 'string') {
     return { type: 'pmid', value: '' };
   }
@@ -55,10 +50,10 @@ export function parseLegacyArticleKey(key: string | unknown): SourceIdentifier {
     return { type: 'pmid', value: trimmed };
   }
   return { type: 'pmid', value: trimmed };
-}
+};
 
 /** Canonical string key used in maps, exports, and legacy `pmid` fields. */
-export function canonicalArticleKey(id: SourceIdentifier): string {
+export const canonicalArticleKey = (id: SourceIdentifier): string => {
   switch (id.type) {
     case 'pmid':
       return id.value;
@@ -68,11 +63,15 @@ export function canonicalArticleKey(id: SourceIdentifier): string {
       return `${DOI_PREFIX}${id.value}`;
     case 'pmcid':
       return `${PMCID_PREFIX}${normalizePmcidValue(id.value)}`;
+    default: {
+      const fallback = id as SourceIdentifier;
+      return fallback.value;
+    }
   }
-}
+};
 
 /** Resolve the typed identifier for a ranked article record. */
-export function resolveArticleId(article: RankedArticle): SourceIdentifier {
+export const resolveArticleId = (article: RankedArticle): SourceIdentifier => {
   const fromPmid = parseLegacyArticleKey(article.pmid);
   if (isSourceIdentifier(article.articleId)) {
     if (canonicalArticleKey(article.articleId) === canonicalArticleKey(fromPmid)) {
@@ -81,18 +80,17 @@ export function resolveArticleId(article: RankedArticle): SourceIdentifier {
     return fromPmid;
   }
   return fromPmid;
-}
+};
 
 /** Find a corpus article by its canonical legacy key. */
-export function findArticleByCorpusKey(
+export const findArticleByCorpusKey = (
   articles: readonly RankedArticle[],
   corpusKey: string,
-): RankedArticle | undefined {
-  return articles.find((a) => canonicalArticleKey(resolveArticleId(a)) === corpusKey);
-}
+): RankedArticle | undefined =>
+  articles.find((a) => canonicalArticleKey(resolveArticleId(a)) === corpusKey);
 
 /** Ensure typed `articleId` and legacy `pmid` canonical key stay aligned. */
-export function ensureArticleIdentifiers(article: RankedArticle): RankedArticle {
+export const ensureArticleIdentifiers = (article: RankedArticle): RankedArticle => {
   const articleId = resolveArticleId(article);
   const pmid = canonicalArticleKey(articleId);
   const pmcId =
@@ -106,15 +104,14 @@ export function ensureArticleIdentifiers(article: RankedArticle): RankedArticle 
     pmcId,
     doi,
   };
-}
+};
 
 /** Whether the article's primary identifier is arXiv. */
-export function isArxivArticle(article: RankedArticle): boolean {
-  return resolveArticleId(article).type === 'arxiv';
-}
+export const isArxivArticle = (article: RankedArticle): boolean =>
+  resolveArticleId(article).type === 'arxiv';
 
 /** External URL for a typed source identifier. */
-export function sourceIdentifierExternalUrl(id: SourceIdentifier): string {
+export const sourceIdentifierExternalUrl = (id: SourceIdentifier): string => {
   switch (id.type) {
     case 'arxiv':
       return `https://arxiv.org/abs/${id.value}`;
@@ -124,13 +121,16 @@ export function sourceIdentifierExternalUrl(id: SourceIdentifier): string {
       return `https://www.ncbi.nlm.nih.gov/pmc/articles/PMC${normalizePmcidValue(id.value)}/`;
     case 'pmid':
       return `https://pubmed.ncbi.nlm.nih.gov/${id.value}/`;
+    default: {
+      const fallback = id as SourceIdentifier;
+      return `https://pubmed.ncbi.nlm.nih.gov/${fallback.value}/`;
+    }
   }
-}
+};
 
 /** Primary external link for an article record (matches resolved primary identifier). */
-export function articleExternalUrl(article: RankedArticle): string {
-  return sourceIdentifierExternalUrl(resolveArticleId(article));
-}
+export const articleExternalUrl = (article: RankedArticle): string =>
+  sourceIdentifierExternalUrl(resolveArticleId(article));
 
 export type SourceIdentifierLabelKey =
   | 'article.identifier.pmid'
@@ -139,7 +139,7 @@ export type SourceIdentifierLabelKey =
   | 'article.identifier.pmcid';
 
 /** i18n key for the identifier type label in UI. */
-export function sourceIdentifierLabelKey(id: SourceIdentifier): SourceIdentifierLabelKey {
+export const sourceIdentifierLabelKey = (id: SourceIdentifier): SourceIdentifierLabelKey => {
   switch (id.type) {
     case 'arxiv':
       return 'article.identifier.arxiv';
@@ -149,8 +149,10 @@ export function sourceIdentifierLabelKey(id: SourceIdentifier): SourceIdentifier
       return 'article.identifier.pmcid';
     case 'pmid':
       return 'article.identifier.pmid';
+    default:
+      return 'article.identifier.pmid';
   }
-}
+};
 
 export type SourceIdentifierCopyLabelKey =
   | 'report.copyType.pmid'
@@ -159,7 +161,7 @@ export type SourceIdentifierCopyLabelKey =
   | 'report.copyType.pmcid';
 
 /** i18n key for copy-to-clipboard toast labels. */
-export function sourceIdentifierCopyLabelKey(id: SourceIdentifier): SourceIdentifierCopyLabelKey {
+export const sourceIdentifierCopyLabelKey = (id: SourceIdentifier): SourceIdentifierCopyLabelKey => {
   switch (id.type) {
     case 'arxiv':
       return 'report.copyType.arxiv';
@@ -169,29 +171,29 @@ export function sourceIdentifierCopyLabelKey(id: SourceIdentifier): SourceIdenti
       return 'report.copyType.pmcid';
     case 'pmid':
       return 'report.copyType.pmid';
+    default:
+      return 'report.copyType.pmid';
   }
-}
+};
 
 /** Display value for an identifier (PMCID values include the PMC prefix). */
-export function formatSourceIdentifierValue(id: SourceIdentifier): string {
+export const formatSourceIdentifierValue = (id: SourceIdentifier): string => {
   if (id.type === 'pmcid') {
     return `PMC${normalizePmcidValue(id.value)}`;
   }
   return id.value;
-}
+};
 
 /** Collect canonical corpus keys from ranked articles. */
-export function corpusKeysFromArticles(articles: readonly RankedArticle[]): Set<string> {
-  return new Set(articles.map((a) => canonicalArticleKey(resolveArticleId(a))));
-}
+export const corpusKeysFromArticles = (articles: readonly RankedArticle[]): Set<string> =>
+  new Set(articles.map((a) => canonicalArticleKey(resolveArticleId(a))));
 
 /** External URL for a legacy canonical key string. */
-export function legacyArticleKeyUrl(key: string): string {
-  return sourceIdentifierExternalUrl(parseLegacyArticleKey(key));
-}
+export const legacyArticleKeyUrl = (key: string): string =>
+  sourceIdentifierExternalUrl(parseLegacyArticleKey(key));
 
 /** English label for exports/PDF where i18n is unavailable. */
-export function formatLegacyArticleKeyLabel(key: string): string {
+export const formatLegacyArticleKeyLabel = (key: string): string => {
   const id = parseLegacyArticleKey(key);
   const prefix =
     id.type === 'pmid'
@@ -202,13 +204,14 @@ export function formatLegacyArticleKeyLabel(key: string): string {
           ? 'DOI'
           : 'PMCID';
   return `${prefix}: ${formatSourceIdentifierValue(id)}`;
-}
+};
 
 /** Normalize grounded-claim identifier fields for persistence. */
-export function ensureGroundedClaim(claim: GroundedClaim): GroundedClaim {
+export const ensureGroundedClaim = (claim: GroundedClaim): GroundedClaim => {
   const validIds = claim.articleIds?.filter(isSourceIdentifier) ?? [];
-  const rawIds = validIds.length > 0 ? validIds : claim.pmids.map((p) => parseLegacyArticleKey(p));
+  const rawIds =
+    validIds.length > 0 ? validIds : claim.pmids.map((p) => parseLegacyArticleKey(p));
   const articleIds = rawIds.map((id) => parseLegacyArticleKey(canonicalArticleKey(id)));
   const pmids = articleIds.map((id) => canonicalArticleKey(id));
   return { ...claim, articleIds, pmids };
-}
+};

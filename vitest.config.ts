@@ -1,8 +1,10 @@
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
+import { buildDefineConstants } from './scripts/lib/buildMeta.mjs';
 
 export default defineConfig({
   plugins: [react()],
+  define: buildDefineConstants(),
   test: {
     globals: true,
     environment: 'jsdom',

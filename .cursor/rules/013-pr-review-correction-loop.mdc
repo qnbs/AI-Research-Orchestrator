@@ -16,7 +16,7 @@ Complements `@.cursor/rules/011-coderabbit-pr-gate.mdc` (scope) and `@.cursor/ru
 | **CodeRabbit** (`coderabbitai`) | Inline threads + **review body** (out-of-diff findings often appear only in the summary) |
 | **CodeAnt** (`codeant-ai`) | Inline suggestions + quality-gate status contexts |
 | **Copilot** (`copilot-pull-request-reviewer`) | Inline PR review comments |
-| **DeepSource** (`deepsource-io`) | Inline threads; JavaScript analyzer is **advisory** unless repo policy changes (`docs/project-facts.json` → `staticAnalysis.deepsourceJavaScriptAdvisory`) |
+| **DeepSource** (`deepsource-io`) | Inline threads; JavaScript analyzer is **advisory** for merge blocking but **still in scope** — fix valid findings (e.g. JS-0125 `export const` arrows), reply + resolve every thread before merge (`docs/project-facts.json` → `staticAnalysis.deepsourceJavaScriptAdvisory`) |
 | **Socket Security** | Actionable PR alerts when they block merge |
 | **Cursor Bugbot** | When explicitly requested |
 | **Greptile / Codex** | Skip when trial or usage limits return no review (document in PR disposition comment) |
@@ -29,7 +29,7 @@ Human review comments requesting concrete fixes are in scope while open.
 2. **Wait** for blocking CI on the latest commit (`deploy.yml` Typecheck/Lint/Tests, build, security audit — read job logs, not badge alone for advisory jobs).
 3. **Collect** all open review threads (GraphQL `reviewThreads`) and scan latest bot **review bodies** for new actionable items.
 4. **Fix or reply** on every thread; **resolve** threads after fix or documented rationale.
-5. **Re-check** after CodeRabbit (or other bots) finish on the new commit — temporary rate limits may delay reviews; wait and re-poll before declaring quiescence.
+5. **Re-check** after CodeRabbit (or other bots) finish on the new commit — temporary rate limits may delay reviews **14–20+ minutes**; wait and re-poll before declaring quiescence. **Do not merge** while CodeRabbit `CHANGES_REQUESTED` targets an older commit or while unresolved inline threads remain.
 6. **Merge** only when step 2 is green and step 5 shows no new actionable items.
 
 Do **not** merge on stale bot approval from an older commit while newer commits are untested or unreviewed.

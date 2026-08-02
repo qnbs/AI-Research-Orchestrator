@@ -57,6 +57,12 @@
     "defaultSiteOrigin": "https://qnbs.github.io",
     "envVars": ["VITE_BASE_PATH", "VITE_SITE_ORIGIN"]
   },
+  "release": {
+    "policyPath": "docs/release-policy.md",
+    "packageVersion": "0.4.0",
+    "dexieSchemaVersion": 5,
+    "swCacheVersion": "v1"
+  },
   "sourceIdentifiers": ["pmid", "pmc", "doi", "arxiv"],
   "forbiddenReadmePhrases": ["Every AI assertion is inextricably linked to a verified PubMed ID"],
   "forbiddenAgentsPhrases": [

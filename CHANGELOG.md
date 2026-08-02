@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Source identifier model (P1-5):** `SourceIdentifier` (`pmid` | `pmcid` | `doi` | `arxiv`) with `articleId` on `RankedArticle`, `articleIds` on `GroundedClaim`, canonical legacy `pmid` keys, provider-aware external URLs, Dexie v5 hydration for KB entries and research checkpoints, and UI/export wiring for arXiv/DOI/PMC links.
+- **Release and version discipline (P1-6):** `docs/release-policy.md`, build-time `appVersion` + `buildCommitSha` injection, Help/About and export/PDF release labels, `ResearchReport.generationProvenance`, JSON export meta fields, `appReleaseInfo` module.
+- **DeepSource follow-up (P1-5):** `sourceIdentifier.ts` and `isKnowledgeBaseEntry` converted to `export const` arrows (JS-0125); switch `default` branches for analyzer clarity.
 - **Portable deployment base path (P1-3):** `VITE_BASE_PATH` + `VITE_SITE_ORIGIN` drive Vite `base`, generated manifest/canonical/OG URLs, and service-worker scope via `<base href>`; self-hosting matrix in README.
 - **External fetch retry policy (P1-4):** `fetchWithExternalPolicy` centralizes abort-aware backoff, Retry-After, jitter, and elapsed budget for PubMed, arXiv, and RTK Query fetches.
 - **Provider-aware cost estimator (P1-2):** `providerPricing` + `researchCostEstimate` use prompt-budget token sizing, per-provider list-price heuristics, unknown-pricing state (no guessed USD), and updated Settings/orchestrator UI strings.

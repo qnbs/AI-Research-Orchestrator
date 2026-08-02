@@ -11,7 +11,7 @@ Tracks **valid** findings fixed in-repo vs. intentional exclusions. Autofix PRs 
 | JS-0437  | Stable React keys: JSON composite keys, `compareEnLocale`, pipe-collision test                                                         |
 | JS-0116  | Removed `async` from functions that only return an existing `Promise` (`apiKeyService` vault helpers)                                  |
 | JS-0440  | `skipcq` on sanitized `dangerouslySetInnerHTML` in `AuthorProfileView`                                                                 |
-| JS-0125  | `promptBudget`, `pubmedUtils`, `stableReactKeys`, `untrustedDataFraming`: `export const` / arrow helpers instead of hoisted `function` |
+| JS-0125  | `sourceIdentifier.ts`, `knowledgeBaseValidation.ts` | `export const` arrow exports + switch `default` branches (DeepSource JS-0125) |
 | JS-0116  | `pubmedUtils.test.ts`: sync `Promise.resolve` mocks instead of needless `async` callbacks                                              |
 
 ## Excluded (false positives / out of scope)
