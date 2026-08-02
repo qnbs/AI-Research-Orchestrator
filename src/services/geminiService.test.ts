@@ -228,6 +228,50 @@ describe('geminiService with mocked SDK', () => {
     expect(out[0].pmid).toBe('1');
   });
 
+  it('findSimilarArticles passes vault NCBI key to PubMed validation', async () => {
+    hoisted.generateContent.mockResolvedValue({
+      text: JSON.stringify([{ pmid: '1', title: 'x', reason: 'y' }]),
+    });
+    mockPubMed.fetchArticleDetails.mockResolvedValueOnce([
+      {
+        pmid: '1',
+        title: 'x',
+        summary: 'S',
+        authors: 'A',
+        journal: 'J',
+        pubYear: '2020',
+        keywords: [],
+        relevanceScore: 0,
+        relevanceExplanation: '',
+      },
+    ]);
+    await findSimilarArticles({ title: 't', summary: 's' }, mockAi);
+    expect(mockPubMed.fetchArticleDetails).toHaveBeenCalledWith(['1'], undefined, 'ncbi-vault-key');
+  });
+
+  it('findSimilarArticles rethrows STREAM_ABORTED when signal is already aborted', async () => {
+    const controller = new AbortController();
+    controller.abort();
+    await expect(
+      findSimilarArticles({ title: 't', summary: 's' }, mockAi, controller.signal),
+    ).rejects.toMatchObject({ code: 'STREAM_ABORTED' });
+  });
+
+  it('findSimilarArticles rethrows STREAM_ABORTED when PubMed fetch aborts', async () => {
+    hoisted.generateContent.mockResolvedValue({
+      text: JSON.stringify([{ pmid: '1', title: 'x', reason: 'y' }]),
+    });
+    const controller = new AbortController();
+    mockPubMed.fetchArticleDetails.mockImplementationOnce((_pmids, signal) => {
+      controller.abort();
+      void signal;
+      return Promise.reject(new DOMException('Aborted', 'AbortError'));
+    });
+    await expect(
+      findSimilarArticles({ title: 't', summary: 's' }, mockAi, controller.signal),
+    ).rejects.toMatchObject({ code: 'STREAM_ABORTED' });
+  });
+
   it('generateResearchAnalysis returns structured analysis', async () => {
     hoisted.generateContent.mockResolvedValue({
       text: JSON.stringify({
@@ -575,10 +619,7 @@ describe('geminiService with mocked SDK', () => {
     it('logs and maps findSimilarArticles errors', async () => {
       hoisted.generateContent.mockRejectedValueOnce(new Error('similar fail'));
       await expect(findSimilarArticles({ title: 't', summary: 's' }, mockAi)).rejects.toThrow();
-      expect(safeLogErrorSpy).toHaveBeenCalledWith(
-        'Error finding similar articles:',
-        expect.any(Error),
-      );
+      expect(safeLogErrorSpy).toHaveBeenCalledWith('Error generating content:', expect.any(Error));
     });
 
     it('logs and maps generateResearchAnalysis errors', async () => {

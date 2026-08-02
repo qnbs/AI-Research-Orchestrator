@@ -2,7 +2,7 @@ import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { BugAntIcon } from './icons/BugAntIcon';
 import { HomeIcon } from './icons/HomeIcon';
 import { ClipboardIcon } from './icons/ClipboardIcon';
-import { AppLogo } from './AppLogo';
+import { AppBrandMark } from './AppBrandMark';
 import { errorBoundaryCopy } from './errorBoundaryCopy';
 import { safeLogError } from '../lib/safeLog';
 
@@ -97,7 +97,7 @@ class ErrorBoundary extends Component<Props, State> {
             <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-red-500/10 border border-red-500/20 mb-4 shadow-[0_0_15px_rgba(239,68,68,0.2)]">
               <BugAntIcon className="h-10 w-10 text-red-400 animate-pulse" />
             </div>
-            <AppLogo className="h-10 w-10 mx-auto mb-6 opacity-80" aria-hidden />
+            <AppBrandMark size="sm" showEmoji className="mx-auto mb-6 opacity-80" aria-hidden />
 
             <h1 className="text-3xl font-bold text-text-primary mb-2 tracking-tight">
               {errorBoundaryCopy.title}

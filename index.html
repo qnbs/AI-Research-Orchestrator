@@ -16,6 +16,8 @@
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://qnbs.github.io/AI-Research-Orchestrator/" />
     <meta name="twitter:card" content="summary" />
+    <meta name="twitter:image" content="https://qnbs.github.io/AI-Research-Orchestrator/icons/icon-512.png" />
+    <meta name="twitter:image:alt" content="AI Research Orchestrator — microscope research mark" />
     <meta property="og:image" content="https://qnbs.github.io/AI-Research-Orchestrator/icons/icon-512.png" />
     <meta property="og:image:alt" content="AI Research Orchestrator — microscope research mark" />
     <meta name="format-detection" content="telephone=no">
@@ -27,7 +29,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png" />
     <script type="application/ld+json">
-      {"@context":"https://schema.org","@type":"SoftwareApplication","name":"AI Research Orchestrator","applicationCategory":"EducationalApplication","operatingSystem":"Web","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"url":"https://qnbs.github.io/AI-Research-Orchestrator/"}
+      {"@context":"https://schema.org","@type":"SoftwareApplication","name":"AI Research Orchestrator","applicationCategory":"EducationalApplication","operatingSystem":"Web","image":"https://qnbs.github.io/AI-Research-Orchestrator/icons/icon-512.png","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"url":"https://qnbs.github.io/AI-Research-Orchestrator/"}
     </script>
     <meta name="theme-color" content="#070b12" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -156,9 +158,48 @@
         0% { transform: rotate(0deg) scale(1); }
         100% { transform: rotate(4deg) scale(1.06); }
       }
+      /* Boot splash — removed by index.tsx once React mounts */
+      #boot-splash {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        background-color: #070b12;
+        transition: opacity 0.35s ease, visibility 0.35s ease;
+      }
+      #boot-splash.boot-splash--hide {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
+      #boot-splash img {
+        width: 5rem;
+        height: 5rem;
+        animation: bootPulse 1.6s ease-in-out infinite;
+      }
+      #boot-splash .boot-emoji {
+        font-size: 1.5rem;
+        line-height: 1;
+        opacity: 0.9;
+      }
+      @keyframes bootPulse {
+        0%, 100% { opacity: 0.6; transform: scale(0.96); }
+        50% { opacity: 1; transform: scale(1); }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #boot-splash img { animation: none !important; }
+      }
     </style>
 </head>
   <body>
+    <div id="boot-splash" role="status" aria-live="polite" aria-label="Loading AI Research Orchestrator">
+      <img src="icons/icon-192.png" alt="" width="80" height="80" />
+      <span class="boot-emoji" aria-hidden="true">🔬</span>
+    </div>
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
     <script src="./register-sw.js"></script>

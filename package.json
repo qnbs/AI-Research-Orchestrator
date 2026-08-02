@@ -16,7 +16,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "vite build && node scripts/patch-csp-hashes.mjs",
+    "build": "pnpm run icons && vite build && node scripts/patch-csp-hashes.mjs",
     "preview": "vite preview",
     "test": "vitest",
     "test:run": "vitest run",

@@ -1,5 +1,9 @@
 # AI Research Orchestration Author
 
+<p align="center">
+  <img src="public/icons/icon-512.png" alt="AI Research Orchestrator — microscope research mark 🔬" width="128" height="128" />
+</p>
+
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/qnbs/AI-Research-Orchestrator)
 
 ![Status](https://img.shields.io/badge/Status-Production_Ready-success?style=flat-square)

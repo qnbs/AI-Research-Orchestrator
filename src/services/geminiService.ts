@@ -488,6 +488,7 @@ export async function findSimilarArticles(
   }
   const provider = await getProviderForSettings(aiSettings);
   throwIfAborted(signal);
+  const ncbiApiKey = (await getNcbiApiKey()) ?? undefined;
   try {
     const similarSchema: AIJsonSchema = {
       type: 'array',
@@ -501,7 +502,7 @@ export async function findSimilarArticles(
         required: ['pmid', 'title', 'reason'],
       },
     };
-    return await generateJson<SimilarArticle[]>(
+    const results = await generateJson<SimilarArticle[]>(
       aiSettings,
       {
         model: aiSettings.model,
@@ -512,14 +513,23 @@ export async function findSimilarArticles(
             ${wrapUntrustedJsonBlock('source_article', { title: article.title, summary: article.summary })}`,
       },
       signal,
-    ).then(async (results) => {
-      const pmids = results.map((r) => r.pmid).filter(Boolean);
-      if (pmids.length === 0) return [];
-      const details = await fetchArticleDetails(pmids, signal);
-      const valid = new Set(details.map((d) => d.pmid));
-      return results.filter((r) => valid.has(r.pmid));
-    });
+    );
+    throwIfAborted(signal);
+    const pmids = results.map((r) => r.pmid).filter(Boolean);
+    if (pmids.length === 0) return [];
+    const details = await fetchArticleDetails(pmids, signal, ncbiApiKey);
+    const valid = new Set(details.map((d) => d.pmid));
+    return results.filter((r) => valid.has(r.pmid));
   } catch (error) {
+    if (signal?.aborted) {
+      throw new AppError({
+        code: 'STREAM_ABORTED',
+        message: 'Aborted',
+        retryable: false,
+        cause: error,
+      });
+    }
+    if (error instanceof AppError) throw error;
     safeLogError('Error finding similar articles:', error);
     throw provider.mapError(error);
   }

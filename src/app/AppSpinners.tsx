@@ -1,5 +1,5 @@
 import React from 'react';
-import { AppLogo } from '../components/AppLogo';
+import { AppBrandMark } from '../components/AppBrandMark';
 
 interface SpinnerProps {
   /** Accessible status label (visually hidden). */
@@ -12,7 +12,7 @@ export const FullScreenSpinner: React.FC<SpinnerProps> = ({ label = 'Loading' })
     role="status"
     aria-live="polite"
   >
-    <AppLogo className="h-20 w-20 animate-pulse" aria-label={label} />
+    <AppBrandMark size="xl" showEmoji className="animate-pulse" aria-label={label} />
     <span className="sr-only">{label}</span>
   </div>
 );
@@ -23,7 +23,7 @@ export const ContentSpinner: React.FC<SpinnerProps> = ({ label = 'Loading' }) =>
     role="status"
     aria-live="polite"
   >
-    <AppLogo className="h-14 w-14 animate-pulse" aria-label={label} />
+    <AppBrandMark size="lg" className="animate-pulse" aria-label={label} />
     <span className="sr-only">{label}</span>
   </div>
 );
