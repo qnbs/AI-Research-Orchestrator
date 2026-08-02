@@ -15,10 +15,21 @@ Docker and Shell analyzers remain **enabled** (advisory GitHub checks).
 
 ## Re-enabling JavaScript (maintainers)
 
-1. Set `enabled = true` under `[[analyzers]] name = "javascript"` in `.deepsource.toml`.
+1. Add `[[analyzers]] name = "javascript"` with `enabled = true` in `.deepsource.toml`.
 2. Set `deepsourceJavaScriptEnabled: true` in `docs/project-facts.json`.
-3. Adjust DeepSource dashboard quality gates (limit to critical/security) or add repository-wide ignore rules.
-4. Prove one full PR stays green before treating the check as merge-blocking.
+3. Enable JavaScript in the DeepSource dashboard (Settings → Code Review → Analyzers).
+4. Adjust dashboard quality gates (limit to critical/security) or add repository-wide ignore rules.
+5. Push a test PR and confirm `DeepSource: JavaScript` stays green before treating the check as merge-blocking.
+
+## Verifying dashboard-off (maintainers)
+
+After toggling JavaScript **off** in the dashboard:
+
+1. Push an empty commit or doc-only change to an open PR.
+2. Confirm the PR checks list has **no** `DeepSource: JavaScript` failure (check absent or success).
+3. Record confirmation in the PR disposition comment if this was the remediation step.
+
+See `docs/deepsource-dashboard-off.md` for the toggle path.
 
 ## Excludes (when JS is re-enabled)
 

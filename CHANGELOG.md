@@ -22,20 +22,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - **Claude Code Review CI:** deleted `.github/workflows/claude-code-review.yml` (failing `review` job without `ANTHROPIC_API_KEY`; CodeRabbit + deploy gates remain). On-demand `@claude` via `claude.yml` unchanged.
+- **SonarQube Cloud:** deleted `sonar-project.properties`, `docs/sonarcloud-setup-todo.md`, and all active CI/docs references (dashboard removed by owner).
+
+### Added
 
 - **Synthesis trust model (P0-6):** claim-level corpus + evidence validation, `trustLevel` on `groundedSynthesis`, live UI banner for unverified narrative drafts, adversarial claim tests, agent-eval unsupported-claim rate metric.
 - **Brand identity (🔬 microscope mark):** unified PWA icon set (`app-icon.svg`, maskable PNGs, favicons, apple-touch-icon), `AppLogo` / `AppBrandMark` microscope SVG with optional emoji badge, branded boot splash, loading spinners, PWA settings preview, manifest shortcuts/categories, and theme metadata (`#070b12`).
 
-### Removed
-
-- **SonarQube Cloud:** deleted `sonar-project.properties`, `docs/sonarcloud-setup-todo.md`, and all active CI/docs references (dashboard removed by owner).
-
 ### Changed
 
 - **Prompt budget (P0-3):** lexical pre-filter + per-field bounding before JSON serialization; `wrapUntrustedJsonBlock` no longer truncates mid-JSON; Agent Debugger trace metadata records included/omitted corpus counts.
-
-- **DeepSource root causes:** i18n `{usd}`/`{tier}` placeholders, stable React list keys, removed deprecated install-prompt snapshot API, unnecessary `async` in vault helpers; tightened `.deepsource.toml` excludes (`docs/deepsource-disposition.md`).
-
 - **Deployment pruning:** `prune-deployments.yml` plus a post-deploy job in `deploy.yml` keep only the latest 3 GitHub deployment records per environment (inactive-then-delete API flow).
 
 - **Audit P0/P1 completion:** mandatory custom-endpoint approval, CSP drift gate (`check:csp-endpoint-drift`), untrusted-data framing on all live AI prompts, capability-aware `generateJson`, export/history synthesis sanitization, PubMed query validation in orchestrator, `check:agent-eval` CI gate with `liveOrchestratorEval` fixtures.
