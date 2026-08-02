@@ -25,11 +25,6 @@ export function getInstallPromptStateSnapshot(): InstallPromptState {
   return state;
 }
 
-/** @deprecated Prefer `getInstallPromptStateSnapshot().event` — kept for existing tests. */
-export function getInstallPromptSnapshot(): BeforeInstallPromptEvent | null {
-  return state.event;
-}
-
 export function setInstallPromptEvent(event: BeforeInstallPromptEvent | null): void {
   if (state.event === event) return;
   state = { ...state, event };

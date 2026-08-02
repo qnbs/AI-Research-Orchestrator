@@ -430,8 +430,8 @@ export const AnalysisCharts: React.FC = () => {
                   outerRadius="95%"
                   paddingAngle={2}
                 >
-                  {analyticsData.topicData.map((_, index) => (
-                    <Cell key={`cell-${index}`} fill={TOPIC_COLORS[index % TOPIC_COLORS.length]} />
+                  {analyticsData.topicData.map((entry, index) => (
+                    <Cell key={entry.name} fill={TOPIC_COLORS[index % TOPIC_COLORS.length]} />
                   ))}
                 </Pie>
                 <Legend

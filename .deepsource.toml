@@ -1,13 +1,17 @@
 version = 1
 
+# Node maintenance scripts and service-worker bundles are excluded — the JS analyzer
+# parses them as script (not module) and reports false JS-0833 / workbox-global noise.
 exclude_patterns = [
   "eslint-local-rules/**",
-  "**/scripts/**",
-  "**/*.mjs",
+  "scripts",
+  "scripts/**",
+  "scripts/*.mjs",
+  "public/sw.js",
+  "public/register-sw.js",
   "public/**",
   "dist/**",
   "coverage/**",
-  "index.tsx",
 ]
 
 test_patterns = [
@@ -33,7 +37,7 @@ enabled = true
   module_system = "es-modules"
   dialect = "typescript"
   dependency_file_paths = ["."]
-  environment = ["browser", "nodejs", "vitest", "cypress"]
+  environment = ["browser", "nodejs", "vitest", "cypress", "serviceworker"]
   cyclomatic_complexity_threshold = "critical"
   skip_doc_coverage = [
     "function-declaration",

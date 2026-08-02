@@ -400,10 +400,10 @@ export const DisambiguationView: React.FC = () => {
         {t('authors.disambiguation.prefix')} “{authorQuery}”. {t('authors.disambiguation.suffix')}
       </p>
       <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
-        {clusters.map((cluster, index) => (
+        {clusters.map((cluster) => (
           <button
             type="button"
-            key={index}
+            key={`${cluster.nameVariant}|${cluster.primaryAffiliation}|${cluster.publicationCount}`}
             onClick={() => onSelect(cluster)}
             className="group w-full h-full p-5 bg-surface border border-border rounded-lg text-left transition-all duration-300 hover:shadow-xl hover:border-brand-accent/50 hover:-translate-y-1.5 focus:outline-none focus:ring-2 focus:ring-brand-accent ring-offset-2 ring-offset-background"
           >

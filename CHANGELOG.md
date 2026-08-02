@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **CI hygiene:** removed SonarQube Cloud integration entirely; disabled DeepSource JavaScript analyzer (Docker/Shell advisory only).
 
+- **DeepSource root causes:** i18n `{usd}`/`{tier}` placeholders, stable React list keys, removed deprecated install-prompt snapshot API, unnecessary `async` in vault helpers; tightened `.deepsource.toml` excludes (`docs/deepsource-disposition.md`).
+
 - **Deployment pruning:** `prune-deployments.yml` plus a post-deploy job in `deploy.yml` keep only the latest 3 GitHub deployment records per environment (inactive-then-delete API flow).
 
 - **Audit P0/P1 completion:** mandatory custom-endpoint approval, CSP drift gate (`check:csp-endpoint-drift`), untrusted-data framing on all live AI prompts, capability-aware `generateJson`, export/history synthesis sanitization, PubMed query validation in orchestrator, `check:agent-eval` CI gate with `liveOrchestratorEval` fixtures.

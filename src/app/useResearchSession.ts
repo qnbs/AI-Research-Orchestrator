@@ -50,6 +50,7 @@ export interface UseResearchSessionArgs {
 /**
  * Orchestrator research session: streaming generation, report state, and checkpoints.
  */
+// skipcq: JS-0067 - standard ESM exported React hook
 export function useResearchSession({
   aiSettings,
   autoSaveReports,
@@ -159,9 +160,10 @@ export function useResearchSession({
         model: aiSettings.model,
       });
       if (shouldWarnAboutResearchCost(costEstimate.estimatedUsd)) {
-        const msg = t('orchestrator.cost_preflight')
-          .replace('${usd}', costEstimate.estimatedUsd.toFixed(3))
-          .replace('${tier}', costEstimate.tier);
+        const msg = t('orchestrator.cost_preflight', {
+          usd: costEstimate.estimatedUsd.toFixed(3),
+          tier: costEstimate.tier,
+        });
         setNotification({
           id: Date.now(),
           type: 'success',

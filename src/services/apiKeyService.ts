@@ -43,7 +43,7 @@ export function __resetEncryptionKeyCacheForTests(): void {
  * When unavailable (older browsers / some test envs), falls through to the
  * in-tab promise memoization only.
  */
-async function withVaultLock<T>(fn: () => Promise<T>): Promise<T> {
+function withVaultLock<T>(fn: () => Promise<T>): Promise<T> {
   const locks = globalThis.navigator?.locks;
   if (!locks?.request) {
     return fn();
@@ -97,7 +97,7 @@ function notifyVaultReset(): void {
  * or a compromised third-party script can no longer read the master key that
  * protects every stored provider secret.
  */
-async function getOrCreateEncryptionKey(): Promise<CryptoKey> {
+function getOrCreateEncryptionKey(): Promise<CryptoKey> {
   // In-tab memoization first; Web Locks then serialize the IndexedDB read/
   // generate/save across tabs so a second tab waits and re-reads the key the
   // first tab just wrote instead of racing a second generateKey.
@@ -383,11 +383,11 @@ export async function saveApiKey(apiKey: string): Promise<void> {
   await saveProviderApiKey('gemini', apiKey);
 }
 
-export async function getApiKey(): Promise<string | null> {
+export function getApiKey(): Promise<string | null> {
   return getProviderApiKey('gemini');
 }
 
-export async function hasApiKey(): Promise<boolean> {
+export function hasApiKey(): Promise<boolean> {
   return hasProviderApiKey('gemini');
 }
 
@@ -411,7 +411,7 @@ export async function saveNcbiApiKey(apiKey: string): Promise<void> {
 /**
  * Retrieves and decrypts the NCBI API key from IndexedDB.
  */
-export async function getNcbiApiKey(): Promise<string | null> {
+export function getNcbiApiKey(): Promise<string | null> {
   return getEncryptedSecret(STORAGE_KEY_NCBI, 'NCBI API key');
 }
 
