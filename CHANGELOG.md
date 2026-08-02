@@ -9,7 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Source identifier model (P1-5):** `SourceIdentifier` (`pmid` | `pmcid` | `doi` | `arxiv`) with `articleId` on `RankedArticle`, `articleIds` on `GroundedClaim`, canonical legacy `pmid` keys, provider-aware external URLs, Dexie v5 hydration for KB entries and research checkpoints, and UI/export wiring for arXiv/DOI/PMC links.
+- **Release and version discipline (P1-6):** `docs/release-policy.md`, build-time `appVersion` + `buildCommitSha`, `ResearchReport.generationProvenance`, Help/About + JSON/PDF export release labels, `appReleaseInfo` module.
+
+### Changed
+
+- **DeepSource JavaScript analyzer disabled (dashboard):** root cause in `docs/deepsource-javascript-ci.md`; TOML has no JS block; ESLint + `deploy.yml` authoritative; `scripts/build-meta.mjs` at scripts root.
 - **Portable deployment base path (P1-3):** `VITE_BASE_PATH` + `VITE_SITE_ORIGIN` drive Vite `base`, generated manifest/canonical/OG URLs, and service-worker scope via `<base href>`; self-hosting matrix in README.
 - **External fetch retry policy (P1-4):** `fetchWithExternalPolicy` centralizes abort-aware backoff, Retry-After, jitter, and elapsed budget for PubMed, arXiv, and RTK Query fetches.
 - **Provider-aware cost estimator (P1-2):** `providerPricing` + `researchCostEstimate` use prompt-budget token sizing, per-provider list-price heuristics, unknown-pricing state (no guessed USD), and updated Settings/orchestrator UI strings.
@@ -18,20 +22,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - **Claude Code Review CI:** deleted `.github/workflows/claude-code-review.yml` (failing `review` job without `ANTHROPIC_API_KEY`; CodeRabbit + deploy gates remain). On-demand `@claude` via `claude.yml` unchanged.
+- **SonarQube Cloud:** deleted `sonar-project.properties`, `docs/sonarcloud-setup-todo.md`, and all active CI/docs references (dashboard removed by owner).
+
+### Added
 
 - **Synthesis trust model (P0-6):** claim-level corpus + evidence validation, `trustLevel` on `groundedSynthesis`, live UI banner for unverified narrative drafts, adversarial claim tests, agent-eval unsupported-claim rate metric.
 - **Brand identity (🔬 microscope mark):** unified PWA icon set (`app-icon.svg`, maskable PNGs, favicons, apple-touch-icon), `AppLogo` / `AppBrandMark` microscope SVG with optional emoji badge, branded boot splash, loading spinners, PWA settings preview, manifest shortcuts/categories, and theme metadata (`#070b12`).
 
-### Removed
-
-- **SonarQube Cloud:** deleted `sonar-project.properties`, `docs/sonarcloud-setup-todo.md`, and all active CI/docs references (dashboard removed by owner).
-
 ### Changed
 
 - **Prompt budget (P0-3):** lexical pre-filter + per-field bounding before JSON serialization; `wrapUntrustedJsonBlock` no longer truncates mid-JSON; Agent Debugger trace metadata records included/omitted corpus counts.
-
-- **DeepSource root causes:** i18n `{usd}`/`{tier}` placeholders, stable React list keys, removed deprecated install-prompt snapshot API, unnecessary `async` in vault helpers; tightened `.deepsource.toml` excludes (`docs/deepsource-disposition.md`).
-
 - **Deployment pruning:** `prune-deployments.yml` plus a post-deploy job in `deploy.yml` keep only the latest 3 GitHub deployment records per environment (inactive-then-delete API flow).
 
 - **Audit P0/P1 completion:** mandatory custom-endpoint approval, CSP drift gate (`check:csp-endpoint-drift`), untrusted-data framing on all live AI prompts, capability-aware `generateJson`, export/history synthesis sanitization, PubMed query validation in orchestrator, `check:agent-eval` CI gate with `liveOrchestratorEval` fixtures.

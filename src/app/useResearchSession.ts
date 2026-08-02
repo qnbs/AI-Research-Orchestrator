@@ -28,6 +28,7 @@ import type { View } from '../types/ui';
 import type { TranslationKey } from '../i18n/translations';
 import type { HapticPreset } from '../hooks/useHaptic';
 import { getAgentForPhase } from './getAgentForPhase';
+import { stampReportWithProvenance } from '../lib/appReleaseInfo';
 import { safeLogError } from '../lib/safeLog';
 
 type ReportStatus = 'idle' | 'generating' | 'streaming' | 'done' | 'error';
@@ -253,7 +254,14 @@ export function useResearchSession({
         }
         dispatch(completeTrace({ status: 'done' }));
 
-        const completeReport = { ...finalReport, synthesis: finalSynthesis };
+        const completeReport = stampReportWithProvenance(
+          { ...finalReport, synthesis: finalSynthesis },
+          {
+            inferenceMode: aiSettings.provider === 'heuristic' ? 'heuristic' : 'live',
+            providerId: aiSettings.provider ?? 'gemini',
+            model: aiSettings.model,
+          },
+        );
         const corpusPmids = completeReport.rankedArticles.map((a) => a.pmid);
         const extractedClaims = extractGroundedClaimsFromMarkdown(finalSynthesis, corpusPmids);
         if (extractedClaims.length > 0) {

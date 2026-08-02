@@ -77,7 +77,7 @@ const isValidJournalProfile = (journalProfile: unknown): boolean =>
  * nested report/profile/journalProfile fields read without a guard
  * downstream — not a full recursive schema validation of every article.
  */
-export function isKnowledgeBaseEntry(item: unknown): item is KnowledgeBaseEntry {
+export const isKnowledgeBaseEntry = (item: unknown): item is KnowledgeBaseEntry => {
   if (!isPlainObject(item) || !hasBaseEntryShape(item)) return false;
 
   switch (item.sourceType) {

@@ -101,6 +101,20 @@ export interface ResearchReport {
   /** Optional structured claims; sanitized on export when present. */
   groundedSynthesis?: GroundedSynthesis;
   sources?: WebContent[];
+  /** Build/runtime provenance stamped at report completion (P1-6). */
+  generationProvenance?: ReportGenerationProvenance;
+}
+
+/** Identifies the app build that produced a research report. */
+export interface ReportGenerationProvenance {
+  appVersion: string;
+  buildCommitSha: string;
+  dexieSchemaVersion: number;
+  swCacheVersion: string;
+  generatedAt: number;
+  inferenceMode?: 'live' | 'heuristic';
+  providerId?: import('./services/providers/types').AIProviderSelection;
+  model?: string;
 }
 
 export interface AuthorProfileInput {

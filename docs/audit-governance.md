@@ -11,7 +11,7 @@ security gates so future PRs do not re-litigate the same trade-offs.
 | Typecheck / lint / unit tests + coverage | `deploy.yml`                           | **Yes**        | `pnpm run test:coverage` — 80% lines/statements on `store`/`services`/`hooks`/`lib`        |
 | Critical-path coverage floors            | `deploy.yml` → `check:coverage-floors` | **Yes**        | Ratchet on `providers/`, `geminiService.ts`, `apiKeyService.ts`                            |
 | CodeQL                                   | `security.yml`                         | **Yes**        | `security-extended` query set                                                              |
-| DeepSource (Docker/Shell/JS)             | GitHub App check                       | Advisory       | JS enabled with `scripts/**` + `public/**` excludes; ESLint + deploy.yml are authoritative |
+| DeepSource (Docker/Shell)                | GitHub App check                       | Advisory       | JavaScript analyzer **disabled** — see `docs/deepsource-javascript-ci.md`; ESLint + deploy.yml authoritative |
 | Deployment record pruning                | `deploy.yml` + `prune-deployments.yml` | **Yes** (main) | Keep latest 3 `github-pages` deployments per environment; weekly/dispatch safety net       |
 | CodeAnt / Semgrep / gitleaks             | GitHub App checks                      | Mixed          | See workflow outputs per PR                                                                |
 
@@ -19,7 +19,7 @@ security gates so future PRs do not re-litigate the same trade-offs.
 
 ### Known false positives / external failures
 
-- **DeepSource JavaScript:** analyzer **enabled** in `.deepsource.toml` with excludes for Node maintenance scripts (`scripts/**`) and service-worker bundles (`public/**`) where ESM/Workbox parsing produces false positives. Treat as advisory; ESLint + `deploy.yml` gates are authoritative for TS/TSX. Docker/Shell remain advisory.
+- **DeepSource JavaScript:** analyzer **off in the DeepSource dashboard** (Settings → Code Review → Analyzers); `.deepsource.toml` has no `javascript` block (2026-08-02). Persistent ESM false positives, `scripts/lib` parse errors, and quality-gate churn — see `docs/deepsource-javascript-ci.md` and `docs/deepsource-dashboard-off.md`. Docker/Shell remain advisory; ESLint + `deploy.yml` are authoritative for TS/TSX.
 - **Claude Code Review:** removed from CI (2026-08-02) — no blocking `review` job. On-demand `@claude` remains via `claude.yml`.
 
 ## `pnpm audit` governance

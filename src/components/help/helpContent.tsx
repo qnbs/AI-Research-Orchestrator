@@ -2,6 +2,7 @@ import React from 'react';
 import { InfoIcon } from '../icons/InfoIcon';
 import { Kbd } from '../Kbd';
 import type { TranslationKey } from '../../hooks/useTranslation';
+import { formatReleaseLabel } from '../../lib/appReleaseInfo';
 
 type Translator = (
   key: TranslationKey | (string & {}),
@@ -385,7 +386,7 @@ export const AboutSection: React.FC<{ t: Translator }> = ({ t }) => (
     <h3 className="text-xl font-bold text-text-primary">{t('help.about.title')}</h3>
     <p>{t('help.about.description')}</p>
     <p>
-      <strong>{t('help.about.version.label')}</strong> {t('help.about.version.value')}
+      <strong>{t('help.about.version.label')}</strong> {formatReleaseLabel()}
     </p>
     <h4 className="font-semibold text-text-primary">{t('help.about.principles.title')}</h4>
     <ul>

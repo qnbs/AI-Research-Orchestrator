@@ -5,11 +5,14 @@ import {
   corpusKeysFromArticles,
   ensureArticleIdentifiers,
   ensureGroundedClaim,
+  formatLegacyArticleKeyLabel,
   formatSourceIdentifierValue,
   isArxivArticle,
+  legacyArticleKeyUrl,
   parseLegacyArticleKey,
   articleExternalUrl,
   resolveArticleId,
+  sourceIdentifierCopyLabelKey,
   sourceIdentifierExternalUrl,
   sourceIdentifierLabelKey,
 } from './sourceIdentifier';
@@ -274,7 +277,62 @@ describe('labels', () => {
     expect(sourceIdentifierLabelKey({ type: 'arxiv', value: '1' })).toBe(
       'article.identifier.arxiv',
     );
+    expect(sourceIdentifierLabelKey({ type: 'doi', value: '10.1/x' })).toBe(
+      'article.identifier.doi',
+    );
+    expect(sourceIdentifierLabelKey({ type: 'pmid', value: '99' })).toBe(
+      'article.identifier.pmid',
+    );
+    expect(sourceIdentifierLabelKey({ type: 'pmcid', value: '123' })).toBe(
+      'article.identifier.pmcid',
+    );
+    expect(
+      sourceIdentifierLabelKey({ type: 'bogus', value: 'x' } as unknown as import('../types').SourceIdentifier),
+    ).toBe('article.identifier.pmid');
     expect(formatSourceIdentifierValue({ type: 'pmcid', value: '123' })).toBe('PMC123');
+    expect(formatSourceIdentifierValue({ type: 'pmid', value: '42' })).toBe('42');
+    expect(formatSourceIdentifierValue({ type: 'arxiv', value: '2301.1' })).toBe('2301.1');
+    expect(formatSourceIdentifierValue({ type: 'doi', value: '10.1/x' })).toBe('10.1/x');
+  });
+
+  it('maps copy-to-clipboard label keys for every identifier type', () => {
+    expect(sourceIdentifierCopyLabelKey({ type: 'pmid', value: '1' })).toBe('report.copyType.pmid');
+    expect(sourceIdentifierCopyLabelKey({ type: 'arxiv', value: '1' })).toBe('report.copyType.arxiv');
+    expect(sourceIdentifierCopyLabelKey({ type: 'doi', value: '1' })).toBe('report.copyType.doi');
+    expect(sourceIdentifierCopyLabelKey({ type: 'pmcid', value: '1' })).toBe('report.copyType.pmcid');
+    expect(
+      sourceIdentifierCopyLabelKey({ type: 'bogus', value: 'x' } as unknown as import('../types').SourceIdentifier),
+    ).toBe('report.copyType.pmid');
+  });
+
+  it('builds external URLs for every identifier type', () => {
+    expect(sourceIdentifierExternalUrl({ type: 'pmid', value: '12345' })).toBe(
+      'https://pubmed.ncbi.nlm.nih.gov/12345/',
+    );
+    expect(sourceIdentifierExternalUrl({ type: 'arxiv', value: '2301.99999' })).toBe(
+      'https://arxiv.org/abs/2301.99999',
+    );
+    expect(sourceIdentifierExternalUrl({ type: 'doi', value: '10.1234/example' })).toBe(
+      'https://doi.org/10.1234/example',
+    );
+    expect(sourceIdentifierExternalUrl({ type: 'pmcid', value: '888' })).toBe(
+      'https://www.ncbi.nlm.nih.gov/pmc/articles/PMC888/',
+    );
+    expect(sourceIdentifierExternalUrl({ type: 'pmcid', value: 'PMC888' })).toBe(
+      'https://www.ncbi.nlm.nih.gov/pmc/articles/PMC888/',
+    );
+    expect(
+      sourceIdentifierExternalUrl({ type: 'bogus', value: 'x' } as unknown as import('../types').SourceIdentifier),
+    ).toBe('https://pubmed.ncbi.nlm.nih.gov/x/');
+  });
+
+  it('formats legacy keys for exports and resolves legacy URLs', () => {
+    expect(formatLegacyArticleKeyLabel('12345')).toBe('PMID: 12345');
+    expect(formatLegacyArticleKeyLabel('arxiv:2301.1')).toBe('arXiv: 2301.1');
+    expect(formatLegacyArticleKeyLabel('doi:10.1/x')).toBe('DOI: 10.1/x');
+    expect(formatLegacyArticleKeyLabel('pmcid:PMC555')).toBe('PMCID: PMC555');
+    expect(legacyArticleKeyUrl('12345')).toBe('https://pubmed.ncbi.nlm.nih.gov/12345/');
+    expect(legacyArticleKeyUrl('arxiv:2301.1')).toBe('https://arxiv.org/abs/2301.1');
   });
 
   it('detects arxiv articles', () => {
