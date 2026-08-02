@@ -225,11 +225,18 @@ export function useResearchSession({
             );
           }
 
-          if (isFirstChunk && partialReport) {
+          if (partialReport) {
             finalReport = partialReport;
-            setReport(finalReport);
-            setReportStatus('streaming');
-            isFirstChunk = false;
+            // Empty-retrieval / non-streaming reports carry full synthesis on `report`
+            // without `synthesisChunk` events — seed so completion does not wipe it.
+            if (!finalSynthesis && partialReport.synthesis) {
+              finalSynthesis = partialReport.synthesis;
+            }
+            if (isFirstChunk) {
+              setReport(finalReport);
+              setReportStatus('streaming');
+              isFirstChunk = false;
+            }
           }
 
           if (synthesisChunk) {
@@ -262,8 +269,9 @@ export function useResearchSession({
         const executedProviderId =
           modeSnapshot.mode === 'heuristic' ? 'heuristic' : (aiSettings.provider ?? 'gemini');
 
+        const synthesisText = finalSynthesis || finalReport.synthesis || '';
         const completeReport = stampReportWithProvenance(
-          { ...finalReport, synthesis: finalSynthesis },
+          { ...finalReport, synthesis: synthesisText },
           {
             inferenceMode: modeSnapshot.mode,
             providerId: executedProviderId,
@@ -271,7 +279,7 @@ export function useResearchSession({
           },
         );
         const corpusPmids = completeReport.rankedArticles.map((a) => a.pmid);
-        const extractedClaims = extractGroundedClaimsFromMarkdown(finalSynthesis, corpusPmids);
+        const extractedClaims = extractGroundedClaimsFromMarkdown(synthesisText, corpusPmids);
         if (extractedClaims.length > 0) {
           completeReport.groundedSynthesis = buildAssessedGroundedSynthesis(
             extractedClaims,

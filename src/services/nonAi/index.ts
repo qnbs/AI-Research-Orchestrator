@@ -199,6 +199,8 @@ export async function* generateNonAiResearchReportStream(
     );
     yield {
       report: emptyReport,
+      // Emit as a chunk so orchestrator session accumulation keeps the explanation.
+      synthesisChunk: emptyReport.synthesis,
       phase: phase('Empty retrieval — no scientific corpus assembled.'),
     };
     yield { phase: phase('Phase 6: Finalizing report...') };

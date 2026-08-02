@@ -106,6 +106,7 @@ describe('generateNonAiResearchReportStream', () => {
     expect(reportEvent?.report?.retrievalOutcome).toBe('zero_results');
     expect(reportEvent?.report?.synthesis).toMatch(/zero-result|No PubMed/i);
     expect(reportEvent?.report?.synthesis).not.toMatch(/using PubMed and arXiv sources/);
+    expect(reportEvent?.synthesisChunk).toBe(reportEvent?.report?.synthesis);
   });
 
   it('does not substitute demo corpus when PubMed search itself fails', async () => {
