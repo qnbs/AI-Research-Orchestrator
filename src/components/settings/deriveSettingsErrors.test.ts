@@ -15,6 +15,15 @@ describe('deriveSettingsErrors', () => {
     expect(errors.endpoint).toContain('settings.ai.base_url_invalid');
   });
 
+  it('flags whitespace-only custom endpoint values', () => {
+    const settings = {
+      ...defaultSettings,
+      ai: { ...defaultSettings.ai, customBaseUrl: '   ' },
+    };
+    const errors = deriveSettingsErrors(settings, t);
+    expect(errors.endpoint).toContain('settings.ai.base_url_invalid');
+  });
+
   it('flags CSP-blocked origins', () => {
     const settings = {
       ...defaultSettings,

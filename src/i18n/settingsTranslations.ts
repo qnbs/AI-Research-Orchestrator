@@ -28,6 +28,7 @@ export const settingsTranslations = {
     'settings.pwa.title': 'Application',
     'settings.pwa.desc': "Manage the application's installation status and offline capabilities.",
     'settings.pwa.installed': 'App is installed and ready for offline use.',
+    'settings.pwa.brand_status': 'PWA · Offline-ready · 🔬',
     'settings.pwa.install_cta': 'Install App on this Device',
     'settings.pwa.install_hint':
       'Install for a native-like experience, including an icon on your home screen or desktop.',
@@ -269,6 +270,7 @@ export const settingsTranslations = {
     'settings.pwa.title': 'Anwendung',
     'settings.pwa.desc': 'Installationsstatus und Offline-Funktionen der Anwendung verwalten.',
     'settings.pwa.installed': 'App ist installiert und bereit für die Offline-Nutzung.',
+    'settings.pwa.brand_status': 'PWA · Offline-bereit · 🔬',
     'settings.pwa.install_cta': 'App auf diesem Gerät installieren',
     'settings.pwa.install_hint':
       'Installieren Sie die App für ein natives Erlebnis inkl. Symbol auf dem Startbildschirm oder Desktop.',

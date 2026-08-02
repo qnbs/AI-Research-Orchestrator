@@ -9,9 +9,12 @@ exclude_patterns = [
   "index.tsx",
 ]
 
-# JavaScript/TypeScript quality is enforced by ESLint + deploy.yml (typecheck/lint/test:coverage).
-# Only infrastructure analyzers remain here; disable JavaScript in the DeepSource dashboard
-# (Settings → Code Review) if the GitHub check still appears.
+test_patterns = [
+  "**/*.test.ts",
+  "**/*.test.tsx",
+  "**/*.spec.ts",
+]
+
 [[analyzers]]
 name = "docker"
 enabled = true
@@ -19,3 +22,23 @@ enabled = true
 [[analyzers]]
 name = "shell"
 enabled = true
+
+[[analyzers]]
+name = "javascript"
+enabled = true
+
+  [analyzers.meta]
+  plugins = ["react"]
+  module_system = "es-modules"
+  dialect = "typescript"
+  dependency_file_paths = ["."]
+  environment = ["browser", "nodejs", "vitest", "cypress"]
+  cyclomatic_complexity_threshold = "critical"
+  skip_doc_coverage = [
+    "function-declaration",
+    "function-expression",
+    "arrow-function-expression",
+    "class-declaration",
+    "class-expression",
+    "method-definition",
+  ]

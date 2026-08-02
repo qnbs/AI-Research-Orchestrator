@@ -18,6 +18,7 @@ export interface AppBrandMarkProps {
   idPrefix?: string;
   className?: string;
   'aria-label'?: string;
+  'aria-hidden'?: boolean;
 }
 
 /** Product mark: microscope SVG with optional 🔬 recognition badge. */
@@ -27,12 +28,17 @@ export const AppBrandMark: React.FC<AppBrandMarkProps> = ({
   idPrefix = 'brand',
   className = '',
   'aria-label': ariaLabel,
+  'aria-hidden': ariaHidden,
 }) => (
-  <div className={`relative inline-flex shrink-0 items-center justify-center ${className}`}>
+  <div
+    className={`relative inline-flex shrink-0 items-center justify-center ${className}`}
+    aria-hidden={ariaHidden}
+  >
     <AppLogo
       idPrefix={idPrefix}
       className={`${SIZE_CLASS[size]} drop-shadow-lg`}
-      aria-label={ariaLabel}
+      aria-label={ariaHidden ? undefined : ariaLabel}
+      aria-hidden={ariaHidden}
     />
     {showEmoji ? (
       <span

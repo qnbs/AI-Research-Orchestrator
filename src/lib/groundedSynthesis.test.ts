@@ -104,6 +104,16 @@ describe('sanitizeSynthesisForExport', () => {
     expect(result.synthesis).toBe('');
     expect(result.uncitedParagraphsRemoved).toBe(0);
   });
+
+  it('preserves standalone heading blocks in rebuilt export synthesis', () => {
+    const synthesis =
+      '## Findings\n\nDrug X reduced risk (PMID: 1).\n\n## Methods\n\nUncited methods text.';
+    const { synthesis: cleaned } = sanitizeSynthesisForExport(synthesis, undefined, ['1']);
+    expect(cleaned).toContain('## Findings');
+    expect(cleaned).toContain('## Methods');
+    expect(cleaned).toContain('PMID: 1');
+    expect(cleaned).not.toContain('Uncited methods');
+  });
 });
 
 describe('rebuildSynthesisFromClaims', () => {

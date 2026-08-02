@@ -96,8 +96,20 @@ export function sanitizeGroundedClaims(
 }
 
 /** Rebuild markdown synthesis from corpus-bound claims (export-safe). */
-export function rebuildSynthesisFromClaims(claims: readonly GroundedClaim[]): string {
-  return claims.map((c) => c.text).join('\n\n');
+export function rebuildSynthesisFromClaims(
+  claims: readonly GroundedClaim[],
+  preservedHeadings?: readonly string[],
+): string {
+  const body = claims.map((c) => c.text).join('\n\n');
+  if (!preservedHeadings?.length) return body;
+  return [...preservedHeadings, body].join('\n\n');
+}
+
+function extractHeadingOnlyBlocks(synthesis: string): string[] {
+  return synthesis
+    .split(/\n\n+/)
+    .map((b) => b.trim())
+    .filter((b) => b.length > 0 && isHeadingOnlyBlock(b));
 }
 
 const HEADING_ONLY_PATTERN = /^#{1,6}\s+\S/;
@@ -145,7 +157,8 @@ export function sanitizeSynthesisForExport(
   }
 
   const originalBlocks = countSubstantiveBlocks(synthesis);
-  const rebuilt = rebuildSynthesisFromClaims(claims);
+  const headings = extractHeadingOnlyBlocks(synthesis);
+  const rebuilt = rebuildSynthesisFromClaims(claims, headings);
   return {
     synthesis: rebuilt,
     uncitedParagraphsRemoved: Math.max(0, originalBlocks - claims.length),

@@ -12,7 +12,7 @@ export const FullScreenSpinner: React.FC<SpinnerProps> = ({ label = 'Loading' })
     role="status"
     aria-live="polite"
   >
-    <AppBrandMark size="xl" showEmoji className="animate-pulse" aria-label={label} />
+    <AppBrandMark size="xl" showEmoji className="animate-pulse" aria-hidden />
     <span className="sr-only">{label}</span>
   </div>
 );
@@ -23,7 +23,7 @@ export const ContentSpinner: React.FC<SpinnerProps> = ({ label = 'Loading' }) =>
     role="status"
     aria-live="polite"
   >
-    <AppBrandMark size="lg" className="animate-pulse" aria-label={label} />
+    <AppBrandMark size="lg" className="animate-pulse" aria-hidden />
     <span className="sr-only">{label}</span>
   </div>
 );
