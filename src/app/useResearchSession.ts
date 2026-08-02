@@ -18,7 +18,10 @@ import { generateResearchReportStream } from '../services/geminiService';
 import { handleResearchStreamFailure } from '../lib/researchStreamFailure';
 import { estimateResearchRunCostUsd, shouldWarnAboutResearchCost } from '../lib/resilience';
 import { reportFromCheckpoint, type ResearchCheckpoint } from '../lib/researchCheckpoint';
-import { extractGroundedClaimsFromMarkdown } from '../lib/groundedSynthesis';
+import {
+  extractGroundedClaimsFromMarkdown,
+  buildAssessedGroundedSynthesis,
+} from '../lib/groundedSynthesis';
 import { deleteResearchCheckpoint } from '../services/databaseService';
 import { toAppError } from '../lib/errors';
 import type { View } from '../types/ui';
@@ -252,10 +255,11 @@ export function useResearchSession({
         const corpusPmids = completeReport.rankedArticles.map((a) => a.pmid);
         const extractedClaims = extractGroundedClaimsFromMarkdown(finalSynthesis, corpusPmids);
         if (extractedClaims.length > 0) {
-          completeReport.groundedSynthesis = {
-            mode: 'narrative-extracted',
-            claims: extractedClaims,
-          };
+          completeReport.groundedSynthesis = buildAssessedGroundedSynthesis(
+            extractedClaims,
+            completeReport.rankedArticles,
+            'narrative-extracted',
+          );
         }
         setReport(completeReport);
         setReportStatus('done');

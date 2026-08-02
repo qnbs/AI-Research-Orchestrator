@@ -22,6 +22,10 @@ export const reportTranslations = {
     'report.accordion.chat': 'Chat with this Report',
     'report.synthesis.copyAria': 'Copy synthesis to clipboard',
     'report.synthesis.copiedToast': 'Synthesis (plain text) copied to clipboard!',
+    'report.synthesis.narrativeDraftBanner':
+      'Unverified narrative draft — only claims with corpus evidence are validated. Verify against source abstracts before citing.',
+    'report.synthesis.verifiedBanner':
+      'Verified synthesis — claims are bound to retrieved corpus evidence.',
     'report.insights.supportingEvidence': 'Supporting Evidence (PMIDs):',
     'report.sources.intro':
       'The following web pages were consulted by the AI to generate this report. This provides traceability for the AI’s findings.',
@@ -77,6 +81,10 @@ export const reportTranslations = {
     'report.accordion.chat': 'Mit diesem Bericht chatten',
     'report.synthesis.copyAria': 'Synthese in die Zwischenablage kopieren',
     'report.synthesis.copiedToast': 'Synthese (Klartext) in die Zwischenablage kopiert!',
+    'report.synthesis.narrativeDraftBanner':
+      'Unverifizierter Narrativ-Entwurf — nur Behauptungen mit Korpus-Evidenz sind validiert. Vor Zitieren die Quellabstracts prüfen.',
+    'report.synthesis.verifiedBanner':
+      'Verifizierte Synthese — Behauptungen sind an den abgerufenen Korpus gebunden.',
     'report.insights.supportingEvidence': 'Belege (PMIDs):',
     'report.sources.intro':
       'Die folgenden Webseiten wurden von der KI zur Erstellung dieses Berichts konsultiert. Das ermöglicht die Nachvollziehbarkeit der KI-Ergebnisse.',

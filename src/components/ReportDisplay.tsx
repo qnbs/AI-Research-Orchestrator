@@ -212,6 +212,11 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(function R
     }, 50);
   };
 
+  const synthesisTrustLevel =
+    report.groundedSynthesis?.trustLevel ??
+    (report.groundedSynthesis?.mode === 'extractive-template' ? 'verified' : 'narrative-draft');
+  const showNarrativeDraftBanner = synthesisTrustLevel === 'narrative-draft';
+
   const handleCopySynthesis = useCallback(() => {
     const plainText = stripMarkdown(report.synthesis);
     navigator.clipboard.writeText(plainText).then(() => {
@@ -334,6 +339,21 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(function R
             }
             defaultOpen
           >
+            {showNarrativeDraftBanner ? (
+              <p
+                className="mb-3 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-200"
+                role="status"
+              >
+                {t('report.synthesis.narrativeDraftBanner')}
+              </p>
+            ) : report.groundedSynthesis?.trustLevel === 'verified' ? (
+              <p
+                className="mb-3 rounded-md border border-green-500/30 bg-green-500/10 px-3 py-2 text-sm text-green-200"
+                role="status"
+              >
+                {t('report.synthesis.verifiedBanner')}
+              </p>
+            ) : null}
             <div
               className="prose prose-sm prose-invert max-w-none text-text-secondary/90 leading-relaxed"
               dangerouslySetInnerHTML={{ __html: secureMarkdownToHtml(report.synthesis) }} // skipcq: JS-0440

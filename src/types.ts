@@ -58,15 +58,26 @@ export interface OverallKeyword {
 
 /** Atomically citable synthesis claim bound to corpus PMIDs. */
 export interface GroundedClaim {
+  id?: string;
   text: string;
   pmids: string[];
+  validationState?: ClaimValidationState;
+  evidenceSnippets?: string[];
+  provenanceMode?: 'extractive-template' | 'narrative-extracted' | 'structured-schema';
 }
+
+export type ClaimValidationState = 'verified' | 'unverified' | 'rejected';
+
+export type SynthesisTrustLevel = 'verified' | 'narrative-draft';
 
 /** Structured synthesis layer for export/persistence validation. */
 export interface GroundedSynthesis {
   claims: GroundedClaim[];
   /** Provenance of claim extraction (heuristic template vs live narrative parse). */
   mode: 'extractive-template' | 'narrative-extracted';
+  /** Whether claims passed corpus + evidence validation (live narrative defaults to draft). */
+  trustLevel?: SynthesisTrustLevel;
+  validatedAt?: number;
 }
 
 export interface ResearchReport {

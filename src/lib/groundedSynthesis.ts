@@ -6,6 +6,7 @@
 import type { GroundedClaim, GroundedSynthesis } from '../types';
 import type { ExtractiveSynthesis, NarrativeSection } from '../services/nonAi/types';
 import { partitionCorpusCitations } from './citationGrounding';
+import { assessSynthesisTrust } from './claimValidation';
 
 export interface GroundedClaimSanitizationMetrics {
   droppedClaims: number;
@@ -36,7 +37,43 @@ export function buildGroundedSynthesisFromExtractive(
     claims.push({ text, pmids: [...section.pmids] });
   }
 
-  return { claims, mode: 'extractive-template' };
+  return { claims, mode: 'extractive-template', trustLevel: 'verified' };
+}
+
+/** Build trust-assessed grounded synthesis from live-extracted or template claims. */
+export function buildAssessedGroundedSynthesis(
+  claims: GroundedClaim[],
+  corpusArticles: readonly { pmid: string; title: string; summary?: string; aiSummary?: string }[],
+  mode: GroundedSynthesis['mode'],
+): GroundedSynthesis | undefined {
+  if (!claims.length) return undefined;
+  const ranked = corpusArticles.map((a) => ({
+    pmid: a.pmid,
+    title: a.title,
+    authors: '',
+    journal: '',
+    pubYear: '0000',
+    summary: a.summary ?? '',
+    relevanceScore: 0,
+    relevanceExplanation: '',
+    keywords: [],
+    isOpenAccess: false,
+    aiSummary: a.aiSummary,
+  }));
+  const assessment = assessSynthesisTrust(claims, ranked, mode);
+  return {
+    mode,
+    trustLevel: assessment.trustLevel,
+    validatedAt: Date.now(),
+    claims: assessment.claims.map((c) => ({
+      id: c.id,
+      text: c.text,
+      pmids: c.pmids,
+      validationState: c.validationState,
+      evidenceSnippets: c.evidenceSnippets,
+      provenanceMode: mode,
+    })),
+  };
 }
 
 /** Extract corpus-bound claims from streamed/live markdown synthesis. */

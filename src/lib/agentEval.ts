@@ -4,6 +4,7 @@
  */
 
 import { measureCitationGrounding, partitionCorpusCitations } from './citationGrounding';
+import { computeClaimTrustMetrics } from './claimValidation';
 import type { GroundedSynthesis } from '../types';
 import { validatePubMedQuery } from './pubmedQueryValidator';
 
@@ -29,6 +30,8 @@ export interface EvalCase {
     mustCitePmids?: string[];
     /** Corpus PMIDs every rankedArticles[].pmid must belong to. */
     rankedCorpusPmids?: string[];
+    /** Maximum unsupported-claim rate (0–1) from claim validation metrics. */
+    maxUnsupportedClaimRate?: number;
     /** Minimum grounded claims with valid corpus PMIDs. */
     minGroundedClaims?: number;
     /** PubMed query string to validate structurally. */
@@ -126,6 +129,45 @@ export function evaluateCase(testCase: EvalCase): EvalCaseResult {
       detail: invalid.length
         ? `out-of-corpus: ${invalid.map((r) => r.pmid).join(', ')}`
         : undefined,
+    });
+  }
+
+  if (exp.maxUnsupportedClaimRate != null) {
+    const obj =
+      actual !== null && typeof actual === 'object' && !Array.isArray(actual)
+        ? (actual as Record<string, unknown>)
+        : null;
+    const grounded = obj?.groundedSynthesis as GroundedSynthesis | undefined;
+    const ranked =
+      obj && Array.isArray(obj.rankedArticles)
+        ? (obj.rankedArticles as { pmid?: string; title?: string; summary?: string }[])
+        : [];
+    const claims = grounded?.claims ?? [];
+    const metrics = computeClaimTrustMetrics(
+      claims.map((c) => ({
+        ...c,
+        validationState: c.validationState ?? 'unverified',
+      })),
+      ranked.map((r) => ({
+        pmid: r.pmid ?? '',
+        title: r.title ?? '',
+        authors: '',
+        journal: '',
+        pubYear: '0000',
+        summary: r.summary ?? '',
+        relevanceScore: 0,
+        relevanceExplanation: '',
+        keywords: [],
+        isOpenAccess: false,
+      })),
+    );
+    const passed = metrics.unsupportedClaimRate <= exp.maxUnsupportedClaimRate;
+    dimensions.push({
+      dimension: 'groundedSynthesis',
+      passed,
+      detail: passed
+        ? undefined
+        : `unsupportedClaimRate=${metrics.unsupportedClaimRate.toFixed(2)} max<=${exp.maxUnsupportedClaimRate}`,
     });
   }
 
