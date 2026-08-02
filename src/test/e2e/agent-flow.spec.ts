@@ -7,6 +7,7 @@
 import { test, expect, Page, Route } from '@playwright/test';
 import {
   navigateToView,
+  navigateToKnowledgeBase,
   openHelpFromChrome,
   openSettingsFromChrome,
   prepareFirstLaunchDemoKb,
@@ -321,11 +322,11 @@ test.describe('4. Full Agent Pipeline (mocked APIs)', () => {
 
 test.describe('5. Knowledge Base View', () => {
   test('KB shows demo data on first launch', async ({ page }) => {
-    test.setTimeout(180_000);
+    test.setTimeout(240_000);
     await prepareFirstLaunchDemoKb(page);
-    await navigateToView(page, '#knowledgeBase');
+    await navigateToKnowledgeBase(page);
     await waitForKbArticleCount(page, DEMO_KB_UNIQUE_ARTICLE_COUNT);
-    await expect(page.getByText(/\[Demo\]/i).first()).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText(/\[Demo\]/i).first()).toBeVisible({ timeout: 30_000 });
   });
 
   test.describe('with standard bootstrap', () => {

@@ -30,6 +30,9 @@ export const DEMO_SEEDED_STORAGE_KEY = 'aro.demoDataSeeded';
 /** Unique article count after flattening `createDemoKnowledgeBaseEntries()` (KB header). */
 export const DEMO_KB_UNIQUE_ARTICLE_COUNT = 5;
 
+/** IndexedDB row count from `createDemoKnowledgeBaseEntries()` (four demo KB entries). */
+export const DEMO_KB_ENTRY_COUNT = 4;
+
 /**
  * Curated educational article corpus used offline / when PubMed returns empty.
  */
