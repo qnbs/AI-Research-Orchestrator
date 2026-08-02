@@ -45,3 +45,28 @@ export async function navigateToView(page: Page, viewHash: string) {
   // Allow lazy Suspense boundaries to resolve
   await page.waitForTimeout(1_500);
 }
+
+/** Open Settings from header chrome (desktop icons or mobile overflow menu). */
+export async function openSettingsFromChrome(page: Page) {
+  const viewport = page.viewportSize();
+  if (viewport && viewport.width < 768) {
+    await page.getByRole('button', { name: /more options/i }).click();
+    await page.getByRole('button', { name: /^settings$/i }).click();
+  } else {
+    await page
+      .getByRole('button', { name: /settings/i })
+      .first()
+      .click();
+  }
+}
+
+/** Open Help from header chrome (desktop icons or mobile overflow menu). */
+export async function openHelpFromChrome(page: Page) {
+  const viewport = page.viewportSize();
+  if (viewport && viewport.width < 768) {
+    await page.getByRole('button', { name: /more options/i }).click();
+    await page.getByRole('button', { name: /^help$/i }).click();
+  } else {
+    await page.getByRole('button', { name: /help/i }).first().click();
+  }
+}

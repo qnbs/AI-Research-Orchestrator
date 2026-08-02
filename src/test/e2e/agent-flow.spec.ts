@@ -5,6 +5,7 @@
  *         Knowledge Base, Command Palette, Settings, Mobile UX, Accessibility.
  */
 import { test, expect, Page, Route } from '@playwright/test';
+import { openHelpFromChrome, openSettingsFromChrome } from './e2eHelpers';
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -186,22 +187,20 @@ test.describe('2. Navigation', () => {
   });
 
   test('settings button is in header', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
     const settingsBtn = page.getByRole('button', { name: /settings/i }).first();
     await expect(settingsBtn).toBeVisible({ timeout: 5_000 });
   });
 
   test('clicking settings opens settings view', async ({ page }) => {
-    await page
-      .getByRole('button', { name: /settings/i })
-      .first()
-      .click();
+    await openSettingsFromChrome(page);
     await expect(page.getByText(/API|Appearance|settings/i).first()).toBeVisible({
       timeout: 8_000,
     });
   });
 
   test('clicking help opens help view', async ({ page }) => {
-    await page.getByRole('button', { name: /help/i }).first().click();
+    await openHelpFromChrome(page);
     await expect(page.getByText(/FAQ|how to use|frequently/i).first()).toBeVisible({
       timeout: 8_000,
     });
@@ -514,9 +513,8 @@ test.describe('8. Mobile UX — Bottom Nav & Pipeline', () => {
 test.describe('9. Accessibility', () => {
   test('page has at least one heading', async ({ page }) => {
     await skipOnboarding(page);
-    const headings = page.getByRole('heading');
-    const count = await headings.count();
-    expect(count).toBeGreaterThan(0);
+    await page.getByRole('button', { name: /home/i }).first().click();
+    await expect(page.getByRole('heading').first()).toBeVisible({ timeout: 8_000 });
   });
 
   test('buttons are keyboard-focusable', async ({ page }) => {

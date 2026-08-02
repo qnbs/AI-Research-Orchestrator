@@ -313,6 +313,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
             </span>
           </button>
           <div className="flex items-center gap-1">
+            <InferenceModeBadge className="max-w-[7.5rem] truncate text-[10px] px-1.5 py-0.5" />
             <button
               onClick={toggleLanguage}
               className="p-2.5 text-text-secondary font-bold text-xs focus-ring-aa touch-target-aa rounded-full"
