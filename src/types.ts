@@ -43,12 +43,27 @@ export interface OverallKeyword {
   frequency: number;
 }
 
+/** Atomically citable synthesis claim bound to corpus PMIDs. */
+export interface GroundedClaim {
+  text: string;
+  pmids: string[];
+}
+
+/** Structured synthesis layer for export/persistence validation. */
+export interface GroundedSynthesis {
+  claims: GroundedClaim[];
+  /** Provenance of claim extraction (heuristic template vs live narrative parse). */
+  mode: 'extractive-template' | 'narrative-extracted';
+}
+
 export interface ResearchReport {
   generatedQueries: GeneratedQuery[];
   rankedArticles: RankedArticle[];
   synthesis: string;
   aiGeneratedInsights: { question: string; answer: string; supportingArticles: string[] }[];
   overallKeywords: OverallKeyword[];
+  /** Optional structured claims; sanitized on export when present. */
+  groundedSynthesis?: GroundedSynthesis;
   sources?: WebContent[];
 }
 

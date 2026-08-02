@@ -5,6 +5,7 @@
 
 import type { RankedArticle, ResearchReport } from '../../types';
 import type { ExtractiveSynthesis, NarrativeSection } from './types';
+import { buildGroundedSynthesisFromExtractive } from '../../lib/groundedSynthesis';
 import { tokenize, jaccardSimilarity, splitSentences, stemmedTokens, cosineBag } from './utils';
 
 /**
@@ -262,6 +263,7 @@ export function generateResearchReport(articles: RankedArticle[], query: string)
     synthesis: synthesisMarkdown,
     aiGeneratedInsights,
     overallKeywords,
+    groundedSynthesis: buildGroundedSynthesisFromExtractive(synthesis, sections),
   };
 }
 

@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Grounded synthesis schema (P0-3 completion):** optional `ResearchReport.groundedSynthesis` with `GroundedClaim[]`; heuristic population from extractive templates, live narrative PMID extraction, export sanitization, and KB import validation. ADR [0015](docs/adr/0015-grounded-synthesis-schema.md).
+
 - **Audit follow-up:** `check:docs-drift` CI gate; export-time citation sanitization (`reportExportProvenance.ts`); agent doc corrections (Vite 8, `nonAi/` path, calibrated grounding claim).
 
 ### Added (audit remediation 2026-08-02) corpus-bound citation grounding (`citationGrounding.ts`), PubMed query structural validator, untrusted-data prompt framing, custom endpoint trust policy with origin approval, finer provider structured-output capability flags, and regression/property tests across MeSH dictionary entries.

@@ -18,6 +18,7 @@ Index of ADRs for AI-Research-Orchestrator. Each record captures one significant
 | [0012](0012-corpus-citation-grounding.md)               | Corpus-Bound Citation Grounding                         | Accepted | 2026-08-02 | Post-ranking PMID validation; derived `aiSummary` labelling                                   |
 | [0013](0013-custom-endpoint-trust-policy.md)            | Custom Endpoint Trust Policy                            | Accepted | 2026-08-02 | Origin approval + CSP coherence; no `connect-src *`                                           |
 | [0014](0014-provider-structured-output-capabilities.md) | Provider Structured Output Capabilities                 | Accepted | 2026-08-02 | Replaces single `jsonMode` boolean with explicit capability flags                             |
+| [0015](0015-grounded-synthesis-schema.md)               | Grounded Synthesis Schema                               | Accepted | 2026-08-02 | Optional `groundedSynthesis.claims[]` for export/import validation                            |
 
 ## Conventions
 

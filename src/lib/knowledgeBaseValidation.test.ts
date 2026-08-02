@@ -138,9 +138,34 @@ describe('isKnowledgeBaseEntry', () => {
     ).toBe(false);
   });
 
-  it('rejects a journal entry with an empty journalProfile object', () => {
-    expect(isKnowledgeBaseEntry({ ...baseFields, sourceType: 'journal', journalProfile: {} })).toBe(
-      false,
-    );
+  it('rejects a research entry with malformed groundedSynthesis', () => {
+    expect(
+      isKnowledgeBaseEntry({
+        ...baseFields,
+        sourceType: 'research',
+        input: {},
+        report: {
+          ...validReport,
+          groundedSynthesis: { mode: 'bogus', claims: [] },
+        },
+      }),
+    ).toBe(false);
+  });
+
+  it('accepts a research entry with valid groundedSynthesis', () => {
+    expect(
+      isKnowledgeBaseEntry({
+        ...baseFields,
+        sourceType: 'research',
+        input: {},
+        report: {
+          ...validReport,
+          groundedSynthesis: {
+            mode: 'narrative-extracted',
+            claims: [{ text: 'Claim', pmids: ['1'] }],
+          },
+        },
+      }),
+    ).toBe(true);
   });
 });
