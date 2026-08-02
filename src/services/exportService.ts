@@ -9,6 +9,7 @@ import {
   CSV_EXPORT_COLUMNS,
   KnowledgeBaseEntry,
 } from '../types';
+import { sanitizeReportForExport } from '../lib/reportExportProvenance';
 
 // ===================================================================================
 //
@@ -422,8 +423,9 @@ export const exportToPdf = (
   input: ResearchInput,
   settings: Settings['export']['pdf'],
 ): void => {
+  const { report: sanitizedReport } = sanitizeReportForExport(report);
   const exporter = new PdfExporter(input.researchTopic, settings);
-  exporter.exportResearchReport(report, input);
+  exporter.exportResearchReport(sanitizedReport, input);
 };
 
 /** Export knowledge-base articles (and related insights) as PDF. */
