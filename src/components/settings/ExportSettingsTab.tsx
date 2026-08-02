@@ -3,11 +3,11 @@ import { useSettingsView } from './SettingsViewContext';
 import { SettingCard } from '../SettingCard';
 import { Toggle } from '../Toggle';
 import { ExportIcon } from '../icons/ExportIcon';
-import { CSV_EXPORT_COLUMNS } from '../../types';
+import { CSV_EXPORT_COLUMNS, type CsvExportColumn } from '../../types';
 import type { Settings } from '../../types';
 import type { TranslationKey } from '../../i18n/translations';
 
-const CSV_COLUMN_LABEL_KEYS: Record<(typeof CSV_EXPORT_COLUMNS)[number], TranslationKey> = {
+const CSV_COLUMN_LABEL_KEYS: Record<CsvExportColumn, TranslationKey> = {
   pmid: 'settings.export.csv.column.pmid',
   pmcId: 'settings.export.csv.column.pmcId',
   title: 'settings.export.csv.column.title',
@@ -145,7 +145,7 @@ const CsvDelimiterField: React.FC = () => {
   );
 };
 
-const CsvColumnToggle: React.FC<{ col: (typeof CSV_EXPORT_COLUMNS)[number] }> = ({ col }) => {
+const CsvColumnToggle: React.FC<{ col: CsvExportColumn }> = ({ col }) => {
   const { tempSettings, setTempSettings, t } = useSettingsView();
   return (
     <Toggle

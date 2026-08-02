@@ -78,6 +78,20 @@ describe('service worker integrity', () => {
     }
   });
 
+  it('never caches NCBI URLs with credential-like query parameters', () => {
+    expect(swSource).toMatch(/urlHasCredentialQuery/);
+    expect(swSource).toMatch(/new NetworkOnly\(\)/);
+    expect(swSource).toMatch(/isNcbiHost\(url\.hostname\) && urlHasCredentialQuery\(url\)/);
+    expect(swSource).toMatch(/isNcbiHost\(url\.hostname\) && !urlHasCredentialQuery\(url\)/);
+  });
+
+  it('purges legacy credential-bearing PubMed cache entries on activate', () => {
+    const activateIndex = swSource.indexOf("addEventListener('activate'");
+    const activateBlock = swSource.slice(activateIndex);
+    expect(activateBlock).toMatch(/pubmedCache\.delete\(request\)/);
+    expect(activateBlock).toMatch(/urlHasCredentialQuery\(reqUrl\)/);
+  });
+
   it('versions every runtime cache name', () => {
     const cacheNamesBlock = swSource.match(/const CACHE_NAMES = \{([\s\S]*?)\};/);
     expect(cacheNamesBlock).not.toBeNull();

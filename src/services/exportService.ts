@@ -6,7 +6,7 @@ import {
   AggregatedArticle,
   ResearchReport,
   Settings,
-  CSV_EXPORT_COLUMNS,
+  type CsvExportColumn,
   KnowledgeBaseEntry,
 } from '../types';
 import { sanitizeReportForExport } from '../lib/reportExportProvenance';
@@ -462,7 +462,7 @@ export const exportToCsv = (
       ? `https://www.ncbi.nlm.nih.gov/pmc/articles/${article.pmcId}/`
       : '';
 
-    const rowData: Record<(typeof CSV_EXPORT_COLUMNS)[number], string | number | boolean> = {
+    const rowData: Record<CsvExportColumn, string | number | boolean> = {
       pmid: article.pmid,
       pmcId: article.pmcId ?? '',
       title: article.title,

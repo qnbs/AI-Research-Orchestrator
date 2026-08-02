@@ -3,6 +3,7 @@
  * Keeps `geminiService` as the public entry while avoiding further monolith growth (ADR 0007).
  */
 import type { ResearchInput, ResearchReport, Settings } from '../types';
+import type { PromptBudgetAccounting } from '../lib/promptBudget';
 import { generateNonAiResearchReportStream } from './nonAi';
 import { resolveActiveInferenceMode } from './resolveActiveInferenceMode';
 
@@ -10,6 +11,7 @@ export type ResearchStreamEvent = {
   report?: ResearchReport;
   synthesisChunk?: string;
   phase: string;
+  promptBudget?: PromptBudgetAccounting;
 };
 
 /** True when the local heuristic path should run instead of a live provider. */

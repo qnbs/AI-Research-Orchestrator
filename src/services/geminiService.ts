@@ -29,6 +29,11 @@ import {
   wrapUntrustedTextBlock,
 } from '../lib/untrustedDataFraming';
 import {
+  selectArticlesForRankingPrompt,
+  selectArticlesForSynthesisPrompt,
+  type PromptBudgetAccounting,
+} from '../lib/promptBudget';
+import {
   parseGeminiResponseJson as parseGeminiJsonCore,
   GeminiJsonParseError,
 } from '../lib/parseGeminiJson';
@@ -204,7 +209,12 @@ export async function* generateResearchReportStream(
   input: ResearchInput,
   aiSettings: Settings['ai'],
   signal?: AbortSignal,
-): AsyncGenerator<{ report?: ResearchReport; synthesisChunk?: string; phase: string }> {
+): AsyncGenerator<{
+  report?: ResearchReport;
+  synthesisChunk?: string;
+  phase: string;
+  promptBudget?: PromptBudgetAccounting;
+}> {
   yield* generateResearchReportStreamWithMode(
     input,
     aiSettings,
@@ -217,7 +227,12 @@ async function* generateLiveResearchReportStream(
   input: ResearchInput,
   aiSettings: Settings['ai'],
   signal?: AbortSignal,
-): AsyncGenerator<{ report?: ResearchReport; synthesisChunk?: string; phase: string }> {
+): AsyncGenerator<{
+  report?: ResearchReport;
+  synthesisChunk?: string;
+  phase: string;
+  promptBudget?: PromptBudgetAccounting;
+}> {
   const provider = await getProviderForSettings(aiSettings);
   throwIfAborted(signal);
   const ncbiApiKey = (await getNcbiApiKey()) ?? undefined;
@@ -319,7 +334,6 @@ Research Topic: ${wrapUntrustedTextBlock('research_topic', topicSafe)}
 
     throwIfAborted(signal);
     // STEP 4: AI Analyzes and Ranks Real Data
-    yield { phase: 'Phase 4: AI Ranking & Analysis of Real Articles...' };
 
     const rankingSchema: AIJsonSchema = {
       type: 'object',
@@ -389,6 +403,23 @@ Research Topic: ${wrapUntrustedTextBlock('research_topic', topicSafe)}
     }
 
     throwIfAborted(signal);
+    const providerId = aiSettings.provider ?? 'gemini';
+    const rankingSelection = selectArticlesForRankingPrompt(
+      articleDetails,
+      topicSafe,
+      providerId,
+      aiSettings.model,
+    );
+    yield {
+      phase: `Phase 4: AI Ranking (${rankingSelection.accounting.includedInPrompt}/${rankingSelection.accounting.totalRetrieved} articles in prompt)...`,
+      promptBudget: rankingSelection.accounting,
+    };
+
+    const corpusScopeNote =
+      rankingSelection.accounting.omittedFromPrompt > 0
+        ? `Lexically pre-filtered corpus: ${rankingSelection.accounting.includedInPrompt} of ${rankingSelection.accounting.totalRetrieved} retrieved articles are in the untrusted JSON block below. Omitted PMIDs were scored locally but are not in this prompt: ${rankingSelection.omittedPmids.slice(0, 20).join(', ')}${rankingSelection.omittedPmids.length > 20 ? '…' : ''}. `
+        : '';
+
     const analysisData = await generateJson<RankingAnalysisResponse>(
       aiSettings,
       {
@@ -397,19 +428,12 @@ Research Topic: ${wrapUntrustedTextBlock('research_topic', topicSafe)}
         temperature: aiSettings.temperature,
         jsonSchema: rankingSchema,
         thinkingBudget: defaultGeminiThinkingBudget(aiSettings.model),
-        prompt: `From the provided list of articles, please perform the following analysis based on the original research topic: ${wrapUntrustedTextBlock('research_topic', topicSafe)}.
-            1.  Rank the top ${input.topNToSynthesize} articles based on their relevance to the topic. For each, provide its PMID, a relevance score (1-100), a brief explanation for the score, 3-5 keywords from its summary, classify its article type, and write a new, concise summary (as 'aiSummary') that extracts the core methodology, key findings, and limitations of the study. Ensure you ONLY use PMIDs from the provided list.
+        prompt: `${corpusScopeNote}From the provided list of articles, please perform the following analysis based on the original research topic: ${wrapUntrustedTextBlock('research_topic', topicSafe)}.
+            1.  Rank the top ${input.topNToSynthesize} articles based on their relevance to the topic. For each, provide its PMID, a relevance score (1-100), a brief explanation for the score, 3-5 keywords from title/abstract when present, classify its article type, and write a new, concise summary (as 'aiSummary') that extracts the core methodology, key findings, and limitations of the study. When abstractStatus is "missing", rank from title/metadata only and state that limitation in relevanceExplanation. Ensure you ONLY use PMIDs from the provided list.
             2.  Generate 3-5 AI-powered insights based on the provided articles. Each insight should be a question/answer pair. List the PMIDs from the provided list that support each insight.
             3.  Analyze the keywords from all ranked articles to identify overall themes. List the top 5-10 keywords and their frequency.
 
-            ${wrapUntrustedJsonBlock(
-              'article_list',
-              articleDetails.map((a) => ({
-                pmid: a.pmid,
-                title: a.title,
-                summary: a.summary,
-              })),
-            )}
+            ${wrapUntrustedJsonBlock('article_list', rankingSelection.payloads)}
             `,
       },
       signal,
@@ -443,20 +467,19 @@ Research Topic: ${wrapUntrustedTextBlock('research_topic', topicSafe)}
     yield { report: partialReport, phase: 'Phase 5: Synthesizing Top Findings...' };
 
     throwIfAborted(signal);
-    // STEP 5: AI Generates Synthesis
+    const synthesisSelection = selectArticlesForSynthesisPrompt(
+      grounded.rankedArticles,
+      providerId,
+      aiSettings.model,
+    );
+    yield {
+      phase: 'Phase 5: Synthesizing Top Findings...',
+      promptBudget: synthesisSelection.accounting,
+    };
+
     const synthesisPrompt = `Based on the following articles, write a comprehensive synthesis focusing on ${wrapUntrustedTextBlock('synthesis_focus', focusSafe)}. This should be a well-structured narrative in markdown format. Cite PMIDs inline where claims are made. AI summaries are derived — verify against source abstracts when precision matters.
         
-        ${wrapUntrustedJsonBlock(
-          'ranked_articles',
-          grounded.rankedArticles.map((a: RankedArticle) => ({
-            pmid: a.pmid,
-            title: a.title,
-            abstract: a.summary,
-            aiSummary: a.aiSummary,
-            relevanceScore: a.relevanceScore,
-            keywords: a.keywords,
-          })),
-        )}
+        ${wrapUntrustedJsonBlock('ranked_articles', synthesisSelection.payloads)}
         `;
 
     throwIfAborted(signal);

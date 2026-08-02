@@ -20,6 +20,7 @@ import { useTranslation } from '../hooks/useTranslation';
 import type { TranslationKey } from '../hooks/useTranslation';
 import { ChevronUpIcon } from './icons/ChevronUpIcon';
 import { safeLogError } from '../lib/safeLog';
+import { stableInsightKey } from '../lib/stableReactKeys';
 
 interface ArticleDetailPanelProps {
   article: AggregatedArticle;
@@ -286,7 +287,7 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({
               {t('article.abstract')}
             </h4>
             <div className="prose prose-sm prose-invert max-w-none text-text-secondary/90 leading-relaxed">
-              <p>{article.summary}</p>
+              <p>{article.summary ? article.summary : t('report.article.abstractMissing')}</p>
             </div>
           </div>
 
@@ -323,7 +324,7 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({
               <div className="space-y-3">
                 {relatedInsights.map((insight) => (
                   <div
-                    key={insight.question}
+                    key={stableInsightKey(insight)}
                     className="bg-background/50 p-4 rounded-lg border border-border shadow-sm"
                   >
                     <p className="font-semibold text-brand-accent text-sm mb-1">

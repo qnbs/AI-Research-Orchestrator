@@ -6,16 +6,18 @@
  * cannot be used. React components should use the RTK Query endpoints in
  * `src/store/slices/apiSlice.ts` instead, which add caching and deduplication.
  */
-import type { RankedArticle } from '../types';
+import type { AbstractStatus, RankedArticle } from '../types';
 import { combineAbortSignals } from '../lib/abortUtils';
 import { withCircuitBreaker, CircuitOpenError } from '../lib/circuitBreaker';
 import { AppError, isAbortError } from '../lib/errors';
 import { withExponentialBackoff } from '../lib/resilience';
+import { batchPmids, parsePubMedEfetchXml } from './pubmedXmlParser';
 
 const PUBMED_BASE = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils';
 const PUBMED_CIRCUIT = 'pubmed';
 const PUBMED_RETRIES = 3;
 const PUBMED_TIMEOUT_MS = 15_000;
+const EFETCH_BATCH_SIZE = 200;
 
 /** Append NCBI api_key when provided (higher rate limits). */
 export function withNcbiApiKey(url: string, apiKey?: string): string {
@@ -198,17 +200,94 @@ export async function searchPubMedForIds(
   }
 }
 
-/** Fetch full article details for the given PMIDs via POST to esummary. */
-export async function fetchArticleDetails(
+type ESummaryArticle = {
+  title?: string;
+  authors?: Array<{ name: string }>;
+  fulljournalname?: string;
+  pubdate?: string;
+  articleids?: Array<{ idtype: string; value: string }>;
+};
+
+const mapEsummaryMetadata = (pmid: string, art: ESummaryArticle): Partial<RankedArticle> => {
+  const pmcEntry = (art.articleids ?? []).find((entry) => entry.idtype === 'pmc');
+  const yearRaw = (art.pubdate ?? '').split(' ')[0];
+  const pubYear = /^\d{4}$/.test(yearRaw) ? yearRaw : '0000';
+  return {
+    pmid,
+    pmcId: pmcEntry?.value,
+    title: art.title ?? '',
+    authors: (art.authors ?? []).map((author) => author.name).join(', '),
+    journal: art.fulljournalname ?? '',
+    pubYear,
+    summary: '',
+    abstractStatus: 'missing' as AbstractStatus,
+    isOpenAccess: Boolean(pmcEntry?.value),
+    keywords: [],
+    relevanceScore: 0,
+    relevanceExplanation: '',
+  };
+};
+
+const fetchPubMedAbstractsByEfetch = async (
   pmids: string[],
   signal?: AbortSignal,
   apiKey?: string,
-): Promise<Partial<RankedArticle>[]> {
+): Promise<
+  Map<
+    string,
+    { abstract?: string; abstractStatus: AbstractStatus; publicationTypes: string[]; doi?: string }
+  >
+> => {
+  const merged = new Map<
+    string,
+    { abstract?: string; abstractStatus: AbstractStatus; publicationTypes: string[]; doi?: string }
+  >();
+
+  for (const batch of batchPmids(pmids, EFETCH_BATCH_SIZE)) {
+    const url = withNcbiApiKey(
+      `${PUBMED_BASE}/efetch.fcgi?db=pubmed&id=${batch.join(',')}&retmode=xml`,
+      apiKey,
+    );
+    try {
+      const response = await pubmedFetch(url, { signal });
+      if (!response.ok) {
+        continue;
+      }
+      const xml = await response.text();
+      const parsed = parsePubMedEfetchXml(xml);
+      for (const [id, rec] of parsed) {
+        merged.set(id, {
+          abstract: rec.abstract,
+          abstractStatus: rec.abstractStatus,
+          publicationTypes: rec.publicationTypes,
+          doi: rec.doi,
+        });
+      }
+    } catch (error) {
+      if (isAbortError(error)) throw error;
+      // Partial batch failure: metadata-only records remain with missing abstract status.
+    }
+  }
+
+  return merged;
+};
+
+/**
+ * Fetch article metadata (ESummary) and source abstracts (EFetch XML).
+ * Never writes placeholder text into `summary` when an abstract is absent.
+ */
+export const fetchArticleDetails = async (
+  pmids: string[],
+  signal?: AbortSignal,
+  apiKey?: string,
+): Promise<Partial<RankedArticle>[]> => {
   if (!pmids.length) return [];
-  const url = withNcbiApiKey(`${PUBMED_BASE}/esummary.fcgi?db=pubmed&retmode=json`, apiKey);
+
+  const retrievedAt = Date.now();
+  const esummaryUrl = withNcbiApiKey(`${PUBMED_BASE}/esummary.fcgi?db=pubmed&retmode=json`, apiKey);
   const formData = new FormData();
   formData.append('id', pmids.join(','));
-  const response = await pubmedFetch(url, { method: 'POST', body: formData, signal });
+  const response = await pubmedFetch(esummaryUrl, { method: 'POST', body: formData, signal });
   if (!response.ok) {
     throw pubMedHttpError(response);
   }
@@ -221,28 +300,41 @@ export async function fetchArticleDetails(
       context: 'pubmed',
     });
   }
-  const articles: Partial<RankedArticle>[] = [];
+
+  const metadataByPmid = new Map<string, Partial<RankedArticle>>();
   for (const pmid of data.result.uids as string[]) {
-    const art = data.result[pmid];
+    const art = data.result[pmid] as ESummaryArticle | undefined;
     if (!art) continue;
-    const pmcEntry = ((art.articleids ?? []) as Array<{ idtype: string; value: string }>).find(
-      (x) => x.idtype === 'pmc',
-    );
-    const yearRaw = (art.pubdate ?? '').split(' ')[0];
-    const pubYear = /^\d{4}$/.test(yearRaw) ? yearRaw : '0000';
+    metadataByPmid.set(pmid, mapEsummaryMetadata(pmid, art));
+  }
+
+  const abstractMap = await fetchPubMedAbstractsByEfetch(
+    [...metadataByPmid.keys()],
+    signal,
+    apiKey,
+  );
+
+  const articles: Partial<RankedArticle>[] = [];
+  for (const pmid of pmids) {
+    const base = metadataByPmid.get(pmid);
+    if (!base) continue;
+
+    const efetch = abstractMap.get(pmid);
+    const abstractStatus = efetch?.abstractStatus ?? 'missing';
+    const summary = efetch?.abstract ?? '';
+    const retrievalSource = efetch ? 'pubmed_efetch' : 'pubmed_esummary';
+
     articles.push({
-      pmid,
-      pmcId: pmcEntry?.value,
-      title: art.title ?? '',
-      authors: ((art.authors ?? []) as Array<{ name: string }>).map((a) => a.name).join(', '),
-      journal: art.fulljournalname ?? '',
-      pubYear,
-      summary: art.abstract || 'No abstract available.',
-      isOpenAccess: !!pmcEntry?.value,
-      keywords: [],
-      relevanceScore: 0,
-      relevanceExplanation: '',
+      ...base,
+      summary,
+      abstractStatus,
+      retrievalSource,
+      retrievedAt,
+      doi: efetch?.doi,
+      publicationTypes: efetch?.publicationTypes ?? [],
+      articleType: efetch?.publicationTypes?.[0],
     });
   }
+
   return articles;
-}
+};

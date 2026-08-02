@@ -21,6 +21,7 @@ import { ExportIcon } from './icons/ExportIcon';
 import { ChatInterface } from './ChatInterface';
 import { ChatBubbleLeftRightIcon } from './icons/ChatBubbleLeftRightIcon';
 import { ReportArticleCard } from './ReportArticleCard';
+import { stableInsightKey } from '../lib/stableReactKeys';
 import {
   BarChart,
   Bar,
@@ -345,7 +346,7 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(function R
             <div className="space-y-4">
               {report.aiGeneratedInsights.map((insight) => (
                 <div
-                  key={insight.question}
+                  key={stableInsightKey(insight)}
                   className="bg-background p-3 rounded-md border border-border"
                 >
                   <p className="font-semibold text-brand-accent text-sm">{insight.question}</p>

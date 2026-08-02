@@ -56,6 +56,7 @@ Custom endpoints require explicit user approval of the destination **origin** an
 - `AbortSignal` propagated to provider network requests.
 - CI: `pnpm audit`, CodeQL, Dependency Review, secret scanning (gitleaks).
 - Application logging uses `safeLogError` / `safeLogWarn` (`src/lib/safeLog.ts`) with automatic redaction of API-key-shaped strings; CI `check:log-redaction` blocks raw `console.*` in `src/`.
+- Service worker **never caches** NCBI requests whose URL contains credential-like query parameters (`api_key`, `key`, `token`, `authorization`). Credential-free PubMed GETs may still use NetworkFirst for offline resilience. Activate-time cleanup purges legacy credential-bearing entries from the PubMed runtime cache only.
 
 ### Residual Risks
 

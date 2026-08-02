@@ -17,6 +17,15 @@ const mockResponse = (overrides: {
     json: overrides.json ?? (async () => ({})),
   }) as unknown as Response;
 
+const EFETCH_WITH_ABSTRACT_XML =
+  '<?xml version="1.0"?><PubmedArticleSet><PubmedArticle><MedlineCitation><PMID>1</PMID><Article><Abstract><AbstractText>Abs</AbstractText></Abstract></Article></MedlineCitation></PubmedArticle></PubmedArticleSet>';
+
+const EFETCH_BODY_XML =
+  '<?xml version="1.0"?><PubmedArticleSet><PubmedArticle><MedlineCitation><PMID>1</PMID><Article><Abstract><AbstractText>Body</AbstractText></Abstract></Article></MedlineCitation></PubmedArticle></PubmedArticleSet>';
+
+const EFETCH_NO_ABSTRACT_XML =
+  '<?xml version="1.0"?><PubmedArticleSet><PubmedArticle><MedlineCitation><PMID>9</PMID><Article><ArticleTitle>No abs</ArticleTitle></Article></MedlineCitation></PubmedArticle></PubmedArticleSet>';
+
 describe('pubmedUtils', () => {
   const originalFetch = globalThis.fetch;
 
@@ -176,24 +185,36 @@ describe('pubmedUtils', () => {
     await expect(fetchArticleDetails([])).resolves.toEqual([]);
   });
 
-  it('fetchArticleDetails maps esummary result', async () => {
-    globalThis.fetch = vi.fn().mockResolvedValue(
-      mockResponse({
-        json: async () => ({
-          result: {
-            uids: ['1'],
-            '1': {
-              title: 'T',
-              authors: [{ name: 'A' }],
-              fulljournalname: 'J',
-              pubdate: '2020 Jan',
-              abstract: 'Abs',
-              articleids: [{ idtype: 'pmc', value: 'PMC1' }],
-            },
-          },
-        }),
-      }),
-    );
+  it('fetchArticleDetails maps esummary metadata and efetch abstract', async () => {
+    const esummaryJson = {
+      result: {
+        uids: ['1'],
+        '1': {
+          title: 'T',
+          authors: [{ name: 'A' }],
+          fulljournalname: 'J',
+          pubdate: '2020 Jan',
+          articleids: [{ idtype: 'pmc', value: 'PMC1' }],
+        },
+      },
+    };
+    const efetchXml = EFETCH_WITH_ABSTRACT_XML;
+
+    globalThis.fetch = vi.fn().mockImplementation((url: string, init?: RequestInit) => {
+      if (init?.method === 'POST') {
+        return Promise.resolve(mockResponse({ json: () => Promise.resolve(esummaryJson) }));
+      }
+      if (String(url).includes('efetch.fcgi')) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          statusText: 'OK',
+          headers: { get: () => null },
+          text: () => Promise.resolve(efetchXml),
+        } as unknown as Response);
+      }
+      return Promise.resolve(mockResponse({ json: () => Promise.resolve({}) }));
+    });
 
     const rows = await fetchArticleDetails(['1']);
     expect(rows).toHaveLength(1);
@@ -203,29 +224,85 @@ describe('pubmedUtils', () => {
       pmcId: 'PMC1',
       isOpenAccess: true,
       pubYear: '2020',
+      summary: 'Abs',
+      abstractStatus: 'available',
+      retrievalSource: 'pubmed_efetch',
     });
+    expect(rows[0].retrievedAt).toBeTypeOf('number');
   });
 
   it('fetchArticleDetails skips missing uids and normalizes invalid years', async () => {
-    globalThis.fetch = vi.fn().mockResolvedValue(
-      mockResponse({
-        json: async () => ({
-          result: {
-            uids: ['1', '2'],
-            '1': {
-              title: 'Only',
-              authors: [],
-              fulljournalname: 'J',
-              pubdate: 'in press',
-              articleids: [],
-            },
-          },
-        }),
-      }),
-    );
+    const esummaryJson = {
+      result: {
+        uids: ['1', '2'],
+        '1': {
+          title: 'Only',
+          authors: [],
+          fulljournalname: 'J',
+          pubdate: 'in press',
+          articleids: [],
+        },
+      },
+    };
+    const efetchXml = EFETCH_BODY_XML;
+
+    globalThis.fetch = vi.fn().mockImplementation((url: string, init?: RequestInit) => {
+      if (init?.method === 'POST') {
+        return Promise.resolve(mockResponse({ json: () => Promise.resolve(esummaryJson) }));
+      }
+      if (String(url).includes('efetch.fcgi')) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          statusText: 'OK',
+          headers: { get: () => null },
+          text: () => Promise.resolve(efetchXml),
+        } as unknown as Response);
+      }
+      return Promise.resolve(mockResponse({ json: () => Promise.resolve({}) }));
+    });
+
     const rows = await fetchArticleDetails(['1', '2']);
     expect(rows).toHaveLength(1);
     expect(rows[0].pubYear).toBe('0000');
+    expect(rows[0].summary).toBe('Body');
+  });
+
+  it('fetchArticleDetails marks missing abstract without placeholder text', async () => {
+    const esummaryJson = {
+      result: {
+        uids: ['9'],
+        '9': {
+          title: 'No abs',
+          authors: [],
+          fulljournalname: 'J',
+          pubdate: '2021',
+          articleids: [],
+        },
+      },
+    };
+    const efetchXml = EFETCH_NO_ABSTRACT_XML;
+
+    globalThis.fetch = vi.fn().mockImplementation((url: string, init?: RequestInit) => {
+      if (init?.method === 'POST') {
+        return Promise.resolve(mockResponse({ json: () => Promise.resolve(esummaryJson) }));
+      }
+      if (String(url).includes('efetch.fcgi')) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          statusText: 'OK',
+          headers: { get: () => null },
+          text: () => Promise.resolve(efetchXml),
+        } as unknown as Response);
+      }
+      return Promise.resolve(mockResponse({ json: () => Promise.resolve({}) }));
+    });
+
+    const rows = await fetchArticleDetails(['9']);
+    expect(rows[0]?.summary).toBe('');
+    expect(rows[0]?.abstractStatus).toBe('missing');
+    expect(rows[0]?.summary).not.toMatch(/No abstract available/i);
   });
 
   it('fetchArticleDetails throws on invalid payload', async () => {

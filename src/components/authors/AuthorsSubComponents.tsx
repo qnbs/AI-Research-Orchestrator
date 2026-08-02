@@ -11,6 +11,7 @@ import { BeakerIcon } from '../icons/BeakerIcon';
 import { ChartBarIcon } from '../icons/ChartBarIcon';
 import { SearchIcon } from '../icons/SearchIcon';
 import { useTranslation, type TranslationKey } from '../../hooks/useTranslation';
+import { stableAuthorClusterKey } from '../../lib/stableReactKeys';
 
 export { AuthorProfileView } from './AuthorProfileView';
 
@@ -403,7 +404,7 @@ export const DisambiguationView: React.FC = () => {
         {clusters.map((cluster) => (
           <button
             type="button"
-            key={`${cluster.nameVariant}|${cluster.primaryAffiliation}|${cluster.publicationCount}`}
+            key={stableAuthorClusterKey(cluster)}
             onClick={() => onSelect(cluster)}
             className="group w-full h-full p-5 bg-surface border border-border rounded-lg text-left transition-all duration-300 hover:shadow-xl hover:border-brand-accent/50 hover:-translate-y-1.5 focus:outline-none focus:ring-2 focus:ring-brand-accent ring-offset-2 ring-offset-background"
           >

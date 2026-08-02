@@ -35,6 +35,17 @@ function isHost(hostname, domain) {
     return hostname === domain || hostname.endsWith(`.${domain}`);
 }
 
+/** Credential-like query params must never be persisted in Cache Storage keys. */
+const CREDENTIAL_QUERY_PATTERN = /(?:^|[?&])(api_key|key|token|authorization)=/i;
+
+function urlHasCredentialQuery(url) {
+    return CREDENTIAL_QUERY_PATTERN.test(url.search);
+}
+
+function isNcbiHost(hostname) {
+    return isHost(hostname, 'ncbi.nlm.nih.gov');
+}
+
 // Matches this SW's own cache names exactly - `<base>` (pre-versioning) or
 // `<base>-v<digits>` (any past/future CACHE_VERSION) - never a same-prefixed
 // but unrelated cache. A plain `startsWith(`${base}-v`)` also matches
@@ -58,7 +69,7 @@ if (workbox) {
     workbox.precaching.cleanupOutdatedCaches();
 
     const { registerRoute, setCatchHandler } = workbox.routing;
-    const { NetworkFirst, CacheFirst, StaleWhileRevalidate } = workbox.strategies;
+    const { NetworkFirst, CacheFirst, StaleWhileRevalidate, NetworkOnly } = workbox.strategies;
     const { CacheableResponsePlugin } = workbox.cacheableResponse;
     const { ExpirationPlugin } = workbox.expiration;
 
@@ -76,10 +87,9 @@ if (workbox) {
     );
 
     // --- 2. Critical Data (PubMed API) ---
-    // Strategy: Network First (Fresh Data Priority)
-    // Optimization: Short timeout (5s) to prevent hanging on slow connections.
+    // Credential-free requests: NetworkFirst cache for offline resilience.
     registerRoute(
-        ({ url }) => isHost(url.hostname, 'ncbi.nlm.nih.gov'),
+        ({ url }) => isNcbiHost(url.hostname) && !urlHasCredentialQuery(url),
         new NetworkFirst({
             cacheName: CACHE_NAMES.pubmedApi,
             networkTimeoutSeconds: 5,
@@ -92,6 +102,12 @@ if (workbox) {
                 }),
             ],
         })
+    );
+
+    // NCBI requests bearing api_key (or similar) bypass Cache Storage entirely.
+    registerRoute(
+        ({ url }) => isNcbiHost(url.hostname) && urlHasCredentialQuery(url),
+        new NetworkOnly(),
     );
 
     // --- 3. Google Fonts ---
@@ -201,8 +217,8 @@ if (workbox) {
     self.addEventListener('activate', (event) => {
         const currentNames = new Set(Object.values(CACHE_NAMES));
         event.waitUntil(
-            caches.keys().then((keys) =>
-                Promise.all(
+            caches.keys().then(async (keys) => {
+                await Promise.all(
                     keys
                         .filter(
                             (key) =>
@@ -210,8 +226,25 @@ if (workbox) {
                                 !currentNames.has(key),
                         )
                         .map((key) => caches.delete(key)),
-                ),
-            ),
+                );
+
+                // Remove legacy PubMed cache entries that embedded credentials in request URLs.
+                const pubmedCacheName = CACHE_NAMES.pubmedApi;
+                const pubmedCache = await caches.open(pubmedCacheName);
+                const requests = await pubmedCache.keys();
+                await Promise.all(
+                    requests.map(async (request) => {
+                        try {
+                            const reqUrl = new URL(request.url);
+                            if (urlHasCredentialQuery(reqUrl)) {
+                                await pubmedCache.delete(request);
+                            }
+                        } catch (_err) {
+                            // Skip malformed cache keys without deleting unrelated entries.
+                        }
+                    }),
+                );
+            }),
         );
     });
 

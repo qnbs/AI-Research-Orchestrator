@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<PubmedArticleSet>
+  <PubmedArticle>
+    <MedlineCitation Status="MEDLINE" Owner="NLM">
+      <PMID Version="1">100001</PMID>
+      <Article PubModel="Print">
+        <ArticleTitle>Plain abstract article</ArticleTitle>
+        <Abstract>
+          <AbstractText>This is a plain abstract without labels.</AbstractText>
+        </Abstract>
+      </Article>
+    </MedlineCitation>
+    <PubmedData>
+      <ArticleIdList>
+        <ArticleId IdType="pubmed">100001</ArticleId>
+        <ArticleId IdType="doi">10.1000/example.1</ArticleId>
+      </ArticleIdList>
+      <PublicationTypeList>
+        <PublicationType UI="D016428">Journal Article</PublicationType>
+      </PublicationTypeList>
+    </PubmedData>
+  </PubmedArticle>
+</PubmedArticleSet>

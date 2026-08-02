@@ -21,6 +21,10 @@ export interface GeneratedQuery {
   explanation: string;
 }
 
+export type AbstractStatus = 'available' | 'missing' | 'structured';
+
+export type PubMedRetrievalSource = 'pubmed_efetch' | 'pubmed_esummary';
+
 export interface RankedArticle {
   pmid: string;
   pmcId?: string; // PubMed Central ID, often available for open access articles
@@ -28,7 +32,14 @@ export interface RankedArticle {
   authors: string;
   journal: string;
   pubYear: string;
+  /** Source abstract from PubMed EFetch when available; empty when absent — never a placeholder string. */
   summary: string;
+  /** Explicit abstract availability for ranking and UI provenance. */
+  abstractStatus?: AbstractStatus;
+  /** Where metadata/abstract was retrieved (NCBI stage). */
+  retrievalSource?: PubMedRetrievalSource;
+  /** Epoch ms when this record was fetched from NCBI. */
+  retrievedAt?: number;
   relevanceScore: number;
   relevanceExplanation: string;
   keywords: string[];
@@ -36,6 +47,8 @@ export interface RankedArticle {
   articleType?: string; // Type of article, e.g., 'Systematic Review'
   aiSummary?: string; // AI-generated summary focusing on methodology, findings, etc.
   customTags?: string[]; // for user-added tags
+  doi?: string;
+  publicationTypes?: string[];
 }
 
 export interface OverallKeyword {
@@ -138,9 +151,7 @@ export type AggregatedArticle = RankedArticle & {
 };
 
 // Omit 'sourceId' as it's an internal identifier not meant for export.
-export const CSV_EXPORT_COLUMNS: (
-  keyof Omit<AggregatedArticle, 'sourceId'> | 'URL' | 'PMCID_URL'
-)[] = [
+const CSV_EXPORT_COLUMN_LIST = [
   'pmid',
   'pmcId',
   'title',
@@ -158,7 +169,11 @@ export const CSV_EXPORT_COLUMNS: (
   'articleType',
   'URL',
   'PMCID_URL',
-];
+] as const;
+
+export type CsvExportColumn = (typeof CSV_EXPORT_COLUMN_LIST)[number];
+
+export const CSV_EXPORT_COLUMNS: readonly CsvExportColumn[] = CSV_EXPORT_COLUMN_LIST;
 
 export interface Preset {
   id: string;

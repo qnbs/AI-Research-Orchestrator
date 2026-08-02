@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<PubmedArticleSet>
+  <PubmedArticle>
+    <MedlineCitation>
+      <PMID Version="1">100001</PMID>
+      <Article>
+        <ArticleTitle>Plain abstract article</ArticleTitle>
+        <Abstract>
+          <AbstractText>EFetch abstract text.</AbstractText>
+        </Abstract>
+      </Article>
+    </MedlineCitation>
+  </PubmedArticle>
+  <PubmedArticle>
+    <MedlineCitation>
+      <PMID Version="1">100003</PMID>
+      <Article>
+        <ArticleTitle>No abstract article</ArticleTitle>
+      </Article>
+    </MedlineCitation>
+  </PubmedArticle>
+</PubmedArticleSet>
