@@ -51,7 +51,7 @@ function countTokenOverlap(left: Set<string>, right: Set<string>): number {
 export function articleSupportsClaim(claimText: string, article: RankedArticle): boolean {
   const claimTokens = tokenize(claimText);
   if (claimTokens.size === 0) return false;
-  const corpusText = `${article.title} ${article.summary ?? ''} ${article.aiSummary ?? ''}`;
+  const corpusText = `${article.title} ${article.summary ?? ''}`;
   const articleTokens = tokenize(corpusText);
   return countTokenOverlap(claimTokens, articleTokens) >= MIN_EVIDENCE_TOKENS;
 }

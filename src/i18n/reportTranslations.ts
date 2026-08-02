@@ -25,7 +25,7 @@ export const reportTranslations = {
     'report.synthesis.narrativeDraftBanner':
       'Unverified narrative draft — only claims with corpus evidence are validated. Verify against source abstracts before citing.',
     'report.synthesis.verifiedBanner':
-      'Verified synthesis — claims are bound to retrieved corpus evidence.',
+      'Corpus-supported synthesis — claims matched lexical evidence in retrieved abstracts (not a full bibliographic audit).',
     'report.insights.supportingEvidence': 'Supporting evidence:',
     'report.sources.intro':
       'The following web pages were consulted by the AI to generate this report. This provides traceability for the AI’s findings.',
@@ -88,7 +88,7 @@ export const reportTranslations = {
     'report.synthesis.narrativeDraftBanner':
       'Unverifizierter Narrativ-Entwurf — nur Behauptungen mit Korpus-Evidenz sind validiert. Vor Zitieren die Quellabstracts prüfen.',
     'report.synthesis.verifiedBanner':
-      'Verifizierte Synthese — Behauptungen sind an den abgerufenen Korpus gebunden.',
+      'Korpus-gestützte Synthese — Behauptungen stimmen lexikalisch mit abgerufenen Abstracts überein (kein vollständiges bibliometrisches Audit).',
     'report.insights.supportingEvidence': 'Belege:',
     'report.sources.intro':
       'Die folgenden Webseiten wurden von der KI zur Erstellung dieses Berichts konsultiert. Das ermöglicht die Nachvollziehbarkeit der KI-Ergebnisse.',

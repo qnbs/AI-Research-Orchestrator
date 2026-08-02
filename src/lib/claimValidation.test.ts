@@ -226,4 +226,10 @@ describe('articleSupportsClaim', () => {
     expect(articleSupportsClaim('Aspirin cardiovascular outcomes improved.', art)).toBe(true);
     expect(articleSupportsClaim('XY', art)).toBe(false);
   });
+
+  it('does not treat aiSummary alone as supporting evidence', () => {
+    const art = article('1', 'Short title', 'Original abstract about aspirin.');
+    art.aiSummary = 'Quantum entanglement breakthrough in unrelated field.';
+    expect(articleSupportsClaim('Quantum entanglement breakthrough.', art)).toBe(false);
+  });
 });

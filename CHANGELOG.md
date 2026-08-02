@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Claim validation integrity (P0-E):** evidence corpus excludes `aiSummary`; trust banner clarifies corpus-supported vs verified audit.
 - **KB dedup follow-up (P0-B):** research-only prune deletes from research entries only; harmonization preserves `report.rankedArticles`; prune count matches research-only predicate; i18n notifications; `bulkUpdateKbEntries` unwrap + transaction rollback on missing ids.
 - **Execution provenance (P0-D):** research reports stamp `inferenceMode` from `resolveActiveInferenceMode` at completion, not from settings provider alone.
 - **KB import trust boundary (P0-C):** versioned import envelope, strict validation, corpus re-sanitization, forced `narrative-draft` trust on import, quarantine reporting in Settings UI.
