@@ -41,11 +41,15 @@ export const EventRow: React.FC<{
         : `${(event.durationMs / 1000).toFixed(1)}s`
       : null;
   const hasOmittedPmids = (promptBudget?.omittedPmids.length ?? 0) > 0;
+  const hasFieldTruncation =
+    promptBudget != null &&
+    (promptBudget.truncatedTitleCount > 0 || promptBudget.truncatedAbstractCount > 0);
+  const hasPromptBudgetDetails = hasOmittedPmids || hasFieldTruncation;
   const hasDetails = !!(
     event.inputSummary ||
     event.outputSummary ||
     event.error ||
-    hasOmittedPmids
+    hasPromptBudgetDetails
   );
 
   return (
@@ -178,17 +182,22 @@ export const EventRow: React.FC<{
                     </span>
                   </div>
                 )}
-                {hasOmittedPmids && promptBudget && (
+                {hasPromptBudgetDetails && promptBudget && (
                   <div className="bg-surface/50 rounded-lg p-2 border border-border/50">
-                    <span className="text-text-secondary font-semibold uppercase tracking-wide block mb-0.5">
-                      {t('debugger.promptBudget.omittedPmids')}
-                    </span>
-                    <span className="text-text-primary font-mono whitespace-pre-wrap break-words">
-                      {promptBudget.omittedPmids.join(', ')}
-                    </span>
-                    {(promptBudget.truncatedTitleCount > 0 ||
-                      promptBudget.truncatedAbstractCount > 0) && (
-                      <span className="text-text-secondary block mt-1">
+                    {hasOmittedPmids && (
+                      <>
+                        <span className="text-text-secondary font-semibold uppercase tracking-wide block mb-0.5">
+                          {t('debugger.promptBudget.omittedPmids')}
+                        </span>
+                        <span className="text-text-primary font-mono whitespace-pre-wrap break-words">
+                          {promptBudget.omittedPmids.join(', ')}
+                        </span>
+                      </>
+                    )}
+                    {hasFieldTruncation && (
+                      <span
+                        className={`text-text-secondary block ${hasOmittedPmids ? 'mt-1' : ''}`}
+                      >
                         {t('debugger.promptBudget.fieldTruncation')}:{' '}
                         {promptBudget.truncatedTitleCount} title /{' '}
                         {promptBudget.truncatedAbstractCount} abstract
