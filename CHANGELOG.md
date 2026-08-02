@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Journal metadata integrity (P0-F):** no LLM-estimated impact factor; OA PubMed filter uses `free full text[filter]` + PMC post-filter; metrics `source: computed` from corpus.
 - **Quality gates:** `check:conflict-markers` blocks unresolved merge markers in CI, pre-commit, and `check:fast`; pre-commit also runs full `format:check` (closes rebase/amend bypass).
+- **P0 closeout audit:** `docs/audits/2026-08-02-p0-closeout.md` records P0-A–F disposition at `3a73707`.
 - **Claim validation integrity (P0-E):** evidence corpus excludes `aiSummary`; trust banner clarifies corpus-supported vs verified audit; Unicode tokenization for non-English claims.
 - **KB dedup follow-up (P0-B):** research-only prune deletes from research entries only; harmonization preserves `report.rankedArticles`; prune count matches research-only predicate; per-entry prune preserves high-scoring PMID copies in other reports; i18n notifications; `bulkUpdateKbEntries` unwrap + transaction rollback on missing ids.
 - **Execution provenance (P0-D):** research reports stamp `inferenceMode` from `resolveActiveInferenceMode` at completion, not from settings provider alone.

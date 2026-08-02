@@ -1,5 +1,7 @@
 # Scientific integrity revalidation — baseline evidence
 
+> **Status:** P0-A–F **closed** on `main` at `3a73707` — see [`2026-08-02-p0-closeout.md`](./2026-08-02-p0-closeout.md) for merged PR map, verification, and release recommendation. This file retains the pre-fix evidence at baseline `716696e`.
+
 **Prepared:** 2026-08-02 (post-merge reconciliation)  
 **Baseline SHA:** `716696eba424109dc4da412ecd6b7bd959df395a` (`main`)  
 **Prior audit baseline referenced in master prompt:** `cd2e03c` — superseded by PR #175 merge  
