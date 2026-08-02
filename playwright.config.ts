@@ -1,5 +1,12 @@
 import { defineConfig, devices } from '@playwright/test';
 
+/** Chromium-only: required in Docker/CI; invalid for Firefox/WebKit launchers. */
+const chromiumLaunch = {
+  launchOptions: {
+    args: ['--no-sandbox', '--disable-setuid-sandbox'],
+  },
+};
+
 /**
  * AI Research Orchestrator — Playwright E2E configuration
  *
@@ -22,10 +29,6 @@ export default defineConfig({
     baseURL: process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000',
     // Trace on first retry, useful for CI debugging
     trace: 'on-first-retry',
-    // All Playwright tests run headless; no sandbox required in Docker
-    launchOptions: {
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    },
     // Capture screenshots on failure
     screenshot: 'only-on-failure',
   },
@@ -45,13 +48,13 @@ export default defineConfig({
           },
           {
             name: 'mobile-chrome',
-            use: { ...devices['Pixel 5'] },
+            use: { ...devices['Pixel 5'], ...chromiumLaunch },
           },
         ]
       : [
           {
             name: 'chromium',
-            use: { ...devices['Desktop Chrome'] },
+            use: { ...devices['Desktop Chrome'], ...chromiumLaunch },
           },
         ],
 

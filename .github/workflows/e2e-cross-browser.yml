@@ -60,7 +60,12 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Install Playwright browser
-        run: pnpm exec playwright install --with-deps ${{ matrix.browser }}
+        run: |
+          target="${{ matrix.browser }}"
+          if [ "$target" = "mobile-chrome" ]; then
+            target="chromium"
+          fi
+          pnpm exec playwright install --with-deps "$target"
 
       - name: Run smoke spec
         env:
