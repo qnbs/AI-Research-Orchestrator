@@ -29,6 +29,7 @@ import type { TranslationKey } from '../i18n/translations';
 import type { HapticPreset } from '../hooks/useHaptic';
 import { getAgentForPhase } from './getAgentForPhase';
 import { stampReportWithProvenance } from '../lib/appReleaseInfo';
+import { resolveActiveInferenceMode } from '../services/resolveActiveInferenceMode';
 import { safeLogError } from '../lib/safeLog';
 
 type ReportStatus = 'idle' | 'generating' | 'streaming' | 'done' | 'error';
@@ -254,11 +255,18 @@ export function useResearchSession({
         }
         dispatch(completeTrace({ status: 'done' }));
 
+        const modeSnapshot = await resolveActiveInferenceMode({
+          forceHeuristic: Boolean(aiSettings.forceHeuristicMode),
+          provider: aiSettings.provider ?? 'gemini',
+        });
+        const executedProviderId =
+          modeSnapshot.mode === 'heuristic' ? 'heuristic' : (aiSettings.provider ?? 'gemini');
+
         const completeReport = stampReportWithProvenance(
           { ...finalReport, synthesis: finalSynthesis },
           {
-            inferenceMode: aiSettings.provider === 'heuristic' ? 'heuristic' : 'live',
-            providerId: aiSettings.provider ?? 'gemini',
+            inferenceMode: modeSnapshot.mode,
+            providerId: executedProviderId,
             model: aiSettings.model,
           },
         );
