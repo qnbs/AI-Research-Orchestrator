@@ -548,10 +548,10 @@ const createJsonExport = <T>(data: T, type: string, count: number) => {
       dexieSchemaVersion: release.dexieSchemaVersion,
       swCacheVersion: release.swCacheVersion,
       exportDate: new Date().toISOString(),
-      type: type,
-      count: count,
+      type,
+      count,
     },
-    data: data,
+    data,
   };
   const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(exportObject, null, 2))}`;
   const link = document.createElement('a');
