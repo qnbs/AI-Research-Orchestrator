@@ -323,10 +323,10 @@ describe('geminiService with mocked SDK', () => {
         text: JSON.stringify(rankingPayload),
       });
 
-    hoisted.generateContentStream.mockImplementation(async () =>
-      (async function* () {
+    hoisted.generateContentStream.mockImplementation(() =>
+      Promise.resolve((async function* () {
         yield { text: 'syn ' };
-      })(),
+      })()),
     );
 
     const phases: string[] = [];
@@ -375,7 +375,7 @@ describe('geminiService with mocked SDK', () => {
         text: JSON.stringify(rankingPayload),
       });
 
-    hoisted.generateContentStream.mockImplementation(async () =>
+    hoisted.generateContentStream.mockImplementation(() =>
       (async function* () {
         yield { text: 'syn ' };
       })(),

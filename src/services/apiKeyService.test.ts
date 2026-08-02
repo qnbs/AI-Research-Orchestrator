@@ -363,7 +363,7 @@ describe('apiKeyService', () => {
     });
 
     it('serializes vault key resolution through navigator.locks when available', async () => {
-      const lockRequest = vi.fn(async (_name: string, callback: () => Promise<CryptoKey>) =>
+      const lockRequest = vi.fn((_name: string, callback: () => Promise<CryptoKey>) =>
         callback(),
       );
       Object.defineProperty(globalThis.navigator, 'locks', {

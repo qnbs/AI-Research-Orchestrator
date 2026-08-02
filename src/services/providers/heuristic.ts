@@ -91,8 +91,8 @@ export function createHeuristicProvider(): AIProvider {
     id: 'heuristic',
     capabilities: providerCapabilities({ requiresApiKey: false }),
 
-    async generateContent(request: AIContentRequest): Promise<AIContentResponse> {
-      return generateGenericHeuristicResponse(request);
+    generateContent(request: AIContentRequest): Promise<AIContentResponse> {
+      return Promise.resolve(generateGenericHeuristicResponse(request));
     },
 
     async *generateContentStream(request: AIContentRequest): AsyncGenerator<AIStreamChunk> {
@@ -104,7 +104,7 @@ export function createHeuristicProvider(): AIProvider {
       yield { done: true };
     },
 
-    async createChatSession(request: AIChatSessionRequest): Promise<ProviderChatSession> {
+    createChatSession(request: AIChatSessionRequest): Promise<ProviderChatSession> {
       // Chat requires a report to ground answers. Without one we return a polite
       // refusal stream so the session still satisfies the interface contract.
       const fallbackReport = {
@@ -115,7 +115,7 @@ export function createHeuristicProvider(): AIProvider {
         generatedQueries: [],
       } as unknown as import('../../types').ResearchReport;
 
-      return createHeuristicChatSession(fallbackReport);
+      return Promise.resolve(createHeuristicChatSession(fallbackReport));
     },
 
     mapError: mapHeuristicError,

@@ -152,14 +152,14 @@ export function createOllamaProvider(): AIProvider {
       yield { done: true };
     },
 
-    async createChatSession(request: AIChatSessionRequest): Promise<ProviderChatSession> {
+    createChatSession(request: AIChatSessionRequest): Promise<ProviderChatSession> {
       const baseURL = getBaseUrl(request.baseURL);
       const messages = (request.history ?? []).map((m) => ({
         role: m.role === 'model' ? ('assistant' as const) : ('user' as const),
         content: m.text,
       }));
 
-      return {
+      return Promise.resolve({
         async sendMessageStream({ message }) {
           const chatMessages = [...messages, { role: 'user' as const, content: message }];
           const response = await fetch(`${baseURL}/api/chat`, {
@@ -190,7 +190,7 @@ export function createOllamaProvider(): AIProvider {
             }
           })();
         },
-      };
+      });
     },
 
     mapError: mapOllamaError,
