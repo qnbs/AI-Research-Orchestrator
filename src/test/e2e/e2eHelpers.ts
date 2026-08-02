@@ -139,10 +139,11 @@ export async function prepareFirstLaunchDemoKb(page: Page) {
 
   await waitForKnowledgeBaseStore(page);
 
+  // Block demo seed while clearing IndexedDB so importKbEntries cannot race the clear transaction.
   await page.evaluate(async () => {
     try {
-      localStorage.removeItem('aro.demoDataSeeded');
-      localStorage.removeItem('aro.demoDataDismissed');
+      localStorage.setItem('aro.demoDataSeeded', '1');
+      localStorage.setItem('aro.demoDataDismissed', '1');
     } catch {
       /* ignore quota / private mode */
     }
@@ -165,6 +166,15 @@ export async function prepareFirstLaunchDemoKb(page: Page) {
     db.close();
   });
 
+  await page.evaluate(() => {
+    try {
+      localStorage.removeItem('aro.demoDataSeeded');
+      localStorage.removeItem('aro.demoDataDismissed');
+    } catch {
+      /* ignore quota / private mode */
+    }
+  });
+
   await page.reload({ waitUntil: 'domcontentloaded' });
 
   const startBtn = page.getByRole('button', { name: /start researching/i });
@@ -178,17 +188,58 @@ export async function prepareFirstLaunchDemoKb(page: Page) {
     await header.waitFor({ state: 'visible', timeout: 10_000 });
   }
 
-  await page.waitForFunction(() => localStorage.getItem('aro.demoDataSeeded') === '1', {
-    timeout: 45_000,
-  });
-
-  await waitForIndexedDbEntryCount(page, DEMO_KB_ENTRY_COUNT);
+  await waitForDemoKbSeed(page);
 
   // Cold mounts can fulfill fetchKnowledgeBase before importKbEntries finishes — reload so
   // Redux hydrates from the persisted demo rows before the KB view assertion runs.
   await page.reload({ waitUntil: 'domcontentloaded' });
   await header.waitFor({ state: 'visible', timeout: 15_000 });
   await waitForIndexedDbEntryCount(page, DEMO_KB_ENTRY_COUNT, 30_000);
+}
+
+async function waitForDemoKbSeed(page: Page, timeout = 60_000) {
+  await page.waitForFunction(
+    async (minEntries) => {
+      try {
+        if (localStorage.getItem('aro.demoDataSeeded') !== '1') {
+          return false;
+        }
+      } catch {
+        return false;
+      }
+
+      const db = await new Promise<IDBDatabase | null>((resolve) => {
+        const req = indexedDB.open('AIResearchAppDatabase');
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => resolve(null);
+      });
+      if (!db?.objectStoreNames.contains('knowledgeBaseEntries')) {
+        db?.close();
+        return false;
+      }
+
+      const count = await new Promise<number>((resolve, reject) => {
+        const tx = db.transaction('knowledgeBaseEntries', 'readonly');
+        const req = tx.objectStore('knowledgeBaseEntries').count();
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error ?? new Error('indexedDB count failed'));
+      });
+      db.close();
+
+      if (count < minEntries) {
+        try {
+          localStorage.removeItem('aro.demoDataSeeded');
+        } catch {
+          /* ignore */
+        }
+        return false;
+      }
+
+      return true;
+    },
+    DEMO_KB_ENTRY_COUNT,
+    { timeout },
+  );
 }
 
 /** Open Settings from header chrome (desktop icons or mobile overflow menu). */
