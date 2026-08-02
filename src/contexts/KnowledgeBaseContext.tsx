@@ -38,8 +38,8 @@ import { markDemoSeedConsumed, useDemoKnowledgeBaseSeed } from '../hooks/useDemo
 import { useTranslation } from '../hooks/useTranslation';
 import {
   buildHarmonizeDuplicateUpdates,
+  buildResearchPrunePlan,
   countDuplicateArticleGroups,
-  selectResearchPrunePmids,
 } from '../lib/knowledgeBaseDedup';
 
 interface KnowledgeBaseContextType {
@@ -228,41 +228,6 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
     [dispatch, knowledgeBase],
   );
 
-  const deleteResearchArticles = useCallback(
-    async (pmids: string[]) => {
-      const pmidSet = new Set(pmids);
-      const updates: { id: string; changes: Partial<KnowledgeBaseEntry> }[] = [];
-      const toDeleteIds: string[] = [];
-
-      knowledgeBase.forEach((entry) => {
-        if (entry.sourceType !== 'research') return;
-
-        const keptArticles = (entry.articles || []).filter((a) => !pmidSet.has(a.pmid));
-        if (keptArticles.length < entry.articles.length) {
-          if (keptArticles.length === 0) {
-            toDeleteIds.push(entry.id);
-          } else {
-            updates.push({
-              id: entry.id,
-              changes: {
-                articles: keptArticles,
-                report: { ...entry.report, rankedArticles: keptArticles },
-              },
-            });
-          }
-        }
-      });
-
-      if (updates.length > 0) {
-        await dispatch(bulkUpdateKbEntries(updates)).unwrap();
-      }
-      if (toDeleteIds.length > 0) await deleteEntriesFromDb(toDeleteIds);
-
-      dispatch(fetchKnowledgeBase());
-    },
-    [dispatch, knowledgeBase],
-  );
-
   const deleteArticles = useCallback(
     async (pmids: string[]) => {
       const pmidSet = new Set(pmids);
@@ -368,10 +333,19 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
   const onPruneByRelevance = useCallback(
     async (pruneScore: number) => {
       try {
-        const toPrunePmids = new Set<string>(selectResearchPrunePmids(knowledgeBase, pruneScore));
-        if (toPrunePmids.size > 0) {
-          await deleteResearchArticles(Array.from(toPrunePmids));
-          showNotification(t('settings.kb.notification.pruned', { count: toPrunePmids.size }));
+        const { updates, deleteEntryIds, pruneCount } = buildResearchPrunePlan(
+          knowledgeBase,
+          pruneScore,
+        );
+        if (pruneCount > 0) {
+          if (updates.length > 0) {
+            await dispatch(bulkUpdateKbEntries(updates)).unwrap();
+          }
+          if (deleteEntryIds.length > 0) {
+            await deleteEntriesFromDb(deleteEntryIds);
+          }
+          dispatch(fetchKnowledgeBase());
+          showNotification(t('settings.kb.notification.pruned', { count: pruneCount }));
         } else {
           showNotification(
             t('settings.kb.notification.no_prune_candidates', { score: pruneScore }),
@@ -382,7 +356,7 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
         showNotification(t('settings.kb.notification.prune_failed'), 'error');
       }
     },
-    [knowledgeBase, deleteResearchArticles, showNotification, t],
+    [knowledgeBase, dispatch, showNotification, t],
   );
 
   const getRecentResearchEntries = useCallback(

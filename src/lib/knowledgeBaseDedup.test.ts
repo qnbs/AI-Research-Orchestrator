@@ -2,10 +2,10 @@ import { describe, expect, it } from 'vitest';
 import type { AuthorProfileEntry, RankedArticle, ResearchEntry } from '../types';
 import {
   buildHarmonizeDuplicateUpdates,
+  buildResearchPrunePlan,
   countDuplicateArticleGroups,
   countResearchPruneCandidates,
   pickCanonicalArticle,
-  selectResearchPrunePmids,
 } from './knowledgeBaseDedup';
 
 const makeArticle = (pmid: string, score: number, tags?: string[]): RankedArticle => ({
@@ -93,7 +93,6 @@ describe('buildHarmonizeDuplicateUpdates', () => {
     expect(updates[0].changes.articles?.[0].relevanceScore).toBe(90);
     expect('report' in updates[0].changes ? updates[0].changes.report : undefined).toBeUndefined();
 
-    // Both entries still retain their article row
     const mergedA = { ...entryA, ...updates[0].changes };
     const mergedB = entryB;
     expect(mergedA.articles.length + mergedB.articles.length).toBe(2);
@@ -139,30 +138,40 @@ describe('countDuplicateArticleGroups', () => {
   });
 });
 
-describe('selectResearchPrunePmids', () => {
-  it('includes low-scoring research articles from all research copies', () => {
+describe('buildResearchPrunePlan', () => {
+  it('excludes author-profile articles', () => {
     const research = makeResearchEntry('r1', [makeArticle('1', 0)]);
     const authorEntry = makeAuthorEntry('auth', [makeArticle('2', 0)]);
 
-    const pmids = selectResearchPrunePmids([research, authorEntry], 1);
+    const { pruneCount, updates, deleteEntryIds } = buildResearchPrunePlan(
+      [research, authorEntry],
+      1,
+    );
 
-    expect(pmids).toEqual(['1']);
+    expect(pruneCount).toBe(1);
+    expect(updates).toHaveLength(0);
+    expect(deleteEntryIds).toEqual(['r1']);
   });
 
-  it('finds low-scoring research copy even when author copy has higher score', () => {
-    const researchLow = makeArticle('100', 5, []);
-    const authorHigh = makeArticle('100', 95, []);
-    const research = makeResearchEntry('r1', [researchLow]);
-    const author = makeAuthorEntry('auth', [authorHigh]);
+  it('prunes per entry so high-scoring copies in other reports survive', () => {
+    const low = makeArticle('100', 5);
+    const high = makeArticle('100', 90);
+    const lowReport = makeResearchEntry('r-low', [low]);
+    const highReport = makeResearchEntry('r-high', [high]);
 
-    const pmids = selectResearchPrunePmids([research, author], 10);
+    const { pruneCount, updates, deleteEntryIds } = buildResearchPrunePlan(
+      [lowReport, highReport],
+      10,
+    );
 
-    expect(pmids).toEqual(['100']);
+    expect(pruneCount).toBe(1);
+    expect(deleteEntryIds).toEqual(['r-low']);
+    expect(updates).toHaveLength(0);
   });
 });
 
 describe('countResearchPruneCandidates', () => {
-  it('matches selectResearchPrunePmids length', () => {
+  it('counts low-scoring copies across research entries', () => {
     const entries = [
       makeResearchEntry('a', [makeArticle('1', 0), makeArticle('2', 50)]),
       makeAuthorEntry('auth', [makeArticle('3', 0)]),
