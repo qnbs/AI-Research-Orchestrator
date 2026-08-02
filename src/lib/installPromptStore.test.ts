@@ -1,6 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
 import {
-  getInstallPromptSnapshot,
   getInstallPromptStateSnapshot,
   setInstallPromptEvent,
   setIsPwaInstalled,
@@ -14,7 +13,7 @@ describe('installPromptStore', () => {
     const unsub = subscribeInstallPrompt(spy);
     const fake = { preventDefault: vi.fn() } as unknown as BeforeInstallPromptEvent;
     setInstallPromptEvent(fake);
-    expect(getInstallPromptSnapshot()).toBe(fake);
+    expect(getInstallPromptStateSnapshot().event).toBe(fake);
     expect(getInstallPromptStateSnapshot().event).toBe(fake);
     expect(spy).toHaveBeenCalled();
     setInstallPromptEvent(null);
