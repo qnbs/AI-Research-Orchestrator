@@ -25,4 +25,17 @@ test.describe('App smoke tests', () => {
     await page.goto('/');
     await expectNoCriticalAxeViolations(page);
   });
+
+  test('exposes a valid web app manifest', async ({ page }) => {
+    await page.goto('/');
+    const manifestHref = await page.locator('link[rel="manifest"]').getAttribute('href');
+    expect(manifestHref).toBeTruthy();
+    const manifestUrl = new URL(manifestHref!, page.url()).href;
+    const response = await page.request.get(manifestUrl);
+    expect(response.ok()).toBe(true);
+    const manifest = await response.json();
+    expect(manifest.name).toMatch(/Research Orchestrator/i);
+    expect(manifest.start_url).toBeTruthy();
+    expect(manifest.icons?.length).toBeGreaterThan(0);
+  });
 });

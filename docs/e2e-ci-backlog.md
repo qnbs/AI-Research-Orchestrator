@@ -33,7 +33,7 @@ ignore the file list and run the entire `testDir` (including `a11y.spec.ts`).
 
 ### Promotion criteria (per browser)
 
-1. **10 consecutive workflow runs** where the browser job reports **3 passed / 0 failed**
+1. **10 consecutive workflow runs** where the browser job reports **4 passed / 0 failed**
    smoke tests (read counts from the job log — the green badge alone is not enough).
 2. After promotion: expand that browser to the full seven-spec list (same files as
    blocking Chromium) while keeping `continue-on-error: true`.
@@ -41,6 +41,10 @@ ignore the file list and run the entire `testDir` (including `a11y.spec.ts`).
    browser to blocking (separate decision — do not bulk-promote all browsers at once).
 
 Track progress in this file when a browser is promoted.
+
+### Streak (updated 2026-08-02)
+
+Smoke matrix jobs on **Firefox**, **WebKit**, and **mobile Chrome** each reported **success** on the last **8** consecutive workflow runs (including merge of PR #174). Promotion threshold: **10 consecutive** runs with **3 passed / 0 failed** per browser (read job logs). Next step after streak ≥10: expand that browser to the full seven-spec list while keeping `continue-on-error: true`.
 
 ## Historical note (fixed 2026-07-21)
 

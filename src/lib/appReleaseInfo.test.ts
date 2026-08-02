@@ -18,9 +18,14 @@ describe('appReleaseInfo', () => {
   });
 
   it('formats a human-readable release label', () => {
-    expect(formatReleaseLabel({ appVersion: '0.4.0', buildCommitSha: 'abc1234', dexieSchemaVersion: 5, swCacheVersion: 'v1' })).toBe(
-      'v0.4.0 (abc1234)',
-    );
+    expect(
+      formatReleaseLabel({
+        appVersion: '0.4.0',
+        buildCommitSha: 'abc1234',
+        dexieSchemaVersion: 5,
+        swCacheVersion: 'v1',
+      }),
+    ).toBe('v0.4.0 (abc1234)');
   });
 
   it('prefers report provenance for export labels', () => {

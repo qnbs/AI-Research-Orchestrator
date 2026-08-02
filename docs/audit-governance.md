@@ -9,6 +9,7 @@ security gates so future PRs do not re-litigate the same trade-offs.
 | Gate                                     | Where                                  | Blocking?      | Notes                                                                                      |
 | ---------------------------------------- | -------------------------------------- | -------------- | ------------------------------------------------------------------------------------------ |
 | Typecheck / lint / unit tests + coverage | `deploy.yml`                           | **Yes**        | `pnpm run test:coverage` — 80% lines/statements on `store`/`services`/`hooks`/`lib`        |
+| Prettier `format:check`                  | `deploy.yml`                           | **Yes**        | `pnpm run format:check` on `src/**` and root markdown/json                                 |
 | Critical-path coverage floors            | `deploy.yml` → `check:coverage-floors` | **Yes**        | Ratchet on `providers/`, `geminiService.ts`, `apiKeyService.ts`                            |
 | CodeQL                                   | `security.yml`                         | **Yes**        | `security-extended` query set                                                              |
 | DeepSource (Docker/Shell)                | GitHub App check                       | Advisory       | JavaScript analyzer **disabled** — see `docs/deepsource-javascript-ci.md`; ESLint + deploy.yml authoritative |

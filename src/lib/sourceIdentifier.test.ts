@@ -280,14 +280,15 @@ describe('labels', () => {
     expect(sourceIdentifierLabelKey({ type: 'doi', value: '10.1/x' })).toBe(
       'article.identifier.doi',
     );
-    expect(sourceIdentifierLabelKey({ type: 'pmid', value: '99' })).toBe(
-      'article.identifier.pmid',
-    );
+    expect(sourceIdentifierLabelKey({ type: 'pmid', value: '99' })).toBe('article.identifier.pmid');
     expect(sourceIdentifierLabelKey({ type: 'pmcid', value: '123' })).toBe(
       'article.identifier.pmcid',
     );
     expect(
-      sourceIdentifierLabelKey({ type: 'bogus', value: 'x' } as unknown as import('../types').SourceIdentifier),
+      sourceIdentifierLabelKey({
+        type: 'bogus',
+        value: 'x',
+      } as unknown as import('../types').SourceIdentifier),
     ).toBe('article.identifier.pmid');
     expect(formatSourceIdentifierValue({ type: 'pmcid', value: '123' })).toBe('PMC123');
     expect(formatSourceIdentifierValue({ type: 'pmid', value: '42' })).toBe('42');
@@ -297,11 +298,18 @@ describe('labels', () => {
 
   it('maps copy-to-clipboard label keys for every identifier type', () => {
     expect(sourceIdentifierCopyLabelKey({ type: 'pmid', value: '1' })).toBe('report.copyType.pmid');
-    expect(sourceIdentifierCopyLabelKey({ type: 'arxiv', value: '1' })).toBe('report.copyType.arxiv');
+    expect(sourceIdentifierCopyLabelKey({ type: 'arxiv', value: '1' })).toBe(
+      'report.copyType.arxiv',
+    );
     expect(sourceIdentifierCopyLabelKey({ type: 'doi', value: '1' })).toBe('report.copyType.doi');
-    expect(sourceIdentifierCopyLabelKey({ type: 'pmcid', value: '1' })).toBe('report.copyType.pmcid');
+    expect(sourceIdentifierCopyLabelKey({ type: 'pmcid', value: '1' })).toBe(
+      'report.copyType.pmcid',
+    );
     expect(
-      sourceIdentifierCopyLabelKey({ type: 'bogus', value: 'x' } as unknown as import('../types').SourceIdentifier),
+      sourceIdentifierCopyLabelKey({
+        type: 'bogus',
+        value: 'x',
+      } as unknown as import('../types').SourceIdentifier),
     ).toBe('report.copyType.pmid');
   });
 
@@ -322,7 +330,10 @@ describe('labels', () => {
       'https://www.ncbi.nlm.nih.gov/pmc/articles/PMC888/',
     );
     expect(
-      sourceIdentifierExternalUrl({ type: 'bogus', value: 'x' } as unknown as import('../types').SourceIdentifier),
+      sourceIdentifierExternalUrl({
+        type: 'bogus',
+        value: 'x',
+      } as unknown as import('../types').SourceIdentifier),
     ).toBe('https://pubmed.ncbi.nlm.nih.gov/x/');
   });
 

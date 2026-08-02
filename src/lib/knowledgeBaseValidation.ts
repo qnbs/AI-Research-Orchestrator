@@ -90,4 +90,4 @@ export const isKnowledgeBaseEntry = (item: unknown): item is KnowledgeBaseEntry 
     default:
       return false;
   }
-}
+};

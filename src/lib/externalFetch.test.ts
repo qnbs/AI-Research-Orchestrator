@@ -78,11 +78,15 @@ describe('fetchWithExternalPolicy', () => {
       .mockResolvedValueOnce({ ok: false, status: 503 } as Response)
       .mockResolvedValueOnce({ ok: true, status: 200 } as Response);
 
-    const res = await fetchWithExternalPolicy('https://example.com', {}, {
-      retries: 2,
-      baseMs: 5,
-      jitter: 0,
-    });
+    const res = await fetchWithExternalPolicy(
+      'https://example.com',
+      {},
+      {
+        retries: 2,
+        baseMs: 5,
+        jitter: 0,
+      },
+    );
     expect(res.status).toBe(200);
     expect(globalThis.fetch).toHaveBeenCalledTimes(2);
   });
@@ -108,12 +112,16 @@ describe('fetchWithExternalPolicy', () => {
         }),
     );
 
-    const promise = fetchWithExternalPolicy('https://example.com', {}, {
-      retries: 3,
-      baseMs: 10,
-      jitter: 0,
-      signal: ctrl.signal,
-    });
+    const promise = fetchWithExternalPolicy(
+      'https://example.com',
+      {},
+      {
+        retries: 3,
+        baseMs: 10,
+        jitter: 0,
+        signal: ctrl.signal,
+      },
+    );
 
     await Promise.resolve();
     ctrl.abort();
@@ -134,11 +142,15 @@ describe('fetchWithExternalPolicy', () => {
   it('stops when max elapsed retry budget is exceeded before fetch', async () => {
     globalThis.fetch = vi.fn().mockRejectedValue(new Error('network'));
     await expect(
-      fetchWithExternalPolicy('https://example.com', {}, {
-        retries: 10,
-        baseMs: 1000,
-        maxElapsedMs: 0,
-      }),
+      fetchWithExternalPolicy(
+        'https://example.com',
+        {},
+        {
+          retries: 10,
+          baseMs: 1000,
+          maxElapsedMs: 0,
+        },
+      ),
     ).rejects.toThrow('retry budget exhausted');
     expect(globalThis.fetch).not.toHaveBeenCalled();
   });

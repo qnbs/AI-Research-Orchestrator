@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **CI format gate (P1-7):** `pnpm run format:check` is blocking in `deploy.yml`; documented in `docs/audit-governance.md`.
+- **Critical-path tests (P1-9):** JSON export release `meta`, PDF cover report provenance, PWA manifest smoke in `smoke.spec.ts`.
+- **Cross-browser E2E streak:** `docs/e2e-ci-backlog.md` tracks advisory matrix progress toward promotion.
 - **DeepSource JavaScript analyzer disabled (dashboard):** root cause in `docs/deepsource-javascript-ci.md`; TOML has no JS block; ESLint + `deploy.yml` authoritative; `scripts/build-meta.mjs` at scripts root.
 - **Portable deployment base path (P1-3):** `VITE_BASE_PATH` + `VITE_SITE_ORIGIN` drive Vite `base`, generated manifest/canonical/OG URLs, and service-worker scope via `<base href>`; self-hosting matrix in README.
 - **External fetch retry policy (P1-4):** `fetchWithExternalPolicy` centralizes abort-aware backoff, Retry-After, jitter, and elapsed budget for PubMed, arXiv, and RTK Query fetches.

@@ -161,7 +161,9 @@ export type SourceIdentifierCopyLabelKey =
   | 'report.copyType.pmcid';
 
 /** i18n key for copy-to-clipboard toast labels. */
-export const sourceIdentifierCopyLabelKey = (id: SourceIdentifier): SourceIdentifierCopyLabelKey => {
+export const sourceIdentifierCopyLabelKey = (
+  id: SourceIdentifier,
+): SourceIdentifierCopyLabelKey => {
   switch (id.type) {
     case 'arxiv':
       return 'report.copyType.arxiv';
@@ -209,8 +211,7 @@ export const formatLegacyArticleKeyLabel = (key: string): string => {
 /** Normalize grounded-claim identifier fields for persistence. */
 export const ensureGroundedClaim = (claim: GroundedClaim): GroundedClaim => {
   const validIds = claim.articleIds?.filter(isSourceIdentifier) ?? [];
-  const rawIds =
-    validIds.length > 0 ? validIds : claim.pmids.map((p) => parseLegacyArticleKey(p));
+  const rawIds = validIds.length > 0 ? validIds : claim.pmids.map((p) => parseLegacyArticleKey(p));
   const articleIds = rawIds.map((id) => parseLegacyArticleKey(canonicalArticleKey(id)));
   const pmids = articleIds.map((id) => canonicalArticleKey(id));
   return { ...claim, articleIds, pmids };
