@@ -112,8 +112,9 @@ export const agentDebugSlice = createSlice({
         existing.status = action.payload.status;
         if (action.payload.message) existing.message = action.payload.message;
         if (action.payload.phaseId) existing.phaseId = action.payload.phaseId;
-        if (action.payload.metadata) {
-          existing.metadata = { ...existing.metadata, ...action.payload.metadata };
+        // Replace (do not merge) when provided so promptBudget cannot go stale.
+        if (action.payload.metadata !== undefined) {
+          existing.metadata = action.payload.metadata;
         }
         if (action.payload.status === 'done' || action.payload.status === 'error') {
           existing.completedAt = Date.now();

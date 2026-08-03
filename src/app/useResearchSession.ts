@@ -238,20 +238,22 @@ export function useResearchSession({
           setCurrentPhase(usesDefaultLabel && localized !== i18nKey ? localized : phase);
           const nextTimeline = PIPELINE_TIMELINE_INDEX[phaseId];
           if (nextTimeline >= 0) {
-            setTimelineIndex(nextTimeline);
+            // Monotonic — status notices must not rewind past retrieval/curation.
+            setTimelineIndex((prev) => Math.max(prev, nextTimeline));
           }
 
-          // null = status/metadata phase — update chrome only, no agent row.
+          // null = status/metadata phase — keep debugger message in sync on the
+          // current agent row without inventing a new agent.
           const typedAgent = getAgentForPhaseId(phaseId);
-          if (typedAgent !== null) {
-            const currentAgent = typedAgent;
-            if (currentAgent !== prevAgent) {
+          const agentForUpdate = typedAgent ?? prevAgent;
+          if (agentForUpdate !== null) {
+            if (typedAgent !== null && typedAgent !== prevAgent) {
               if (prevAgent !== null) {
                 dispatch(setAgentStatus({ agentName: prevAgent, status: 'done' }));
               }
               dispatch(
                 addTraceEvent({
-                  agentName: currentAgent,
+                  agentName: typedAgent,
                   status: 'running',
                   message: phase,
                   phaseId,
@@ -259,15 +261,16 @@ export function useResearchSession({
                   metadata: promptBudget ? { promptBudget } : undefined,
                 }),
               );
-              prevAgent = currentAgent;
+              prevAgent = typedAgent;
             } else {
               dispatch(
                 setAgentStatus({
-                  agentName: currentAgent,
+                  agentName: agentForUpdate,
                   status: 'running',
                   message: phase,
                   phaseId,
-                  metadata: promptBudget ? { promptBudget } : undefined,
+                  // Always pass metadata so stale promptBudget does not linger.
+                  metadata: promptBudget ? { promptBudget } : {},
                 }),
               );
             }

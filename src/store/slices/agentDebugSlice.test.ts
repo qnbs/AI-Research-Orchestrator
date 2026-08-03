@@ -152,4 +152,31 @@ describe('agentDebugSlice', () => {
     expect(s.currentTrace!.events[0].phaseId).toBe('pubmed-fetch');
     expect(s.currentTrace!.events[0].message).toBe('fetch details');
   });
+
+  it('setAgentStatus replaces metadata instead of merging stale promptBudget', () => {
+    let s = agentDebugReducer(undefined, startNewTrace({ sessionId: 's', topic: 't' }));
+    s = agentDebugReducer(
+      s,
+      addTraceEvent({
+        agentName: 'Synthesizer',
+        status: 'running',
+        message: 'synth',
+        phaseId: 'synthesis',
+        startedAt: 10,
+        metadata: { promptBudget: { stage: 'synthesis' } },
+      }),
+    );
+    s = agentDebugReducer(
+      s,
+      setAgentStatus({
+        agentName: 'Synthesizer',
+        status: 'running',
+        message: 'finalizing',
+        phaseId: 'finalizing',
+        metadata: {},
+      }),
+    );
+    expect(s.currentTrace!.events[0].phaseId).toBe('finalizing');
+    expect(s.currentTrace!.events[0].metadata).toEqual({});
+  });
 });
