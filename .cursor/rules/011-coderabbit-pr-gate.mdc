@@ -13,10 +13,10 @@ Before merging any PR to `main`, **trigger and fully resolve all automated revie
 
 Address findings from **all** of these when present:
 
-- **CodeRabbit** (`coderabbitai`)
+- **CodeRabbit** (`coderabbitai`) — **always** obtain a real review on the latest head before merge (not a rate-limit placeholder). See rate-limit loop below.
 - **CodeAnt** / Code Antai (`codeant-ai`)
 - **GitHub Copilot** (`copilot-pull-request-reviewer`)
-- **DeepSource** (`deepsource-io`) — **always** comment `@deepsourcebot review` after opening a PR and after every push that needs re-review (team AI Review is on-demand; static analysis alone is not enough). Also address Docker/Shell advisory findings when actionable. Dashboard JavaScript analyzer remains off (`docs/project-facts.json` / `docs/deepsource-javascript-ci.md`); ESLint + `deploy.yml` stay authoritative for TS/TSX.
+- **DeepSource** (`deepsource-io`) — **always** comment `@deepsourcebot review` after opening a PR and after every push that needs re-review (team AI Review is on-demand; static analysis alone is not enough). Prefer a top-level comment whose first line is exactly `@deepsourcebot review`. If the PR report still shows the on-demand notice / no `DeepSource: AI Review` check appears, a human collaborator may need to re-post (DeepSource can ignore GitHub App bot mentions). Also address Docker/Shell advisory findings when actionable. Dashboard JavaScript analyzer remains off (`docs/project-facts.json` / `docs/deepsource-javascript-ci.md`); ESLint + `deploy.yml` stay authoritative for TS/TSX.
 - Other automated PR reviewers that post inline or summary comments (e.g. Socket Security actionable items when they block merge, Cursor Bugbot when requested)
 
 Human review comments that request concrete fixes are also in scope when they are open on the PR.
@@ -32,11 +32,22 @@ Address **every** item, including:
 
 ## Workflow (loop until clear)
 
-1. After pushing PR updates, **trigger on-demand reviewers**: `@coderabbitai review` when needed, and **always** `@deepsourcebot review` (DeepSource AI Review is on-demand for this team — static analysis alone does not count as a completed AI Review).
+1. After pushing PR updates, **trigger on-demand reviewers**: `@coderabbitai review` when a full review is missing/stale/rate-limited, and **always** `@deepsourcebot review` (DeepSource AI Review is on-demand for this team — static analysis alone does not count as a completed AI Review).
 2. Collect **all** review threads (inline + summary + out-of-range) from every in-scope bot, including DeepSource AI Review findings.
 3. For each item: fix in code/docs, or reply with a clear English rationale if intentionally deferred (rare — prefer fixing).
-4. Push follow-up commits; re-trigger `@deepsourcebot review` (and CodeRabbit when applicable); **repeat until no new actionable comments remain**.
+4. Push follow-up commits; re-trigger `@deepsourcebot review` and CodeRabbit as needed; **repeat until no new actionable comments remain**.
 5. Do **not** merge while unresolved automated review comments remain.
+
+## CodeRabbit rate-limit loop (mandatory — never skip)
+
+A green CodeRabbit check that only says **“Review rate limited”** is **not** a completed review. Do **not** merge on that alone.
+
+1. Parse the PR summary / comment for **`Next review available in: N minutes`** (or similar).
+2. **Wait** at least `N` minutes (add ~2–5 minutes buffer). Prefer sleeping/polling over guessing; typical windows are **14–60+ minutes**.
+3. Re-poll: issue comments + `pulls/N/reviews` for `coderabbitai[bot]` on the **current** head SHA.
+4. When the window has elapsed, post a clean top-level `@coderabbitai review` (and `@coderabbitai summary` only if needed). Prefer re-trigger over relying on auto-review after a rate-limit event.
+5. If still rate-limited, read the new wait time and **repeat** — do not declare quiescence.
+6. Quiescence requires a real CodeRabbit review (APPROVED / COMMENTED / CHANGES_REQUESTED with a review body) that targets the **latest** head commit, plus all actionable threads resolved.
 
 ## Exceptions
 
