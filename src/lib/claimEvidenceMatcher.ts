@@ -464,6 +464,7 @@ export function assessClaimArticleEvidence(
       fieldOverlap.overlapCount >= 2 ||
       fieldOverlap.overlapCount >= Math.ceil(aggregateOverlap / 2);
     if (!meetsOverlap) return false;
+    if (fieldOverlap.field !== 'title') return true;
     const claimDirectionStems = claimContent.filter(isDirectionStem);
     if (claimDirectionStems.length === 0) return true;
     return claimDirectionStems.some((token) => fieldOverlap.overlapTokens.has(token));
@@ -570,6 +571,15 @@ export function assessClaimArticleEvidence(
       spans: bestReportSpan ? [bestReportSpan] : [],
       contentOverlapCount: totalOverlap,
       reasons: ['title and abstract provide conflicting lexical signals for this claim'],
+    };
+  }
+
+  if (!hasSupportingField) {
+    return {
+      relation: 'insufficient',
+      spans: [],
+      contentOverlapCount: totalOverlap,
+      reasons: ['aggregate overlap met threshold but no field aligns with claim direction'],
     };
   }
 
