@@ -359,14 +359,29 @@ describe('createOllamaProvider', () => {
     ]);
   });
 
-  it('testConnection checks /api/tags', async () => {
+  it('testConnection probes /api/version then /api/tags', async () => {
     const timeoutSignal = new AbortController().signal;
     const timeoutSpy = vi.spyOn(AbortSignal, 'timeout').mockReturnValue(timeoutSignal);
-    global.fetch = vi.fn().mockResolvedValueOnce({ ok: true });
+    global.fetch = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ version: '0.5.0' }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ models: [{ name: 'llama3.1:8b' }] }),
+      });
     const provider = createOllamaProvider();
     await expect(provider.testConnection!('http://localhost:11434')).resolves.toBe(true);
     expect(timeoutSpy).toHaveBeenCalledWith(15_000);
-    expect(global.fetch).toHaveBeenCalledWith(
+    expect(global.fetch).toHaveBeenNthCalledWith(
+      1,
+      'http://localhost:11434/api/version',
+      expect.objectContaining({ signal: timeoutSignal }),
+    );
+    expect(global.fetch).toHaveBeenNthCalledWith(
+      2,
       'http://localhost:11434/api/tags',
       expect.objectContaining({ signal: timeoutSignal }),
     );

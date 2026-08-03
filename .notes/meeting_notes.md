@@ -194,3 +194,8 @@
 - Confirmed silent demo fallback in nonAi stream on empty/fail/offline.
 - ADR 0016: explicit `educationalDemoMode` only; Dexie v6 stamps demo sourceClass.
 - Next: immutable execution provenance (PR2), abort contracts (PR3), stateful chat (PR4).
+
+## 2026-08-03 — Integrity wave #200–#204 merged; PR6 Ollama Local AI
+
+- Merged: #200 demo quarantine, #201 immutable provenance, #202 abort/timeout, #203 stateful chat, #204 claim/corpus-supported terminology.
+- Next in remediation plan: PR6 Ollama first-class Local AI → PR7 typed pipeline events → PR8 E2E fixtures → PR9 eval → PR10 docs → PR11 CI governance.

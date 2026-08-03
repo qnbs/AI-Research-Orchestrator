@@ -12,6 +12,8 @@ export const CSP_ALLOWED_ORIGINS = new Set([
   'https://openrouter.ai',
   'https://api.anthropic.com',
   'http://localhost:11434',
+  'http://127.0.0.1:11434',
+  'http://[::1]:11434',
 ]);
 
 export type EndpointValidationResult =
@@ -53,6 +55,7 @@ export function validateCustomEndpointUrl(raw: string): EndpointValidationResult
   const isLoopback =
     parsed.hostname === 'localhost' ||
     parsed.hostname === '127.0.0.1' ||
+    parsed.hostname === '::1' ||
     parsed.hostname === '[::1]';
 
   if (parsed.protocol === 'http:' && !isLoopback) {

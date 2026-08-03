@@ -7,6 +7,7 @@ import type { AIProviderSelection } from '../services/providers/types';
 import type { AbstractStatus, RankedArticle } from '../types';
 import { estimateTokensFromText } from './resilience';
 import { rankArticles } from '../services/nonAi/ranker';
+import { estimateOllamaInputTokenBudget } from './ollamaContextBudget';
 
 export type PromptFieldLimits = {
   maxTitleChars: number;
@@ -65,6 +66,9 @@ export type RankingArticlePromptPayload = {
 };
 
 export const getInputTokenBudget = (provider: AIProviderSelection, model: string): number => {
+  if (provider === 'ollama') {
+    return estimateOllamaInputTokenBudget(model).budget;
+  }
   const modelKey = model.toLowerCase();
   if (/pro|opus|gpt-5|o3/i.test(modelKey)) {
     return 28_000;

@@ -16,6 +16,7 @@ import { isNonAiAvailable } from '../../services/nonAi';
 import type { TranslationKey } from '../../i18n/translations';
 import { validateCustomEndpointUrl, isOriginCspAllowed } from '../../lib/endpointPolicy';
 import { BaseUrlValidationAlerts } from './BaseUrlValidationAlerts';
+import { OllamaHealthPanel } from './OllamaHealthPanel';
 
 type AiPersona = Settings['ai']['aiPersona'];
 
@@ -200,13 +201,18 @@ const BaseUrlField: React.FC = () => {
   );
 };
 
-const ProviderFields: React.FC = () => (
-  <>
-    <ProviderSelect />
-    <ModelField />
-    <BaseUrlField />
-  </>
-);
+const ProviderFields: React.FC = () => {
+  const { tempSettings } = useSettingsView();
+  const provider = tempSettings.ai.provider ?? 'gemini';
+  return (
+    <>
+      <ProviderSelect />
+      <ModelField />
+      <BaseUrlField />
+      {provider === 'ollama' && <OllamaHealthPanel />}
+    </>
+  );
+};
 
 const PersonaPicker: React.FC = () => {
   const { tempSettings, setTempSettings, t } = useSettingsView();

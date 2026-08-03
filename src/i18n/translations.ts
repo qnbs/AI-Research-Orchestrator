@@ -235,6 +235,21 @@ export const translations = {
       'Powered by the Non-AI Programmatic Research Engine — deterministic, works fully offline, and costs nothing.',
     'settings.ai.nonai_unavailable_desc':
       'The Non-AI Programmatic Research Engine is currently unavailable in this environment.',
+    'settings.ai.ollama.health_title': 'Local AI (Ollama) health',
+    'settings.ai.ollama.refresh': 'Refresh',
+    'settings.ai.ollama.probing': 'Checking…',
+    'settings.ai.ollama.privacy_note':
+      'Local AI runs the model on your machine, but literature retrieval still uses the network (PubMed / arXiv) unless you are offline.',
+    'settings.ai.ollama.status_ok': 'Connected to {origin} (Ollama {version}).',
+    'settings.ai.ollama.status_fail': 'Ollama unavailable ({reason}): {message}',
+    'settings.ai.ollama.last_checked': 'Last successful check: {time}',
+    'settings.ai.ollama.models_label': 'Discovered models',
+    'settings.ai.ollama.models_empty': 'No models installed. Pull a model in Ollama, then refresh.',
+    'settings.ai.ollama.models_placeholder': 'Select a discovered model…',
+    'settings.ai.ollama.model_missing':
+      'Model “{model}” was not found on the Ollama server. Pull it or pick a discovered model.',
+    'settings.ai.ollama.model_small_warn':
+      '“{model}” looks small for structured ranking/synthesis (prompt budget ≈ {budget} tokens). Prefer a larger local model when possible.',
     'onboarding.welcome_prefix': 'Welcome to the',
     'onboarding.welcome_highlight': 'Future of Research',
     'onboarding.subtitle': 'Your intelligent assistant for scientific literature reviews.',
@@ -542,6 +557,22 @@ export const translations = {
       'Angetrieben von der Non-AI Programmatic Research Engine — deterministisch, funktioniert vollständig offline und kostenlos.',
     'settings.ai.nonai_unavailable_desc':
       'Die Non-AI Programmatic Research Engine ist in dieser Umgebung derzeit nicht verfügbar.',
+    'settings.ai.ollama.health_title': 'Local AI (Ollama) Status',
+    'settings.ai.ollama.refresh': 'Aktualisieren',
+    'settings.ai.ollama.probing': 'Prüfe…',
+    'settings.ai.ollama.privacy_note':
+      'Local AI führt das Modell lokal aus, aber die Literaturabfrage nutzt weiterhin das Netzwerk (PubMed / arXiv), sofern Sie nicht offline sind.',
+    'settings.ai.ollama.status_ok': 'Verbunden mit {origin} (Ollama {version}).',
+    'settings.ai.ollama.status_fail': 'Ollama nicht erreichbar ({reason}): {message}',
+    'settings.ai.ollama.last_checked': 'Letzte erfolgreiche Prüfung: {time}',
+    'settings.ai.ollama.models_label': 'Gefundene Modelle',
+    'settings.ai.ollama.models_empty':
+      'Keine Modelle installiert. Laden Sie ein Modell in Ollama und aktualisieren Sie.',
+    'settings.ai.ollama.models_placeholder': 'Gefundenes Modell wählen…',
+    'settings.ai.ollama.model_missing':
+      'Modell „{model}“ wurde auf dem Ollama-Server nicht gefunden. Laden Sie es oder wählen Sie ein gefundenes Modell.',
+    'settings.ai.ollama.model_small_warn':
+      '„{model}“ wirkt klein für strukturiertes Ranking/Synthese (Prompt-Budget ≈ {budget} Tokens). Bevorzugen Sie nach Möglichkeit ein größeres lokales Modell.',
     'onboarding.welcome_prefix': 'Willkommen in der',
     'onboarding.welcome_highlight': 'Zukunft der Recherche',
     'onboarding.subtitle': 'Ihr intelligenter Assistent für wissenschaftliche Literaturrecherchen.',

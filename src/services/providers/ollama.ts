@@ -2,11 +2,12 @@
  * Ollama local provider adapter.
  *
  * Uses plain fetch against the Ollama HTTP API (`/api/generate` and `/api/chat`).
- * No API key is required. Streaming reads NDJSON lines. JSON mode is requested
- * via `format: 'json'` when `json: true` is set on the request.
+ * No API key is required. Streaming reads NDJSON lines via `streamOllamaNdjson`.
+ * JSON mode is requested via `format: 'json'` when `json: true` is set.
  */
 
 import { AppError } from '../../lib/errors';
+import { streamOllamaNdjson } from '../../lib/ollamaNdjson';
 import type { AIProvider } from './provider';
 import type {
   AIChatSessionRequest,
@@ -16,6 +17,7 @@ import type {
   ProviderChatSession,
 } from './types';
 import { providerCapabilities } from './types';
+import { probeOllamaHealth } from './ollamaHealth';
 
 function getBaseUrl(requestBaseURL?: string): string {
   if (requestBaseURL) return requestBaseURL.replace(/\/$/, '');
@@ -29,9 +31,19 @@ function resetClient(): void {
 function mapOllamaError(error: unknown): AppError {
   if (error instanceof AppError) return error;
   if (error instanceof Error) {
+    const message = error.message;
+    if (/not found|model .* not found|pull model/i.test(message)) {
+      return new AppError({
+        code: 'PROVIDER_UNAVAILABLE',
+        message: `Ollama model not found: ${message}`,
+        retryable: false,
+        cause: error,
+        context: 'ollama_model_not_found',
+      });
+    }
     return new AppError({
       code: 'PROVIDER_UNAVAILABLE',
-      message: `Ollama error: ${error.message}`,
+      message: `Ollama error: ${message}`,
       retryable: true,
       cause: error,
     });
@@ -44,35 +56,17 @@ function mapOllamaError(error: unknown): AppError {
   });
 }
 
-async function* streamNdjson<
-  T extends { done?: boolean; error?: string; response?: string; message?: { content?: string } },
->(response: Response): AsyncGenerator<T> {
-  if (!response.body) return;
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = '';
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-    const lines = buffer.split('\n');
-    buffer = lines.pop() ?? '';
-    for (const line of lines) {
-      if (!line.trim()) continue;
-      try {
-        yield JSON.parse(line) as T;
-      } catch {
-        // ignore malformed lines
-      }
-    }
-  }
-  if (buffer.trim()) {
-    try {
-      yield JSON.parse(buffer) as T;
-    } catch {
-      // ignore trailing malformed line
-    }
-  }
+function throwHttpError(status: number, text: string, label: string): never {
+  const modelMissing = status === 404 || /not found|model .* not found/i.test(text);
+  throw new AppError({
+    code: status === 401 ? 'PROVIDER_AUTH' : 'PROVIDER_UNAVAILABLE',
+    message: modelMissing
+      ? `Ollama model not found (${label}): ${text}`
+      : `Ollama ${label} responded with ${status}: ${text}`,
+    retryable: !modelMissing && status >= 500,
+    status,
+    context: modelMissing ? 'ollama_model_not_found' : undefined,
+  });
 }
 
 export function createOllamaProvider(): AIProvider {
@@ -105,15 +99,13 @@ export function createOllamaProvider(): AIProvider {
 
       if (!response.ok) {
         const text = await response.text().catch(() => 'Unknown error');
-        throw new AppError({
-          code: response.status === 401 ? 'PROVIDER_AUTH' : 'PROVIDER_UNAVAILABLE',
-          message: `Ollama responded with ${response.status}: ${text}`,
-          retryable: response.status >= 500,
-          status: response.status,
-        });
+        throwHttpError(response.status, text, 'generate');
       }
 
-      const data = (await response.json()) as { response?: string };
+      const data = (await response.json()) as { response?: string; error?: string };
+      if (typeof data.error === 'string' && data.error.length > 0) {
+        throw mapOllamaError(new Error(data.error));
+      }
       return { text: data.response ?? '' };
     },
 
@@ -138,15 +130,16 @@ export function createOllamaProvider(): AIProvider {
 
       if (!response.ok) {
         const text = await response.text().catch(() => 'Unknown error');
-        throw new AppError({
-          code: response.status === 401 ? 'PROVIDER_AUTH' : 'PROVIDER_UNAVAILABLE',
-          message: `Ollama responded with ${response.status}: ${text}`,
-          retryable: response.status >= 500,
-          status: response.status,
-        });
+        throwHttpError(response.status, text, 'generate stream');
       }
 
-      for await (const chunk of streamNdjson<{ response?: string }>(response)) {
+      for await (const chunk of streamOllamaNdjson<{ response?: string; error?: string }>(
+        response,
+        { signal: request.signal },
+      )) {
+        if (typeof chunk.error === 'string' && chunk.error.length > 0) {
+          throw mapOllamaError(new Error(chunk.error));
+        }
         if (chunk.response) yield { text: chunk.response };
       }
       yield { done: true };
@@ -177,22 +170,17 @@ export function createOllamaProvider(): AIProvider {
 
           if (!response.ok) {
             const text = await response.text().catch(() => 'Unknown error');
-            throw new AppError({
-              code: response.status === 401 ? 'PROVIDER_AUTH' : 'PROVIDER_UNAVAILABLE',
-              message: `Ollama chat responded with ${response.status}: ${text}`,
-              retryable: response.status >= 500,
-              status: response.status,
-            });
+            throwHttpError(response.status, text, 'chat');
           }
 
           return (async function* () {
             let assistant = '';
             let completed = false;
-            for await (const chunk of streamNdjson<{
+            for await (const chunk of streamOllamaNdjson<{
               message?: { content?: string };
               done?: boolean;
               error?: string;
-            }>(response)) {
+            }>(response, { signal: request.signal })) {
               if (typeof chunk.error === 'string' && chunk.error.length > 0) {
                 throw new AppError({
                   code: 'PROVIDER_UNAVAILABLE',
@@ -227,11 +215,8 @@ export function createOllamaProvider(): AIProvider {
     mapError: mapOllamaError,
 
     async testConnection(baseURL?: string): Promise<boolean> {
-      const resolvedBaseURL = getBaseUrl(baseURL);
-      const response = await fetch(`${resolvedBaseURL}/api/tags`, {
-        signal: AbortSignal.timeout(15_000),
-      });
-      return response.ok;
+      const result = await probeOllamaHealth(baseURL, { force: true });
+      return result.ok;
     },
 
     reset: resetClient,
