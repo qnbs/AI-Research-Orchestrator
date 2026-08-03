@@ -21,6 +21,8 @@ import type {
   JournalCandidate,
   Settings,
 } from '../../types';
+import { isAbortLikeError } from '../../lib/abortUtils';
+import { EXECUTION_PROVENANCE_PHASE } from '../../lib/researchExecutionContext';
 import {
   generateResearchReportStream,
   generateResearchAnalysis,
@@ -33,6 +35,17 @@ import {
   disambiguateJournal,
   suggestJournals,
 } from '../../services/geminiService';
+
+/** Abort-like cancellation without importing `errors.ts` (avoids store↔i18n cycles). */
+function isSilentStreamAbort(error: unknown): boolean {
+  if (isAbortLikeError(error)) return true;
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    (error as { code?: unknown }).code === 'STREAM_ABORTED'
+  );
+}
 
 // ── Streaming report state ────────────────────────────────────────────────────
 export interface StreamingReportState {
@@ -131,7 +144,7 @@ export const geminiApi = createApi({
           for await (const chunk of stream) {
             if (controller.signal.aborted) break;
             // Skip bootstrap provenance event (ADR 0017) — not a user-facing phase.
-            if (chunk.phase === 'execution-provenance') continue;
+            if (chunk.phase === EXECUTION_PROVENANCE_PHASE) continue;
             updateCachedData((draft) => {
               draft.phase = chunk.phase;
               if (chunk.synthesisChunk) draft.synthesisChunks.push(chunk.synthesisChunk);
@@ -145,7 +158,7 @@ export const geminiApi = createApi({
             if (!draft.isComplete) draft.isComplete = true;
           });
         } catch (err) {
-          if (err instanceof DOMException && err.name === 'AbortError') {
+          if (isSilentStreamAbort(err)) {
             updateCachedData((draft) => {
               draft.isComplete = true;
             });

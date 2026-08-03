@@ -156,6 +156,24 @@ describe('researchOrchestratorAdapter', () => {
     expect(frozenProvider).toBe('heuristic');
   });
 
+  it('rejects with STREAM_ABORTED when signal is already aborted', async () => {
+    const liveStream = vi.fn(async function* () {
+      yield { phase: 'should-not-run' };
+    });
+    const ac = new AbortController();
+    ac.abort();
+
+    const gen = generateResearchReportStreamWithMode(
+      baseInput,
+      baseAiSettings,
+      liveStream,
+      ac.signal,
+    );
+    await expect(gen.next()).rejects.toMatchObject({ code: 'STREAM_ABORTED' });
+    expect(liveStream).not.toHaveBeenCalled();
+    expect(resolveActiveInferenceMode).not.toHaveBeenCalled();
+  });
+
   it('freezes heuristic provenance once at start even if later resolve would be live', async () => {
     vi.mocked(resolveActiveInferenceMode).mockResolvedValue({
       mode: 'heuristic',

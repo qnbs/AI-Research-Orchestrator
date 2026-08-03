@@ -156,12 +156,7 @@ export interface ReportGenerationProvenance {
   /** Prompt catalog version at run start. */
   promptRegistryVersion?: string;
   /** Append-only mid-run transitions (prefer clean restart; usually empty). */
-  transitions?: Array<{
-    at: number;
-    fromMode: 'live' | 'heuristic';
-    toMode: 'live' | 'heuristic';
-    reason: string;
-  }>;
+  transitions?: import('./lib/researchExecutionContext').InferenceTransition[];
 }
 
 export interface AuthorProfileInput {

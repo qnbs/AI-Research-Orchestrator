@@ -68,41 +68,40 @@ export const buildReportGenerationProvenance = (
   options: StampReportProvenanceOptions = {},
 ): ReportGenerationProvenance => {
   const ctx = options.executionContext;
-  if (ctx) {
-    return {
-      appVersion: ctx.appVersion,
-      buildCommitSha: ctx.buildCommitSha,
-      dexieSchemaVersion: ctx.dexieSchemaVersion,
-      swCacheVersion: ctx.swCacheVersion,
-      generatedAt: options.generatedAt ?? Date.now(),
-      inferenceMode: ctx.inferenceMode,
-      providerId: ctx.providerId,
-      model: ctx.model,
-      executionId: ctx.executionId,
-      inferenceReason: ctx.inferenceReason,
-      startedAt: ctx.startedAt,
-      ...(ctx.endpointOrigin ? { endpointOrigin: ctx.endpointOrigin } : {}),
-      promptRegistryVersion: ctx.promptRegistryVersion,
-      ...(ctx.transitions.length > 0 ? { transitions: ctx.transitions } : {}),
-    };
-  }
+  const release = ctx
+    ? {
+        appVersion: ctx.appVersion,
+        buildCommitSha: ctx.buildCommitSha,
+        dexieSchemaVersion: ctx.dexieSchemaVersion,
+        swCacheVersion: ctx.swCacheVersion,
+      }
+    : getAppReleaseInfo();
+  const inferenceMode = ctx?.inferenceMode ?? options.inferenceMode;
+  const providerId = ctx?.providerId ?? options.providerId;
+  const model = ctx?.model ?? options.model;
+  const executionId = ctx?.executionId ?? options.executionId;
+  const inferenceReason = ctx?.inferenceReason ?? options.inferenceReason;
+  const startedAt = ctx?.startedAt ?? options.startedAt;
+  const endpointOrigin = ctx?.endpointOrigin ?? options.endpointOrigin;
+  const promptRegistryVersion = ctx?.promptRegistryVersion ?? options.promptRegistryVersion;
+  const transitions = ctx?.transitions?.length
+    ? ctx.transitions
+    : options.transitions && options.transitions.length > 0
+      ? options.transitions
+      : undefined;
 
   return {
-    ...getAppReleaseInfo(),
+    ...release,
     generatedAt: options.generatedAt ?? Date.now(),
-    inferenceMode: options.inferenceMode,
-    providerId: options.providerId,
-    model: options.model,
-    ...(options.executionId ? { executionId: options.executionId } : {}),
-    ...(options.inferenceReason ? { inferenceReason: options.inferenceReason } : {}),
-    ...(options.startedAt !== undefined ? { startedAt: options.startedAt } : {}),
-    ...(options.endpointOrigin ? { endpointOrigin: options.endpointOrigin } : {}),
-    ...(options.promptRegistryVersion
-      ? { promptRegistryVersion: options.promptRegistryVersion }
-      : {}),
-    ...(options.transitions && options.transitions.length > 0
-      ? { transitions: options.transitions }
-      : {}),
+    inferenceMode,
+    providerId,
+    model,
+    ...(executionId ? { executionId } : {}),
+    ...(inferenceReason ? { inferenceReason } : {}),
+    ...(startedAt !== undefined ? { startedAt } : {}),
+    ...(endpointOrigin ? { endpointOrigin } : {}),
+    ...(promptRegistryVersion ? { promptRegistryVersion } : {}),
+    ...(transitions ? { transitions } : {}),
   };
 };
 

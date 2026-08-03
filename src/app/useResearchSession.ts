@@ -245,14 +245,6 @@ export function useResearchSession({
 
           if (partialReport) {
             finalReport = partialReport;
-<<<<<<< HEAD
-=======
-            // Empty-retrieval / non-streaming reports carry full synthesis on `report`
-            // without `synthesisChunk` events — seed so completion does not wipe it.
-            if (!finalSynthesis && partialReport.synthesis) {
-              finalSynthesis = partialReport.synthesis;
-            }
->>>>>>> 8b7a43f (fix(integrity): preserve report synthesis when stream has no chunks)
             if (isFirstChunk) {
               setReport(finalReport);
               setReportStatus('streaming');
@@ -295,10 +287,10 @@ export function useResearchSession({
           frozenExecutionContext
             ? { executionContext: frozenExecutionContext }
             : {
+                // Defensive fallback only if the stream omitted the freeze event.
                 inferenceMode: 'heuristic',
                 providerId: 'heuristic',
                 model: aiSettings.model,
-                inferenceReason: 'no_api_key',
               },
         );
         const corpusPmids = completeReport.rankedArticles.map((a) => a.pmid);

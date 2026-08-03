@@ -4,7 +4,7 @@
  * Freezes ResearchExecutionContext once at stream start (ADR 0017).
  */
 import type { ResearchInput, ResearchReport, Settings } from '../types';
-import { AppError } from '../lib/errors';
+import { throwIfAborted } from '../lib/errors';
 import type { PromptBudgetAccounting } from '../lib/promptBudget';
 import {
   buildResearchExecutionContext,
@@ -14,15 +14,6 @@ import {
 import { generateNonAiResearchReportStream } from './nonAi';
 import { resolveActiveInferenceMode } from './resolveActiveInferenceMode';
 import type { InferenceModeSnapshot } from './inferenceMode';
-
-function throwIfAborted(signal?: AbortSignal): void {
-  if (signal?.aborted) {
-    throw new AppError({
-      code: 'STREAM_ABORTED',
-      message: 'Research stream aborted',
-    });
-  }
-}
 
 export type ResearchStreamEvent = {
   report?: ResearchReport;
@@ -71,17 +62,17 @@ export async function* generateResearchReportStreamWithMode(
   liveStream: LiveStream,
   signal?: AbortSignal,
 ): AsyncGenerator<ResearchStreamEvent> {
-  throwIfAborted(signal);
+  throwIfAborted(signal, 'Research stream aborted');
   const snapshot: InferenceModeSnapshot = input.educationalDemoMode
     ? EDUCATIONAL_DEMO_SNAPSHOT
     : await resolveActiveInferenceMode({
         forceHeuristic: Boolean(aiSettings.forceHeuristicMode),
         provider: aiSettings.provider ?? 'gemini',
       });
-  throwIfAborted(signal);
+  throwIfAborted(signal, 'Research stream aborted');
   const executionContext = buildResearchExecutionContext({ snapshot, aiSettings });
   yield { phase: EXECUTION_PROVENANCE_PHASE, executionContext };
-  throwIfAborted(signal);
+  throwIfAborted(signal, 'Research stream aborted');
 
   if (snapshot.mode === 'heuristic') {
     yield* generateNonAiResearchReportStream(input, signal);
