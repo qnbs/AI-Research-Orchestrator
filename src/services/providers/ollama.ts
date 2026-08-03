@@ -45,7 +45,7 @@ function mapOllamaError(error: unknown): AppError {
 }
 
 async function* streamNdjson<
-  T extends { done?: boolean; response?: string; message?: { content?: string } },
+  T extends { done?: boolean; error?: string; response?: string; message?: { content?: string } },
 >(response: Response): AsyncGenerator<T> {
   if (!response.body) return;
   const reader = response.body.getReader();
@@ -187,13 +187,36 @@ export function createOllamaProvider(): AIProvider {
 
           return (async function* () {
             let assistant = '';
-            for await (const chunk of streamNdjson<{ message?: { content?: string } }>(response)) {
+            let completed = false;
+            for await (const chunk of streamNdjson<{
+              message?: { content?: string };
+              done?: boolean;
+              error?: string;
+            }>(response)) {
+              if (typeof chunk.error === 'string' && chunk.error.length > 0) {
+                throw new AppError({
+                  code: 'PROVIDER_UNAVAILABLE',
+                  message: `Ollama chat stream error: ${chunk.error}`,
+                  retryable: true,
+                });
+              }
               if (chunk.message?.content) {
                 assistant += chunk.message.content;
                 yield { text: chunk.message.content };
               }
+              if (chunk.done === true) {
+                completed = true;
+              }
             }
-            // Commit the completed turn so subsequent sends keep multi-turn context.
+            if (!completed) {
+              throw new AppError({
+                code: 'PROVIDER_UNAVAILABLE',
+                message: 'Ollama chat stream ended without a done marker',
+                retryable: true,
+              });
+            }
+            // Commit only after a protocol-complete stream so failed turns
+            // never poison multi-turn context.
             messages.push({ role: 'user', content: message });
             messages.push({ role: 'assistant', content: assistant });
           })();

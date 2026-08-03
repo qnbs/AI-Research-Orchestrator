@@ -233,6 +233,55 @@ describe('createOpenAIProvider', () => {
     ]);
   });
 
+  it('does not commit history after a mid-stream failure', async () => {
+    createMock
+      .mockResolvedValueOnce({
+        [Symbol.asyncIterator]: async function* () {
+          yield { choices: [{ delta: { content: 'ok' } }] };
+        },
+      })
+      .mockResolvedValueOnce({
+        [Symbol.asyncIterator]: async function* () {
+          yield { choices: [{ delta: { content: 'partial' } }] };
+          throw new Error('stream broken');
+        },
+      })
+      .mockResolvedValueOnce({
+        [Symbol.asyncIterator]: async function* () {
+          yield { choices: [{ delta: { content: 'recovered' } }] };
+        },
+      });
+
+    const provider = createOpenAIProvider();
+    const session = await provider.createChatSession({
+      model: 'gpt-5',
+      system: 'sys',
+      baseURL: 'https://api.openai.com/v1',
+    });
+
+    for await (const _chunk of await session.sendMessageStream({ message: 't1' })) {
+      // drain
+    }
+    await expect(
+      (async () => {
+        for await (const _chunk of await session.sendMessageStream({ message: 'bad' })) {
+          // drain
+        }
+      })(),
+    ).rejects.toThrow(/stream broken/);
+
+    for await (const _chunk of await session.sendMessageStream({ message: 't3' })) {
+      // drain
+    }
+
+    expect(createMock.mock.calls[2][0].messages).toEqual([
+      { role: 'system', content: 'sys' },
+      { role: 'user', content: 't1' },
+      { role: 'assistant', content: 'ok' },
+      { role: 'user', content: 't3' },
+    ]);
+  });
+
   it('testConnection pings a cheap model', async () => {
     createMock.mockResolvedValueOnce({ choices: [{ message: { content: 'p' } }] });
     const provider = createOpenAIProvider();
