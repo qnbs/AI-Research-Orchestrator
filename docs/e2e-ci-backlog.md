@@ -38,6 +38,13 @@ parity). `fail-fast: false` keeps all browsers reporting.
 
 `docs/project-facts.json` → `e2e.crossBrowserAdvisory: false`.
 
+### Incident — main tip WebKit canceled during apt install (2026-08-03)
+
+- **Symptom:** `main` tip `2d8d4f9` (PR10) cross-browser run [`30807274942`](https://github.com/qnbs/AI-Research-Orchestrator/actions/runs/30807274942) concluded **canceled**; only WebKit canceled, Firefox/mobile-chrome green.
+- **Where:** Step `Install Playwright browser` ran ~30 minutes downloading WebKit OS deps from `azure.archive.ubuntu.com`, then hit job `timeout-minutes: 30` (`##[error]The operation was canceled.`). No Playwright tests executed.
+- **Related pattern:** Burst merges also canceled earlier `main` runs while `cancel-in-progress: true` applied to push events (e.g. `f5b5ed7` canceled when `4fd9419` pushed) — fixed by PR-only concurrency in PR11.
+- **Fix (PR11):** PR-only `cancel-in-progress`; cache `~/.cache/ms-playwright`; split `playwright install` / `install-deps` with 3× retry + `apt-get update`; raise cross-browser job timeout to **45** minutes.
+
 ### Incident — WebKit Ollama health masked by advisory gate (2026-08-03)
 
 - **Symptom:** `main` run [`30786120773`](https://github.com/qnbs/AI-Research-Orchestrator/actions/runs/30786120773) after #206 merge showed Cross-browser WebKit red while the overall workflow stayed green.

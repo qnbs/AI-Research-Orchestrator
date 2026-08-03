@@ -1,5 +1,7 @@
 # Remediation Session Baseline — 2026-08-02 (10:10 UTC)
 
+> **Point-in-time snapshot.** Cross-browser and a11y are **blocking** as of 2026-08-03 (`docs/project-facts.json`, `docs/e2e-ci-backlog.md`, `docs/ci-branch-governance.md`). Rows below describing advisory `continue-on-error` are historical.
+
 ## Metadata
 
 | Field                             | Value                                      |

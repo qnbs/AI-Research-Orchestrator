@@ -5,6 +5,10 @@
 # Chromium e2e.yml. fail-fast is false so all browsers still report. A green
 # check means every matrix leg passed (no continue-on-error mask).
 # History / streak notes: docs/e2e-ci-backlog.md
+#
+# Install hardening (2026-08-03): main tip 2d8d4f9 WebKit was cancelled at the
+# job timeout while `playwright install --with-deps` crawled apt mirrors — not a
+# test failure. Cache browser binaries, retry OS-deps install, longer job budget.
 # ==============================================================================
 
 name: E2E Cross-Browser Smoke
@@ -23,13 +27,16 @@ permissions:
 
 concurrency:
   group: "${{ github.workflow }}-${{ github.ref }}"
-  cancel-in-progress: true
+  # Cancel superseded PR runs only — never abort an in-flight main validation.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   cross-browser-smoke:
     name: "Cross-browser (${{ matrix.browser }})"
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    # WebKit --with-deps can spend 20+ minutes on slow apt mirrors; leave headroom
+    # for the seven-spec suite after a cold install.
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
@@ -60,13 +67,48 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Install Playwright browser
+      - name: Resolve Playwright browser target
+        id: pw
         run: |
           target="${{ matrix.browser }}"
           if [ "$target" = "mobile-chrome" ]; then
             target="chromium"
           fi
-          pnpm exec playwright install --with-deps "$target"
+          echo "target=${target}" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Playwright browsers
+        # actions/cache@v4.2.4 — browser binaries only (~/.cache/ms-playwright)
+        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ steps.pw.outputs.target }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-${{ steps.pw.outputs.target }}-
+
+      - name: Install Playwright browser and OS deps
+        # Split browser download (cacheable) from apt OS deps; retry on apt stalls.
+        run: |
+          set -euo pipefail
+          target="${{ steps.pw.outputs.target }}"
+          max=3
+          attempt=1
+          while true; do
+            echo "::group::Playwright install attempt ${attempt}/${max} (target=${target})"
+            if pnpm exec playwright install "$target" \
+              && pnpm exec playwright install-deps "$target"; then
+              echo "::endgroup::"
+              exit 0
+            fi
+            echo "::endgroup::"
+            if [ "$attempt" -ge "$max" ]; then
+              echo "Playwright install failed after ${max} attempts" >&2
+              exit 1
+            fi
+            echo "Install attempt ${attempt} failed; refreshing apt and retrying in 25s..."
+            attempt=$((attempt + 1))
+            sudo apt-get update -y || true
+            sleep 25
+          done
 
       - name: Run cross-browser E2E suite
         env:

@@ -32,5 +32,5 @@ The product is a static GitHub Pages PWA with no backend. Users must supply a Ge
 
 ## Alternatives Considered
 
-- Backend proxy with server-stored keys: rejected (privacy / zero-knowledge goal).
+- Backend proxy with server-stored keys: rejected (local-first / no application backend for keys).
 - Env-only keys for production: rejected for GitHub Pages multi-tenant forks.

@@ -15,15 +15,22 @@ security gates so future PRs do not re-litigate the same trade-offs.
 | Husky pre-push                           | local `git push`                       | **Yes**        | `pnpm run check:fast` (`typecheck` + `lint` + `format:check` + conflict markers)                             |
 | Critical-path coverage floors            | `deploy.yml` → `check:coverage-floors` | **Yes**        | Ratchet on `providers/`, `geminiService.ts`, `apiKeyService.ts`                                              |
 | CodeQL                                   | `security.yml`                         | **Yes**        | `security-extended` query set                                                                                |
+| Playwright E2E (Chromium)                | `e2e.yml`                              | **Yes**        | Seven-spec suite — see `docs/e2e-ci-backlog.md`                                                              |
+| Cross-browser E2E                        | `e2e-cross-browser.yml`                | **Yes**        | Firefox / WebKit / mobile Chrome; blocking since 2026-08-03 (`crossBrowserAdvisory: false`)                  |
+| Axe a11y smoke                           | `a11y.yml`                             | **Yes**        | Critical/serious WCAG findings fail the job                                                                  |
 | DeepSource (Docker/Shell)                | GitHub App check                       | Advisory       | JavaScript analyzer **disabled** — see `docs/deepsource-javascript-ci.md`; ESLint + deploy.yml authoritative |
+| DeepSource AI Review                     | On-demand `@deepsourcebot review`      | Process gate   | Mandatory on every PR open/fix push (rules `011`/`013`); not a GitHub required-check substitute              |
 | Deployment record pruning                | `deploy.yml` + `prune-deployments.yml` | **Yes** (main) | Keep latest 3 `github-pages` deployments per environment; weekly/dispatch safety net                         |
 | CodeAnt / Semgrep / gitleaks             | GitHub App checks                      | Mixed          | See workflow outputs per PR                                                                                  |
 
 **Coverage scope:** Vitest gates logic layers (`src/store`, `src/services`, `src/hooks`, `src/lib`). UI views are covered by Playwright E2E instead.
 
+**Concurrency:** Deploy, E2E, cross-browser, a11y, and security cancel in-progress runs on `pull_request` only — never cancel an in-flight `main` validation/deploy. Details: `docs/ci-branch-governance.md`.
+
 ### Known false positives / external failures
 
 - **DeepSource JavaScript:** analyzer **off in the DeepSource dashboard** (Settings → Code Review → Analyzers); `.deepsource.toml` has no `javascript` block (2026-08-02). Persistent ESM false positives, `scripts/lib` parse errors, and quality-gate churn — see `docs/deepsource-javascript-ci.md` and `docs/deepsource-dashboard-off.md`. Docker/Shell remain advisory; ESLint + `deploy.yml` are authoritative for TS/TSX.
+- **DeepSource AI Review:** team AI Review is on-demand — always comment `@deepsourcebot review` after PR open and every fix push; address findings in the correction loop before merge.
 - **Claude Code Review:** removed from CI (2026-08-02) — no blocking `review` job. On-demand `@claude` remains via `claude.yml`.
 
 ## `pnpm audit` governance
@@ -60,6 +67,7 @@ Moderate findings are **tracked but not CI-blocking** because:
 
 ## Cross-references
 
+- Branch protection / concurrency / artifacts: `docs/ci-branch-governance.md`
 - E2E promotion: `docs/e2e-ci-backlog.md`
 - DeepSource dashboard: `docs/deepsource-setup.md`
 - Dependabot process: `.cursor/rules/012-dependabot-pr-gate.mdc`

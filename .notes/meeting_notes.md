@@ -235,3 +235,21 @@
 - **What:** Calibrate EN/DE README, Help About, onboarding privacy, manifest; expand `forbiddenReadmePhrases`; point privacy copy at SECURITY.md egress table.
 - **Impact:** Product copy matches executable guarantees; docs-drift fails on reintroduced overclaims.
 - **Note:** Existing bilingual DE README section was calibrated in parallel with EN (product truthfulness); DE UI strings remain in `src/i18n` per rule `010`.
+
+## 2026-08-03 — PR11 CI / branch governance (P1-7)
+
+- **Why:** Master prompt P1-7 / PR H — document required checks, keep `main` validation from being cancelled by concurrency, align audit-governance with blocking cross-browser + DeepSource AI Review mandate.
+- **What:** `docs/ci-branch-governance.md`; PR-only `cancel-in-progress` on deploy/e2e/cross-browser/a11y/security; `project-facts` + `check:docs-drift` guard; update `audit-governance` / CONTRIBUTING / AGENTS / release-policy.
+- **Live ruleset:** `mainrules` (20291814) active with all 11 required check contexts; recommend enabling conversation resolution + strict up-to-date.
+
+## 2026-08-03 — Main tip WebKit cancelled (apt install timeout)
+
+- **Why:** `main` `2d8d4f9` cross-browser run `30807274942` WebKit cancelled; firefox/mobile-chrome green. Logs show ~30 min `playwright install --with-deps` apt crawl → job timeout (not suite failure). Separately, burst merges cancelled prior `main` runs under `cancel-in-progress: true`.
+- **What (in #212):** browser cache + install/install-deps retry + 45m job timeout; keep PR-only concurrency.
+- **Next:** Merge #212 after CodeRabbit quiescence; tip re-validates on merge push.
+
+## 2026-08-03 — PR11 docs/metadata accuracy sweep
+
+- **Why:** Agent entrypoints and dated audits still described advisory cross-browser, Vite 6/Chart.js/Gemini-only, ADR floor 15, missing DeepSource AI Review / governance links.
+- **What:** Rewrite `copilot-instructions.md`; English `.cursor/index.mdc`; AGENTS/CLAUDE grounding+E2E+ADR 0020; README CI inventory; `package.json` description; DeepSource setup AI Review; audit/prompt supersession banners; remove dead Help `HELP_VERSION`.
+- **Next:** CodeRabbit on latest #212 head → merge → Zwischenstandsbericht.

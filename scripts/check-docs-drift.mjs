@@ -98,6 +98,60 @@ function workflowJobHasContinueOnError(workflowYaml, jobName) {
   return /continue-on-error:\s*true/.test(jobBlock[0]);
 }
 
+/**
+ * Read top-level `concurrency.cancel-in-progress` (ignores `#` comments and
+ * job-level keys). Returns the raw scalar/expression string, or null.
+ * @param {string} workflowYaml
+ */
+function extractTopLevelCancelInProgress(workflowYaml) {
+  const lines = workflowYaml.split(/\r?\n/);
+  let inConcurrency = false;
+  let concurrencyIndent = 0;
+  /** @type {string | null} */
+  let cancelValue = null;
+
+  for (const rawLine of lines) {
+    const line = rawLine.replace(/\t/g, '  ');
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+
+    const indent = line.match(/^ */)?.[0].length ?? 0;
+
+    if (!inConcurrency) {
+      if (/^concurrency:\s*(#.*)?$/.test(trimmed)) {
+        inConcurrency = true;
+        concurrencyIndent = indent;
+      }
+      continue;
+    }
+
+    if (indent <= concurrencyIndent) {
+      break;
+    }
+
+    const withoutComment = trimmed.replace(/\s+#.*$/, '');
+    const match = /^cancel-in-progress:\s*(.+)$/.exec(withoutComment);
+    if (match) {
+      cancelValue = match[1].trim();
+    }
+  }
+
+  return cancelValue;
+}
+
+/** @param {string | null} value */
+function isPullRequestOnlyCancelExpression(value) {
+  if (!value) return false;
+  return /^\$\{\{\s*github\.event_name\s*==\s*'pull_request'\s*\}\}$/.test(value);
+}
+
+/** @param {string | null} value */
+function isUnconditionalCancelTrue(value) {
+  if (!value) return false;
+  if (value === 'true') return true;
+  return /^\$\{\{\s*true\s*\}\}$/.test(value);
+}
+
 /** @param {string[]} errors @param {Record<string, unknown>} facts */
 async function checkProjectFacts(errors, facts) {
   const readme = await read('README.md');
@@ -182,6 +236,56 @@ async function checkProjectFacts(errors, facts) {
     const claudeReview = await readOptional('.github/workflows/claude-code-review.yml');
     if (claudeReview) {
       errors.push('claude-code-review.yml must be removed (disabled in project-facts.json)');
+    }
+  }
+
+  if (facts.ci?.branchGovernancePath) {
+    const gov = await readOptional(facts.ci.branchGovernancePath);
+    if (!gov) {
+      errors.push(`Missing branch governance doc: ${facts.ci.branchGovernancePath}`);
+    }
+  }
+
+  if (facts.ci?.cancelInProgressOnPullRequestOnly === true) {
+    const guarded = facts.ci.concurrencyGuardedWorkflows;
+    if (!Array.isArray(guarded) || guarded.length === 0) {
+      errors.push(
+        'docs/project-facts.json ci.concurrencyGuardedWorkflows must list workflows when cancelInProgressOnPullRequestOnly is true',
+      );
+    } else {
+      for (const wf of guarded) {
+        const yaml = await readOptional(wf);
+        if (!yaml) {
+          errors.push(`Missing concurrency-guarded workflow: ${wf}`);
+          continue;
+        }
+        const cancelValue = extractTopLevelCancelInProgress(yaml);
+        if (!isPullRequestOnlyCancelExpression(cancelValue)) {
+          errors.push(
+            `${wf} top-level concurrency.cancel-in-progress must be \${{ github.event_name == 'pull_request' }} (found: ${cancelValue ?? 'missing'})`,
+          );
+        }
+        if (isUnconditionalCancelTrue(cancelValue)) {
+          errors.push(`${wf} must not use unconditional cancel-in-progress: true (would cancel main runs)`);
+        }
+      }
+    }
+
+    // Catch unlisted workflows that still cancel main runs unconditionally.
+    const workflowFiles = (await readdir(`${ROOT}/.github/workflows`)).filter((f) =>
+      /\.ya?ml$/i.test(f),
+    );
+    for (const file of workflowFiles) {
+      const rel = `.github/workflows/${file}`;
+      if (Array.isArray(guarded) && guarded.includes(rel)) continue;
+      const yaml = await readOptional(rel);
+      if (!yaml) continue;
+      const cancelValue = extractTopLevelCancelInProgress(yaml);
+      if (isUnconditionalCancelTrue(cancelValue)) {
+        errors.push(
+          `${rel} has unconditional cancel-in-progress: true — add to ci.concurrencyGuardedWorkflows or use PR-only cancel`,
+        );
+      }
     }
   }
 
@@ -391,7 +495,66 @@ async function main() {
   );
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+function runConcurrencyParserSelfTest() {
+  /** @type {{ name: string; yaml: string; expect: string | null; prOnly?: boolean; unconditional?: boolean }[]} */
+  const fixtures = [
+    {
+      name: 'pr-only expression',
+      yaml: `name: X\nconcurrency:\n  group: g\n  cancel-in-progress: \${{ github.event_name == 'pull_request' }}\njobs:\n  a:\n    runs-on: ubuntu-latest\n`,
+      expect: "${{ github.event_name == 'pull_request' }}",
+      prOnly: true,
+    },
+    {
+      name: 'comment must not satisfy check',
+      yaml: `name: X\n# cancel-in-progress: \${{ github.event_name == 'pull_request' }}\nconcurrency:\n  group: g\n  cancel-in-progress: true\n`,
+      expect: 'true',
+      unconditional: true,
+    },
+    {
+      name: 'quoted text in run step ignored',
+      yaml: `name: X\nconcurrency:\n  cancel-in-progress: \${{ github.event_name == 'pull_request' }}\njobs:\n  a:\n    steps:\n      - run: echo "cancel-in-progress: true"\n`,
+      expect: "${{ github.event_name == 'pull_request' }}",
+      prOnly: true,
+    },
+    {
+      name: 'expression true rejected',
+      yaml: `concurrency:\n  cancel-in-progress: \${{ true }}\n`,
+      expect: '${{ true }}',
+      unconditional: true,
+    },
+  ];
+
+  for (const fixture of fixtures) {
+    const got = extractTopLevelCancelInProgress(fixture.yaml);
+    if (got !== fixture.expect) {
+      throw new Error(`concurrency self-test "${fixture.name}": expected ${fixture.expect}, got ${got}`);
+    }
+    if (fixture.prOnly && !isPullRequestOnlyCancelExpression(got)) {
+      throw new Error(`concurrency self-test "${fixture.name}": expected PR-only`);
+    }
+    if (fixture.unconditional && !isUnconditionalCancelTrue(got)) {
+      throw new Error(`concurrency self-test "${fixture.name}": expected unconditional true`);
+    }
+  }
+  console.log('check-docs-drift concurrency parser self-test OK');
+}
+
+if (process.argv.includes('--self-test')) {
+  try {
+    runConcurrencyParserSelfTest();
+  } catch (err) {
+    console.error(err);
+    process.exit(1);
+  }
+} else {
+  try {
+    runConcurrencyParserSelfTest();
+  } catch (err) {
+    console.error(err);
+    process.exit(1);
+  }
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}

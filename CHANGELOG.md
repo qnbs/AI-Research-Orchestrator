@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Cross-browser WebKit install cancel on `main`:** Tip `2d8d4f9` WebKit job cancelled at the 30-minute timeout while apt OS deps crawled (not a Playwright failure). Cache Playwright browsers, retry `install`/`install-deps`, raise cross-browser job timeout to 45 minutes.
 - **Cross-browser WebKit Ollama health E2E:** Block service workers in Playwright (`serviceWorkers: 'block'`) so WebKit cannot bypass `page.route` for Ollama mocks; CORS-aware fulfills + `127.0.0.1` loopback + forced refresh (`ollamaMocks.ts`). Previously WebKit reported `cors`/`connection refused` while Chromium/Firefox passed, and `continue-on-error` hid the failure on PR checks.
 - **E2E Firefox onboarding flake:** `skipOnboarding` always waits for a stable `<header>` after Start Researching (retry click + longer timeout); `agent-flow` uses the shared helper; heuristic suite waits for the orchestrator form before assertions.
 - **Synthetic demo quarantine (P0):** Non-AI research no longer silently substitutes the educational demo corpus on empty/failed/offline retrieval. Explicit Educational Demo mode always routes through the Non-AI engine and stamps heuristic provenance (never a live provider); reports stamp `sourceClass` / `corpusClass`, use Demo ID labels, refuse `verified` trust, and watermark exports (ADR 0016, Dexie v6 via tested `demoCorpusMigration` helpers). Empty-retrieval synthesis is preserved on export and via `synthesisChunk` (no mid-stream double-seed). Mixed corpora stay `mixed-retrieved`; provider-partial failures stamp `retrievalOutcome: partial_failure`.
@@ -19,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Docs / metadata accuracy (PR11):** Synced agent entrypoints (`AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.cursor/index.mdc`) to multi-provider + ADR 0001–0020 + blocking cross-browser + DeepSource AI Review + PR-only concurrency; README EN/DE CI sections; `package.json` description; DeepSource setup AI Review gate; audit/prompt supersession banners; Help dead `HELP_VERSION` removed (About uses `formatReleaseLabel()`); ADR floor 20 in `project-facts.json`.
+- **CI concurrency (PR11):** Deploy, E2E, cross-browser, a11y, and security cancel in-progress runs on `pull_request` only — never cancel an in-flight `main` validation or Pages deploy.
 - **Product truthfulness docs (PR10):** Calibrated README (EN/DE), Help/About, onboarding, and PWA manifest claims — local-first storage vs provider egress, corpus-supported vs unverified narrative draft, estimated scientometrics, encryption XSS caveat. Extended `forbiddenReadmePhrases` drift gate. Badges: Local-First PWA / Multi-Provider (removed Production_Ready / Gemini_Pro overclaims).
 - **E2E Cross-Browser Smoke is blocking:** removed `continue-on-error` from `.github/workflows/e2e-cross-browser.yml`; `docs/project-facts.json` `crossBrowserAdvisory: false`.
 - **E2E network fixtures (PR8):** PubMed / Gemini / arXiv Playwright mocks live in `src/test/e2e/fixtures/`; agent-flow and journal-hub import the shared helpers instead of inlined route handlers.
@@ -26,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **CI / branch governance doc (PR11 / P1-7):** `docs/ci-branch-governance.md` — required checks, advisory bots, concurrency policy, artifact retention, stabilization window, merge-queue note; drift-gated via `docs/project-facts.json`.
 - **Typed pipeline events (P1 / ADR 0020):** Research streams emit stable `phaseId` values; Agent Debugger and Orchestrator timeline map from IDs (not English substring heuristics / i18n string equality).
 - **Ollama first-class Local AI (P1 / ADR 0019):** Health probe (`/api/version` + `/api/tags`) with TTL cache and Settings diagnostics; bounded NDJSON stream parser; CSP/`endpointPolicy` loopback parity for `127.0.0.1` and `[::1]`; model-missing / small-model warnings; privacy copy that PubMed/arXiv still use the network.
 - **P1-9 test depth (providers / Dexie / orchestration):** Expanded unit coverage for Gemini/OpenAI/Anthropic/Ollama adapters (error mapping, abort, chat sessions, `testConnection`, capability flags, schema conversion, grounding sources), `databaseService` settings sanitization + checkpoint ordering, and `generateResearchReportStream` prompt-budget stage yields. Ratcheted `check:coverage-floors` / `docs/project-facts.json` for providers (≈85/82/70/85) and `geminiService` (≈68/68/50/70).

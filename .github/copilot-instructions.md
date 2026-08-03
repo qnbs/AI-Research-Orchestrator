@@ -1,115 +1,80 @@
-You are an expert full-stack React 19 + TypeScript architect specialized in agentic AI research tools using PubMed + Gemini.
+# Copilot / agent instructions
 
-**Cursor entry point:** repo root `AGENTS.md`, **`.cursor/index.mdc`** (always-on manifest), and **`.cursor/rules/`** (modular `.mdc` rules — see `000-cursor-rules.mdc`).
+You are an expert React 19 + TypeScript engineer working on **AI Research Orchestrator** — a client-only PWA for agentic biomedical literature research (PubMed/arXiv + multi-provider AI or heuristic fallback).
 
-## Tech Stack (current, installed)
+**Canonical entry points (prefer these over this file if anything conflicts):**
 
-| Category        | Technology                                             | Version           |
-| --------------- | ------------------------------------------------------ | ----------------- |
-| Framework       | React                                                  | 19                |
-| Language        | TypeScript                                             | 5.8 (strict mode) |
-| Build           | Vite                                                   | 6                 |
-| State / APIs    | Redux Toolkit + RTK Query (`researchApi`, `geminiApi`) | 2                 |
-| Local DB        | Dexie.js + dexie-react-hooks                           | 4                 |
-| AI              | @google/genai (Gemini 2.5 Flash + Gemini 3 Pro)        | latest            |
-| Styling         | Tailwind CSS v4 + @tailwindcss/postcss                 | 4.2               |
-| Animation       | Framer Motion                                          | 12                |
-| Icons           | lucide-react                                           | latest            |
-| Charts          | Chart.js + react-chartjs-2, Recharts                   | latest            |
-| Virtualization  | @tanstack/react-virtual                                | 3                 |
-| Command Palette | cmdk                                                   | 1                 |
-| PDF Export      | jsPDF + marked                                         | latest            |
-| Sanitization    | DOMPurify                                              | 3                 |
-| Testing         | Vitest + @testing-library/react + Playwright           | latest            |
+1. Repo root [`AGENTS.md`](../AGENTS.md)
+2. [`.cursor/index.mdc`](../.cursor/index.mdc) (always-on manifest)
+3. [`.cursor/rules/`](../.cursor/rules/) (modular `.mdc` rules — see `000-cursor-rules.mdc`)
+4. [`docs/adr/README.md`](../docs/adr/README.md) (ADRs 0001–0020)
+5. [`docs/ci-branch-governance.md`](../docs/ci-branch-governance.md) + [`docs/project-facts.json`](../docs/project-facts.json)
 
-## Project Rules (ALWAYS follow)
+## Tech stack (current)
 
-### Architecture
+| Category          | Technology                                                                    | Notes                                                                             |
+| ----------------- | ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Framework         | React 19                                                                      | Suspense, lazy views                                                              |
+| Language          | TypeScript 5.8                                                                | **strict**                                                                        |
+| Build             | Vite **8**                                                                    | + visualizer, terser                                                              |
+| State / APIs      | Redux Toolkit 2 + RTK Query                                                   | `researchApi`, `geminiApi`                                                        |
+| Local DB          | Dexie 4 + dexie-react-hooks                                                   | IndexedDB only — no app backend                                                   |
+| AI                | `@google/genai`, `openai`, `@anthropic-ai/sdk`, Ollama `fetch`, **heuristic** | Lazy-loaded via `getProviderForSettings()`; default live model `gemini-2.5-flash` |
+| Styling           | Tailwind CSS v4 (`@tailwindcss/postcss`)                                      | Cybernetic glassmorphism                                                          |
+| Charts            | **Recharts only** (ADR 0005)                                                  | Do not re-add Chart.js                                                            |
+| UI extras         | Framer Motion 12, lucide-react, cmdk, `@tanstack/react-virtual`               |                                                                                   |
+| Export / sanitize | jsPDF + marked, DOMPurify                                                     |                                                                                   |
+| Tests             | Vitest + Testing Library; Playwright                                          | Blocking Chromium + blocking cross-browser + axe                                  |
+| Toolchain         | Node ≥22, pnpm 11                                                             | `pnpm install --frozen-lockfile`                                                  |
 
-- **Local-first**: All user data in IndexedDB via Dexie.js — zero backend dependency
-- **API-key-in-browser**: Gemini key encrypted with Web Crypto AES-GCM, stored in IndexedDB (apiKeyService.ts)
-- **Direct API calls**: Browser → Google Gemini API + NCBI PubMed E-utilities (no proxy)
-- **PWA**: Service worker (`public/sw.js`) with Workbox caching strategies, offline fallback, GitHub Pages deployment
+## Architecture (always follow)
 
-### State Management
+- **Local-first**: User data (reports, history, settings, KB, collections) in IndexedDB via Dexie — **no application backend**. Live mode still sends prompts/metadata to the selected AI provider and PubMed/arXiv (see `SECURITY.md` / README).
+- **Multi-provider**: Transports in `src/services/providers/`; feature façade `geminiService.ts` never imports a vendor SDK directly (ADR 0008).
+- **InferenceMode** `live | heuristic`: never dead-end on missing key/offline — use `src/services/nonAi/` (ADR 0007/0009). Explicit educational demo is quarantined (ADR 0016).
+- **Grounding**: corpus-validated where implemented; synthesis trust is `claim-supported` / `corpus-supported` vs unverified narrative draft (ADR 0012, 0015, **0018** — do not reintroduce overclaiming `verified` wire values).
+- **Keys**: AES-GCM encrypted IndexedDB via `apiKeyService.ts` — never `VITE_*` secrets.
+- **State**: Redux is SoT; Context only hydrates/composes — never duplicate the same flags.
+- **PWA / CSP**: `public/sw.js`, CSP hash patched on build; no CDN import map (ADR 0011).
 
-- **Redux Toolkit** for global app state (settings, UI, knowledgeBase, agentDebug, collections, theme slices)
-- **RTK Query** for API endpoints (apiSlice.ts, geminiApiSlice.ts)
-- **Hooks**: `useSettings` / `useUI` read from Redux; PWA `beforeinstallprompt` uses `lib/installPromptStore` + `useSyncExternalStore` (not in Redux)
-- **Context API**: `SettingsProvider` only hydrates IndexedDB → Redux once; `KnowledgeBaseContext` / `PresetContext` compose Dexie + Redux actions—no parallel copies of `settings`/`ui`
-- **Never duplicate** the same flags in Context and Redux
+## Code style
 
-### Code Style
+- TypeScript strict — no `any` unless unavoidable; functional components + hooks only
+- English-only new repo content (rule `010`); UI strings EN+DE via `t()`
+- File size target 200–400 lines, hard max 700 — split large views (`FeatureView` + Context + `useFeatureLogic`)
+- Sanitize HTML/Markdown with DOMPurify; prompt fragments via `lib/promptSanitize.ts`
 
-- TypeScript strict mode — no `any` unless absolutely necessary
-- Functional components only with hooks
-- File structure: `src/components/`, `src/services/`, `src/store/slices/`, `src/hooks/`, `src/contexts/`, `src/i18n/`
-- Sub-feature folders: `components/authors/`, `components/journals/`, `components/settings/`, `components/knowledge-base/`, `components/ui/`, `components/icons/`
-- Custom hooks for complex logic extraction (useAuthorsViewLogic, useSettingsViewLogic, etc.)
-- Context + SubComponents pattern for large views (e.g., AuthorsViewContext + AuthorsSubComponents)
+## Testing & CI
 
-### UI/UX
+- Unit: colocated `*.test.ts(x)`; mock network/AI/crypto; coverage gate on `store`/`services`/`hooks`/`lib`
+- E2E (blocking): seven Chromium specs in `e2e.yml`; same seven on Firefox/WebKit/mobile Chrome in `e2e-cross-browser.yml`; separate `a11y.yml`
+- **Core flows** (orchestration, Knowledge Base, `src/services`): run `typecheck`, `lint`, and `test:coverage` before push (or confirm the blocking CI coverage job on the PR)
+- For unrelated UI edits, scoped Playwright/`vitest` locally is fine; still read full coverage/E2E from CI logs before merge
+- **PR process gates:** always `@deepsourcebot review` after open/fix push; resolve CodeRabbit/CodeAnt/Copilot/DeepSource threads (rules `011`/`013`); PR-only workflow `cancel-in-progress` (never cancel in-flight `main`)
+- Required checks inventory: `docs/ci-branch-governance.md` (live ruleset `mainrules`)
 
-- **Tailwind CSS** with Cybernetic Glassmorphism design system (backdrop-blur, neon accents, ambient animations)
-- **Framer Motion** for agent flows and transitions
-- **WCAG 2.2 AA**: ARIA roles, keyboard navigation, focus management, Cmd+K palette
-- **i18n**: English + German via src/i18n/translations.ts, use `t()` hook for all user-facing strings
-- **Responsive**: Mobile-first with bottom nav bar, desktop header with two-line layout
+## Safety
 
-### API Patterns
+- Never commit API keys or secrets
+- Never break the orchestrator pipeline or Knowledge Base silently
+- Always keep i18n EN+DE parity for new UI strings
+- Run `pnpm run typecheck` before committing; Husky runs typecheck / `check:fast`
 
-- PubMed NCBI E-utilities with exponential backoff (pubmedUtils.ts)
-- arXiv search as supplementary source (arxivUtils.ts)
-- Gemini streaming responses via AsyncGenerator (geminiService.ts)
-- DOMPurify for all HTML sanitization
+## New feature checklist
 
-### Testing
+1. Redux slice or RTK Query endpoint
+2. Dexie schema bump + migration if persisted
+3. i18n EN + DE
+4. Framer Motion transition where appropriate
+5. ARIA / keyboard support
+6. Unit test stub (happy + failure + abort for external calls)
 
-- Vitest for unit tests (src/services/_.test.ts, src/store/slices/_.test.ts)
-- Playwright for E2E (src/test/e2e/)
-- Test setup in src/test/setup.ts with IndexedDB + crypto mocks
+## Project structure (abbreviated)
 
-### Safety Rules
-
-- **Never** break existing agent pipeline or Knowledge Base
-- **Never** commit API keys or secrets
-- **Always** run `pnpm run typecheck` before committing
-- **Always** maintain i18n parity (EN + DE) for new user-facing strings
-
-### New Feature Checklist
-
-When adding a new feature, ensure:
-
-1. Redux slice (if stateful) or RTK Query endpoint (if API)
-2. Dexie schema update (if persistent data)
-3. i18n keys in both EN and DE
-4. Framer Motion animation for transitions
-5. ARIA attributes and keyboard support
-6. Unit test stub at minimum
-
-## Project Structure
-
-```
+```text
 src/
- App.tsx                  # Main app with lazy-loaded views
- types.ts                 # Shared TypeScript interfaces
- index.css                # Tailwind imports + custom CSS
- components/              # UI components
-   ├── icons/               # 60+ icon components
-   ├── ui/                  # Reusable UI primitives
-   ├── settings/            # Settings sub-components
-   ├── knowledge-base/      # KB sub-components
-   ├── authors/             # Author hub sub-components
-   └── journals/            # Journal hub sub-components
- contexts/                # React Context providers
- hooks/                   # Custom React hooks
- i18n/                    # Translation files
- services/                # API + business logic
- store/                   # Redux store + slices
-   └── slices/              # Individual Redux slices
- test/                    # Test setup + E2E specs
+  App.tsx, services/geminiService.ts, services/providers/, services/nonAi/
+  store/slices/, components/, hooks/, contexts/, i18n/, lib/, test/e2e/
+docs/adr/, docs/ci-branch-governance.md, docs/project-facts.json
+.github/workflows/{deploy,e2e,e2e-cross-browser,a11y,security}.yml
 ```
-
-## Goal
-
-Make this the most powerful, beautiful and production-ready AI Research Orchestrator — with visual agent debugging, multi-DB support and stunning Cybernetic UI.

@@ -1,5 +1,3 @@
-const HELP_VERSION = '0.4.0';
-
 export const helpTranslations = {
   en: {
     // ── Help ──
@@ -224,7 +222,6 @@ export const helpTranslations = {
     'help.about.description':
       'This application is a tool designed to accelerate the process of scientific literature review. It leverages generative AI to automate the tedious tasks of searching, filtering, and synthesizing information from the PubMed database.',
     'help.about.version.label': 'Version:',
-    'help.about.version.value': HELP_VERSION,
     'help.about.principles.title': 'Core Principles',
     'help.about.principles.privacy.label': 'Privacy First:',
     'help.about.principles.privacy.desc':
@@ -468,7 +465,6 @@ export const helpTranslations = {
     'help.about.description':
       'Diese Anwendung ist ein Werkzeug, das den Prozess wissenschaftlicher Literaturrecherche beschleunigen soll. Sie nutzt generative KI, um aufwendige Aufgaben wie Suchen, Filtern und Synthetisieren von Informationen aus der PubMed-Datenbank zu automatisieren.',
     'help.about.version.label': 'Version:',
-    'help.about.version.value': HELP_VERSION,
     'help.about.principles.title': 'Grundprinzipien',
     'help.about.principles.privacy.label': 'Datenschutz zuerst:',
     'help.about.principles.privacy.desc':

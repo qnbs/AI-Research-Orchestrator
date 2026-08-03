@@ -22,13 +22,13 @@ Tags are optional for every `main` deploy but **required** when promoting `[Unre
 
 ## Deploy identity (always available)
 
-| Surface | What users see |
-|--------|----------------|
-| Help → About | `v{packageVersion} ({shortSha})` via `formatReleaseLabel()` |
+| Surface            | What users see                                                         |
+| ------------------ | ---------------------------------------------------------------------- |
+| Help → About       | `v{packageVersion} ({shortSha})` via `formatReleaseLabel()`            |
 | JSON export `meta` | `appVersion`, `buildCommitSha`, `dexieSchemaVersion`, `swCacheVersion` |
-| PDF cover | `formatReportReleaseLabel(report)` (report provenance when present) |
-| PDF footer | `formatReleaseLabel()` (current build) |
-| Research reports | `generationProvenance` on completed orchestrator runs |
+| PDF cover          | `formatReportReleaseLabel(report)` (report provenance when present)    |
+| PDF footer         | `formatReleaseLabel()` (current build)                                 |
+| Research reports   | `generationProvenance` on completed orchestrator runs                  |
 
 Build injection: `scripts/build-meta.mjs` → Vite/Vitest `define` (`__APP_VERSION__`, `__BUILD_COMMIT_SHA__`). CI uses `GITHUB_SHA`; local dev uses `git rev-parse --short HEAD` or `dev`.
 
@@ -72,10 +72,11 @@ There is no server-side rollback — all state is local IndexedDB.
 
 ## CI
 
-Blocking gates remain in `.github/workflows/deploy.yml`. DeepSource JavaScript is advisory unless `docs/project-facts.json` flips `deepsourceJavaScriptAdvisory` to `false`.
+Blocking gates: `deploy.yml` plus E2E / cross-browser / a11y / security (see `docs/ci-branch-governance.md`). DeepSource JavaScript analyzer is **off** (`docs/project-facts.json` → `staticAnalysis.deepsourceJavaScriptEnabled: false`); ESLint + `deploy.yml` are authoritative for TS/TSX — see `docs/deepsource-setup.md`. After high-risk scientific or security merges, prefer one green `main` deploy before stacking unrelated large features.
 
 ## Related
 
 - `CONTRIBUTING.md` — PR correction loop before merge
 - `.cursor/rules/013-pr-review-correction-loop.mdc`
+- `docs/ci-branch-governance.md` — required checks, concurrency, artifacts
 - `docs/deepsource-disposition.md` — static analysis disposition
