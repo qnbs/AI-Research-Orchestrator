@@ -122,6 +122,25 @@ Severity: P0 = stop-the-line · P1 = pre-release hardening · P2 = architecture/
 | Acceptance | Verified ruleset snapshot; CODEOWNERS for critical paths |
 | Note       | Do not mutate settings without maintainer authorization  |
 
+### ISSUE-P1-TRANSPORT-001 — Ollama bounded response bodies
+
+| Field      | Value                                                           |
+| ---------- | --------------------------------------------------------------- |
+| Severity   | P1                                                              |
+| Impact     | Oversized or idle streams can exhaust browser memory            |
+| Evidence   | Master prompt §7.4; `ollama.ts` lacks max body / idle bounds    |
+| Acceptance | Connect/total/idle timeouts; max error and non-stream body caps |
+| Owner      | local-ai                                                        |
+
+### ISSUE-P1-CLAIM-002 — Mixed supporting/contradicting claim policy
+
+| Field      | Value                                                                 |
+| ---------- | --------------------------------------------------------------------- |
+| Severity   | P1                                                                    |
+| Impact     | Claims with both supporting and contradicting citations need policy   |
+| Acceptance | Explicit state (unverified); snippets only from retained result PMIDs |
+| Owner      | scientific-trust                                                      |
+
 ---
 
 ## P2

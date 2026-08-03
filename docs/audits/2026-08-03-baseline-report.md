@@ -14,13 +14,14 @@
 
 ## Repository inventory
 
-| Item         | State                                             |
-| ------------ | ------------------------------------------------- |
-| Open PRs     | 0                                                 |
-| Open issues  | 0                                                 |
-| Latest tag   | `v0.4.1` (verify against `package.json`)          |
-| Deploy model | GitHub Pages from `main` on merge (not tag-gated) |
-| Node / pnpm  | Per `package.json` (Node ≥22, pnpm 11)            |
+| Item           | Value                                             |
+| -------------- | ------------------------------------------------- |
+| Open PRs       | 0                                                 |
+| Open issues    | 0                                                 |
+| `package.json` | `0.4.1`                                           |
+| Latest git tag | `v0.4.1` (matches `package.json`)                 |
+| Deploy model   | GitHub Pages from `main` on merge (not tag-gated) |
+| Node / pnpm    | Per `package.json` (Node ≥22, pnpm 11)            |
 
 ## `main` workflow evidence (commit `84fbcdf`)
 
@@ -33,7 +34,7 @@
 | Security                | 30811964404 | success | ~1m35s |
 
 Production URL: `https://qnbs.github.io/AI-Research-Orchestrator/`  
-Expected deployed SHA: `84fbcdf` (Pages deploy job on same push).
+**Observed deployed SHA:** `84fbcdf` (production bundle embeds `buildCommitSha: "84fbcdf"`; deploy run 30811964412 success).
 
 ## Confirmed residual risks (revalidated against `84fbcdf`)
 
@@ -69,9 +70,16 @@ Expected deployed SHA: `84fbcdf` (Pages deploy job on same push).
 - Product truth calibration (#211)
 - CI branch governance (#212)
 
-## Local validation (this agent run)
+## Local validation (PR #213 agent run, pre-push)
 
-Full gate set executed before PR push — see PR description / validation evidence section.
+| Command                                                                                     | Result          |
+| ------------------------------------------------------------------------------------------- | --------------- |
+| `pnpm run typecheck`                                                                        | PASS            |
+| `pnpm run lint`                                                                             | PASS            |
+| `pnpm exec vitest run src/lib/claimEvidenceMatcher.test.ts src/lib/claimValidation.test.ts` | PASS            |
+| `pnpm run check:agent-eval`                                                                 | PASS (27 tests) |
+
+Full `test:coverage`, E2E, cross-browser, and a11y: **CI authoritative** on PR head (blocking workflows on `deploy.yml`, `e2e.yml`, `e2e-cross-browser.yml`, `a11y.yml`).
 
 ## Stop-the-line
 

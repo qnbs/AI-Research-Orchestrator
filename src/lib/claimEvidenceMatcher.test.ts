@@ -84,4 +84,21 @@ describe('assessClaimArticleEvidence — adversarial', () => {
     const art = article('Herzinfarkt', 'Behandlung von Herzinfarkt mit Aspirin.');
     expect(articleSupportsClaim('Aspirin bei Herzinfarkt.', art)).toBe(true);
   });
+
+  it('does not treat German function words as content tokens', () => {
+    const art = article('Studie', 'Therapie über Herzinfarkt mit Aspirin.');
+    expect(assessClaimArticleEvidence('über und der die das', art).relation).toBe('insufficient');
+  });
+
+  it('does not contradict when opposite direction appears outside the matched span', () => {
+    const art = article(
+      'Aspirin trial',
+      'Aspirin reduced major cardiovascular events. Major bleeding was increased in the aspirin arm.',
+    );
+    const result = assessClaimArticleEvidence(
+      'Aspirin reduced major cardiovascular events in adults.',
+      art,
+    );
+    expect(result.relation).toBe('supports');
+  });
 });

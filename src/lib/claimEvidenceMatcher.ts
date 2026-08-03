@@ -124,7 +124,7 @@ const STOPWORDS = new Set([
   'bei',
   'nach',
   'vor',
-  'über',
+  'uber',
   'unter',
   'durch',
   'wurde',
@@ -417,7 +417,8 @@ export function assessClaimArticleEvidence(
   }
 
   const combinedArticleText = fields.map((f) => f.text).join(' ');
-  if (detectDirectionConflict(claimContent, tokenizeContent(combinedArticleText))) {
+  const evidenceText = bestSpan?.quote?.trim() || combinedArticleText;
+  if (detectDirectionConflict(claimContent, tokenizeContent(evidenceText))) {
     reasons.push('direction or comparator terms conflict between claim and source');
     return {
       relation: 'contradicts',
@@ -427,7 +428,7 @@ export function assessClaimArticleEvidence(
     };
   }
 
-  if (detectNegationConflict(claimText, combinedArticleText)) {
+  if (detectNegationConflict(claimText, evidenceText)) {
     reasons.push('negation scope differs between claim and source');
     return {
       relation: 'contradicts',

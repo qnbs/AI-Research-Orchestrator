@@ -92,42 +92,43 @@ export function validateClaimAgainstCorpus(
 
   const supporting: string[] = [];
   const contradicting: string[] = [];
-  const snippets: string[] = [];
+  const evidenceByPmid = new Map<string, ReturnType<typeof assessClaimArticleEvidence>>();
 
   for (const pmid of valid) {
     const article = findArticleByCorpusKey(corpusArticles, pmid);
     if (!article) continue;
     const evidence = assessClaimArticleEvidence(normalized.text, article);
-    if (evidence.relation === 'supports') {
-      supporting.push(pmid);
-      const span = evidence.spans[0];
-      if (span) {
-        snippets.push(formatEvidenceSnippet(pmid, span.quote));
-      } else {
-        snippets.push(formatEvidenceSnippet(pmid, article.summary ?? article.title));
-      }
-    } else if (evidence.relation === 'contradicts') {
-      contradicting.push(pmid);
-      const span = evidence.spans[0];
-      if (span) {
-        snippets.push(formatEvidenceSnippet(pmid, span.quote));
-      }
-    }
+    evidenceByPmid.set(pmid, evidence);
+    if (evidence.relation === 'supports') supporting.push(pmid);
+    else if (evidence.relation === 'contradicts') contradicting.push(pmid);
   }
 
   let validationState: ClaimValidationState;
   let resultPmids: string[];
 
-  if (supporting.length > 0) {
+  if (supporting.length > 0 && contradicting.length === 0) {
     validationState = 'claim-supported';
     resultPmids = supporting;
-  } else if (contradicting.length > 0) {
+  } else if (contradicting.length > 0 && supporting.length === 0) {
     validationState = 'rejected';
     resultPmids = valid;
   } else {
     validationState = 'unverified';
     resultPmids = valid;
   }
+
+  const snippets = resultPmids
+    .map((pmid) => {
+      const evidence = evidenceByPmid.get(pmid);
+      const span = evidence?.spans[0];
+      if (span) return formatEvidenceSnippet(pmid, span.quote);
+      if (validationState === 'claim-supported') {
+        const article = findArticleByCorpusKey(corpusArticles, pmid);
+        return article ? formatEvidenceSnippet(pmid, article.summary ?? article.title) : undefined;
+      }
+      return undefined;
+    })
+    .filter((s): s is string => Boolean(s));
 
   return {
     ...normalized,

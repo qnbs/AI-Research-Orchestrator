@@ -232,6 +232,38 @@ describe('validateClaimAgainstCorpus — adversarial fixtures', () => {
     );
     expect(result.validationState).toBe('rejected');
   });
+
+  it('marks mixed supporting and contradicting citations as unverified', () => {
+    const mixedCorpus = [
+      article('4', 'Aspirin benefit', 'Aspirin reduced major cardiovascular events in adults.'),
+      article('5', 'Bleeding harm', 'Aspirin increased major bleeding events in adults.'),
+    ];
+    const result = validateClaimAgainstCorpus(
+      {
+        text: 'Aspirin reduced major cardiovascular events in adults.',
+        pmids: ['4', '5'],
+      },
+      mixedCorpus,
+    );
+    expect(result.validationState).toBe('unverified');
+    expect(result.pmids).toEqual(['4', '5']);
+  });
+
+  it('claim-supported snippets exclude contradicting sources', () => {
+    const mixedCorpus = [
+      article('4', 'Aspirin benefit', 'Aspirin reduced major cardiovascular events in adults.'),
+      article('5', 'Bleeding harm', 'Aspirin increased major bleeding events in adults.'),
+    ];
+    const result = validateClaimAgainstCorpus(
+      {
+        text: 'Aspirin reduced major cardiovascular events in adults.',
+        pmids: ['4'],
+      },
+      mixedCorpus,
+    );
+    expect(result.validationState).toBe('claim-supported');
+    expect(result.evidenceSnippets?.every((s) => s.startsWith('4:'))).toBe(true);
+  });
 });
 
 describe('assessSynthesisTrust', () => {
