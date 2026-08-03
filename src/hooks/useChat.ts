@@ -42,19 +42,20 @@ export const useChat = (
     if (!(report && reportStatus === 'done')) {
       return;
     }
-    let cancelled = false;
+    const abort = new AbortController();
     // eslint-disable-next-line react-hooks/set-state-in-effect -- resets chat session state before starting a new async chat init; bundled with the network call and cleanup below, which must be an effect.
     invalidateSession();
 
     const initChat = async () => {
       try {
-        const session = await startChatWithReport(report, aiSettings);
-        if (isMounted.current && !cancelled) {
+        const session = await startChatWithReport(report, aiSettings, abort.signal);
+        if (isMounted.current && !abort.signal.aborted) {
           chatSessionRef.current = session;
         }
       } catch (error) {
+        if (abort.signal.aborted) return;
         safeLogError('Failed to initialize chat:', error);
-        if (isMounted.current && !cancelled) {
+        if (isMounted.current) {
           setNotification({
             id: Date.now(),
             message: error instanceof Error ? error.message : 'Chat could not be initialized.',
@@ -65,7 +66,7 @@ export const useChat = (
     };
     void initChat();
     return () => {
-      cancelled = true;
+      abort.abort();
       chatSessionRef.current = null;
       sessionGenerationRef.current += 1;
     };

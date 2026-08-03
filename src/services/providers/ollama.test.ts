@@ -204,7 +204,10 @@ describe('createOllamaProvider', () => {
     global.fetch = vi.fn().mockResolvedValueOnce({ ok: true });
     const provider = createOllamaProvider();
     await expect(provider.testConnection!('http://localhost:11434')).resolves.toBe(true);
-    expect(global.fetch).toHaveBeenCalledWith('http://localhost:11434/api/tags');
+    expect(global.fetch).toHaveBeenCalledWith(
+      'http://localhost:11434/api/tags',
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
   });
 
   it('exposes requiresApiKey=false capability', () => {

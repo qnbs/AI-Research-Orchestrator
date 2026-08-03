@@ -20,6 +20,7 @@ import { useTranslation } from '../hooks/useTranslation';
 import type { TranslationKey } from '../hooks/useTranslation';
 import { ChevronUpIcon } from './icons/ChevronUpIcon';
 import { safeLogError } from '../lib/safeLog';
+import { isAbortError } from '../lib/errors';
 import { stableInsightKey } from '../lib/stableReactKeys';
 import {
   articleExternalUrl,
@@ -92,6 +93,9 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({
   const contentRef = useRef<HTMLDivElement>(null);
   const [showGoToTop, setShowGoToTop] = useState(false);
   const isMounted = useRef(true);
+  const similarAbortRef = useRef<AbortController | null>(null);
+  const onlineAbortRef = useRef<AbortController | null>(null);
+  const tldrAbortRef = useRef<AbortController | null>(null);
 
   const articleId = resolveArticleId(article);
   const relatedInsights = findRelatedInsights(article.pmid);
@@ -100,6 +104,9 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({
     isMounted.current = true;
     return () => {
       isMounted.current = false;
+      similarAbortRef.current?.abort();
+      onlineAbortRef.current?.abort();
+      tldrAbortRef.current?.abort();
     };
   }, []);
 
@@ -143,50 +150,63 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({
   };
 
   const handleFindSimilar = async () => {
+    similarAbortRef.current?.abort();
+    const abort = new AbortController();
+    similarAbortRef.current = abort;
     setIsFindingSimilar(true);
     setFindError(null);
     try {
       const result = await findSimilarArticles(
         { title: article.title, summary: article.summary },
         settings.ai,
+        abort.signal,
       );
-      if (isMounted.current) setSimilarArticles(result);
+      if (isMounted.current && !abort.signal.aborted) setSimilarArticles(result);
     } catch (err) {
+      if (isAbortError(err) || abort.signal.aborted) return;
       safeLogError('Failed to find similar articles', err);
       if (isMounted.current) setFindError('article.error.similar');
     } finally {
-      if (isMounted.current) setIsFindingSimilar(false);
+      if (isMounted.current && !abort.signal.aborted) setIsFindingSimilar(false);
     }
   };
 
   const handleFindOnline = async () => {
+    onlineAbortRef.current?.abort();
+    const abort = new AbortController();
+    onlineAbortRef.current = abort;
     setIsFindingOnline(true);
     setOnlineError(null);
     try {
-      const result = await findRelatedOnline(article.title, settings.ai);
-      if (isMounted.current) setOnlineFindings(result);
+      const result = await findRelatedOnline(article.title, settings.ai, abort.signal);
+      if (isMounted.current && !abort.signal.aborted) setOnlineFindings(result);
     } catch (err) {
+      if (isAbortError(err) || abort.signal.aborted) return;
       safeLogError('Failed to find related online discussions', err);
       if (isMounted.current) {
         setOnlineFindings(null);
         setOnlineError('article.error.online');
       }
     } finally {
-      if (isMounted.current) setIsFindingOnline(false);
+      if (isMounted.current && !abort.signal.aborted) setIsFindingOnline(false);
     }
   };
 
   const handleGenerateTldr = async () => {
+    tldrAbortRef.current?.abort();
+    const abort = new AbortController();
+    tldrAbortRef.current = abort;
     setIsGeneratingTldr(true);
     setTldrError(null);
     try {
-      const result = await generateTldrSummary(article.summary, settings.ai);
-      if (isMounted.current) setTldr(result);
+      const result = await generateTldrSummary(article.summary, settings.ai, abort.signal);
+      if (isMounted.current && !abort.signal.aborted) setTldr(result);
     } catch (err) {
+      if (isAbortError(err) || abort.signal.aborted) return;
       safeLogError('Failed to generate TL;DR summary', err);
       if (isMounted.current) setTldrError('article.error.tldr');
     } finally {
-      if (isMounted.current) setIsGeneratingTldr(false);
+      if (isMounted.current && !abort.signal.aborted) setIsGeneratingTldr(false);
     }
   };
 

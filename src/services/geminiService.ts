@@ -569,6 +569,7 @@ export async function findRelatedOnline(
       prompt: `Provide a brief summary of the online discussion, news, or recent developments related to ${wrapUntrustedTextBlock('topic', topicSafe)}.`,
       webGrounding: true,
       baseURL: resolveApprovedBaseUrl(aiSettings.customBaseUrl, aiSettings.approvedEndpointOrigin),
+      signal,
     });
     const sources: WebContent[] = (response.sources ?? []).map((s) => ({
       uri: s.uri,
@@ -600,6 +601,7 @@ export async function generateTldrSummary(
       temperature: 0,
       prompt: `Summarize the following abstract in a single, concise sentence (TL;DR format): ${wrapUntrustedTextBlock('abstract', abstractSafe)}`,
       baseURL: resolveApprovedBaseUrl(aiSettings.customBaseUrl, aiSettings.approvedEndpointOrigin),
+      signal,
     });
     return response.text ?? '';
   } catch (error) {
@@ -1150,6 +1152,7 @@ export const startChatWithReport = async (
     system: context,
     temperature: aiSettings.temperature * 0.8, // Slightly lower temperature for more factual chat
     baseURL: resolveApprovedBaseUrl(aiSettings.customBaseUrl, aiSettings.approvedEndpointOrigin),
+    signal,
   });
 };
 

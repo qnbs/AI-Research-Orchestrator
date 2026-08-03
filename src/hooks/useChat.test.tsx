@@ -75,6 +75,35 @@ describe('useChat', () => {
     await waitFor(() => {
       expect(vi.mocked(geminiService.startChatWithReport)).toHaveBeenCalled();
     });
+    expect(vi.mocked(geminiService.startChatWithReport).mock.calls[0][2]).toBeInstanceOf(
+      AbortSignal,
+    );
+  });
+
+  it('aborts chat init on cleanup without notifying', async () => {
+    let rejectInit!: (reason?: unknown) => void;
+    vi.mocked(geminiService.startChatWithReport).mockImplementationOnce(
+      (_report, _ai, signal) =>
+        new Promise((_resolve, reject) => {
+          rejectInit = reject;
+          signal?.addEventListener('abort', () => {
+            reject(new DOMException('Aborted', 'AbortError'));
+          });
+        }) as never,
+    );
+
+    const { unmount } = renderHook(() => useChat(minimalReport, 'done', ai));
+
+    await waitFor(() => {
+      expect(vi.mocked(geminiService.startChatWithReport)).toHaveBeenCalled();
+    });
+
+    unmount();
+    await act(async () => {
+      rejectInit?.(new DOMException('Aborted', 'AbortError'));
+    });
+
+    expect(setNotification).not.toHaveBeenCalled();
   });
 
   it('resets session when report is cleared', async () => {

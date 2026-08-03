@@ -157,7 +157,10 @@ describe('createGeminiProvider', () => {
       expect.objectContaining({
         model: 'gemini-2.5-flash',
         contents: 'ping',
-        config: { maxOutputTokens: 1 },
+        config: {
+          maxOutputTokens: 1,
+          abortSignal: expect.any(AbortSignal),
+        },
       }),
     );
   });
