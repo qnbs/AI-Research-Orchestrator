@@ -193,21 +193,28 @@ async function checkProjectFacts(errors, facts) {
   }
 
   if (facts.ci?.cancelInProgressOnPullRequestOnly === true) {
-    const expected =
-      /cancel-in-progress:\s*\$\{\{\s*github\.event_name\s*==\s*'pull_request'\s*\}\}/;
-    for (const wf of facts.ci.concurrencyGuardedWorkflows ?? []) {
-      const yaml = await readOptional(wf);
-      if (!yaml) {
-        errors.push(`Missing concurrency-guarded workflow: ${wf}`);
-        continue;
-      }
-      if (!expected.test(yaml)) {
-        errors.push(
-          `${wf} must set cancel-in-progress to PR-only (github.event_name == 'pull_request')`,
-        );
-      }
-      if (/cancel-in-progress:\s*true\b/.test(yaml)) {
-        errors.push(`${wf} must not use cancel-in-progress: true (would cancel main runs)`);
+    const guarded = facts.ci.concurrencyGuardedWorkflows;
+    if (!Array.isArray(guarded) || guarded.length === 0) {
+      errors.push(
+        'docs/project-facts.json ci.concurrencyGuardedWorkflows must list workflows when cancelInProgressOnPullRequestOnly is true',
+      );
+    } else {
+      const expected =
+        /cancel-in-progress:\s*\$\{\{\s*github\.event_name\s*==\s*'pull_request'\s*\}\}/;
+      for (const wf of guarded) {
+        const yaml = await readOptional(wf);
+        if (!yaml) {
+          errors.push(`Missing concurrency-guarded workflow: ${wf}`);
+          continue;
+        }
+        if (!expected.test(yaml)) {
+          errors.push(
+            `${wf} must set cancel-in-progress to PR-only (github.event_name == 'pull_request')`,
+          );
+        }
+        if (/cancel-in-progress:\s*true\b/.test(yaml)) {
+          errors.push(`${wf} must not use cancel-in-progress: true (would cancel main runs)`);
+        }
       }
     }
   }
