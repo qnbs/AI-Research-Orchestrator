@@ -178,6 +178,39 @@ describe('createAnthropicProvider', () => {
     );
   });
 
+  it('keeps multi-turn chat context across three sends', async () => {
+    const replies = ['r1', 'r2', 'r3'];
+    for (const reply of replies) {
+      createMock.mockResolvedValueOnce({
+        [Symbol.asyncIterator]: async function* () {
+          yield { type: 'content_block_delta', delta: { type: 'text_delta', text: reply } };
+          yield { type: 'message_stop' };
+        },
+      });
+    }
+    const provider = createAnthropicProvider();
+    const session = await provider.createChatSession({
+      model: 'claude-sonnet-4-5',
+      system: 'sys',
+      baseURL: 'https://api.anthropic.com',
+    });
+
+    for (const message of ['t1', 't2', 't3']) {
+      for await (const _chunk of await session.sendMessageStream({ message })) {
+        // drain
+      }
+    }
+
+    expect(createMock).toHaveBeenCalledTimes(3);
+    expect(createMock.mock.calls[2][0].messages).toEqual([
+      { role: 'user', content: 't1' },
+      { role: 'assistant', content: 'r1' },
+      { role: 'user', content: 't2' },
+      { role: 'assistant', content: 'r2' },
+      { role: 'user', content: 't3' },
+    ]);
+  });
+
   it('testConnection pings haiku', async () => {
     createMock.mockResolvedValueOnce({ content: [{ type: 'text', text: 'p' }] });
     const provider = createAnthropicProvider();

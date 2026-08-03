@@ -154,10 +154,11 @@ export function createOllamaProvider(): AIProvider {
 
     async createChatSession(request: AIChatSessionRequest): Promise<ProviderChatSession> {
       const baseURL = getBaseUrl(request.baseURL);
-      const messages = (request.history ?? []).map((m) => ({
-        role: m.role === 'model' ? ('assistant' as const) : ('user' as const),
-        content: m.text,
-      }));
+      const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [];
+      if (request.system) messages.push({ role: 'system', content: request.system });
+      for (const m of request.history ?? []) {
+        messages.push({ role: m.role === 'model' ? 'assistant' : 'user', content: m.text });
+      }
 
       return {
         async sendMessageStream({ message }) {
@@ -185,9 +186,16 @@ export function createOllamaProvider(): AIProvider {
           }
 
           return (async function* () {
+            let assistant = '';
             for await (const chunk of streamNdjson<{ message?: { content?: string } }>(response)) {
-              if (chunk.message?.content) yield { text: chunk.message.content };
+              if (chunk.message?.content) {
+                assistant += chunk.message.content;
+                yield { text: chunk.message.content };
+              }
             }
+            // Commit the completed turn so subsequent sends keep multi-turn context.
+            messages.push({ role: 'user', content: message });
+            messages.push({ role: 'assistant', content: assistant });
           })();
         },
       };

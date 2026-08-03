@@ -200,6 +200,55 @@ describe('createOllamaProvider', () => {
     );
   });
 
+  it('keeps multi-turn chat context across three sends', async () => {
+    const encoder = new TextEncoder();
+    const mockChatResponse = (content: string) => ({
+      ok: true,
+      body: {
+        getReader: () => {
+          const payload = JSON.stringify({ message: { content } }) + '\n';
+          let done = false;
+          return {
+            read: async () => {
+              if (done) return { done: true, value: undefined };
+              done = true;
+              return { done: false, value: encoder.encode(payload) };
+            },
+          };
+        },
+      },
+    });
+    global.fetch = vi
+      .fn()
+      .mockResolvedValueOnce(mockChatResponse('r1'))
+      .mockResolvedValueOnce(mockChatResponse('r2'))
+      .mockResolvedValueOnce(mockChatResponse('r3'));
+
+    const provider = createOllamaProvider();
+    const session = await provider.createChatSession({
+      model: 'llama3.1:8b',
+      system: 'sys',
+      baseURL: 'http://127.0.0.1:11434',
+    });
+
+    for (const message of ['t1', 't2', 't3']) {
+      for await (const _chunk of await session.sendMessageStream({ message })) {
+        // drain
+      }
+    }
+
+    expect(global.fetch).toHaveBeenCalledTimes(3);
+    const thirdBody = JSON.parse((global.fetch as ReturnType<typeof vi.fn>).mock.calls[2][1].body);
+    expect(thirdBody.messages).toEqual([
+      { role: 'system', content: 'sys' },
+      { role: 'user', content: 't1' },
+      { role: 'assistant', content: 'r1' },
+      { role: 'user', content: 't2' },
+      { role: 'assistant', content: 'r2' },
+      { role: 'user', content: 't3' },
+    ]);
+  });
+
   it('testConnection checks /api/tags', async () => {
     const timeoutSignal = new AbortController().signal;
     const timeoutSpy = vi.spyOn(AbortSignal, 'timeout').mockReturnValue(timeoutSignal);
