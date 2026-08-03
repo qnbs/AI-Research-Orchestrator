@@ -185,6 +185,33 @@ async function checkProjectFacts(errors, facts) {
     }
   }
 
+  if (facts.ci?.branchGovernancePath) {
+    const gov = await readOptional(facts.ci.branchGovernancePath);
+    if (!gov) {
+      errors.push(`Missing branch governance doc: ${facts.ci.branchGovernancePath}`);
+    }
+  }
+
+  if (facts.ci?.cancelInProgressOnPullRequestOnly === true) {
+    const expected =
+      /cancel-in-progress:\s*\$\{\{\s*github\.event_name\s*==\s*'pull_request'\s*\}\}/;
+    for (const wf of facts.ci.concurrencyGuardedWorkflows ?? []) {
+      const yaml = await readOptional(wf);
+      if (!yaml) {
+        errors.push(`Missing concurrency-guarded workflow: ${wf}`);
+        continue;
+      }
+      if (!expected.test(yaml)) {
+        errors.push(
+          `${wf} must set cancel-in-progress to PR-only (github.event_name == 'pull_request')`,
+        );
+      }
+      if (/cancel-in-progress:\s*true\b/.test(yaml)) {
+        errors.push(`${wf} must not use cancel-in-progress: true (would cancel main runs)`);
+      }
+    }
+  }
+
   if (facts.staticAnalysis?.deepsourceJavaScriptEnabled) {
     if (!/name\s*=\s*["']javascript["'][\s\S]*enabled\s*=\s*true/.test(deepsource)) {
       errors.push('.deepsource.toml must enable javascript analyzer');

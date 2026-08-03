@@ -75,16 +75,17 @@ See `.cursor/rules/011-coderabbit-pr-gate.mdc` and `.cursor/rules/013-pr-review-
 
 ## Continuous integration
 
-GitHub Actions (`.github/workflows/deploy.yml`) on pushes and PRs to `main`:
+Blocking gates on pushes and PRs to `main` (see `docs/ci-branch-governance.md` for the full inventory and branch-protection expectations):
 
-1. `pnpm install --frozen-lockfile`
-2. `pnpm audit --audit-level=high`
-3. `pnpm run typecheck`
-4. `pnpm run lint`
-5. `pnpm run test:coverage`
-6. `pnpm run build`
+1. `deploy.yml` — `pnpm install --frozen-lockfile` → `pnpm audit --audit-level=high` → typecheck → lint → `format:check` → `test:coverage` → coverage floors → build → `bundle:budget` → Lighthouse CI
+2. `e2e.yml` — Chromium Playwright suite (blocking)
+3. `e2e-cross-browser.yml` — Firefox / WebKit / mobile Chrome (blocking)
+4. `a11y.yml` — axe critical/serious smoke
+5. `security.yml` — CodeQL, Dependency Review, audit, gitleaks
 
-Deployment to GitHub Pages runs only for pushes (and manual dispatch) on `main`, not for pull requests.
+Concurrency cancels superseded **PR** runs only; in-flight `main` validation/deploy is never cancelled mid-run.
+
+Deployment to GitHub Pages runs only for pushes (and manual dispatch) on `main`, not for pull requests. Quality/audit decisions: `docs/audit-governance.md`.
 
 ## AI-assisted development (Cursor)
 

@@ -98,6 +98,9 @@ pnpm run format                  # Prettier write (src + root md/json)
 
 - **`.github/workflows/deploy.yml`** (push + PR to `main`): `pnpm install --frozen-lockfile` → `pnpm audit --audit-level=high` → typecheck → lint → `test:coverage` → build → `bundle:budget` → Lighthouse CI (assertions: a11y/best-practices/SEO ≥ 0.95, performance ≥ 0.85 warn). **GitHub Pages upload/deploy only on `refs/heads/main` (non-PR).** Actions are pinned by SHA.
 - **`.github/workflows/security.yml`**: CodeQL, Dependency Review, `pnpm audit --audit-level=high`, gitleaks secret scan.
+- **E2E / a11y**: blocking Chromium (`e2e.yml`), blocking cross-browser (`e2e-cross-browser.yml`), blocking axe smoke (`a11y.yml`).
+- **Concurrency**: `cancel-in-progress` is PR-only on deploy/e2e/cross-browser/a11y/security — never cancel an in-flight `main` gate/deploy (drift-gated via `docs/project-facts.json`).
+- **Governance docs**: `docs/ci-branch-governance.md` (required checks, artifacts, stabilization window), `docs/audit-governance.md` (audit/coverage posture).
 - **Dependabot**: process every open Dependabot PR individually with gates green; document disposition in `docs/dependabot-disposition.md` (rule `012`). Never bulk-close.
 
 ## Conventions & Code Style

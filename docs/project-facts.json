@@ -44,7 +44,16 @@
   },
   "ci": {
     "claudeCodeReviewWorkflow": false,
-    "claudeOnDemandWorkflow": true
+    "claudeOnDemandWorkflow": true,
+    "branchGovernancePath": "docs/ci-branch-governance.md",
+    "cancelInProgressOnPullRequestOnly": true,
+    "concurrencyGuardedWorkflows": [
+      ".github/workflows/deploy.yml",
+      ".github/workflows/e2e.yml",
+      ".github/workflows/e2e-cross-browser.yml",
+      ".github/workflows/a11y.yml",
+      ".github/workflows/security.yml"
+    ]
   },
   "staticAnalysis": {
     "eslintBlocking": true,

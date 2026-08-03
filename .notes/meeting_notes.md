@@ -235,3 +235,9 @@
 - **What:** Calibrate EN/DE README, Help About, onboarding privacy, manifest; expand `forbiddenReadmePhrases`; point privacy copy at SECURITY.md egress table.
 - **Impact:** Product copy matches executable guarantees; docs-drift fails on reintroduced overclaims.
 - **Note:** Existing bilingual DE README section was calibrated in parallel with EN (product truthfulness); DE UI strings remain in `src/i18n` per rule `010`.
+
+## 2026-08-03 — PR11 CI / branch governance (P1-7)
+
+- **Why:** Master prompt P1-7 / PR H — document required checks, keep `main` validation from being cancelled by concurrency, align audit-governance with blocking cross-browser + DeepSource AI Review mandate.
+- **What:** `docs/ci-branch-governance.md`; PR-only `cancel-in-progress` on deploy/e2e/cross-browser/a11y/security; `project-facts` + `check:docs-drift` guard; update `audit-governance` / CONTRIBUTING / AGENTS / release-policy.
+- **Next:** Remaining remediation (architecture decomposition / P2–P3) if still desired; package stays 0.4.1 until a named release cut.

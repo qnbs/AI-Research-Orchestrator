@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **CI concurrency (PR11):** Deploy, E2E, cross-browser, a11y, and security cancel in-progress runs on `pull_request` only — never cancel an in-flight `main` validation or Pages deploy.
 - **Product truthfulness docs (PR10):** Calibrated README (EN/DE), Help/About, onboarding, and PWA manifest claims — local-first storage vs provider egress, corpus-supported vs unverified narrative draft, estimated scientometrics, encryption XSS caveat. Extended `forbiddenReadmePhrases` drift gate. Badges: Local-First PWA / Multi-Provider (removed Production_Ready / Gemini_Pro overclaims).
 - **E2E Cross-Browser Smoke is blocking:** removed `continue-on-error` from `.github/workflows/e2e-cross-browser.yml`; `docs/project-facts.json` `crossBrowserAdvisory: false`.
 - **E2E network fixtures (PR8):** PubMed / Gemini / arXiv Playwright mocks live in `src/test/e2e/fixtures/`; agent-flow and journal-hub import the shared helpers instead of inlined route handlers.
@@ -26,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **CI / branch governance doc (PR11 / P1-7):** `docs/ci-branch-governance.md` — required checks, advisory bots, concurrency policy, artifact retention, stabilization window, merge-queue note; drift-gated via `docs/project-facts.json`.
 - **Typed pipeline events (P1 / ADR 0020):** Research streams emit stable `phaseId` values; Agent Debugger and Orchestrator timeline map from IDs (not English substring heuristics / i18n string equality).
 - **Ollama first-class Local AI (P1 / ADR 0019):** Health probe (`/api/version` + `/api/tags`) with TTL cache and Settings diagnostics; bounded NDJSON stream parser; CSP/`endpointPolicy` loopback parity for `127.0.0.1` and `[::1]`; model-missing / small-model warnings; privacy copy that PubMed/arXiv still use the network.
 - **P1-9 test depth (providers / Dexie / orchestration):** Expanded unit coverage for Gemini/OpenAI/Anthropic/Ollama adapters (error mapping, abort, chat sessions, `testConnection`, capability flags, schema conversion, grounding sources), `databaseService` settings sanitization + checkpoint ordering, and `generateResearchReportStream` prompt-budget stage yields. Ratcheted `check:coverage-floors` / `docs/project-facts.json` for providers (≈85/82/70/85) and `geminiService` (≈68/68/50/70).
