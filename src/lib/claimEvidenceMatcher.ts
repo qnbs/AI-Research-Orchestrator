@@ -4,7 +4,6 @@
  */
 
 import type { RankedArticle } from '../types';
-import { stem } from '../services/nonAi/utils';
 
 /** Bump when matcher semantics change (exported in validation results). */
 export const CLAIM_EVIDENCE_MATCHER_VERSION = '2.1.0';
@@ -246,13 +245,27 @@ function normalizeForTokenize(text: string): string {
   return text.toLowerCase().normalize('NFD').replace(/\p{M}/gu, '');
 }
 
+/** Lightweight Porter-like stemmer (mirrors nonAi/utils.stem; kept local to avoid store import cycle). */
+function stemToken(token: string): string {
+  let result = token;
+  result = result.replace(/(tion|sion|ness|ment|ance|ence)$/i, '');
+  if (result.length > 5) {
+    result = result.replace(/ing$/i, '');
+  }
+  result = result.replace(/ies$/i, 'y');
+  result = result.replace(/(ed|ly|er|est)$/i, '');
+  result = result.replace(/es$/i, '');
+  result = result.replace(/s$/i, '');
+  return result;
+}
+
 function tokenizeContent(text: string): string[] {
   const normalized = normalizeForTokenize(text);
   return normalized
     .replace(/[^\p{L}\p{N}]+/gu, ' ')
     .split(/\s+/)
     .filter((t) => t.length >= TOKEN_MIN_LEN && !STOPWORDS.has(t))
-    .map(stem);
+    .map(stemToken);
 }
 
 function uniqueTokens(tokens: string[]): Set<string> {
@@ -276,20 +289,20 @@ function hasNegationNear(tokens: string[], index: number): boolean {
 }
 
 function detectDirectionConflict(claimTokens: string[], articleTokens: string[]): boolean {
-  const claimSet = new Set(claimTokens.map(stem));
-  const articleSet = new Set(articleTokens.map(stem));
+  const claimSet = new Set(claimTokens.map(stemToken));
+  const articleSet = new Set(articleTokens.map(stemToken));
   for (const [term, opposites] of Object.entries(DIRECTION_TERMS)) {
-    const stemmedTerm = stem(term);
+    const stemmedTerm = stemToken(term);
     if (!claimSet.has(stemmedTerm)) continue;
     for (const opposite of opposites) {
-      if (articleSet.has(stem(opposite))) return true;
+      if (articleSet.has(stemToken(opposite))) return true;
     }
   }
   for (const [term, opposites] of Object.entries(DIRECTION_TERMS)) {
-    const stemmedTerm = stem(term);
+    const stemmedTerm = stemToken(term);
     if (!articleSet.has(stemmedTerm)) continue;
     for (const opposite of opposites) {
-      if (claimSet.has(stem(opposite))) return true;
+      if (claimSet.has(stemToken(opposite))) return true;
     }
   }
   return false;
