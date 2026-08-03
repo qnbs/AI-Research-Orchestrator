@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { ResearchInput, Settings } from '../types';
 import * as safeLog from '../lib/safeLog';
+import { EXECUTION_PROVENANCE_PHASE } from '../lib/researchExecutionContext';
 import {
   generateAuthorQuery,
   parseGeminiResponseJson,
@@ -455,6 +456,11 @@ describe('geminiService with mocked SDK', () => {
       }),
     });
     const gen = generateResearchReportStream(mockInput, mockAi);
+    // First event is frozen execution provenance (ADR 0017).
+    await expect(gen.next()).resolves.toMatchObject({
+      value: { phase: EXECUTION_PROVENANCE_PHASE },
+    });
+    // Phase 1 query generation then validation failure before PubMed search.
     await expect(gen.next()).resolves.toBeDefined();
     await expect(gen.next()).rejects.toThrow(/PubMed query/i);
     expect(mockPubMed.searchPubMedForIds).not.toHaveBeenCalled();

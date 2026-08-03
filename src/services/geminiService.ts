@@ -38,7 +38,7 @@ import {
   parseGeminiResponseJson as parseGeminiJsonCore,
   GeminiJsonParseError,
 } from '../lib/parseGeminiJson';
-import { AppError, toAppError, isAbortError } from '../lib/errors';
+import { AppError, toAppError, isAbortError, throwIfAborted } from '../lib/errors';
 import { PromptId, promptTag, type PromptIdValue } from '../lib/promptRegistry';
 import {
   findSimilarArticlesHeuristic,
@@ -62,17 +62,6 @@ import {
   shouldUseHeuristic,
 } from './researchOrchestratorAdapter';
 import { safeLogError } from '../lib/safeLog';
-
-function throwIfAborted(signal?: AbortSignal): void {
-  if (signal?.aborted) {
-    throw new AppError({
-      code: 'STREAM_ABORTED',
-      message: 'Aborted',
-      retryable: false,
-      cause: new DOMException('Aborted', 'AbortError'),
-    });
-  }
-}
 
 /**
  * Resets cached provider instances (call when API key / provider settings change).
@@ -210,12 +199,7 @@ export async function* generateResearchReportStream(
   input: ResearchInput,
   aiSettings: Settings['ai'],
   signal?: AbortSignal,
-): AsyncGenerator<{
-  report?: ResearchReport;
-  synthesisChunk?: string;
-  phase: string;
-  promptBudget?: PromptBudgetAccounting;
-}> {
+) {
   yield* generateResearchReportStreamWithMode(
     input,
     aiSettings,

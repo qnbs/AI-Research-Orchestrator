@@ -94,6 +94,18 @@ export function isAbortError(error: unknown): boolean {
   return false;
 }
 
+/** Throw STREAM_ABORTED when the optional AbortSignal is already aborted. */
+export function throwIfAborted(signal?: AbortSignal, message = 'Aborted'): void {
+  if (signal?.aborted) {
+    throw new AppError({
+      code: 'STREAM_ABORTED',
+      message,
+      retryable: false,
+      cause: new DOMException('Aborted', 'AbortError'),
+    });
+  }
+}
+
 /** Normalize unknown thrown values into AppError (preserves AbortError identity). */
 export function toAppError(error: unknown, fallbackContext?: string): AppError {
   if (isAbortError(error)) {
