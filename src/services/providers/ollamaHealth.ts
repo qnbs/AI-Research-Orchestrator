@@ -66,11 +66,21 @@ function normalizeBaseUrl(
   return { ok: true, baseUrl: validated.normalizedUrl, origin: validated.origin };
 }
 
+function isTimeoutAbort(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  if (error.name === 'TimeoutError') return true;
+  if (/timed?\s*out|timeout/i.test(error.message)) return true;
+  const cause = error.cause;
+  if (cause instanceof Error) {
+    if (cause.name === 'TimeoutError') return true;
+    if (/timed?\s*out|timeout/i.test(cause.message)) return true;
+  }
+  return false;
+}
+
 function diagnoseFetchError(error: unknown): Pick<OllamaHealthFail, 'reason' | 'message'> {
   if (isAbortError(error)) {
-    const name = error instanceof Error ? error.name : '';
-    const msg = error instanceof Error ? error.message : String(error);
-    if (name === 'TimeoutError' || /timeout/i.test(msg)) {
+    if (isTimeoutAbort(error)) {
       return { reason: 'timeout', message: 'Ollama health probe timed out' };
     }
     return { reason: 'aborted', message: 'Ollama health probe aborted' };
@@ -98,21 +108,26 @@ export function mergeSignals(timeoutMs: number, external?: AbortSignal): AbortSi
   }
 
   const controller = new AbortController();
-  const abortFrom = (signal: AbortSignal) => {
+  const abortAsTimeout = () => {
     if (!controller.signal.aborted) {
-      controller.abort(signal.reason);
+      controller.abort(new DOMException('Ollama health probe timed out', 'TimeoutError'));
+    }
+  };
+  const abortAsExternal = () => {
+    if (!controller.signal.aborted) {
+      controller.abort(external.reason);
     }
   };
   if (timeout.aborted) {
-    abortFrom(timeout);
+    abortAsTimeout();
     return controller.signal;
   }
   if (external.aborted) {
-    abortFrom(external);
+    abortAsExternal();
     return controller.signal;
   }
-  timeout.addEventListener('abort', () => abortFrom(timeout), { once: true });
-  external.addEventListener('abort', () => abortFrom(external), { once: true });
+  timeout.addEventListener('abort', abortAsTimeout, { once: true });
+  external.addEventListener('abort', abortAsExternal, { once: true });
   return controller.signal;
 }
 
