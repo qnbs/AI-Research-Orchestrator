@@ -191,6 +191,42 @@ describe('validateClaimAgainstCorpus — adversarial fixtures', () => {
     expect(result.validationState).toBe('claim-supported');
     expect(result.pmids).toEqual(['1']);
   });
+
+  it('preserves invalid citations in validated results and metrics after stripping from pmids', () => {
+    const result = validateClaimAgainstCorpus(
+      { text: 'Aspirin reduced cardiovascular events.', pmids: ['1', '999'] },
+      corpus,
+    );
+    expect(result.invalidCitations).toEqual(['999']);
+    expect(result.validationState).toBe('claim-supported');
+    expect(result.pmids).toEqual(['1']);
+
+    const metrics = computeClaimTrustMetrics([result], corpus);
+    expect(metrics.invalidCitationCount).toBe(1);
+  });
+
+  it('keeps only supporting citations when one valid citation is irrelevant', () => {
+    const result = validateClaimAgainstCorpus(
+      {
+        text: 'Aspirin reduced cardiovascular events in adults.',
+        pmids: ['1', '2'],
+      },
+      corpus,
+    );
+    expect(result.validationState).toBe('claim-supported');
+    expect(result.pmids).toEqual(['1']);
+  });
+
+  it('rejects contradictory evidence even with lexical overlap', () => {
+    const contradictoryCorpus = [
+      article('3', 'Aspirin harm signal', 'Aspirin increased major bleeding events in adults.'),
+    ];
+    const result = validateClaimAgainstCorpus(
+      { text: 'Aspirin reduced major bleeding events in adults.', pmids: ['3'] },
+      contradictoryCorpus,
+    );
+    expect(result.validationState).toBe('rejected');
+  });
 });
 
 describe('assessSynthesisTrust', () => {
@@ -246,6 +282,7 @@ describe('assessSynthesisTrust', () => {
           text: 'Aspirin reduces events',
           pmids: ['999'],
           validationState: 'rejected',
+          invalidCitations: ['999'],
         },
       ],
       [article('100', 'Aspirin trial', 'Aspirin reduces events in prevention.')],
