@@ -201,10 +201,17 @@ describe('createOllamaProvider', () => {
   });
 
   it('testConnection checks /api/tags', async () => {
+    const timeoutSignal = new AbortController().signal;
+    const timeoutSpy = vi.spyOn(AbortSignal, 'timeout').mockReturnValue(timeoutSignal);
     global.fetch = vi.fn().mockResolvedValueOnce({ ok: true });
     const provider = createOllamaProvider();
     await expect(provider.testConnection!('http://localhost:11434')).resolves.toBe(true);
-    expect(global.fetch).toHaveBeenCalledWith('http://localhost:11434/api/tags');
+    expect(timeoutSpy).toHaveBeenCalledWith(15_000);
+    expect(global.fetch).toHaveBeenCalledWith(
+      'http://localhost:11434/api/tags',
+      expect.objectContaining({ signal: timeoutSignal }),
+    );
+    timeoutSpy.mockRestore();
   });
 
   it('exposes requiresApiKey=false capability', () => {

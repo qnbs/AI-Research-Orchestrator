@@ -150,16 +150,23 @@ describe('createGeminiProvider', () => {
   });
 
   it('testConnection pings the model', async () => {
+    const timeoutSignal = new AbortController().signal;
+    const timeoutSpy = vi.spyOn(AbortSignal, 'timeout').mockReturnValue(timeoutSignal);
     generateContentMock.mockResolvedValueOnce({ text: 'p' });
     expect(provider.testConnection).toBeDefined();
     await expect(provider.testConnection!()).resolves.toBe(true);
+    expect(timeoutSpy).toHaveBeenCalledWith(15_000);
     expect(generateContentMock).toHaveBeenCalledWith(
       expect.objectContaining({
         model: 'gemini-2.5-flash',
         contents: 'ping',
-        config: { maxOutputTokens: 1 },
+        config: {
+          maxOutputTokens: 1,
+          abortSignal: timeoutSignal,
+        },
       }),
     );
+    timeoutSpy.mockRestore();
   });
 
   it('exposes webGrounding + nativeJsonSchema capabilities', () => {

@@ -11,6 +11,7 @@ import {
   generateResearchReportStream,
   generateTldrSummary,
   findRelatedOnline,
+  startChatWithReport,
   disambiguateAuthor,
   suggestAuthors,
   analyzeSingleArticle,
@@ -298,6 +299,40 @@ describe('geminiService with mocked SDK', () => {
     await expect(generateTldrSummary('abstract text', mockAi)).resolves.toBe('One-liner.');
   });
 
+  it('generateTldrSummary forwards abort signal to the provider', async () => {
+    hoisted.generateContent.mockResolvedValue({ text: 'One-liner.' });
+    const ac = new AbortController();
+    await generateTldrSummary('abstract text', mockAi, ac.signal);
+    expect(hoisted.generateContent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        config: expect.objectContaining({ abortSignal: ac.signal }),
+      }),
+    );
+  });
+
+  it('generateTldrSummary rejects when signal is already aborted', async () => {
+    const ac = new AbortController();
+    ac.abort();
+    await expect(generateTldrSummary('abstract text', mockAi, ac.signal)).rejects.toMatchObject({
+      code: 'STREAM_ABORTED',
+    });
+    expect(hoisted.generateContent).not.toHaveBeenCalled();
+  });
+
+  it('generateTldrSummary does not log when an in-flight call is aborted', async () => {
+    const ac = new AbortController();
+    const logSpy = vi.spyOn(safeLog, 'safeLogError').mockImplementation(() => {});
+    hoisted.generateContent.mockImplementationOnce(async () => {
+      ac.abort();
+      throw new DOMException('Aborted', 'AbortError');
+    });
+    await expect(generateTldrSummary('abstract text', mockAi, ac.signal)).rejects.toMatchObject({
+      code: 'STREAM_ABORTED',
+    });
+    expect(logSpy).not.toHaveBeenCalled();
+    logSpy.mockRestore();
+  });
+
   it('generateResearchReportStream yields phases and completes', async () => {
     const rankingPayload = {
       rankedArticles: [
@@ -507,6 +542,49 @@ describe('geminiService with mocked SDK', () => {
     const out = await findRelatedOnline('topic', mockAi);
     expect(out.summary).toContain('Summary');
     expect(out.sources.length).toBe(1);
+  });
+
+  it('findRelatedOnline forwards abort signal to the provider', async () => {
+    hoisted.generateContent.mockResolvedValue({ text: 'Summary text', sources: [] });
+    const ac = new AbortController();
+    await findRelatedOnline('topic', mockAi, ac.signal);
+    expect(hoisted.generateContent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        config: expect.objectContaining({ abortSignal: ac.signal }),
+      }),
+    );
+  });
+
+  it('findRelatedOnline does not log when an in-flight call is aborted', async () => {
+    const ac = new AbortController();
+    const logSpy = vi.spyOn(safeLog, 'safeLogError').mockImplementation(() => {});
+    hoisted.generateContent.mockImplementationOnce(async () => {
+      ac.abort();
+      throw new DOMException('Aborted', 'AbortError');
+    });
+    await expect(findRelatedOnline('topic', mockAi, ac.signal)).rejects.toMatchObject({
+      code: 'STREAM_ABORTED',
+    });
+    expect(logSpy).not.toHaveBeenCalled();
+    logSpy.mockRestore();
+  });
+
+  it('startChatWithReport rejects when signal is already aborted', async () => {
+    const ac = new AbortController();
+    ac.abort();
+    await expect(
+      startChatWithReport(
+        {
+          synthesis: 'syn',
+          rankedArticles: [],
+          generatedQueries: [],
+          aiGeneratedInsights: [],
+          overallKeywords: [],
+        },
+        mockAi,
+        ac.signal,
+      ),
+    ).rejects.toMatchObject({ code: 'STREAM_ABORTED' });
   });
 
   it('disambiguateAuthor parses clusters', async () => {

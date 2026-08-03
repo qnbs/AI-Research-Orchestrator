@@ -281,7 +281,10 @@ export function createGeminiProvider(): AIProvider {
       await ai.models.generateContent({
         model: 'gemini-2.5-flash',
         contents: 'ping',
-        config: { maxOutputTokens: 1 },
+        config: {
+          maxOutputTokens: 1,
+          abortSignal: AbortSignal.timeout(15_000),
+        },
       });
       return true;
     },

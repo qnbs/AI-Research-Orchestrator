@@ -569,6 +569,7 @@ export async function findRelatedOnline(
       prompt: `Provide a brief summary of the online discussion, news, or recent developments related to ${wrapUntrustedTextBlock('topic', topicSafe)}.`,
       webGrounding: true,
       baseURL: resolveApprovedBaseUrl(aiSettings.customBaseUrl, aiSettings.approvedEndpointOrigin),
+      signal,
     });
     const sources: WebContent[] = (response.sources ?? []).map((s) => ({
       uri: s.uri,
@@ -576,6 +577,14 @@ export async function findRelatedOnline(
     }));
     return { summary: response.text ?? '', sources };
   } catch (error) {
+    if (signal?.aborted || isAbortError(error)) {
+      throw new AppError({
+        code: 'STREAM_ABORTED',
+        message: 'Aborted',
+        retryable: false,
+        cause: error,
+      });
+    }
     safeLogError('Error finding related online content:', error);
     throw provider.mapError(error);
   }
@@ -600,9 +609,18 @@ export async function generateTldrSummary(
       temperature: 0,
       prompt: `Summarize the following abstract in a single, concise sentence (TL;DR format): ${wrapUntrustedTextBlock('abstract', abstractSafe)}`,
       baseURL: resolveApprovedBaseUrl(aiSettings.customBaseUrl, aiSettings.approvedEndpointOrigin),
+      signal,
     });
     return response.text ?? '';
   } catch (error) {
+    if (signal?.aborted || isAbortError(error)) {
+      throw new AppError({
+        code: 'STREAM_ABORTED',
+        message: 'Aborted',
+        retryable: false,
+        cause: error,
+      });
+    }
     safeLogError('Error generating TL;DR summary:', error);
     throw provider.mapError(error);
   }
@@ -1150,6 +1168,7 @@ export const startChatWithReport = async (
     system: context,
     temperature: aiSettings.temperature * 0.8, // Slightly lower temperature for more factual chat
     baseURL: resolveApprovedBaseUrl(aiSettings.customBaseUrl, aiSettings.approvedEndpointOrigin),
+    signal,
   });
 };
 

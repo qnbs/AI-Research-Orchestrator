@@ -197,7 +197,9 @@ export function createOllamaProvider(): AIProvider {
 
     async testConnection(baseURL?: string): Promise<boolean> {
       const resolvedBaseURL = getBaseUrl(baseURL);
-      const response = await fetch(`${resolvedBaseURL}/api/tags`);
+      const response = await fetch(`${resolvedBaseURL}/api/tags`, {
+        signal: AbortSignal.timeout(15_000),
+      });
       return response.ok;
     },
 
