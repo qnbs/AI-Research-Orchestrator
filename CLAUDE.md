@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 AI Research Orchestrator — a client-only React 19 PWA for agentic biomedical literature research. It couples PubMed (NCBI E-utilities) and arXiv retrieval with a pluggable AI provider layer (Gemini, OpenAI, Anthropic, local Ollama, or a deterministic heuristic fallback) to run: query formulation → live fetch → relevance ranking → streaming, cited synthesis. All user data (reports, history, settings, knowledge base, collections) lives in the browser via Dexie/IndexedDB — there is no backend. Live at `https://qnbs.github.io/AI-Research-Orchestrator/`.
 
-**Canonical docs** — read before non-trivial changes: `AGENTS.md` (full agent guide with required-reading order), `docs/adr/0001`–`0014` (architecture decisions), `.cursor/rules/*.mdc` (numbered: `000` meta, `001` security, `010`/`011`/`012` content & PR-bot gates, `100`s APIs, `200`s architecture limits, `300`s UI, `800`s testing). `.github/copilot-instructions.md` predates the multi-provider/Recharts-only decisions — don't trust it over `AGENTS.md` or the ADRs.
+**Canonical docs** — read before non-trivial changes: `AGENTS.md` (full agent guide with required-reading order), `docs/adr/0001`–`0020` (architecture decisions — see `docs/adr/README.md`), `docs/ci-branch-governance.md` + `docs/project-facts.json` (CI/ruleset), `.cursor/rules/*.mdc` (numbered: `000` meta, `001` security, `010`/`011`/`012`/`013` content & PR-bot gates, `100`s APIs, `200`s architecture limits, `300`s UI, `800`s testing). Prefer `AGENTS.md` if anything conflicts with older notes.
 
 ## Commands
 
@@ -30,8 +30,8 @@ pnpm exec vitest run -t "retries on 429"                # single test by name
 pnpm exec playwright install chromium   # one-time browser install
 pnpm exec playwright test src/test/e2e/smoke.spec.ts -g "loads home"   # single e2e test
 pnpm exec playwright test src/test/e2e/agent-flow.spec.ts              # one spec file
-# Do NOT run `pnpm run test:e2e` (the full suite, both spec files) locally - see
-# Testing notes below. Use GitHub Actions' "Playwright E2E" job output instead.
+# Do NOT run `pnpm run test:e2e` (full seven-spec suite) locally on constrained hardware —
+# see Testing notes. Read Chromium + cross-browser job logs from GitHub Actions instead.
 
 pnpm run bundle:budget   # gzip gate: chunk <=200kB, entry <=400kB, charts <=180kB
 pnpm run analyze         # bundle visualizer -> dist/stats.html
@@ -75,8 +75,9 @@ Service worker at `public/sw.js`; `404.html` handles SPA routing on GitHub Pages
 - All HTML/Markdown is sanitized with DOMPurify; no bare `dangerouslySetInnerHTML`; prompt fragments go through `lib/promptSanitize.ts`; CSV export must stay formula-injection-safe.
 - New feature checklist: Redux slice/RTK Query endpoint → Dexie schema (if persisted) → i18n EN+DE → Framer Motion transition → ARIA/keyboard support → unit test stub.
 - Chart library is Recharts only (ADR 0005) — do not reintroduce Chart.js.
-- Resolve _all_ automated review-bot comments (CodeRabbit, CodeAnt, etc.) on a PR, including nitpicks and out-of-diff items, before considering it mergeable.
-- PR review: CodeRabbit (and CodeAnt where configured) — resolve bot threads before merge. Optional on-demand `@claude` via `.github/workflows/claude.yml`; automated Claude Code Review is **not** in CI.
+- Resolve _all_ automated review-bot comments (CodeRabbit, CodeAnt, Copilot, DeepSource AI Review, etc.) on a PR, including nitpicks and out-of-diff items, before considering it mergeable (rules `011`/`013`).
+- **Always** comment `@deepsourcebot review` on PR open and after every fix push. For CodeRabbit rate limits: wait the stated cooldown, then `@coderabbitai review` (max 3 cycles / escalate after >90m). Optional on-demand `@claude` via `.github/workflows/claude.yml`; automated Claude Code Review is **not** in CI.
+- Concurrency: workflows cancel in-progress runs on `pull_request` only — never cancel an in-flight `main` validation/deploy (`docs/ci-branch-governance.md`).
 
 ## Code intelligence (local, not committed)
 
@@ -85,6 +86,6 @@ This repo has both `codegraph` (`.codegraph/` — fast deterministic symbol/call
 ## Testing notes
 
 - Unit/integration specs are colocated `*.test.ts(x)` next to their source. `src/test/setup.ts` mocks IndexedDB and Web Crypto; `fake-indexeddb` is available for DB-heavy tests. Keep specs deterministic (mock network/AI/crypto calls) and isolated (no shared mutable state across files) — never comment out or delete a failing test to get CI green.
-- E2E specs live in `src/test/e2e/` (`agent-flow.spec.ts`, `smoke.spec.ts`); Playwright auto-starts the Vite dev server and uses a fake Gemini key. Prefer `getByRole` selectors; justify any `sleep`.
-- **Full E2E suite runs belong in CI, not on the local dev machine.** This project runs on a resource-constrained (~3.7 GB RAM) local box; the full suite reliably exhausts it or gets killed outright, independent of whether the code change under test is correct. Locally, only run a single spec file or a scoped `-g "<pattern>"` subset. For a genuine full-suite result, read the blocking Playwright checks on the PR: Chromium (`.github/workflows/e2e.yml`) and cross-browser Firefox/WebKit/mobile Chrome (`.github/workflows/e2e-cross-browser.yml`) via `gh run view <run-id> --log` — do not rely on a green badge alone when debugging a single matrix leg.
+- E2E specs live in `src/test/e2e/` (seven blocking Chromium specs + separate `a11y.spec.ts`); the same seven run on Firefox/WebKit/mobile Chrome (`e2e-cross-browser.yml`, also blocking). Playwright auto-starts the Vite dev server and uses a fake Gemini key. Prefer `getByRole` selectors; justify any `sleep`.
+- **Full E2E suite runs belong in CI, not on the local dev machine.** This project runs on a resource-constrained (~3.7 GB RAM) local box; the full suite reliably exhausts it or gets killed outright. Locally, only run a single spec file or a scoped `-g "<pattern>"` subset. For a genuine full-suite result, read the blocking Playwright checks on the PR: Chromium (`e2e.yml`) and cross-browser (`e2e-cross-browser.yml`) via `gh run view <run-id> --log` — a cancelled WebKit job during `playwright install-deps` is incomplete validation, not a suite failure (see `docs/e2e-ci-backlog.md`).
 - **The same cloud-first principle applies to `pnpm run test:coverage`.** It's not RAM-fatal the way the full E2E suite is, but it routinely runs past this box's own 120s foreground timeout and gets auto-backgrounded — repeating it before every push is wasted local resource on a machine that's already tight on RAM. Locally, run `pnpm exec vitest run <changed-file>.test.ts` for fast, targeted feedback while editing. Treat the "Typecheck, Lint & Tests" GitHub Actions job (`.github/workflows/deploy.yml`, blocking/required, not `continue-on-error`) as the authoritative full-suite-plus-coverage-gate result — read it with `gh run view <run-id> --log` or the PR's check output after pushing, rather than running `pnpm run test:coverage` locally as a matter of routine. A local full run is still fine when you specifically want the coverage table in front of you before writing new tests, or when iterating on a coverage-threshold failure itself.

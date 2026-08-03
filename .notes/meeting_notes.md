@@ -247,3 +247,9 @@
 - **Why:** `main` `2d8d4f9` cross-browser run `30807274942` WebKit cancelled; firefox/mobile-chrome green. Logs show ~30 min `playwright install --with-deps` apt crawl → job timeout (not suite failure). Separately, burst merges cancelled prior `main` runs under `cancel-in-progress: true`.
 - **What (in #212):** browser cache + install/install-deps retry + 45m job timeout; keep PR-only concurrency.
 - **Next:** Merge #212 after CodeRabbit quiescence; tip re-validates on merge push.
+
+## 2026-08-03 — PR11 docs/metadata accuracy sweep
+
+- **Why:** Agent entrypoints and dated audits still described advisory cross-browser, Vite 6/Chart.js/Gemini-only, ADR floor 15, missing DeepSource AI Review / governance links.
+- **What:** Rewrite `copilot-instructions.md`; English `.cursor/index.mdc`; AGENTS/CLAUDE grounding+E2E+ADR 0020; README CI inventory; `package.json` description; DeepSource setup AI Review; audit/prompt supersession banners; remove dead Help `HELP_VERSION`.
+- **Next:** CodeRabbit on latest #212 head → merge → Zwischenstandsbericht.

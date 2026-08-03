@@ -62,7 +62,7 @@
   },
   "adr": {
     "indexPath": "docs/adr/README.md",
-    "minNumberedRecords": 15
+    "minNumberedRecords": 20
   },
   "providers": {
     "ids": ["gemini", "openai", "anthropic", "ollama", "heuristic"],

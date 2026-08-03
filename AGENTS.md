@@ -6,9 +6,9 @@ Guidance for AI coding agents (Kimi, Cursor, Copilot) working in this repository
 
 **AI Research Orchestration Author** (`ai-research-orchestrator`, v0.4.1, MIT, private package) is a **client-only React 19 PWA** for agentic biomedical literature research. It couples **PubMed (NCBI E-utilities)** and **arXiv** retrieval with a **pluggable AI provider layer** (Google Gemini, OpenAI, Anthropic, local Ollama, or the deterministic heuristic fallback) to autonomously run literature reviews: query formulation → live fetch → semantic ranking (0–100 relevance) → streaming, cited synthesis.
 
-- **Local-first / zero backend**: all user data (reports, history, settings, knowledge base, collections) lives in the browser's IndexedDB via Dexie 4. No server stores anything.
+- **Local-first / zero app backend**: all user data (reports, history, settings, knowledge base, collections) lives in the browser's IndexedDB via Dexie 4. There is **no application server** that stores research — in live mode the browser still sends prompts and article metadata to the selected AI provider and calls PubMed/arXiv (see `SECURITY.md` / README).
 - **Direct-to-API**: the browser talks directly to the selected AI provider, `eutils.ncbi.nlm.nih.gov`, and `export.arxiv.org` (see CSP in `index.html`).
-- **Grounding**: ranked insights and exports are corpus-validated where implemented; narrative synthesis is labeled verified vs. unverified narrative draft (ADR 0012, 0015). Source identifiers: PMID, PMC, DOI, arXiv.
+- **Grounding**: ranked insights and exports are corpus-validated where implemented; narrative synthesis is labeled **corpus-supported / claim-supported** vs. unverified narrative draft (ADR 0012, 0015, **0018**). Source identifiers: PMID, PMC, DOI, arXiv.
 - **Live demo / deployment**: GitHub Pages at `https://qnbs.github.io/AI-Research-Orchestrator/` (base path `/AI-Research-Orchestrator/`).
 
 Main features: Orchestrator pipeline, Knowledge Base (dedup, faceted filtering, charts), Rapid Research Assistant (TL;DR, similar articles, report chat), scientometric Author/Journal hubs, Collections, Agent Debugger (visual traces), Dashboard, History, and export to JSON/CSV/RIS/BibTeX/PDF.
@@ -18,7 +18,8 @@ Main features: Orchestrator pipeline, Knowledge Base (dedup, faceted filtering, 
 1. **`.github/copilot-instructions.md`** — current stack, folder structure, state management, testing, safety rules.
 2. **`.cursor/index.mdc`** — always-on project manifest.
 3. **`.cursor/rules/*.mdc`** — contextual rules (Security, APIs, Architecture, UI, QA — numbering scheme in `000-cursor-rules.mdc`).
-4. **`docs/adr/`** — architecture decisions; see `docs/adr/README.md` for the full, current index (0001 state management … 0011 remove the CDN import map).
+4. **`docs/adr/`** — architecture decisions; see `docs/adr/README.md` for the full, current index (0001 state management … **0020** typed pipeline events).
+5. **`docs/ci-branch-governance.md`** + **`docs/project-facts.json`** — required CI checks, concurrency, ruleset expectations, drift-gated facts.
 
 ## Technology Stack
 
@@ -33,7 +34,7 @@ Main features: Orchestrator pipeline, Knowledge Base (dedup, faceted filtering, 
 | UI extras            | Framer Motion 12, lucide-react, cmdk (`⌘+K` palette), @tanstack/react-virtual                                                                               |
 | Charts               | Recharts (ADR 0005 — Recharts-only; do not re-add Chart.js)                                                                                                 |
 | Export / sanitize    | jsPDF + marked, DOMPurify                                                                                                                                   |
-| Tests                | Vitest + Testing Library (jsdom), Playwright (Chromium)                                                                                                     |
+| Tests                | Vitest + Testing Library (jsdom), Playwright (**blocking** Chromium + Firefox/WebKit/mobile Chrome + axe)                                                   |
 | Toolchain            | Node **≥22**, pnpm **11** (`packageManager: pnpm@11.13.1`), ESLint 9 + Prettier, husky + lint-staged                                                        |
 
 ## Runtime Architecture
@@ -66,7 +67,7 @@ src/
                          # researchOrchestratorAdapter, providers/ (transport adapters),
                          # nonAi/ (deterministic offline inference engine)
   store/                 # store.ts, hooks.ts, slices/ (one slice per domain + *.test.ts)
-  test/                  # setup.ts (IndexedDB + crypto mocks), e2e/ (agent-flow, smoke specs)
+  test/                  # setup.ts (IndexedDB + crypto mocks), e2e/ (seven blocking specs + a11y)
 scripts/                 # patch-csp-hashes, check-bundle-budget, generate-pwa-icons
 docs/adr/                # Architecture Decision Records — see docs/adr/README.md for the current index
 ```

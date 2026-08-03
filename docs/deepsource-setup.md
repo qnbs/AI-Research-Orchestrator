@@ -1,5 +1,16 @@
 # DeepSource setup notes
 
+## DeepSource AI Review — **mandatory process gate** (2026-08-03)
+
+Team AI Review for this repository is **on-demand**. Static analysis checks alone
+(Docker/Shell grades) are **not** a completed review.
+
+1. After opening a PR, comment `@deepsourcebot review`.
+2. After **every** fix push, comment `@deepsourcebot review` again.
+3. Address AI Review findings in the correction loop (rules `011` / `013`) before merge.
+4. Do not treat DeepSource AI Review as a substitute for deterministic CI
+   (`deploy.yml`, E2E, cross-browser, a11y, security) — see `docs/ci-branch-governance.md`.
+
 ## JavaScript analyzer — **disabled** (2026-08-02)
 
 The JavaScript analyzer is **not declared** in `.deepsource.toml`. Disable it in the **DeepSource dashboard** — see **`docs/deepsource-dashboard-off.md`** and **`docs/deepsource-javascript-ci.md`**.

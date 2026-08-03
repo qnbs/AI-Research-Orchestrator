@@ -1,5 +1,7 @@
 # Remediation Sprint Session — 2026-08-02 (evening)
 
+> **Superseded note (2026-08-03):** Blocking cross-browser promotion **was** flipped in #207. PR-only concurrency + WebKit install hardening landed in #212. Residual “not flipped yet” / streak language in this file is historical.
+
 ## Metadata
 
 | Field                     | Value                                                                           |

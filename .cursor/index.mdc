@@ -5,14 +5,16 @@ alwaysApply: true
 
 # AI Research Orchestrator — Manifest
 
-**Zweck:** Lokale PWA für agentische Literaturrecherche: PubMed/NCBI, arXiv, Gemini-Streaming, Knowledge Base, Export — kein eigenes Backend für Nutzerdaten.
+**Purpose:** Client-only PWA for agentic biomedical literature research: PubMed/NCBI, arXiv, multi-provider AI (Gemini / OpenAI / Anthropic / Ollama) or deterministic heuristic fallback, local Knowledge Base, and export — no application backend for user data.
 
-**Stack:** React 19, TypeScript strict, Vite 8, Redux Toolkit, TanStack Query/Virtual, Dexie 4 + dexie-react-hooks (IndexedDB), Tailwind CSS v4, `@google/genai`, Marked/DOMPurify, jsPDF, Recharts, Framer Motion, cmdk, Vitest + Testing Library, Playwright E2E. Inference: live providers **or** local deterministic engine (`src/services/nonAi/`, ADR 0007/0009).
+**Stack:** React 19, TypeScript strict, Vite 8, Redux Toolkit, Dexie 4 + dexie-react-hooks (IndexedDB), Tailwind CSS v4, lazy provider SDKs, Marked/DOMPurify, jsPDF, **Recharts only**, Framer Motion, cmdk, Vitest + Testing Library, Playwright E2E (blocking Chromium + blocking Firefox/WebKit/mobile Chrome). Inference: `live | heuristic` (`src/services/nonAi/`, ADR 0007/0009).
 
-**Architektur:** Browser-only → Gemini API + NCBI E-utilities (+ arXiv); AES-GCM über `apiKeyService`; Redux als Single Source of Truth; Context nur für Hydration/Komposition (`SettingsProvider`, KB) — keine parallelen Kopien derselben Settings/UI-Flags.
+**Architecture:** Browser talks directly to the selected AI provider + NCBI E-utilities (+ arXiv); AES-GCM keys via `apiKeyService`; Redux is the single source of truth; Context only hydrates/composes (`SettingsProvider`, KB) — never duplicate the same settings/UI flags. Synthesis trust: corpus-/claim-supported vs unverified narrative draft (ADR 0018).
 
-**Konventionen:** EN+DE in `src/i18n/translations.ts`; WCAG-orientiert (ARIA, Tastatur); neue persistente Daten → Dexie-Schema in `databaseService`; Runtime Node **>=22**; Abhängigkeiten via `pnpm install --frozen-lockfile`; vor Commit: `pnpm run typecheck`, `pnpm run lint`, `pnpm run test:coverage` (wie CI) und Security-Gate `pnpm audit --audit-level=high`.
+**Conventions:** EN+DE in `src/i18n/translations.ts`; WCAG-oriented (ARIA, keyboard); new persistent data → Dexie schema in `databaseService`; Node **≥22**; `pnpm install --frozen-lockfile`; before commit: `typecheck`, `lint`, and scoped tests (full coverage/E2E from CI). English-only new repo content (rule `010`).
 
-**Modulare Regeln:** `.cursor/rules/` — `001–099` Security/PR gates (`011` bot scope, `013` correction loop), `100–199` APIs, `200–299` Architektur, `300–399` UI, `800–899` QA/Workflows; Details in `000-cursor-rules.mdc`.
+**PR / CI gates:** Rules `011`/`013` — always `@deepsourcebot review`; resolve bot threads; CodeRabbit rate-limit loop (bounded). Blocking checks + PR-only `cancel-in-progress`: `docs/ci-branch-governance.md` + `docs/project-facts.json` (drift-gated). Live ruleset: `mainrules`.
 
-**Kanonisch:** `AGENTS.md`, `.github/copilot-instructions.md`, `README.md`, `.github/workflows/deploy.yml`.
+**Modular rules:** `.cursor/rules/` — `001–099` Security/PR gates, `100–199` APIs, `200–299` Architecture, `300–399` UI, `800–899` QA/Workflows; details in `000-cursor-rules.mdc`.
+
+**Canonical:** `AGENTS.md`, `.github/copilot-instructions.md`, `README.md`, `docs/ci-branch-governance.md`, `.github/workflows/deploy.yml`.

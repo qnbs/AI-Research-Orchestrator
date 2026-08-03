@@ -1,5 +1,7 @@
 # Full-Scale Audit Report — 2026-08-02
 
+> **Point-in-time audit (2026-08-02).** Current CI/E2E/ruleset policy: `docs/ci-branch-governance.md`, `docs/e2e-ci-backlog.md`, `docs/project-facts.json`. Cross-browser is full seven-spec **blocking** (#207); DeepSource AI Review is a mandatory process gate (#209); product truthfulness calibrated (#211); governance + concurrency hardening (#212).
+
 ## Metadata
 
 | Field                     | Value                                                                                                 |

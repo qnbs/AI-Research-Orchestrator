@@ -1,5 +1,7 @@
 # Cursor Agent Master Prompt — Full-Scale Audit Remediation and Production Hardening
 
+> **Status (2026-08-03):** Large portions of this prompt are **executed / archived**. Do not re-litigate completed gates: cross-browser is **blocking** (not advisory); Claude Code Review was **removed** from CI (on-demand `@claude` only); DeepSource **AI Review** is mandatory via `@deepsourcebot review`; P1-7 governance lives in `docs/ci-branch-governance.md` + live ruleset `mainrules`. Prefer current `AGENTS.md`, `docs/project-facts.json`, and open GitHub issues for remaining P2/P3 work.
+>
 > **Repository:** `qnbs/AI-Research-Orchestrator`  
 > **Initial audited baseline:** `e7e6a02ad1f62e863d29ce855675151cd11ba285` (`main`, 2026-08-02)  
 > **Execution target:** the latest `main` at the moment this prompt is run  
@@ -836,8 +838,8 @@ At the end of every work session, provide:
 
 A table with:
 
-| ID | Severity | Domain | Evidence | Root cause | Status | Fix/next action |
-| --- | --- | --- | --- | --- | --- | --- |
+| ID  | Severity | Domain | Evidence | Root cause | Status | Fix/next action |
+| --- | -------- | ------ | -------- | ---------- | ------ | --------------- |
 
 ### Changes made
 

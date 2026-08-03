@@ -134,14 +134,21 @@ pnpm run build
 #### Tests & CI
 
 ```bash
-pnpm run typecheck    # TypeScript (strict, no emit)
-pnpm run lint         # ESLint (warning budget in package.json)
+pnpm run typecheck     # TypeScript (strict, no emit)
+pnpm run lint          # ESLint (zero-warning gate)
 pnpm run test:coverage # Vitest + coverage thresholds (logic layers — vitest.config.ts)
-pnpm run test:e2e     # Playwright E2E (one-time: pnpm exec playwright install chromium)
-pnpm run build        # Production bundle
+pnpm run test:e2e      # Playwright (prefer scoped local runs; full suite in CI)
+pnpm run build         # Production bundle + CSP hash patch
 ```
 
-On every **push** to `main` and on **pull requests** targeting `main`, GitHub Actions runs install, typecheck, lint, tests with coverage, and production build (see `.github/workflows/deploy.yml`). Upload and deployment to GitHub Pages run only when the ref is `refs/heads/main` and the event is not a pull request.
+On every **push** to `main` and on **pull requests** targeting `main`, GitHub Actions runs:
+
+- **Quality / build** — `deploy.yml` (typecheck, lint, format, coverage, docs-drift, production build, bundle budget, Lighthouse)
+- **E2E** — blocking Chromium (`e2e.yml`) and blocking Firefox / WebKit / mobile Chrome (`e2e-cross-browser.yml`)
+- **A11y** — blocking axe smoke (`a11y.yml`)
+- **Security** — CodeQL, Dependency Review, `pnpm audit` (high+), gitleaks (`security.yml`)
+
+Upload and deployment to GitHub Pages run only on `refs/heads/main` (not on pull requests). Required-check inventory, concurrency (PR-only cancel-in-progress), and branch ruleset expectations: [`docs/ci-branch-governance.md`](./docs/ci-branch-governance.md). Contributor PR bot loop: [`CONTRIBUTING.md`](./CONTRIBUTING.md).
 
 #### Cursor / IDE setup
 
@@ -366,14 +373,14 @@ pnpm run build
 #### Tests & CI (Deutsch)
 
 ```bash
-pnpm run typecheck    # TypeScript (strikt, ohne Emit)
-pnpm run lint         # ESLint (Warnbudget in package.json)
+pnpm run typecheck     # TypeScript (strikt, ohne Emit)
+pnpm run lint          # ESLint (Null-Warnungen)
 pnpm run test:coverage # Vitest + Coverage-Schwellen (Logiklayer — vitest.config.ts)
-pnpm run test:e2e     # Playwright E2E (einmalig: pnpm exec playwright install chromium)
-pnpm run build        # Produktionsbundle
+pnpm run test:e2e      # Playwright (lokal eher scoped; volle Suite in CI)
+pnpm run build         # Produktionsbundle + CSP-Hash
 ```
 
-Bei jedem **Push** auf `main` und bei **Pull Requests** gegen `main` führt GitHub Actions Installation, Typecheck, Lint, Tests mit Coverage und Production-Build aus (`.github/workflows/deploy.yml`). Upload und Deploy nach GitHub Pages erfolgen nur auf `refs/heads/main`, nicht bei PRs.
+Bei jedem **Push** auf `main` und bei **Pull Requests** gegen `main` laufen Qualität/Build (`deploy.yml`), blockierendes Chromium-E2E (`e2e.yml`), blockierendes Cross-Browser-E2E Firefox/WebKit/mobile Chrome (`e2e-cross-browser.yml`), Axe-A11y (`a11y.yml`) und Security (`security.yml`). Upload/Deploy nach GitHub Pages nur auf `refs/heads/main`. Required Checks und Concurrency: [`docs/ci-branch-governance.md`](./docs/ci-branch-governance.md).
 
 #### Cursor / IDE
 
@@ -383,18 +390,18 @@ Für KI-gestützte Entwicklung in Cursor: [`AGENTS.md`](./AGENTS.md), [`.cursor/
 
 - Node.js 22+ und pnpm 11
 - Ein moderner Browser (Chrome, Edge, Safari, Firefox)
-- Ein **Google Gemini API Key** — [Hier erhalten](https://aistudio.google.com/)
+- Optional: API-Key für Gemini, OpenAI oder Anthropic — oder lokal Ollama / Heuristik-Modus ohne Key
 
 #### API Key einrichten
 
-Die App speichert Ihren API Key **sicher verschlüsselt** in der IndexedDB Ihres Browsers (AES-GCM Verschlüsselung):
+Die App speichert Anbieter-Keys **AES-GCM-verschlüsselt** in der IndexedDB Ihres Browsers (Web Crypto). Encryption schützt Keys at rest; nicht vor Malware/XSS — siehe [SECURITY.md](./SECURITY.md).
 
 1. App öffnen
-2. Navigieren Sie zu **Einstellungen** → **API Key**
-3. Geben Sie Ihren Gemini API Key ein
-4. Klicken Sie auf **Schlüssel speichern**
+2. **Einstellungen** → **AI Configuration** / KI-Konfiguration
+3. Anbieter wählen und Key(s) eintragen (oder Ollama/Heuristik ohne Cloud-Key)
+4. Speichern
 
-> ⚠️ **Sicherheitshinweis**: Keys werden **nicht** an ein Anwendungs-Backend gesendet. Im Live-Modus dienen sie als Authorization beim **gewählten KI-Anbieter**. Recherche-Prompts und Artikelmetadaten gehen ebenfalls an diesen Anbieter. AES-GCM schützt Keys at rest in IndexedDB, nicht vor Malware/XSS — siehe [SECURITY.md](./SECURITY.md).
+> ⚠️ **Sicherheitshinweis**: Keys werden **nicht** an ein Anwendungs-Backend gesendet. Im Live-Modus dienen sie als Authorization beim **gewählten KI-Anbieter**. Recherche-Prompts und Artikelmetadaten gehen ebenfalls an diesen Anbieter.
 
 ---
 
@@ -404,7 +411,7 @@ Die Anwendung verfügt über eine granulare Einstellungs-Engine, die eine präzi
 
 - **KI-Persona**: Wechseln Sie zwischen "Neutraler Wissenschaftler", "Kreativer Synthetisierer" oder "Kritischer Gutachter", um den rhetorischen Ton anzupassen.
 - **Temperatur**: Feinabstimmung der Kreativität (0.0 für deterministische Fakten, 0.8 für Hypothesengenerierung).
-- **Thinking Budget**: Weisen Sie spezifische Token-Anzahlen für den internen Denkprozess des Modells zu, bevor die Ausgabe generiert wird (aktiviert für Gemini 2.5/3.0 Modelle).
+- **Thinking Budget**: Weisen Sie spezifische Token-Anzahlen für den internen Denkprozess zu, soweit der gewählte Anbieter das unterstützt (z. B. Gemini 2.5 Flash).
 - **Sprache**: Erzwingen Sie die Ausgabe in bestimmten Sprachen (Englisch, Deutsch, Französisch, Spanisch) unabhängig von der Eingangssprache.
 
 ---
