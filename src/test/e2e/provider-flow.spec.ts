@@ -4,7 +4,12 @@
  */
 import { test, expect } from '@playwright/test';
 import { navigateToView, skipOnboarding } from './e2eHelpers';
-import { configureOllamaLoopback, mockOllamaHealthy, mockOllamaUnavailable } from './ollamaMocks';
+import {
+  OLLAMA_E2E_LOOPBACK,
+  configureOllamaLoopback,
+  mockOllamaHealthy,
+  mockOllamaUnavailable,
+} from './ollamaMocks';
 
 async function openAiConfiguration(page: import('@playwright/test').Page) {
   await navigateToView(page, '#settings');
@@ -82,7 +87,10 @@ test.describe('Provider selection flow', () => {
     await select.selectOption('ollama');
     await expect(page.getByTestId('ollama-health-panel')).toBeVisible({ timeout: 5_000 });
     await configureOllamaLoopback(page);
+    await expect(page.locator('#ai-base-url')).toHaveValue(OLLAMA_E2E_LOOPBACK);
     await expect(page.getByTestId('ollama-health-ok')).toBeVisible({ timeout: 15_000 });
+    // Prove the panel probed the configured loopback, not a silent localhost fallback.
+    await expect(page.getByTestId('ollama-health-ok')).toContainText('127.0.0.1');
     await expect(page.getByTestId('ollama-discovered-models')).toBeVisible();
     await expect(
       page.getByTestId('ollama-discovered-models').locator('option[value="llama3.1:8b"]'),

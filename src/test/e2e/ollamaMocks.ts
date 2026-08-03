@@ -3,10 +3,15 @@
  *
  * WebKit enforces CORS on fulfilled cross-origin responses even when Playwright
  * intercepts the request. Always attach ACAO headers and answer OPTIONS.
+ *
+ * Routes are scoped to known loopback origins (not a global api-path glob) so a
+ * regression that probes an unexpected host fails instead of being silently mocked.
  */
 import type { Page, Route } from '@playwright/test';
 
 export const OLLAMA_E2E_LOOPBACK = 'http://127.0.0.1:11434';
+/** Default provider preset before the test rewrites the base URL. */
+export const OLLAMA_E2E_LOCALHOST = 'http://localhost:11434';
 
 const CORS_HEADERS: Record<string, string> = {
   'Access-Control-Allow-Origin': '*',
@@ -27,40 +32,69 @@ async function fulfillJson(route: Route, body: unknown, status = 200): Promise<v
   });
 }
 
-/** Mock a reachable Ollama with one discovered model. */
+async function routeLoopbackApis(
+  page: Page,
+  origins: readonly string[],
+  handlers: {
+    version: (route: Route) => Promise<void>;
+    tags: (route: Route) => Promise<void>;
+  },
+): Promise<void> {
+  for (const origin of origins) {
+    await page.route(`${origin}/api/version`, handlers.version);
+    await page.route(`${origin}/api/tags`, handlers.tags);
+  }
+}
+
+/** Mock a reachable Ollama with one discovered model on loopback origins only. */
 export async function mockOllamaHealthy(
   page: Page,
-  options: { version?: string; modelName?: string; parameterSize?: string } = {},
+  options: {
+    version?: string;
+    modelName?: string;
+    parameterSize?: string;
+    /** Origins to intercept (defaults: 127.0.0.1 + localhost presets). */
+    origins?: readonly string[];
+  } = {},
 ): Promise<void> {
   const version = options.version ?? '0.5.0-e2e';
   const modelName = options.modelName ?? 'llama3.1:8b';
   const parameterSize = options.parameterSize ?? '8B';
+  const origins = options.origins ?? [OLLAMA_E2E_LOOPBACK, OLLAMA_E2E_LOCALHOST];
 
-  await page.route('**/api/version', async (route) => {
-    await fulfillJson(route, { version });
-  });
-  await page.route('**/api/tags', async (route) => {
-    await fulfillJson(route, {
-      models: [{ name: modelName, details: { parameter_size: parameterSize } }],
-    });
+  await routeLoopbackApis(page, origins, {
+    version: async (route) => {
+      await fulfillJson(route, { version });
+    },
+    tags: async (route) => {
+      await fulfillJson(route, {
+        models: [{ name: modelName, details: { parameter_size: parameterSize } }],
+      });
+    },
   });
 }
 
 /** Mock an unreachable Ollama (network failure on both probes). */
-export async function mockOllamaUnavailable(page: Page): Promise<void> {
-  await page.route('**/api/version', async (route) => {
-    if (route.request().method() === 'OPTIONS') {
-      await route.fulfill({ status: 204, headers: CORS_HEADERS });
-      return;
-    }
-    await route.abort('failed');
-  });
-  await page.route('**/api/tags', async (route) => {
-    if (route.request().method() === 'OPTIONS') {
-      await route.fulfill({ status: 204, headers: CORS_HEADERS });
-      return;
-    }
-    await route.abort('failed');
+export async function mockOllamaUnavailable(
+  page: Page,
+  options: { origins?: readonly string[] } = {},
+): Promise<void> {
+  const origins = options.origins ?? [OLLAMA_E2E_LOOPBACK, OLLAMA_E2E_LOCALHOST];
+  await routeLoopbackApis(page, origins, {
+    version: async (route) => {
+      if (route.request().method() === 'OPTIONS') {
+        await route.fulfill({ status: 204, headers: CORS_HEADERS });
+        return;
+      }
+      await route.abort('failed');
+    },
+    tags: async (route) => {
+      if (route.request().method() === 'OPTIONS') {
+        await route.fulfill({ status: 204, headers: CORS_HEADERS });
+        return;
+      }
+      await route.abort('failed');
+    },
   });
 }
 
