@@ -1,37 +1,11 @@
 /**
  * Journal Hub E2E — landing chrome, featured section, analyze form.
- * Network: featured journals JSON is bundled/fetched locally; PubMed/AI mocked only when needed.
+ * Network: featured journals JSON is bundled/fetched locally; PubMed mocked only when needed.
  */
-import { test, expect, type Page, type Route } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import { navigateToView, skipOnboarding } from './e2eHelpers';
-
-function mockPubMedSearch(page: Page) {
-  page.route(
-    (url) => url.hostname === 'eutils.ncbi.nlm.nih.gov',
-    async (route: Route) => {
-      const url = route.request().url();
-      if (url.includes('esearch')) {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({ esearchresult: { idlist: ['39000002'] } }),
-        });
-        return;
-      }
-      await route.fulfill({
-        status: 200,
-        contentType: 'text/xml',
-        body: `<?xml version="1.0"?><PubmedArticleSet><PubmedArticle>
-          <MedlineCitation Status="MEDLINE"><PMID Version="1">39000002</PMID>
-          <Article><ArticleTitle>Nature Medicine Sample</ArticleTitle>
-          <Abstract><AbstractText>Sample abstract.</AbstractText></Abstract>
-          <AuthorList><Author><LastName>Doe</LastName><ForeName>A</ForeName></Author></AuthorList>
-          <Journal><Title>Nature Medicine</Title><JournalIssue><PubDate><Year>2024</Year></PubDate></JournalIssue></Journal>
-          </Article></MedlineCitation></PubmedArticle></PubmedArticleSet>`,
-      });
-    },
-  );
-}
+import { mockPubMedRoutes } from './fixtures/networkMocks';
+import { JOURNAL_HUB_PUBMED_ARTICLE } from './fixtures/pubmedArticle';
 
 test.describe('Journal Hub', () => {
   test.beforeEach(async ({ page }) => {
@@ -78,7 +52,7 @@ test.describe('Journal Hub', () => {
   });
 
   test('analyze form accepts a journal query', async ({ page }) => {
-    mockPubMedSearch(page);
+    await mockPubMedRoutes(page, JOURNAL_HUB_PUBMED_ARTICLE);
     const input = page.getByRole('textbox', {
       name: /journal name to analyze|zu analysierender journalname/i,
     });

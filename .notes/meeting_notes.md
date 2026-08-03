@@ -209,4 +209,10 @@
 
 - **Why:** After #206 merge, `main` run `30786120773` WebKit failed `provider-flow` Ollama healthy path (`cors`); PR looked green because `e2e-cross-browser.yml` used `continue-on-error: true`.
 - **What:** `serviceWorkers: 'block'` in Playwright (WebKit SW bypassed `page.route`); CORS-aware Ollama mocks + `127.0.0.1` refresh; remove `continue-on-error`; `crossBrowserAdvisory: false`; update backlog/AGENTS/rules/drift check.
-- **Impact:** Cross-browser failures fail the PR/`main` check — same visibility as Chromium E2E.
+- **Impact:** Cross-browser failures fail the PR/`main` check — same visibility as Chromium E2E. Merged as **#207**.
+
+## 2026-08-03 — PR8 E2E shared network fixtures
+
+- **Why:** Agent-flow / Journal Hub duplicated PubMed/Gemini/arXiv mocks; consolidate after #207 Ollama helpers.
+- **What:** `src/test/e2e/fixtures/{networkMocks,pubmedArticle}.ts`; refactor agent-flow + journal-hub to import shared mocks.
+- **Next:** PR9 eval → PR10 docs → PR11 CI governance.

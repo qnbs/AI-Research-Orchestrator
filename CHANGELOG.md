@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **E2E Cross-Browser Smoke is blocking:** removed `continue-on-error` from `.github/workflows/e2e-cross-browser.yml`; `docs/project-facts.json` `crossBrowserAdvisory: false`.
+- **E2E network fixtures (PR8):** PubMed / Gemini / arXiv Playwright mocks live in `src/test/e2e/fixtures/`; agent-flow and journal-hub import the shared helpers instead of inlined route handlers.
 
 ### Added
 

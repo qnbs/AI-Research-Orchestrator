@@ -16,7 +16,11 @@ Suite files (a11y.spec.ts stays on the dedicated `a11y.yml` job):
 - `src/test/e2e/journal-hub.spec.ts`
 - `src/test/e2e/provider-flow.spec.ts`
 
-Shared helpers live in `src/test/e2e/e2eHelpers.ts`. Ollama health mocks: `src/test/e2e/ollamaMocks.ts` (CORS headers required for WebKit).
+Shared helpers live in `src/test/e2e/e2eHelpers.ts`. Network fixtures:
+
+- `src/test/e2e/ollamaMocks.ts` — Ollama health (CORS + loopback-scoped routes; WebKit needs `serviceWorkers: 'block'`)
+- `src/test/e2e/fixtures/networkMocks.ts` — PubMed / Gemini / arXiv hostname-scoped mocks
+- `src/test/e2e/fixtures/pubmedArticle.ts` — deterministic ESearch/EFetch payloads
 
 **CLI note:** Invoke via `pnpm exec playwright test <files…>` in CI. Do **not** use
 `pnpm run test:e2e -- <files>` — the bare `--` forwarded to Playwright causes it to

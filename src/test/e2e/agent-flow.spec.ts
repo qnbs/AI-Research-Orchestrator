@@ -4,7 +4,7 @@
  * Covers: Bootstrap, Navigation, Orchestrator Form, Mocked Pipeline,
  *         Knowledge Base, Command Palette, Settings, Mobile UX, Accessibility.
  */
-import { test, expect, Page, Route } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import {
   navigateToView,
   navigateToKnowledgeBase,
@@ -15,69 +15,7 @@ import {
   waitForKbArticleCount,
   DEMO_KB_UNIQUE_ARTICLE_COUNT,
 } from './e2eHelpers';
-
-// ── API Mocks ──────────────────────────────────────────────────────────────────
-
-// Route matchers use an exact-hostname predicate rather than an unanchored regex —
-// `/export\.arxiv\.org/.test(url)` would also match e.g. `evil.example/?u=export.arxiv.org`.
-function mockPubMedRoutes(page: Page) {
-  page.route(
-    (url) => url.hostname === 'eutils.ncbi.nlm.nih.gov',
-    async (route: Route) => {
-      const url = route.request().url();
-      if (url.includes('esearch')) {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({ esearchresult: { idlist: ['39000001'] } }),
-        });
-      } else {
-        await route.fulfill({
-          status: 200,
-          contentType: 'text/xml',
-          body: `<?xml version="1.0"?><PubmedArticleSet><PubmedArticle>
-          <MedlineCitation Status="MEDLINE"><PMID Version="1">39000001</PMID>
-          <Article><ArticleTitle>COVID Cognition Study</ArticleTitle>
-          <Abstract><AbstractText>Brain fog findings.</AbstractText></Abstract>
-          <AuthorList><Author><LastName>Smith</LastName><ForeName>J</ForeName></Author></AuthorList>
-          <Journal><Title>Nature Medicine</Title><JournalIssue><PubDate><Year>2024</Year></PubDate></JournalIssue></Journal>
-          </Article></MedlineCitation></PubmedArticle></PubmedArticleSet>`,
-        });
-      }
-    },
-  );
-}
-
-function mockGeminiRoutes(page: Page) {
-  page.route(
-    (url) => url.hostname === 'generativelanguage.googleapis.com',
-    async (route: Route) => {
-      const summary = '## Research Summary\\n\\nCOVID-19 cognitive effects findings.';
-      await route.fulfill({
-        status: 200,
-        headers: { 'Content-Type': 'text/event-stream' },
-        body: `data: {"candidates":[{"content":{"parts":[{"text":"${summary}"}],"role":"model"}}]}\n\ndata: [DONE]\n\n`,
-      });
-    },
-  );
-}
-
-function mockArxivRoutes(page: Page) {
-  page.route(
-    (url) => url.hostname === 'export.arxiv.org' || url.hostname === 'corsproxy.io',
-    async (route: Route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/atom+xml',
-        body: `<?xml version="1.0"?><feed xmlns="http://www.w3.org/2005/Atom"><entry>
-        <id>http://arxiv.org/abs/2404.00001v1</id><title>COVID arXiv Study</title>
-        <summary>Neurological findings.</summary><author><name>Author A</name></author>
-        <published>2024-04-01T00:00:00Z</published><updated>2024-04-01T00:00:00Z</updated>
-        <category term="q-bio.NC"/></entry></feed>`,
-      });
-    },
-  );
-}
+import { mockAgentPipelineApis, mockGeminiUnavailable } from './fixtures/networkMocks';
 
 const FAKE_API_KEY = 'AIzaFAKEKEY000000000000000000000000001';
 
@@ -224,9 +162,7 @@ test.describe('3. Orchestrator Form', () => {
 
 test.describe('4. Full Agent Pipeline (mocked APIs)', () => {
   test.beforeEach(async ({ page }) => {
-    mockPubMedRoutes(page);
-    mockGeminiRoutes(page);
-    mockArxivRoutes(page);
+    await mockAgentPipelineApis(page);
     await skipOnboarding(page);
     await navigateToView(page, '#orchestrator');
   });
@@ -510,7 +446,7 @@ test.describe('9. Accessibility', () => {
 test.describe('10. Heuristic inference (no API key)', () => {
   test.beforeEach(async ({ page }) => {
     // Block Gemini so live path cannot succeed; PubMed may still be called when online.
-    await page.route('**/*generativelanguage.googleapis.com/**', (route) => route.abort());
+    await mockGeminiUnavailable(page);
     await skipOnboarding(page);
     await navigateToView(page, '#orchestrator');
     await page.locator('#researchTopic').waitFor({ state: 'visible', timeout: 20_000 });
