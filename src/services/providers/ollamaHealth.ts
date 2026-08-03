@@ -224,14 +224,19 @@ export async function probeOllamaHealth(
     });
   } catch (error) {
     const diagnosed = diagnoseFetchError(error);
-    return remember({
+    const fail: OllamaHealthFail = {
       ok: false,
       origin,
       baseUrl,
       reason: diagnosed.reason,
       message: diagnosed.message,
       checkedAt,
-    });
+    };
+    // Do not cache aborted/timeout probes — they are often supersession artifacts.
+    if (diagnosed.reason === 'aborted' || diagnosed.reason === 'timeout') {
+      return fail;
+    }
+    return remember(fail);
   }
 }
 

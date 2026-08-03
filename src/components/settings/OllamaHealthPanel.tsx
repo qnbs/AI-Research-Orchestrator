@@ -1,10 +1,11 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useSettingsView } from './SettingsViewContext';
 import {
   estimateOllamaInputTokenBudget,
   isOllamaModelAvailable,
   probeOllamaHealth,
   type OllamaHealthResult,
+  type OllamaModelInfo,
 } from '../../services/providers/ollamaHealth';
 
 function formatCheckedAt(ts: number): string {
@@ -15,6 +16,22 @@ function formatCheckedAt(ts: number): string {
   }
 }
 
+/** Resolve the discovered model option that matches the selected model (incl. tag aliases). */
+export function resolveDiscoveredModelValue(
+  models: OllamaModelInfo[],
+  selectedModel: string,
+): string {
+  const target = selectedModel.trim().toLowerCase();
+  if (!target) return '';
+  const exact = models.find((m) => m.name.toLowerCase() === target);
+  if (exact) return exact.name;
+  const alias = models.find((m) => {
+    const name = m.name.toLowerCase();
+    return name.startsWith(`${target}:`) || target.startsWith(`${name}:`);
+  });
+  return alias?.name ?? '';
+}
+
 /**
  * Settings diagnostics for the Ollama / Local AI backend:
  * health probe, model discovery, model-missing warning, and privacy note.
@@ -23,18 +40,30 @@ export const OllamaHealthPanel: React.FC = () => {
   const { tempSettings, setTempSettings, t } = useSettingsView();
   const [health, setHealth] = useState<OllamaHealthResult | null>(null);
   const [loading, setLoading] = useState(false);
+  const probeSeq = useRef(0);
+  const abortRef = useRef<AbortController | null>(null);
 
   const baseUrl = tempSettings.ai.customBaseUrl?.trim() || 'http://localhost:11434';
   const selectedModel = tempSettings.ai.model;
 
   const runProbe = useCallback(
     async (force: boolean) => {
+      abortRef.current?.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
+      const seq = ++probeSeq.current;
       setLoading(true);
       try {
-        const result = await probeOllamaHealth(baseUrl, { force });
+        const result = await probeOllamaHealth(baseUrl, {
+          force,
+          signal: controller.signal,
+        });
+        if (seq !== probeSeq.current) return;
         setHealth(result);
       } finally {
-        setLoading(false);
+        if (seq === probeSeq.current) {
+          setLoading(false);
+        }
       }
     },
     [baseUrl],
@@ -43,6 +72,10 @@ export const OllamaHealthPanel: React.FC = () => {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- kicks off an async health probe when the Local AI base URL changes; loading/result state is not derivable from render.
     void runProbe(false);
+    return () => {
+      abortRef.current?.abort();
+      probeSeq.current += 1;
+    };
   }, [runProbe]);
 
   const modelMissing =
@@ -50,6 +83,8 @@ export const OllamaHealthPanel: React.FC = () => {
       ? !isOllamaModelAvailable(health.models, selectedModel)
       : false;
   const budgetHint = estimateOllamaInputTokenBudget(selectedModel);
+  const discoveredValue =
+    health?.ok === true ? resolveDiscoveredModelValue(health.models, selectedModel) : '';
 
   return (
     <div
@@ -94,7 +129,7 @@ export const OllamaHealthPanel: React.FC = () => {
               <select
                 id="ollama-discovered-model"
                 className="mt-1 block w-full bg-input-bg border border-border rounded-md py-1.5 px-2"
-                value={health.models.some((m) => m.name === selectedModel) ? selectedModel : ''}
+                value={discoveredValue}
                 onChange={(e) => {
                   const next = e.target.value;
                   if (!next) return;
