@@ -13,10 +13,10 @@ Complements `@.cursor/rules/011-coderabbit-pr-gate.mdc` (scope) and `@.cursor/ru
 
 | Source | Notes |
 |--------|--------|
-| **CodeRabbit** (`coderabbitai`) | Inline threads + **review body** (out-of-diff findings often appear only in the summary) |
+| **CodeRabbit** (`coderabbitai`) | Inline threads + **review body** (out-of-diff findings often appear only in the summary). A check that only says **“Review rate limited”** is **not** quiescence — parse **Next review available in: N minutes**, wait `N+buffer`, then post `@coderabbitai review` and repeat until a real review targets the latest head (see `011`). |
 | **CodeAnt** (`codeant-ai`) | Inline suggestions + quality-gate status contexts |
 | **Copilot** (`copilot-pull-request-reviewer`) | Inline PR review comments |
-| **DeepSource** (`deepsource-io`) | Inline threads when JS analyzer enabled in dashboard; `DeepSource: JavaScript` GitHub check disappears when dashboard analyzer is off (TOML has no `javascript` block) — see `docs/deepsource-javascript-ci.md`. Docker/Shell remain advisory. ESLint + `deploy.yml` are authoritative for TS/TSX. |
+| **DeepSource** (`deepsource-io`) | **Mandatory:** post `@deepsourcebot review` on every PR (open + after fix pushes). Team AI Review is on-demand; without that mention only static analysis runs. Address AI Review + actionable Docker/Shell findings. Dashboard JS analyzer remains off (no `javascript` block in `.deepsource.toml`) — see `docs/deepsource-javascript-ci.md`. ESLint + `deploy.yml` are authoritative for TS/TSX. |
 | **Socket Security** | Actionable PR alerts when they block merge |
 | **Cursor Bugbot** | When explicitly requested |
 | **Greptile / Codex** | Skip when trial or usage limits return no review (document in PR disposition comment) |
@@ -26,11 +26,12 @@ Human review comments requesting concrete fixes are in scope while open.
 ## Merge gate order (strict)
 
 1. **Push** fix commits to the PR branch.
-2. **Wait** for blocking CI on the latest commit (`deploy.yml` Typecheck/Lint/Tests, build, security audit — read job logs, not badge alone for advisory jobs).
-3. **Collect** all open review threads (GraphQL `reviewThreads`) and scan latest bot **review bodies** for new actionable items.
-4. **Fix or reply** on every thread; **resolve** threads after fix or documented rationale.
-5. **Re-check** after CodeRabbit (or other bots) finish on the new commit — temporary rate limits may delay reviews **14–20+ minutes**; wait and re-poll before declaring quiescence. **Do not merge** while CodeRabbit `CHANGES_REQUESTED` targets an older commit or while unresolved inline threads remain.
-6. **Merge** only when step 2 is green and step 5 shows no new actionable items.
+2. **Trigger** `@deepsourcebot review` (required on open and after **every** fix push to the latest head) and `@coderabbitai review` whenever the latest head lacks a real CodeRabbit review (missing, stale SHA, or rate-limited placeholder).
+3. **Wait** for blocking CI on the latest commit (`deploy.yml` Typecheck/Lint/Tests, build, security audit, Chromium + cross-browser E2E — read job logs, not badge alone for advisory jobs).
+4. **Collect** all open review threads (GraphQL `reviewThreads`) and scan latest bot **review bodies** for new actionable items (include DeepSource AI Review + CodeRabbit summary).
+5. **Fix or reply** on every thread; **resolve** threads after fix or documented rationale.
+6. **Re-check** after bots finish on the new commit. For CodeRabbit rate limits: parse the wait time, sleep through it (+buffer), re-trigger `@coderabbitai review` (bounded loop in `011` — max 3 cycles / escalate after >90m waits), and **do not merge** until a non-rate-limited review exists for the latest head. **Do not merge** while CodeRabbit `CHANGES_REQUESTED` targets the **latest** head, while DeepSource AI Review was never attempted on the latest head, or while unresolved inline threads remain. A `CHANGES_REQUESTED` review on a **superseded** commit is not a merge block once a newer real review (or APPROVED/COMMENTED replacement) exists for the current head — dismiss or ignore the stale review state and resolve any remaining open threads.
+7. **Merge** only when step 3 is green and step 6 shows no new actionable items.
 
 Do **not** merge on stale bot approval from an older commit while newer commits are untested or unreviewed.
 
@@ -70,7 +71,7 @@ Replace `N` with the PR number. After fixes, resolve threads via GraphQL `resolv
 - **Hydrate before validation:** Run `ensureGroundedClaim` / `ensureArticleIdentifiers` before corpus validation and Dexie upgrades; guard non-string legacy keys.
 - **i18n for all identifier types:** Copy toast and ARIA labels must not hard-code “PMID” when DOI/arXiv/PMCID are copied.
 - **DOI URLs:** Use `encodeURI` for `doi.org` paths (preserve `/`); do not `encodeURIComponent` the full DOI.
-- **CodeRabbit re-reviews** each push — expect 2–4 correction rounds on medium PRs; budget time for rate-limit delays.
+- **CodeRabbit re-reviews** each push — expect 2–4 correction rounds on medium PRs. Rate-limit placeholders must be waited out and re-triggered (`@coderabbitai review`); never treat “Review rate limited” as approval.
 - **DeepSource noise:** JavaScript analyzer is off in the DeepSource dashboard; `.deepsource.toml` has no `javascript` block (`docs/deepsource-dashboard-off.md`). Do not churn code solely for advisory DeepSource JavaScript unless policy flips to blocking.
 
 ## Related docs

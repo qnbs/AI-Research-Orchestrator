@@ -60,14 +60,16 @@ pnpm run test:e2e
 
 ### Automated review correction loop (required before merge)
 
-1. Push fixes; wait for **blocking CI** green on the latest commit (`deploy.yml`).
-2. Address **every** open inline thread from CodeRabbit, CodeAnt, Copilot, DeepSource (and any other bot reviewers listed in `.cursor/rules/013-pr-review-correction-loop.mdc`).
-3. Read latest bot **review summaries** — CodeRabbit out-of-diff items often appear only in the review body.
-4. Reply on each thread (cite fix commit) and **resolve** the conversation.
-5. Re-poll after bots finish on the new commit; wait through CodeRabbit rate limits if needed.
-6. Merge only when CI is green and no new actionable bot comments remain.
+1. Push fixes; wait for **blocking CI** green on the latest commit (`deploy.yml` + Chromium/cross-browser E2E).
+2. **Always** comment `@deepsourcebot review` on the PR after open and after **every** fix push (DeepSource AI Review is on-demand for this team — static analysis alone is not enough).
+3. **Always** ensure CodeRabbit reviewed the latest head: if the check says **Review rate limited**, parse **Next review available in: N minutes**, wait `N` (+ a few minutes buffer), then comment `@coderabbitai review` and repeat (max **3** wait/re-trigger cycles per head; escalate to a maintainer after that or if a single wait exceeds **90 minutes**) until a real review lands — do not merge on a rate-limit placeholder.
+4. Address **every** open inline thread from CodeRabbit, CodeAnt, Copilot, DeepSource AI Review (and any other bot reviewers listed in `.cursor/rules/013-pr-review-correction-loop.mdc`).
+5. Read latest bot **review summaries** — CodeRabbit out-of-diff items often appear only in the review body.
+6. Reply on each thread (cite fix commit) and **resolve** the conversation.
+7. Re-poll after bots finish on the new commit; re-trigger DeepSource/CodeRabbit as above after every fix push.
+8. Merge only when CI is green and no new actionable bot comments remain.
 
-DeepSource JavaScript is **advisory** by default (`docs/project-facts.json`). Chromium and cross-browser Playwright E2E are **blocking**. Post a short disposition comment when closing a large review batch.
+DeepSource dashboard JavaScript analyzer remains off / advisory (`docs/project-facts.json`). Chromium and cross-browser Playwright E2E are **blocking**. Post a short disposition comment when closing a large review batch.
 
 See `.cursor/rules/011-coderabbit-pr-gate.mdc` and `.cursor/rules/013-pr-review-correction-loop.mdc` for agent/maintainer detail.
 

@@ -216,3 +216,9 @@
 - **Why:** Agent-flow / Journal Hub duplicated PubMed/Gemini/arXiv mocks; consolidate after #207 Ollama helpers.
 - **What:** `src/test/e2e/fixtures/{networkMocks,pubmedArticle}.ts`; refactor agent-flow + journal-hub to import shared mocks.
 - **Next:** PR9 eval → PR10 docs → PR11 CI governance.
+
+## 2026-08-03 — Mandate DeepSource AI Review on every PR
+
+- **Why:** DeepSource shows static analysis by default; AI Review runs only after `@deepsourcebot review` for this team.
+- **What:** Rules `011`/`013`, `AGENTS.md`, `CONTRIBUTING.md` — always trigger `@deepsourcebot review` on PR open and after fix pushes; treat AI Review findings as in-scope before merge.
+- **Also:** Triggered on merged #207/#208 threads for catch-up.
