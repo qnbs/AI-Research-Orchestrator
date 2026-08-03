@@ -6,7 +6,7 @@
  */
 
 import { AppError, isAbortError } from '../../lib/errors';
-import { validateCustomEndpointUrl } from '../../lib/endpointPolicy';
+import { isOriginCspAllowed, validateCustomEndpointUrl } from '../../lib/endpointPolicy';
 import { estimateOllamaInputTokenBudget } from '../../lib/ollamaContextBudget';
 
 export { estimateOllamaInputTokenBudget };
@@ -163,14 +163,33 @@ export function getCachedOllamaHealth(baseUrl: string): OllamaHealthResult | und
   return entry.result;
 }
 
-function remember(result: OllamaHealthResult): OllamaHealthResult {
-  if (result.baseUrl) {
-    healthCache.set(result.baseUrl, {
-      result,
-      expiresAt: Date.now() + OLLAMA_HEALTH_CACHE_TTL_MS,
-    });
-  }
+/** Cache successful probes only — transient failures must remain retriable. */
+function rememberSuccess(result: OllamaHealthOk): OllamaHealthOk {
+  healthCache.set(result.baseUrl, {
+    result,
+    expiresAt: Date.now() + OLLAMA_HEALTH_CACHE_TTL_MS,
+  });
   return result;
+}
+
+/** Best-effort parameter size from any non-expired successful health cache entry. */
+export function lookupCachedOllamaParameterSize(model: string): string | undefined {
+  const target = model.trim().toLowerCase();
+  if (!target) return undefined;
+  const now = Date.now();
+  for (const [key, entry] of healthCache) {
+    if (now > entry.expiresAt) {
+      healthCache.delete(key);
+      continue;
+    }
+    if (!entry.result.ok) continue;
+    const matched = entry.result.models.find((m) => {
+      const name = m.name.toLowerCase();
+      return name === target || name.startsWith(`${target}:`) || target.startsWith(`${name}:`);
+    });
+    if (matched?.parameterSize) return matched.parameterSize;
+  }
+  return undefined;
 }
 
 type TagsPayload = {
@@ -195,6 +214,16 @@ export async function probeOllamaHealth(
   if (!normalized.ok) return normalized;
 
   const { baseUrl, origin } = normalized;
+  if (!isOriginCspAllowed(origin)) {
+    return {
+      ok: false,
+      origin,
+      baseUrl,
+      reason: 'invalid_endpoint',
+      message: `Origin ${origin} is not permitted by the application CSP`,
+      checkedAt: Date.now(),
+    };
+  }
   if (!options.force) {
     const cached = getCachedOllamaHealth(baseUrl);
     if (cached) return cached;
@@ -207,7 +236,7 @@ export async function probeOllamaHealth(
   try {
     const versionResponse = await fetch(`${baseUrl}/api/version`, { signal });
     if (!versionResponse.ok) {
-      return remember({
+      return {
         ok: false,
         origin,
         baseUrl,
@@ -215,50 +244,32 @@ export async function probeOllamaHealth(
         message: `Ollama /api/version responded with ${versionResponse.status}`,
         status: versionResponse.status,
         checkedAt,
-      });
+      };
     }
     const versionJson = (await versionResponse.json().catch(() => ({}))) as { version?: string };
     const version = typeof versionJson.version === 'string' ? versionJson.version : 'unknown';
 
-    const tagsResponse = await fetch(`${baseUrl}/api/tags`, { signal });
-    if (!tagsResponse.ok) {
-      return remember({
-        ok: false,
-        origin,
-        baseUrl,
-        reason: 'model_list',
-        message: `Ollama /api/tags responded with ${tagsResponse.status}`,
-        status: tagsResponse.status,
-        checkedAt,
-      });
-    }
-
-    const tagsJson = (await tagsResponse.json().catch(() => null)) as TagsPayload | null;
-    if (!tagsJson || !Array.isArray(tagsJson.models)) {
-      return remember({
-        ok: false,
-        origin,
-        baseUrl,
-        reason: 'model_list',
-        message: 'Ollama /api/tags returned an unexpected payload',
-        checkedAt,
-      });
-    }
-
+    // Connectivity is established by /api/version. Model discovery is best-effort.
     const models: OllamaModelInfo[] = [];
-    for (const m of tagsJson.models) {
-      const name = (m.name ?? m.model ?? '').trim();
-      if (!name) continue;
-      const info: OllamaModelInfo = { name };
-      if (typeof m.size === 'number') info.size = m.size;
-      if (typeof m.modified_at === 'string') info.modifiedAt = m.modified_at;
-      if (typeof m.details?.parameter_size === 'string') {
-        info.parameterSize = m.details.parameter_size;
+    const tagsResponse = await fetch(`${baseUrl}/api/tags`, { signal });
+    if (tagsResponse.ok) {
+      const tagsJson = (await tagsResponse.json().catch(() => null)) as TagsPayload | null;
+      if (tagsJson && Array.isArray(tagsJson.models)) {
+        for (const m of tagsJson.models) {
+          const name = (m.name ?? m.model ?? '').trim();
+          if (!name) continue;
+          const info: OllamaModelInfo = { name };
+          if (typeof m.size === 'number') info.size = m.size;
+          if (typeof m.modified_at === 'string') info.modifiedAt = m.modified_at;
+          if (typeof m.details?.parameter_size === 'string') {
+            info.parameterSize = m.details.parameter_size;
+          }
+          models.push(info);
+        }
       }
-      models.push(info);
     }
 
-    return remember({
+    return rememberSuccess({
       ok: true,
       origin,
       baseUrl,
@@ -268,7 +279,7 @@ export async function probeOllamaHealth(
     });
   } catch (error) {
     const diagnosed = diagnoseFetchError(error);
-    const fail: OllamaHealthFail = {
+    return {
       ok: false,
       origin,
       baseUrl,
@@ -276,11 +287,6 @@ export async function probeOllamaHealth(
       message: diagnosed.message,
       checkedAt,
     };
-    // Do not cache aborted/timeout probes — they are often supersession artifacts.
-    if (diagnosed.reason === 'aborted' || diagnosed.reason === 'timeout') {
-      return fail;
-    }
-    return remember(fail);
   }
 }
 

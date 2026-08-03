@@ -40,7 +40,7 @@ function mapOllamaError(error: unknown): AppError {
   }
   if (error instanceof Error) {
     const message = error.message;
-    if (/not found|model .* not found|pull model/i.test(message)) {
+    if (/model ['"`]?[\w.:+-]+['"`]? not found|file does not exist|pull model/i.test(message)) {
       return new AppError({
         code: 'PROVIDER_UNAVAILABLE',
         message: `Ollama model not found: ${message}`,
@@ -65,11 +65,11 @@ function mapOllamaError(error: unknown): AppError {
 }
 
 function throwHttpError(status: number, text: string, label: string): never {
-  // Only trust body "not found" text on 4xx — 5xx/proxy pages often say "Not Found"
-  // without meaning the model is missing.
+  // Require an explicit model-missing body — bare 404/proxy "Not Found" is not enough.
   const modelMissing =
-    status === 404 ||
-    (status >= 400 && status < 500 && /model .* not found|file does not exist/i.test(text));
+    status >= 400 &&
+    status < 500 &&
+    /model ['"`]?[\w.:+-]+['"`]? not found|model .* not found|file does not exist/i.test(text);
   throw new AppError({
     code: status === 401 ? 'PROVIDER_AUTH' : 'PROVIDER_UNAVAILABLE',
     message: modelMissing

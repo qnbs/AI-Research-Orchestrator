@@ -87,6 +87,24 @@ describe('probeOllamaHealth', () => {
     }
   });
 
+  it('treats version success as connected even when tags fail', async () => {
+    global.fetch = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ version: '0.5.0' }) })
+      .mockResolvedValueOnce({ ok: false, status: 500 });
+    const result = await probeOllamaHealth('http://localhost:11434', { force: true });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.models).toEqual([]);
+    }
+  });
+
+  it('does not cache failed probes', async () => {
+    global.fetch = vi.fn().mockResolvedValueOnce({ ok: false, status: 503 });
+    await probeOllamaHealth('http://localhost:11434', { force: true });
+    expect(getCachedOllamaHealth('http://localhost:11434')).toBeUndefined();
+  });
+
   it('reports an aborted probe', async () => {
     const controller = new AbortController();
     global.fetch = vi.fn().mockImplementation(() => {
@@ -173,8 +191,10 @@ describe('isOllamaModelAvailable / estimateOllamaInputTokenBudget', () => {
 
   it('tightens budget and warns for small parameter sizes', () => {
     expect(estimateOllamaInputTokenBudget('tinyllama:1b').warnTooSmall).toBe(true);
+    expect(estimateOllamaInputTokenBudget('tinyllama:1b').budget).toBeGreaterThanOrEqual(6_000);
     expect(estimateOllamaInputTokenBudget('llama3.1:8b').budget).toBe(8_000);
     expect(estimateOllamaInputTokenBudget('qwen2.5:14b').warnTooSmall).toBe(false);
     expect(estimateOllamaInputTokenBudget('qwen2.5:32b').budget).toBe(16_000);
+    expect(estimateOllamaInputTokenBudget('mixtral:8x7b').budget).toBe(16_000);
   });
 });
