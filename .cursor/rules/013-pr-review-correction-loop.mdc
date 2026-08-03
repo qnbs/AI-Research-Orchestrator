@@ -47,8 +47,8 @@ Do **not** use `git commit --no-verify` / `git push --no-verify` to skip Husky �
 
 ## CI vs advisory checks
 
-- **Blocking:** `deploy.yml` quality gates, required branch protections, Socket when flagged blocking.
-- **Advisory (default):** `e2e.yml` (`continue-on-error`), `e2e-cross-browser.yml`, DeepSource JavaScript (`deepsourceJavaScriptAdvisory: true`), Claude Code skipped jobs on PRs without `@claude`.
+- **Blocking:** `deploy.yml` quality gates, Chromium E2E (`e2e.yml`), cross-browser E2E (`e2e-cross-browser.yml` — Firefox/WebKit/mobile Chrome), required branch protections, Socket when flagged blocking.
+- **Advisory (default):** DeepSource JavaScript (`deepsourceJavaScriptAdvisory: true`), Claude Code skipped jobs on PRs without `@claude`.
 - **Claude Code `action_required`:** Workflow triggered by `pull_request_review_comment` may show **Approve and run workflows** with zero jobs — GitHub workflow-approval gate, not a failed test. Job `if` still requires `@claude` in the comment body; approval alone does not run Claude on bot threads.
 
 ## Collection commands (agents / maintainers)

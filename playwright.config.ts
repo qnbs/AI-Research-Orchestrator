@@ -11,7 +11,7 @@ const chromiumLaunch = {
  * AI Research Orchestrator — Playwright E2E configuration
  *
  * Runs Chromium-only inside DevContainers / CI (headless, no sandbox).
- * Set PLAYWRIGHT_MATRIX=1 for the non-blocking cross-browser smoke workflow (P1-6).
+ * Set PLAYWRIGHT_MATRIX=1 for the blocking cross-browser workflow (Firefox/WebKit/mobile).
  * Browser binary is installed by .devcontainer/postCreate.sh.
  *
  * @see https://playwright.dev/docs/test-configuration
@@ -31,10 +31,15 @@ export default defineConfig({
     trace: 'on-first-retry',
     // Capture screenshots on failure
     screenshot: 'only-on-failure',
+    // WebKit lets an active service worker bypass Playwright page.route(), so
+    // mocked cross-origin probes (e.g. Ollama :11434) hit the real network and
+    // fail as CORS/connection-refused. Block SW in E2E; SW behavior is covered
+    // by unit tests (sw-integrity / useServiceWorkerUpdate).
+    serviceWorkers: 'block',
   },
 
   // Chromium is the blocking CI default. Set PLAYWRIGHT_MATRIX=1 to enable the
-  // non-blocking cross-browser smoke workflow (audit P1-6).
+  // blocking cross-browser workflow (Firefox / WebKit / mobile Chrome).
   projects:
     process.env.PLAYWRIGHT_MATRIX === '1'
       ? [

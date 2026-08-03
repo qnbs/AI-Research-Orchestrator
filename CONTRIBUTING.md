@@ -67,7 +67,7 @@ pnpm run test:e2e
 5. Re-poll after bots finish on the new commit; wait through CodeRabbit rate limits if needed.
 6. Merge only when CI is green and no new actionable bot comments remain.
 
-DeepSource JavaScript and full E2E on PRs are **advisory** by default (`docs/project-facts.json`). Post a short disposition comment when closing a large review batch.
+DeepSource JavaScript is **advisory** by default (`docs/project-facts.json`). Chromium and cross-browser Playwright E2E are **blocking**. Post a short disposition comment when closing a large review batch.
 
 See `.cursor/rules/011-coderabbit-pr-gate.mdc` and `.cursor/rules/013-pr-review-correction-loop.mdc` for agent/maintainer detail.
 
