@@ -13,7 +13,7 @@ import { detectNumericConflict, detectPopulationConflict } from './claimEvidence
 // to avoid a cycle through nonAi/utils.stem.
 
 /** Bump when matcher semantics change (exported in validation results). */
-export const CLAIM_EVIDENCE_MATCHER_VERSION = '2.2.0';
+export const CLAIM_EVIDENCE_MATCHER_VERSION = '2.3.0';
 
 const TOKEN_MIN_LEN = 3;
 
@@ -296,11 +296,12 @@ function hasNegationNear(tokens: string[], index: number): boolean {
   return false;
 }
 
-function findStemmedTokenIndex(rawTokens: string[], stemmedToken: string): number {
+function findAllStemmedTokenIndices(rawTokens: string[], stemmedToken: string): number[] {
+  const indices: number[] = [];
   for (let i = 0; i < rawTokens.length; i += 1) {
-    if (stemToken(rawTokens[i]) === stemmedToken) return i;
+    if (stemToken(rawTokens[i]) === stemmedToken) indices.push(i);
   }
-  return -1;
+  return indices;
 }
 
 function detectDirectionConflict(claimTokens: string[], articleTokens: string[]): boolean {
@@ -377,12 +378,17 @@ function detectNegationConflict(claimText: string, articleText: string): boolean
   const overlapping = claimContent.filter((t) => articleContentSet.has(t));
 
   for (const token of overlapping) {
-    const claimIdx = findStemmedTokenIndex(claimTokens, token);
-    const articleIdx = findStemmedTokenIndex(articleTokens, token);
-    if (claimIdx < 0 || articleIdx < 0) continue;
-    const claimNegated = hasNegationNear(claimTokens, claimIdx);
-    const articleNegated = hasNegationNear(articleTokens, articleIdx);
-    if (claimNegated !== articleNegated) return true;
+    const claimIndices = findAllStemmedTokenIndices(claimTokens, token);
+    const articleIndices = findAllStemmedTokenIndices(articleTokens, token);
+    if (claimIndices.length === 0 || articleIndices.length === 0) continue;
+
+    for (const claimIdx of claimIndices) {
+      const claimNegated = hasNegationNear(claimTokens, claimIdx);
+      for (const articleIdx of articleIndices) {
+        const articleNegated = hasNegationNear(articleTokens, articleIdx);
+        if (claimNegated !== articleNegated) return true;
+      }
+    }
   }
   return false;
 }

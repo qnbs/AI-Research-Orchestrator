@@ -39,9 +39,9 @@ enforcement **active**:
 | Required status checks (11 contexts below)                                      | On — names match workflow job titles                                 |
 | Code scanning (CodeQL errors / high+)                                           | On                                                                   |
 | Code quality (errors)                                                           | On                                                                   |
-| Require conversation resolution                                                 | **Off** — recommend enabling                                         |
-| Require branch up to date before merge (`strict_required_status_checks_policy`) | **Off** — recommend enabling                                         |
-| Dismiss stale reviews on push                                                   | Off (optional with 0 required approvals)                             |
+| Require conversation resolution                                                 | **Off** — **enable** (2026-08-03 post-merge review #213)             |
+| Require branch up to date before merge (`strict_required_status_checks_policy`) | **Off** — **enable**                                                 |
+| Dismiss stale reviews on push                                                   | **Off** — **enable** for latest-head review integrity (PR #213 gap)  |
 
 Required check contexts currently configured:
 
@@ -52,10 +52,12 @@ Required check contexts currently configured:
 
 ### Process gates (not GitHub-required checks)
 
-| Gate                             | Enforcement                                                                                         |
-| -------------------------------- | --------------------------------------------------------------------------------------------------- |
-| Automated review correction loop | Rules `011` / `013` — CodeRabbit + DeepSource AI Review (`@deepsourcebot review`) + resolve threads |
-| Human/agent rebase before merge  | Prefer enabling ruleset “Require branches to be up to date”; until then rebase onto latest `main`   |
+| Gate                              | Enforcement                                                                                                                                                                                                       |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Automated review correction loop  | Rules `011` / `013` — CodeRabbit + DeepSource AI Review (`@deepsourcebot review`) + resolve threads                                                                                                               |
+| **Latest-head review quiescence** | CodeRabbit (or documented independent review) must target the **merge tree SHA** — rate-limit placeholders are **not** approval; see `docs/audits/2026-08-03-post-merge-scientific-integrity-review.md` (PR #213) |
+| Dismiss stale bot/human approvals | Enable ruleset **Dismiss stale pull request approvals when new commits are pushed** so post-approval commits cannot merge on superseded review SHAs                                                               |
+| Human/agent rebase before merge   | Prefer enabling ruleset “Require branches to be up to date”; until then rebase onto latest `main`                                                                                                                 |
 
 ## Advisory / non-blocking
 

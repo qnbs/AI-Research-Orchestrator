@@ -190,6 +190,42 @@ describe('assessClaimArticleEvidence — adversarial', () => {
     expect(result.relation).toBe('insufficient');
   });
 
+  it('supports when abstract aligns despite contradicting title direction', () => {
+    const art = article(
+      'Aspirin increased major cardiovascular events trial',
+      'Aspirin reduced major cardiovascular events compared with placebo.',
+    );
+    const result = assessClaimArticleEvidence(
+      'Aspirin reduced major cardiovascular events compared with placebo.',
+      art,
+    );
+    expect(result.relation).toBe('insufficient');
+  });
+
+  it('contradicts when negation differs on a later overlapping token occurrence', () => {
+    const art = article(
+      'Aspirin cohort study',
+      'Adults received aspirin; cardiovascular events in adults were reduced.',
+    );
+    const result = assessClaimArticleEvidence(
+      'Adults received aspirin; cardiovascular events in adults were not reduced.',
+      art,
+    );
+    expect(result.relation).toBe('contradicts');
+  });
+
+  it('does not contradict multi-outcome abstracts when matched span aligns', () => {
+    const art = article(
+      'Aspirin outcomes trial',
+      'Aspirin reduced cardiovascular events. Major bleeding was increased in the aspirin arm.',
+    );
+    const result = assessClaimArticleEvidence(
+      'Aspirin reduced cardiovascular events in adults.',
+      art,
+    );
+    expect(result.relation).toBe('supports');
+  });
+
   it('contradicts when a same-unit percent value drifts beyond tolerance', () => {
     const art = article(
       'Aspirin cardiovascular trial',
