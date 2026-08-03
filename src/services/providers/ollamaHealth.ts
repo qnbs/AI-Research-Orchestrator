@@ -235,26 +235,36 @@ export async function probeOllamaHealth(
     const versionJson = (await versionResponse.json().catch(() => ({}))) as { version?: string };
     const version = typeof versionJson.version === 'string' ? versionJson.version : 'unknown';
 
-    // Connectivity is established by /api/version. Model discovery is best-effort.
+    // Connectivity is established by /api/version. Model discovery is best-effort:
+    // HTTP failures and non-abort network errors on /api/tags must not mark the
+    // server offline after a successful version probe.
     const models: OllamaModelInfo[] = [];
     let modelsDiscovered = false;
-    const tagsResponse = await fetch(`${baseUrl}/api/tags`, { signal });
-    if (tagsResponse.ok) {
-      const tagsJson = (await tagsResponse.json().catch(() => null)) as TagsPayload | null;
-      if (tagsJson && Array.isArray(tagsJson.models)) {
-        modelsDiscovered = true;
-        for (const m of tagsJson.models) {
-          const name = (m.name ?? m.model ?? '').trim();
-          if (!name) continue;
-          const info: OllamaModelInfo = { name };
-          if (typeof m.size === 'number') info.size = m.size;
-          if (typeof m.modified_at === 'string') info.modifiedAt = m.modified_at;
-          if (typeof m.details?.parameter_size === 'string') {
-            info.parameterSize = m.details.parameter_size;
+    try {
+      const tagsResponse = await fetch(`${baseUrl}/api/tags`, { signal });
+      if (tagsResponse.ok) {
+        const tagsJson = (await tagsResponse.json().catch(() => null)) as TagsPayload | null;
+        if (tagsJson && Array.isArray(tagsJson.models)) {
+          modelsDiscovered = true;
+          for (const m of tagsJson.models) {
+            const name = (m.name ?? m.model ?? '').trim();
+            if (!name) continue;
+            const info: OllamaModelInfo = { name };
+            if (typeof m.size === 'number') info.size = m.size;
+            if (typeof m.modified_at === 'string') info.modifiedAt = m.modified_at;
+            if (typeof m.details?.parameter_size === 'string') {
+              info.parameterSize = m.details.parameter_size;
+            }
+            models.push(info);
           }
-          models.push(info);
         }
       }
+    } catch (tagsError) {
+      // Propagate cancel/timeout so the outer catch still reports aborted/timeout.
+      if (isTimeoutAbort(tagsError) || isAbortError(tagsError)) {
+        throw tagsError;
+      }
+      modelsDiscovered = false;
     }
 
     return rememberSuccess({

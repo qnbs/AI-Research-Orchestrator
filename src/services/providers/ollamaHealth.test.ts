@@ -101,6 +101,19 @@ describe('probeOllamaHealth', () => {
     }
   });
 
+  it('keeps connectivity when tags fetch throws a network error', async () => {
+    global.fetch = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ version: '0.5.0' }) })
+      .mockRejectedValueOnce(new TypeError('Failed to fetch'));
+    const result = await probeOllamaHealth('http://localhost:11434', { force: true });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.version).toBe('0.5.0');
+      expect(result.modelsDiscovered).toBe(false);
+    }
+  });
+
   it('marks empty tags payload as discovered (no false model-missing)', async () => {
     global.fetch = vi
       .fn()
