@@ -67,7 +67,8 @@ export const PIPELINE_TIMELINE_INDEX: Record<PipelinePhaseId, number> = {
   'pubmed-fetch': 2,
   curation: 2,
   'arxiv-fetch': 2,
-  'retrieval-status': 2,
+  // Offline / unavailable notices often replace an in-flight retrieval step.
+  'retrieval-status': 1,
   ranking: 3,
   synthesis: 4,
   'empty-retrieval': 4,

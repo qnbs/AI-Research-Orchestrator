@@ -34,7 +34,7 @@ import {
   type ResearchExecutionContext,
 } from '../lib/researchExecutionContext';
 import type { PipelinePhaseId } from '../types/pipelineEvents';
-import { PIPELINE_TIMELINE_INDEX } from '../types/pipelineEvents';
+import { PIPELINE_PHASE_LABEL, PIPELINE_TIMELINE_INDEX } from '../types/pipelineEvents';
 import { safeLogError } from '../lib/safeLog';
 
 type ReportStatus = 'idle' | 'generating' | 'streaming' | 'done' | 'error';
@@ -229,10 +229,13 @@ export function useResearchSession({
 
           lastPhase = phase;
           setCurrentPhaseId(phaseId);
-          // Prefer i18n label keyed by phaseId; fall back to producer English text.
+          // Keep producer phase text when it carries run-specific detail (ranking
+          // counts, offline/partial status). Localize only the default label.
           const i18nKey = `orchestrator.pipeline.${phaseId}`;
           const localized = t(i18nKey);
-          setCurrentPhase(localized === i18nKey ? phase : localized);
+          const defaultLabel = PIPELINE_PHASE_LABEL[phaseId];
+          const usesDefaultLabel = phase === defaultLabel || phase.endsWith(` · ${defaultLabel}`);
+          setCurrentPhase(usesDefaultLabel && localized !== i18nKey ? localized : phase);
           const nextTimeline = PIPELINE_TIMELINE_INDEX[phaseId];
           if (nextTimeline >= 0) {
             setTimelineIndex(nextTimeline);
