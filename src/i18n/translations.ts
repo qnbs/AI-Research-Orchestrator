@@ -271,6 +271,7 @@ export const translations = {
     'settings.ai.ollama.status_ok': 'Connected to {origin} (Ollama {version}).',
     'settings.ai.ollama.status_fail': 'Ollama unavailable ({reason}): {message}',
     'settings.ai.ollama.last_checked': 'Last successful check: {time}',
+    'settings.ai.ollama.discovery_checked': 'Model list probe: {time}',
     'settings.ai.ollama.models_label': 'Discovered models',
     'settings.ai.ollama.models_empty': 'No models installed. Pull a model in Ollama, then refresh.',
     'settings.ai.ollama.models_discovery_failed':
@@ -626,6 +627,7 @@ export const translations = {
     'settings.ai.ollama.status_ok': 'Verbunden mit {origin} (Ollama {version}).',
     'settings.ai.ollama.status_fail': 'Ollama nicht erreichbar ({reason}): {message}',
     'settings.ai.ollama.last_checked': 'Letzte erfolgreiche Prüfung: {time}',
+    'settings.ai.ollama.discovery_checked': 'Modelllisten-Abfrage: {time}',
     'settings.ai.ollama.models_label': 'Gefundene Modelle',
     'settings.ai.ollama.models_empty':
       'Keine Modelle installiert. Laden Sie ein Modell in Ollama und aktualisieren Sie.',

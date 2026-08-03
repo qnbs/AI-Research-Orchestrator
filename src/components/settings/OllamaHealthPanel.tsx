@@ -7,6 +7,10 @@ import {
   type OllamaHealthResult,
   type OllamaModelInfo,
 } from '../../services/providers/ollamaHealth';
+import {
+  probeOllamaModelMetadata,
+  getCachedOllamaModelMetadata,
+} from '../../lib/ollamaModelMetadata';
 
 function formatCheckedAt(ts: number): string {
   try {
@@ -79,6 +83,11 @@ export const OllamaHealthPanel: React.FC = () => {
     };
   }, [runProbe]);
 
+  useEffect(() => {
+    if (health?.ok !== true || !selectedModel.trim()) return;
+    void probeOllamaModelMetadata(baseUrl, selectedModel).catch(() => undefined);
+  }, [baseUrl, health?.ok, selectedModel]);
+
   const modelMissing =
     health?.ok === true && health.modelsDiscovered && selectedModel.trim().length > 0
       ? !isOllamaModelAvailable(health.models, selectedModel)
@@ -91,7 +100,14 @@ export const OllamaHealthPanel: React.FC = () => {
       ? (health.models.find((m) => m.name === discoveredValue) ??
         health.models.find((m) => m.name === selectedModel))
       : undefined;
-  const budgetHint = estimateOllamaInputTokenBudget(selectedModel, matchedModel?.parameterSize);
+  const modelMeta =
+    health?.ok === true && selectedModel.trim()
+      ? getCachedOllamaModelMetadata(baseUrl, selectedModel)
+      : undefined;
+  const budgetHint = estimateOllamaInputTokenBudget(selectedModel, {
+    parameterSize: matchedModel?.parameterSize ?? modelMeta?.parameterSize,
+    contextLength: modelMeta?.contextLength,
+  });
 
   return (
     <div
@@ -127,6 +143,13 @@ export const OllamaHealthPanel: React.FC = () => {
             <p className="text-text-secondary">
               {t('settings.ai.ollama.last_checked', { time: formatCheckedAt(health.checkedAt) })}
             </p>
+            {discoveryFailed && (
+              <p className="text-text-secondary">
+                {t('settings.ai.ollama.discovery_checked', {
+                  time: formatCheckedAt(health.discoveryCheckedAt),
+                })}
+              </p>
+            )}
             <div>
               <label htmlFor="ollama-discovered-model" className="font-medium">
                 {t('settings.ai.ollama.models_label')}

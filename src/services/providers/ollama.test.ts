@@ -38,7 +38,7 @@ describe('createOllamaProvider', () => {
         getReader: () => {
           const chunks = [
             JSON.stringify({ response: 'hi' }),
-            JSON.stringify({ response: ' there' }),
+            JSON.stringify({ response: ' there', done: true }),
           ];
           let i = 0;
           return {
@@ -164,7 +164,7 @@ describe('createOllamaProvider', () => {
       ok: true,
       body: {
         getReader: () => {
-          const chunks = ['not-json\n', JSON.stringify({ response: 'ok' }) + '\n'];
+          const chunks = ['not-json\n', JSON.stringify({ response: 'ok', done: true }) + '\n'];
           let i = 0;
           return {
             read: async () => {
@@ -184,6 +184,40 @@ describe('createOllamaProvider', () => {
       if (chunk.text) chunks.push(chunk.text);
     }
     expect(chunks).toEqual(['ok']);
+  });
+
+  it('throws when generate stream ends without a done marker', async () => {
+    const encoder = new TextEncoder();
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      body: {
+        getReader: () => {
+          const payload = JSON.stringify({ response: 'partial' }) + '\n';
+          let done = false;
+          return {
+            read: async () => {
+              if (done) return { done: true, value: undefined };
+              done = true;
+              return { done: false, value: encoder.encode(payload) };
+            },
+          };
+        },
+      },
+    });
+    const provider = createOllamaProvider();
+    await expect(
+      (async () => {
+        for await (const _chunk of provider.generateContentStream({
+          model: 'llama3.1:8b',
+          prompt: 'hello',
+        })) {
+          // drain
+        }
+      })(),
+    ).rejects.toMatchObject({
+      code: 'PROVIDER_UNAVAILABLE',
+      message: expect.stringContaining('done marker'),
+    });
   });
 
   it('creates a chat session against /api/chat', async () => {

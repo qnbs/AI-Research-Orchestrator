@@ -5,6 +5,7 @@ import {
   invalidateOllamaHealthCache,
   isOllamaModelAvailable,
   mergeSignals,
+  OLLAMA_DISCOVERY_FAILURE_TTL_MS,
   probeOllamaHealth,
   resolveCachedOllamaParameterSize,
 } from './ollamaHealth';
@@ -128,6 +129,45 @@ describe('probeOllamaHealth', () => {
     }
   });
 
+  it('re-probes discovery after degraded cache expires without re-checking version', async () => {
+    vi.useFakeTimers();
+    const start = Date.now();
+    vi.setSystemTime(start);
+
+    global.fetch = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ version: '0.5.0' }) })
+      .mockResolvedValueOnce({ ok: false, status: 500 });
+
+    const degraded = await probeOllamaHealth('http://localhost:11434', { force: true });
+    expect(degraded.ok).toBe(true);
+    if (degraded.ok) {
+      expect(degraded.modelsDiscovered).toBe(false);
+    }
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+
+    await probeOllamaHealth('http://localhost:11434');
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+
+    vi.setSystemTime(start + OLLAMA_DISCOVERY_FAILURE_TTL_MS + 1);
+
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ models: [{ name: 'llama3.1:8b' }] }),
+    });
+
+    const recovered = await probeOllamaHealth('http://localhost:11434');
+    expect(recovered.ok).toBe(true);
+    if (recovered.ok) {
+      expect(recovered.modelsDiscovered).toBe(true);
+      expect(recovered.models[0]?.name).toBe('llama3.1:8b');
+    }
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+    expect(global.fetch).toHaveBeenCalledWith('http://localhost:11434/api/tags', expect.anything());
+
+    vi.useRealTimers();
+  });
+
   it('does not cache failed probes', async () => {
     global.fetch = vi.fn().mockResolvedValueOnce({ ok: false, status: 503 });
     await probeOllamaHealth('http://localhost:11434', { force: true });
@@ -242,5 +282,8 @@ describe('isOllamaModelAvailable / estimateOllamaInputTokenBudget', () => {
     expect(estimateOllamaInputTokenBudget('qwen2.5:14b').warnTooSmall).toBe(false);
     expect(estimateOllamaInputTokenBudget('qwen2.5:32b').budget).toBe(16_000);
     expect(estimateOllamaInputTokenBudget('mixtral:8x7b').budget).toBe(16_000);
+    expect(
+      estimateOllamaInputTokenBudget('llama3.1:8b', { contextLength: 32_768 }).budget,
+    ).toBeGreaterThan(16_000);
   });
 });

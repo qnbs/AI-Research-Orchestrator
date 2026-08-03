@@ -8,6 +8,7 @@ import type { AbstractStatus, RankedArticle } from '../types';
 import { estimateTokensFromText } from './resilience';
 import { rankArticles } from '../services/nonAi/ranker';
 import { estimateOllamaInputTokenBudget } from './ollamaContextBudget';
+import { resolveCachedOllamaContextLength } from './ollamaModelMetadata';
 import { resolveCachedOllamaParameterSize } from '../services/providers/ollamaHealth';
 
 export type PromptFieldLimits = {
@@ -78,10 +79,9 @@ export const getInputTokenBudget = (
   options?: PromptBudgetOptions,
 ): number => {
   if (provider === 'ollama') {
-    // Prefer parameterSize from the active endpoint's health cache only.
-    // Never scan other cached base URLs (cross-endpoint contamination).
     const parameterSize = resolveCachedOllamaParameterSize(options?.ollamaBaseUrl, model);
-    return estimateOllamaInputTokenBudget(model, parameterSize).budget;
+    const contextLength = resolveCachedOllamaContextLength(options?.ollamaBaseUrl, model);
+    return estimateOllamaInputTokenBudget(model, { parameterSize, contextLength }).budget;
   }
   const modelKey = model.toLowerCase();
   if (/pro|opus|gpt-5|o3/i.test(modelKey)) {

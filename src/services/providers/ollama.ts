@@ -145,14 +145,26 @@ export function createOllamaProvider(): AIProvider {
         throwHttpError(response.status, text, 'generate stream');
       }
 
-      for await (const chunk of streamOllamaNdjson<{ response?: string; error?: string }>(
-        response,
-        { signal: request.signal },
-      )) {
+      let completed = false;
+      for await (const chunk of streamOllamaNdjson<{
+        response?: string;
+        error?: string;
+        done?: boolean;
+      }>(response, { signal: request.signal })) {
         if (typeof chunk.error === 'string' && chunk.error.length > 0) {
           throw mapOllamaError(new Error(chunk.error));
         }
         if (chunk.response) yield { text: chunk.response };
+        if (chunk.done === true) {
+          completed = true;
+        }
+      }
+      if (!completed) {
+        throw new AppError({
+          code: 'PROVIDER_UNAVAILABLE',
+          message: 'Ollama generate stream ended without a done marker',
+          retryable: true,
+        });
       }
       yield { done: true };
     },
