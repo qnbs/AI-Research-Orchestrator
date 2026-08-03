@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Immutable execution provenance (P0 / ADR 0017):** Research runs freeze `ResearchExecutionContext` once at stream start (`executionId`, inference mode/reason, provider, model, release + prompt registry versions). Completion no longer re-calls `resolveActiveInferenceMode`, so mid-run online/key flips cannot rewrite heuristic runs as live.
 - **Abort/timeout contract (P0):** `findRelatedOnline`, `generateTldrSummary`, and `startChatWithReport` forward `AbortSignal` into live provider calls; Gemini/Ollama `testConnection` use a 15s timeout like OpenAI/Anthropic; `useChat` and `ArticleDetailPanel` abort in-flight work on cleanup/supersede and suppress abort noise.
 - **Stateful cross-provider chat (P0):** OpenAI, Anthropic, and Ollama chat sessions now accumulate completed user/assistant turns so multi-turn report chat keeps context (Gemini already did via the SDK). Ollama chat also forwards the system prompt as a `system` message.
+- **Synthesis trust terminology (P0 / ADR 0018):** Renamed overclaiming `verified` wire values to `claim-supported` / `corpus-supported`. Readers accept legacy `verified`; Dexie v7 rewrites persisted report JSON; UI/README/import copy match lexical corpus-support (not a bibliographic audit).
 
 ### Added
 

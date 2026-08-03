@@ -37,7 +37,7 @@ export function buildGroundedSynthesisFromExtractive(
     claims.push({ text, pmids: [...section.pmids] });
   }
 
-  return { claims, mode: 'extractive-template', trustLevel: 'verified' };
+  return { claims, mode: 'extractive-template', trustLevel: 'corpus-supported' };
 }
 
 /** Build trust-assessed grounded synthesis from live-extracted or template claims. */

@@ -7,6 +7,7 @@ import type { KnowledgeBaseEntry, ResearchEntry } from '../types';
 import { buildAssessedGroundedSynthesis } from './groundedSynthesis';
 import { isKnowledgeBaseEntry } from './knowledgeBaseValidation';
 import { sanitizeReportForExport } from './reportExportProvenance';
+import { isElevatedSynthesisTrust } from './synthesisTrustTerminology';
 
 export const KNOWLEDGE_BASE_IMPORT_ENVELOPE_VERSION = 1;
 export const MAX_KB_IMPORT_ENTRIES = 500;
@@ -84,9 +85,13 @@ export const sanitizeKnowledgeBaseEntryForImport = (
           validatedAt: Date.now(),
         },
       };
-      trustDowngraded = importedTrust === 'verified' || reassessed.trustLevel === 'verified';
+      trustDowngraded =
+        isElevatedSynthesisTrust(importedTrust) || isElevatedSynthesisTrust(reassessed.trustLevel);
     }
-  } else if (report.groundedSynthesis?.trustLevel === 'verified') {
+  } else if (
+    report.groundedSynthesis &&
+    isElevatedSynthesisTrust(report.groundedSynthesis.trustLevel)
+  ) {
     report = {
       ...report,
       groundedSynthesis: {

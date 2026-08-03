@@ -98,16 +98,21 @@ export interface GroundedClaim {
   provenanceMode?: 'extractive-template' | 'narrative-extracted' | 'structured-schema';
 }
 
-export type ClaimValidationState = 'verified' | 'unverified' | 'rejected';
+/** Lexical corpus support for a claim — not a bibliographic audit (ADR 0018). */
+export type ClaimValidationState = 'claim-supported' | 'unverified' | 'rejected';
 
-export type SynthesisTrustLevel = 'verified' | 'narrative-draft';
+/** Report-level synthesis trust — elevated value means corpus-supported, not verified. */
+export type SynthesisTrustLevel = 'corpus-supported' | 'narrative-draft';
 
 /** Structured synthesis layer for export/persistence validation. */
 export interface GroundedSynthesis {
   claims: GroundedClaim[];
   /** Provenance of claim extraction (heuristic template vs live narrative parse). */
   mode: 'extractive-template' | 'narrative-extracted';
-  /** Whether claims passed corpus + evidence validation (live narrative defaults to draft). */
+  /**
+   * Lexical corpus-support outcome (ADR 0018). Live narrative defaults to draft.
+   * Legacy persisted `'verified'` is normalized to `'corpus-supported'` on read.
+   */
   trustLevel?: SynthesisTrustLevel;
   validatedAt?: number;
 }

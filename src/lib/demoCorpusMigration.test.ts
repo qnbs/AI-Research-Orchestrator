@@ -50,7 +50,7 @@ describe('demoCorpusMigration', () => {
     expect(isAllDemoCorpus([])).toBe(false);
   });
 
-  it('stamps demo-only report provenance and demotes verified trust', () => {
+  it('stamps demo-only report provenance and demotes elevated trust', () => {
     const report: ResearchReport = {
       generatedQueries: [],
       rankedArticles: [demoArticle],
@@ -60,7 +60,7 @@ describe('demoCorpusMigration', () => {
       groundedSynthesis: {
         mode: 'extractive-template',
         claims: [{ text: 'c', pmids: ['demo:aspirin-1'] }],
-        trustLevel: 'verified',
+        trustLevel: 'corpus-supported',
       },
     };
     const next = stampDemoReportProvenance(report);
@@ -121,7 +121,7 @@ describe('demoCorpusMigration', () => {
         groundedSynthesis: {
           mode: 'extractive-template',
           claims: [{ text: 'c', pmids: ['demo:aspirin-1'] }],
-          trustLevel: 'verified',
+          trustLevel: 'corpus-supported',
         },
       },
     };

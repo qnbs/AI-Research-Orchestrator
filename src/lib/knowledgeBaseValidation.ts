@@ -43,8 +43,10 @@ const isValidGroundedSynthesis = (grounded: unknown): boolean =>
   Array.isArray(grounded.claims) &&
   grounded.claims.every(isValidGroundedClaim) &&
   (grounded.trustLevel === undefined ||
-    grounded.trustLevel === 'verified' ||
-    grounded.trustLevel === 'narrative-draft');
+    grounded.trustLevel === 'corpus-supported' ||
+    grounded.trustLevel === 'narrative-draft' ||
+    // Legacy wire value before ADR 0018 rename.
+    grounded.trustLevel === 'verified');
 
 const isValidReport = (report: unknown): boolean =>
   isPlainObject(report) &&

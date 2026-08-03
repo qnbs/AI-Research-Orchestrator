@@ -1,5 +1,5 @@
 {
-  "$comment": "Canonical project facts for check-docs-drift.mjs — update when CI policy or documented inventory changes.",
+  "$comment": "Canonical project facts for check-docs-drift.mjs \u2014 update when CI policy or documented inventory changes.",
   "coverageThresholds": {
     "lines": 80,
     "statements": 80,
@@ -7,9 +7,24 @@
     "functions": 55
   },
   "coverageModuleFloors": {
-    "providers": { "lines": 85, "statements": 82, "branches": 70, "functions": 85 },
-    "geminiService": { "lines": 68, "statements": 68, "branches": 50, "functions": 70 },
-    "apiKeyService": { "lines": 91, "statements": 86, "branches": 82, "functions": 80 }
+    "providers": {
+      "lines": 85,
+      "statements": 82,
+      "branches": 70,
+      "functions": 85
+    },
+    "geminiService": {
+      "lines": 68,
+      "statements": 68,
+      "branches": 50,
+      "functions": 70
+    },
+    "apiKeyService": {
+      "lines": 91,
+      "statements": 86,
+      "branches": 82,
+      "functions": 80
+    }
   },
   "e2e": {
     "mainWorkflowPath": ".github/workflows/e2e.yml",
@@ -60,7 +75,7 @@
   "release": {
     "policyPath": "docs/release-policy.md",
     "packageVersion": "0.4.1",
-    "dexieSchemaVersion": 6,
+    "dexieSchemaVersion": 7,
     "swCacheVersion": "v1"
   },
   "sourceIdentifiers": ["pmid", "pmc", "doi", "arxiv"],
