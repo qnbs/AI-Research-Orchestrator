@@ -6,7 +6,7 @@
   "display": "standalone",
   "background_color": "#070b12",
   "theme_color": "#070b12",
-  "description": "An expert system for authoring comprehensive literature reviews by managing a swarm of specialized AI agents.",
+  "description": "Client-only PWA for PubMed/arXiv literature review, multi-provider AI synthesis, and a local knowledge base.",
   "categories": ["education", "productivity", "medical"],
   "icons": [
     {
