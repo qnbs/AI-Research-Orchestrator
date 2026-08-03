@@ -12,6 +12,11 @@ import {
 import { wrapUntrustedJsonBlock } from './untrustedDataFraming';
 import type { RankedArticle } from '../types';
 import { invalidateOllamaHealthCache, probeOllamaHealth } from '../services/providers/ollamaHealth';
+import {
+  invalidateOllamaModelMetadataCache,
+  probeOllamaModelMetadata,
+} from './ollamaModelMetadata';
+import { OLLAMA_BUDGET_SAFETY_MARGIN, OLLAMA_OUTPUT_TOKEN_RESERVE } from './ollamaContextBudget';
 
 const makeArticle = (pmid: string, title: string, summary = 'Abstract text.'): RankedArticle => ({
   pmid,
@@ -27,13 +32,49 @@ const makeArticle = (pmid: string, title: string, summary = 'Abstract text.'): R
   abstractStatus: 'available',
 });
 
+describe('selectArticlesForRankingPrompt (small Ollama context)', () => {
+  beforeEach(() => {
+    invalidateOllamaModelMetadataCache();
+    vi.restoreAllMocks();
+  });
+  afterEach(() => {
+    invalidateOllamaModelMetadataCache();
+  });
+
+  it('omits corpus when runtime context cannot cover ranking overhead', async () => {
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ model_info: { context_length: 4_096 } }),
+    });
+    await probeOllamaModelMetadata('http://localhost:11434', 'tiny-local', { force: true });
+
+    const articles = [makeArticle('1', 'aspirin trial'), makeArticle('2', 'cardiovascular study')];
+    const selection = selectArticlesForRankingPrompt(
+      articles,
+      'aspirin',
+      'ollama',
+      'tiny-local',
+      undefined,
+      { ollamaBaseUrl: 'http://localhost:11434' },
+    );
+
+    const expectedBudget = 4_096 - OLLAMA_OUTPUT_TOKEN_RESERVE - OLLAMA_BUDGET_SAFETY_MARGIN;
+    expect(selection.accounting.inputTokenBudget).toBe(expectedBudget);
+    expect(selection.accounting.includedInPrompt).toBe(0);
+    expect(selection.accounting.omittedFromPrompt).toBe(2);
+    expect(selection.accounting.estimatedPromptTokens).toBeLessThanOrEqual(expectedBudget);
+  });
+});
+
 describe('getInputTokenBudget (ollama active-endpoint metadata)', () => {
   beforeEach(() => {
     invalidateOllamaHealthCache();
+    invalidateOllamaModelMetadataCache();
     vi.restoreAllMocks();
   });
   afterEach(() => {
     invalidateOllamaHealthCache();
+    invalidateOllamaModelMetadataCache();
   });
 
   it('uses parameterSize from the active Ollama endpoint cache only', async () => {

@@ -174,7 +174,7 @@ export const selectArticlesForRankingPrompt = (
   );
 
   const inputBudget = getInputTokenBudget(provider, model, options);
-  const availableTokens = Math.max(1_000, inputBudget - RANKING_RESERVED_TOKENS);
+  const availableTokens = Math.max(0, inputBudget - RANKING_RESERVED_TOKENS);
 
   let bestCount = 0;
   let bestPayloads: RankingArticlePromptPayload[] = [];
@@ -270,7 +270,7 @@ export const selectArticlesForSynthesisPrompt = (
   options?: PromptBudgetOptions,
 ): SynthesisPromptSelection => {
   const inputBudget = getInputTokenBudget(provider, model, options);
-  const availableTokens = Math.max(800, inputBudget - SYNTHESIS_RESERVED_TOKENS);
+  const availableTokens = Math.max(0, inputBudget - SYNTHESIS_RESERVED_TOKENS);
 
   let bestCount = 0;
   let bestPayloads: SynthesisArticlePromptPayload[] = [];
