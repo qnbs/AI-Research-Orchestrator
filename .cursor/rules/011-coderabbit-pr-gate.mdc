@@ -46,8 +46,9 @@ A green CodeRabbit check that only says **“Review rate limited”** is **not**
 2. **Wait** at least `N` minutes (add ~2–5 minutes buffer). Prefer sleeping/polling over guessing; typical windows are **14–60+ minutes**.
 3. Re-poll: issue comments + `pulls/N/reviews` for `coderabbitai[bot]` on the **current** head SHA.
 4. When the window has elapsed, post a clean top-level `@coderabbitai review` (and `@coderabbitai summary` only if needed). Prefer re-trigger over relying on auto-review after a rate-limit event.
-5. If still rate-limited, read the new wait time and **repeat** — do not declare quiescence.
-6. Quiescence requires a real CodeRabbit review (APPROVED / COMMENTED / CHANGES_REQUESTED with a review body) that targets the **latest** head commit, plus all actionable threads resolved.
+5. If still rate-limited, read the new wait time and **repeat** up to **3** wait/re-trigger cycles on the same head (document each attempt in a PR comment).
+6. After 3 failed cycles (or a single wait **> 90 minutes**), escalate: post a disposition comment with the last rate-limit text + timestamps, ping a human maintainer, and **do not merge** until a real review lands or a maintainer explicitly documents an exception for that PR.
+7. Quiescence requires a real CodeRabbit review (APPROVED / COMMENTED / CHANGES_REQUESTED with a review body) that targets the **latest** head commit, plus all actionable threads resolved.
 
 ## Exceptions
 
