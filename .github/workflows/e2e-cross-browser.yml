@@ -1,8 +1,10 @@
 # ==============================================================================
-# Cross-browser Playwright smoke matrix (audit P1-6)
+# Cross-browser Playwright suite (audit P1-6 → blocking 2026-08-03)
 #
-# Non-blocking: Firefox, WebKit, and mobile Chrome run smoke.spec.ts only.
-# Promotion criteria: docs/e2e-ci-backlog.md
+# Blocking: Firefox, WebKit, and mobile Chrome run the same seven-spec list as
+# Chromium e2e.yml. fail-fast is false so all browsers still report. A green
+# check means every matrix leg passed (no continue-on-error mask).
+# History / streak notes: docs/e2e-ci-backlog.md
 # ==============================================================================
 
 name: E2E Cross-Browser Smoke
@@ -28,7 +30,6 @@ jobs:
     name: "Cross-browser (${{ matrix.browser }})"
     runs-on: ubuntu-24.04
     timeout-minutes: 30
-    continue-on-error: true
     strategy:
       fail-fast: false
       matrix:

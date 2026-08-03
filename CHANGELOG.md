@@ -9,12 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Cross-browser WebKit Ollama health E2E:** Block service workers in Playwright (`serviceWorkers: 'block'`) so WebKit cannot bypass `page.route` for Ollama mocks; CORS-aware fulfills + `127.0.0.1` loopback + forced refresh (`ollamaMocks.ts`). Previously WebKit reported `cors`/`connection refused` while Chromium/Firefox passed, and `continue-on-error` hid the failure on PR checks.
 - **E2E Firefox onboarding flake:** `skipOnboarding` always waits for a stable `<header>` after Start Researching (retry click + longer timeout); `agent-flow` uses the shared helper; heuristic suite waits for the orchestrator form before assertions.
 - **Synthetic demo quarantine (P0):** Non-AI research no longer silently substitutes the educational demo corpus on empty/failed/offline retrieval. Explicit Educational Demo mode always routes through the Non-AI engine and stamps heuristic provenance (never a live provider); reports stamp `sourceClass` / `corpusClass`, use Demo ID labels, refuse `verified` trust, and watermark exports (ADR 0016, Dexie v6 via tested `demoCorpusMigration` helpers). Empty-retrieval synthesis is preserved on export and via `synthesisChunk` (no mid-stream double-seed). Mixed corpora stay `mixed-retrieved`; provider-partial failures stamp `retrievalOutcome: partial_failure`.
 - **Immutable execution provenance (P0 / ADR 0017):** Research runs freeze `ResearchExecutionContext` once at stream start (`executionId`, inference mode/reason, provider, model, release + prompt registry versions). Completion no longer re-calls `resolveActiveInferenceMode`, so mid-run online/key flips cannot rewrite heuristic runs as live.
 - **Abort/timeout contract (P0):** `findRelatedOnline`, `generateTldrSummary`, and `startChatWithReport` forward `AbortSignal` into live provider calls; Gemini/Ollama `testConnection` use a 15s timeout like OpenAI/Anthropic; `useChat` and `ArticleDetailPanel` abort in-flight work on cleanup/supersede and suppress abort noise.
 - **Stateful cross-provider chat (P0):** OpenAI, Anthropic, and Ollama chat sessions now accumulate completed user/assistant turns so multi-turn report chat keeps context (Gemini already did via the SDK). Ollama chat also forwards the system prompt as a `system` message.
 - **Synthesis trust terminology (P0 / ADR 0018):** Renamed overclaiming `verified` wire values to `claim-supported` / `corpus-supported`. Readers accept legacy `verified`; Dexie v7 rewrites persisted report JSON; UI/README/import copy match lexical corpus-support (not a bibliographic audit).
+
+### Changed
+
+- **E2E Cross-Browser Smoke is blocking:** removed `continue-on-error` from `.github/workflows/e2e-cross-browser.yml`; `docs/project-facts.json` `crossBrowserAdvisory: false`.
 
 ### Added
 

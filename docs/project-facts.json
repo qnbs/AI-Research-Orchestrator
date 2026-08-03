@@ -30,7 +30,7 @@
     "mainWorkflowPath": ".github/workflows/e2e.yml",
     "mainJobBlocking": true,
     "crossBrowserWorkflowPath": ".github/workflows/e2e-cross-browser.yml",
-    "crossBrowserAdvisory": true,
+    "crossBrowserAdvisory": false,
     "ciSpecPaths": [
       "src/test/e2e/smoke.spec.ts",
       "src/test/e2e/agent-flow.spec.ts",

@@ -1,9 +1,10 @@
 /**
  * Multi-provider Settings flow — provider dropdown + heuristic mode chrome.
- * Does not run live provider calls; selection UI only (mocked network unused).
+ * Ollama health probes are mocked (no live Local AI server required).
  */
 import { test, expect } from '@playwright/test';
 import { navigateToView, skipOnboarding } from './e2eHelpers';
+import { configureOllamaLoopback, mockOllamaHealthy, mockOllamaUnavailable } from './ollamaMocks';
 
 async function openAiConfiguration(page: import('@playwright/test').Page) {
   await navigateToView(page, '#settings');
@@ -62,48 +63,26 @@ test.describe('Provider selection flow', () => {
   });
 
   test('Ollama health panel diagnoses unavailable server', async ({ page }) => {
-    await page.route('**/api/version', async (route) => {
-      await route.abort('failed');
-    });
-    await page.route('**/api/tags', async (route) => {
-      await route.abort('failed');
-    });
+    await mockOllamaUnavailable(page);
 
     const select = page.locator('#ai-provider');
     await select.selectOption('ollama');
     await expect(page.getByTestId('ollama-health-panel')).toBeVisible({ timeout: 5_000 });
-    await expect(page.getByTestId('ollama-health-fail')).toBeVisible({ timeout: 10_000 });
+    await configureOllamaLoopback(page);
+    await expect(page.getByTestId('ollama-health-fail')).toBeVisible({ timeout: 15_000 });
     await expect(
       page.getByText(/Local AI runs the model|Local AI führt das Modell/i),
     ).toBeVisible();
   });
 
   test('Ollama health panel lists discovered models when available', async ({ page }) => {
-    await page.route('**/api/version', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ version: '0.5.0-e2e' }),
-      });
-    });
-    await page.route('**/api/tags', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          models: [{ name: 'llama3.1:8b', details: { parameter_size: '8B' } }],
-        }),
-      });
-    });
+    await mockOllamaHealthy(page);
 
     const select = page.locator('#ai-provider');
     await select.selectOption('ollama');
-    // Approve default loopback origin so the panel is the focus (URL field already defaults).
-    const approve = page.getByRole('button', { name: /Approve|genehmigen/i });
-    if (await approve.isVisible().catch(() => false)) {
-      await approve.click();
-    }
-    await expect(page.getByTestId('ollama-health-ok')).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByTestId('ollama-health-panel')).toBeVisible({ timeout: 5_000 });
+    await configureOllamaLoopback(page);
+    await expect(page.getByTestId('ollama-health-ok')).toBeVisible({ timeout: 15_000 });
     await expect(page.getByTestId('ollama-discovered-models')).toBeVisible();
     await expect(
       page.getByTestId('ollama-discovered-models').locator('option[value="llama3.1:8b"]'),

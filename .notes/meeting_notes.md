@@ -204,3 +204,9 @@
 
 - Merged #205 Ollama first-class Local AI (ADR 0019).
 - PR7: ADR 0020 typed `phaseId` stream events; fix PubMed+arXiv → PubMedFetcher; timeline by ID for DE locale.
+
+## 2026-08-03 — Main cross-browser WebKit red (Ollama CORS) + gate promotion
+
+- **Why:** After #206 merge, `main` run `30786120773` WebKit failed `provider-flow` Ollama healthy path (`cors`); PR looked green because `e2e-cross-browser.yml` used `continue-on-error: true`.
+- **What:** `serviceWorkers: 'block'` in Playwright (WebKit SW bypassed `page.route`); CORS-aware Ollama mocks + `127.0.0.1` refresh; remove `continue-on-error`; `crossBrowserAdvisory: false`; update backlog/AGENTS/rules/drift check.
+- **Impact:** Cross-browser failures fail the PR/`main` check — same visibility as Chromium E2E.

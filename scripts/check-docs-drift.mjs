@@ -151,6 +151,11 @@ async function checkProjectFacts(errors, facts) {
     if (advisory && !hasContinue) {
       errors.push(`${facts.e2e.crossBrowserWorkflowPath} should be advisory (continue-on-error: true)`);
     }
+    if (!advisory && hasContinue) {
+      errors.push(
+        `${facts.e2e.crossBrowserWorkflowPath} must not use continue-on-error (blocking cross-browser E2E)`,
+      );
+    }
   }
 
   for (const spec of facts.e2e?.ciSpecPaths ?? []) {
