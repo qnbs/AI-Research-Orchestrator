@@ -4,7 +4,7 @@
  */
 
 import { measureCitationGrounding, partitionCorpusCitations } from './citationGrounding';
-import { computeClaimTrustMetrics } from './claimValidation';
+import { computeClaimTrustMetrics, validateClaimAgainstCorpus } from './claimValidation';
 import type { GroundedSynthesis } from '../types';
 import { validatePubMedQuery } from './pubmedQueryValidator';
 
@@ -129,18 +129,32 @@ export function evaluateCase(testCase: EvalCase): EvalCaseResult {
       actual !== null && typeof actual === 'object' && !Array.isArray(actual)
         ? (actual as Record<string, unknown>)
         : null;
-    const ranked =
-      obj && Array.isArray(obj.rankedArticles) ? (obj.rankedArticles as { pmid?: string }[]) : [];
+    const rankedRaw = obj && Array.isArray(obj.rankedArticles) ? obj.rankedArticles : [];
+    const ranked = rankedRaw.filter(
+      (r): r is { pmid?: string } => r !== null && typeof r === 'object' && !Array.isArray(r),
+    );
     const failures: string[] = [];
 
     if (exp.rankedCorpusPmids?.length) {
       const corpus = new Set(exp.rankedCorpusPmids);
-      const invalid = ranked.filter(
-        (r) =>
-          !r || typeof r.pmid !== 'string' || r.pmid.trim().length === 0 || !corpus.has(r.pmid),
-      );
+      const invalid = rankedRaw.filter((r) => {
+        if (!r || typeof r !== 'object' || Array.isArray(r)) return true;
+        const pmid = (r as { pmid?: unknown }).pmid;
+        return typeof pmid !== 'string' || pmid.trim().length === 0 || !corpus.has(pmid);
+      });
       if (invalid.length) {
-        failures.push(`out-of-corpus: ${invalid.map((r) => r.pmid).join(', ')}`);
+        failures.push(
+          `out-of-corpus: ${invalid
+            .map((r) =>
+              r &&
+              typeof r === 'object' &&
+              !Array.isArray(r) &&
+              typeof (r as { pmid?: unknown }).pmid === 'string'
+                ? (r as { pmid: string }).pmid
+                : '<invalid>',
+            )
+            .join(', ')}`,
+        );
       }
     }
 
@@ -210,28 +224,31 @@ export function evaluateCase(testCase: EvalCase): EvalCaseResult {
     }
 
     if (failures.length === 0) {
-      const metrics = computeClaimTrustMetrics(
-        claims.map((c) => ({
-          ...c,
-          text: typeof c.text === 'string' ? c.text : '',
-          pmids: Array.isArray(c.pmids)
-            ? c.pmids.filter((p): p is string => typeof p === 'string')
-            : [],
-          validationState: c.validationState ?? 'unverified',
-        })),
-        ranked.map((r) => ({
-          pmid: typeof r.pmid === 'string' ? r.pmid : '',
-          title: typeof r.title === 'string' ? r.title : '',
-          authors: '',
-          journal: '',
-          pubYear: '0000',
-          summary: typeof r.summary === 'string' ? r.summary : '',
-          relevanceScore: 0,
-          relevanceExplanation: '',
-          keywords: [],
-          isOpenAccess: false,
-        })),
+      const corpusArticles = ranked.map((r) => ({
+        pmid: typeof r.pmid === 'string' ? r.pmid : '',
+        title: typeof r.title === 'string' ? r.title : '',
+        authors: '',
+        journal: '',
+        pubYear: '0000',
+        summary: typeof r.summary === 'string' ? r.summary : '',
+        relevanceScore: 0,
+        relevanceExplanation: '',
+        keywords: [],
+        isOpenAccess: false,
+      }));
+      // Recompute validationState from corpus evidence — do not trust model-supplied states.
+      const validatedClaims = claims.map((c) =>
+        validateClaimAgainstCorpus(
+          {
+            text: typeof c.text === 'string' ? c.text : '',
+            pmids: Array.isArray(c.pmids)
+              ? c.pmids.filter((p): p is string => typeof p === 'string')
+              : [],
+          },
+          corpusArticles,
+        ),
       );
+      const metrics = computeClaimTrustMetrics(validatedClaims, corpusArticles);
 
       if (
         exp.maxUnsupportedClaimRate != null &&
