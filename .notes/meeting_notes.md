@@ -227,4 +227,11 @@
 
 - **Why:** Master prompt acceptance — measure claim-level citation precision/recall/source relevance/unsupported rate; keep tail articles in large corpora.
 - **What:** Extend `ClaimTrustMetrics` + `agentEval` thresholds; `liveOrchestratorEval` tail + claim-trust fixtures; empty claims / zero citations fail metric floors; tail fixture runs ranking prompt-budget selection.
-- **Impact:** `check:agent-eval` catches claim-quality regressions (precision/recall/relevance/unsupported) and loss of a relevant tail PMID after ranking truncation.
+- **Impact:** `check:agent-eval` catches claim-quality regressions (precision/recall/relevance/unsupported) and loss of a relevant tail PMID after ranking truncation. Merged as **#210**.
+
+## 2026-08-03 — PR10 product truthfulness docs
+
+- **Why:** Master prompt P3 — README/Help/onboarding claimed stronger privacy/grounding guarantees than runtime (e.g. DE “every assertion linked to verified PMID”, “nothing sent to a server”).
+- **What:** Calibrate EN/DE README, Help About, onboarding privacy, manifest; expand `forbiddenReadmePhrases`; point privacy copy at SECURITY.md egress table.
+- **Impact:** Product copy matches executable guarantees; docs-drift fails on reintroduced overclaims.
+- **Note:** Existing bilingual DE README section was calibrated in parallel with EN (product truthfulness); DE UI strings remain in `src/i18n` per rule `010`.

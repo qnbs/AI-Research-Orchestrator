@@ -163,7 +163,7 @@ export const helpTranslations = {
       "All data, including your research history, saved articles, and settings, is stored exclusively in your browser's",
     'help.faq.privacy.storage': 'IndexedDB',
     'help.faq.privacy.answer.end':
-      'database. No information is ever uploaded to a server or shared. Your research is completely private to the browser you are using.',
+      'database. There is no app backend that stores your research. In live mode, prompts and article metadata go to the AI provider you configure, and search queries go to NCBI/arXiv.',
     'help.faq.privacy.backup.start':
       'Because the data is stored locally, it can be lost if you clear your browser data. Use the export features in',
     'help.faq.privacy.backup.settings': 'Settings → Data Management & Privacy',
@@ -228,13 +228,13 @@ export const helpTranslations = {
     'help.about.principles.title': 'Core Principles',
     'help.about.principles.privacy.label': 'Privacy First:',
     'help.about.principles.privacy.desc':
-      'All your data is stored locally in your browser. Nothing is ever sent to a server.',
+      'Reports, history, and settings stay in your browser (IndexedDB). There is no app backend storing your research. In live mode, prompts and article metadata are sent to the AI provider you configure, and search queries go to NCBI/arXiv — see Settings and SECURITY.md.',
     'help.about.principles.assistant.label': 'AI as an Assistant:',
     'help.about.principles.assistant.desc':
       'The AI is a powerful tool, but it is meant to augment, not replace, human intelligence. Always critically evaluate its output.',
     'help.about.principles.traceability.label': 'Traceability:',
     'help.about.principles.traceability.desc':
-      'The AI sources are provided where possible to allow for verification of its findings.',
+      'Ranked insights and exports are corpus-validated where implemented; narrative synthesis is labeled corpus-supported or unverified narrative draft. Always verify against primary sources.',
     'help.about.disclaimer.title': 'Disclaimer',
     'help.about.disclaimer.desc':
       'This tool is for informational and research assistance purposes only. It is not a substitute for professional medical or scientific advice. The AI can make mistakes; always verify information from the primary source articles.',
@@ -406,7 +406,7 @@ export const helpTranslations = {
       'Alle Daten, einschließlich Rechercheverlauf, gespeicherter Artikel und Einstellungen, werden ausschließlich in der Browser-Datenbank',
     'help.faq.privacy.storage': 'IndexedDB',
     'help.faq.privacy.answer.end':
-      'gespeichert. Keine Informationen werden jemals auf einen Server hochgeladen oder geteilt. Ihre Recherche bleibt vollständig privat in dem Browser, den Sie verwenden.',
+      'gespeichert. Es gibt kein App-Backend, das Ihre Recherche speichert. Im Live-Modus gehen Prompts und Artikelmetadaten an den konfigurierten KI-Anbieter sowie Suchanfragen an NCBI/arXiv.',
     'help.faq.privacy.backup.start':
       'Da die Daten lokal gespeichert werden, können sie verloren gehen, wenn Sie Browserdaten löschen. Nutzen Sie regelmäßig die Exportfunktionen unter',
     'help.faq.privacy.backup.settings': 'Einstellungen → Datenverwaltung & Datenschutz',
@@ -472,13 +472,13 @@ export const helpTranslations = {
     'help.about.principles.title': 'Grundprinzipien',
     'help.about.principles.privacy.label': 'Datenschutz zuerst:',
     'help.about.principles.privacy.desc':
-      'Alle Ihre Daten werden lokal in Ihrem Browser gespeichert. Nichts wird jemals an einen Server gesendet.',
+      'Berichte, Historie und Einstellungen bleiben in Ihrem Browser (IndexedDB). Es gibt kein App-Backend, das Ihre Recherche speichert. Im Live-Modus gehen Prompts und Artikelmetadaten an den konfigurierten KI-Anbieter sowie Suchanfragen an NCBI/arXiv — siehe Einstellungen und SECURITY.md.',
     'help.about.principles.assistant.label': 'KI als Assistent:',
     'help.about.principles.assistant.desc':
       'Die KI ist ein leistungsfähiges Werkzeug, soll menschliche Intelligenz aber ergänzen, nicht ersetzen. Bewerten Sie ihre Ausgaben immer kritisch.',
     'help.about.principles.traceability.label': 'Nachvollziehbarkeit:',
     'help.about.principles.traceability.desc':
-      'Die Quellen der KI werden nach Möglichkeit angegeben, damit ihre Ergebnisse überprüft werden können.',
+      'Gerankte Insights und Exporte sind korpusvalidiert, wo umgesetzt; narrative Synthese wird als corpus-supported oder unverified narrative draft gekennzeichnet. Prüfen Sie immer die Primärquellen.',
     'help.about.disclaimer.title': 'Haftungsausschluss',
     'help.about.disclaimer.desc':
       'Dieses Werkzeug dient nur Informations- und Rechercheunterstützungszwecken. Es ist kein Ersatz für professionelle medizinische oder wissenschaftliche Beratung. Die KI kann Fehler machen; überprüfen Sie Informationen immer anhand der primären Quellenartikel.',

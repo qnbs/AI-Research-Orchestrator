@@ -293,7 +293,8 @@ export const translations = {
     'onboarding.step3.desc':
       'Build a personal, de-duplicated knowledge base and export your findings for any workflow.',
     'onboarding.start': 'Start Researching',
-    'onboarding.privacy': 'Your data remains private and is stored only locally in your browser.',
+    'onboarding.privacy':
+      'Stored research data stays in your browser. Live mode still sends prompts and article metadata to your chosen AI provider and queries to PubMed/arXiv.',
     'settings.ai.enable_tldr': 'Enable AI “TL;DR” Summaries',
     ...journalTranslations.en,
     'kb.analyze_journal': 'Analyze journal in Journal Hub',
@@ -649,7 +650,7 @@ export const translations = {
       'Bauen Sie eine persönliche, deduplizierte Wissensdatenbank auf und exportieren Sie Ihre Ergebnisse für jeden Workflow.',
     'onboarding.start': 'Recherche starten',
     'onboarding.privacy':
-      'Ihre Daten bleiben privat und werden nur lokal in Ihrem Browser gespeichert.',
+      'Gespeicherte Recherche-Daten bleiben im Browser. Im Live-Modus gehen Prompts und Artikelmetadaten an Ihren KI-Anbieter und Suchanfragen an PubMed/arXiv.',
     'settings.ai.enable_tldr': 'KI-„TL;DR“-Zusammenfassungen aktivieren',
     ...journalTranslations.de,
     'kb.analyze_journal': 'Journal im Journal-Hub analysieren',

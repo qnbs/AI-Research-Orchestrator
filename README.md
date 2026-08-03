@@ -6,13 +6,13 @@
 
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/qnbs/AI-Research-Orchestrator)
 
-![Status](https://img.shields.io/badge/Status-Production_Ready-success?style=flat-square)
+![Status](https://img.shields.io/badge/Status-Local--First_PWA-success?style=flat-square)
 ![Version](https://img.shields.io/badge/Version-0.4.1-blue?style=flat-square)
-![Tech](https://img.shields.io/badge/Stack-React_19_|_TypeScript_|_Gemini_Pro-blueviolet?style=flat-square)
+![Tech](https://img.shields.io/badge/Stack-React_19_|_TypeScript_|_Multi--Provider-blueviolet?style=flat-square)
 ![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)
 ![Privacy](https://img.shields.io/badge/Privacy-Local_First-green?style=flat-square)
 
-> **A sophisticated, agentic expert system for high-dimensional literature synthesis, automated knowledge discovery, and scientometric analysis.**
+> **A client-only, agentic PWA for biomedical literature synthesis, knowledge-base workflows, and scientometric exploration.**
 
 **[🚀 Live Demo](https://qnbs.github.io/AI-Research-Orchestrator/)** | [Get Gemini API Key](https://aistudio.google.com/)
 
@@ -22,16 +22,16 @@
 
 ### 🌌 Executive Overview
 
-The **AI Research Orchestration Author** represents a paradigm shift in scientific inquiry tools. It is a **state-of-the-art frontend application** designed to autonomously conduct rigorous literature reviews by coupling the vast biomedical corpus of **PubMed** with the advanced cognitive reasoning capabilities of **Google's Gemini 2.5 Flash** and **Gemini 3 Pro** models.
+The **AI Research Orchestration Author** is a **client-only frontend application** that helps run literature reviews by coupling **PubMed** (and optional arXiv) retrieval with a pluggable AI provider layer — default live model **Google Gemini 2.5 Flash**, plus OpenAI, Anthropic, local Ollama, or a deterministic heuristic fallback.
 
-Unlike conventional summarization tools, this system employs a **multi-agent orchestration pattern**. It decomposes complex research questions into constituent logic streams, autonomously formulates Boolean search strategies, executes live API retrieval, ranks findings using semantic understanding, and synthesizes narrative reports with academic precision.
+Unlike conventional summarization tools, this system employs a **multi-agent orchestration pattern**. It decomposes research questions into pipeline phases, formulates Boolean search strategies, executes live API retrieval, ranks findings (semantic when live; lexical in heuristic mode), and synthesizes narrative reports with citations where available.
 
 **Core Philosophy:**
 
-- **Local-First Sovereignty:** A zero-knowledge architecture where all data resides within the user's browser (IndexedDB).
-- **Progressive enhancement:** Live Gemini is the high-fidelity path; a first-class **heuristic inference layer** keeps every AI feature fully usable offline or without an API key (deterministic ranking, template synthesis, extractive TL;DR, report-grounded chat).
+- **Local-First Storage:** Reports, history, settings, and knowledge base live in the browser (IndexedDB). There is no app backend that stores your research. Live mode still sends prompts and article metadata to the **selected AI provider** and search queries to NCBI/arXiv — see [SECURITY.md](./SECURITY.md).
+- **Progressive enhancement:** Live Gemini (or another configured provider) is the high-fidelity path; a first-class **heuristic inference layer** keeps every AI feature usable offline or without an API key (deterministic ranking, template synthesis, extractive TL;DR, report-grounded chat).
 - **Agentic Reasoning:** Autonomous query formulation, decision-making, and relevance scoring.
-- **Traceability & Grounding:** Ranked insights and exports are corpus-validated; live narrative synthesis is labeled **corpus-supported** or **unverified narrative draft** based on claim-level lexical evidence checks (see ADR 0012, ADR 0018).
+- **Traceability & Grounding:** Ranked insights and exports are corpus-validated where implemented; live narrative synthesis is labeled **corpus-supported** or **unverified narrative draft** based on claim-level lexical evidence checks (see ADR 0012, ADR 0018). This is **not** a guarantee that every sentence is fully verified.
 
 ### Offline / Heuristic mode
 
@@ -54,9 +54,9 @@ See [ADR 0007](docs/adr/0007-heuristic-inference-layer.md).
 The application's core is a multi-stage generative pipeline that mimics the workflow of a human researcher:
 
 - **Query Formulation Agent**: Analyzes natural language intent to construct high-precision Boolean search strings tailored to PubMed's MeSH taxonomy.
-- **Live Retrieval Engine**: Interfaces directly with the NCBI E-utilities API to fetch metadata for hundreds of candidate articles in real-time.
-- **Semantic Ranking Agent**: Reads titles and abstracts to score relevance (0-100) against specific research contexts, utilizing a dedicated "Thinking Budget" for complex nuance detection.
-- **Synthesis Agent**: Streams a comprehensive, cited executive summary, highlighting consensus, contradictions, and critical gaps in the literature.
+- **Live Retrieval Engine**: Interfaces directly with the NCBI E-utilities API to fetch metadata for candidate articles in real-time (subject to NCBI rate limits).
+- **Semantic Ranking Agent**: Scores relevance (0–100) from **titles and available abstracts** (records without abstracts are metadata-only and ranked accordingly). Live providers may use a thinking/token budget; heuristic mode uses lexical ranking.
+- **Synthesis Agent**: Streams a cited executive summary when possible, highlighting consensus, contradictions, and gaps. Treat unverified narrative sections as drafts pending primary-source review.
 
 #### 2. 📚 Intelligent Knowledge Base
 
@@ -71,14 +71,14 @@ A persistent, self-organizing library for long-term research management.
 A lightweight, high-speed tool for ad-hoc inquiry and validation.
 
 - **Abstract Analysis**: Paste complex text to generate "TL;DR" summaries and extract key findings instantly.
-- **Latent Similarity Search**: Uses semantic understanding to discover related papers based on conceptual overlap rather than just keyword matching.
-- **Cross-Modal Grounding**: Cross-references scientific findings with live web search data to provide broader societal or clinical context.
+- **Similarity Search**: Finds related papers via provider semantic search when live, or lexical/demo paths in heuristic mode.
+- **Optional web grounding**: When using Gemini with search grounding enabled, some findings may be cross-checked against live web results — this is provider-dependent, not a universal guarantee.
 
 #### 4. 👤 Scientometric Hubs (Authors & Journals)
 
-- **Author Disambiguation**: Leverages AI to cluster publications and distinguish between researchers with identical names based on co-authorship networks and affiliation patterns.
-- **Impact Metrics**: Estimates H-Index, citation flows, and identifies core research concepts over a career.
-- **Journal Profiling**: AI-generated profiles of publication venues, analyzing scope, Open Access policies, and thematic focus areas.
+- **Author Disambiguation**: Uses AI (or heuristic clustering) to group publications and help distinguish researchers with similar names via co-authorship and affiliation signals — treat results as assistive, not authoritative identity resolution.
+- **Impact Metrics**: Surfaces **estimated** H-Index-style and career-concept signals from retrieved corpora; these are approximate scientometrics, not official bibliometric database values.
+- **Journal Profiling**: AI- or heuristic-generated venue profiles (scope, Open Access heuristics, themes). PubMed `free full text` filters are **not** identical to all definitions of “open access” (see SECURITY.md).
 
 ---
 
@@ -90,10 +90,10 @@ This application is a **Progressive Web App (PWA)** built on a modern, performan
 
 - **Framework**: [React 19](https://react.dev/) (leveraging Suspense, Concurrent Mode, and refined Hooks).
 - **Language**: [TypeScript](https://www.typescriptlang.org/) ensuring strict type safety and architectural robustness.
-- **AI Integration**: [`@google/genai`](https://www.npmjs.com/package/@google/genai) SDK connecting to Gemini 2.5 Flash (for speed) and Gemini 3 Pro (for reasoning).
+- **AI Integration**: Pluggable providers via lazy-loaded SDKs — default live model **Gemini `gemini-2.5-flash`**, plus OpenAI, Anthropic, Ollama, or heuristic fallback (ADR 0008 / ADR 0009).
 - **State/Storage**: [Dexie.js](https://dexie.org/) (IndexedDB wrapper) for high-performance, offline-capable structured local storage.
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/) with a custom "Cybernetic" design system featuring glassmorphism and ambient animations.
-- **Visualization**: [Recharts](https://recharts.org/) for reactive data analytics.
+- **Visualization**: [Recharts](https://recharts.org/) for reactive data analytics (Recharts-only; see ADR 0005).
 - **Export**: [jsPDF](https://github.com/parallax/jsPDF) for client-side PDF report compilation.
 
 #### Design Patterns
@@ -111,7 +111,7 @@ This application is a **Progressive Web App (PWA)** built on a modern, performan
 
 1. Visit **[https://qnbs.github.io/AI-Research-Orchestrator/](https://qnbs.github.io/AI-Research-Orchestrator/)**
 2. Click **Settings** (gear icon) → **API Key**
-3. Enter your Gemini API Key (stored encrypted locally, never sent to any server)
+3. Enter your Gemini API Key (AES-GCM encrypted in IndexedDB; used only with the provider you select — not sent to an app backend)
 4. Start researching!
 
 #### Local Development
@@ -155,14 +155,14 @@ For AI-assisted work in Cursor, see [`AGENTS.md`](./AGENTS.md), [`.cursor/index.
 
 #### How to Set Your API Key
 
-The app stores your API key **securely encrypted** in your browser's IndexedDB using AES-GCM encryption:
+The app stores provider API keys **AES-GCM encrypted** in your browser's IndexedDB (Web Crypto). Encryption protects keys at rest in IndexedDB; it does **not** protect against malware or XSS in a compromised browser session — see [SECURITY.md](./SECURITY.md).
 
 1. Open the app
-2. Navigate to **Settings** → **API Key**
-3. Enter your Gemini API Key
-4. Click **Save Key**
+2. Navigate to **Settings** → **AI Configuration**
+3. Enter your provider API key(s)
+4. Click **Save**
 
-> ⚠️ **Security Note**: Your API key is encrypted with Web Crypto API and stored locally. It never leaves your browser or gets sent to any external server (except the selected AI provider's API for inference).
+> ⚠️ **Security Note**: Keys are **not** sent to an application backend. In live mode they are used as Authorization credentials with the **AI provider you selected**. Research prompts and article metadata are also sent to that provider.
 
 ---
 
@@ -197,11 +197,13 @@ The application features a granular settings engine allowing precise tuning of t
 
 ### 🛡️ Privacy & Security
 
-**Zero-Knowledge Architecture:**
+**Local-first, zero-backend app:**
 
-- **Local Storage**: All user data (reports, history, settings) resides exclusively in your browser's IndexedDB.
-- **Direct-to-API**: The app communicates directly with Google's Gemini API and NCBI's PubMed API. No intermediate backend server collects, stores, or analyzes your data.
-- **Data Portability**: You own your data. Export complete datasets to JSON, CSV, RIS, BibTeX, or PDF at any time.
+- **Local Storage**: Reports, history, settings, and knowledge base reside in your browser's IndexedDB — there is **no application server** that stores them.
+- **Direct-to-API**: In live mode the browser talks directly to the selected AI provider, NCBI, and (optionally) arXiv. Prompts, article metadata, and retrieval queries leave the device for those destinations.
+- **Data Portability**: Export complete datasets to JSON, CSV, RIS, BibTeX, or PDF at any time.
+
+Threat model and residual risks: [SECURITY.md](./SECURITY.md).
 
 ---
 
@@ -267,16 +269,16 @@ For subpath hosts, configure the static server to serve `dist/` under that path 
 
 ### 🌌 Überblick
 
-Der **AI Research Orchestration Author** markiert einen Paradigmenwechsel bei Werkzeugen für wissenschaftliche Recherche. Es handelt sich um eine **hochmoderne Frontend-Anwendung**, die entwickelt wurde, um rigorose Literaturrecherchen autonom durchzuführen. Hierbei wird der riesige biomedizinische Korpus von **PubMed** mit den fortschrittlichen kognitiven Fähigkeiten der Modelle **Google Gemini 2.5 Flash** und **Gemini 3 Pro** gekoppelt.
+Der **AI Research Orchestration Author** ist eine **client-seitige Frontend-Anwendung** für Literaturrecherchen: **PubMed** (optional arXiv) plus eine austauschbare KI-Schicht — Standard-Live-Modell **Google Gemini 2.5 Flash**, außerdem OpenAI, Anthropic, lokales Ollama oder eine deterministische Heuristik.
 
-Im Gegensatz zu herkömmlichen Zusammenfassungstools verwendet dieses System ein **Multi-Agenten-Orchestrierungsmuster**. Es zerlegt komplexe Forschungsfragen in logische Teilströme, formuliert autonom boolesche Suchstrategien, führt Live-API-Abrufe durch, bewertet Ergebnisse mittels semantischem Verständnis und synthetisiert narrative Berichte mit akademischer Präzision.
+Im Gegensatz zu herkömmlichen Zusammenfassungstools verwendet dieses System ein **Multi-Agenten-Orchestrierungsmuster**. Es zerlegt Forschungsfragen in Pipeline-Phasen, formuliert boolesche Suchstrategien, führt Live-API-Abrufe durch, bewertet Ergebnisse (semantisch im Live-Modus; lexikalisch in der Heuristik) und synthetisiert narrative Berichte mit Zitationen, wo verfügbar.
 
 **Kernphilosophie:**
 
-- **Local-First-Souveränität:** Eine Zero-Knowledge-Architektur, bei der alle Daten ausschließlich im Browser des Nutzers (IndexedDB) verbleiben.
-- **Progressive Enhancement:** Live-Gemini ist der High-Fidelity-Pfad; eine erstklassige **Heuristik-Inferenzschicht** hält alle KI-Funktionen offline und ohne API-Schlüssel nutzbar.
+- **Local-First-Speicher:** Berichte, Historie, Einstellungen und Wissensdatenbank liegen im Browser (IndexedDB). Es gibt kein App-Backend, das Ihre Recherche speichert. Im Live-Modus gehen Prompts und Artikelmetadaten an den **gewählten KI-Anbieter** sowie Suchanfragen an NCBI/arXiv — siehe [SECURITY.md](./SECURITY.md).
+- **Progressive Enhancement:** Live-Gemini (oder ein anderer konfigurierter Anbieter) ist der High-Fidelity-Pfad; eine erstklassige **Heuristik-Inferenzschicht** hält alle KI-Funktionen offline und ohne API-Schlüssel nutzbar.
 - **Agentisches Denken:** Autonome Abfrageformulierung, Entscheidungsfindung und Relevanzbewertung.
-- **Rückverfolgbarkeit & Grounding:** Jede KI-Aussage ist untrennbar mit einer verifizierten PubMed-ID (PMID) verknüpft.
+- **Rückverfolgbarkeit & Grounding:** Gerankte Insights und Exporte sind korpusvalidiert, wo umgesetzt; narrative Synthese wird als **corpus-supported** oder **unverified narrative draft** gekennzeichnet (ADR 0012, ADR 0018). Das ist **keine** Garantie, dass jeder Satz vollständig verifiziert ist.
 
 ### Offline- / Heuristik-Modus
 
@@ -308,29 +310,29 @@ Eine persistente, sich selbst organisierende Bibliothek für langfristiges Forsc
 Ein leichtgewichtiges Hochgeschwindigkeitstool für Ad-hoc-Anfragen und Validierung.
 
 - **Abstract-Analyse**: Fügen Sie komplexen Text ein, um "TL;DR"-Zusammenfassungen zu generieren und Schlüsselerkenntnisse sofort zu extrahieren.
-- **Latente Ähnlichkeitssuche**: Nutzt semantisches Verständnis, um verwandte Arbeiten basierend auf konzeptionellen Überschneidungen statt reiner Keyword-Übereinstimmung zu entdecken.
-- **Cross-Modal Grounding**: Vergleicht wissenschaftliche Erkenntnisse mit Live-Websuchdaten, um breiteren gesellschaftlichen oder klinischen Kontext zu liefern.
+- **Ähnlichkeitssuche**: Findet verwandte Papers über Anbieter-Suche im Live-Modus oder lexikalische/Demo-Pfade in der Heuristik.
+- **Optionales Web-Grounding**: Bei Gemini mit aktiviertem Search-Grounding können Ergebnisse gegen Live-Webdaten geprüft werden — anbieterabhängig, keine Universalgarantie.
 
 #### 4. 👤 Szientometrische Hubs (Autoren & Journale)
 
-- **Autoren-Disambiguierung**: Nutzt KI, um Publikationen zu clustern und Forscher mit identischen Namen anhand von Co-Autorschaftsnetzwerken und Affiliationsmustern zu unterscheiden.
-- **Impact-Metriken**: Schätzt den H-Index, Zitationsflüsse und identifiziert Kernforschungskonzepte über eine gesamte Karriere hinweg.
-- **Journal-Profiling**: KI-generierte Profile von Publikationsorten, die Umfang, Open-Access-Richtlinien und thematische Schwerpunkte analysieren.
+- **Autoren-Disambiguierung**: KI- oder Heuristik-Clustering als Hilfsmittel — keine autoritative Identitätsauflösung.
+- **Impact-Metriken**: **Geschätzte** H-Index-/Karrieresignale aus dem abgerufenen Korpus, keine offiziellen Bibliometrie-Datenbankwerte.
+- **Journal-Profiling**: KI-/Heuristik-Profile (Scope, Open-Access-Heuristiken, Themen). PubMed-`free full text` ist nicht identisch mit allen OA-Definitionen.
 
 ---
 
 ### 🛠️ Technische Architektur
 
-Diese Anwendung ist eine **Progressive Web App (PWA)**, die auf einem modernen, leistungsorientierten Stack basiert und für Edge-Umgebungen konzipiert ist.
+Diese Anwendung ist eine **Progressive Web App (PWA)** auf einem modernen Stack für clientseitige Nutzung.
 
 #### Technologie-Stack
 
 - **Framework**: [React 19](https://react.dev/) (nutzt Suspense, Concurrent Mode und verfeinerte Hooks).
 - **Sprache**: [TypeScript](https://www.typescriptlang.org/) für strikte Typsicherheit und architektonische Robustheit.
-- **KI-Integration**: [`@google/genai`](https://www.npmjs.com/package/@google/genai) SDK zur Verbindung mit Gemini 2.5 Flash (für Geschwindigkeit) und Gemini 3 Pro (für Reasoning).
+- **KI-Integration**: Austauschbare Anbieter (lazy-loaded) — Standard-Live-Modell **Gemini `gemini-2.5-flash`**, plus OpenAI, Anthropic, Ollama oder Heuristik (ADR 0008 / ADR 0009).
 - **Status/Speicher**: [Dexie.js](https://dexie.org/) (IndexedDB-Wrapper) für hochperformante, offline-fähige strukturierte lokale Speicherung.
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/) mit einem benutzerdefinierten "Cybernetic"-Designsystem mit Glassmorphismus und ambienten Animationen.
-- **Visualisierung**: [Recharts](https://recharts.org/) für reaktive Datenanalysen.
+- **Visualisierung**: [Recharts](https://recharts.org/) für reaktive Datenanalysen (nur Recharts; ADR 0005).
 - **Export**: [jsPDF](https://github.com/parallax/jsPDF) für clientseitige PDF-Berichterstellung.
 
 ---
@@ -341,7 +343,7 @@ Diese Anwendung ist eine **Progressive Web App (PWA)**, die auf einem modernen, 
 
 1. Besuchen Sie **[https://qnbs.github.io/AI-Research-Orchestrator/](https://qnbs.github.io/AI-Research-Orchestrator/)**
 2. Klicken Sie auf **Einstellungen** (Zahnrad-Icon) → **API Key**
-3. Geben Sie Ihren Gemini API Key ein (wird verschlüsselt lokal gespeichert)
+3. Geben Sie Ihren Gemini API Key ein (AES-GCM in IndexedDB; nur beim gewählten Anbieter — nicht an ein App-Backend)
 4. Starten Sie Ihre Recherche!
 
 #### Lokale Entwicklung
@@ -392,7 +394,7 @@ Die App speichert Ihren API Key **sicher verschlüsselt** in der IndexedDB Ihres
 3. Geben Sie Ihren Gemini API Key ein
 4. Klicken Sie auf **Schlüssel speichern**
 
-> ⚠️ **Sicherheitshinweis**: Ihr API Key wird mit der Web Crypto API verschlüsselt und lokal gespeichert. Er verlässt niemals Ihren Browser und wird an keinen externen Server gesendet (außer an die Google Gemini API für Inferenz).
+> ⚠️ **Sicherheitshinweis**: Keys werden **nicht** an ein Anwendungs-Backend gesendet. Im Live-Modus dienen sie als Authorization beim **gewählten KI-Anbieter**. Recherche-Prompts und Artikelmetadaten gehen ebenfalls an diesen Anbieter. AES-GCM schützt Keys at rest in IndexedDB, nicht vor Malware/XSS — siehe [SECURITY.md](./SECURITY.md).
 
 ---
 
@@ -409,11 +411,13 @@ Die Anwendung verfügt über eine granulare Einstellungs-Engine, die eine präzi
 
 ### 🛡️ Datenschutz & Sicherheit
 
-**Zero-Knowledge-Architektur:**
+**Local-First, Zero-Backend:**
 
-- **Lokaler Speicher**: Alle Benutzerdaten (Berichte, Verlauf, Einstellungen) befinden sich ausschließlich in der IndexedDB Ihres Browsers.
-- **Direkt-zu-API**: Die App kommuniziert direkt mit der Google Gemini API und der NCBI PubMed API. Kein zwischengeschalteter Backend-Server sammelt, speichert oder analysiert Ihre Daten.
-- **Datenportabilität**: Ihre Daten gehören Ihnen. Exportieren Sie vollständige Datensätze jederzeit als JSON, CSV, RIS, BibTeX oder PDF.
+- **Lokaler Speicher**: Berichte, Verlauf, Einstellungen und Wissensdatenbank liegen in der IndexedDB — es gibt **keinen Anwendungsserver**, der sie speichert.
+- **Direkt-zu-API**: Im Live-Modus spricht der Browser direkt mit dem gewählten KI-Anbieter, NCBI und (optional) arXiv. Prompts, Artikelmetadaten und Suchanfragen verlassen das Gerät zu diesen Zielen.
+- **Datenportabilität**: Exportieren Sie vollständige Datensätze jederzeit als JSON, CSV, RIS, BibTeX oder PDF.
+
+Bedrohungsmodell und Restrisiken: [SECURITY.md](./SECURITY.md).
 
 ---
 

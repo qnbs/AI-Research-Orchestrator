@@ -79,7 +79,18 @@
     "swCacheVersion": "v1"
   },
   "sourceIdentifiers": ["pmid", "pmc", "doi", "arxiv"],
-  "forbiddenReadmePhrases": ["Every AI assertion is inextricably linked to a verified PubMed ID"],
+  "forbiddenReadmePhrases": [
+    "Every AI assertion is inextricably linked to a verified PubMed ID",
+    "Jede KI-Aussage ist untrennbar mit einer verifizierten PubMed-ID",
+    "Nothing is ever sent to a server",
+    "Nichts wird jemals an einen Server gesendet",
+    "zero-knowledge architecture",
+    "Zero-Knowledge-Architektur",
+    "Production_Ready",
+    "Gemini_Pro",
+    "Gemini 3 Pro",
+    "never sent to any server"
+  ],
   "forbiddenAgentsPhrases": [
     "That job is `continue-on-error: true`, so its green badge alone doesn't prove 0 failures"
   ]
