@@ -456,6 +456,19 @@ export function assessClaimArticleEvidence(
     span?: EvidenceSpan;
   };
 
+  const fieldQualifiesAsSupport = (
+    fieldOverlap: FieldOverlap,
+    aggregateOverlap: number,
+  ): boolean => {
+    const meetsOverlap =
+      fieldOverlap.overlapCount >= 2 ||
+      fieldOverlap.overlapCount >= Math.ceil(aggregateOverlap / 2);
+    if (!meetsOverlap) return false;
+    const claimDirectionStems = claimContent.filter(isDirectionStem);
+    if (claimDirectionStems.length === 0) return true;
+    return claimDirectionStems.some((token) => fieldOverlap.overlapTokens.has(token));
+  };
+
   const fieldOverlaps: FieldOverlap[] = [];
   const aggregatedOverlap = new Set<string>();
 
@@ -497,16 +510,13 @@ export function assessClaimArticleEvidence(
   let bestContradictOverlap = 0;
   let bestReportSpan: EvidenceSpan | undefined;
   let bestReportOverlap = 0;
+  let hasSupportingField = false;
+  let hasContradictingField = false;
   let hasDirectionConflict = false;
   let hasNegationConflict = false;
 
   for (const fieldOverlap of fieldOverlaps) {
     if (fieldOverlap.overlapCount === 0) continue;
-
-    if (fieldOverlap.overlapCount > bestReportOverlap) {
-      bestReportOverlap = fieldOverlap.overlapCount;
-      bestReportSpan = fieldOverlap.span;
-    }
 
     const evidenceText = fieldOverlap.span?.quote?.trim() || fieldOverlap.text;
     const evidenceTokens = tokenizeContent(evidenceText);
@@ -515,23 +525,31 @@ export function assessClaimArticleEvidence(
       fieldOverlap.overlapTokens,
       evidenceTokens,
     );
-    if (detectDirectionConflict(claimDirectionTokens, evidenceTokens)) {
-      hasDirectionConflict = true;
+    const fieldDirectionConflict = detectDirectionConflict(claimDirectionTokens, evidenceTokens);
+    const fieldNegationConflict = detectNegationConflict(claimText, evidenceText);
+    const fieldContradicts = fieldDirectionConflict || fieldNegationConflict;
+
+    if (fieldContradicts) {
+      hasContradictingField = true;
+      if (fieldDirectionConflict) hasDirectionConflict = true;
+      if (fieldNegationConflict) hasNegationConflict = true;
       if (fieldOverlap.overlapCount > bestContradictOverlap) {
         bestContradictOverlap = fieldOverlap.overlapCount;
         bestContradictSpan = fieldOverlap.span;
       }
+      continue;
     }
-    if (detectNegationConflict(claimText, evidenceText)) {
-      hasNegationConflict = true;
-      if (fieldOverlap.overlapCount > bestContradictOverlap) {
-        bestContradictOverlap = fieldOverlap.overlapCount;
-        bestContradictSpan = fieldOverlap.span;
+
+    if (fieldQualifiesAsSupport(fieldOverlap, totalOverlap)) {
+      hasSupportingField = true;
+      if (fieldOverlap.overlapCount > bestReportOverlap) {
+        bestReportOverlap = fieldOverlap.overlapCount;
+        bestReportSpan = fieldOverlap.span;
       }
     }
   }
 
-  if (hasDirectionConflict || hasNegationConflict) {
+  if (hasContradictingField && !hasSupportingField) {
     if (hasDirectionConflict) {
       reasons.push('direction or comparator terms conflict between claim and source');
     }
@@ -543,6 +561,15 @@ export function assessClaimArticleEvidence(
       spans: bestContradictSpan ? [bestContradictSpan] : [],
       contentOverlapCount: totalOverlap,
       reasons,
+    };
+  }
+
+  if (hasContradictingField && hasSupportingField) {
+    return {
+      relation: 'insufficient',
+      spans: bestReportSpan ? [bestReportSpan] : [],
+      contentOverlapCount: totalOverlap,
+      reasons: ['title and abstract provide conflicting lexical signals for this claim'],
     };
   }
 

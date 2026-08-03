@@ -165,4 +165,28 @@ describe('assessClaimArticleEvidence — adversarial', () => {
     );
     expect(result.relation).toBe('supports');
   });
+
+  it('supports claim when abstract aligns despite title-only keyword overlap', () => {
+    const art = article(
+      'Aspirin cardiovascular trial overview',
+      'Aspirin reduced major cardiovascular events compared with placebo.',
+    );
+    const result = assessClaimArticleEvidence(
+      'Aspirin reduced major cardiovascular events compared with placebo.',
+      art,
+    );
+    expect(result.relation).toBe('supports');
+  });
+
+  it('marks internal title-abstract conflict as insufficient', () => {
+    const art = article(
+      'Aspirin increased cardiovascular events overview',
+      'Aspirin reduced major cardiovascular events compared with placebo.',
+    );
+    const result = assessClaimArticleEvidence(
+      'Aspirin reduced major cardiovascular events compared with placebo.',
+      art,
+    );
+    expect(result.relation).toBe('insufficient');
+  });
 });
