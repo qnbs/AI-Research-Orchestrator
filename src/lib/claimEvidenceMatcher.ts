@@ -283,9 +283,17 @@ function countOverlap(left: Set<string>, right: Set<string>): number {
 function hasNegationNear(tokens: string[], index: number): boolean {
   const windowStart = Math.max(0, index - 3);
   for (let i = windowStart; i < index; i += 1) {
+    if (tokens[i] === 'not' && tokens[i + 1] === 'only') continue;
     if (NEGATION_MARKERS.has(tokens[i])) return true;
   }
   return false;
+}
+
+function findStemmedTokenIndex(rawTokens: string[], stemmedToken: string): number {
+  for (let i = 0; i < rawTokens.length; i += 1) {
+    if (stemToken(rawTokens[i]) === stemmedToken) return i;
+  }
+  return -1;
 }
 
 function detectDirectionConflict(claimTokens: string[], articleTokens: string[]): boolean {
@@ -308,6 +316,42 @@ function detectDirectionConflict(claimTokens: string[], articleTokens: string[])
   return false;
 }
 
+function isDirectionStem(stemmed: string): boolean {
+  for (const [term, opposites] of Object.entries(DIRECTION_TERMS)) {
+    if (stemToken(term) === stemmed) return true;
+    for (const opposite of opposites) {
+      if (stemToken(opposite) === stemmed) return true;
+    }
+  }
+  return false;
+}
+
+function claimTokensForDirectionCheck(
+  claimContent: string[],
+  overlapTokens: Set<string>,
+  evidenceTokens: string[],
+): string[] {
+  const evidenceSet = new Set(evidenceTokens.map(stemToken));
+  const scoped = new Set<string>();
+  for (const token of claimContent) {
+    if (overlapTokens.has(token)) scoped.add(token);
+    if (!isDirectionStem(token)) continue;
+    for (const [term, opposites] of Object.entries(DIRECTION_TERMS)) {
+      if (stemToken(term) !== token) continue;
+      for (const opposite of opposites) {
+        if (evidenceSet.has(stemToken(opposite))) scoped.add(token);
+      }
+    }
+    for (const [term, opposites] of Object.entries(DIRECTION_TERMS)) {
+      for (const opposite of opposites) {
+        if (stemToken(opposite) !== token) continue;
+        if (evidenceSet.has(stemToken(term))) scoped.add(token);
+      }
+    }
+  }
+  return [...scoped];
+}
+
 function detectNegationConflict(claimText: string, articleText: string): boolean {
   const claimTokens = normalizeForTokenize(claimText)
     .replace(/[^\p{L}\p{N}]+/gu, ' ')
@@ -323,8 +367,8 @@ function detectNegationConflict(claimText: string, articleText: string): boolean
   const overlapping = claimContent.filter((t) => articleContentSet.has(t));
 
   for (const token of overlapping) {
-    const claimIdx = claimTokens.indexOf(token);
-    const articleIdx = articleTokens.indexOf(token);
+    const claimIdx = findStemmedTokenIndex(claimTokens, token);
+    const articleIdx = findStemmedTokenIndex(articleTokens, token);
     if (claimIdx < 0 || articleIdx < 0) continue;
     const claimNegated = hasNegationNear(claimTokens, claimIdx);
     const articleNegated = hasNegationNear(articleTokens, articleIdx);
@@ -465,7 +509,13 @@ export function assessClaimArticleEvidence(
     }
 
     const evidenceText = fieldOverlap.span?.quote?.trim() || fieldOverlap.text;
-    if (detectDirectionConflict(claimContent, tokenizeContent(evidenceText))) {
+    const evidenceTokens = tokenizeContent(evidenceText);
+    const claimDirectionTokens = claimTokensForDirectionCheck(
+      claimContent,
+      fieldOverlap.overlapTokens,
+      evidenceTokens,
+    );
+    if (detectDirectionConflict(claimDirectionTokens, evidenceTokens)) {
       hasDirectionConflict = true;
       if (fieldOverlap.overlapCount > bestContradictOverlap) {
         bestContradictOverlap = fieldOverlap.overlapCount;

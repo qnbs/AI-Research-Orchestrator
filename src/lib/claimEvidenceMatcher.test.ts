@@ -141,4 +141,28 @@ describe('assessClaimArticleEvidence — adversarial', () => {
     );
     expect(result.relation).toBe('contradicts');
   });
+
+  it('contradicts when negation differs on inflected overlapping tokens', () => {
+    const art = article(
+      'Aspirin prevention',
+      'Aspirin did not prevent stroke in this patient cohort.',
+    );
+    const result = assessClaimArticleEvidence(
+      'Aspirin prevented stroke in this patient cohort.',
+      art,
+    );
+    expect(result.relation).toBe('contradicts');
+  });
+
+  it('does not treat affirming not-only phrasing as negation conflict', () => {
+    const art = article(
+      'Combination therapy',
+      'Not only aspirin but also statins reduced cardiovascular events in adults.',
+    );
+    const result = assessClaimArticleEvidence(
+      'Aspirin reduced cardiovascular events in adults.',
+      art,
+    );
+    expect(result.relation).toBe('supports');
+  });
 });
