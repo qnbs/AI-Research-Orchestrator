@@ -319,6 +319,20 @@ describe('geminiService with mocked SDK', () => {
     expect(hoisted.generateContent).not.toHaveBeenCalled();
   });
 
+  it('generateTldrSummary does not log when an in-flight call is aborted', async () => {
+    const ac = new AbortController();
+    const logSpy = vi.spyOn(safeLog, 'safeLogError').mockImplementation(() => {});
+    hoisted.generateContent.mockImplementationOnce(async () => {
+      ac.abort();
+      throw new DOMException('Aborted', 'AbortError');
+    });
+    await expect(generateTldrSummary('abstract text', mockAi, ac.signal)).rejects.toMatchObject({
+      code: 'STREAM_ABORTED',
+    });
+    expect(logSpy).not.toHaveBeenCalled();
+    logSpy.mockRestore();
+  });
+
   it('generateResearchReportStream yields phases and completes', async () => {
     const rankingPayload = {
       rankedArticles: [
@@ -539,6 +553,20 @@ describe('geminiService with mocked SDK', () => {
         config: expect.objectContaining({ abortSignal: ac.signal }),
       }),
     );
+  });
+
+  it('findRelatedOnline does not log when an in-flight call is aborted', async () => {
+    const ac = new AbortController();
+    const logSpy = vi.spyOn(safeLog, 'safeLogError').mockImplementation(() => {});
+    hoisted.generateContent.mockImplementationOnce(async () => {
+      ac.abort();
+      throw new DOMException('Aborted', 'AbortError');
+    });
+    await expect(findRelatedOnline('topic', mockAi, ac.signal)).rejects.toMatchObject({
+      code: 'STREAM_ABORTED',
+    });
+    expect(logSpy).not.toHaveBeenCalled();
+    logSpy.mockRestore();
   });
 
   it('startChatWithReport rejects when signal is already aborted', async () => {

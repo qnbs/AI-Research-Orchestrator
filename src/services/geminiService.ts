@@ -577,6 +577,14 @@ export async function findRelatedOnline(
     }));
     return { summary: response.text ?? '', sources };
   } catch (error) {
+    if (signal?.aborted || isAbortError(error)) {
+      throw new AppError({
+        code: 'STREAM_ABORTED',
+        message: 'Aborted',
+        retryable: false,
+        cause: error,
+      });
+    }
     safeLogError('Error finding related online content:', error);
     throw provider.mapError(error);
   }
@@ -605,6 +613,14 @@ export async function generateTldrSummary(
     });
     return response.text ?? '';
   } catch (error) {
+    if (signal?.aborted || isAbortError(error)) {
+      throw new AppError({
+        code: 'STREAM_ABORTED',
+        message: 'Aborted',
+        retryable: false,
+        cause: error,
+      });
+    }
     safeLogError('Error generating TL;DR summary:', error);
     throw provider.mapError(error);
   }

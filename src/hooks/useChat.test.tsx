@@ -81,10 +81,12 @@ describe('useChat', () => {
   });
 
   it('aborts chat init on cleanup without notifying', async () => {
+    let capturedSignal: AbortSignal | undefined;
     let rejectInit!: (reason?: unknown) => void;
     vi.mocked(geminiService.startChatWithReport).mockImplementationOnce(
       (_report, _ai, signal) =>
         new Promise((_resolve, reject) => {
+          capturedSignal = signal;
           rejectInit = reject;
           signal?.addEventListener('abort', () => {
             reject(new DOMException('Aborted', 'AbortError'));
@@ -99,6 +101,7 @@ describe('useChat', () => {
     });
 
     unmount();
+    expect(capturedSignal?.aborted).toBe(true);
     await act(async () => {
       rejectInit?.(new DOMException('Aborted', 'AbortError'));
     });
