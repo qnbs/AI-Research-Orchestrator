@@ -27,14 +27,35 @@ should require these (or their workflow job equivalents) for `main`:
 
 Review bots are **not** substitutes for the deterministic gates above.
 
-### Required but not always GitHub “required checks”
+### Live ruleset (2026-08-03)
+
+Repository ruleset **`mainrules`** (`id` 20291814) targets `~DEFAULT_BRANCH`,
+enforcement **active**:
+
+| Rule                                                                            | Status                                                               |
+| ------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| Block deletions / non-fast-forward                                              | On                                                                   |
+| Require pull request                                                            | On (`required_approving_review_count: 0` — solo-maintainer friendly) |
+| Required status checks (11 contexts below)                                      | On — names match workflow job titles                                 |
+| Code scanning (CodeQL errors / high+)                                           | On                                                                   |
+| Code quality (errors)                                                           | On                                                                   |
+| Require conversation resolution                                                 | **Off** — recommend enabling                                         |
+| Require branch up to date before merge (`strict_required_status_checks_policy`) | **Off** — recommend enabling                                         |
+| Dismiss stale reviews on push                                                   | Off (optional with 0 required approvals)                             |
+
+Required check contexts currently configured:
+
+`Typecheck, Lint & Tests`, `Production Build`, `Playwright E2E`,
+`Cross-browser (firefox)`, `Cross-browser (webkit)`, `Cross-browser (mobile-chrome)`,
+`Axe critical/serious smoke`, `CodeQL`, `Dependency Review`, `pnpm audit (high+)`,
+`Secret scan (gitleaks)`.
+
+### Process gates (not GitHub required checks)
 
 | Gate                             | Enforcement                                                                                         |
 | -------------------------------- | --------------------------------------------------------------------------------------------------- |
 | Automated review correction loop | Rules `011` / `013` — CodeRabbit + DeepSource AI Review (`@deepsourcebot review`) + resolve threads |
-| Up-to-date with `main`           | Prefer ruleset “Require branches to be up to date”; agents rebase before merge                      |
-| No direct pushes to `main`       | Ruleset / branch protection — PRs only                                                              |
-| Conversation resolution          | Ruleset “Require conversation resolution before merging”                                            |
+| Human/agent rebase before merge  | Prefer enabling ruleset “Require branches to be up to date”; until then rebase onto latest `main`   |
 
 ## Advisory / non-blocking
 
