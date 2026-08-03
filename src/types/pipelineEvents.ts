@@ -45,7 +45,10 @@ export function isPipelinePhaseId(value: string): value is PipelinePhaseId {
   return PIPELINE_PHASE_IDS.has(value);
 }
 
-/** Conceptual agent role for the debugger; null = skip agent chrome. */
+/**
+ * Conceptual agent role for the debugger.
+ * `null` = status/metadata phase — update timeline only, do not invent agent work.
+ */
 export const PIPELINE_PHASE_AGENT: Record<PipelinePhaseId, AgentName | null> = {
   'execution-provenance': null,
   'query-generation': 'QueryGenerator',
@@ -56,14 +59,18 @@ export const PIPELINE_PHASE_AGENT: Record<PipelinePhaseId, AgentName | null> = {
   synthesis: 'Synthesizer',
   'synthesis-stream': 'Synthesizer',
   finalizing: 'Synthesizer',
-  'demo-corpus': 'PubMedFetcher',
+  // Demo / status / empty outcomes are not PubMed or synthesis agent work.
+  'demo-corpus': null,
   retrieval: 'PubMedFetcher',
   curation: 'PubMedFetcher',
-  'retrieval-status': 'PubMedFetcher',
-  'empty-retrieval': 'Synthesizer',
+  'retrieval-status': null,
+  'empty-retrieval': null,
 };
 
-/** Default English display labels (UI may i18n via phaseId separately). */
+/**
+ * Default English transport labels for producers/debugger fallbacks.
+ * User-facing chrome resolves `orchestrator.pipeline.<phaseId>` via i18n.
+ */
 export const PIPELINE_PHASE_LABEL: Record<PipelinePhaseId, string> = {
   'execution-provenance': 'execution-provenance',
   'query-generation': 'Phase 1: AI Generating PubMed Queries...',

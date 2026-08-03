@@ -15,6 +15,7 @@ interface OrchestratorViewProps {
   currentPhase: string;
   /** Stable timeline index from typed pipeline phaseId (ADR 0020). */
   timelineIndex?: number;
+  currentPhaseId?: string | null;
   error: string | null;
   report: ResearchReport | null;
   researchInput: ResearchInput | null;
@@ -38,43 +39,71 @@ interface OrchestratorViewProps {
   onDiscardCheckpoint: (id: string) => void;
 }
 
-const phaseDetails: Record<string, string[]> = {
-  'Phase 1: AI Generating PubMed Queries...': [
+/** Sub-phase guidance keyed by stable PipelinePhaseId (ADR 0020). */
+const phaseDetailsById: Record<string, string[]> = {
+  'query-generation': [
     'Analyzing research topic and user criteria...',
     'AI is constructing advanced boolean search strings...',
     'Optimizing queries for relevance...',
   ],
-  'Phase 2: Executing Real-time PubMed Search...': [
+  'pubmed-search': [
     'Connecting to live NCBI PubMed database...',
     'Submitting best query to retrieve article IDs...',
     'Compiling list of relevant publications...',
   ],
-  'Phase 3: Fetching Article Details from PubMed...': [
+  retrieval: [
+    'Retrieving literature from PubMed and arXiv...',
+    'Respecting rate limits and abort signals...',
+    'Collecting candidate articles for curation...',
+  ],
+  'pubmed-fetch': [
     'Requesting abstracts and metadata for found articles...',
     'Parsing publication data (titles, authors, journals)...',
     'Preparing real-world data for AI analysis...',
   ],
-  'Phase 4: AI Ranking & Analysis of Real Articles...': [
+  curation: [
+    'Deduplicating PubMed and arXiv hits...',
+    'Cleaning metadata and classifying article types...',
+    'Preparing the curated corpus for ranking...',
+  ],
+  'arxiv-fetch': [
+    'Querying arXiv for matching preprints...',
+    'Merging preprint metadata into the corpus...',
+  ],
+  ranking: [
     'AI is reading and scoring each article for relevance...',
     'Writing relevance explanations based on content...',
     'Identifying key themes and generating insights...',
   ],
-  'Phase 5: Synthesizing Top Findings...': [
+  synthesis: [
     'Selecting top articles for the executive summary...',
     'Preparing final prompt for narrative synthesis...',
     'Initializing streaming connection with AI...',
   ],
-  'Streaming Synthesis...': [
+  'synthesis-stream': [
     'Receiving synthesized text in real-time...',
     'Building the narrative summary chunk by chunk...',
   ],
-  'Finalizing Report...': ['Assembling final report structure...', 'Finishing up...'],
+  finalizing: ['Assembling final report structure...', 'Finishing up...'],
+  'demo-corpus': [
+    'Loading the educational demo corpus...',
+    'Stamping synthetic fixtures for practice only...',
+  ],
+  'retrieval-status': [
+    'Updating retrieval status...',
+    'No silent demo substitution on empty or failed retrieval...',
+  ],
+  'empty-retrieval': [
+    'No scientific corpus was assembled...',
+    'Preparing an empty-retrieval explanation...',
+  ],
 };
 
 const OrchestratorViewComponent: React.FC<OrchestratorViewProps> = ({
   reportStatus,
   currentPhase,
   timelineIndex,
+  currentPhaseId,
   error,
   report,
   researchInput,
@@ -138,8 +167,9 @@ const OrchestratorViewComponent: React.FC<OrchestratorViewProps> = ({
         <LoadingIndicator
           title={t('orchestrator.title')}
           phase={currentPhase}
+          phaseId={currentPhaseId ?? undefined}
           phases={loadingPhases}
-          phaseDetails={phaseDetails}
+          phaseDetails={phaseDetailsById}
           timelineIndex={timelineIndex}
           footerText="This may take up to a minute. The AI is performing multiple complex steps, including live database searches and synthesis."
         />

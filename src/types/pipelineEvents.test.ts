@@ -15,6 +15,8 @@ describe('pipelineEvents', () => {
   it('maps retrieval (PubMed+arXiv) to PubMedFetcher, not ArxivFetcher', () => {
     expect(PIPELINE_PHASE_AGENT.retrieval).toBe('PubMedFetcher');
     expect(PIPELINE_PHASE_AGENT['arxiv-fetch']).toBe('ArxivFetcher');
+    expect(PIPELINE_PHASE_AGENT['demo-corpus']).toBeNull();
+    expect(PIPELINE_PHASE_AGENT['empty-retrieval']).toBeNull();
   });
 
   it('skips agent chrome for provenance', () => {

@@ -9,6 +9,9 @@ describe('getAgentForPhaseId', () => {
     expect(getAgentForPhaseId('ranking')).toBe('Ranker');
     expect(getAgentForPhaseId('synthesis-stream')).toBe('Synthesizer');
     expect(getAgentForPhaseId('execution-provenance')).toBeNull();
+    expect(getAgentForPhaseId('demo-corpus')).toBeNull();
+    expect(getAgentForPhaseId('retrieval-status')).toBeNull();
+    expect(getAgentForPhaseId('empty-retrieval')).toBeNull();
   });
 });
 

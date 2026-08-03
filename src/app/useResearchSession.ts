@@ -27,7 +27,7 @@ import { toAppError } from '../lib/errors';
 import type { View } from '../types/ui';
 import type { TranslationKey } from '../i18n/translations';
 import type { HapticPreset } from '../hooks/useHaptic';
-import { getAgentForPhase, getAgentForPhaseId } from './getAgentForPhase';
+import { getAgentForPhaseId } from './getAgentForPhase';
 import { stampReportWithProvenance } from '../lib/appReleaseInfo';
 import {
   EXECUTION_PROVENANCE_PHASE,
@@ -228,39 +228,46 @@ export function useResearchSession({
           }
 
           lastPhase = phase;
-          setCurrentPhase(phase);
           setCurrentPhaseId(phaseId);
+          // Prefer i18n label keyed by phaseId; fall back to producer English text.
+          const i18nKey = `orchestrator.pipeline.${phaseId}`;
+          const localized = t(i18nKey);
+          setCurrentPhase(localized === i18nKey ? phase : localized);
           const nextTimeline = PIPELINE_TIMELINE_INDEX[phaseId];
           if (nextTimeline >= 0) {
             setTimelineIndex(nextTimeline);
           }
 
-          const currentAgent = getAgentForPhaseId(phaseId) ?? getAgentForPhase(phase, phaseId);
-          if (currentAgent !== prevAgent) {
-            if (prevAgent !== null) {
-              dispatch(setAgentStatus({ agentName: prevAgent, status: 'done' }));
+          // null = status/metadata phase — update chrome only, no agent row.
+          const typedAgent = getAgentForPhaseId(phaseId);
+          if (typedAgent !== null) {
+            const currentAgent = typedAgent;
+            if (currentAgent !== prevAgent) {
+              if (prevAgent !== null) {
+                dispatch(setAgentStatus({ agentName: prevAgent, status: 'done' }));
+              }
+              dispatch(
+                addTraceEvent({
+                  agentName: currentAgent,
+                  status: 'running',
+                  message: phase,
+                  phaseId,
+                  startedAt: Date.now(),
+                  metadata: promptBudget ? { promptBudget } : undefined,
+                }),
+              );
+              prevAgent = currentAgent;
+            } else {
+              dispatch(
+                setAgentStatus({
+                  agentName: currentAgent,
+                  status: 'running',
+                  message: phase,
+                  phaseId,
+                  metadata: promptBudget ? { promptBudget } : undefined,
+                }),
+              );
             }
-            dispatch(
-              addTraceEvent({
-                agentName: currentAgent,
-                status: 'running',
-                message: phase,
-                phaseId,
-                startedAt: Date.now(),
-                metadata: promptBudget ? { promptBudget } : undefined,
-              }),
-            );
-            prevAgent = currentAgent;
-          } else {
-            dispatch(
-              setAgentStatus({
-                agentName: currentAgent,
-                status: 'running',
-                message: phase,
-                phaseId,
-                metadata: promptBudget ? { promptBudget } : undefined,
-              }),
-            );
           }
 
           if (partialReport) {

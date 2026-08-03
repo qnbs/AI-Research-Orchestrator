@@ -23,6 +23,7 @@ import type {
 } from '../../types';
 import { isAbortLikeError } from '../../lib/abortUtils';
 import { EXECUTION_PROVENANCE_PHASE } from '../../lib/researchExecutionContext';
+import type { PipelinePhaseId } from '../../types/pipelineEvents';
 import {
   generateResearchReportStream,
   generateResearchAnalysis,
@@ -51,7 +52,7 @@ function isSilentStreamAbort(error: unknown): boolean {
 export interface StreamingReportState {
   phase: string;
   /** Stable pipeline phase ID when present (ADR 0020). */
-  phaseId?: string;
+  phaseId?: PipelinePhaseId;
   synthesisChunks: string[];
   report: ResearchReport | null;
   isComplete: boolean;

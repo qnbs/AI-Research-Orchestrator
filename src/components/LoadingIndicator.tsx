@@ -9,6 +9,8 @@ interface LoadingIndicatorProps {
   phaseDetails: Record<string, string[]>;
   /** Prefer stable timeline index from typed phaseId (ADR 0020) over string equality. */
   timelineIndex?: number;
+  /** When set, sub-phase details are looked up by phaseId (works for Non-AI badge prefixes). */
+  phaseId?: string;
   footerText?: string;
   swipeHintText?: string;
 }
@@ -182,6 +184,7 @@ export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
   phases,
   phaseDetails,
   timelineIndex,
+  phaseId,
   footerText,
   swipeHintText,
 }) => {
@@ -200,7 +203,7 @@ export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
 
     if (subPhaseIntervalRef.current) clearInterval(subPhaseIntervalRef.current);
 
-    const subPhases = phaseDetails[phase] ?? [];
+    const subPhases = (phaseId ? phaseDetails[phaseId] : undefined) ?? phaseDetails[phase] ?? [];
     if (subPhases.length > 0) {
       let si = 0;
       setCurrentSubPhase(subPhases[si]);
@@ -215,7 +218,7 @@ export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
     return () => {
       if (subPhaseIntervalRef.current) clearInterval(subPhaseIntervalRef.current);
     };
-  }, [phase, phases, phaseDetails, timelineIndex]);
+  }, [phase, phaseId, phases, phaseDetails, timelineIndex]);
 
   const progress = ((currentPhaseIndex + 1) / phases.length) * 100;
 

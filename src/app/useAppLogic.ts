@@ -224,6 +224,7 @@ export function useAppLogic() {
     reportStatus: research.reportStatus,
     error: research.error,
     currentPhase: research.currentPhase,
+    currentPhaseId: research.currentPhaseId,
     timelineIndex: research.timelineIndex,
     selectedAuthorProfile,
     selectedJournalEntry,
