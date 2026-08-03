@@ -3,6 +3,7 @@
  */
 import { applyCorpusCitationGrounding } from './citationGrounding';
 import { evaluateCase, runEvalSuite, type EvalCase } from './agentEval';
+import { DEFAULT_PROMPT_FIELD_LIMITS, selectArticlesForRankingPrompt } from './promptBudget';
 import type { RankedArticle } from '../types';
 
 const SAMPLE_CORPUS = ['1001', '1002', '1003'];
@@ -55,27 +56,41 @@ function toRankedStub(
 }
 
 /**
- * Large corpus with the only highly relevant article at the end.
- * Proves grounding retains the tail PMID (not lost to truncation/order bias).
+ * Large corpus with the only topically relevant article at the end of the input list.
+ * Runs through ranking prompt-budget selection (so truncation can omit fillers) then
+ * citation grounding — the tail PMID must survive both stages.
  */
 function largeCorpusTailCase(): EvalCase {
-  const fillerPmids = Array.from({ length: 48 }, (_, i) => String(3000 + i));
+  const fillerPmids = Array.from({ length: 90 }, (_, i) => String(3000 + i));
   const tailPmid = '9001';
+  const topic = 'aspirin cardiovascular prevention';
   const corpus = [...fillerPmids, tailPmid];
-  const ranked = [
+  const longFiller = 'x'.repeat(DEFAULT_PROMPT_FIELD_LIMITS.maxAbstractChars);
+  const retrieved = [
     ...fillerPmids.map((pmid) =>
       toRankedStub(pmid, {
-        title: `Filler ${pmid}`,
-        summary: `Unrelated filler abstract ${pmid}.`,
-        relevanceScore: 20,
+        title: `Misc unrelated topic paper ${pmid}`,
+        summary: longFiller,
+        relevanceScore: 0,
       }),
     ),
     toRankedStub(tailPmid, {
-      title: 'Aspirin cardiovascular prevention trial',
-      summary: 'Aspirin reduced major cardiovascular events in high-risk adults.',
-      relevanceScore: 99,
+      title: 'Aspirin cardiovascular randomized trial outcomes aspirin aspirin',
+      summary: 'Aspirin reduces cardiovascular events in aspirin trials.',
+      relevanceScore: 0,
     }),
   ];
+
+  const selection = selectArticlesForRankingPrompt(retrieved, topic, 'gemini', 'gemini-2.5-flash');
+
+  const included = selection.includedArticles.map((a) =>
+    toRankedStub(a.pmid!, {
+      title: a.title,
+      summary: a.summary,
+      relevanceScore: a.relevanceScore,
+    }),
+  );
+
   const insights = [
     {
       question: 'Does aspirin reduce cardiovascular events?',
@@ -83,19 +98,26 @@ function largeCorpusTailCase(): EvalCase {
       supportingArticles: [tailPmid],
     },
   ];
-  const grounded = applyCorpusCitationGrounding(corpus, ranked, insights);
+  const grounded = applyCorpusCitationGrounding(corpus, included, insights);
 
   return {
     id: 'orchestrator-tail-article-survives',
     description:
-      'Relevant article at the end of a large corpus remains after corpus citation grounding',
+      'Relevant article at the end of a large corpus survives ranking prompt-budget selection and grounding',
     actual: {
       rankedArticles: grounded.rankedArticles,
       aiGeneratedInsights: grounded.insights,
+      promptBudget: {
+        omittedPmids: selection.omittedPmids,
+        includedInPrompt: selection.accounting.includedInPrompt,
+        omittedFromPrompt: selection.accounting.omittedFromPrompt,
+      },
     },
     expect: {
       type: 'object',
       rankedCorpusPmids: corpus,
+      mustRankPmids: [tailPmid],
+      minRankedArticles: 1,
       mustCitePmids: [tailPmid],
     },
   };
@@ -143,6 +165,8 @@ function claimTrustMetricsCase(): EvalCase {
       minSourceRelevance: 1,
       minGroundedClaims: 2,
       rankedCorpusPmids: ['1001', '1002'],
+      mustRankPmids: ['1001', '1002'],
+      minRankedArticles: 2,
     },
   };
 }
@@ -181,6 +205,7 @@ export function liveOrchestratorEvalFixtures(): EvalCase[] {
         type: 'object',
         rankedCorpusPmids: SAMPLE_CORPUS,
         mustCitePmids: ['1001'],
+        mustRankPmids: ['1001'],
       },
     },
     {

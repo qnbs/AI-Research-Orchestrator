@@ -214,4 +214,48 @@ describe('agentEval', () => {
     expect(result.passed).toBe(false);
     expect(result.dimensions.find((d) => d.dimension === 'groundedSynthesis')?.passed).toBe(false);
   });
+
+  it('fails claim metric floors when groundedSynthesis claims are empty', () => {
+    const result = evaluateCase({
+      id: 'empty-claims-metrics',
+      description: 'vacuous perfect metrics must not pass floors',
+      actual: {
+        rankedArticles: [{ pmid: '1', title: 'T', summary: 'S' }],
+        groundedSynthesis: { mode: 'extractive-template', claims: [] },
+      },
+      expect: {
+        maxUnsupportedClaimRate: 0,
+        minCitationPrecision: 1,
+        minCitationRecall: 1,
+        minSourceRelevance: 1,
+      },
+    });
+    expect(result.passed).toBe(false);
+    expect(result.dimensions.find((d) => d.dimension === 'groundedSynthesis')?.detail).toMatch(
+      /no claims evaluated/,
+    );
+  });
+
+  it('fails claim metric floors when groundedSynthesis is absent', () => {
+    const result = evaluateCase({
+      id: 'absent-grounded-synthesis',
+      description: 'missing groundedSynthesis must not pass floors',
+      actual: { rankedArticles: [{ pmid: '1' }] },
+      expect: { minCitationRecall: 1, maxUnsupportedClaimRate: 0 },
+    });
+    expect(result.passed).toBe(false);
+  });
+
+  it('requires mustRankPmids in rankedArticles', () => {
+    const result = evaluateCase({
+      id: 'must-rank-missing',
+      description: 'tail pmid dropped from ranked list',
+      actual: { rankedArticles: [{ pmid: '1' }] },
+      expect: { mustRankPmids: ['9001'], minRankedArticles: 1 },
+    });
+    expect(result.passed).toBe(false);
+    expect(result.dimensions.find((d) => d.dimension === 'rankedCorpus')?.detail).toMatch(
+      /missing ranked PMIDs: 9001/,
+    );
+  });
 });

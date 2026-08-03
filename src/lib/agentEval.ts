@@ -30,6 +30,10 @@ export interface EvalCase {
     mustCitePmids?: string[];
     /** Corpus PMIDs every rankedArticles[].pmid must belong to. */
     rankedCorpusPmids?: string[];
+    /** PMIDs that must appear in rankedArticles (order-independent). */
+    mustRankPmids?: string[];
+    /** Minimum number of rankedArticles entries. */
+    minRankedArticles?: number;
     /** Maximum unsupported-claim rate (0–1) from claim validation metrics. */
     maxUnsupportedClaimRate?: number;
     /** Minimum citation precision (0–1) — cited PMIDs with lexical evidence. */
@@ -120,23 +124,46 @@ export function evaluateCase(testCase: EvalCase): EvalCaseResult {
     }
   }
 
-  if (exp.rankedCorpusPmids?.length) {
+  if (exp.rankedCorpusPmids?.length || exp.mustRankPmids?.length || exp.minRankedArticles != null) {
     const obj =
       actual !== null && typeof actual === 'object' && !Array.isArray(actual)
         ? (actual as Record<string, unknown>)
         : null;
     const ranked =
       obj && Array.isArray(obj.rankedArticles) ? (obj.rankedArticles as { pmid?: string }[]) : [];
-    const corpus = new Set(exp.rankedCorpusPmids);
-    const invalid = ranked.filter(
-      (r) => !r || typeof r.pmid !== 'string' || r.pmid.trim().length === 0 || !corpus.has(r.pmid),
-    );
+    const failures: string[] = [];
+
+    if (exp.rankedCorpusPmids?.length) {
+      const corpus = new Set(exp.rankedCorpusPmids);
+      const invalid = ranked.filter(
+        (r) =>
+          !r || typeof r.pmid !== 'string' || r.pmid.trim().length === 0 || !corpus.has(r.pmid),
+      );
+      if (invalid.length) {
+        failures.push(`out-of-corpus: ${invalid.map((r) => r.pmid).join(', ')}`);
+      }
+    }
+
+    if (exp.minRankedArticles != null && ranked.length < exp.minRankedArticles) {
+      failures.push(`rankedCount=${ranked.length} required>=${exp.minRankedArticles}`);
+    }
+
+    if (exp.mustRankPmids?.length) {
+      const present = new Set(
+        ranked
+          .map((r) => r.pmid)
+          .filter((id): id is string => typeof id === 'string' && id.length > 0),
+      );
+      const missing = exp.mustRankPmids.filter((pmid) => !present.has(pmid));
+      if (missing.length) {
+        failures.push(`missing ranked PMIDs: ${missing.join(', ')}`);
+      }
+    }
+
     dimensions.push({
       dimension: 'rankedCorpus',
-      passed: invalid.length === 0,
-      detail: invalid.length
-        ? `out-of-corpus: ${invalid.map((r) => r.pmid).join(', ')}`
-        : undefined,
+      passed: failures.length === 0,
+      detail: failures.length ? failures.join('; ') : undefined,
     });
   }
 
@@ -157,57 +184,66 @@ export function evaluateCase(testCase: EvalCase): EvalCaseResult {
       obj && Array.isArray(obj.rankedArticles)
         ? (obj.rankedArticles as { pmid?: string; title?: string; summary?: string }[])
         : [];
-    const claims = grounded?.claims ?? [];
-    const metrics = computeClaimTrustMetrics(
-      claims.map((c) => ({
-        ...c,
-        validationState: c.validationState ?? 'unverified',
-      })),
-      ranked.map((r) => ({
-        pmid: r.pmid ?? '',
-        title: r.title ?? '',
-        authors: '',
-        journal: '',
-        pubYear: '0000',
-        summary: r.summary ?? '',
-        relevanceScore: 0,
-        relevanceExplanation: '',
-        keywords: [],
-        isOpenAccess: false,
-      })),
-    );
-
+    // Absent/empty claims must not vacuous-pass metric floors (perfect recall on []).
+    const claims = Array.isArray(grounded?.claims) ? grounded.claims : [];
     const failures: string[] = [];
-    if (
-      exp.maxUnsupportedClaimRate != null &&
-      metrics.unsupportedClaimRate > exp.maxUnsupportedClaimRate
-    ) {
-      failures.push(
-        `unsupportedClaimRate=${metrics.unsupportedClaimRate.toFixed(2)} max<=${exp.maxUnsupportedClaimRate}`,
+
+    if (claims.length === 0) {
+      failures.push('no claims evaluated (missing or empty groundedSynthesis.claims)');
+    } else {
+      const metrics = computeClaimTrustMetrics(
+        claims.map((c) => ({
+          ...c,
+          validationState: c.validationState ?? 'unverified',
+        })),
+        ranked.map((r) => ({
+          pmid: r.pmid ?? '',
+          title: r.title ?? '',
+          authors: '',
+          journal: '',
+          pubYear: '0000',
+          summary: r.summary ?? '',
+          relevanceScore: 0,
+          relevanceExplanation: '',
+          keywords: [],
+          isOpenAccess: false,
+        })),
       );
-    }
-    if (exp.minCitationPrecision != null && metrics.citationPrecision < exp.minCitationPrecision) {
-      failures.push(
-        `citationPrecision=${metrics.citationPrecision.toFixed(2)} min>=${exp.minCitationPrecision}`,
-      );
-    }
-    if (exp.minCitationRecall != null && metrics.citationRecall < exp.minCitationRecall) {
-      failures.push(
-        `citationRecall=${metrics.citationRecall.toFixed(2)} min>=${exp.minCitationRecall}`,
-      );
-    }
-    if (
-      exp.maxIrrelevantCitationRate != null &&
-      metrics.irrelevantCitationRate > exp.maxIrrelevantCitationRate
-    ) {
-      failures.push(
-        `irrelevantCitationRate=${metrics.irrelevantCitationRate.toFixed(2)} max<=${exp.maxIrrelevantCitationRate}`,
-      );
-    }
-    if (exp.minSourceRelevance != null && metrics.sourceRelevance < exp.minSourceRelevance) {
-      failures.push(
-        `sourceRelevance=${metrics.sourceRelevance.toFixed(2)} min>=${exp.minSourceRelevance}`,
-      );
+
+      if (
+        exp.maxUnsupportedClaimRate != null &&
+        metrics.unsupportedClaimRate > exp.maxUnsupportedClaimRate
+      ) {
+        failures.push(
+          `unsupportedClaimRate=${metrics.unsupportedClaimRate.toFixed(2)} max<=${exp.maxUnsupportedClaimRate}`,
+        );
+      }
+      if (
+        exp.minCitationPrecision != null &&
+        metrics.citationPrecision < exp.minCitationPrecision
+      ) {
+        failures.push(
+          `citationPrecision=${metrics.citationPrecision.toFixed(2)} min>=${exp.minCitationPrecision}`,
+        );
+      }
+      if (exp.minCitationRecall != null && metrics.citationRecall < exp.minCitationRecall) {
+        failures.push(
+          `citationRecall=${metrics.citationRecall.toFixed(2)} min>=${exp.minCitationRecall}`,
+        );
+      }
+      if (
+        exp.maxIrrelevantCitationRate != null &&
+        metrics.irrelevantCitationRate > exp.maxIrrelevantCitationRate
+      ) {
+        failures.push(
+          `irrelevantCitationRate=${metrics.irrelevantCitationRate.toFixed(2)} max<=${exp.maxIrrelevantCitationRate}`,
+        );
+      }
+      if (exp.minSourceRelevance != null && metrics.sourceRelevance < exp.minSourceRelevance) {
+        failures.push(
+          `sourceRelevance=${metrics.sourceRelevance.toFixed(2)} min>=${exp.minSourceRelevance}`,
+        );
+      }
     }
 
     dimensions.push({
