@@ -253,7 +253,13 @@ export function useResearchSession({
             prevAgent = currentAgent;
           } else {
             dispatch(
-              setAgentStatus({ agentName: currentAgent, status: 'running', message: phase }),
+              setAgentStatus({
+                agentName: currentAgent,
+                status: 'running',
+                message: phase,
+                phaseId,
+                metadata: promptBudget ? { promptBudget } : undefined,
+              }),
             );
           }
 

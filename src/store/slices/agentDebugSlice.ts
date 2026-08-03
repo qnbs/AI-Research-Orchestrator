@@ -89,7 +89,13 @@ export const agentDebugSlice = createSlice({
     },
     setAgentStatus: (
       state,
-      action: PayloadAction<{ agentName: AgentName; status: AgentStatus; message?: string }>,
+      action: PayloadAction<{
+        agentName: AgentName;
+        status: AgentStatus;
+        message?: string;
+        phaseId?: string;
+        metadata?: Record<string, unknown>;
+      }>,
     ) => {
       if (!state.currentTrace) return;
       // Find the last event for this agent and update, or add a status event
@@ -99,6 +105,10 @@ export const agentDebugSlice = createSlice({
       if (existing) {
         existing.status = action.payload.status;
         if (action.payload.message) existing.message = action.payload.message;
+        if (action.payload.phaseId) existing.phaseId = action.payload.phaseId;
+        if (action.payload.metadata) {
+          existing.metadata = { ...existing.metadata, ...action.payload.metadata };
+        }
         if (action.payload.status === 'done' || action.payload.status === 'error') {
           existing.completedAt = Date.now();
           if (existing.startedAt) existing.durationMs = existing.completedAt - existing.startedAt;
