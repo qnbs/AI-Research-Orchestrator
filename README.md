@@ -1,7 +1,7 @@
 # AI Research Orchestration Author
 
 <p align="center">
-  <img src="public/icons/icon-512.png" alt="AI Research Orchestrator — microscope research mark 🔬" width="128" height="128" />
+  <img src="public/icons/icon-512.png" alt="AI Research Orchestrator logo" width="128" height="128" />
 </p>
 
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/qnbs/AI-Research-Orchestrator)
@@ -12,426 +12,346 @@
 ![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)
 ![Privacy](https://img.shields.io/badge/Privacy-Local_First-green?style=flat-square)
 
-> **A client-only, agentic PWA for biomedical literature synthesis, knowledge-base workflows, and scientometric exploration.**
+> **Client-only PWA for biomedical literature review:** PubMed/arXiv retrieval, multi-provider AI (or heuristic fallback), a local knowledge base, and scientometric exploration.
 
-**[🚀 Live Demo](https://qnbs.github.io/AI-Research-Orchestrator/)** | [Get Gemini API Key](https://aistudio.google.com/)
+**[Live Demo](https://qnbs.github.io/AI-Research-Orchestrator/)** · [SECURITY.md](./SECURITY.md) · [CONTRIBUTING.md](./CONTRIBUTING.md) · [CHANGELOG.md](./CHANGELOG.md) · [AGENTS.md](./AGENTS.md)
 
----
-
-## 🇬🇧 English Documentation
-
-### 🌌 Executive Overview
-
-The **AI Research Orchestration Author** is a **client-only frontend application** that helps run literature reviews by coupling **PubMed** (and optional arXiv) retrieval with a pluggable AI provider layer — default live model **Google Gemini 2.5 Flash**, plus OpenAI, Anthropic, local Ollama, or a deterministic heuristic fallback.
-
-Unlike conventional summarization tools, this system employs a **multi-agent orchestration pattern**. It decomposes research questions into pipeline phases, formulates Boolean search strategies, executes live API retrieval, ranks findings (semantic when live; lexical in heuristic mode), and synthesizes narrative reports with citations where available.
-
-**Core Philosophy:**
-
-- **Local-First Storage:** Reports, history, settings, and knowledge base live in the browser (IndexedDB). There is no app backend that stores your research. Live mode still sends prompts and article metadata to the **selected AI provider** and search queries to NCBI/arXiv — see [SECURITY.md](./SECURITY.md).
-- **Progressive enhancement:** Live Gemini (or another configured provider) is the high-fidelity path; a first-class **heuristic inference layer** keeps every AI feature usable offline or without an API key (deterministic ranking, template synthesis, extractive TL;DR, report-grounded chat).
-- **Agentic Reasoning:** Autonomous query formulation, decision-making, and relevance scoring.
-- **Traceability & Grounding:** Ranked insights and exports are corpus-validated where implemented; live narrative synthesis is labeled **corpus-supported** or **unverified narrative draft** based on claim-level lexical evidence checks (see ADR 0012, ADR 0018). This is **not** a guarantee that every sentence is fully verified.
-
-### Offline / Heuristic mode
-
-Without a Gemini key (or while offline), the app automatically switches to **Heuristic mode**:
-
-- Orchestrator runs with local Boolean/MeSH-style query building, PubMed fetch when online (demo corpus offline), lexical ranking, and structured markdown synthesis.
-- TL;DR, similar articles, author/journal tools, and report chat use the same TypeScript types as the live path.
-- Header badge shows `Heuristic · Offline/No-Key` (or `Live · Gemini` when a key + network are available).
-- Settings → AI: optional **Force Heuristic Mode**; cost estimator shows `$0 · Heuristic mode`.
-- First launch seeds educational demo Knowledge Base entries (dismissible).
-
-See [ADR 0007](docs/adr/0007-heuristic-inference-layer.md).
+Provider keys (optional): [Gemini](https://aistudio.google.com/) · OpenAI · Anthropic · or run **Ollama / Heuristic** with no cloud key.
 
 ---
 
-### 🚀 Advanced Capabilities
+## English Documentation
 
-#### 1. 🧠 The Orchestrator (Agentic Pipeline)
+### Executive overview
 
-The application's core is a multi-stage generative pipeline that mimics the workflow of a human researcher:
+**AI Research Orchestration Author** is a **client-only** React Progressive Web App. It couples **PubMed** (NCBI E-utilities) and optional **arXiv** retrieval with a pluggable AI layer — default live model **Google Gemini `gemini-2.5-flash`**, plus OpenAI, Anthropic, local **Ollama**, or a deterministic **heuristic** engine.
 
-- **Query Formulation Agent**: Analyzes natural language intent to construct high-precision Boolean search strings tailored to PubMed's MeSH taxonomy.
-- **Live Retrieval Engine**: Interfaces directly with the NCBI E-utilities API to fetch metadata for candidate articles in real-time (subject to NCBI rate limits).
-- **Semantic Ranking Agent**: Scores relevance (0–100) from **titles and available abstracts** (records without abstracts are metadata-only and ranked accordingly). Live providers may use a thinking/token budget; heuristic mode uses lexical ranking.
-- **Synthesis Agent**: Streams a cited executive summary when possible, highlighting consensus, contradictions, and gaps. Treat unverified narrative sections as drafts pending primary-source review.
+The orchestrator runs a multi-phase pipeline: natural-language intent → Boolean/MeSH-oriented query formulation → live fetch → relevance ranking (semantic when live; lexical in heuristic mode) → streaming, cited synthesis where the runtime supports it.
 
-#### 2. 📚 Intelligent Knowledge Base
+**Core principles**
 
-A persistent, self-organizing library for long-term research management.
+- **Local-first storage** — Reports, history, settings, collections, and the knowledge base live in IndexedDB (Dexie). There is **no application backend** that stores your research. In live mode the browser still sends prompts and article metadata to the **selected AI provider**, and search traffic to NCBI/arXiv — see [SECURITY.md](./SECURITY.md).
+- **Progressive enhancement** — A configured live provider is the high-fidelity path; the heuristic layer keeps every AI-backed surface usable offline or without a cloud key (ADR [0007](docs/adr/0007-heuristic-inference-layer.md) / [0009](docs/adr/0009-non-ai-programmatic-research-engine.md)).
+- **Agentic pipeline** — Conceptual agent roles (query, fetch, rank, synthesize) for the debugger UI map to phases of one stream, not separate OS processes.
+- **Grounding with honest labels** — Ranked insights and exports are corpus-validated **where implemented**. Narrative synthesis is labeled **corpus-supported** / **claim-supported** or **unverified narrative draft** from claim-level lexical checks (ADR [0012](docs/adr/0012-corpus-citation-grounding.md), [0018](docs/adr/0018-synthesis-trust-terminology.md)). That is **not** a guarantee that every sentence is fully verified against primary literature.
 
-- **Deduplication Engine**: Automatically merges duplicate entries while preserving the highest-fidelity metadata.
-- **Semantic Filtering**: Advanced faceting allows filtering by AI-generated tags, article types, authors, and publication venues.
-- **Data Visualization**: Integrated analytics visualize publication trends over time, journal impact distributions, and keyword frequency.
+### Offline / heuristic mode
 
-#### 3. 🔬 Rapid Research Assistant
+Without a usable live-provider key, while offline, or with **Force Heuristic Mode** enabled (Settings → AI Configuration):
 
-A lightweight, high-speed tool for ad-hoc inquiry and validation.
+- Orchestrator uses local query building, PubMed fetch when online (or an explicit **Educational Demo** corpus path — never a silent substitute for failed live retrieval; ADR [0016](docs/adr/0016-synthetic-demo-quarantine.md)), lexical ranking, and structured markdown synthesis.
+- TL;DR, similar articles, author/journal tools, and report chat share the same TypeScript contracts as the live path.
+- The header badge reflects mode (e.g. heuristic vs live + provider).
+- Cost estimator reports `$0 · Heuristic mode` when heuristic is active.
+- First launch may seed dismissible educational demo Knowledge Base entries.
 
-- **Abstract Analysis**: Paste complex text to generate "TL;DR" summaries and extract key findings instantly.
-- **Similarity Search**: Finds related papers via provider semantic search when live, or lexical/demo paths in heuristic mode.
-- **Optional web grounding**: When using Gemini with search grounding enabled, some findings may be cross-checked against live web results — this is provider-dependent, not a universal guarantee.
+### Features
 
-#### 4. 👤 Scientometric Hubs (Authors & Journals)
+#### 1. Orchestrator (agentic pipeline)
 
-- **Author Disambiguation**: Uses AI (or heuristic clustering) to group publications and help distinguish researchers with similar names via co-authorship and affiliation signals — treat results as assistive, not authoritative identity resolution.
-- **Impact Metrics**: Surfaces **estimated** H-Index-style and career-concept signals from retrieved corpora; these are approximate scientometrics, not official bibliometric database values.
-- **Journal Profiling**: AI- or heuristic-generated venue profiles (scope, Open Access heuristics, themes). PubMed `free full text` filters are **not** identical to all definitions of “open access” (see SECURITY.md).
+- **Query formulation** — Natural language → Boolean strings oriented toward PubMed/MeSH.
+- **Live retrieval** — NCBI E-utilities (and optional arXiv), with rate limits and backoff.
+- **Relevance ranking** — Scores 0–100 from titles and available abstracts (metadata-only records ranked accordingly). Live providers may use model reasoning budgets; heuristic mode uses lexical ranking.
+- **Synthesis** — Streams a cited executive summary when possible. Treat unverified narrative sections as drafts pending primary-source review.
 
----
+#### 2. Knowledge Base
 
-### 🛠️ Technical Architecture
+- Deduplicating library for articles and reports (highest-fidelity metadata wins on merge).
+- Faceted filtering (tags, article types, authors, venues).
+- Charts for publication trends, journal distributions, and keyword frequency (**Recharts** only — ADR [0005](docs/adr/0005-chart-library-recharts.md)).
 
-This application is a **Progressive Web App (PWA)** built on a modern, performance-oriented stack designed for the edge.
+#### 3. Rapid Research Assistant
 
-#### Technology Stack
+- Paste text for extractive/generative TL;DR (live or heuristic).
+- Similar articles via provider search when live, or lexical/demo paths in heuristic mode.
+- Optional Gemini web grounding when enabled — **provider-dependent**, not a universal guarantee.
 
-- **Framework**: [React 19](https://react.dev/) (leveraging Suspense, Concurrent Mode, and refined Hooks).
-- **Language**: [TypeScript](https://www.typescriptlang.org/) ensuring strict type safety and architectural robustness.
-- **AI Integration**: Pluggable providers via lazy-loaded SDKs — default live model **Gemini `gemini-2.5-flash`**, plus OpenAI, Anthropic, Ollama, or heuristic fallback (ADR 0008 / ADR 0009).
-- **State/Storage**: [Dexie.js](https://dexie.org/) (IndexedDB wrapper) for high-performance, offline-capable structured local storage.
-- **Styling**: [Tailwind CSS](https://tailwindcss.com/) with a custom "Cybernetic" design system featuring glassmorphism and ambient animations.
-- **Visualization**: [Recharts](https://recharts.org/) for reactive data analytics (Recharts-only; see ADR 0005).
-- **Export**: [jsPDF](https://github.com/parallax/jsPDF) for client-side PDF report compilation.
+#### 4. Scientometric hubs (authors & journals)
 
-#### Design Patterns
+- Author clustering from co-authorship/affiliation signals — **assistive**, not authoritative identity resolution.
+- **Estimated** H-index-style and career signals from the retrieved corpus — not official bibliometric database values.
+- Journal profiles (scope, OA heuristics, themes). PubMed `free full text` is **not** identical to every definition of “open access”.
 
-- **Streaming Responses**: Utilizes Gemini's streaming API to provide immediate feedback during long-running synthesis tasks.
-- **Resilient Networking**: Implements exponential backoff strategies for robust interaction with public APIs.
-- **Component Architecture**: Modular, lazy-loaded components ensure fast initial load times and efficient code splitting.
-- **Accessibility**: Fully ARIA-compliant UI with keyboard navigation support (Command Palette `⌘+K`).
+### Technical architecture
 
----
+Progressive Web App (service worker, installable, GitHub Pages SPA via `404.html`).
 
-### ⚡ Getting Started
+| Area   | Choice                                                                                                                                    |
+| ------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| UI     | React 19, TypeScript strict, Tailwind CSS v4 (“Cybernetic” glassmorphism), Framer Motion                                                  |
+| State  | Redux Toolkit + RTK Query; Dexie/IndexedDB persistence                                                                                    |
+| AI     | Lazy-loaded providers (`gemini`, `openai`, `anthropic`, `ollama`, `heuristic`) — ADR [0008](docs/adr/0008-multi-provider-architecture.md) |
+| Charts | Recharts only                                                                                                                             |
+| Export | JSON, CSV, RIS, BibTeX, PDF (jsPDF); HTML/Markdown sanitized with DOMPurify                                                               |
+| Build  | Vite 8; CSP hash patched on build; no CDN import map (ADR [0011](docs/adr/0011-remove-cdn-import-map.md))                                 |
 
-#### Quick Start (Live App)
+**Design notes:** streaming synthesis where the provider supports it; exponential backoff / circuit breakers on external calls; lazy-loaded views; WCAG-oriented UI with `⌘+K` command palette.
 
-1. Visit **[https://qnbs.github.io/AI-Research-Orchestrator/](https://qnbs.github.io/AI-Research-Orchestrator/)**
-2. Click **Settings** (gear icon) → **API Key**
-3. Enter your Gemini API Key (AES-GCM encrypted in IndexedDB; used only with the provider you select — not sent to an app backend)
-4. Start researching!
+### Getting started
 
-#### Local Development
+#### Quick start (live demo)
+
+1. Open **[https://qnbs.github.io/AI-Research-Orchestrator/](https://qnbs.github.io/AI-Research-Orchestrator/)**.
+2. **Settings** (gear) → **AI Configuration**.
+3. Choose a provider and save a key **or** use **Local AI (Ollama)** / **Heuristic (local)** without a cloud key.
+4. Start from Orchestrator or Rapid Research.
+
+Keys are AES-GCM encrypted in IndexedDB (Web Crypto). Encryption protects keys at rest; it does **not** protect against malware or XSS in a compromised session — [SECURITY.md](./SECURITY.md).
+
+#### Local development
 
 ```bash
-# Clone repository
 git clone https://github.com/qnbs/AI-Research-Orchestrator.git
 cd AI-Research-Orchestrator
-
-# Install dependencies
-pnpm install
-
-# Start development server
-pnpm run dev
-
-# Build for production
-pnpm run build
+pnpm install --frozen-lockfile   # Node ≥22, pnpm 11
+pnpm run dev                     # http://localhost:3000
+pnpm run build                   # production bundle + CSP hash patch → dist/
 ```
+
+#### Prerequisites
+
+- Node.js **22+** and **pnpm 11**
+- A modern browser (Chrome, Edge, Firefox, Safari)
+- Optional: Gemini / OpenAI / Anthropic API key, or Ollama locally, or heuristic-only use
 
 #### Tests & CI
 
 ```bash
-pnpm run typecheck     # TypeScript (strict, no emit)
-pnpm run lint          # ESLint (zero-warning gate)
-pnpm run test:coverage # Vitest + coverage thresholds (logic layers — vitest.config.ts)
-pnpm run test:e2e      # Playwright (prefer scoped local runs; full suite in CI)
-pnpm run build         # Production bundle + CSP hash patch
+pnpm run typecheck      # TypeScript (strict, no emit)
+pnpm run lint           # ESLint (zero-warning gate)
+pnpm run test:coverage  # Vitest + logic-layer coverage floors
+pnpm run test:e2e       # Playwright — prefer scoped local runs; full suite in CI
+pnpm run build
 ```
 
-On every **push** to `main` and on **pull requests** targeting `main`, GitHub Actions runs:
+On every **push** to `main` and every **PR** targeting `main`, GitHub Actions runs:
 
-- **Quality / build** — `deploy.yml` (typecheck, lint, format, coverage, docs-drift, production build, bundle budget, Lighthouse)
-- **E2E** — blocking Chromium (`e2e.yml`) and blocking Firefox / WebKit / mobile Chrome (`e2e-cross-browser.yml`)
-- **A11y** — blocking axe smoke (`a11y.yml`)
-- **Security** — CodeQL, Dependency Review, `pnpm audit` (high+), gitleaks (`security.yml`)
+| Gate                                                                            | Workflow                               |
+| ------------------------------------------------------------------------------- | -------------------------------------- |
+| Typecheck, lint, format, coverage, docs-drift, build, bundle budget, Lighthouse | `deploy.yml`                           |
+| Playwright E2E (Chromium, seven specs)                                          | `e2e.yml` (**blocking**)               |
+| Cross-browser E2E (Firefox, WebKit, mobile Chrome — same seven specs)           | `e2e-cross-browser.yml` (**blocking**) |
+| Axe critical/serious smoke                                                      | `a11y.yml` (**blocking**)              |
+| CodeQL, Dependency Review, `pnpm audit` (high+), gitleaks                       | `security.yml`                         |
 
-Upload and deployment to GitHub Pages run only on `refs/heads/main` (not on pull requests). Required-check inventory, concurrency (PR-only cancel-in-progress), and branch ruleset expectations: [`docs/ci-branch-governance.md`](./docs/ci-branch-governance.md). Contributor PR bot loop: [`CONTRIBUTING.md`](./CONTRIBUTING.md).
+GitHub Pages upload/deploy runs only on `refs/heads/main` (not on pull requests). Required checks, PR-only `cancel-in-progress`, and ruleset expectations: [`docs/ci-branch-governance.md`](./docs/ci-branch-governance.md). Contributor review loop: [`CONTRIBUTING.md`](./CONTRIBUTING.md).
 
-#### Cursor / IDE setup
+#### Cursor / IDE
 
-For AI-assisted work in Cursor, see [`AGENTS.md`](./AGENTS.md), [`.cursor/index.mdc`](./.cursor/index.mdc) (always-on manifest), `.cursor/rules/*.mdc`, and [CONTRIBUTING.md](./CONTRIBUTING.md).
+[`AGENTS.md`](./AGENTS.md), [`.cursor/index.mdc`](./.cursor/index.mdc), `.cursor/rules/*.mdc`, and [`CONTRIBUTING.md`](./CONTRIBUTING.md).
 
-#### Prerequisites
+### Multi-provider setup
 
-- Node.js 22+ and pnpm 11
-- A modern browser (Chrome, Edge, Safari, Firefox)
-- A **Google Gemini API Key** — [Get one here](https://aistudio.google.com/)
+**Settings → AI Configuration → AI Provider**
 
-#### How to Set Your API Key
+| Provider          | Key format | Notes                                                                                                 |
+| ----------------- | ---------- | ----------------------------------------------------------------------------------------------------- |
+| Google Gemini     | `AIza…`    | Default live model `gemini-2.5-flash`; optional Google Search grounding                               |
+| OpenAI            | `sk-…`     | Official API or OpenRouter-compatible proxies via **Base URL**                                        |
+| Anthropic         | `sk-ant-…` | Claude models via the Messages API                                                                    |
+| Local AI (Ollama) | none       | Default `http://localhost:11434` (or custom Base URL); PubMed/arXiv still use the network when online |
+| Heuristic (local) | none       | Deterministic fallback; `$0`; no provider network                                                     |
 
-The app stores provider API keys **AES-GCM encrypted** in your browser's IndexedDB (Web Crypto). Encryption protects keys at rest in IndexedDB; it does **not** protect against malware or XSS in a compromised browser session — see [SECURITY.md](./SECURITY.md).
+OpenRouter example: Base URL `https://openrouter.ai/api/v1` + an OpenRouter API key.
 
-1. Open the app
-2. Navigate to **Settings** → **AI Configuration**
-3. Enter your provider API key(s)
-4. Click **Save**
+Architecture: [ADR 0008](docs/adr/0008-multi-provider-architecture.md).
 
-> ⚠️ **Security Note**: Keys are **not** sent to an application backend. In live mode they are used as Authorization credentials with the **AI provider you selected**. Research prompts and article metadata are also sent to that provider.
+### Configuration
 
----
+Granular AI settings (provider-dependent where noted):
 
-### 🤖 Multi-Provider Setup
+- **AI persona** — Neutral Scientist, Concise Expert, Detailed Analyst, or Creative Synthesizer
+- **Temperature** — creativity vs. determinism
+- **Thinking budget** — internal reasoning tokens where the selected model supports it (e.g. Gemini 2.5 Flash)
+- **Output language** — English, German, French, Spanish (independent of UI locale)
+- **Force Heuristic Mode** — stay on the deterministic engine even when a live key is present
 
-Besides Google Gemini, the app supports OpenAI, Anthropic, and local Ollama endpoints. Choose the backend in **Settings → AI → AI Provider**.
+### Privacy & security
 
-| Provider      | Key format   | Notes                                                                               |
-| ------------- | ------------ | ----------------------------------------------------------------------------------- |
-| Google Gemini | `AIza...`    | Default; supports live Google Search grounding.                                     |
-| OpenAI        | `sk-...`     | Supports official API and OpenRouter-compatible proxies via the **Base URL** field. |
-| Anthropic     | `sk-ant-...` | Claude models via the Messages API.                                                 |
-| Ollama        | none         | Local inference at `http://localhost:11434` (or a custom Base URL).                 |
-| Heuristic     | none         | Deterministic local fallback; zero cost, no network required.                       |
-
-For OpenRouter, set the Base URL to `https://openrouter.ai/api/v1` and use an OpenRouter API key.
-
-See [ADR 0008](docs/adr/0008-multi-provider-architecture.md) for the architecture rationale.
-
----
-
-### ⚙️ Configuration & Customization
-
-The application features a granular settings engine allowing precise tuning of the AI's cognitive profile.
-
-- **AI Persona**: Switch between "Neutral Scientist", "Creative Synthesizer", or "Critical Reviewer" to adjust the rhetorical tone.
-- **Temperature**: Fine-tune creativity (0.0 for deterministic facts, 0.8 for hypothesis generation).
-- **Thinking Budget**: Allocate specific token counts for the model's internal reasoning process before output generation (enabled for Gemini 2.5/3.0 models).
-- **Language**: Force output in specific languages (English, German, French, Spanish) regardless of input source language.
-
----
-
-### 🛡️ Privacy & Security
-
-**Local-first, zero-backend app:**
-
-- **Local Storage**: Reports, history, settings, and knowledge base reside in your browser's IndexedDB — there is **no application server** that stores them.
-- **Direct-to-API**: In live mode the browser talks directly to the selected AI provider, NCBI, and (optionally) arXiv. Prompts, article metadata, and retrieval queries leave the device for those destinations.
-- **Data Portability**: Export complete datasets to JSON, CSV, RIS, BibTeX, or PDF at any time.
+- **Local storage** — research data in IndexedDB; no app server stores it.
+- **Direct-to-API** — live mode talks to the selected AI provider, NCBI, and optionally arXiv.
+- **Portability** — export JSON, CSV, RIS, BibTeX, or PDF anytime.
 
 Threat model and residual risks: [SECURITY.md](./SECURITY.md).
 
----
+### Deployment
 
-### 📄 License
+Configured for **GitHub Pages**:
 
-Distributed under the MIT License. See `LICENSE` for more information.
+1. **Automatic** — merge/push to `main` runs quality gates, then Pages deploy (`deploy.yml`).
+2. **Manual** — `pnpm run build` and host the `dist/` folder.
 
----
+SPA deep links use a `404.html` → `index.html` fallback (CI generates this). Blocking E2E/a11y/security workflows run alongside deploy quality jobs — see [`docs/ci-branch-governance.md`](./docs/ci-branch-governance.md).
 
-### 🚀 Deployment
+#### Self-hosting
 
-This app is configured for **GitHub Pages** deployment:
+Set `VITE_BASE_PATH` and optional `VITE_SITE_ORIGIN` before build:
 
-1. **Automatic Deployment**: Push to `main` branch triggers GitHub Actions workflow
-2. **Manual Deployment**: Run `pnpm run build` and deploy `dist/` folder
-
-#### GitHub Actions Setup
-
-The repository includes `.github/workflows/deploy.yml` that:
-
-- Runs install, TypeScript, ESLint, tests with coverage, and production build on every push to `main` and on pull requests targeting `main`
-- Uploads and deploys to GitHub Pages only for pushes (or manual dispatch) on `main` — not for pull requests
-- Handles SPA routing via `404.html` fallback
-
-#### Self-Hosting
-
-Build output is portable static assets. Configure deployment with `VITE_BASE_PATH` and optional `VITE_SITE_ORIGIN` before `pnpm run build`:
-
-| Host scenario                    | `VITE_BASE_PATH`             | `VITE_SITE_ORIGIN` (canonical/OG) | Example URL                                        |
-| -------------------------------- | ---------------------------- | --------------------------------- | -------------------------------------------------- |
-| GitHub Pages (default CI)        | `/AI-Research-Orchestrator/` | `https://qnbs.github.io`          | `https://qnbs.github.io/AI-Research-Orchestrator/` |
-| Root static host (custom domain) | `/`                          | `https://your-domain.example`     | `https://your-domain.example/`                     |
-| Subpath on static host           | `/my-app/`                   | `https://your-domain.example`     | `https://your-domain.example/my-app/`              |
+| Host scenario             | `VITE_BASE_PATH`             | `VITE_SITE_ORIGIN`            | Example URL                                        |
+| ------------------------- | ---------------------------- | ----------------------------- | -------------------------------------------------- |
+| GitHub Pages (default CI) | `/AI-Research-Orchestrator/` | `https://qnbs.github.io`      | `https://qnbs.github.io/AI-Research-Orchestrator/` |
+| Root static host          | `/`                          | `https://your-domain.example` | `https://your-domain.example/`                     |
+| Subpath static host       | `/my-app/`                   | `https://your-domain.example` | `https://your-domain.example/my-app/`              |
 
 ```bash
-# Root host (Netlify/Vercel custom domain, nginx at site root)
 VITE_BASE_PATH=/ VITE_SITE_ORIGIN=https://your-domain.example pnpm run build
-
-# GitHub Pages subpath (same as CI — default when unset in production)
+# or GitHub Pages defaults:
 VITE_BASE_PATH=/AI-Research-Orchestrator/ VITE_SITE_ORIGIN=https://qnbs.github.io pnpm run build
-
-# Deploy dist/ to any static hosting:
-# - Netlify, Vercel, Cloudflare Pages
-# - AWS S3 + CloudFront
-# - Any web server (nginx, Apache)
 ```
 
-For subpath hosts, configure the static server to serve `dist/` under that path and copy `dist/index.html` to `dist/404.html` for SPA deep-link recovery (GitHub Actions does this automatically).
+Serve `dist/` under the chosen base path; copy `dist/index.html` to `dist/404.html` for SPA recovery on hosts that need it (GitHub Actions does this automatically).
+
+### Troubleshooting
+
+| Symptom                     | What to try                                                                                                                                                               |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Blocked / no-key UX         | Settings → AI Configuration: add a provider key, use Ollama, or rely on Heuristic mode                                                                                    |
+| PubMed failures             | Check network; respect NCBI rate limits; optional NCBI API key in settings                                                                                                |
+| Ollama “unavailable”        | Ensure Ollama is running; check Base URL / loopback; see Settings health panel                                                                                            |
+| PWA install missing         | HTTPS + valid `manifest.json`; try a Chromium-based browser                                                                                                               |
+| Blank page after navigation | Hard reload; clear site data if a stale service worker is stuck                                                                                                           |
+| CI red                      | `pnpm run typecheck`, `pnpm run lint`, scoped `vitest` / Playwright; read job logs (cancelled ≠ suite failure — see [`docs/e2e-ci-backlog.md`](./docs/e2e-ci-backlog.md)) |
+
+### License
+
+MIT — see [`LICENSE`](./LICENSE).
+
+### Further reading
+
+- [CHANGELOG.md](./CHANGELOG.md) — what shipped
+- [docs/ci-branch-governance.md](./docs/ci-branch-governance.md) — CI / ruleset
+- [docs/adr/README.md](./docs/adr/README.md) — architecture decisions
+- [docs/release-policy.md](./docs/release-policy.md) — version / deploy identity
 
 ---
 
-### 🔧 Troubleshooting
+## Deutsche Dokumentation
 
-- `"API Key Required" error`: Go to Settings -> API Key and enter your Gemini API key.
-- `PubMed requests failing`: Check internet connection; NCBI may have rate limits.
-- `PWA not installing`: Ensure HTTPS and a valid `manifest.json`.
-- `Blank page after navigation`: Clear browser cache and reload.
-- `CI fails on TypeScript or tests`: Run `pnpm run typecheck` and `pnpm run test:run` locally and fix reported errors.
+> Produkt-Copy auf Deutsch (zweisprachige README). Neue Repository-Prosa außerhalb von Locale-Werten bleibt Englisch (Regel `010`).
 
----
+### Überblick
 
-## 🇩🇪 Deutsche Dokumentation
+**AI Research Orchestration Author** ist eine **clientseitige** Progressive Web App für biomedizinische Literaturrecherchen: **PubMed** (NCBI) und optional **arXiv**, plus austauschbare KI — Standard-Live-Modell **Google Gemini `gemini-2.5-flash`**, außerdem OpenAI, Anthropic, lokales **Ollama** oder eine deterministische **Heuristik**.
 
-### 🌌 Überblick
+Die Pipeline: natürliche Sprache → boolesche/MeSH-orientierte Query → Live-Abruf → Relevanzranking (semantisch live; lexikalisch in der Heuristik) → gestreamte, zitierte Synthese, soweit der Runtime-Pfad das unterstützt.
 
-Der **AI Research Orchestration Author** ist eine **client-seitige Frontend-Anwendung** für Literaturrecherchen: **PubMed** (optional arXiv) plus eine austauschbare KI-Schicht — Standard-Live-Modell **Google Gemini 2.5 Flash**, außerdem OpenAI, Anthropic, lokales Ollama oder eine deterministische Heuristik.
+**Kernprinzipien**
 
-Im Gegensatz zu herkömmlichen Zusammenfassungstools verwendet dieses System ein **Multi-Agenten-Orchestrierungsmuster**. Es zerlegt Forschungsfragen in Pipeline-Phasen, formuliert boolesche Suchstrategien, führt Live-API-Abrufe durch, bewertet Ergebnisse (semantisch im Live-Modus; lexikalisch in der Heuristik) und synthetisiert narrative Berichte mit Zitationen, wo verfügbar.
-
-**Kernphilosophie:**
-
-- **Local-First-Speicher:** Berichte, Historie, Einstellungen und Wissensdatenbank liegen im Browser (IndexedDB). Es gibt kein App-Backend, das Ihre Recherche speichert. Im Live-Modus gehen Prompts und Artikelmetadaten an den **gewählten KI-Anbieter** sowie Suchanfragen an NCBI/arXiv — siehe [SECURITY.md](./SECURITY.md).
-- **Progressive Enhancement:** Live-Gemini (oder ein anderer konfigurierter Anbieter) ist der High-Fidelity-Pfad; eine erstklassige **Heuristik-Inferenzschicht** hält alle KI-Funktionen offline und ohne API-Schlüssel nutzbar.
-- **Agentisches Denken:** Autonome Abfrageformulierung, Entscheidungsfindung und Relevanzbewertung.
-- **Rückverfolgbarkeit & Grounding:** Gerankte Insights und Exporte sind korpusvalidiert, wo umgesetzt; narrative Synthese wird als **corpus-supported** oder **unverified narrative draft** gekennzeichnet (ADR 0012, ADR 0018). Das ist **keine** Garantie, dass jeder Satz vollständig verifiziert ist.
+- **Local-First-Speicher** — Berichte, Historie, Einstellungen, Collections und Wissensdatenbank in IndexedDB. Es gibt **kein Anwendungs-Backend**, das Ihre Recherche speichert. Im Live-Modus gehen Prompts und Artikelmetadaten an den **gewählten KI-Anbieter** sowie Suchtraffic an NCBI/arXiv — siehe [SECURITY.md](./SECURITY.md).
+- **Progressive Enhancement** — Live-Anbieter für hohe Treue; die Heuristik hält alle KI-Flächen offline/ohne Cloud-Key nutzbar (ADR [0007](docs/adr/0007-heuristic-inference-layer.md) / [0009](docs/adr/0009-non-ai-programmatic-research-engine.md)).
+- **Agentische Pipeline** — Debugger-Rollen entsprechen Phasen eines Streams, nicht separaten OS-Prozessen.
+- **Grounding mit ehrlichen Labels** — Korpusvalidierung **wo umgesetzt**. Narrative Synthese heißt **corpus-supported** / **claim-supported** oder **unverified narrative draft** (ADR [0012](docs/adr/0012-corpus-citation-grounding.md), [0018](docs/adr/0018-synthesis-trust-terminology.md)) — **keine** Garantie, dass jeder Satz vollständig verifiziert ist.
 
 ### Offline- / Heuristik-Modus
 
-Ohne Gemini-Schlüssel (oder offline) wechselt die App automatisch in den **Heuristik-Modus**: lokale Query-Formulierung, Ranking, Synthese, TL;DR, Autoren-/Journal-Tools und report-gebundener Chat. Header-Badge und Settings-Toggle machen den Modus transparent. Details: [ADR 0007](docs/adr/0007-heuristic-inference-layer.md).
+Ohne nutzbaren Live-Key, offline oder mit **Force Heuristic Mode** (Einstellungen → AI Configuration / KI-Konfiguration): lokale Query-Formulierung, PubMed wenn online (expliziter **Educational-Demo**-Pfad — kein stilles Ersetzen fehlgeschlagener Live-Läufe; ADR [0016](docs/adr/0016-synthetic-demo-quarantine.md)), lexikalisches Ranking, Template-Synthese, TL;DR, Autoren-/Journal-Tools und report-gebundener Chat. Details: ADR 0007.
 
----
+### Funktionen
 
-### 🚀 Erweiterte Funktionen
+#### 1. Orchestrator
 
-#### 1. 🧠 Der Orchestrator (Agenten-Pipeline)
+- Query-Formulierung, NCBI-/arXiv-Abruf mit Rate-Limits, Ranking 0–100 aus Titel/Abstracts, gestreamte Synthese. Unverifizierte Narrative als Entwurf behandeln.
 
-Das Herzstück der Anwendung ist eine mehrstufige generative Pipeline, die den Arbeitsablauf eines menschlichen Forschers nachahmt:
+#### 2. Wissensdatenbank
 
-- **Abfrageformulierungs-Agent**: Analysiert die natürliche Sprachabsicht, um hochpräzise boolesche Suchstrings zu konstruieren, die auf die MeSH-Taxonomie von PubMed zugeschnitten sind.
-- **Live-Retrieval-Engine**: Interagiert direkt mit der NCBI E-utilities API, um Metadaten für Hunderte von Kandidatenartikeln in Echtzeit abzurufen.
-- **Semantischer Ranking-Agent**: Liest Titel und Abstracts, um die Relevanz (0-100) für spezifische Forschungskontexte zu bewerten, wobei ein spezielles "Thinking Budget" für die Erkennung komplexer Nuancen genutzt wird.
-- **Synthese-Agent**: Streamt eine umfassende, zitierte Zusammenfassung für Führungskräfte, die Konsens, Widersprüche und kritische Lücken in der Literatur hervorhebt.
+- Deduplizierung, Facettenfilter, Charts (nur Recharts).
 
-#### 2. 📚 Intelligente Wissensdatenbank
+#### 3. Forschungsassistent
 
-Eine persistente, sich selbst organisierende Bibliothek für langfristiges Forschungsmanagement.
+- TL;DR, Ähnlichkeitssuche (live oder lexikalisch), optionales Gemini-Web-Grounding (**anbieterabhängig**).
 
-- **Deduplizierungs-Engine**: Führt doppelte Einträge automatisch zusammen und bewahrt dabei die hochwertigsten Metadaten.
-- **Semantische Filterung**: Erlaubt das Filtern nach KI-generierten Tags, Artikeltypen, Autoren und Publikationsorten.
-- **Datenvisualisierung**: Integrierte Analysen visualisieren Publikationstrends im Zeitverlauf, Impact-Verteilungen von Journalen und Keyword-Häufigkeiten.
+#### 4. Szientometrische Hubs
 
-#### 3. 🔬 Forschungsassistent (Rapid Research Assistant)
+- Autoren-Clustering als Hilfsmittel; **geschätzte** Impact-Signale; Journal-Profile. PubMed-`free full text` ≠ jede OA-Definition.
 
-Ein leichtgewichtiges Hochgeschwindigkeitstool für Ad-hoc-Anfragen und Validierung.
+### Technische Architektur
 
-- **Abstract-Analyse**: Fügen Sie komplexen Text ein, um "TL;DR"-Zusammenfassungen zu generieren und Schlüsselerkenntnisse sofort zu extrahieren.
-- **Ähnlichkeitssuche**: Findet verwandte Papers über Anbieter-Suche im Live-Modus oder lexikalische/Demo-Pfade in der Heuristik.
-- **Optionales Web-Grounding**: Bei Gemini mit aktiviertem Search-Grounding können Ergebnisse gegen Live-Webdaten geprüft werden — anbieterabhängig, keine Universalgarantie.
+PWA (Service Worker, installierbar, GitHub Pages mit `404.html`-Fallback).
 
-#### 4. 👤 Szientometrische Hubs (Autoren & Journale)
+| Bereich | Wahl                                                                                                                              |
+| ------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| UI      | React 19, TypeScript strict, Tailwind CSS v4, Framer Motion                                                                       |
+| State   | Redux Toolkit + RTK Query; Dexie/IndexedDB                                                                                        |
+| KI      | Lazy Provider (`gemini`, `openai`, `anthropic`, `ollama`, `heuristic`) — ADR [0008](docs/adr/0008-multi-provider-architecture.md) |
+| Charts  | nur Recharts                                                                                                                      |
+| Export  | JSON, CSV, RIS, BibTeX, PDF; DOMPurify                                                                                            |
+| Build   | Vite 8; CSP-Hash beim Build; kein CDN-Import-Map (ADR [0011](docs/adr/0011-remove-cdn-import-map.md))                             |
 
-- **Autoren-Disambiguierung**: KI- oder Heuristik-Clustering als Hilfsmittel — keine autoritative Identitätsauflösung.
-- **Impact-Metriken**: **Geschätzte** H-Index-/Karrieresignale aus dem abgerufenen Korpus, keine offiziellen Bibliometrie-Datenbankwerte.
-- **Journal-Profiling**: KI-/Heuristik-Profile (Scope, Open-Access-Heuristiken, Themen). PubMed-`free full text` ist nicht identisch mit allen OA-Definitionen.
+### Erste Schritte
 
----
+#### Schnellstart (Live-Demo)
 
-### 🛠️ Technische Architektur
+1. **[https://qnbs.github.io/AI-Research-Orchestrator/](https://qnbs.github.io/AI-Research-Orchestrator/)** öffnen.
+2. **Einstellungen** → **AI Configuration** / KI-Konfiguration.
+3. Anbieter + Key **oder** Ollama / Heuristik ohne Cloud-Key.
+4. Orchestrator oder Rapid Research starten.
 
-Diese Anwendung ist eine **Progressive Web App (PWA)** auf einem modernen Stack für clientseitige Nutzung.
-
-#### Technologie-Stack
-
-- **Framework**: [React 19](https://react.dev/) (nutzt Suspense, Concurrent Mode und verfeinerte Hooks).
-- **Sprache**: [TypeScript](https://www.typescriptlang.org/) für strikte Typsicherheit und architektonische Robustheit.
-- **KI-Integration**: Austauschbare Anbieter (lazy-loaded) — Standard-Live-Modell **Gemini `gemini-2.5-flash`**, plus OpenAI, Anthropic, Ollama oder Heuristik (ADR 0008 / ADR 0009).
-- **Status/Speicher**: [Dexie.js](https://dexie.org/) (IndexedDB-Wrapper) für hochperformante, offline-fähige strukturierte lokale Speicherung.
-- **Styling**: [Tailwind CSS](https://tailwindcss.com/) mit einem benutzerdefinierten "Cybernetic"-Designsystem mit Glassmorphismus und ambienten Animationen.
-- **Visualisierung**: [Recharts](https://recharts.org/) für reaktive Datenanalysen (nur Recharts; ADR 0005).
-- **Export**: [jsPDF](https://github.com/parallax/jsPDF) für clientseitige PDF-Berichterstellung.
-
----
-
-### ⚡ Erste Schritte
-
-#### Schnellstart (Live App)
-
-1. Besuchen Sie **[https://qnbs.github.io/AI-Research-Orchestrator/](https://qnbs.github.io/AI-Research-Orchestrator/)**
-2. Klicken Sie auf **Einstellungen** (Zahnrad-Icon) → **API Key**
-3. Geben Sie Ihren Gemini API Key ein (AES-GCM in IndexedDB; nur beim gewählten Anbieter — nicht an ein App-Backend)
-4. Starten Sie Ihre Recherche!
+Keys: AES-GCM in IndexedDB — schützt at rest, nicht vor Malware/XSS ([SECURITY.md](./SECURITY.md)).
 
 #### Lokale Entwicklung
 
 ```bash
-# Repository klonen
 git clone https://github.com/qnbs/AI-Research-Orchestrator.git
 cd AI-Research-Orchestrator
-
-# Abhängigkeiten installieren
-pnpm install
-
-# Entwicklungsserver starten
+pnpm install --frozen-lockfile   # Node ≥22, pnpm 11
 pnpm run dev
-
-# Für Produktion bauen
 pnpm run build
 ```
 
-#### Tests & CI (Deutsch)
+#### Voraussetzungen
+
+- Node.js **22+** und **pnpm 11**
+- Moderner Browser
+- Optional: Gemini-/OpenAI-/Anthropic-Key, lokales Ollama, oder nur Heuristik
+
+#### Tests & CI
 
 ```bash
-pnpm run typecheck     # TypeScript (strikt, ohne Emit)
-pnpm run lint          # ESLint (Null-Warnungen)
-pnpm run test:coverage # Vitest + Coverage-Schwellen (Logiklayer — vitest.config.ts)
-pnpm run test:e2e      # Playwright (lokal eher scoped; volle Suite in CI)
-pnpm run build         # Produktionsbundle + CSP-Hash
+pnpm run typecheck
+pnpm run lint
+pnpm run test:coverage
+pnpm run test:e2e    # lokal eher scoped; volle Suite in CI
+pnpm run build
 ```
 
-Bei jedem **Push** auf `main` und bei **Pull Requests** gegen `main` laufen Qualität/Build (`deploy.yml`), blockierendes Chromium-E2E (`e2e.yml`), blockierendes Cross-Browser-E2E Firefox/WebKit/mobile Chrome (`e2e-cross-browser.yml`), Axe-A11y (`a11y.yml`) und Security (`security.yml`). Upload/Deploy nach GitHub Pages nur auf `refs/heads/main`. Required Checks und Concurrency: [`docs/ci-branch-governance.md`](./docs/ci-branch-governance.md).
+Push/PR gegen `main`: `deploy.yml`, blockierendes Chromium-E2E, blockierendes Cross-Browser-E2E (Firefox/WebKit/mobile Chrome), Axe-A11y, Security. Pages-Deploy nur auf `main`. Details: [`docs/ci-branch-governance.md`](./docs/ci-branch-governance.md).
 
 #### Cursor / IDE
 
-Für KI-gestützte Entwicklung in Cursor: [`AGENTS.md`](./AGENTS.md), [`.cursor/index.mdc`](./.cursor/index.mdc), `.cursor/rules/*.mdc` und [CONTRIBUTING.md](./CONTRIBUTING.md).
+[`AGENTS.md`](./AGENTS.md), [`.cursor/index.mdc`](./.cursor/index.mdc), `.cursor/rules/*.mdc`, [`CONTRIBUTING.md`](./CONTRIBUTING.md).
 
-#### Voraussetzungen
+### Multi-Provider
 
-- Node.js 22+ und pnpm 11
-- Ein moderner Browser (Chrome, Edge, Safari, Firefox)
-- Optional: API-Key für Gemini, OpenAI oder Anthropic — oder lokal Ollama / Heuristik-Modus ohne Key
+**Einstellungen → AI Configuration → AI Provider** — gleiche Tabelle wie im englischen Abschnitt (Gemini / OpenAI / Anthropic / Ollama / Heuristik). Architektur: [ADR 0008](docs/adr/0008-multi-provider-architecture.md).
 
-#### API Key einrichten
+### Konfiguration
 
-Die App speichert Anbieter-Keys **AES-GCM-verschlüsselt** in der IndexedDB Ihres Browsers (Web Crypto). Encryption schützt Keys at rest; nicht vor Malware/XSS — siehe [SECURITY.md](./SECURITY.md).
+- **KI-Persona** — Neutral Scientist, Concise Expert, Detailed Analyst, Creative Synthesizer
+- **Temperatur**, **Thinking Budget** (wo das Modell es unterstützt, z. B. Gemini 2.5 Flash)
+- **Ausgabesprache** — EN/DE/FR/ES
+- **Force Heuristic Mode**
 
-1. App öffnen
-2. **Einstellungen** → **AI Configuration** / KI-Konfiguration
-3. Anbieter wählen und Key(s) eintragen (oder Ollama/Heuristik ohne Cloud-Key)
-4. Speichern
+### Datenschutz & Sicherheit
 
-> ⚠️ **Sicherheitshinweis**: Keys werden **nicht** an ein Anwendungs-Backend gesendet. Im Live-Modus dienen sie als Authorization beim **gewählten KI-Anbieter**. Recherche-Prompts und Artikelmetadaten gehen ebenfalls an diesen Anbieter.
+Local-First, kein App-Backend für Forschungsdaten; Live-Modus = Direkt-zu-API (Anbieter + NCBI/arXiv); Export jederzeit. Bedrohungsmodell: [SECURITY.md](./SECURITY.md).
 
----
+### Deployment & Self-Hosting
 
-### ⚙️ Konfiguration & Anpassung
+Wie im englischen Abschnitt: GitHub Pages über `deploy.yml`; portable `dist/` mit `VITE_BASE_PATH` / `VITE_SITE_ORIGIN`. Governance: [`docs/ci-branch-governance.md`](./docs/ci-branch-governance.md).
 
-Die Anwendung verfügt über eine granulare Einstellungs-Engine, die eine präzise Abstimmung des kognitiven Profils der KI ermöglicht.
+### Fehlerbehebung
 
-- **KI-Persona**: Wechseln Sie zwischen "Neutraler Wissenschaftler", "Kreativer Synthetisierer" oder "Kritischer Gutachter", um den rhetorischen Ton anzupassen.
-- **Temperatur**: Feinabstimmung der Kreativität (0.0 für deterministische Fakten, 0.8 für Hypothesengenerierung).
-- **Thinking Budget**: Weisen Sie spezifische Token-Anzahlen für den internen Denkprozess zu, soweit der gewählte Anbieter das unterstützt (z. B. Gemini 2.5 Flash).
-- **Sprache**: Erzwingen Sie die Ausgabe in bestimmten Sprachen (Englisch, Deutsch, Französisch, Spanisch) unabhängig von der Eingangssprache.
+| Symptom              | Hinweis                                                           |
+| -------------------- | ----------------------------------------------------------------- |
+| Kein Key / blockiert | AI Configuration: Key, Ollama oder Heuristik                      |
+| PubMed-Fehler        | Netz / NCBI-Limits; optionaler NCBI-Key                           |
+| Ollama unavailable   | Dienst + Base URL; Health-Panel in Settings                       |
+| CI rot               | Lokal typecheck/lint; Job-Logs lesen (`cancelled` ≠ Suite-Fehler) |
 
----
+### Lizenz
 
-### 🛡️ Datenschutz & Sicherheit
+MIT — siehe [`LICENSE`](./LICENSE).
 
-**Local-First, Zero-Backend:**
+### Haftungsausschluss
 
-- **Lokaler Speicher**: Berichte, Verlauf, Einstellungen und Wissensdatenbank liegen in der IndexedDB — es gibt **keinen Anwendungsserver**, der sie speichert.
-- **Direkt-zu-API**: Im Live-Modus spricht der Browser direkt mit dem gewählten KI-Anbieter, NCBI und (optional) arXiv. Prompts, Artikelmetadaten und Suchanfragen verlassen das Gerät zu diesen Zielen.
-- **Datenportabilität**: Exportieren Sie vollständige Datensätze jederzeit als JSON, CSV, RIS, BibTeX oder PDF.
-
-Bedrohungsmodell und Restrisiken: [SECURITY.md](./SECURITY.md).
-
----
-
-### 📄 Lizenz
-
-Veröffentlicht unter der MIT-Lizenz. Siehe `LICENSE` für weitere Informationen.
-
----
-
-> **Haftungsausschluss**: Dieses Tool nutzt generative KI. Obwohl es Grounding-Techniken (PubMed-Zitate) verwendet, können gelegentlich Ungenauigkeiten auftreten. Überprüfen Sie Ergebnisse immer anhand der in den Berichten verlinkten Originalquelldokumente.
+Dieses Tool nutzt generative KI und lexikalisches Grounding. Es können Ungenauigkeiten auftreten. Prüfen Sie Ergebnisse immer anhand der verlinkten Primärquellen in den Berichten.
