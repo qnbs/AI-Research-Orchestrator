@@ -146,6 +146,20 @@ async function checkProjectFacts(errors, facts) {
 
   if (facts.e2e?.crossBrowserWorkflowPath) {
     const crossYaml = await read(facts.e2e.crossBrowserWorkflowPath);
+    const listed = extractE2eSpecPathsFromWorkflow(crossYaml);
+    const expected = facts.e2e.ciSpecPaths ?? [];
+    for (const spec of expected) {
+      if (!listed.includes(spec)) {
+        errors.push(`${facts.e2e.crossBrowserWorkflowPath} missing CI spec: ${spec}`);
+      }
+    }
+    for (const spec of listed) {
+      if (!expected.includes(spec)) {
+        errors.push(
+          `${facts.e2e.crossBrowserWorkflowPath} lists ${spec} but docs/project-facts.json ciSpecPaths omits it`,
+        );
+      }
+    }
     const advisory = facts.e2e.crossBrowserAdvisory === true;
     const hasContinue = /continue-on-error:\s*true/.test(crossYaml);
     if (advisory && !hasContinue) {

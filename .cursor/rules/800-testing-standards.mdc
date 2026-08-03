@@ -10,7 +10,7 @@ alwaysApply: false
 - **Verboten:** Tests auskommentieren/löschen, um CI grün zu tricksen — Ursachen beheben oder Assertions präzisieren.
 - **Isolation:** Specs unabhängig lauffähig; kein geteilter mutable Global-State zwischen Files.
 - **E2E:** `src/test/e2e/` — stabile Selektoren (`getByRole` bevorzugt); `sleep` nur mit Begründung.
-- **Full E2E suite runs (`pnpm run test:e2e`, both spec files together) belong in CI only**, not on the local dev machine (~3.7 GB RAM) — it reliably gets OOM-killed there regardless of whether the code under test is correct. Locally, only run a single spec file or a `-g "<pattern>"` scoped subset. For a genuine full-suite result, read the blocking Playwright checks on the PR: Chromium (`.github/workflows/e2e.yml`) and cross-browser (`.github/workflows/e2e-cross-browser.yml`).
+- **Full local `pnpm run test:e2e` (eight specs under `testDir`, including `a11y.spec.ts`) belongs in CI only**, not on the local dev machine (~3.7 GB RAM) — it reliably gets OOM-killed there regardless of whether the code under test is correct. Locally, only run a single spec file or a `-g "<pattern>"` scoped subset. Blocking CI scopes: Chromium + cross-browser workflows each run the seven-spec list from `docs/project-facts.json` `ciSpecPaths`; `a11y.spec.ts` runs separately in `.github/workflows/a11y.yml`.
 
 Coverage-Schwellen für Logik-Layer: `@vitest.config.ts`. CI nutzt `pnpm run test:coverage`.
 
