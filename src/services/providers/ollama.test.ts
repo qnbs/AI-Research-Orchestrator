@@ -128,6 +128,13 @@ describe('createOllamaProvider', () => {
     );
   });
 
+  it('mapError maps abort errors to non-retryable STREAM_ABORTED', () => {
+    const provider = createOllamaProvider();
+    const mapped = provider.mapError(new DOMException('Aborted', 'AbortError'));
+    expect(mapped.code).toBe('STREAM_ABORTED');
+    expect(mapped.retryable).toBe(false);
+  });
+
   it('mapError wraps unknown failures as PROVIDER_UNAVAILABLE', () => {
     const provider = createOllamaProvider();
     expect(provider.mapError(new Error('down')).code).toBe('PROVIDER_UNAVAILABLE');

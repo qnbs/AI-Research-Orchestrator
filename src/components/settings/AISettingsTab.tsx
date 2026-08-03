@@ -54,6 +54,14 @@ const ARTICLE_TYPE_LABEL_KEYS: Record<(typeof ARTICLE_TYPES)[number], Translatio
   'Observational Study': 'inputForm.articleType.observational',
 };
 
+const PROVIDER_LABEL_KEYS: Record<AIProviderSelection, TranslationKey> = {
+  gemini: 'settings.ai.provider_label.gemini',
+  openai: 'settings.ai.provider_label.openai',
+  anthropic: 'settings.ai.provider_label.anthropic',
+  ollama: 'settings.ai.provider_label.ollama',
+  heuristic: 'settings.ai.provider_label.heuristic',
+};
+
 const ProviderSelect: React.FC = () => {
   const { tempSettings, setTempSettings, t } = useSettingsView();
   const currentProvider = tempSettings.ai.provider ?? 'gemini';
@@ -85,7 +93,7 @@ const ProviderSelect: React.FC = () => {
       >
         {Object.values(AI_PROVIDERS).map((meta) => (
           <option key={meta.id} value={meta.id}>
-            {meta.label}
+            {t(PROVIDER_LABEL_KEYS[meta.id])}
           </option>
         ))}
       </select>
@@ -124,7 +132,9 @@ const ModelField: React.FC = () => {
         ))}
       </datalist>
       <p className="text-xs text-text-secondary mt-1">
-        {t('settings.ai.model_desc', { provider: providerMeta.label })}
+        {t('settings.ai.model_desc', {
+          provider: t(PROVIDER_LABEL_KEYS[providerMeta.id]),
+        })}
       </p>
     </div>
   );

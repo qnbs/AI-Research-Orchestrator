@@ -89,14 +89,31 @@ function diagnoseFetchError(error: unknown): Pick<OllamaHealthFail, 'reason' | '
   return { reason: 'unavailable', message: 'Ollama server is unavailable' };
 }
 
-function mergeSignals(timeoutMs: number, external?: AbortSignal): AbortSignal {
+/** Combine timeout + optional external signal; always enforce timeoutMs. */
+export function mergeSignals(timeoutMs: number, external?: AbortSignal): AbortSignal {
   const timeout = AbortSignal.timeout(timeoutMs);
   if (!external) return timeout;
   if (typeof AbortSignal.any === 'function') {
     return AbortSignal.any([timeout, external]);
   }
-  // Fallback for older runtimes: prefer the external signal; timeout still races via Promise.
-  return external;
+
+  const controller = new AbortController();
+  const abortFrom = (signal: AbortSignal) => {
+    if (!controller.signal.aborted) {
+      controller.abort(signal.reason);
+    }
+  };
+  if (timeout.aborted) {
+    abortFrom(timeout);
+    return controller.signal;
+  }
+  if (external.aborted) {
+    abortFrom(external);
+    return controller.signal;
+  }
+  timeout.addEventListener('abort', () => abortFrom(timeout), { once: true });
+  external.addEventListener('abort', () => abortFrom(external), { once: true });
+  return controller.signal;
 }
 
 /** Clear cached health for one origin, or the entire cache when omitted. */

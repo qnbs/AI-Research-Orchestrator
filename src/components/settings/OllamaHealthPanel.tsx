@@ -108,55 +108,57 @@ export const OllamaHealthPanel: React.FC = () => {
 
       <p className="text-xs text-text-secondary">{t('settings.ai.ollama.privacy_note')}</p>
 
-      {health?.ok === true && (
-        <div className="text-xs text-text-primary space-y-1" data-testid="ollama-health-ok">
-          <p>
-            {t('settings.ai.ollama.status_ok', {
-              version: health.version,
-              origin: health.origin,
+      <div role="status" aria-live="polite" aria-atomic="true">
+        {health?.ok === true && (
+          <div className="text-xs text-text-primary space-y-1" data-testid="ollama-health-ok">
+            <p>
+              {t('settings.ai.ollama.status_ok', {
+                version: health.version,
+                origin: health.origin,
+              })}
+            </p>
+            <p className="text-text-secondary">
+              {t('settings.ai.ollama.last_checked', { time: formatCheckedAt(health.checkedAt) })}
+            </p>
+            <div>
+              <label htmlFor="ollama-discovered-model" className="font-medium">
+                {t('settings.ai.ollama.models_label')}
+              </label>
+              {health.models.length === 0 ? (
+                <p className="text-text-secondary mt-1">{t('settings.ai.ollama.models_empty')}</p>
+              ) : (
+                <select
+                  id="ollama-discovered-model"
+                  className="mt-1 block w-full bg-input-bg border border-border rounded-md py-1.5 px-2"
+                  value={discoveredValue}
+                  onChange={(e) => {
+                    const next = e.target.value;
+                    if (!next) return;
+                    setTempSettings((s) => ({ ...s, ai: { ...s.ai, model: next } }));
+                  }}
+                  data-testid="ollama-discovered-models"
+                >
+                  <option value="">{t('settings.ai.ollama.models_placeholder')}</option>
+                  {health.models.map((m) => (
+                    <option key={m.name} value={m.name}>
+                      {m.parameterSize ? `${m.name} (${m.parameterSize})` : m.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+          </div>
+        )}
+
+        {health?.ok === false && (
+          <p className="text-xs text-red-600 dark:text-red-400" data-testid="ollama-health-fail">
+            {t('settings.ai.ollama.status_fail', {
+              reason: health.reason,
+              message: health.message,
             })}
           </p>
-          <p className="text-text-secondary">
-            {t('settings.ai.ollama.last_checked', { time: formatCheckedAt(health.checkedAt) })}
-          </p>
-          <div>
-            <label htmlFor="ollama-discovered-model" className="font-medium">
-              {t('settings.ai.ollama.models_label')}
-            </label>
-            {health.models.length === 0 ? (
-              <p className="text-text-secondary mt-1">{t('settings.ai.ollama.models_empty')}</p>
-            ) : (
-              <select
-                id="ollama-discovered-model"
-                className="mt-1 block w-full bg-input-bg border border-border rounded-md py-1.5 px-2"
-                value={discoveredValue}
-                onChange={(e) => {
-                  const next = e.target.value;
-                  if (!next) return;
-                  setTempSettings((s) => ({ ...s, ai: { ...s.ai, model: next } }));
-                }}
-                data-testid="ollama-discovered-models"
-              >
-                <option value="">{t('settings.ai.ollama.models_placeholder')}</option>
-                {health.models.map((m) => (
-                  <option key={m.name} value={m.name}>
-                    {m.parameterSize ? `${m.name} (${m.parameterSize})` : m.name}
-                  </option>
-                ))}
-              </select>
-            )}
-          </div>
-        </div>
-      )}
-
-      {health?.ok === false && (
-        <p className="text-xs text-red-600 dark:text-red-400" data-testid="ollama-health-fail">
-          {t('settings.ai.ollama.status_fail', {
-            reason: health.reason,
-            message: health.message,
-          })}
-        </p>
-      )}
+        )}
+      </div>
 
       {modelMissing && (
         <p

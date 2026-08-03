@@ -4,6 +4,7 @@ import {
   getCachedOllamaHealth,
   invalidateOllamaHealthCache,
   isOllamaModelAvailable,
+  mergeSignals,
   probeOllamaHealth,
 } from './ollamaHealth';
 
@@ -74,6 +75,39 @@ describe('probeOllamaHealth', () => {
     if (!result.ok) {
       expect(result.reason).toBe('http');
       expect(result.status).toBe(503);
+    }
+  });
+
+  it('reports an aborted probe', async () => {
+    const controller = new AbortController();
+    global.fetch = vi.fn().mockImplementation(() => {
+      controller.abort();
+      return Promise.reject(new DOMException('Aborted', 'AbortError'));
+    });
+    const result = await probeOllamaHealth('http://localhost:11434', {
+      force: true,
+      signal: controller.signal,
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.reason).toBe('aborted');
+    }
+  });
+});
+
+describe('mergeSignals', () => {
+  it('aborts when the external signal aborts even without AbortSignal.any', () => {
+    const originalAny = AbortSignal.any;
+    // @ts-expect-error -- simulate older runtimes lacking AbortSignal.any
+    AbortSignal.any = undefined;
+    try {
+      const external = new AbortController();
+      const merged = mergeSignals(60_000, external.signal);
+      expect(merged.aborted).toBe(false);
+      external.abort();
+      expect(merged.aborted).toBe(true);
+    } finally {
+      AbortSignal.any = originalAny;
     }
   });
 });

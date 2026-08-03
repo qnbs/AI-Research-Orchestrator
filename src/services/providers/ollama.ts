@@ -6,7 +6,7 @@
  * JSON mode is requested via `format: 'json'` when `json: true` is set.
  */
 
-import { AppError } from '../../lib/errors';
+import { AppError, isAbortError } from '../../lib/errors';
 import { streamOllamaNdjson } from '../../lib/ollamaNdjson';
 import type { AIProvider } from './provider';
 import type {
@@ -30,6 +30,14 @@ function resetClient(): void {
 
 function mapOllamaError(error: unknown): AppError {
   if (error instanceof AppError) return error;
+  if (isAbortError(error)) {
+    return new AppError({
+      code: 'STREAM_ABORTED',
+      message: 'Ollama request aborted',
+      retryable: false,
+      cause: error,
+    });
+  }
   if (error instanceof Error) {
     const message = error.message;
     if (/not found|model .* not found|pull model/i.test(message)) {

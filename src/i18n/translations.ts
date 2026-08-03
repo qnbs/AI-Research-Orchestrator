@@ -221,6 +221,11 @@ export const translations = {
     'settings.ai.provider': 'AI Provider',
     'settings.ai.provider_desc':
       'Choose the AI backend. Gemini is the default; other providers require their own API key or a local endpoint.',
+    'settings.ai.provider_label.gemini': 'Google Gemini',
+    'settings.ai.provider_label.openai': 'OpenAI',
+    'settings.ai.provider_label.anthropic': 'Anthropic',
+    'settings.ai.provider_label.ollama': 'Local AI (Ollama)',
+    'settings.ai.provider_label.heuristic': 'Heuristic (local)',
     'settings.ai.model': 'AI Model',
     'settings.ai.model_desc': 'Enter any model identifier supported by {provider}.',
     'settings.ai.base_url': 'Base URL',
@@ -541,6 +546,11 @@ export const translations = {
     'settings.ai.provider': 'KI-Anbieter',
     'settings.ai.provider_desc':
       'Wählen Sie das KI-Backend. Gemini ist der Standard; andere Anbieter erfordern einen eigenen API-Key oder einen lokalen Endpunkt.',
+    'settings.ai.provider_label.gemini': 'Google Gemini',
+    'settings.ai.provider_label.openai': 'OpenAI',
+    'settings.ai.provider_label.anthropic': 'Anthropic',
+    'settings.ai.provider_label.ollama': 'Local AI (Ollama)',
+    'settings.ai.provider_label.heuristic': 'Heuristik (lokal)',
     'settings.ai.model': 'KI-Modell',
     'settings.ai.model_desc':
       'Geben Sie eine beliebige Modellkennung ein, die {provider} unterstützt.',

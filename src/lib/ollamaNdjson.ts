@@ -46,7 +46,9 @@ export async function* streamOllamaNdjson<T>(
 
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
+  const utf8 = new TextEncoder();
   let buffer = '';
+  let pendingBytes = 0;
   let malformed = 0;
 
   try {
@@ -57,11 +59,13 @@ export async function* streamOllamaNdjson<T>(
 
       if (done) {
         buffer += decoder.decode();
+        pendingBytes = utf8.encode(buffer).byteLength;
         break;
       }
 
+      pendingBytes += value.byteLength;
       buffer += decoder.decode(value, { stream: true });
-      if (buffer.length > maxBufferBytes) {
+      if (pendingBytes > maxBufferBytes) {
         throw new AppError({
           code: 'PROVIDER_PARSE_FAILURE',
           message: `Ollama NDJSON buffer exceeded ${maxBufferBytes} bytes`,
@@ -72,6 +76,7 @@ export async function* streamOllamaNdjson<T>(
 
       const lines = buffer.split('\n');
       buffer = lines.pop() ?? '';
+      pendingBytes = utf8.encode(buffer).byteLength;
       for (const line of lines) {
         const parsed = parseLine<T>(line, () => {
           malformed += 1;
