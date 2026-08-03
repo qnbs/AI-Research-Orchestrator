@@ -60,11 +60,23 @@ export async function* streamOllamaNdjson<T>(
       if (done) {
         buffer += decoder.decode();
         pendingBytes = utf8.encode(buffer).byteLength;
+        if (pendingBytes > maxBufferBytes) {
+          throw new AppError({
+            code: 'PROVIDER_PARSE_FAILURE',
+            message: `Ollama NDJSON buffer exceeded ${maxBufferBytes} bytes`,
+            retryable: false,
+            context: 'ollama_ndjson',
+          });
+        }
         break;
       }
 
-      pendingBytes += value.byteLength;
       buffer += decoder.decode(value, { stream: true });
+
+      const lines = buffer.split('\n');
+      buffer = lines.pop() ?? '';
+      // Bound only the unfinished line — complete NDJSON records are yielded and discarded.
+      pendingBytes = utf8.encode(buffer).byteLength;
       if (pendingBytes > maxBufferBytes) {
         throw new AppError({
           code: 'PROVIDER_PARSE_FAILURE',
@@ -73,10 +85,6 @@ export async function* streamOllamaNdjson<T>(
           context: 'ollama_ndjson',
         });
       }
-
-      const lines = buffer.split('\n');
-      buffer = lines.pop() ?? '';
-      pendingBytes = utf8.encode(buffer).byteLength;
       for (const line of lines) {
         const parsed = parseLine<T>(line, () => {
           malformed += 1;

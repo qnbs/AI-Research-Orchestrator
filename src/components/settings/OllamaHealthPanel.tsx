@@ -53,6 +53,7 @@ export const OllamaHealthPanel: React.FC = () => {
       abortRef.current = controller;
       const seq = ++probeSeq.current;
       setLoading(true);
+      setHealth(null);
       try {
         const result = await probeOllamaHealth(baseUrl, {
           force,
