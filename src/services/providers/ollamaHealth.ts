@@ -143,29 +143,29 @@ export function mergeSignals(timeoutMs: number, external?: AbortSignal): AbortSi
   return controller.signal;
 }
 
-/** Clear cached health for one origin, or the entire cache when omitted. */
-export function invalidateOllamaHealthCache(origin?: string): void {
-  if (!origin) {
+/** Clear cached health for one base URL, or the entire cache when omitted. */
+export function invalidateOllamaHealthCache(baseUrl?: string): void {
+  if (!baseUrl) {
     healthCache.clear();
     return;
   }
-  healthCache.delete(origin);
+  healthCache.delete(baseUrl);
 }
 
-/** Return a non-expired cached probe result when available. */
-export function getCachedOllamaHealth(origin: string): OllamaHealthResult | undefined {
-  const entry = healthCache.get(origin);
+/** Return a non-expired cached probe result when available (keyed by full base URL). */
+export function getCachedOllamaHealth(baseUrl: string): OllamaHealthResult | undefined {
+  const entry = healthCache.get(baseUrl);
   if (!entry) return undefined;
   if (Date.now() > entry.expiresAt) {
-    healthCache.delete(origin);
+    healthCache.delete(baseUrl);
     return undefined;
   }
   return entry.result;
 }
 
 function remember(result: OllamaHealthResult): OllamaHealthResult {
-  if (result.origin) {
-    healthCache.set(result.origin, {
+  if (result.baseUrl) {
+    healthCache.set(result.baseUrl, {
       result,
       expiresAt: Date.now() + OLLAMA_HEALTH_CACHE_TTL_MS,
     });
@@ -196,7 +196,7 @@ export async function probeOllamaHealth(
 
   const { baseUrl, origin } = normalized;
   if (!options.force) {
-    const cached = getCachedOllamaHealth(origin);
+    const cached = getCachedOllamaHealth(baseUrl);
     if (cached) return cached;
   }
 

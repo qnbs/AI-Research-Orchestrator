@@ -83,9 +83,14 @@ export const OllamaHealthPanel: React.FC = () => {
     health?.ok === true && selectedModel.trim().length > 0
       ? !isOllamaModelAvailable(health.models, selectedModel)
       : false;
-  const budgetHint = estimateOllamaInputTokenBudget(selectedModel);
   const discoveredValue =
     health?.ok === true ? resolveDiscoveredModelValue(health.models, selectedModel) : '';
+  const matchedModel =
+    health?.ok === true
+      ? (health.models.find((m) => m.name === discoveredValue) ??
+        health.models.find((m) => m.name === selectedModel))
+      : undefined;
+  const budgetHint = estimateOllamaInputTokenBudget(selectedModel, matchedModel?.parameterSize);
 
   return (
     <div

@@ -47,6 +47,15 @@ describe('probeOllamaHealth', () => {
     const second = await probeOllamaHealth('http://localhost:11434');
     expect(second.ok).toBe(true);
     expect(global.fetch).toHaveBeenCalledTimes(2);
+
+    // Different path on the same origin must not reuse the previous cache entry.
+    global.fetch = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ version: '0.5.1' }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ models: [] }) });
+    const otherPath = await probeOllamaHealth('http://localhost:11434/v1');
+    expect(otherPath.ok).toBe(true);
+    expect(global.fetch).toHaveBeenCalledTimes(2);
   });
 
   it('diagnoses CORS/network TypeError', async () => {
