@@ -3,7 +3,9 @@ import type { RankedArticle } from '../types';
 import {
   articleSupportsClaim,
   assessSynthesisTrust,
+  computeClaimTrustMetrics,
   validateClaimAgainstCorpus,
+  type ValidatedClaimResult,
 } from './claimValidation';
 
 function article(pmid: string, title: string, summary: string): RankedArticle {
@@ -217,6 +219,22 @@ describe('assessSynthesisTrust', () => {
     );
     expect(assessment.trustLevel).toBe('narrative-draft');
     expect(assessment.metrics.unsupportedClaimRate).toBeGreaterThan(0);
+  });
+
+  it('counts legacy verified claim state as claim-supported in metrics', () => {
+    const metrics = computeClaimTrustMetrics(
+      [
+        {
+          text: 'Aspirin reduces events',
+          pmids: ['100'],
+          validationState: 'verified',
+        } as unknown as ValidatedClaimResult,
+      ],
+      [article('100', 'Aspirin trial', 'Aspirin reduces events in prevention.')],
+    );
+    expect(metrics.claimSupportedClaims).toBe(1);
+    expect(metrics.rejectedClaims).toBe(0);
+    expect(metrics.unsupportedClaimRate).toBe(0);
   });
 
   it('never marks synthetic demo corpora as corpus-supported', () => {

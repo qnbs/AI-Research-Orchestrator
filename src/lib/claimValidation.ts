@@ -16,6 +16,7 @@ import {
   ensureGroundedClaim,
   findArticleByCorpusKey,
 } from './sourceIdentifier';
+import { normalizeClaimValidationState } from './synthesisTrustTerminology';
 
 export type ClaimTrustMetrics = {
   totalClaims: number;
@@ -168,8 +169,9 @@ export function computeClaimTrustMetrics(
     const { invalid } = partitionCorpusCitations(corpusIds, claim.pmids);
     invalidCitationCount += invalid.length;
 
-    if (claim.validationState === 'claim-supported') claimSupportedClaims += 1;
-    else if (claim.validationState === 'unverified') unverifiedClaims += 1;
+    const state = normalizeClaimValidationState(claim.validationState);
+    if (state === 'claim-supported') claimSupportedClaims += 1;
+    else if (state === 'unverified') unverifiedClaims += 1;
     else rejectedClaims += 1;
 
     for (const pmid of claim.pmids) {

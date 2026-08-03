@@ -166,10 +166,12 @@ db.version(7)
       try {
         const kb = entry as KnowledgeBaseEntry;
         if (kb.sourceType !== 'research' || !kb.report) return;
-        kb.report = {
+        // Rename first, then re-apply demo demotion so skipped v6 stamps cannot keep elevated trust.
+        const renamed: ResearchReport = {
           ...kb.report,
           groundedSynthesis: migrateGroundedSynthesisTrustTerminology(kb.report.groundedSynthesis),
         };
+        kb.report = stampDemoReportProvenance(renamed);
       } catch (err) {
         safeLogError('Dexie v7: skip trust terminology migration', err);
       }
@@ -180,12 +182,13 @@ db.version(7)
       try {
         const ckpt = checkpoint as ResearchCheckpoint;
         if (!ckpt.report) return;
-        ckpt.report = {
+        const renamed: ResearchReport = {
           ...ckpt.report,
           groundedSynthesis: migrateGroundedSynthesisTrustTerminology(
             ckpt.report.groundedSynthesis,
           ),
         };
+        ckpt.report = stampDemoReportProvenance(renamed);
       } catch (err) {
         safeLogError('Dexie v7: skip checkpoint trust terminology migration', err);
       }
