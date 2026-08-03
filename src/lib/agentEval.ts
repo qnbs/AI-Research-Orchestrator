@@ -32,6 +32,14 @@ export interface EvalCase {
     rankedCorpusPmids?: string[];
     /** Maximum unsupported-claim rate (0–1) from claim validation metrics. */
     maxUnsupportedClaimRate?: number;
+    /** Minimum citation precision (0–1) — cited PMIDs with lexical evidence. */
+    minCitationPrecision?: number;
+    /** Minimum claim-level citation recall (claim-supported / total claims). */
+    minCitationRecall?: number;
+    /** Maximum irrelevant-citation rate (0–1). */
+    maxIrrelevantCitationRate?: number;
+    /** Minimum source relevance (alias of citation precision). */
+    minSourceRelevance?: number;
     /** Minimum grounded claims with valid corpus PMIDs. */
     minGroundedClaims?: number;
     /** PubMed query string to validate structurally. */
@@ -132,7 +140,14 @@ export function evaluateCase(testCase: EvalCase): EvalCaseResult {
     });
   }
 
-  if (exp.maxUnsupportedClaimRate != null) {
+  const needsClaimMetrics =
+    exp.maxUnsupportedClaimRate != null ||
+    exp.minCitationPrecision != null ||
+    exp.minCitationRecall != null ||
+    exp.maxIrrelevantCitationRate != null ||
+    exp.minSourceRelevance != null;
+
+  if (needsClaimMetrics) {
     const obj =
       actual !== null && typeof actual === 'object' && !Array.isArray(actual)
         ? (actual as Record<string, unknown>)
@@ -161,13 +176,44 @@ export function evaluateCase(testCase: EvalCase): EvalCaseResult {
         isOpenAccess: false,
       })),
     );
-    const passed = metrics.unsupportedClaimRate <= exp.maxUnsupportedClaimRate;
+
+    const failures: string[] = [];
+    if (
+      exp.maxUnsupportedClaimRate != null &&
+      metrics.unsupportedClaimRate > exp.maxUnsupportedClaimRate
+    ) {
+      failures.push(
+        `unsupportedClaimRate=${metrics.unsupportedClaimRate.toFixed(2)} max<=${exp.maxUnsupportedClaimRate}`,
+      );
+    }
+    if (exp.minCitationPrecision != null && metrics.citationPrecision < exp.minCitationPrecision) {
+      failures.push(
+        `citationPrecision=${metrics.citationPrecision.toFixed(2)} min>=${exp.minCitationPrecision}`,
+      );
+    }
+    if (exp.minCitationRecall != null && metrics.citationRecall < exp.minCitationRecall) {
+      failures.push(
+        `citationRecall=${metrics.citationRecall.toFixed(2)} min>=${exp.minCitationRecall}`,
+      );
+    }
+    if (
+      exp.maxIrrelevantCitationRate != null &&
+      metrics.irrelevantCitationRate > exp.maxIrrelevantCitationRate
+    ) {
+      failures.push(
+        `irrelevantCitationRate=${metrics.irrelevantCitationRate.toFixed(2)} max<=${exp.maxIrrelevantCitationRate}`,
+      );
+    }
+    if (exp.minSourceRelevance != null && metrics.sourceRelevance < exp.minSourceRelevance) {
+      failures.push(
+        `sourceRelevance=${metrics.sourceRelevance.toFixed(2)} min>=${exp.minSourceRelevance}`,
+      );
+    }
+
     dimensions.push({
       dimension: 'groundedSynthesis',
-      passed,
-      detail: passed
-        ? undefined
-        : `unsupportedClaimRate=${metrics.unsupportedClaimRate.toFixed(2)} max<=${exp.maxUnsupportedClaimRate}`,
+      passed: failures.length === 0,
+      detail: failures.length ? failures.join('; ') : undefined,
     });
   }
 

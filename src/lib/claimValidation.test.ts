@@ -235,6 +235,8 @@ describe('assessSynthesisTrust', () => {
     expect(metrics.claimSupportedClaims).toBe(1);
     expect(metrics.rejectedClaims).toBe(0);
     expect(metrics.unsupportedClaimRate).toBe(0);
+    expect(metrics.citationRecall).toBe(1);
+    expect(metrics.sourceRelevance).toBe(metrics.citationPrecision);
   });
 
   it('never marks synthetic demo corpora as corpus-supported', () => {

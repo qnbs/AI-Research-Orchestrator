@@ -146,4 +146,72 @@ describe('agentEval', () => {
     });
     expect(result.passed).toBe(false);
   });
+
+  it('enforces claim-level precision, recall, and source relevance thresholds', () => {
+    const result = evaluateCase({
+      id: 'claim-metrics-ok',
+      description: 'supported claims meet metric floors',
+      actual: {
+        rankedArticles: [
+          {
+            pmid: '1',
+            title: 'Aspirin cardiovascular trial',
+            summary: 'Aspirin reduced major cardiovascular events.',
+          },
+        ],
+        groundedSynthesis: {
+          mode: 'extractive-template',
+          claims: [
+            {
+              text: 'Aspirin reduced major cardiovascular events.',
+              pmids: ['1'],
+              validationState: 'claim-supported',
+            },
+          ],
+        },
+      },
+      expect: {
+        maxUnsupportedClaimRate: 0,
+        minCitationPrecision: 1,
+        minCitationRecall: 1,
+        maxIrrelevantCitationRate: 0,
+        minSourceRelevance: 1,
+      },
+    });
+    expect(result.passed).toBe(true);
+  });
+
+  it('fails when citation recall drops below the floor', () => {
+    const result = evaluateCase({
+      id: 'claim-metrics-low-recall',
+      description: 'unsupported claim tanks recall',
+      actual: {
+        rankedArticles: [
+          {
+            pmid: '1',
+            title: 'Aspirin cardiovascular trial',
+            summary: 'Aspirin reduced major cardiovascular events.',
+          },
+        ],
+        groundedSynthesis: {
+          mode: 'narrative-extracted',
+          claims: [
+            {
+              text: 'Aspirin reduced major cardiovascular events.',
+              pmids: ['1'],
+              validationState: 'claim-supported',
+            },
+            {
+              text: 'Completely unrelated quantum claim.',
+              pmids: ['1'],
+              validationState: 'unverified',
+            },
+          ],
+        },
+      },
+      expect: { minCitationRecall: 1, maxUnsupportedClaimRate: 0 },
+    });
+    expect(result.passed).toBe(false);
+    expect(result.dimensions.find((d) => d.dimension === 'groundedSynthesis')?.passed).toBe(false);
+  });
 });
