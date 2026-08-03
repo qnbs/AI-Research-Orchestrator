@@ -62,6 +62,22 @@ describe('createOllamaProvider', () => {
     expect(chunks).toEqual(['hi', ' there']);
   });
 
+  it('keeps 503 retryable even when the body says Not Found', async () => {
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: false,
+      status: 503,
+      text: async () => 'Not Found',
+    });
+    const provider = createOllamaProvider();
+    await expect(
+      provider.generateContent({ model: 'llama3.1:8b', prompt: 'x' }),
+    ).rejects.toMatchObject({
+      code: 'PROVIDER_UNAVAILABLE',
+      status: 503,
+      retryable: true,
+    });
+  });
+
   it('maps HTTP errors to AppError', async () => {
     global.fetch = vi.fn().mockResolvedValueOnce({
       ok: false,

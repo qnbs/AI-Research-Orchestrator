@@ -65,7 +65,11 @@ function mapOllamaError(error: unknown): AppError {
 }
 
 function throwHttpError(status: number, text: string, label: string): never {
-  const modelMissing = status === 404 || /not found|model .* not found/i.test(text);
+  // Only trust body "not found" text on 4xx — 5xx/proxy pages often say "Not Found"
+  // without meaning the model is missing.
+  const modelMissing =
+    status === 404 ||
+    (status >= 400 && status < 500 && /model .* not found|file does not exist/i.test(text));
   throw new AppError({
     code: status === 401 ? 'PROVIDER_AUTH' : 'PROVIDER_UNAVAILABLE',
     message: modelMissing
