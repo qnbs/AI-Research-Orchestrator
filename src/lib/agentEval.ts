@@ -249,6 +249,14 @@ export function evaluateCase(testCase: EvalCase): EvalCaseResult {
         ),
       );
       const metrics = computeClaimTrustMetrics(validatedClaims, corpusArticles);
+      const citedPmidCount = validatedClaims.reduce((n, c) => n + c.pmids.length, 0);
+
+      if (
+        (exp.minCitationPrecision != null || exp.minSourceRelevance != null) &&
+        citedPmidCount === 0
+      ) {
+        failures.push('no citations evaluated for precision/relevance floors');
+      }
 
       if (
         exp.maxUnsupportedClaimRate != null &&

@@ -193,8 +193,9 @@ export function computeClaimTrustMetrics(
   }
 
   const totalClaims = claims.length;
-  const citationPrecision = citedPmids === 0 ? 1 : (citedPmids - irrelevantPmids) / citedPmids;
-  const citationRecall = totalClaims === 0 ? 1 : claimSupportedClaims / totalClaims;
+  // No citations evaluated → precision/relevance are undefined; use 0 so floors cannot vacuous-pass.
+  const citationPrecision = citedPmids === 0 ? 0 : (citedPmids - irrelevantPmids) / citedPmids;
+  const citationRecall = totalClaims === 0 ? 0 : claimSupportedClaims / totalClaims;
   const unsupportedClaimRate =
     totalClaims === 0 ? 0 : (unverifiedClaims + rejectedClaims) / totalClaims;
   const irrelevantCitationRate = citedPmids === 0 ? 0 : irrelevantPmids / citedPmids;

@@ -359,6 +359,31 @@ describe('agentEval', () => {
     );
   });
 
+  it('fails precision floors when claims have zero citations', () => {
+    const result = evaluateCase({
+      id: 'zero-citation-precision',
+      description: 'claims without PMIDs must not vacuous-pass precision',
+      actual: {
+        rankedArticles: [
+          {
+            pmid: '1',
+            title: 'Aspirin cardiovascular trial',
+            summary: 'Aspirin reduced major cardiovascular events.',
+          },
+        ],
+        groundedSynthesis: {
+          mode: 'extractive-template',
+          claims: [{ text: 'Aspirin reduced major cardiovascular events.', pmids: [] }],
+        },
+      },
+      expect: { minCitationPrecision: 1, minSourceRelevance: 1 },
+    });
+    expect(result.passed).toBe(false);
+    expect(result.dimensions.find((d) => d.dimension === 'groundedSynthesis')?.detail).toMatch(
+      /no citations evaluated/,
+    );
+  });
+
   it('handles null holes in rankedArticles for mustRankPmids without throwing', () => {
     const result = evaluateCase({
       id: 'must-rank-null-holes',
