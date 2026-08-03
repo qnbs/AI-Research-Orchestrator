@@ -2,7 +2,13 @@
  * Agent Debugger Slice — Visual pipeline tracing with token usage
  */
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import type { AgentPipelineTrace, AgentTraceEvent, AgentName, AgentStatus } from '../../types';
+import type {
+  AgentPipelineTrace,
+  AgentTraceEvent,
+  AgentName,
+  AgentStatus,
+  PipelinePhaseId,
+} from '../../types';
 
 interface AgentDebugState {
   isVisible: boolean;
@@ -89,7 +95,13 @@ export const agentDebugSlice = createSlice({
     },
     setAgentStatus: (
       state,
-      action: PayloadAction<{ agentName: AgentName; status: AgentStatus; message?: string }>,
+      action: PayloadAction<{
+        agentName: AgentName;
+        status: AgentStatus;
+        message?: string;
+        phaseId?: PipelinePhaseId;
+        metadata?: Record<string, unknown>;
+      }>,
     ) => {
       if (!state.currentTrace) return;
       // Find the last event for this agent and update, or add a status event
@@ -99,6 +111,11 @@ export const agentDebugSlice = createSlice({
       if (existing) {
         existing.status = action.payload.status;
         if (action.payload.message) existing.message = action.payload.message;
+        if (action.payload.phaseId) existing.phaseId = action.payload.phaseId;
+        // Replace (do not merge) when provided so promptBudget cannot go stale.
+        if (action.payload.metadata !== undefined) {
+          existing.metadata = action.payload.metadata;
+        }
         if (action.payload.status === 'done' || action.payload.status === 'error') {
           existing.completedAt = Date.now();
           if (existing.startedAt) existing.durationMs = existing.completedAt - existing.startedAt;

@@ -27,12 +27,14 @@ import { toAppError } from '../lib/errors';
 import type { View } from '../types/ui';
 import type { TranslationKey } from '../i18n/translations';
 import type { HapticPreset } from '../hooks/useHaptic';
-import { getAgentForPhase } from './getAgentForPhase';
+import { getAgentForPhaseId } from './getAgentForPhase';
 import { stampReportWithProvenance } from '../lib/appReleaseInfo';
 import {
   EXECUTION_PROVENANCE_PHASE,
   type ResearchExecutionContext,
 } from '../lib/researchExecutionContext';
+import type { PipelinePhaseId } from '../types/pipelineEvents';
+import { PIPELINE_PHASE_LABEL, PIPELINE_TIMELINE_INDEX } from '../types/pipelineEvents';
 import { safeLogError } from '../lib/safeLog';
 
 type ReportStatus = 'idle' | 'generating' | 'streaming' | 'done' | 'error';
@@ -77,6 +79,8 @@ export function useResearchSession({
   const [reportStatus, setReportStatus] = useState<ReportStatus>('idle');
   const [error, setError] = useState<string | null>(null);
   const [currentPhase, setCurrentPhase] = useState<string>('');
+  const [currentPhaseId, setCurrentPhaseId] = useState<PipelinePhaseId | null>(null);
+  const [timelineIndex, setTimelineIndex] = useState(0);
   const [isCurrentReportSaved, setIsCurrentReportSaved] = useState(false);
   const [resumeCheckpoints, setResumeCheckpoints] = useState<ResearchCheckpoint[]>([]);
 
@@ -160,6 +164,9 @@ export function useResearchSession({
       setLocalResearchInput(data);
       setCurrentView('orchestrator');
       setIsCurrentReportSaved(false);
+      setCurrentPhase('');
+      setCurrentPhaseId(null);
+      setTimelineIndex(0);
 
       const costEstimate = estimateResearchRunCost({
         provider: aiSettings.provider ?? 'gemini',
@@ -203,6 +210,7 @@ export function useResearchSession({
           report: partialReport,
           synthesisChunk,
           phase,
+          phaseId,
           promptBudget,
           executionContext,
         } of stream) {
@@ -215,32 +223,58 @@ export function useResearchSession({
             frozenExecutionContext = executionContext;
           }
           // Bootstrap provenance event — do not drive agent UI / phase chrome.
-          if (phase === EXECUTION_PROVENANCE_PHASE) {
+          if (phaseId === 'execution-provenance' || phase === EXECUTION_PROVENANCE_PHASE) {
             continue;
           }
 
           lastPhase = phase;
-          setCurrentPhase(phase);
+          setCurrentPhaseId(phaseId);
+          // Keep producer phase text when it carries run-specific detail (ranking
+          // counts, offline/partial status). Localize only the default label.
+          const i18nKey = `orchestrator.pipeline.${phaseId}`;
+          const localized = t(i18nKey);
+          const defaultLabel = PIPELINE_PHASE_LABEL[phaseId];
+          const usesDefaultLabel = phase === defaultLabel || phase.endsWith(` · ${defaultLabel}`);
+          setCurrentPhase(usesDefaultLabel && localized !== i18nKey ? localized : phase);
+          const nextTimeline = PIPELINE_TIMELINE_INDEX[phaseId];
+          if (nextTimeline >= 0) {
+            // Monotonic — status notices must not rewind past retrieval/curation.
+            setTimelineIndex((prev) => Math.max(prev, nextTimeline));
+          }
 
-          const currentAgent = getAgentForPhase(phase);
-          if (currentAgent !== prevAgent) {
-            if (prevAgent !== null) {
-              dispatch(setAgentStatus({ agentName: prevAgent, status: 'done' }));
+          // null = status/metadata phase — keep debugger message in sync on the
+          // current agent row without inventing a new agent.
+          const typedAgent = getAgentForPhaseId(phaseId);
+          const agentForUpdate = typedAgent ?? prevAgent;
+          if (agentForUpdate !== null) {
+            if (typedAgent !== null && typedAgent !== prevAgent) {
+              if (prevAgent !== null) {
+                dispatch(setAgentStatus({ agentName: prevAgent, status: 'done' }));
+              }
+              dispatch(
+                addTraceEvent({
+                  agentName: typedAgent,
+                  status: 'running',
+                  message: phase,
+                  phaseId,
+                  startedAt: Date.now(),
+                  metadata: promptBudget ? { promptBudget } : undefined,
+                }),
+              );
+              prevAgent = typedAgent;
+            } else {
+              dispatch(
+                setAgentStatus({
+                  agentName: agentForUpdate,
+                  status: 'running',
+                  message: phase,
+                  // Agentless status phases must not rewrite the row's phaseId.
+                  ...(typedAgent !== null ? { phaseId } : {}),
+                  // Always pass metadata so stale promptBudget does not linger.
+                  metadata: promptBudget ? { promptBudget } : {},
+                }),
+              );
             }
-            dispatch(
-              addTraceEvent({
-                agentName: currentAgent,
-                status: 'running',
-                message: phase,
-                startedAt: Date.now(),
-                metadata: promptBudget ? { promptBudget } : undefined,
-              }),
-            );
-            prevAgent = currentAgent;
-          } else {
-            dispatch(
-              setAgentStatus({ agentName: currentAgent, status: 'running', message: phase }),
-            );
           }
 
           if (partialReport) {
@@ -366,6 +400,9 @@ export function useResearchSession({
     setReportStatus('idle');
     setError(null);
     setIsCurrentReportSaved(false);
+    setCurrentPhase('');
+    setCurrentPhaseId(null);
+    setTimelineIndex(0);
     setCurrentView('orchestrator');
   }, [setCurrentView]);
 
@@ -408,6 +445,8 @@ export function useResearchSession({
     reportStatus,
     error,
     currentPhase,
+    currentPhaseId,
+    timelineIndex,
     isCurrentReportSaved,
     resumeCheckpoints,
     setResumeCheckpoints: setResumeCheckpoints as Dispatch<SetStateAction<ResearchCheckpoint[]>>,

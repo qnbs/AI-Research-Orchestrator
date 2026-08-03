@@ -2,29 +2,21 @@
  * Thin adapter: routes literature orchestration between live Gemini and local heuristics.
  * Keeps `geminiService` as the public entry while avoiding further monolith growth (ADR 0007).
  * Freezes ResearchExecutionContext once at stream start (ADR 0017).
+ * Yields typed phaseId stream events (ADR 0020).
  */
-import type { ResearchInput, ResearchReport, Settings } from '../types';
+import type { ResearchInput, Settings } from '../types';
 import { throwIfAborted } from '../lib/errors';
-import type { PromptBudgetAccounting } from '../lib/promptBudget';
 import {
   buildResearchExecutionContext,
   EXECUTION_PROVENANCE_PHASE,
   type ResearchExecutionContext,
 } from '../lib/researchExecutionContext';
+import { makePipelineEvent, type ResearchStreamEvent } from '../types/pipelineEvents';
 import { generateNonAiResearchReportStream } from './nonAi';
 import { resolveActiveInferenceMode } from './resolveActiveInferenceMode';
 import type { InferenceModeSnapshot } from './inferenceMode';
 
-export type ResearchStreamEvent = {
-  report?: ResearchReport;
-  synthesisChunk?: string;
-  phase: string;
-  promptBudget?: PromptBudgetAccounting;
-  /** Present on the first event; frozen for the rest of the run. */
-  executionContext?: ResearchExecutionContext;
-};
-
-export type { ResearchExecutionContext };
+export type { ResearchStreamEvent, ResearchExecutionContext };
 
 /** True when the local heuristic path should run instead of a live provider. */
 export async function shouldUseHeuristic(aiSettings: Settings['ai']): Promise<boolean> {
@@ -71,7 +63,10 @@ export async function* generateResearchReportStreamWithMode(
       });
   throwIfAborted(signal, 'Research stream aborted');
   const executionContext = buildResearchExecutionContext({ snapshot, aiSettings });
-  yield { phase: EXECUTION_PROVENANCE_PHASE, executionContext };
+  yield makePipelineEvent('execution-provenance', {
+    phase: EXECUTION_PROVENANCE_PHASE,
+    executionContext,
+  });
   throwIfAborted(signal, 'Research stream aborted');
 
   if (snapshot.mode === 'heuristic') {

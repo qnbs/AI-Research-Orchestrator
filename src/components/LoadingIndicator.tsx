@@ -7,6 +7,10 @@ interface LoadingIndicatorProps {
   phase: string;
   phases: readonly string[];
   phaseDetails: Record<string, string[]>;
+  /** Prefer stable timeline index from typed phaseId (ADR 0020) over string equality. */
+  timelineIndex?: number;
+  /** When set, sub-phase details are looked up by phaseId (works for Non-AI badge prefixes). */
+  phaseId?: string;
   footerText?: string;
   swipeHintText?: string;
 }
@@ -179,6 +183,8 @@ export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
   phase,
   phases,
   phaseDetails,
+  timelineIndex,
+  phaseId,
   footerText,
   swipeHintText,
 }) => {
@@ -187,13 +193,17 @@ export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
   const subPhaseIntervalRef = useRef<number | null>(null);
 
   useEffect(() => {
-    const index = phases.findIndex((p) => p === phase);
+    const indexFromId =
+      typeof timelineIndex === 'number' && timelineIndex >= 0 && timelineIndex < phases.length
+        ? timelineIndex
+        : -1;
+    const index = indexFromId !== -1 ? indexFromId : phases.findIndex((p) => p === phase);
     // eslint-disable-next-line react-hooks/set-state-in-effect -- bundled with interval setup/teardown below, which must be an effect; keeps the last-known-good index rather than resetting when phase isn't found.
     if (index !== -1) setCurrentPhaseIndex(index);
 
     if (subPhaseIntervalRef.current) clearInterval(subPhaseIntervalRef.current);
 
-    const subPhases = phaseDetails[phase] ?? [];
+    const subPhases = (phaseId ? phaseDetails[phaseId] : undefined) ?? phaseDetails[phase] ?? [];
     if (subPhases.length > 0) {
       let si = 0;
       setCurrentSubPhase(subPhases[si]);
@@ -208,7 +218,7 @@ export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
     return () => {
       if (subPhaseIntervalRef.current) clearInterval(subPhaseIntervalRef.current);
     };
-  }, [phase, phases, phaseDetails]);
+  }, [phase, phaseId, phases, phaseDetails, timelineIndex]);
 
   const progress = ((currentPhaseIndex + 1) / phases.length) * 100;
 

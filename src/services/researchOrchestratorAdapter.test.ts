@@ -13,8 +13,11 @@ vi.mock('./resolveActiveInferenceMode', () => ({
 
 vi.mock('./nonAi', () => ({
   generateNonAiResearchReportStream: vi.fn(async function* () {
-    yield { phase: 'heuristic · Phase 1: Building Boolean query with MeSH terms...' };
-    yield { phase: 'heuristic · Finalizing report...' };
+    yield {
+      phaseId: 'query-generation',
+      phase: 'heuristic · Phase 1: Building Boolean query with MeSH terms...',
+    };
+    yield { phaseId: 'finalizing', phase: 'heuristic · Finalizing report...' };
   }),
 }));
 
@@ -73,21 +76,25 @@ describe('researchOrchestratorAdapter', () => {
     });
 
     const liveStream = vi.fn(async function* () {
-      yield { phase: 'live-ranking' };
+      yield { phaseId: 'ranking' as const, phase: 'live-ranking' };
     });
 
     const events: string[] = [];
+    const phaseIds: string[] = [];
     for await (const event of generateResearchReportStreamWithMode(
       baseInput,
       baseAiSettings,
       liveStream,
     )) {
       events.push(event.phase);
+      phaseIds.push(event.phaseId);
     }
 
     expect(liveStream).toHaveBeenCalledOnce();
     expect(events[0]).toBe(EXECUTION_PROVENANCE_PHASE);
+    expect(phaseIds[0]).toBe('execution-provenance');
     expect(events.slice(1)).toEqual(['live-ranking']);
+    expect(phaseIds.slice(1)).toEqual(['ranking']);
   });
 
   it('uses heuristic stream when mode resolves to heuristic', async () => {
@@ -101,7 +108,7 @@ describe('researchOrchestratorAdapter', () => {
     });
 
     const liveStream = vi.fn(async function* () {
-      yield { phase: 'should-not-run' };
+      yield { phaseId: 'ranking' as const, phase: 'should-not-run' };
     });
 
     const events: string[] = [];
@@ -130,7 +137,7 @@ describe('researchOrchestratorAdapter', () => {
     });
 
     const liveStream = vi.fn(async function* () {
-      yield { phase: 'should-not-run' };
+      yield { phaseId: 'ranking' as const, phase: 'should-not-run' };
     });
 
     const events: string[] = [];
@@ -158,7 +165,7 @@ describe('researchOrchestratorAdapter', () => {
 
   it('rejects with STREAM_ABORTED when signal is already aborted', async () => {
     const liveStream = vi.fn(async function* () {
-      yield { phase: 'should-not-run' };
+      yield { phaseId: 'ranking' as const, phase: 'should-not-run' };
     });
     const ac = new AbortController();
     ac.abort();
@@ -185,7 +192,7 @@ describe('researchOrchestratorAdapter', () => {
     });
 
     const liveStream = vi.fn(async function* () {
-      yield { phase: 'live' };
+      yield { phaseId: 'ranking' as const, phase: 'live' };
     });
 
     let frozenMode: string | undefined;

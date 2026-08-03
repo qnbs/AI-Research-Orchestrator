@@ -199,3 +199,8 @@
 
 - Merged: #200 demo quarantine, #201 immutable provenance, #202 abort/timeout, #203 stateful chat, #204 claim/corpus-supported terminology.
 - Next in remediation plan: PR6 Ollama first-class Local AI → PR7 typed pipeline events → PR8 E2E fixtures → PR9 eval → PR10 docs → PR11 CI governance.
+
+## 2026-08-03 — PR6 merged (#205); PR7 typed pipeline events
+
+- Merged #205 Ollama first-class Local AI (ADR 0019).
+- PR7: ADR 0020 typed `phaseId` stream events; fix PubMed+arXiv → PubMedFetcher; timeline by ID for DE locale.

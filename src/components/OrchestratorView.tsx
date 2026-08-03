@@ -13,6 +13,9 @@ import { useTranslation } from '../hooks/useTranslation';
 interface OrchestratorViewProps {
   reportStatus: 'idle' | 'generating' | 'streaming' | 'done' | 'error';
   currentPhase: string;
+  /** Stable timeline index from typed pipeline phaseId (ADR 0020). */
+  timelineIndex?: number;
+  currentPhaseId?: string | null;
   error: string | null;
   report: ResearchReport | null;
   researchInput: ResearchInput | null;
@@ -36,42 +39,54 @@ interface OrchestratorViewProps {
   onDiscardCheckpoint: (id: string) => void;
 }
 
-const phaseDetails: Record<string, string[]> = {
-  'Phase 1: AI Generating PubMed Queries...': [
+/** Legacy live-path sub-phase guidance (pre-existing English chrome). */
+const LEGACY_PHASE_DETAILS: Record<string, string[]> = {
+  'query-generation': [
     'Analyzing research topic and user criteria...',
     'AI is constructing advanced boolean search strings...',
     'Optimizing queries for relevance...',
   ],
-  'Phase 2: Executing Real-time PubMed Search...': [
+  'pubmed-search': [
     'Connecting to live NCBI PubMed database...',
     'Submitting best query to retrieve article IDs...',
     'Compiling list of relevant publications...',
   ],
-  'Phase 3: Fetching Article Details from PubMed...': [
+  'pubmed-fetch': [
     'Requesting abstracts and metadata for found articles...',
     'Parsing publication data (titles, authors, journals)...',
     'Preparing real-world data for AI analysis...',
   ],
-  'Phase 4: AI Ranking & Analysis of Real Articles...': [
+  curation: [
+    'Deduplicating PubMed and arXiv hits...',
+    'Cleaning metadata and classifying article types...',
+    'Preparing the curated corpus for ranking...',
+  ],
+  'arxiv-fetch': [
+    'Querying arXiv for matching preprints...',
+    'Merging preprint metadata into the corpus...',
+  ],
+  ranking: [
     'AI is reading and scoring each article for relevance...',
     'Writing relevance explanations based on content...',
     'Identifying key themes and generating insights...',
   ],
-  'Phase 5: Synthesizing Top Findings...': [
+  synthesis: [
     'Selecting top articles for the executive summary...',
     'Preparing final prompt for narrative synthesis...',
     'Initializing streaming connection with AI...',
   ],
-  'Streaming Synthesis...': [
+  'synthesis-stream': [
     'Receiving synthesized text in real-time...',
     'Building the narrative summary chunk by chunk...',
   ],
-  'Finalizing Report...': ['Assembling final report structure...', 'Finishing up...'],
+  finalizing: ['Assembling final report structure...', 'Finishing up...'],
 };
 
 const OrchestratorViewComponent: React.FC<OrchestratorViewProps> = ({
   reportStatus,
   currentPhase,
+  timelineIndex,
+  currentPhaseId,
   error,
   report,
   researchInput,
@@ -107,6 +122,27 @@ const OrchestratorViewComponent: React.FC<OrchestratorViewProps> = ({
     t('orchestrator.phase7'),
   ];
 
+  const phaseDetailsById: Record<string, string[]> = {
+    ...LEGACY_PHASE_DETAILS,
+    retrieval: [
+      t('orchestrator.subphase.retrieval.1'),
+      t('orchestrator.subphase.retrieval.2'),
+      t('orchestrator.subphase.retrieval.3'),
+    ],
+    'demo-corpus': [
+      t('orchestrator.subphase.demo_corpus.1'),
+      t('orchestrator.subphase.demo_corpus.2'),
+    ],
+    'retrieval-status': [
+      t('orchestrator.subphase.retrieval_status.1'),
+      t('orchestrator.subphase.retrieval_status.2'),
+    ],
+    'empty-retrieval': [
+      t('orchestrator.subphase.empty_retrieval.1'),
+      t('orchestrator.subphase.empty_retrieval.2'),
+    ],
+  };
+
   const isProcessing = reportStatus === 'generating' || reportStatus === 'streaming';
   const showLoadingIndicator = reportStatus === 'generating';
   const showReport = (reportStatus === 'streaming' || reportStatus === 'done') && report;
@@ -135,8 +171,10 @@ const OrchestratorViewComponent: React.FC<OrchestratorViewProps> = ({
         <LoadingIndicator
           title={t('orchestrator.title')}
           phase={currentPhase}
+          phaseId={currentPhaseId ?? undefined}
           phases={loadingPhases}
-          phaseDetails={phaseDetails}
+          phaseDetails={phaseDetailsById}
+          timelineIndex={timelineIndex}
           footerText="This may take up to a minute. The AI is performing multiple complex steps, including live database searches and synthesis."
         />
       )}

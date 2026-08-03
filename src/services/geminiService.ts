@@ -33,8 +33,8 @@ import {
 import {
   selectArticlesForRankingPrompt,
   selectArticlesForSynthesisPrompt,
-  type PromptBudgetAccounting,
 } from '../lib/promptBudget';
+import { makePipelineEvent, type ResearchStreamEvent } from '../types/pipelineEvents';
 import {
   parseGeminiResponseJson as parseGeminiJsonCore,
   GeminiJsonParseError,
@@ -213,12 +213,7 @@ async function* generateLiveResearchReportStream(
   input: ResearchInput,
   aiSettings: Settings['ai'],
   signal?: AbortSignal,
-): AsyncGenerator<{
-  report?: ResearchReport;
-  synthesisChunk?: string;
-  phase: string;
-  promptBudget?: PromptBudgetAccounting;
-}> {
+): AsyncGenerator<ResearchStreamEvent> {
   const provider = await getProviderForSettings(aiSettings);
   throwIfAborted(signal);
   const ncbiApiKey = (await getNcbiApiKey()) ?? undefined;
@@ -266,7 +261,7 @@ Research Topic: ${wrapUntrustedTextBlock('research_topic', topicSafe)}
     };
 
     // STEP 1: Generate Search Queries
-    yield { phase: 'Phase 1: AI Generating PubMed Queries...' };
+    yield makePipelineEvent('query-generation');
     throwIfAborted(signal);
     const { generatedQueries } = await generateJson<{ generatedQueries: GeneratedQuery[] }>(
       aiSettings,
@@ -286,7 +281,7 @@ Research Topic: ${wrapUntrustedTextBlock('research_topic', topicSafe)}
 
     throwIfAborted(signal);
     // STEP 2: Execute Real PubMed Search
-    yield { phase: 'Phase 2: Executing Real-time PubMed Search...' };
+    yield makePipelineEvent('pubmed-search');
     const pmids = await searchPubMedForIds(
       generatedQueries[0].query,
       input.maxArticlesToScan,
@@ -301,7 +296,7 @@ Research Topic: ${wrapUntrustedTextBlock('research_topic', topicSafe)}
 
     throwIfAborted(signal);
     // STEP 3: Fetch Real Article Details
-    yield { phase: 'Phase 3: Fetching Article Details from PubMed...' };
+    yield makePipelineEvent('pubmed-fetch');
     const articleDetails = await fetchArticleDetails(pmids, signal, ncbiApiKey);
     if (articleDetails.length === 0) {
       throw new Error('Could not fetch details for the articles found on PubMed.');
@@ -310,7 +305,7 @@ Research Topic: ${wrapUntrustedTextBlock('research_topic', topicSafe)}
     throwIfAborted(signal);
     // STEP 3b: Fetch arXiv Preprints (if enabled, non-blocking)
     if (input.includeArxiv) {
-      yield { phase: 'Phase 3b: Fetching arXiv Preprints...' };
+      yield makePipelineEvent('arxiv-fetch');
       const arxivMax = Math.min(Math.floor(input.maxArticlesToScan / 2), 15);
       const arxivResults = await searchAndFetchArxiv(topicSafe, arxivMax, signal);
       if (arxivResults.length > 0) {
@@ -407,10 +402,10 @@ Research Topic: ${wrapUntrustedTextBlock('research_topic', topicSafe)}
       undefined,
       ollamaBudgetOptions,
     );
-    yield {
+    yield makePipelineEvent('ranking', {
       phase: `Phase 4: AI Ranking (${rankingSelection.accounting.includedInPrompt}/${rankingSelection.accounting.totalRetrieved} articles in prompt)...`,
       promptBudget: rankingSelection.accounting,
-    };
+    });
 
     const corpusScopeNote =
       rankingSelection.accounting.omittedFromPrompt > 0
@@ -461,7 +456,7 @@ Research Topic: ${wrapUntrustedTextBlock('research_topic', topicSafe)}
       aiGeneratedInsights: grounded.insights,
       overallKeywords: analysisData.overallKeywords,
     };
-    yield { report: partialReport, phase: 'Phase 5: Synthesizing Top Findings...' };
+    yield makePipelineEvent('synthesis', { report: partialReport });
 
     throwIfAborted(signal);
     const synthesisSelection = selectArticlesForSynthesisPrompt(
@@ -471,10 +466,9 @@ Research Topic: ${wrapUntrustedTextBlock('research_topic', topicSafe)}
       undefined,
       ollamaBudgetOptions,
     );
-    yield {
-      phase: 'Phase 5: Synthesizing Top Findings...',
+    yield makePipelineEvent('synthesis', {
       promptBudget: synthesisSelection.accounting,
-    };
+    });
 
     const synthesisPrompt = `Based on the following articles, write a comprehensive synthesis focusing on ${wrapUntrustedTextBlock('synthesis_focus', focusSafe)}. This should be a well-structured narrative in markdown format. Cite PMIDs inline where claims are made. AI summaries are derived — verify against source abstracts when precision matters.
         
@@ -494,9 +488,9 @@ Research Topic: ${wrapUntrustedTextBlock('research_topic', topicSafe)}
 
     for await (const chunk of stream) {
       throwIfAborted(signal);
-      yield { synthesisChunk: chunk.text, phase: 'Streaming Synthesis...' };
+      yield makePipelineEvent('synthesis-stream', { synthesisChunk: chunk.text });
     }
-    yield { phase: 'Finalizing Report...' };
+    yield makePipelineEvent('finalizing');
   } catch (error) {
     safeLogError('Error generating research report:', error);
     throw provider.mapError(error);

@@ -493,7 +493,7 @@ describe('geminiService with mocked SDK', () => {
     const gen = generateResearchReportStream(mockInput, mockAi);
     // First event is frozen execution provenance (ADR 0017).
     await expect(gen.next()).resolves.toMatchObject({
-      value: { phase: EXECUTION_PROVENANCE_PHASE },
+      value: { phase: EXECUTION_PROVENANCE_PHASE, phaseId: 'execution-provenance' },
     });
     // Phase 1 query generation then validation failure before PubMed search.
     await expect(gen.next()).resolves.toBeDefined();

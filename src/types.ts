@@ -1,3 +1,7 @@
+import type { PipelinePhaseId } from './types/pipelinePhaseId';
+
+export type { PipelinePhaseId } from './types/pipelinePhaseId';
+
 export const ARTICLE_TYPES = [
   'Randomized Controlled Trial',
   'Meta-Analysis',
@@ -439,6 +443,8 @@ export interface AgentTraceEvent {
   agentName: AgentName;
   status: AgentStatus;
   message: string;
+  /** Stable pipeline phase ID when the event came from a typed stream (ADR 0020). */
+  phaseId?: PipelinePhaseId;
   startedAt: number;
   completedAt?: number;
   durationMs?: number;
