@@ -191,6 +191,88 @@ describe('validateClaimAgainstCorpus — adversarial fixtures', () => {
     expect(result.validationState).toBe('claim-supported');
     expect(result.pmids).toEqual(['1']);
   });
+
+  it('preserves invalid citations in validated results and metrics after stripping from pmids', () => {
+    const result = validateClaimAgainstCorpus(
+      { text: 'Aspirin reduced cardiovascular events.', pmids: ['1', '999'] },
+      corpus,
+    );
+    expect(result.invalidCitations).toEqual(['999']);
+    expect(result.validationState).toBe('claim-supported');
+    expect(result.pmids).toEqual(['1']);
+
+    const metrics = computeClaimTrustMetrics([result], corpus);
+    expect(metrics.invalidCitationCount).toBe(1);
+  });
+
+  it('keeps only supporting citations when one valid citation is irrelevant', () => {
+    const result = validateClaimAgainstCorpus(
+      {
+        text: 'Aspirin reduced cardiovascular events in adults.',
+        pmids: ['1', '2'],
+      },
+      corpus,
+    );
+    expect(result.validationState).toBe('claim-supported');
+    expect(result.pmids).toEqual(['1']);
+    expect(result.citedValidSourceKeys).toEqual(['1', '2']);
+
+    const metrics = computeClaimTrustMetrics([result], corpus);
+    expect(metrics.citationPrecision).toBe(0.5);
+    expect(metrics.irrelevantCitationRate).toBe(0.5);
+  });
+
+  it('rejects contradictory evidence even with lexical overlap', () => {
+    const contradictoryCorpus = [
+      article('3', 'Aspirin harm signal', 'Aspirin increased major bleeding events in adults.'),
+    ];
+    const result = validateClaimAgainstCorpus(
+      { text: 'Aspirin reduced major bleeding events in adults.', pmids: ['3'] },
+      contradictoryCorpus,
+    );
+    expect(result.validationState).toBe('rejected');
+  });
+
+  it('marks mixed supporting and contradicting citations as unverified', () => {
+    const mixedCorpus = [
+      article('4', 'Aspirin benefit', 'Aspirin reduced major cardiovascular events in adults.'),
+      article('5', 'Bleeding harm', 'Aspirin increased major bleeding events in adults.'),
+    ];
+    const result = validateClaimAgainstCorpus(
+      {
+        text: 'Aspirin reduced major cardiovascular events in adults.',
+        pmids: ['4', '5'],
+      },
+      mixedCorpus,
+    );
+    expect(result.validationState).toBe('unverified');
+    expect(result.pmids).toEqual(['4', '5']);
+  });
+
+  it('claim-supported snippets exclude contradicting sources', () => {
+    const mixedCorpus = [
+      article('4', 'Aspirin benefit', 'Aspirin reduced major cardiovascular events in adults.'),
+      article('5', 'Bleeding harm', 'Aspirin increased major bleeding events in adults.'),
+    ];
+    const result = validateClaimAgainstCorpus(
+      {
+        text: 'Aspirin reduced major cardiovascular events in adults.',
+        pmids: ['4'],
+      },
+      mixedCorpus,
+    );
+    expect(result.validationState).toBe('claim-supported');
+    expect(result.evidenceSnippets?.every((s) => s.startsWith('4:'))).toBe(true);
+  });
+
+  it('rejects invalid citations when in-corpus articles do not support the claim', () => {
+    const result = validateClaimAgainstCorpus(
+      { text: 'Quantum computing advances rapidly.', pmids: ['1', '999'] },
+      corpus,
+    );
+    expect(result.validationState).toBe('rejected');
+    expect(result.invalidCitations).toEqual(['999']);
+  });
 });
 
 describe('assessSynthesisTrust', () => {
@@ -246,6 +328,7 @@ describe('assessSynthesisTrust', () => {
           text: 'Aspirin reduces events',
           pmids: ['999'],
           validationState: 'rejected',
+          invalidCitations: ['999'],
         },
       ],
       [article('100', 'Aspirin trial', 'Aspirin reduces events in prevention.')],

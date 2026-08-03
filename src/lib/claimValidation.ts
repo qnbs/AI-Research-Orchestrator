@@ -1,6 +1,6 @@
 /**
- * Claim-level synthesis trust validation (P0-6).
- * Corpus membership alone is insufficient — claims need lexical evidence overlap.
+ * Claim-level synthesis trust validation (P0-6 / P1 claim integrity).
+ * Corpus membership alone is insufficient — claims need conservative evidence assessment.
  */
 
 import type {
@@ -11,6 +11,11 @@ import type {
 } from '../types';
 import { corpusContainsDemo } from './articleSourceClass';
 import { partitionCorpusCitations } from './citationGrounding';
+import {
+  CLAIM_EVIDENCE_MATCHER_VERSION,
+  assessClaimArticleEvidence,
+  articleSupportsClaim,
+} from './claimEvidenceMatcher';
 import {
   corpusKeysFromArticles,
   ensureGroundedClaim,
@@ -37,47 +42,32 @@ export type ClaimTrustMetrics = {
   sourceRelevance: number;
 };
 
-const TOKEN_MIN_LEN = 3;
-const MIN_EVIDENCE_TOKENS = 2;
-
-function tokenize(text: string): Set<string> {
-  const normalized = text.toLowerCase().normalize('NFD').replace(/\p{M}/gu, '');
-  const tokens = normalized
-    .replace(/[^\p{L}\p{N}]+/gu, ' ')
-    .split(/\s+/)
-    .filter((t) => t.length >= TOKEN_MIN_LEN);
-  return new Set(tokens);
-}
-
-function countTokenOverlap(left: Set<string>, right: Set<string>): number {
-  let overlap = 0;
-  for (const token of left) {
-    if (right.has(token)) overlap += 1;
-  }
-  return overlap;
-}
-
-/** Whether article text plausibly supports the claim (lexical overlap heuristic). */
-export function articleSupportsClaim(claimText: string, article: RankedArticle): boolean {
-  const claimTokens = tokenize(claimText);
-  if (claimTokens.size === 0) return false;
-  const corpusText = `${article.title} ${article.summary ?? ''}`;
-  const articleTokens = tokenize(corpusText);
-  return countTokenOverlap(claimTokens, articleTokens) >= MIN_EVIDENCE_TOKENS;
-}
+export type ValidatedClaimResult = GroundedClaim & {
+  validationState: ClaimValidationState;
+  evidenceSnippets?: string[];
+  /** Out-of-corpus citation ids preserved for metrics and export (not stripped). */
+  invalidCitations?: string[];
+  /**
+   * All corpus-valid keys originally cited by the model before support filtering.
+   * Metrics must use this (not trimmed `pmids`) so irrelevant in-corpus citations count.
+   */
+  citedValidSourceKeys?: string[];
+  matcherVersion?: string;
+};
 
 function stableClaimId(text: string, pmids: readonly string[]): string {
   const slug = text.slice(0, 48).replace(/\s+/g, '-').toLowerCase();
   return `claim-${pmids.join('-')}-${slug}`;
 }
 
-export type ValidatedClaimResult = GroundedClaim & {
-  validationState: ClaimValidationState;
-  evidenceSnippets?: string[];
-};
+function formatEvidenceSnippet(sourceKey: string, quote: string): string {
+  const trimmed = quote.trim();
+  if (trimmed.length <= 200) return `${sourceKey}: ${trimmed}`;
+  return `${sourceKey}: ${trimmed.slice(0, 197)}...`;
+}
 
 /**
- * Validate one claim: corpus-bound PMIDs plus evidence overlap in source text.
+ * Validate one claim: corpus-bound PMIDs plus conservative evidence in source text.
  */
 export function validateClaimAgainstCorpus(
   claim: GroundedClaim,
@@ -93,33 +83,69 @@ export function validateClaimAgainstCorpus(
       ...normalized,
       id,
       pmids: [],
+      invalidCitations: invalid.length > 0 ? invalid : undefined,
       validationState: 'rejected',
       evidenceSnippets: [],
+      matcherVersion: CLAIM_EVIDENCE_MATCHER_VERSION,
     };
   }
 
   const supporting: string[] = [];
+  const contradicting: string[] = [];
+  const evidenceByPmid = new Map<string, ReturnType<typeof assessClaimArticleEvidence>>();
+
   for (const pmid of valid) {
     const article = findArticleByCorpusKey(corpusArticles, pmid);
-    if (article && articleSupportsClaim(normalized.text, article)) {
-      const snippet = (article.summary ?? article.title).slice(0, 160);
-      supporting.push(`${pmid}: ${snippet}`);
-    }
+    if (!article) continue;
+    const evidence = assessClaimArticleEvidence(normalized.text, article);
+    evidenceByPmid.set(pmid, evidence);
+    if (evidence.relation === 'supports') supporting.push(pmid);
+    else if (evidence.relation === 'contradicts') contradicting.push(pmid);
   }
 
-  const hasEvidence = supporting.length > 0;
-  const validationState: ClaimValidationState = hasEvidence
-    ? 'claim-supported'
-    : invalid.length > 0
-      ? 'rejected'
-      : 'unverified';
+  let validationState: ClaimValidationState;
+  let resultPmids: string[];
+
+  if (supporting.length > 0 && contradicting.length === 0) {
+    validationState = 'claim-supported';
+    resultPmids = supporting;
+  } else if (contradicting.length > 0 && supporting.length === 0) {
+    validationState = 'rejected';
+    resultPmids = valid;
+  } else if (supporting.length > 0 && contradicting.length > 0) {
+    validationState = 'unverified';
+    resultPmids = valid;
+  } else {
+    validationState = 'unverified';
+    resultPmids = valid;
+  }
+
+  if (invalid.length > 0 && supporting.length === 0 && validationState === 'unverified') {
+    validationState = 'rejected';
+  }
+
+  const snippets = resultPmids
+    .map((pmid) => {
+      const evidence = evidenceByPmid.get(pmid);
+      const span = evidence?.spans[0];
+      if (span) return formatEvidenceSnippet(pmid, span.quote);
+      if (validationState === 'claim-supported') {
+        const article = findArticleByCorpusKey(corpusArticles, pmid);
+        return article ? formatEvidenceSnippet(pmid, article.summary ?? article.title) : undefined;
+      }
+      return undefined;
+    })
+    .filter((s): s is string => Boolean(s));
 
   return {
     ...normalized,
     id,
-    pmids: valid,
+    pmids: resultPmids,
+    citedValidSourceKeys: valid,
+    invalidCitations: invalid.length > 0 ? invalid : undefined,
     validationState,
-    evidenceSnippets: supporting.length > 0 ? supporting : undefined,
+    evidenceSnippets: snippets.length > 0 ? snippets : undefined,
+    matcherVersion: CLAIM_EVIDENCE_MATCHER_VERSION,
   };
 }
 
@@ -174,7 +200,8 @@ export function computeClaimTrustMetrics(
   let irrelevantPmids = 0;
 
   for (const claim of claims) {
-    const { invalid } = partitionCorpusCitations(corpusIds, claim.pmids);
+    const partitioned = partitionCorpusCitations(corpusIds, claim.pmids);
+    const invalid = claim.invalidCitations ?? partitioned.invalid;
     invalidCitationCount += invalid.length;
 
     const state = normalizeClaimValidationState(claim.validationState);
@@ -182,10 +209,11 @@ export function computeClaimTrustMetrics(
     else if (state === 'unverified') unverifiedClaims += 1;
     else rejectedClaims += 1;
 
-    for (const pmid of claim.pmids) {
+    const validCited = claim.citedValidSourceKeys ?? partitioned.valid;
+    const allCitedKeys = [...validCited, ...invalid];
+    for (const pmid of allCitedKeys) {
       citedPmids += 1;
       const article = findArticleByCorpusKey(corpusArticles, pmid);
-      // Out-of-corpus PMIDs are non-supporting (same bucket as lexically irrelevant).
       if (!article || !articleSupportsClaim(claim.text, article)) {
         irrelevantPmids += 1;
       }
@@ -213,3 +241,6 @@ export function computeClaimTrustMetrics(
     sourceRelevance: citationPrecision,
   };
 }
+
+// Re-export for tests and downstream callers.
+export { articleSupportsClaim } from './claimEvidenceMatcher';
