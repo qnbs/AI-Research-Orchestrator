@@ -289,14 +289,41 @@ export async function probeOllamaHealth(
   }
 }
 
+/** Resolve a discovered model entry for a selected name (exact or tag alias). */
+export function findOllamaModelInfo(
+  models: OllamaModelInfo[],
+  selectedModel: string,
+): OllamaModelInfo | undefined {
+  const target = selectedModel.trim().toLowerCase();
+  if (!target) return undefined;
+  const exact = models.find((m) => m.name.toLowerCase() === target);
+  if (exact) return exact;
+  return models.find((m) => {
+    const name = m.name.toLowerCase();
+    return name.startsWith(`${target}:`) || target.startsWith(`${name}:`);
+  });
+}
+
 /** Whether a selected model name is present in a health probe model list. */
 export function isOllamaModelAvailable(models: OllamaModelInfo[], selectedModel: string): boolean {
-  const target = selectedModel.trim().toLowerCase();
-  if (!target) return false;
-  return models.some((m) => {
-    const name = m.name.toLowerCase();
-    return name === target || name.startsWith(`${target}:`) || target.startsWith(`${name}:`);
-  });
+  return findOllamaModelInfo(models, selectedModel) !== undefined;
+}
+
+/**
+ * Parameter-size hint for the active Ollama base URL only.
+ * Never scans other cached endpoints (avoids cross-endpoint contamination).
+ * Requires an explicit base URL string — omitted/undefined skips the cache.
+ */
+export function resolveCachedOllamaParameterSize(
+  rawBaseUrl: string | undefined,
+  model: string,
+): string | undefined {
+  if (typeof rawBaseUrl !== 'string') return undefined;
+  const normalized = normalizeBaseUrl(rawBaseUrl);
+  if (!normalized.ok) return undefined;
+  const cached = getCachedOllamaHealth(normalized.baseUrl);
+  if (!cached?.ok || !cached.modelsDiscovered) return undefined;
+  return findOllamaModelInfo(cached.models, model)?.parameterSize;
 }
 
 /** Map a failed health probe into a typed AppError for provider callers. */

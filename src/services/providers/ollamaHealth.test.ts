@@ -6,6 +6,7 @@ import {
   isOllamaModelAvailable,
   mergeSignals,
   probeOllamaHealth,
+  resolveCachedOllamaParameterSize,
 } from './ollamaHealth';
 
 describe('probeOllamaHealth', () => {
@@ -215,6 +216,23 @@ describe('isOllamaModelAvailable / estimateOllamaInputTokenBudget', () => {
     expect(isOllamaModelAvailable(models, 'llama3.1:8b')).toBe(true);
     expect(isOllamaModelAvailable(models, 'mistral:7b')).toBe(true);
     expect(isOllamaModelAvailable(models, 'missing')).toBe(false);
+  });
+
+  it('resolves parameterSize only from the active endpoint cache', async () => {
+    global.fetch = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ version: '0.5.0' }) })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          models: [{ name: 'custom-local', details: { parameter_size: '1B' } }],
+        }),
+      });
+    await probeOllamaHealth('http://localhost:11434', { force: true });
+    expect(resolveCachedOllamaParameterSize('http://localhost:11434', 'custom-local')).toBe('1B');
+    expect(resolveCachedOllamaParameterSize('http://127.0.0.1:11434', 'custom-local')).toBe(
+      undefined,
+    );
   });
 
   it('tightens budget and warns for small parameter sizes', () => {

@@ -389,11 +389,16 @@ Research Topic: ${wrapUntrustedTextBlock('research_topic', topicSafe)}
 
     throwIfAborted(signal);
     const providerId = aiSettings.provider ?? 'gemini';
+    const ollamaBudgetOptions = {
+      ollamaBaseUrl: aiSettings.customBaseUrl?.trim() || 'http://localhost:11434',
+    };
     const rankingSelection = selectArticlesForRankingPrompt(
       articleDetails,
       topicSafe,
       providerId,
       aiSettings.model,
+      undefined,
+      ollamaBudgetOptions,
     );
     yield {
       phase: `Phase 4: AI Ranking (${rankingSelection.accounting.includedInPrompt}/${rankingSelection.accounting.totalRetrieved} articles in prompt)...`,
@@ -456,6 +461,8 @@ Research Topic: ${wrapUntrustedTextBlock('research_topic', topicSafe)}
       grounded.rankedArticles,
       providerId,
       aiSettings.model,
+      undefined,
+      ollamaBudgetOptions,
     );
     yield {
       phase: 'Phase 5: Synthesizing Top Findings...',
