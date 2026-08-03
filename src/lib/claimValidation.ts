@@ -19,7 +19,7 @@ import {
 
 export type ClaimTrustMetrics = {
   totalClaims: number;
-  verifiedClaims: number;
+  claimSupportedClaims: number;
   unverifiedClaims: number;
   rejectedClaims: number;
   invalidCitationCount: number;
@@ -100,7 +100,7 @@ export function validateClaimAgainstCorpus(
 
   const hasEvidence = supporting.length > 0;
   const validationState: ClaimValidationState = hasEvidence
-    ? 'verified'
+    ? 'claim-supported'
     : invalid.length > 0
       ? 'rejected'
       : 'unverified';
@@ -129,11 +129,13 @@ export function assessSynthesisTrust(
   const validated = claims.map((c) => validateClaimAgainstCorpus(c, corpusArticles));
   const metrics = computeClaimTrustMetrics(validated, corpusArticles);
 
-  // Synthetic demo fixtures must never receive a UI "verified" trust label.
+  // Synthetic demo fixtures must never receive elevated corpus-supported trust.
   const demoCorpus = corpusContainsDemo(corpusArticles);
   if (demoCorpus) {
     const demoted = validated.map((c) =>
-      c.validationState === 'verified' ? { ...c, validationState: 'unverified' as const } : c,
+      c.validationState === 'claim-supported'
+        ? { ...c, validationState: 'unverified' as const }
+        : c,
     );
     return {
       claims: demoted,
@@ -142,10 +144,10 @@ export function assessSynthesisTrust(
     };
   }
 
-  const allVerified =
-    validated.length > 0 && validated.every((c) => c.validationState === 'verified');
+  const allClaimSupported =
+    validated.length > 0 && validated.every((c) => c.validationState === 'claim-supported');
   const trustLevel: SynthesisTrustLevel =
-    mode === 'extractive-template' && allVerified ? 'verified' : 'narrative-draft';
+    mode === 'extractive-template' && allClaimSupported ? 'corpus-supported' : 'narrative-draft';
 
   return { claims: validated, trustLevel, metrics };
 }
@@ -156,7 +158,7 @@ export function computeClaimTrustMetrics(
 ): ClaimTrustMetrics {
   const corpusIds = corpusKeysFromArticles(corpusArticles);
   let invalidCitationCount = 0;
-  let verifiedClaims = 0;
+  let claimSupportedClaims = 0;
   let unverifiedClaims = 0;
   let rejectedClaims = 0;
   let citedPmids = 0;
@@ -166,7 +168,7 @@ export function computeClaimTrustMetrics(
     const { invalid } = partitionCorpusCitations(corpusIds, claim.pmids);
     invalidCitationCount += invalid.length;
 
-    if (claim.validationState === 'verified') verifiedClaims += 1;
+    if (claim.validationState === 'claim-supported') claimSupportedClaims += 1;
     else if (claim.validationState === 'unverified') unverifiedClaims += 1;
     else rejectedClaims += 1;
 
@@ -187,7 +189,7 @@ export function computeClaimTrustMetrics(
 
   return {
     totalClaims,
-    verifiedClaims,
+    claimSupportedClaims,
     unverifiedClaims,
     rejectedClaims,
     invalidCitationCount,

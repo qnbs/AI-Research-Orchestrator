@@ -216,7 +216,7 @@ export const settingsTranslations = {
     'settings.modal.reset.confirm': 'Yes, Reset All',
     'settings.modal.import.title': 'Import Knowledge Base',
     'settings.modal.import.message':
-      'Import {count} sanitized knowledge-base entries? External files are re-validated on import; verified synthesis trust cannot be preserved.',
+      'Import {count} sanitized knowledge-base entries? External files are re-validated on import; corpus-supported synthesis trust cannot be preserved.',
     'settings.modal.import.quarantine':
       'Trust downgraded: {trustDowngraded}. Invalid citations stripped: {invalidCitations}. Rejected before import: {rejected}.',
     'settings.modal.import.confirm': 'Yes, Import',
@@ -472,7 +472,7 @@ export const settingsTranslations = {
     'settings.modal.reset.confirm': 'Ja, alles zurücksetzen',
     'settings.modal.import.title': 'Knowledge Base importieren',
     'settings.modal.import.message':
-      '{count} bereinigte Knowledge-Base-Einträge importieren? Externe Dateien werden beim Import erneut validiert; verifizierter Synthese-Trust kann nicht erhalten bleiben.',
+      '{count} bereinigte Knowledge-Base-Einträge importieren? Externe Dateien werden beim Import erneut validiert; korpus-gestützter Synthese-Trust kann nicht erhalten bleiben.',
     'settings.modal.import.quarantine':
       'Trust herabgestuft: {trustDowngraded}. Ungültige Zitationen entfernt: {invalidCitations}. Vor Import abgelehnt: {rejected}.',
     'settings.modal.import.confirm': 'Ja, importieren',

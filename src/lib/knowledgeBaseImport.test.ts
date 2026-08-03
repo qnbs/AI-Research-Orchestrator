@@ -54,12 +54,12 @@ const baseResearchEntry = (): ResearchEntry => ({
     overallKeywords: [],
     groundedSynthesis: {
       mode: 'narrative-extracted',
-      trustLevel: 'verified',
+      trustLevel: 'corpus-supported',
       claims: [
         {
           text: 'Aspirin helps prevention',
           pmids: ['100'],
-          validationState: 'verified',
+          validationState: 'claim-supported',
         },
       ],
     },
@@ -67,7 +67,7 @@ const baseResearchEntry = (): ResearchEntry => ({
 });
 
 describe('sanitizeKnowledgeBaseEntryForImport', () => {
-  it('downgrades forged verified trust to narrative-draft', () => {
+  it('downgrades forged corpus-supported trust to narrative-draft', () => {
     const { entry, stats } = sanitizeKnowledgeBaseEntryForImport(baseResearchEntry());
     expect(entry.sourceType).toBe('research');
     if (entry.sourceType === 'research') {

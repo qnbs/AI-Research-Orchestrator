@@ -8,6 +8,7 @@ import { corpusContainsDemo, isDemoSyntheticArticle } from './articleSourceClass
 import { applyCorpusCitationGrounding } from './citationGrounding';
 import { isAllDemoCorpus } from './demoCorpusMigration';
 import { sanitizeGroundedSynthesis, sanitizeSynthesisForExport } from './groundedSynthesis';
+import { isElevatedSynthesisTrust } from './synthesisTrustTerminology';
 
 export interface ExportProvenanceResult {
   report: ResearchReport;
@@ -62,7 +63,11 @@ export const sanitizeReportForExport = (report: ResearchReport): ExportProvenanc
 
   const claimGrounding = sanitizeGroundedSynthesis(report.groundedSynthesis, corpusPmids);
   let groundedSynthesis = claimGrounding.groundedSynthesis;
-  if ((isDemoOnly || containsDemo) && groundedSynthesis?.trustLevel === 'verified') {
+  if (
+    groundedSynthesis &&
+    (isDemoOnly || containsDemo) &&
+    isElevatedSynthesisTrust(groundedSynthesis.trustLevel)
+  ) {
     groundedSynthesis = { ...groundedSynthesis, trustLevel: 'narrative-draft' };
   }
 

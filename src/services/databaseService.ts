@@ -13,6 +13,7 @@ import {
 } from '../lib/demoCorpusMigration';
 import { ensureArticleIdentifiers, ensureGroundedClaim } from '../lib/sourceIdentifier';
 import { safeLogError } from '../lib/safeLog';
+import { migrateGroundedSynthesisTrustTerminology } from '../lib/synthesisTrustTerminology';
 
 export const db = new Dexie('AIResearchAppDatabase') as Dexie & {
   knowledgeBaseEntries: Table<KnowledgeBaseEntry, string>;
@@ -146,6 +147,47 @@ db.version(6)
         ckpt.report = stampDemoReportProvenance(ckpt.report);
       } catch (err) {
         safeLogError('Dexie v6: skip checkpoint demo stamp', err);
+      }
+    });
+  });
+
+// Version 7: rename legacy synthesis trust wire values (ADR 0018)
+db.version(7)
+  .stores({
+    knowledgeBaseEntries: 'id, timestamp, sourceType, title',
+    settings: 'id',
+    presets: 'id',
+    collections: 'id, name, createdAt, updatedAt',
+    researchCheckpoints: 'id, createdAt, topic, reason',
+  })
+  .upgrade(async (tx) => {
+    const kbTable = tx.table('knowledgeBaseEntries');
+    await kbTable.toCollection().modify((entry) => {
+      try {
+        const kb = entry as KnowledgeBaseEntry;
+        if (kb.sourceType !== 'research' || !kb.report) return;
+        kb.report = {
+          ...kb.report,
+          groundedSynthesis: migrateGroundedSynthesisTrustTerminology(kb.report.groundedSynthesis),
+        };
+      } catch (err) {
+        safeLogError('Dexie v7: skip trust terminology migration', err);
+      }
+    });
+
+    const checkpointTable = tx.table('researchCheckpoints');
+    await checkpointTable.toCollection().modify((checkpoint) => {
+      try {
+        const ckpt = checkpoint as ResearchCheckpoint;
+        if (!ckpt.report) return;
+        ckpt.report = {
+          ...ckpt.report,
+          groundedSynthesis: migrateGroundedSynthesisTrustTerminology(
+            ckpt.report.groundedSynthesis,
+          ),
+        };
+      } catch (err) {
+        safeLogError('Dexie v7: skip checkpoint trust terminology migration', err);
       }
     });
   });

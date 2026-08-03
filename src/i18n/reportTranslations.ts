@@ -24,7 +24,7 @@ export const reportTranslations = {
     'report.synthesis.copiedToast': 'Synthesis (plain text) copied to clipboard!',
     'report.synthesis.narrativeDraftBanner':
       'Unverified narrative draft — only claims with corpus evidence are validated. Verify against source abstracts before citing.',
-    'report.synthesis.verifiedBanner':
+    'report.synthesis.corpusSupportedBanner':
       'Corpus-supported synthesis — claims matched lexical evidence in retrieved abstracts (not a full bibliographic audit).',
     'report.insights.supportingEvidence': 'Supporting evidence:',
     'report.sources.intro':
@@ -92,7 +92,7 @@ export const reportTranslations = {
     'report.synthesis.copiedToast': 'Synthese (Klartext) in die Zwischenablage kopiert!',
     'report.synthesis.narrativeDraftBanner':
       'Unverifizierter Narrativ-Entwurf — nur Behauptungen mit Korpus-Evidenz sind validiert. Vor Zitieren die Quellabstracts prüfen.',
-    'report.synthesis.verifiedBanner':
+    'report.synthesis.corpusSupportedBanner':
       'Korpus-gestützte Synthese — Behauptungen stimmen lexikalisch mit abgerufenen Abstracts überein (kein vollständiges bibliometrisches Audit).',
     'report.insights.supportingEvidence': 'Belege:',
     'report.sources.intro':

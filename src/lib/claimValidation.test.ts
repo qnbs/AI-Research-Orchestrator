@@ -55,7 +55,7 @@ describe('validateClaimAgainstCorpus — adversarial fixtures', () => {
       { text: 'Aspirin reduced cardiovascular events in the trial.', pmids: ['1'] },
       corpus,
     );
-    expect(result.validationState).toBe('verified');
+    expect(result.validationState).toBe('claim-supported');
     expect(result.evidenceSnippets?.[0]).toContain('1');
   });
 
@@ -91,7 +91,7 @@ describe('validateClaimAgainstCorpus — adversarial fixtures', () => {
       { text: 'Aspirin cardiovascular benefit.', pmids: ['1', '1', '', ' 1 '] },
       corpus,
     );
-    expect(result.validationState).toBe('verified');
+    expect(result.validationState).toBe('claim-supported');
     expect(result.pmids).toEqual(['1']);
   });
 
@@ -129,7 +129,7 @@ describe('validateClaimAgainstCorpus — adversarial fixtures', () => {
       },
       [arxivArticle],
     );
-    expect(result.validationState).toBe('verified');
+    expect(result.validationState).toBe('claim-supported');
   });
 
   it('resolves doi corpus keys via canonical key', () => {
@@ -150,7 +150,7 @@ describe('validateClaimAgainstCorpus — adversarial fixtures', () => {
       { text: 'Open dataset for biomedical benchmarking.', pmids: ['doi:10.1234/example'] },
       [doiArticle],
     );
-    expect(result.validationState).toBe('verified');
+    expect(result.validationState).toBe('claim-supported');
   });
 
   it('resolves pmcid corpus keys via canonical key', () => {
@@ -171,7 +171,7 @@ describe('validateClaimAgainstCorpus — adversarial fixtures', () => {
       { text: 'PMC full text cardiovascular outcomes study.', pmids: ['pmcid:555'] },
       [pmcArticle],
     );
-    expect(result.validationState).toBe('verified');
+    expect(result.validationState).toBe('claim-supported');
   });
 
   it('validates claims using typed articleIds when pmids is empty', () => {
@@ -186,13 +186,13 @@ describe('validateClaimAgainstCorpus — adversarial fixtures', () => {
       },
       corpus,
     );
-    expect(result.validationState).toBe('verified');
+    expect(result.validationState).toBe('claim-supported');
     expect(result.pmids).toEqual(['1']);
   });
 });
 
 describe('assessSynthesisTrust', () => {
-  it('marks extractive mode verified when all claims pass', () => {
+  it('marks extractive mode corpus-supported when all claims pass', () => {
     const corpus = [
       article('1', 'Aspirin trial', 'Aspirin reduced cardiovascular events significantly.'),
     ];
@@ -201,8 +201,8 @@ describe('assessSynthesisTrust', () => {
       corpus,
       'extractive-template',
     );
-    expect(assessment.trustLevel).toBe('verified');
-    expect(assessment.metrics.verifiedClaims).toBe(1);
+    expect(assessment.trustLevel).toBe('corpus-supported');
+    expect(assessment.metrics.claimSupportedClaims).toBe(1);
   });
 
   it('marks narrative mode as draft when any claim is unverified', () => {
@@ -219,7 +219,7 @@ describe('assessSynthesisTrust', () => {
     expect(assessment.metrics.unsupportedClaimRate).toBeGreaterThan(0);
   });
 
-  it('never marks synthetic demo corpora as verified', () => {
+  it('never marks synthetic demo corpora as corpus-supported', () => {
     const corpus = [
       {
         ...article(
@@ -241,7 +241,7 @@ describe('assessSynthesisTrust', () => {
       'extractive-template',
     );
     expect(assessment.trustLevel).toBe('narrative-draft');
-    expect(assessment.metrics.verifiedClaims).toBe(0);
+    expect(assessment.metrics.claimSupportedClaims).toBe(0);
   });
 });
 

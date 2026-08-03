@@ -21,6 +21,7 @@ Index of ADRs for AI-Research-Orchestrator. Each record captures one significant
 | [0015](0015-grounded-synthesis-schema.md)               | Grounded Synthesis Schema                               | Accepted | 2026-08-02 | Optional `groundedSynthesis.claims[]` for export/import validation                            |
 | [0016](0016-synthetic-demo-quarantine.md)               | Synthetic Demo Quarantine                               | Accepted | 2026-08-02 | Explicit educational demo mode; no silent demo substitution on empty/failed retrieval         |
 | [0017](0017-immutable-execution-provenance.md)          | Immutable Execution Provenance                          | Accepted | 2026-08-02 | Freeze inference mode at stream start; no completion re-resolve                               |
+| [0018](0018-synthesis-trust-terminology.md)             | Synthesis Trust Terminology                             | Accepted | 2026-08-03 | Rename overclaiming `verified` wire values to claim/corpus-supported                          |
 
 ## Conventions
 

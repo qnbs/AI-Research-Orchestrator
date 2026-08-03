@@ -4,6 +4,7 @@
  */
 
 import type { KnowledgeBaseEntry, RankedArticle, ResearchEntry, ResearchReport } from '../types';
+import { isElevatedSynthesisTrust } from './synthesisTrustTerminology';
 
 type DemoStampableArticle = RankedArticle & {
   pmid?: string;
@@ -49,11 +50,12 @@ export function stampDemoReportProvenance(report: ResearchReport): ResearchRepor
     corpusClass: 'demo-only',
     retrievalOutcome: 'educational_demo',
   };
-  if (next.groundedSynthesis?.trustLevel === 'verified') {
+  const grounded = next.groundedSynthesis;
+  if (grounded && isElevatedSynthesisTrust(grounded.trustLevel)) {
     next = {
       ...next,
       groundedSynthesis: {
-        ...next.groundedSynthesis,
+        ...grounded,
         trustLevel: 'narrative-draft',
       },
     };

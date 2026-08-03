@@ -23,6 +23,7 @@ import { ChatBubbleLeftRightIcon } from './icons/ChatBubbleLeftRightIcon';
 import { ReportArticleCard } from './ReportArticleCard';
 import { stableInsightKey } from '../lib/stableReactKeys';
 import { isDemoSyntheticArticle } from '../lib/articleSourceClass';
+import { normalizeSynthesisTrustLevel } from '../lib/synthesisTrustTerminology';
 import {
   legacyArticleKeyUrl,
   parseLegacyArticleKey,
@@ -220,8 +221,10 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(function R
   };
 
   const synthesisTrustLevel =
-    report.groundedSynthesis?.trustLevel ??
-    (report.groundedSynthesis?.mode === 'extractive-template' ? 'verified' : 'narrative-draft');
+    normalizeSynthesisTrustLevel(report.groundedSynthesis?.trustLevel) ??
+    (report.groundedSynthesis?.mode === 'extractive-template'
+      ? 'corpus-supported'
+      : 'narrative-draft');
   const isDemoCorpus =
     report.corpusClass === 'demo-only' ||
     report.retrievalOutcome === 'educational_demo' ||
@@ -232,7 +235,7 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(function R
     report.retrievalOutcome === 'zero_results' ||
     report.retrievalOutcome === 'retrieval_failed' ||
     report.retrievalOutcome === 'offline_without_demo';
-  // Demo corpora must never show the green "verified" trust chrome.
+  // Demo corpora must never show the green corpus-supported trust chrome.
   const showNarrativeDraftBanner =
     !isDemoCorpus && !isEmptyRetrieval && synthesisTrustLevel === 'narrative-draft';
 
@@ -381,14 +384,12 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(function R
               >
                 {t('report.synthesis.narrativeDraftBanner')}
               </p>
-            ) : !isDemoCorpus &&
-              !isEmptyRetrieval &&
-              report.groundedSynthesis?.trustLevel === 'verified' ? (
+            ) : !isDemoCorpus && !isEmptyRetrieval && synthesisTrustLevel === 'corpus-supported' ? (
               <p
                 className="mb-3 rounded-md border border-green-500/30 bg-green-500/10 px-3 py-2 text-sm text-green-200"
                 role="status"
               >
-                {t('report.synthesis.verifiedBanner')}
+                {t('report.synthesis.corpusSupportedBanner')}
               </p>
             ) : null}
             <div
