@@ -112,9 +112,16 @@ export function validateClaimAgainstCorpus(
   } else if (contradicting.length > 0 && supporting.length === 0) {
     validationState = 'rejected';
     resultPmids = valid;
+  } else if (supporting.length > 0 && contradicting.length > 0) {
+    validationState = 'unverified';
+    resultPmids = valid;
   } else {
     validationState = 'unverified';
     resultPmids = valid;
+  }
+
+  if (invalid.length > 0 && supporting.length === 0 && validationState === 'unverified') {
+    validationState = 'rejected';
   }
 
   const snippets = resultPmids

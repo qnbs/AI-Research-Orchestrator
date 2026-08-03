@@ -4,9 +4,10 @@
  */
 
 import type { RankedArticle } from '../types';
+import { stem } from '../services/nonAi/utils';
 
 /** Bump when matcher semantics change (exported in validation results). */
-export const CLAIM_EVIDENCE_MATCHER_VERSION = '2.0.0';
+export const CLAIM_EVIDENCE_MATCHER_VERSION = '2.1.0';
 
 const TOKEN_MIN_LEN = 3;
 
@@ -250,7 +251,8 @@ function tokenizeContent(text: string): string[] {
   return normalized
     .replace(/[^\p{L}\p{N}]+/gu, ' ')
     .split(/\s+/)
-    .filter((t) => t.length >= TOKEN_MIN_LEN && !STOPWORDS.has(t));
+    .filter((t) => t.length >= TOKEN_MIN_LEN && !STOPWORDS.has(t))
+    .map(stem);
 }
 
 function uniqueTokens(tokens: string[]): Set<string> {
@@ -274,18 +276,20 @@ function hasNegationNear(tokens: string[], index: number): boolean {
 }
 
 function detectDirectionConflict(claimTokens: string[], articleTokens: string[]): boolean {
-  const claimSet = new Set(claimTokens);
-  const articleSet = new Set(articleTokens);
+  const claimSet = new Set(claimTokens.map(stem));
+  const articleSet = new Set(articleTokens.map(stem));
   for (const [term, opposites] of Object.entries(DIRECTION_TERMS)) {
-    if (!claimSet.has(term)) continue;
+    const stemmedTerm = stem(term);
+    if (!claimSet.has(stemmedTerm)) continue;
     for (const opposite of opposites) {
-      if (articleSet.has(opposite)) return true;
+      if (articleSet.has(stem(opposite))) return true;
     }
   }
   for (const [term, opposites] of Object.entries(DIRECTION_TERMS)) {
-    if (!articleSet.has(term)) continue;
+    const stemmedTerm = stem(term);
+    if (!articleSet.has(stemmedTerm)) continue;
     for (const opposite of opposites) {
-      if (claimSet.has(opposite)) return true;
+      if (claimSet.has(stem(opposite))) return true;
     }
   }
   return false;
@@ -387,8 +391,16 @@ export function assessClaimArticleEvidence(
     };
   }
 
-  let bestOverlap = 0;
-  let bestSpan: EvidenceSpan | undefined;
+  type FieldOverlap = {
+    field: 'title' | 'abstract';
+    text: string;
+    overlapTokens: Set<string>;
+    overlapCount: number;
+    span?: EvidenceSpan;
+  };
+
+  const fieldOverlaps: FieldOverlap[] = [];
+  const aggregatedOverlap = new Set<string>();
 
   for (const { field, text } of fields) {
     const articleContent = tokenizeContent(text);
@@ -397,51 +409,84 @@ export function assessClaimArticleEvidence(
     for (const token of claimContentSet) {
       if (articleSet.has(token)) overlapTokens.add(token);
     }
-    const overlapCount = overlapTokens.size;
-    if (overlapCount > bestOverlap) {
-      bestOverlap = overlapCount;
-      bestSpan = extractEvidenceSpan(field, text, overlapTokens);
-    }
+    for (const token of overlapTokens) aggregatedOverlap.add(token);
+    fieldOverlaps.push({
+      field,
+      text,
+      overlapTokens,
+      overlapCount: overlapTokens.size,
+      span: overlapTokens.size > 0 ? extractEvidenceSpan(field, text, overlapTokens) : undefined,
+    });
   }
 
-  const overlapRatio = bestOverlap / claimContentSet.size;
-  const meetsThreshold = bestOverlap >= 3 || (bestOverlap >= 2 && overlapRatio >= 0.35);
+  const totalOverlap = aggregatedOverlap.size;
+  const overlapRatio = totalOverlap / claimContentSet.size;
+  const meetsThreshold = totalOverlap >= 3 || (totalOverlap >= 2 && overlapRatio >= 0.35);
 
   if (!meetsThreshold) {
+    const bestFieldOverlap = fieldOverlaps.reduce(
+      (best, current) => (current.overlapCount > best.overlapCount ? current : best),
+      fieldOverlaps[0],
+    );
     return {
       relation: 'insufficient',
       spans: [],
-      contentOverlapCount: bestOverlap,
+      contentOverlapCount: bestFieldOverlap?.overlapCount ?? 0,
       reasons: ['content token overlap below conservative threshold'],
     };
   }
 
-  const combinedArticleText = fields.map((f) => f.text).join(' ');
-  const evidenceText = bestSpan?.quote?.trim() || combinedArticleText;
-  if (detectDirectionConflict(claimContent, tokenizeContent(evidenceText))) {
-    reasons.push('direction or comparator terms conflict between claim and source');
-    return {
-      relation: 'contradicts',
-      spans: bestSpan ? [bestSpan] : [],
-      contentOverlapCount: bestOverlap,
-      reasons,
-    };
+  let bestContradictSpan: EvidenceSpan | undefined;
+  let bestContradictOverlap = 0;
+  let bestReportSpan: EvidenceSpan | undefined;
+  let bestReportOverlap = 0;
+  let hasDirectionConflict = false;
+  let hasNegationConflict = false;
+
+  for (const fieldOverlap of fieldOverlaps) {
+    if (fieldOverlap.overlapCount === 0) continue;
+
+    if (fieldOverlap.overlapCount > bestReportOverlap) {
+      bestReportOverlap = fieldOverlap.overlapCount;
+      bestReportSpan = fieldOverlap.span;
+    }
+
+    const evidenceText = fieldOverlap.span?.quote?.trim() || fieldOverlap.text;
+    if (detectDirectionConflict(claimContent, tokenizeContent(evidenceText))) {
+      hasDirectionConflict = true;
+      if (fieldOverlap.overlapCount > bestContradictOverlap) {
+        bestContradictOverlap = fieldOverlap.overlapCount;
+        bestContradictSpan = fieldOverlap.span;
+      }
+    }
+    if (detectNegationConflict(claimText, evidenceText)) {
+      hasNegationConflict = true;
+      if (fieldOverlap.overlapCount > bestContradictOverlap) {
+        bestContradictOverlap = fieldOverlap.overlapCount;
+        bestContradictSpan = fieldOverlap.span;
+      }
+    }
   }
 
-  if (detectNegationConflict(claimText, evidenceText)) {
-    reasons.push('negation scope differs between claim and source');
+  if (hasDirectionConflict || hasNegationConflict) {
+    if (hasDirectionConflict) {
+      reasons.push('direction or comparator terms conflict between claim and source');
+    }
+    if (hasNegationConflict) {
+      reasons.push('negation scope differs between claim and source');
+    }
     return {
       relation: 'contradicts',
-      spans: bestSpan ? [bestSpan] : [],
-      contentOverlapCount: bestOverlap,
+      spans: bestContradictSpan ? [bestContradictSpan] : [],
+      contentOverlapCount: totalOverlap,
       reasons,
     };
   }
 
   return {
     relation: 'supports',
-    spans: bestSpan ? [bestSpan] : [],
-    contentOverlapCount: bestOverlap,
+    spans: bestReportSpan ? [bestReportSpan] : [],
+    contentOverlapCount: totalOverlap,
     reasons: ['conservative lexical evidence overlap'],
   };
 }

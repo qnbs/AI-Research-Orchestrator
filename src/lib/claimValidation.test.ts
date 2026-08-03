@@ -264,6 +264,15 @@ describe('validateClaimAgainstCorpus — adversarial fixtures', () => {
     expect(result.validationState).toBe('claim-supported');
     expect(result.evidenceSnippets?.every((s) => s.startsWith('4:'))).toBe(true);
   });
+
+  it('rejects invalid citations when in-corpus articles do not support the claim', () => {
+    const result = validateClaimAgainstCorpus(
+      { text: 'Quantum computing advances rapidly.', pmids: ['1', '999'] },
+      corpus,
+    );
+    expect(result.validationState).toBe('rejected');
+    expect(result.invalidCitations).toEqual(['999']);
+  });
 });
 
 describe('assessSynthesisTrust', () => {

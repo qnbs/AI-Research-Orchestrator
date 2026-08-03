@@ -29,9 +29,15 @@ describe('CLAIM_EVIDENCE_MATCHER_VERSION', () => {
 });
 
 describe('assessClaimArticleEvidence — adversarial', () => {
-  it('rejects two generic overlapping tokens without substantive overlap', () => {
-    const art = article('Clinical trial overview', 'This study enrolled adults in a trial.');
-    const result = assessClaimArticleEvidence('This clinical trial enrolled study adults.', art);
+  it('rejects sparse overlap below aggregated threshold', () => {
+    const art = article(
+      'Cardiovascular outcomes overview',
+      'Significant improvement noted in this randomized study.',
+    );
+    const result = assessClaimArticleEvidence(
+      'Biomedical cardiovascular outcomes improved significantly worldwide today.',
+      art,
+    );
     expect(result.relation).toBe('insufficient');
   });
 
@@ -100,5 +106,39 @@ describe('assessClaimArticleEvidence — adversarial', () => {
       art,
     );
     expect(result.relation).toBe('supports');
+  });
+
+  it('matches inflected variants via lightweight stemming', () => {
+    const art = article(
+      'Aspirin stroke prevention',
+      'Aspirin prevented strokes in patients with cardiovascular risk.',
+    );
+    const result = assessClaimArticleEvidence('Aspirin prevents stroke in patients.', art);
+    expect(result.relation).toBe('supports');
+  });
+
+  it('aggregates overlap across title and abstract for thresholding', () => {
+    const art = article(
+      'Aspirin stroke prevention trial',
+      'Randomized patients received daily aspirin therapy.',
+    );
+    const result = assessClaimArticleEvidence(
+      'Aspirin stroke prevention randomized patients therapy.',
+      art,
+    );
+    expect(result.relation).toBe('supports');
+    expect(result.contentOverlapCount).toBeGreaterThanOrEqual(3);
+  });
+
+  it('contradicts when abstract opposes claim even if title overlap is higher', () => {
+    const art = article(
+      'Aspirin cardiovascular trial overview',
+      'Aspirin increased major cardiovascular events compared with placebo.',
+    );
+    const result = assessClaimArticleEvidence(
+      'Aspirin reduced major cardiovascular events compared with placebo.',
+      art,
+    );
+    expect(result.relation).toBe('contradicts');
   });
 });
