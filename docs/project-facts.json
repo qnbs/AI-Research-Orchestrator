@@ -75,13 +75,12 @@
   "release": {
     "policyPath": "docs/release-policy.md",
     "packageVersion": "0.4.1",
-    "dexieSchemaVersion": 6,
+    "dexieSchemaVersion": 7,
     "swCacheVersion": "v1"
   },
   "sourceIdentifiers": ["pmid", "pmc", "doi", "arxiv"],
   "forbiddenReadmePhrases": ["Every AI assertion is inextricably linked to a verified PubMed ID"],
   "forbiddenAgentsPhrases": [
     "That job is `continue-on-error: true`, so its green badge alone doesn't prove 0 failures"
-  ],
-  "dexieSchemaVersion": 7
+  ]
 }
