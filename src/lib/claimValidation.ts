@@ -24,9 +24,17 @@ export type ClaimTrustMetrics = {
   unverifiedClaims: number;
   rejectedClaims: number;
   invalidCitationCount: number;
+  /** Share of cited PMIDs whose article text lexically supports the claim. */
   citationPrecision: number;
+  /**
+   * Share of claims that reached claim-supported validation
+   * (claim-level recall of supported statements).
+   */
+  citationRecall: number;
   unsupportedClaimRate: number;
   irrelevantCitationRate: number;
+  /** Alias of citation precision for source-relevance reporting (0–1). */
+  sourceRelevance: number;
 };
 
 const TOKEN_MIN_LEN = 3;
@@ -177,14 +185,17 @@ export function computeClaimTrustMetrics(
     for (const pmid of claim.pmids) {
       citedPmids += 1;
       const article = findArticleByCorpusKey(corpusArticles, pmid);
-      if (article && !articleSupportsClaim(claim.text, article)) {
+      // Out-of-corpus PMIDs are non-supporting (same bucket as lexically irrelevant).
+      if (!article || !articleSupportsClaim(claim.text, article)) {
         irrelevantPmids += 1;
       }
     }
   }
 
   const totalClaims = claims.length;
-  const citationPrecision = citedPmids === 0 ? 1 : (citedPmids - irrelevantPmids) / citedPmids;
+  // No citations evaluated → precision/relevance are undefined; use 0 so floors cannot vacuous-pass.
+  const citationPrecision = citedPmids === 0 ? 0 : (citedPmids - irrelevantPmids) / citedPmids;
+  const citationRecall = totalClaims === 0 ? 0 : claimSupportedClaims / totalClaims;
   const unsupportedClaimRate =
     totalClaims === 0 ? 0 : (unverifiedClaims + rejectedClaims) / totalClaims;
   const irrelevantCitationRate = citedPmids === 0 ? 0 : irrelevantPmids / citedPmids;
@@ -196,7 +207,9 @@ export function computeClaimTrustMetrics(
     rejectedClaims,
     invalidCitationCount,
     citationPrecision,
+    citationRecall,
     unsupportedClaimRate,
     irrelevantCitationRate,
+    sourceRelevance: citationPrecision,
   };
 }

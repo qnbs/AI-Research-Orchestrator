@@ -214,11 +214,17 @@
 ## 2026-08-03 — PR8 E2E shared network fixtures
 
 - **Why:** Agent-flow / Journal Hub duplicated PubMed/Gemini/arXiv mocks; consolidate after #207 Ollama helpers.
-- **What:** `src/test/e2e/fixtures/{networkMocks,pubmedArticle}.ts`; refactor agent-flow + journal-hub to import shared mocks.
+- **What:** `src/test/e2e/fixtures/{networkMocks,pubmedArticle}.ts`; refactor agent-flow + journal-hub to import shared mocks. Merged as **#208**.
 - **Next:** PR9 eval → PR10 docs → PR11 CI governance.
 
 ## 2026-08-03 — Mandate DeepSource AI Review on every PR
 
 - **Why:** DeepSource shows static analysis by default; AI Review runs only after `@deepsourcebot review` for this team.
 - **What:** Rules `011`/`013`, `AGENTS.md`, `CONTRIBUTING.md` — always trigger `@deepsourcebot review` on PR open and after fix pushes; treat AI Review findings as in-scope before merge.
-- **Also:** Triggered on merged #207/#208 threads for catch-up.
+- **Also:** Triggered on merged #207/#208 threads for catch-up. Merged as **#209**.
+
+## 2026-08-03 — PR9 agent-eval claim metrics + large-corpus fixture
+
+- **Why:** Master prompt acceptance — measure claim-level citation precision/recall/source relevance/unsupported rate; keep tail articles in large corpora.
+- **What:** Extend `ClaimTrustMetrics` + `agentEval` thresholds; `liveOrchestratorEval` tail + claim-trust fixtures; empty claims / zero citations fail metric floors; tail fixture runs ranking prompt-budget selection.
+- **Impact:** `check:agent-eval` catches claim-quality regressions (precision/recall/relevance/unsupported) and loss of a relevant tail PMID after ranking truncation.

@@ -146,4 +146,264 @@ describe('agentEval', () => {
     });
     expect(result.passed).toBe(false);
   });
+
+  it('enforces claim-level precision, recall, and source relevance thresholds', () => {
+    const result = evaluateCase({
+      id: 'claim-metrics-ok',
+      description: 'supported claims meet metric floors',
+      actual: {
+        rankedArticles: [
+          {
+            pmid: '1',
+            title: 'Aspirin cardiovascular trial',
+            summary: 'Aspirin reduced major cardiovascular events.',
+          },
+        ],
+        groundedSynthesis: {
+          mode: 'extractive-template',
+          claims: [
+            {
+              text: 'Aspirin reduced major cardiovascular events.',
+              pmids: ['1'],
+              validationState: 'claim-supported',
+            },
+          ],
+        },
+      },
+      expect: {
+        maxUnsupportedClaimRate: 0,
+        minCitationPrecision: 1,
+        minCitationRecall: 1,
+        maxIrrelevantCitationRate: 0,
+        minSourceRelevance: 1,
+      },
+    });
+    expect(result.passed).toBe(true);
+  });
+
+  it('fails when citation recall drops below the floor', () => {
+    const result = evaluateCase({
+      id: 'claim-metrics-low-recall',
+      description: 'unsupported claim tanks recall',
+      actual: {
+        rankedArticles: [
+          {
+            pmid: '1',
+            title: 'Aspirin cardiovascular trial',
+            summary: 'Aspirin reduced major cardiovascular events.',
+          },
+        ],
+        groundedSynthesis: {
+          mode: 'narrative-extracted',
+          claims: [
+            {
+              text: 'Aspirin reduced major cardiovascular events.',
+              pmids: ['1'],
+              validationState: 'claim-supported',
+            },
+            {
+              text: 'Completely unrelated quantum claim.',
+              pmids: ['1'],
+              validationState: 'unverified',
+            },
+          ],
+        },
+      },
+      expect: { minCitationRecall: 1 },
+    });
+    expect(result.passed).toBe(false);
+    expect(result.dimensions.find((d) => d.dimension === 'groundedSynthesis')?.detail).toMatch(
+      /citationRecall/,
+    );
+  });
+
+  it('fails maxUnsupportedClaimRate in isolation', () => {
+    const result = evaluateCase({
+      id: 'claim-metrics-unsupported',
+      description: 'lexically unsupported claim exceeds unsupported rate',
+      actual: {
+        rankedArticles: [
+          {
+            pmid: '1',
+            title: 'Aspirin cardiovascular trial',
+            summary: 'Aspirin reduced major cardiovascular events.',
+          },
+        ],
+        groundedSynthesis: {
+          mode: 'narrative-extracted',
+          claims: [
+            {
+              text: 'Completely unrelated quantum entanglement breakthrough.',
+              pmids: ['1'],
+              // Spoofed state must not satisfy the floor after corpus revalidation.
+              validationState: 'claim-supported',
+            },
+          ],
+        },
+      },
+      expect: { maxUnsupportedClaimRate: 0 },
+    });
+    expect(result.passed).toBe(false);
+    expect(result.dimensions.find((d) => d.dimension === 'groundedSynthesis')?.detail).toMatch(
+      /unsupportedClaimRate/,
+    );
+  });
+
+  it('does not trust model-supplied claim-supported without corpus evidence', () => {
+    const result = evaluateCase({
+      id: 'spoofed-claim-supported',
+      description: 'spoofed validationState fails recall floor after revalidation',
+      actual: {
+        rankedArticles: [
+          {
+            pmid: '1',
+            title: 'Aspirin cardiovascular trial',
+            summary: 'Aspirin reduced major cardiovascular events.',
+          },
+        ],
+        groundedSynthesis: {
+          mode: 'extractive-template',
+          claims: [
+            {
+              text: 'Unrelated quantum claim without lexical support.',
+              pmids: ['1'],
+              validationState: 'claim-supported',
+            },
+          ],
+        },
+      },
+      expect: { minCitationRecall: 1 },
+    });
+    expect(result.passed).toBe(false);
+  });
+
+  it('fails claim metric floors when groundedSynthesis claims are empty', () => {
+    const result = evaluateCase({
+      id: 'empty-claims-metrics',
+      description: 'vacuous perfect metrics must not pass floors',
+      actual: {
+        rankedArticles: [{ pmid: '1', title: 'T', summary: 'S' }],
+        groundedSynthesis: { mode: 'extractive-template', claims: [] },
+      },
+      expect: {
+        maxUnsupportedClaimRate: 0,
+        minCitationPrecision: 1,
+        minCitationRecall: 1,
+        minSourceRelevance: 1,
+      },
+    });
+    expect(result.passed).toBe(false);
+    expect(result.dimensions.find((d) => d.dimension === 'groundedSynthesis')?.detail).toMatch(
+      /no claims evaluated/,
+    );
+  });
+
+  it('fails claim metric floors when groundedSynthesis is absent', () => {
+    const result = evaluateCase({
+      id: 'absent-grounded-synthesis',
+      description: 'missing groundedSynthesis must not pass floors',
+      actual: { rankedArticles: [{ pmid: '1' }] },
+      expect: { minCitationRecall: 1, maxUnsupportedClaimRate: 0 },
+    });
+    expect(result.passed).toBe(false);
+  });
+
+  it('fails claim metrics when claims is not an array', () => {
+    const result = evaluateCase({
+      id: 'claims-not-array',
+      description: 'malformed claims payload',
+      actual: {
+        rankedArticles: [{ pmid: '1' }],
+        groundedSynthesis: { mode: 'extractive-template', claims: 'bad' as unknown as [] },
+      },
+      expect: { minCitationPrecision: 1 },
+    });
+    expect(result.passed).toBe(false);
+    expect(result.dimensions.find((d) => d.dimension === 'groundedSynthesis')?.detail).toMatch(
+      /claims must be an array/,
+    );
+  });
+
+  it('tolerates null rankedArticles entries without throwing', () => {
+    const result = evaluateCase({
+      id: 'null-ranked-entry',
+      description: 'null holes in rankedArticles',
+      actual: {
+        rankedArticles: [null, { pmid: '1', title: 'Aspirin trial', summary: 'Aspirin events.' }],
+        groundedSynthesis: {
+          mode: 'extractive-template',
+          claims: [
+            {
+              text: 'Aspirin events.',
+              pmids: ['1'],
+              validationState: 'claim-supported',
+            },
+          ],
+        },
+      },
+      expect: { minCitationPrecision: 1, minCitationRecall: 1 },
+    });
+    expect(result.passed).toBe(true);
+  });
+
+  it('requires mustRankPmids in rankedArticles', () => {
+    const result = evaluateCase({
+      id: 'must-rank-missing',
+      description: 'tail pmid dropped from ranked list',
+      actual: { rankedArticles: [{ pmid: '1' }] },
+      expect: { mustRankPmids: ['9001'], minRankedArticles: 1 },
+    });
+    expect(result.passed).toBe(false);
+    expect(result.dimensions.find((d) => d.dimension === 'rankedCorpus')?.detail).toMatch(
+      /missing ranked PMIDs: 9001/,
+    );
+  });
+
+  it('fails precision floors when claims have zero citations', () => {
+    const result = evaluateCase({
+      id: 'zero-citation-precision',
+      description: 'claims without PMIDs must not vacuous-pass precision',
+      actual: {
+        rankedArticles: [
+          {
+            pmid: '1',
+            title: 'Aspirin cardiovascular trial',
+            summary: 'Aspirin reduced major cardiovascular events.',
+          },
+        ],
+        groundedSynthesis: {
+          mode: 'extractive-template',
+          claims: [{ text: 'Aspirin reduced major cardiovascular events.', pmids: [] }],
+        },
+      },
+      expect: { minCitationPrecision: 1, minSourceRelevance: 1 },
+    });
+    expect(result.passed).toBe(false);
+    expect(result.dimensions.find((d) => d.dimension === 'groundedSynthesis')?.detail).toMatch(
+      /no citations evaluated/,
+    );
+  });
+
+  it('handles null holes in rankedArticles for mustRankPmids without throwing', () => {
+    const result = evaluateCase({
+      id: 'must-rank-null-holes',
+      description: 'sparse rankedArticles with null entries',
+      actual: { rankedArticles: [null, { pmid: '9001' }, undefined] },
+      expect: { mustRankPmids: ['9001'], minRankedArticles: 1 },
+    });
+    expect(result.passed).toBe(true);
+  });
+
+  it('reports null rankedArticles entries as out-of-corpus without throwing', () => {
+    const result = evaluateCase({
+      id: 'ranked-null-out-of-corpus',
+      description: 'null entry fails corpus check safely',
+      actual: { rankedArticles: [null, { pmid: '1' }] },
+      expect: { rankedCorpusPmids: ['1'] },
+    });
+    expect(result.passed).toBe(false);
+    expect(result.dimensions.find((d) => d.dimension === 'rankedCorpus')?.detail).toMatch(
+      /<invalid>/,
+    );
+  });
 });
