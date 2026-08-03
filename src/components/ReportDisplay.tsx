@@ -220,11 +220,9 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(function R
     }, 50);
   };
 
+  // Missing trust is fail-safe draft — do not infer corpus-supported from mode alone.
   const synthesisTrustLevel =
-    normalizeSynthesisTrustLevel(report.groundedSynthesis?.trustLevel) ??
-    (report.groundedSynthesis?.mode === 'extractive-template'
-      ? 'corpus-supported'
-      : 'narrative-draft');
+    normalizeSynthesisTrustLevel(report.groundedSynthesis?.trustLevel) ?? 'narrative-draft';
   const isDemoCorpus =
     report.corpusClass === 'demo-only' ||
     report.retrievalOutcome === 'educational_demo' ||

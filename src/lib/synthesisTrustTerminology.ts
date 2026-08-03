@@ -33,7 +33,8 @@ export function migrateGroundedSynthesisTrustTerminology(
 ): GroundedSynthesis | undefined {
   if (!grounded) return grounded;
   const trustLevel = normalizeSynthesisTrustLevel(grounded.trustLevel);
-  const claims = grounded.claims.map((claim) => ({
+  const rawClaims = Array.isArray(grounded.claims) ? grounded.claims : [];
+  const claims = rawClaims.map((claim) => ({
     ...claim,
     validationState:
       claim.validationState === undefined
