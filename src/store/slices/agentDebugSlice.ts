@@ -2,7 +2,13 @@
  * Agent Debugger Slice — Visual pipeline tracing with token usage
  */
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import type { AgentPipelineTrace, AgentTraceEvent, AgentName, AgentStatus } from '../../types';
+import type {
+  AgentPipelineTrace,
+  AgentTraceEvent,
+  AgentName,
+  AgentStatus,
+  PipelinePhaseId,
+} from '../../types';
 
 interface AgentDebugState {
   isVisible: boolean;
@@ -93,7 +99,7 @@ export const agentDebugSlice = createSlice({
         agentName: AgentName;
         status: AgentStatus;
         message?: string;
-        phaseId?: string;
+        phaseId?: PipelinePhaseId;
         metadata?: Record<string, unknown>;
       }>,
     ) => {

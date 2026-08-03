@@ -6,44 +6,10 @@
 import type { AgentName, ResearchReport } from '../types';
 import type { PromptBudgetAccounting } from '../lib/promptBudget';
 import type { ResearchExecutionContext } from '../lib/researchExecutionContext';
+import type { PipelinePhaseId } from './pipelinePhaseId';
 
-/** Stable phase identifiers for live + Non-AI research streams. */
-export type PipelinePhaseId =
-  | 'execution-provenance'
-  | 'query-generation'
-  | 'pubmed-search'
-  | 'pubmed-fetch'
-  | 'arxiv-fetch'
-  | 'ranking'
-  | 'synthesis'
-  | 'synthesis-stream'
-  | 'finalizing'
-  | 'demo-corpus'
-  | 'retrieval'
-  | 'curation'
-  | 'retrieval-status'
-  | 'empty-retrieval';
-
-const PIPELINE_PHASE_IDS: ReadonlySet<string> = new Set<PipelinePhaseId>([
-  'execution-provenance',
-  'query-generation',
-  'pubmed-search',
-  'pubmed-fetch',
-  'arxiv-fetch',
-  'ranking',
-  'synthesis',
-  'synthesis-stream',
-  'finalizing',
-  'demo-corpus',
-  'retrieval',
-  'curation',
-  'retrieval-status',
-  'empty-retrieval',
-]);
-
-export function isPipelinePhaseId(value: string): value is PipelinePhaseId {
-  return PIPELINE_PHASE_IDS.has(value);
-}
+export type { PipelinePhaseId } from './pipelinePhaseId';
+export { isPipelinePhaseId } from './pipelinePhaseId';
 
 /**
  * Conceptual agent role for the debugger.

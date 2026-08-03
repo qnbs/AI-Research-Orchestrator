@@ -39,8 +39,8 @@ interface OrchestratorViewProps {
   onDiscardCheckpoint: (id: string) => void;
 }
 
-/** Sub-phase guidance keyed by stable PipelinePhaseId (ADR 0020). */
-const phaseDetailsById: Record<string, string[]> = {
+/** Legacy live-path sub-phase guidance (pre-existing English chrome). */
+const LEGACY_PHASE_DETAILS: Record<string, string[]> = {
   'query-generation': [
     'Analyzing research topic and user criteria...',
     'AI is constructing advanced boolean search strings...',
@@ -50,11 +50,6 @@ const phaseDetailsById: Record<string, string[]> = {
     'Connecting to live NCBI PubMed database...',
     'Submitting best query to retrieve article IDs...',
     'Compiling list of relevant publications...',
-  ],
-  retrieval: [
-    'Retrieving literature from PubMed and arXiv...',
-    'Respecting rate limits and abort signals...',
-    'Collecting candidate articles for curation...',
   ],
   'pubmed-fetch': [
     'Requesting abstracts and metadata for found articles...',
@@ -85,18 +80,6 @@ const phaseDetailsById: Record<string, string[]> = {
     'Building the narrative summary chunk by chunk...',
   ],
   finalizing: ['Assembling final report structure...', 'Finishing up...'],
-  'demo-corpus': [
-    'Loading the educational demo corpus...',
-    'Stamping synthetic fixtures for practice only...',
-  ],
-  'retrieval-status': [
-    'Updating retrieval status...',
-    'No silent demo substitution on empty or failed retrieval...',
-  ],
-  'empty-retrieval': [
-    'No scientific corpus was assembled...',
-    'Preparing an empty-retrieval explanation...',
-  ],
 };
 
 const OrchestratorViewComponent: React.FC<OrchestratorViewProps> = ({
@@ -138,6 +121,27 @@ const OrchestratorViewComponent: React.FC<OrchestratorViewProps> = ({
     t('orchestrator.phase6'),
     t('orchestrator.phase7'),
   ];
+
+  const phaseDetailsById: Record<string, string[]> = {
+    ...LEGACY_PHASE_DETAILS,
+    retrieval: [
+      t('orchestrator.subphase.retrieval.1'),
+      t('orchestrator.subphase.retrieval.2'),
+      t('orchestrator.subphase.retrieval.3'),
+    ],
+    'demo-corpus': [
+      t('orchestrator.subphase.demo_corpus.1'),
+      t('orchestrator.subphase.demo_corpus.2'),
+    ],
+    'retrieval-status': [
+      t('orchestrator.subphase.retrieval_status.1'),
+      t('orchestrator.subphase.retrieval_status.2'),
+    ],
+    'empty-retrieval': [
+      t('orchestrator.subphase.empty_retrieval.1'),
+      t('orchestrator.subphase.empty_retrieval.2'),
+    ],
+  };
 
   const isProcessing = reportStatus === 'generating' || reportStatus === 'streaming';
   const showLoadingIndicator = reportStatus === 'generating';

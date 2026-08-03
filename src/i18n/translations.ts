@@ -92,6 +92,16 @@ export const translations = {
     'orchestrator.pipeline.curation': 'Phase 3: Curating and deduplicating results...',
     'orchestrator.pipeline.retrieval-status': 'Retrieval status update...',
     'orchestrator.pipeline.empty-retrieval': 'Empty retrieval — no scientific corpus assembled...',
+    'orchestrator.subphase.retrieval.1': 'Retrieving literature from PubMed and arXiv...',
+    'orchestrator.subphase.retrieval.2': 'Respecting rate limits and abort signals...',
+    'orchestrator.subphase.retrieval.3': 'Collecting candidate articles for curation...',
+    'orchestrator.subphase.demo_corpus.1': 'Loading the educational demo corpus...',
+    'orchestrator.subphase.demo_corpus.2': 'Stamping synthetic fixtures for practice only...',
+    'orchestrator.subphase.retrieval_status.1': 'Updating retrieval status...',
+    'orchestrator.subphase.retrieval_status.2':
+      'No silent demo substitution on empty or failed retrieval...',
+    'orchestrator.subphase.empty_retrieval.1': 'No scientific corpus was assembled...',
+    'orchestrator.subphase.empty_retrieval.2': 'Preparing an empty-retrieval explanation...',
     // ── Themes ──
     'theme.cyber_dark': 'Cyber-Dark',
     'theme.neon_light': 'Neon-Light',
@@ -428,6 +438,17 @@ export const translations = {
     'orchestrator.pipeline.retrieval-status': 'Abrufstatus-Update...',
     'orchestrator.pipeline.empty-retrieval':
       'Leerer Abruf — kein wissenschaftlicher Korpus zusammengestellt...',
+    'orchestrator.subphase.retrieval.1': 'Rufe Literatur von PubMed und arXiv ab...',
+    'orchestrator.subphase.retrieval.2': 'Respektiere Ratenlimits und Abbruchsignale...',
+    'orchestrator.subphase.retrieval.3': 'Sammle Kandidatenartikel für die Kuratierung...',
+    'orchestrator.subphase.demo_corpus.1': 'Lade den Bildungs-Demo-Korpus...',
+    'orchestrator.subphase.demo_corpus.2': 'Stemple synthetische Fixtures nur für Übungszwecke...',
+    'orchestrator.subphase.retrieval_status.1': 'Aktualisiere Abrufstatus...',
+    'orchestrator.subphase.retrieval_status.2':
+      'Keine stille Demo-Substitution bei leerem oder fehlgeschlagenem Abruf...',
+    'orchestrator.subphase.empty_retrieval.1':
+      'Kein wissenschaftlicher Korpus wurde zusammengestellt...',
+    'orchestrator.subphase.empty_retrieval.2': 'Bereite eine Leerer-Abruf-Erklärung vor...',
     // ── Themes ──
     'theme.cyber_dark': 'Cyber-Dunkel',
     'theme.neon_light': 'Neon-Hell',
