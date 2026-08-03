@@ -268,7 +268,8 @@ export function useResearchSession({
                   agentName: agentForUpdate,
                   status: 'running',
                   message: phase,
-                  phaseId,
+                  // Agentless status phases must not rewrite the row's phaseId.
+                  ...(typedAgent !== null ? { phaseId } : {}),
                   // Always pass metadata so stale promptBudget does not linger.
                   metadata: promptBudget ? { promptBudget } : {},
                 }),
