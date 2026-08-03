@@ -1,6 +1,15 @@
 # Full-Scale Audit Report — 2026-08-02
 
-> **Point-in-time audit (2026-08-02).** Current CI/E2E/ruleset policy: `docs/ci-branch-governance.md`, `docs/e2e-ci-backlog.md`, `docs/project-facts.json`. Cross-browser is full seven-spec **blocking** (#207); DeepSource AI Review is a mandatory process gate (#209); product truthfulness calibrated (#211); governance + concurrency hardening (#212).
+> **Point-in-time audit snapshot (2026-08-02).** Body below reflects repository state and dispositions at that date only.
+
+### Post-audit update — 2026-08-03
+
+Current CI/E2E/ruleset policy (do not re-read the 2026-08-02 body as live policy):
+
+- Cross-browser E2E: full seven-spec **blocking** (#207) — `docs/e2e-ci-backlog.md`, `docs/project-facts.json`
+- DeepSource AI Review: mandatory process gate via `@deepsourcebot review` (#209) — `docs/deepsource-setup.md`
+- Product truthfulness docs calibrated (#211)
+- CI/branch governance + PR-only concurrency + WebKit install hardening (#212) — `docs/ci-branch-governance.md`
 
 ## Metadata
 

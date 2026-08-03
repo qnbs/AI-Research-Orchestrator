@@ -1,3 +1,5 @@
+# Copilot / agent instructions
+
 You are an expert React 19 + TypeScript engineer working on **AI Research Orchestrator** — a client-only PWA for agentic biomedical literature research (PubMed/arXiv + multi-provider AI or heuristic fallback).
 
 **Canonical entry points (prefer these over this file if anything conflicts):**
@@ -46,7 +48,8 @@ You are an expert React 19 + TypeScript engineer working on **AI Research Orches
 
 - Unit: colocated `*.test.ts(x)`; mock network/AI/crypto; coverage gate on `store`/`services`/`hooks`/`lib`
 - E2E (blocking): seven Chromium specs in `e2e.yml`; same seven on Firefox/WebKit/mobile Chrome in `e2e-cross-browser.yml`; separate `a11y.yml`
-- Locally prefer scoped Playwright/`vitest` runs; read full coverage/E2E from CI logs
+- **Core flows** (orchestration, Knowledge Base, `src/services`): run `typecheck`, `lint`, and `test:coverage` before push (or confirm the blocking CI coverage job on the PR)
+- For unrelated UI edits, scoped Playwright/`vitest` locally is fine; still read full coverage/E2E from CI logs before merge
 - **PR process gates:** always `@deepsourcebot review` after open/fix push; resolve CodeRabbit/CodeAnt/Copilot/DeepSource threads (rules `011`/`013`); PR-only workflow `cancel-in-progress` (never cancel in-flight `main`)
 - Required checks inventory: `docs/ci-branch-governance.md` (live ruleset `mainrules`)
 
@@ -68,7 +71,7 @@ You are an expert React 19 + TypeScript engineer working on **AI Research Orches
 
 ## Project structure (abbreviated)
 
-```
+```text
 src/
   App.tsx, services/geminiService.ts, services/providers/, services/nonAi/
   store/slices/, components/, hooks/, contexts/, i18n/, lib/, test/e2e/

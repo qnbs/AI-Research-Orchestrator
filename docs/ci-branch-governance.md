@@ -50,7 +50,7 @@ Required check contexts currently configured:
 `Axe critical/serious smoke`, `CodeQL`, `Dependency Review`, `pnpm audit (high+)`,
 `Secret scan (gitleaks)`.
 
-### Process gates (not GitHub required checks)
+### Process gates (not GitHub-required checks)
 
 | Gate                             | Enforcement                                                                                         |
 | -------------------------------- | --------------------------------------------------------------------------------------------------- |
@@ -76,13 +76,13 @@ Required check contexts currently configured:
 Rationale: canceling the only authoritative `main` quality + Pages deploy leaves
 `main` without a completed gate run after a burst of merges.
 
-### Cancelled ≠ test failure
+### Canceled ≠ test failure
 
-GitHub marks jobs **cancelled** when concurrency aborts them **or** when
-`timeout-minutes` fires. Example: `main` tip `2d8d4f9` WebKit cancelled at the
+GitHub marks jobs **canceled** when concurrency aborts them **or** when
+`timeout-minutes` fires. Example: `main` tip `2d8d4f9` WebKit canceled at the
 30-minute job budget while `playwright install --with-deps` crawled apt mirrors
 (run `30807274942`) — Firefox/mobile-chrome on the same matrix were green.
-Treat cancelled required checks on tip as **incomplete validation**; re-run the
+Treat canceled required checks on tip as **incomplete validation**; re-run the
 workflow (push or `workflow_dispatch`) after hardening, do not blame the suite.
 
 ## Artifacts

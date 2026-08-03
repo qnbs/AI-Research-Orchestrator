@@ -227,7 +227,7 @@ MIT — see [`LICENSE`](./LICENSE).
 
 ## Deutsche Dokumentation
 
-> Produkt-Copy auf Deutsch (zweisprachige README). Neue Repository-Prosa außerhalb von Locale-Werten bleibt Englisch (Regel `010`).
+> **Bilingual product exception** (rule `010`): this German section is maintained for end users alongside the English documentation above. English remains authoritative for CI, agent, and governance facts.
 
 ### Überblick
 

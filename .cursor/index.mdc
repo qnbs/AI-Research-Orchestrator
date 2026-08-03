@@ -11,7 +11,7 @@ alwaysApply: true
 
 **Architecture:** Browser talks directly to the selected AI provider + NCBI E-utilities (+ arXiv); AES-GCM keys via `apiKeyService`; Redux is the single source of truth; Context only hydrates/composes (`SettingsProvider`, KB) — never duplicate the same settings/UI flags. Synthesis trust: corpus-/claim-supported vs unverified narrative draft (ADR 0018).
 
-**Conventions:** EN+DE in `src/i18n/translations.ts`; WCAG-oriented (ARIA, keyboard); new persistent data → Dexie schema in `databaseService`; Node **≥22**; `pnpm install --frozen-lockfile`; before commit: `typecheck`, `lint`, and scoped tests (full coverage/E2E from CI). English-only new repo content (rule `010`).
+**Conventions:** EN+DE in `src/i18n/translations.ts`; WCAG-oriented (ARIA, keyboard); new persistent data → Dexie schema in `databaseService`; Node **≥22**; `pnpm install --frozen-lockfile`. Before commit: `typecheck` + `lint`; for core orchestration / Knowledge Base / `src/services` flows also run `pnpm run test:coverage` (or read the blocking CI coverage job). Prefer scoped Vitest/Playwright locally for unrelated UI edits; full coverage/E2E from CI. English-only new repo content (rule `010`).
 
 **PR / CI gates:** Rules `011`/`013` — always `@deepsourcebot review`; resolve bot threads; CodeRabbit rate-limit loop (bounded). Blocking checks + PR-only `cancel-in-progress`: `docs/ci-branch-governance.md` + `docs/project-facts.json` (drift-gated). Live ruleset: `mainrules`.
 

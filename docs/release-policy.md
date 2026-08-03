@@ -72,7 +72,7 @@ There is no server-side rollback — all state is local IndexedDB.
 
 ## CI
 
-Blocking gates: `deploy.yml` plus E2E / cross-browser / a11y / security (see `docs/ci-branch-governance.md`). DeepSource JavaScript is advisory unless `docs/project-facts.json` flips `deepsourceJavaScriptAdvisory` to `false`. After high-risk scientific or security merges, prefer one green `main` deploy before stacking unrelated large features.
+Blocking gates: `deploy.yml` plus E2E / cross-browser / a11y / security (see `docs/ci-branch-governance.md`). DeepSource JavaScript analyzer is **off** (`docs/project-facts.json` → `staticAnalysis.deepsourceJavaScriptEnabled: false`); ESLint + `deploy.yml` are authoritative for TS/TSX — see `docs/deepsource-setup.md`. After high-risk scientific or security merges, prefer one green `main` deploy before stacking unrelated large features.
 
 ## Related
 

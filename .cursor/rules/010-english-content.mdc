@@ -15,6 +15,7 @@ From 2026-07-16 onward, **all new and edited repository content must be English*
 ## Exceptions (keep as-is unless deliberately migrating)
 
 - Existing `src/i18n/translations.ts` **German locale values** (product i18n)
+- Existing bilingual **`README.md` German product section** (calibrated in parallel with the English section for end users; keep EN authoritative for CI/agent facts)
 - Historical CHANGELOG entries already published
 - Third-party license text
 
