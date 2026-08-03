@@ -87,7 +87,9 @@
     "zero-knowledge architecture",
     "Zero-Knowledge-Architektur",
     "Production_Ready",
-    "Gemini 3 Pro"
+    "Gemini_Pro",
+    "Gemini 3 Pro",
+    "never sent to any server"
   ],
   "forbiddenAgentsPhrases": [
     "That job is `continue-on-error: true`, so its green badge alone doesn't prove 0 failures"

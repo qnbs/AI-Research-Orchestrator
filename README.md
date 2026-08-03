@@ -31,7 +31,7 @@ Unlike conventional summarization tools, this system employs a **multi-agent orc
 - **Local-First Storage:** Reports, history, settings, and knowledge base live in the browser (IndexedDB). There is no app backend that stores your research. Live mode still sends prompts and article metadata to the **selected AI provider** and search queries to NCBI/arXiv — see [SECURITY.md](./SECURITY.md).
 - **Progressive enhancement:** Live Gemini (or another configured provider) is the high-fidelity path; a first-class **heuristic inference layer** keeps every AI feature usable offline or without an API key (deterministic ranking, template synthesis, extractive TL;DR, report-grounded chat).
 - **Agentic Reasoning:** Autonomous query formulation, decision-making, and relevance scoring.
-- **Traceability & Grounding:** Ranked insights and exports are corpus-validated; live narrative synthesis is labeled **corpus-supported** or **unverified narrative draft** based on claim-level lexical evidence checks (see ADR 0012, ADR 0018). This is **not** a guarantee that every sentence is fully verified.
+- **Traceability & Grounding:** Ranked insights and exports are corpus-validated where implemented; live narrative synthesis is labeled **corpus-supported** or **unverified narrative draft** based on claim-level lexical evidence checks (see ADR 0012, ADR 0018). This is **not** a guarantee that every sentence is fully verified.
 
 ### Offline / Heuristic mode
 
@@ -111,7 +111,7 @@ This application is a **Progressive Web App (PWA)** built on a modern, performan
 
 1. Visit **[https://qnbs.github.io/AI-Research-Orchestrator/](https://qnbs.github.io/AI-Research-Orchestrator/)**
 2. Click **Settings** (gear icon) → **API Key**
-3. Enter your Gemini API Key (stored encrypted locally, never sent to any server)
+3. Enter your Gemini API Key (AES-GCM encrypted in IndexedDB; used only with the provider you select — not sent to an app backend)
 4. Start researching!
 
 #### Local Development
@@ -162,7 +162,7 @@ The app stores provider API keys **AES-GCM encrypted** in your browser's Indexed
 3. Enter your provider API key(s)
 4. Click **Save**
 
-> ⚠️ **Security Note**: Keys never leave your browser except as Authorization to the **provider you selected** for inference. Research prompts and article metadata are sent to that provider in live mode.
+> ⚠️ **Security Note**: Keys are **not** sent to an application backend. In live mode they are used as Authorization credentials with the **AI provider you selected**. Research prompts and article metadata are also sent to that provider.
 
 ---
 
@@ -200,10 +200,11 @@ The application features a granular settings engine allowing precise tuning of t
 **Local-first, zero-backend app:**
 
 - **Local Storage**: Reports, history, settings, and knowledge base reside in your browser's IndexedDB — there is **no application server** that stores them.
-- **Direct-to-API**: In live mode the browser talks directly to the selected AI provider, NCBI, and (optionally) arXiv. Prompts and retrieval queries leave the device for those destinations.
+- **Direct-to-API**: In live mode the browser talks directly to the selected AI provider, NCBI, and (optionally) arXiv. Prompts, article metadata, and retrieval queries leave the device for those destinations.
 - **Data Portability**: Export complete datasets to JSON, CSV, RIS, BibTeX, or PDF at any time.
 
 Threat model and residual risks: [SECURITY.md](./SECURITY.md).
+
 ---
 
 ### 📄 License
@@ -277,7 +278,7 @@ Im Gegensatz zu herkömmlichen Zusammenfassungstools verwendet dieses System ein
 - **Local-First-Speicher:** Berichte, Historie, Einstellungen und Wissensdatenbank liegen im Browser (IndexedDB). Es gibt kein App-Backend, das Ihre Recherche speichert. Im Live-Modus gehen Prompts und Artikelmetadaten an den **gewählten KI-Anbieter** sowie Suchanfragen an NCBI/arXiv — siehe [SECURITY.md](./SECURITY.md).
 - **Progressive Enhancement:** Live-Gemini (oder ein anderer konfigurierter Anbieter) ist der High-Fidelity-Pfad; eine erstklassige **Heuristik-Inferenzschicht** hält alle KI-Funktionen offline und ohne API-Schlüssel nutzbar.
 - **Agentisches Denken:** Autonome Abfrageformulierung, Entscheidungsfindung und Relevanzbewertung.
-- **Rückverfolgbarkeit & Grounding:** Gerankte Insights und Exporte sind korpusvalidiert; narrative Synthese wird als **corpus-supported** oder **unverified narrative draft** gekennzeichnet (ADR 0012, ADR 0018). Das ist **keine** Garantie, dass jeder Satz vollständig verifiziert ist.
+- **Rückverfolgbarkeit & Grounding:** Gerankte Insights und Exporte sind korpusvalidiert, wo umgesetzt; narrative Synthese wird als **corpus-supported** oder **unverified narrative draft** gekennzeichnet (ADR 0012, ADR 0018). Das ist **keine** Garantie, dass jeder Satz vollständig verifiziert ist.
 
 ### Offline- / Heuristik-Modus
 
@@ -342,7 +343,7 @@ Diese Anwendung ist eine **Progressive Web App (PWA)** auf einem modernen Stack 
 
 1. Besuchen Sie **[https://qnbs.github.io/AI-Research-Orchestrator/](https://qnbs.github.io/AI-Research-Orchestrator/)**
 2. Klicken Sie auf **Einstellungen** (Zahnrad-Icon) → **API Key**
-3. Geben Sie Ihren Gemini API Key ein (wird verschlüsselt lokal gespeichert)
+3. Geben Sie Ihren Gemini API Key ein (AES-GCM in IndexedDB; nur beim gewählten Anbieter — nicht an ein App-Backend)
 4. Starten Sie Ihre Recherche!
 
 #### Lokale Entwicklung
@@ -393,7 +394,7 @@ Die App speichert Ihren API Key **sicher verschlüsselt** in der IndexedDB Ihres
 3. Geben Sie Ihren Gemini API Key ein
 4. Klicken Sie auf **Schlüssel speichern**
 
-> ⚠️ **Sicherheitshinweis**: Keys werden mit Web Crypto AES-GCM in IndexedDB verschlüsselt. Das schützt Keys at rest, nicht vor Malware/XSS in einer kompromittierten Browser-Session — siehe [SECURITY.md](./SECURITY.md). Keys verlassen den Browser nur als Authorization an den **gewählten Anbieter**. Im Live-Modus gehen Recherche-Prompts und Artikelmetadaten an diesen Anbieter.
+> ⚠️ **Sicherheitshinweis**: Keys werden **nicht** an ein Anwendungs-Backend gesendet. Im Live-Modus dienen sie als Authorization beim **gewählten KI-Anbieter**. Recherche-Prompts und Artikelmetadaten gehen ebenfalls an diesen Anbieter. AES-GCM schützt Keys at rest in IndexedDB, nicht vor Malware/XSS — siehe [SECURITY.md](./SECURITY.md).
 
 ---
 
@@ -413,10 +414,11 @@ Die Anwendung verfügt über eine granulare Einstellungs-Engine, die eine präzi
 **Local-First, Zero-Backend:**
 
 - **Lokaler Speicher**: Berichte, Verlauf, Einstellungen und Wissensdatenbank liegen in der IndexedDB — es gibt **keinen Anwendungsserver**, der sie speichert.
-- **Direkt-zu-API**: Im Live-Modus spricht der Browser direkt mit dem gewählten KI-Anbieter, NCBI und (optional) arXiv. Prompts und Suchanfragen verlassen das Gerät zu diesen Zielen.
+- **Direkt-zu-API**: Im Live-Modus spricht der Browser direkt mit dem gewählten KI-Anbieter, NCBI und (optional) arXiv. Prompts, Artikelmetadaten und Suchanfragen verlassen das Gerät zu diesen Zielen.
 - **Datenportabilität**: Exportieren Sie vollständige Datensätze jederzeit als JSON, CSV, RIS, BibTeX oder PDF.
 
 Bedrohungsmodell und Restrisiken: [SECURITY.md](./SECURITY.md).
+
 ---
 
 ### 📄 Lizenz

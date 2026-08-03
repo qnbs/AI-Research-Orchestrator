@@ -163,7 +163,7 @@ export const helpTranslations = {
       "All data, including your research history, saved articles, and settings, is stored exclusively in your browser's",
     'help.faq.privacy.storage': 'IndexedDB',
     'help.faq.privacy.answer.end':
-      'database. No information is ever uploaded to a server or shared. Your research is completely private to the browser you are using.',
+      'database. There is no app backend that stores your research. In live mode, prompts and article metadata go to the AI provider you configure, and search queries go to NCBI/arXiv.',
     'help.faq.privacy.backup.start':
       'Because the data is stored locally, it can be lost if you clear your browser data. Use the export features in',
     'help.faq.privacy.backup.settings': 'Settings → Data Management & Privacy',
@@ -406,7 +406,7 @@ export const helpTranslations = {
       'Alle Daten, einschließlich Rechercheverlauf, gespeicherter Artikel und Einstellungen, werden ausschließlich in der Browser-Datenbank',
     'help.faq.privacy.storage': 'IndexedDB',
     'help.faq.privacy.answer.end':
-      'gespeichert. Keine Informationen werden jemals auf einen Server hochgeladen oder geteilt. Ihre Recherche bleibt vollständig privat in dem Browser, den Sie verwenden.',
+      'gespeichert. Es gibt kein App-Backend, das Ihre Recherche speichert. Im Live-Modus gehen Prompts und Artikelmetadaten an den konfigurierten KI-Anbieter sowie Suchanfragen an NCBI/arXiv.',
     'help.faq.privacy.backup.start':
       'Da die Daten lokal gespeichert werden, können sie verloren gehen, wenn Sie Browserdaten löschen. Nutzen Sie regelmäßig die Exportfunktionen unter',
     'help.faq.privacy.backup.settings': 'Einstellungen → Datenverwaltung & Datenschutz',
