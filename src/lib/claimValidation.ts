@@ -47,6 +47,11 @@ export type ValidatedClaimResult = GroundedClaim & {
   evidenceSnippets?: string[];
   /** Out-of-corpus citation ids preserved for metrics and export (not stripped). */
   invalidCitations?: string[];
+  /**
+   * All corpus-valid keys originally cited by the model before support filtering.
+   * Metrics must use this (not trimmed `pmids`) so irrelevant in-corpus citations count.
+   */
+  citedValidSourceKeys?: string[];
   matcherVersion?: string;
 };
 
@@ -128,6 +133,7 @@ export function validateClaimAgainstCorpus(
     ...normalized,
     id,
     pmids: resultPmids,
+    citedValidSourceKeys: valid,
     invalidCitations: invalid.length > 0 ? invalid : undefined,
     validationState,
     evidenceSnippets: snippets.length > 0 ? snippets : undefined,
@@ -195,7 +201,8 @@ export function computeClaimTrustMetrics(
     else if (state === 'unverified') unverifiedClaims += 1;
     else rejectedClaims += 1;
 
-    const allCitedKeys = [...partitioned.valid, ...invalid];
+    const validCited = claim.citedValidSourceKeys ?? partitioned.valid;
+    const allCitedKeys = [...validCited, ...invalid];
     for (const pmid of allCitedKeys) {
       citedPmids += 1;
       const article = findArticleByCorpusKey(corpusArticles, pmid);

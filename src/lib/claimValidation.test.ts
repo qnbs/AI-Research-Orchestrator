@@ -215,6 +215,11 @@ describe('validateClaimAgainstCorpus — adversarial fixtures', () => {
     );
     expect(result.validationState).toBe('claim-supported');
     expect(result.pmids).toEqual(['1']);
+    expect(result.citedValidSourceKeys).toEqual(['1', '2']);
+
+    const metrics = computeClaimTrustMetrics([result], corpus);
+    expect(metrics.citationPrecision).toBe(0.5);
+    expect(metrics.irrelevantCitationRate).toBe(0.5);
   });
 
   it('rejects contradictory evidence even with lexical overlap', () => {
