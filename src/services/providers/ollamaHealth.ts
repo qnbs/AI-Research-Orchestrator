@@ -66,14 +66,25 @@ function normalizeBaseUrl(
   return { ok: true, baseUrl: validated.normalizedUrl, origin: validated.origin };
 }
 
+function readErrorField(error: unknown, field: 'name' | 'message'): string {
+  if (!error || typeof error !== 'object') return '';
+  const value = (error as { name?: unknown; message?: unknown })[field];
+  return typeof value === 'string' ? value : '';
+}
+
 function isTimeoutAbort(error: unknown): boolean {
-  if (!(error instanceof Error)) return false;
-  if (error.name === 'TimeoutError') return true;
-  if (/timed?\s*out|timeout/i.test(error.message)) return true;
-  const cause = error.cause;
-  if (cause instanceof Error) {
-    if (cause.name === 'TimeoutError') return true;
-    if (/timed?\s*out|timeout/i.test(cause.message)) return true;
+  // DOMException may not be `instanceof Error` under jsdom — read fields duck-typed.
+  const name = readErrorField(error, 'name');
+  const message = readErrorField(error, 'message');
+  if (name === 'TimeoutError') return true;
+  if (/timed?\s*out|timeout/i.test(message)) return true;
+  const cause =
+    error && typeof error === 'object' && 'cause' in error
+      ? (error as { cause?: unknown }).cause
+      : undefined;
+  if (cause) {
+    if (readErrorField(cause, 'name') === 'TimeoutError') return true;
+    if (/timed?\s*out|timeout/i.test(readErrorField(cause, 'message'))) return true;
   }
   return false;
 }
