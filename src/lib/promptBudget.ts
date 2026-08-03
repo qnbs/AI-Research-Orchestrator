@@ -8,7 +8,6 @@ import type { AbstractStatus, RankedArticle } from '../types';
 import { estimateTokensFromText } from './resilience';
 import { rankArticles } from '../services/nonAi/ranker';
 import { estimateOllamaInputTokenBudget } from './ollamaContextBudget';
-import { lookupCachedOllamaParameterSize } from '../services/providers/ollamaHealth';
 
 export type PromptFieldLimits = {
   maxTitleChars: number;
@@ -68,7 +67,9 @@ export type RankingArticlePromptPayload = {
 
 export const getInputTokenBudget = (provider: AIProviderSelection, model: string): number => {
   if (provider === 'ollama') {
-    return estimateOllamaInputTokenBudget(model, lookupCachedOllamaParameterSize(model)).budget;
+    // Budget from model id / parameter tokens in the name only — do not read
+    // health-cache metadata across Ollama base URLs (cross-endpoint contamination).
+    return estimateOllamaInputTokenBudget(model).budget;
   }
   const modelKey = model.toLowerCase();
   if (/pro|opus|gpt-5|o3/i.test(modelKey)) {

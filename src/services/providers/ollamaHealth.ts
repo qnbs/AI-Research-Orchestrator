@@ -172,26 +172,6 @@ function rememberSuccess(result: OllamaHealthOk): OllamaHealthOk {
   return result;
 }
 
-/** Best-effort parameter size from any non-expired successful health cache entry. */
-export function lookupCachedOllamaParameterSize(model: string): string | undefined {
-  const target = model.trim().toLowerCase();
-  if (!target) return undefined;
-  const now = Date.now();
-  for (const [key, entry] of healthCache) {
-    if (now > entry.expiresAt) {
-      healthCache.delete(key);
-      continue;
-    }
-    if (!entry.result.ok) continue;
-    const matched = entry.result.models.find((m) => {
-      const name = m.name.toLowerCase();
-      return name === target || name.startsWith(`${target}:`) || target.startsWith(`${name}:`);
-    });
-    if (matched?.parameterSize) return matched.parameterSize;
-  }
-  return undefined;
-}
-
 type TagsPayload = {
   models?: Array<{
     name?: string;
