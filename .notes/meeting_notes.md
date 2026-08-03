@@ -240,4 +240,10 @@
 
 - **Why:** Master prompt P1-7 / PR H — document required checks, keep `main` validation from being cancelled by concurrency, align audit-governance with blocking cross-browser + DeepSource AI Review mandate.
 - **What:** `docs/ci-branch-governance.md`; PR-only `cancel-in-progress` on deploy/e2e/cross-browser/a11y/security; `project-facts` + `check:docs-drift` guard; update `audit-governance` / CONTRIBUTING / AGENTS / release-policy.
-- **Next:** Remaining remediation (architecture decomposition / P2–P3) if still desired; package stays 0.4.1 until a named release cut.
+- **Live ruleset:** `mainrules` (20291814) active with all 11 required check contexts; recommend enabling conversation resolution + strict up-to-date.
+
+## 2026-08-03 — Main tip WebKit cancelled (apt install timeout)
+
+- **Why:** `main` `2d8d4f9` cross-browser run `30807274942` WebKit cancelled; firefox/mobile-chrome green. Logs show ~30 min `playwright install --with-deps` apt crawl → job timeout (not suite failure). Separately, burst merges cancelled prior `main` runs under `cancel-in-progress: true`.
+- **What (in #212):** browser cache + install/install-deps retry + 45m job timeout; keep PR-only concurrency.
+- **Next:** Merge #212 after CodeRabbit quiescence; tip re-validates on merge push.
