@@ -7,10 +7,18 @@ import type { AIProviderSelection } from '../services/providers/types';
 import type { AbstractStatus, RankedArticle } from '../types';
 import { estimateTokensFromText } from './resilience';
 import { rankArticles } from '../services/nonAi/ranker';
+import { estimateOllamaInputTokenBudget } from './ollamaContextBudget';
+import { resolveCachedOllamaParameterSize } from '../services/providers/ollamaHealth';
 
 export type PromptFieldLimits = {
   maxTitleChars: number;
   maxAbstractChars: number;
+};
+
+/** Optional runtime hints for provider-specific budgeting. */
+export type PromptBudgetOptions = {
+  /** Active Ollama base URL — used only to read that endpoint's health-cache metadata. */
+  ollamaBaseUrl?: string;
 };
 
 export const DEFAULT_PROMPT_FIELD_LIMITS: PromptFieldLimits = {
@@ -64,7 +72,17 @@ export type RankingArticlePromptPayload = {
   lexicalRankScore?: number;
 };
 
-export const getInputTokenBudget = (provider: AIProviderSelection, model: string): number => {
+export const getInputTokenBudget = (
+  provider: AIProviderSelection,
+  model: string,
+  options?: PromptBudgetOptions,
+): number => {
+  if (provider === 'ollama') {
+    // Prefer parameterSize from the active endpoint's health cache only.
+    // Never scan other cached base URLs (cross-endpoint contamination).
+    const parameterSize = resolveCachedOllamaParameterSize(options?.ollamaBaseUrl, model);
+    return estimateOllamaInputTokenBudget(model, parameterSize).budget;
+  }
   const modelKey = model.toLowerCase();
   if (/pro|opus|gpt-5|o3/i.test(modelKey)) {
     return 28_000;
@@ -148,13 +166,14 @@ export const selectArticlesForRankingPrompt = (
   provider: AIProviderSelection,
   model: string,
   limits: PromptFieldLimits = DEFAULT_PROMPT_FIELD_LIMITS,
+  options?: PromptBudgetOptions,
 ): RankingPromptSelection => {
   const rankable = articles.filter((a) => a.pmid).map(toRankableArticle);
   const lexicallyRanked = rankArticles(rankable, topic).sort(
     (a, b) => b.relevanceScore - a.relevanceScore,
   );
 
-  const inputBudget = getInputTokenBudget(provider, model);
+  const inputBudget = getInputTokenBudget(provider, model, options);
   const availableTokens = Math.max(1_000, inputBudget - RANKING_RESERVED_TOKENS);
 
   let bestCount = 0;
@@ -248,8 +267,9 @@ export const selectArticlesForSynthesisPrompt = (
   provider: AIProviderSelection,
   model: string,
   limits: PromptFieldLimits = DEFAULT_PROMPT_FIELD_LIMITS,
+  options?: PromptBudgetOptions,
 ): SynthesisPromptSelection => {
-  const inputBudget = getInputTokenBudget(provider, model);
+  const inputBudget = getInputTokenBudget(provider, model, options);
   const availableTokens = Math.max(800, inputBudget - SYNTHESIS_RESERVED_TOKENS);
 
   let bestCount = 0;

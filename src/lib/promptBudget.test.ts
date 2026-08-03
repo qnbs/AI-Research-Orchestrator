@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import {
   boundTextField,
   DEFAULT_PROMPT_FIELD_LIMITS,
@@ -11,6 +11,7 @@ import {
 } from './promptBudget';
 import { wrapUntrustedJsonBlock } from './untrustedDataFraming';
 import type { RankedArticle } from '../types';
+import { invalidateOllamaHealthCache, probeOllamaHealth } from '../services/providers/ollamaHealth';
 
 const makeArticle = (pmid: string, title: string, summary = 'Abstract text.'): RankedArticle => ({
   pmid,
@@ -24,6 +25,41 @@ const makeArticle = (pmid: string, title: string, summary = 'Abstract text.'): R
   keywords: [],
   isOpenAccess: false,
   abstractStatus: 'available',
+});
+
+describe('getInputTokenBudget (ollama active-endpoint metadata)', () => {
+  beforeEach(() => {
+    invalidateOllamaHealthCache();
+    vi.restoreAllMocks();
+  });
+  afterEach(() => {
+    invalidateOllamaHealthCache();
+  });
+
+  it('uses parameterSize from the active Ollama endpoint cache only', async () => {
+    global.fetch = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ version: '0.5.0' }) })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          models: [{ name: 'custom-local', details: { parameter_size: '1B' } }],
+        }),
+      });
+    await probeOllamaHealth('http://localhost:11434', { force: true });
+
+    expect(getInputTokenBudget('ollama', 'custom-local')).toBe(8_000);
+    expect(
+      getInputTokenBudget('ollama', 'custom-local', {
+        ollamaBaseUrl: 'http://localhost:11434',
+      }),
+    ).toBe(6_000);
+    expect(
+      getInputTokenBudget('ollama', 'custom-local', {
+        ollamaBaseUrl: 'http://127.0.0.1:11434',
+      }),
+    ).toBe(8_000);
+  });
 });
 
 describe('wrapUntrustedJsonBlock', () => {

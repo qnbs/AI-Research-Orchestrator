@@ -62,6 +62,22 @@ describe('createOllamaProvider', () => {
     expect(chunks).toEqual(['hi', ' there']);
   });
 
+  it('keeps 503 retryable even when the body says Not Found', async () => {
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: false,
+      status: 503,
+      text: async () => 'Not Found',
+    });
+    const provider = createOllamaProvider();
+    await expect(
+      provider.generateContent({ model: 'llama3.1:8b', prompt: 'x' }),
+    ).rejects.toMatchObject({
+      code: 'PROVIDER_UNAVAILABLE',
+      status: 503,
+      retryable: true,
+    });
+  });
+
   it('maps HTTP errors to AppError', async () => {
     global.fetch = vi.fn().mockResolvedValueOnce({
       ok: false,
@@ -126,6 +142,13 @@ describe('createOllamaProvider', () => {
       'http://localhost:11434/api/generate',
       expect.anything(),
     );
+  });
+
+  it('mapError maps abort errors to non-retryable STREAM_ABORTED', () => {
+    const provider = createOllamaProvider();
+    const mapped = provider.mapError(new DOMException('Aborted', 'AbortError'));
+    expect(mapped.code).toBe('STREAM_ABORTED');
+    expect(mapped.retryable).toBe(false);
   });
 
   it('mapError wraps unknown failures as PROVIDER_UNAVAILABLE', () => {
@@ -249,6 +272,43 @@ describe('createOllamaProvider', () => {
     ]);
   });
 
+  it('marks in-band chat model-not-found errors as non-retryable', async () => {
+    const encoder = new TextEncoder();
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      body: {
+        getReader: () => {
+          const payload = `${JSON.stringify({ error: "model 'missing' not found" })}\n`;
+          let done = false;
+          return {
+            read: async () => {
+              if (done) return { done: true, value: undefined };
+              done = true;
+              return { done: false, value: encoder.encode(payload) };
+            },
+          };
+        },
+      },
+    });
+
+    const provider = createOllamaProvider();
+    const session = await provider.createChatSession({
+      model: 'missing',
+      baseURL: 'http://127.0.0.1:11434',
+    });
+    await expect(
+      (async () => {
+        for await (const _chunk of await session.sendMessageStream({ message: 'hi' })) {
+          // drain
+        }
+      })(),
+    ).rejects.toMatchObject({
+      code: 'PROVIDER_UNAVAILABLE',
+      retryable: false,
+      context: 'ollama_model_not_found',
+    });
+  });
+
   it('does not commit history after in-band chat stream errors', async () => {
     const encoder = new TextEncoder();
     const ndjsonBody = (lines: unknown[]) => ({
@@ -359,14 +419,29 @@ describe('createOllamaProvider', () => {
     ]);
   });
 
-  it('testConnection checks /api/tags', async () => {
+  it('testConnection probes /api/version then /api/tags', async () => {
     const timeoutSignal = new AbortController().signal;
     const timeoutSpy = vi.spyOn(AbortSignal, 'timeout').mockReturnValue(timeoutSignal);
-    global.fetch = vi.fn().mockResolvedValueOnce({ ok: true });
+    global.fetch = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ version: '0.5.0' }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ models: [{ name: 'llama3.1:8b' }] }),
+      });
     const provider = createOllamaProvider();
     await expect(provider.testConnection!('http://localhost:11434')).resolves.toBe(true);
     expect(timeoutSpy).toHaveBeenCalledWith(15_000);
-    expect(global.fetch).toHaveBeenCalledWith(
+    expect(global.fetch).toHaveBeenNthCalledWith(
+      1,
+      'http://localhost:11434/api/version',
+      expect.objectContaining({ signal: timeoutSignal }),
+    );
+    expect(global.fetch).toHaveBeenNthCalledWith(
+      2,
       'http://localhost:11434/api/tags',
       expect.objectContaining({ signal: timeoutSignal }),
     );

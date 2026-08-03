@@ -102,7 +102,7 @@ export const AI_PROVIDERS: Record<AIProviderSelection, ProviderMeta> = {
   },
   ollama: {
     id: 'ollama',
-    label: 'Ollama (local)',
+    label: 'Local AI (Ollama)',
     defaultModel: 'llama3.1:8b',
     modelSuggestions: ['llama3.1:8b', 'llama3.3', 'qwen2.5:14b', 'mistral:7b'],
     capabilities: providerCapabilities({

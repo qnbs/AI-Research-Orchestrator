@@ -16,6 +16,7 @@ import { getNcbiApiKey } from './apiKeyService';
 import { defaultGeminiThinkingBudget } from './providers/provider';
 import { getProviderForSettings, resetProviderInstances } from './providers/factory';
 import type { AIContentRequest, AIJsonSchema } from './providers/types';
+import { probeOllamaHealth } from './providers/ollamaHealth';
 import { searchPubMedForIds, fetchArticleDetails } from './pubmedUtils';
 import { searchAndFetchArxiv } from './arxivUtils';
 import { sanitizePromptFragment } from '../lib/promptSanitize';
@@ -389,11 +390,22 @@ Research Topic: ${wrapUntrustedTextBlock('research_topic', topicSafe)}
 
     throwIfAborted(signal);
     const providerId = aiSettings.provider ?? 'gemini';
+    const ollamaBudgetOptions = {
+      ollamaBaseUrl: aiSettings.customBaseUrl?.trim() || 'http://localhost:11434',
+    };
+    // Warm the active-endpoint health cache so prompt budgets can use tag
+    // parameterSize for custom model names (TTL cache; no-op when fresh).
+    if (providerId === 'ollama') {
+      await probeOllamaHealth(ollamaBudgetOptions.ollamaBaseUrl, { signal });
+      throwIfAborted(signal);
+    }
     const rankingSelection = selectArticlesForRankingPrompt(
       articleDetails,
       topicSafe,
       providerId,
       aiSettings.model,
+      undefined,
+      ollamaBudgetOptions,
     );
     yield {
       phase: `Phase 4: AI Ranking (${rankingSelection.accounting.includedInPrompt}/${rankingSelection.accounting.totalRetrieved} articles in prompt)...`,
@@ -456,6 +468,8 @@ Research Topic: ${wrapUntrustedTextBlock('research_topic', topicSafe)}
       grounded.rankedArticles,
       providerId,
       aiSettings.model,
+      undefined,
+      ollamaBudgetOptions,
     );
     yield {
       phase: 'Phase 5: Synthesizing Top Findings...',
