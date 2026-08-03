@@ -71,7 +71,8 @@ export const PIPELINE_TIMELINE_INDEX: Record<PipelinePhaseId, number> = {
   'retrieval-status': 1,
   ranking: 3,
   synthesis: 4,
-  'empty-retrieval': 4,
+  // Empty/offline outcomes stay at the retrieval step — ranking/synthesis never ran.
+  'empty-retrieval': 1,
   'synthesis-stream': 5,
   finalizing: 6,
 };
