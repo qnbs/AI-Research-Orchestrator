@@ -17,7 +17,7 @@ Use a **phased AsyncGenerator** in `src/services/geminiService.ts` (`generateRes
 4. Semantic ranking (Gemini)
 5. Streaming synthesis (Gemini Pro / configured model)
 
-UI maps phases to conceptual agents (`QueryGenerator`, `PubMedFetcher`, `Ranker`, `Synthesizer`) in `App.tsx` — **prompt/phase roles**, not separate SDK processes.
+UI maps phases to conceptual agents (`QueryGenerator`, `PubMedFetcher`, `Ranker`, `Synthesizer`) via stable `phaseId` values (`src/types/pipelineEvents.ts`, `src/app/getAgentForPhase.ts`) — **prompt/phase roles**, not separate SDK processes. Free-text phase labels are display-only (ADR 0020).
 
 Cancellation via `AbortSignal`; aborts surface as `AppError` with code `STREAM_ABORTED`. External PubMed calls use circuit breaker + backoff (`circuitBreaker`, `pubmedUtils`).
 

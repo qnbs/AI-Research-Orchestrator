@@ -50,6 +50,8 @@ function isSilentStreamAbort(error: unknown): boolean {
 // ── Streaming report state ────────────────────────────────────────────────────
 export interface StreamingReportState {
   phase: string;
+  /** Stable pipeline phase ID when present (ADR 0020). */
+  phaseId?: string;
   synthesisChunks: string[];
   report: ResearchReport | null;
   isComplete: boolean;
@@ -144,9 +146,15 @@ export const geminiApi = createApi({
           for await (const chunk of stream) {
             if (controller.signal.aborted) break;
             // Skip bootstrap provenance event (ADR 0017) — not a user-facing phase.
-            if (chunk.phase === EXECUTION_PROVENANCE_PHASE) continue;
+            if (
+              chunk.phaseId === 'execution-provenance' ||
+              chunk.phase === EXECUTION_PROVENANCE_PHASE
+            ) {
+              continue;
+            }
             updateCachedData((draft) => {
               draft.phase = chunk.phase;
+              draft.phaseId = chunk.phaseId;
               if (chunk.synthesisChunk) draft.synthesisChunks.push(chunk.synthesisChunk);
               if (chunk.report) {
                 draft.report = chunk.report;

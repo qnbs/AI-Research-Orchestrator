@@ -23,6 +23,7 @@ Index of ADRs for AI-Research-Orchestrator. Each record captures one significant
 | [0017](0017-immutable-execution-provenance.md)          | Immutable Execution Provenance                          | Accepted | 2026-08-02 | Freeze inference mode at stream start; no completion re-resolve                               |
 | [0018](0018-synthesis-trust-terminology.md)             | Synthesis Trust Terminology                             | Accepted | 2026-08-03 | Rename overclaiming `verified` wire values to claim/corpus-supported                          |
 | [0019](0019-ollama-first-class-local-ai.md)             | Ollama First-Class Local AI                             | Accepted | 2026-08-03 | Health/discovery, bounded NDJSON, loopback CSP parity, Settings diagnostics                   |
+| [0020](0020-typed-pipeline-events.md)                   | Typed Pipeline Events                                   | Accepted | 2026-08-03 | Stable `phaseId` stream contract; supersedes free-text agent mapping in ADR 0002              |
 
 ## Conventions
 

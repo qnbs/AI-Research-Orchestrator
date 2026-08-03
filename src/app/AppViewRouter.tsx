@@ -22,6 +22,7 @@ type AppViewRouterProps = Pick<
   | 'currentView'
   | 'reportStatus'
   | 'currentPhase'
+  | 'timelineIndex'
   | 'error'
   | 'report'
   | 'localResearchInput'
@@ -79,6 +80,7 @@ export function AppViewRouter(props: AppViewRouterProps): React.ReactElement {
     currentView,
     reportStatus,
     currentPhase,
+    timelineIndex,
     error,
     report,
     localResearchInput,
@@ -136,6 +138,7 @@ export function AppViewRouter(props: AppViewRouterProps): React.ReactElement {
           <OrchestratorView
             reportStatus={reportStatus}
             currentPhase={currentPhase}
+            timelineIndex={timelineIndex}
             error={error}
             report={report}
             researchInput={localResearchInput}

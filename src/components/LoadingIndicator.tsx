@@ -7,6 +7,8 @@ interface LoadingIndicatorProps {
   phase: string;
   phases: readonly string[];
   phaseDetails: Record<string, string[]>;
+  /** Prefer stable timeline index from typed phaseId (ADR 0020) over string equality. */
+  timelineIndex?: number;
   footerText?: string;
   swipeHintText?: string;
 }
@@ -179,6 +181,7 @@ export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
   phase,
   phases,
   phaseDetails,
+  timelineIndex,
   footerText,
   swipeHintText,
 }) => {
@@ -187,7 +190,11 @@ export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
   const subPhaseIntervalRef = useRef<number | null>(null);
 
   useEffect(() => {
-    const index = phases.findIndex((p) => p === phase);
+    const indexFromId =
+      typeof timelineIndex === 'number' && timelineIndex >= 0 && timelineIndex < phases.length
+        ? timelineIndex
+        : -1;
+    const index = indexFromId !== -1 ? indexFromId : phases.findIndex((p) => p === phase);
     // eslint-disable-next-line react-hooks/set-state-in-effect -- bundled with interval setup/teardown below, which must be an effect; keeps the last-known-good index rather than resetting when phase isn't found.
     if (index !== -1) setCurrentPhaseIndex(index);
 
@@ -208,7 +215,7 @@ export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
     return () => {
       if (subPhaseIntervalRef.current) clearInterval(subPhaseIntervalRef.current);
     };
-  }, [phase, phases, phaseDetails]);
+  }, [phase, phases, phaseDetails, timelineIndex]);
 
   const progress = ((currentPhaseIndex + 1) / phases.length) * 100;
 

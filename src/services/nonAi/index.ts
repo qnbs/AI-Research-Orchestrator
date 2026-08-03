@@ -8,6 +8,11 @@
  */
 
 import type { ResearchInput, ResearchReport, ReportCorpusClass } from '../../types';
+import {
+  makePipelineEvent,
+  type PipelinePhaseId,
+  type ResearchStreamEvent,
+} from '../../types/pipelineEvents';
 import { HEURISTIC_BADGE } from './types';
 import { buildQuery, type QueryBuildOptions } from './queryBuilder';
 import { retrieveArticles } from './retriever';
@@ -24,11 +29,8 @@ import {
   stampDemoArticle,
 } from '../../lib/articleSourceClass';
 
-export type NonAiStreamEvent = {
-  report?: ResearchReport;
-  synthesisChunk?: string;
-  phase: string;
-};
+/** Non-AI stream events share the typed ResearchStreamEvent contract (ADR 0020). */
+export type NonAiStreamEvent = ResearchStreamEvent;
 
 export type NonAiStreamOptions = {
   /**
@@ -40,6 +42,14 @@ export type NonAiStreamOptions = {
 
 function phase(label: string): string {
   return `${HEURISTIC_BADGE} · ${label}`;
+}
+
+function emit(
+  phaseId: PipelinePhaseId,
+  label: string,
+  extras: Omit<Parameters<typeof makePipelineEvent>[1], 'phase'> = {},
+): NonAiStreamEvent {
+  return makePipelineEvent(phaseId, { ...extras, phase: phase(label) });
 }
 
 /** Maps the user's form filters (date range, article types) onto query-builder options. */
@@ -89,7 +99,7 @@ export async function* generateNonAiResearchReportStream(
   signal?: AbortSignal,
   options: NonAiStreamOptions = {},
 ): AsyncGenerator<NonAiStreamEvent> {
-  yield { phase: phase('Phase 1: Building Boolean query with MeSH terms...') };
+  yield emit('query-generation', 'Phase 1: Building Boolean query with MeSH terms...');
   throwIfAborted(signal, 'Aborted');
 
   const primaryQuery = buildQuery(input.researchTopic, queryOptionsFromInput(input));
@@ -100,7 +110,7 @@ export async function* generateNonAiResearchReportStream(
 
   // Explicit educational demo — never implied by offline/empty/failure.
   if (educationalDemo) {
-    yield { phase: phase('Educational demo mode — loading synthetic demo corpus...') };
+    yield emit('demo-corpus', 'Educational demo mode — loading synthetic demo corpus...');
     const curated = enrichArticles(
       selectDemoArticlesForTopic(
         input.researchTopic,
@@ -109,25 +119,25 @@ export async function* generateNonAiResearchReportStream(
       ).map(stampDemoArticle),
     );
     throwIfAborted(signal, 'Aborted');
-    yield { phase: phase('Phase 4: Ranking with BM25/TF-IDF hybrid...') };
+    yield emit('ranking', 'Phase 4: Ranking with BM25/TF-IDF hybrid...');
     const ranked = rankArticles(curated, input.researchTopic);
     const topRanked = getTopArticles(ranked, input.topNToSynthesize).map(stampDemoArticle);
 
     throwIfAborted(signal, 'Aborted');
-    yield { phase: phase('Phase 5: Generating extractive synthesis...') };
+    yield emit('synthesis', 'Phase 5: Generating extractive synthesis...');
     const report: ResearchReport = {
       ...generateResearchReport(topRanked, input.researchTopic),
       generatedQueries: [{ query: primaryQuery.query, explanation: primaryQuery.explanation }],
       corpusClass: 'demo-only',
       retrievalOutcome: 'educational_demo',
     };
-    yield { report, phase: phase('Phase 5: Generating extractive synthesis...') };
+    yield emit('synthesis', 'Phase 5: Generating extractive synthesis...', { report });
 
     for await (const chunk of streamSynthesisChunks(report.synthesis, signal)) {
-      yield { synthesisChunk: chunk, phase: phase('Streaming synthesis...') };
+      yield emit('synthesis-stream', 'Streaming synthesis...', { synthesisChunk: chunk });
     }
 
-    yield { phase: phase('Phase 6: Finalizing report...') };
+    yield emit('finalizing', 'Phase 6: Finalizing report...');
     return;
   }
 
@@ -136,7 +146,7 @@ export async function* generateNonAiResearchReportStream(
   let retrievalErrorCount = 0;
 
   if (isOnline) {
-    yield { phase: phase('Phase 2: Retrieving articles from PubMed and arXiv...') };
+    yield emit('retrieval', 'Phase 2: Retrieving articles from PubMed and arXiv...');
     try {
       const retrieval = await retrieveArticles([primaryQuery], {
         maxPubmed: input.maxArticlesToScan,
@@ -145,41 +155,37 @@ export async function* generateNonAiResearchReportStream(
       });
       throwIfAborted(signal, 'Aborted');
       retrievalErrorCount = retrieval.retrievalErrorCount ?? 0;
-      yield { phase: phase('Phase 3: Curating and deduplicating results...') };
+      yield emit('curation', 'Phase 3: Curating and deduplicating results...');
       curated = stampRetrievedArticles(
         enrichArticles(mergeAndCurate(retrieval.pubmedArticles, retrieval.arxivArticles)),
       );
       if (curated.length === 0 && retrievalErrorCount > 0) {
         retrievalFailed = true;
-        yield {
-          phase: phase(
-            'PubMed/arXiv unavailable — empty result (enable Educational Demo to practice offline).',
-          ),
-        };
+        yield emit(
+          'retrieval-status',
+          'PubMed/arXiv unavailable — empty result (enable Educational Demo to practice offline).',
+        );
       } else if (curated.length > 0 && retrievalErrorCount > 0) {
-        yield {
-          phase: phase(
-            'Partial retrieval — one or more literature providers failed; synthesizing from available results.',
-          ),
-        };
+        yield emit(
+          'retrieval-status',
+          'Partial retrieval — one or more literature providers failed; synthesizing from available results.',
+        );
       }
     } catch (error) {
       if (error instanceof AppError && error.code === 'STREAM_ABORTED') throw error;
       safeLogWarn('Non-AI retrieval failed; not substituting demo corpus:', error);
       retrievalFailed = true;
       retrievalErrorCount += 1;
-      yield {
-        phase: phase(
-          'PubMed/arXiv unavailable — empty result (enable Educational Demo to practice offline).',
-        ),
-      };
+      yield emit(
+        'retrieval-status',
+        'PubMed/arXiv unavailable — empty result (enable Educational Demo to practice offline).',
+      );
     }
   } else {
-    yield {
-      phase: phase(
-        'Offline — empty result (enable Educational Demo for synthetic practice corpus).',
-      ),
-    };
+    yield emit(
+      'retrieval-status',
+      'Offline — empty result (enable Educational Demo for synthetic practice corpus).',
+    );
   }
 
   if (curated.length === 0) {
@@ -204,18 +210,17 @@ export async function* generateNonAiResearchReportStream(
       outcome,
       message,
     );
-    yield {
+    yield emit('empty-retrieval', 'Empty retrieval — no scientific corpus assembled.', {
       report: emptyReport,
       // Emit as a chunk so orchestrator session accumulation keeps the explanation.
       synthesisChunk: emptyReport.synthesis,
-      phase: phase('Empty retrieval — no scientific corpus assembled.'),
-    };
-    yield { phase: phase('Phase 6: Finalizing report...') };
+    });
+    yield emit('finalizing', 'Phase 6: Finalizing report...');
     return;
   }
 
   throwIfAborted(signal, 'Aborted');
-  yield { phase: phase('Phase 4: Ranking with BM25/TF-IDF hybrid...') };
+  yield emit('ranking', 'Phase 4: Ranking with BM25/TF-IDF hybrid...');
   const ranked = rankArticles(curated, input.researchTopic);
   const topRanked = getTopArticles(ranked, input.topNToSynthesize).map((a) => ({
     ...a,
@@ -223,20 +228,20 @@ export async function* generateNonAiResearchReportStream(
   }));
 
   throwIfAborted(signal, 'Aborted');
-  yield { phase: phase('Phase 5: Generating extractive synthesis...') };
+  yield emit('synthesis', 'Phase 5: Generating extractive synthesis...');
   const report: ResearchReport = {
     ...generateResearchReport(topRanked, input.researchTopic),
     generatedQueries: [{ query: primaryQuery.query, explanation: primaryQuery.explanation }],
     corpusClass: resolveReportCorpusClass(topRanked, 'retrieved'),
     retrievalOutcome: retrievalErrorCount > 0 ? 'partial_failure' : 'ok',
   };
-  yield { report, phase: phase('Phase 5: Generating extractive synthesis...') };
+  yield emit('synthesis', 'Phase 5: Generating extractive synthesis...', { report });
 
   for await (const chunk of streamSynthesisChunks(report.synthesis, signal)) {
-    yield { synthesisChunk: chunk, phase: phase('Streaming synthesis...') };
+    yield emit('synthesis-stream', 'Streaming synthesis...', { synthesisChunk: chunk });
   }
 
-  yield { phase: phase('Phase 6: Finalizing report...') };
+  yield emit('finalizing', 'Phase 6: Finalizing report...');
 }
 
 /**

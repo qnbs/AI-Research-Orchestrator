@@ -439,6 +439,8 @@ export interface AgentTraceEvent {
   agentName: AgentName;
   status: AgentStatus;
   message: string;
+  /** Stable pipeline phase ID when the event came from a typed stream (ADR 0020). */
+  phaseId?: string;
   startedAt: number;
   completedAt?: number;
   durationMs?: number;

@@ -13,6 +13,8 @@ import { useTranslation } from '../hooks/useTranslation';
 interface OrchestratorViewProps {
   reportStatus: 'idle' | 'generating' | 'streaming' | 'done' | 'error';
   currentPhase: string;
+  /** Stable timeline index from typed pipeline phaseId (ADR 0020). */
+  timelineIndex?: number;
   error: string | null;
   report: ResearchReport | null;
   researchInput: ResearchInput | null;
@@ -72,6 +74,7 @@ const phaseDetails: Record<string, string[]> = {
 const OrchestratorViewComponent: React.FC<OrchestratorViewProps> = ({
   reportStatus,
   currentPhase,
+  timelineIndex,
   error,
   report,
   researchInput,
@@ -137,6 +140,7 @@ const OrchestratorViewComponent: React.FC<OrchestratorViewProps> = ({
           phase={currentPhase}
           phases={loadingPhases}
           phaseDetails={phaseDetails}
+          timelineIndex={timelineIndex}
           footerText="This may take up to a minute. The AI is performing multiple complex steps, including live database searches and synthesis."
         />
       )}

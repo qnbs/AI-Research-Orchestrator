@@ -27,12 +27,14 @@ import { toAppError } from '../lib/errors';
 import type { View } from '../types/ui';
 import type { TranslationKey } from '../i18n/translations';
 import type { HapticPreset } from '../hooks/useHaptic';
-import { getAgentForPhase } from './getAgentForPhase';
+import { getAgentForPhase, getAgentForPhaseId } from './getAgentForPhase';
 import { stampReportWithProvenance } from '../lib/appReleaseInfo';
 import {
   EXECUTION_PROVENANCE_PHASE,
   type ResearchExecutionContext,
 } from '../lib/researchExecutionContext';
+import type { PipelinePhaseId } from '../types/pipelineEvents';
+import { PIPELINE_TIMELINE_INDEX } from '../types/pipelineEvents';
 import { safeLogError } from '../lib/safeLog';
 
 type ReportStatus = 'idle' | 'generating' | 'streaming' | 'done' | 'error';
@@ -77,6 +79,8 @@ export function useResearchSession({
   const [reportStatus, setReportStatus] = useState<ReportStatus>('idle');
   const [error, setError] = useState<string | null>(null);
   const [currentPhase, setCurrentPhase] = useState<string>('');
+  const [currentPhaseId, setCurrentPhaseId] = useState<PipelinePhaseId | null>(null);
+  const [timelineIndex, setTimelineIndex] = useState(0);
   const [isCurrentReportSaved, setIsCurrentReportSaved] = useState(false);
   const [resumeCheckpoints, setResumeCheckpoints] = useState<ResearchCheckpoint[]>([]);
 
@@ -160,6 +164,9 @@ export function useResearchSession({
       setLocalResearchInput(data);
       setCurrentView('orchestrator');
       setIsCurrentReportSaved(false);
+      setCurrentPhase('');
+      setCurrentPhaseId(null);
+      setTimelineIndex(0);
 
       const costEstimate = estimateResearchRunCost({
         provider: aiSettings.provider ?? 'gemini',
@@ -203,6 +210,7 @@ export function useResearchSession({
           report: partialReport,
           synthesisChunk,
           phase,
+          phaseId,
           promptBudget,
           executionContext,
         } of stream) {
@@ -215,14 +223,19 @@ export function useResearchSession({
             frozenExecutionContext = executionContext;
           }
           // Bootstrap provenance event — do not drive agent UI / phase chrome.
-          if (phase === EXECUTION_PROVENANCE_PHASE) {
+          if (phaseId === 'execution-provenance' || phase === EXECUTION_PROVENANCE_PHASE) {
             continue;
           }
 
           lastPhase = phase;
           setCurrentPhase(phase);
+          setCurrentPhaseId(phaseId);
+          const nextTimeline = PIPELINE_TIMELINE_INDEX[phaseId];
+          if (nextTimeline >= 0) {
+            setTimelineIndex(nextTimeline);
+          }
 
-          const currentAgent = getAgentForPhase(phase);
+          const currentAgent = getAgentForPhaseId(phaseId) ?? getAgentForPhase(phase, phaseId);
           if (currentAgent !== prevAgent) {
             if (prevAgent !== null) {
               dispatch(setAgentStatus({ agentName: prevAgent, status: 'done' }));
@@ -232,6 +245,7 @@ export function useResearchSession({
                 agentName: currentAgent,
                 status: 'running',
                 message: phase,
+                phaseId,
                 startedAt: Date.now(),
                 metadata: promptBudget ? { promptBudget } : undefined,
               }),
@@ -366,6 +380,9 @@ export function useResearchSession({
     setReportStatus('idle');
     setError(null);
     setIsCurrentReportSaved(false);
+    setCurrentPhase('');
+    setCurrentPhaseId(null);
+    setTimelineIndex(0);
     setCurrentView('orchestrator');
   }, [setCurrentView]);
 
@@ -408,6 +425,8 @@ export function useResearchSession({
     reportStatus,
     error,
     currentPhase,
+    currentPhaseId,
+    timelineIndex,
     isCurrentReportSaved,
     resumeCheckpoints,
     setResumeCheckpoints: setResumeCheckpoints as Dispatch<SetStateAction<ResearchCheckpoint[]>>,
