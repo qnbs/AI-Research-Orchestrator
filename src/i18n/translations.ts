@@ -549,7 +549,7 @@ export const translations = {
     'settings.ai.provider_label.gemini': 'Google Gemini',
     'settings.ai.provider_label.openai': 'OpenAI',
     'settings.ai.provider_label.anthropic': 'Anthropic',
-    'settings.ai.provider_label.ollama': 'Local AI (Ollama)',
+    'settings.ai.provider_label.ollama': 'Lokale KI (Ollama)',
     'settings.ai.provider_label.heuristic': 'Heuristik (lokal)',
     'settings.ai.model': 'KI-Modell',
     'settings.ai.model_desc':

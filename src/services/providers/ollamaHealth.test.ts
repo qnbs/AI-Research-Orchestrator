@@ -119,6 +119,22 @@ describe('mergeSignals', () => {
       AbortSignal.any = originalAny;
     }
   });
+
+  it('aborts on timeout without AbortSignal.any', async () => {
+    const originalAny = AbortSignal.any;
+    // @ts-expect-error -- simulate older runtimes lacking AbortSignal.any
+    AbortSignal.any = undefined;
+    try {
+      const external = new AbortController();
+      const merged = mergeSignals(20, external.signal);
+      expect(merged.aborted).toBe(false);
+      await new Promise((r) => setTimeout(r, 40));
+      expect(merged.aborted).toBe(true);
+      expect((merged.reason as { name?: string } | undefined)?.name).toBe('TimeoutError');
+    } finally {
+      AbortSignal.any = originalAny;
+    }
+  });
 });
 
 describe('diagnoseFetchError timeout classification', () => {
