@@ -79,10 +79,11 @@ function isTimeoutAbort(error: unknown): boolean {
 }
 
 function diagnoseFetchError(error: unknown): Pick<OllamaHealthFail, 'reason' | 'message'> {
+  // TimeoutError is not always classified as AbortError (see isAbortLikeError).
+  if (isTimeoutAbort(error)) {
+    return { reason: 'timeout', message: 'Ollama health probe timed out' };
+  }
   if (isAbortError(error)) {
-    if (isTimeoutAbort(error)) {
-      return { reason: 'timeout', message: 'Ollama health probe timed out' };
-    }
     return { reason: 'aborted', message: 'Ollama health probe aborted' };
   }
   if (error instanceof TypeError) {

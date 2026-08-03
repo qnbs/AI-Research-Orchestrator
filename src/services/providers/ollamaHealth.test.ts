@@ -113,13 +113,23 @@ describe('mergeSignals', () => {
 });
 
 describe('diagnoseFetchError timeout classification', () => {
-  it('classifies TimeoutError-caused aborts as timeout', async () => {
-    // Attach TimeoutError cause as modern runtimes do for AbortSignal.timeout
-    const err = new DOMException('Aborted', 'AbortError');
-    Object.defineProperty(err, 'cause', {
-      value: new DOMException('Ollama health probe timed out', 'TimeoutError'),
-    });
-    global.fetch = vi.fn().mockRejectedValueOnce(err);
+  it('classifies timeout abort messages as timeout', async () => {
+    global.fetch = vi
+      .fn()
+      .mockRejectedValueOnce(
+        new DOMException('The operation was aborted due to timeout', 'AbortError'),
+      );
+    const result = await probeOllamaHealth('http://localhost:11434', { force: true });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.reason).toBe('timeout');
+    }
+  });
+
+  it('classifies TimeoutError name as timeout', async () => {
+    global.fetch = vi
+      .fn()
+      .mockRejectedValueOnce(new DOMException('Ollama health probe timed out', 'TimeoutError'));
     const result = await probeOllamaHealth('http://localhost:11434', { force: true });
     expect(result.ok).toBe(false);
     if (!result.ok) {
