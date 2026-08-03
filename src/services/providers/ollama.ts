@@ -45,7 +45,7 @@ function mapOllamaError(error: unknown): AppError {
 }
 
 async function* streamNdjson<
-  T extends { done?: boolean; response?: string; message?: { content?: string } },
+  T extends { done?: boolean; error?: string; response?: string; message?: { content?: string } },
 >(response: Response): AsyncGenerator<T> {
   if (!response.body) return;
   const reader = response.body.getReader();
@@ -154,10 +154,11 @@ export function createOllamaProvider(): AIProvider {
 
     async createChatSession(request: AIChatSessionRequest): Promise<ProviderChatSession> {
       const baseURL = getBaseUrl(request.baseURL);
-      const messages = (request.history ?? []).map((m) => ({
-        role: m.role === 'model' ? ('assistant' as const) : ('user' as const),
-        content: m.text,
-      }));
+      const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [];
+      if (request.system) messages.push({ role: 'system', content: request.system });
+      for (const m of request.history ?? []) {
+        messages.push({ role: m.role === 'model' ? 'assistant' : 'user', content: m.text });
+      }
 
       return {
         async sendMessageStream({ message }) {
@@ -185,9 +186,39 @@ export function createOllamaProvider(): AIProvider {
           }
 
           return (async function* () {
-            for await (const chunk of streamNdjson<{ message?: { content?: string } }>(response)) {
-              if (chunk.message?.content) yield { text: chunk.message.content };
+            let assistant = '';
+            let completed = false;
+            for await (const chunk of streamNdjson<{
+              message?: { content?: string };
+              done?: boolean;
+              error?: string;
+            }>(response)) {
+              if (typeof chunk.error === 'string' && chunk.error.length > 0) {
+                throw new AppError({
+                  code: 'PROVIDER_UNAVAILABLE',
+                  message: `Ollama chat stream error: ${chunk.error}`,
+                  retryable: true,
+                });
+              }
+              if (chunk.message?.content) {
+                assistant += chunk.message.content;
+                yield { text: chunk.message.content };
+              }
+              if (chunk.done === true) {
+                completed = true;
+              }
             }
+            if (!completed) {
+              throw new AppError({
+                code: 'PROVIDER_UNAVAILABLE',
+                message: 'Ollama chat stream ended without a done marker',
+                retryable: true,
+              });
+            }
+            // Commit only after a protocol-complete stream so failed turns
+            // never poison multi-turn context.
+            messages.push({ role: 'user', content: message });
+            messages.push({ role: 'assistant', content: assistant });
           })();
         },
       };

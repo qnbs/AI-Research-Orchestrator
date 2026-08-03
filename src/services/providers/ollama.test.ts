@@ -169,7 +169,7 @@ describe('createOllamaProvider', () => {
       ok: true,
       body: {
         getReader: () => {
-          const payload = JSON.stringify({ message: { content: 'chat-ok' } }) + '\n';
+          const payload = JSON.stringify({ message: { content: 'chat-ok' }, done: true }) + '\n';
           let done = false;
           return {
             read: async () => {
@@ -198,6 +198,165 @@ describe('createOllamaProvider', () => {
         body: expect.stringContaining('"role":"assistant"'),
       }),
     );
+  });
+
+  it('keeps multi-turn chat context across three sends', async () => {
+    const encoder = new TextEncoder();
+    const mockChatResponse = (content: string) => ({
+      ok: true,
+      body: {
+        getReader: () => {
+          const payload = JSON.stringify({ message: { content }, done: true }) + '\n';
+          let done = false;
+          return {
+            read: async () => {
+              if (done) return { done: true, value: undefined };
+              done = true;
+              return { done: false, value: encoder.encode(payload) };
+            },
+          };
+        },
+      },
+    });
+    global.fetch = vi
+      .fn()
+      .mockResolvedValueOnce(mockChatResponse('r1'))
+      .mockResolvedValueOnce(mockChatResponse('r2'))
+      .mockResolvedValueOnce(mockChatResponse('r3'));
+
+    const provider = createOllamaProvider();
+    const session = await provider.createChatSession({
+      model: 'llama3.1:8b',
+      system: 'sys',
+      baseURL: 'http://127.0.0.1:11434',
+    });
+
+    for (const message of ['t1', 't2', 't3']) {
+      for await (const _chunk of await session.sendMessageStream({ message })) {
+        // drain
+      }
+    }
+
+    expect(global.fetch).toHaveBeenCalledTimes(3);
+    const thirdBody = JSON.parse((global.fetch as ReturnType<typeof vi.fn>).mock.calls[2][1].body);
+    expect(thirdBody.messages).toEqual([
+      { role: 'system', content: 'sys' },
+      { role: 'user', content: 't1' },
+      { role: 'assistant', content: 'r1' },
+      { role: 'user', content: 't2' },
+      { role: 'assistant', content: 'r2' },
+      { role: 'user', content: 't3' },
+    ]);
+  });
+
+  it('does not commit history after in-band chat stream errors', async () => {
+    const encoder = new TextEncoder();
+    const ndjsonBody = (lines: unknown[]) => ({
+      ok: true,
+      body: {
+        getReader: () => {
+          const payload = lines.map((line) => JSON.stringify(line)).join('\n') + '\n';
+          let done = false;
+          return {
+            read: async () => {
+              if (done) return { done: true, value: undefined };
+              done = true;
+              return { done: false, value: encoder.encode(payload) };
+            },
+          };
+        },
+      },
+    });
+    global.fetch = vi
+      .fn()
+      .mockResolvedValueOnce(ndjsonBody([{ message: { content: 'ok' }, done: true }]))
+      .mockResolvedValueOnce(
+        ndjsonBody([{ message: { content: 'partial' }, done: false }, { error: 'model stopped' }]),
+      )
+      .mockResolvedValueOnce(ndjsonBody([{ message: { content: 'recovered' }, done: true }]));
+
+    const provider = createOllamaProvider();
+    const session = await provider.createChatSession({
+      model: 'llama3.1:8b',
+      system: 'sys',
+      baseURL: 'http://127.0.0.1:11434',
+    });
+
+    for await (const _chunk of await session.sendMessageStream({ message: 't1' })) {
+      // drain
+    }
+    await expect(
+      (async () => {
+        for await (const _chunk of await session.sendMessageStream({ message: 'bad' })) {
+          // drain
+        }
+      })(),
+    ).rejects.toMatchObject({ code: 'PROVIDER_UNAVAILABLE' });
+
+    for await (const _chunk of await session.sendMessageStream({ message: 't3' })) {
+      // drain
+    }
+
+    const thirdBody = JSON.parse((global.fetch as ReturnType<typeof vi.fn>).mock.calls[2][1].body);
+    expect(thirdBody.messages).toEqual([
+      { role: 'system', content: 'sys' },
+      { role: 'user', content: 't1' },
+      { role: 'assistant', content: 'ok' },
+      { role: 'user', content: 't3' },
+    ]);
+  });
+
+  it('does not commit history when the chat stream ends without done', async () => {
+    const encoder = new TextEncoder();
+    const ndjsonBody = (lines: unknown[]) => ({
+      ok: true,
+      body: {
+        getReader: () => {
+          const payload = lines.map((line) => JSON.stringify(line)).join('\n') + '\n';
+          let done = false;
+          return {
+            read: async () => {
+              if (done) return { done: true, value: undefined };
+              done = true;
+              return { done: false, value: encoder.encode(payload) };
+            },
+          };
+        },
+      },
+    });
+    global.fetch = vi
+      .fn()
+      .mockResolvedValueOnce(ndjsonBody([{ message: { content: 'ok' }, done: true }]))
+      .mockResolvedValueOnce(ndjsonBody([{ message: { content: 'partial' }, done: false }]))
+      .mockResolvedValueOnce(ndjsonBody([{ message: { content: 'recovered' }, done: true }]));
+
+    const provider = createOllamaProvider();
+    const session = await provider.createChatSession({
+      model: 'llama3.1:8b',
+      baseURL: 'http://127.0.0.1:11434',
+    });
+
+    for await (const _chunk of await session.sendMessageStream({ message: 't1' })) {
+      // drain
+    }
+    await expect(
+      (async () => {
+        for await (const _chunk of await session.sendMessageStream({ message: 'eof' })) {
+          // drain
+        }
+      })(),
+    ).rejects.toMatchObject({ code: 'PROVIDER_UNAVAILABLE' });
+
+    for await (const _chunk of await session.sendMessageStream({ message: 't3' })) {
+      // drain
+    }
+
+    const thirdBody = JSON.parse((global.fetch as ReturnType<typeof vi.fn>).mock.calls[2][1].body);
+    expect(thirdBody.messages).toEqual([
+      { role: 'user', content: 't1' },
+      { role: 'assistant', content: 'ok' },
+      { role: 'user', content: 't3' },
+    ]);
   });
 
   it('testConnection checks /api/tags', async () => {

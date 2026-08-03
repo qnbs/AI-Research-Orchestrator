@@ -181,11 +181,16 @@ export function createAnthropicProvider(): AIProvider {
             { signal: request.signal },
           );
           return (async function* () {
+            let assistant = '';
             for await (const event of stream) {
               if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
+                assistant += event.delta.text;
                 yield { text: event.delta.text };
               }
             }
+            // Commit the completed turn so subsequent sends keep multi-turn context.
+            history.push({ role: 'user', content: message });
+            history.push({ role: 'assistant', content: assistant });
           })();
         },
       };

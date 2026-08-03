@@ -191,21 +191,28 @@ export function createOpenAIProvider(): AIProvider {
 
       return {
         async sendMessageStream({ message }) {
-          const userMessages = [...messages, { role: 'user' as const, content: message }];
+          const turnMessages = [...messages, { role: 'user' as const, content: message }];
           const stream = await openai.chat.completions.create(
             {
               model: request.model,
-              messages: userMessages,
+              messages: turnMessages,
               temperature: request.temperature ?? 0.7,
               stream: true,
             },
             { signal: request.signal },
           );
           return (async function* () {
+            let assistant = '';
             for await (const chunk of stream) {
               const text = chunk.choices[0]?.delta?.content;
-              if (text) yield { text };
+              if (text) {
+                assistant += text;
+                yield { text };
+              }
             }
+            // Commit the completed turn so subsequent sends keep multi-turn context.
+            messages.push({ role: 'user', content: message });
+            messages.push({ role: 'assistant', content: assistant });
           })();
         },
       };
