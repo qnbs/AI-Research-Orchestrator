@@ -209,10 +209,43 @@ describe('agentEval', () => {
           ],
         },
       },
-      expect: { minCitationRecall: 1, maxUnsupportedClaimRate: 0 },
+      expect: { minCitationRecall: 1 },
     });
     expect(result.passed).toBe(false);
-    expect(result.dimensions.find((d) => d.dimension === 'groundedSynthesis')?.passed).toBe(false);
+    expect(result.dimensions.find((d) => d.dimension === 'groundedSynthesis')?.detail).toMatch(
+      /citationRecall/,
+    );
+  });
+
+  it('fails maxUnsupportedClaimRate in isolation', () => {
+    const result = evaluateCase({
+      id: 'claim-metrics-unsupported',
+      description: 'unverified claim exceeds unsupported rate',
+      actual: {
+        rankedArticles: [
+          {
+            pmid: '1',
+            title: 'Aspirin cardiovascular trial',
+            summary: 'Aspirin reduced major cardiovascular events.',
+          },
+        ],
+        groundedSynthesis: {
+          mode: 'narrative-extracted',
+          claims: [
+            {
+              text: 'Aspirin reduced major cardiovascular events.',
+              pmids: ['1'],
+              validationState: 'unverified',
+            },
+          ],
+        },
+      },
+      expect: { maxUnsupportedClaimRate: 0 },
+    });
+    expect(result.passed).toBe(false);
+    expect(result.dimensions.find((d) => d.dimension === 'groundedSynthesis')?.detail).toMatch(
+      /unsupportedClaimRate/,
+    );
   });
 
   it('fails claim metric floors when groundedSynthesis claims are empty', () => {
@@ -244,6 +277,44 @@ describe('agentEval', () => {
       expect: { minCitationRecall: 1, maxUnsupportedClaimRate: 0 },
     });
     expect(result.passed).toBe(false);
+  });
+
+  it('fails claim metrics when claims is not an array', () => {
+    const result = evaluateCase({
+      id: 'claims-not-array',
+      description: 'malformed claims payload',
+      actual: {
+        rankedArticles: [{ pmid: '1' }],
+        groundedSynthesis: { mode: 'extractive-template', claims: 'bad' as unknown as [] },
+      },
+      expect: { minCitationPrecision: 1 },
+    });
+    expect(result.passed).toBe(false);
+    expect(result.dimensions.find((d) => d.dimension === 'groundedSynthesis')?.detail).toMatch(
+      /claims must be an array/,
+    );
+  });
+
+  it('tolerates null rankedArticles entries without throwing', () => {
+    const result = evaluateCase({
+      id: 'null-ranked-entry',
+      description: 'null holes in rankedArticles',
+      actual: {
+        rankedArticles: [null, { pmid: '1', title: 'Aspirin trial', summary: 'Aspirin events.' }],
+        groundedSynthesis: {
+          mode: 'extractive-template',
+          claims: [
+            {
+              text: 'Aspirin events.',
+              pmids: ['1'],
+              validationState: 'claim-supported',
+            },
+          ],
+        },
+      },
+      expect: { minCitationPrecision: 1, minCitationRecall: 1 },
+    });
+    expect(result.passed).toBe(true);
   });
 
   it('requires mustRankPmids in rankedArticles', () => {

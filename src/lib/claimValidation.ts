@@ -185,7 +185,8 @@ export function computeClaimTrustMetrics(
     for (const pmid of claim.pmids) {
       citedPmids += 1;
       const article = findArticleByCorpusKey(corpusArticles, pmid);
-      if (article && !articleSupportsClaim(claim.text, article)) {
+      // Out-of-corpus PMIDs are non-supporting (same bucket as lexically irrelevant).
+      if (!article || !articleSupportsClaim(claim.text, article)) {
         irrelevantPmids += 1;
       }
     }

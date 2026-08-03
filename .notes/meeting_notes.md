@@ -227,4 +227,4 @@
 
 - **Why:** Master prompt acceptance — measure claim-level citation precision/recall/source relevance/unsupported rate; keep tail articles in large corpora.
 - **What:** Extend `ClaimTrustMetrics` + `agentEval` thresholds; `liveOrchestratorEval` tail + claim-trust fixtures; empty claims / zero citations fail metric floors; tail fixture runs ranking prompt-budget selection.
-- **Impact:** `check:agent-eval` catches claim-quality regressions and loss of a relevant tail PMID after ranking truncation.
+- **Impact:** `check:agent-eval` catches claim-quality regressions (precision/recall/relevance/unsupported) and loss of a relevant tail PMID after ranking truncation.

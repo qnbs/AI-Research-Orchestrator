@@ -239,6 +239,23 @@ describe('assessSynthesisTrust', () => {
     expect(metrics.sourceRelevance).toBe(metrics.citationPrecision);
   });
 
+  it('treats out-of-corpus PMIDs as non-supporting for precision and relevance', () => {
+    const metrics = computeClaimTrustMetrics(
+      [
+        {
+          text: 'Aspirin reduces events',
+          pmids: ['999'],
+          validationState: 'rejected',
+        },
+      ],
+      [article('100', 'Aspirin trial', 'Aspirin reduces events in prevention.')],
+    );
+    expect(metrics.invalidCitationCount).toBe(1);
+    expect(metrics.citationPrecision).toBe(0);
+    expect(metrics.irrelevantCitationRate).toBe(1);
+    expect(metrics.sourceRelevance).toBe(0);
+  });
+
   it('never marks synthetic demo corpora as corpus-supported', () => {
     const corpus = [
       {

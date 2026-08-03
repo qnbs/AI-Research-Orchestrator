@@ -180,29 +180,52 @@ export function evaluateCase(testCase: EvalCase): EvalCaseResult {
         ? (actual as Record<string, unknown>)
         : null;
     const grounded = obj?.groundedSynthesis as GroundedSynthesis | undefined;
-    const ranked =
-      obj && Array.isArray(obj.rankedArticles)
-        ? (obj.rankedArticles as { pmid?: string; title?: string; summary?: string }[])
-        : [];
-    // Absent/empty claims must not vacuous-pass metric floors (perfect recall on []).
-    const claims = Array.isArray(grounded?.claims) ? grounded.claims : [];
+    const rankedRaw = obj && Array.isArray(obj.rankedArticles) ? obj.rankedArticles : null;
+    const claimsRaw = grounded && Array.isArray(grounded.claims) ? grounded.claims : null;
     const failures: string[] = [];
 
-    if (claims.length === 0) {
+    if (
+      rankedRaw === null &&
+      obj &&
+      'rankedArticles' in obj &&
+      !Array.isArray(obj.rankedArticles)
+    ) {
+      failures.push('rankedArticles must be an array when present');
+    }
+    if (grounded && grounded.claims !== undefined && claimsRaw === null) {
+      failures.push('groundedSynthesis.claims must be an array when present');
+    }
+
+    const ranked = (rankedRaw ?? []).filter(
+      (r): r is { pmid?: string; title?: string; summary?: string } =>
+        r !== null && typeof r === 'object' && !Array.isArray(r),
+    );
+    // Absent/empty claims must not vacuous-pass metric floors (perfect recall on []).
+    const claims = (claimsRaw ?? []).filter(
+      (c): c is NonNullable<typeof c> => c !== null && typeof c === 'object' && !Array.isArray(c),
+    );
+
+    if (failures.length === 0 && claims.length === 0) {
       failures.push('no claims evaluated (missing or empty groundedSynthesis.claims)');
-    } else {
+    }
+
+    if (failures.length === 0) {
       const metrics = computeClaimTrustMetrics(
         claims.map((c) => ({
           ...c,
+          text: typeof c.text === 'string' ? c.text : '',
+          pmids: Array.isArray(c.pmids)
+            ? c.pmids.filter((p): p is string => typeof p === 'string')
+            : [],
           validationState: c.validationState ?? 'unverified',
         })),
         ranked.map((r) => ({
-          pmid: r.pmid ?? '',
-          title: r.title ?? '',
+          pmid: typeof r.pmid === 'string' ? r.pmid : '',
+          title: typeof r.title === 'string' ? r.title : '',
           authors: '',
           journal: '',
           pubYear: '0000',
-          summary: r.summary ?? '',
+          summary: typeof r.summary === 'string' ? r.summary : '',
           relevanceScore: 0,
           relevanceExplanation: '',
           keywords: [],
