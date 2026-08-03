@@ -250,6 +250,8 @@ export const translations = {
     'settings.ai.ollama.last_checked': 'Last successful check: {time}',
     'settings.ai.ollama.models_label': 'Discovered models',
     'settings.ai.ollama.models_empty': 'No models installed. Pull a model in Ollama, then refresh.',
+    'settings.ai.ollama.models_discovery_failed':
+      'Connected, but model discovery failed. Refresh later — the selected model was not checked against the server list.',
     'settings.ai.ollama.models_placeholder': 'Select a discovered model…',
     'settings.ai.ollama.model_missing':
       'Model “{model}” was not found on the Ollama server. Pull it or pick a discovered model.',
@@ -578,6 +580,8 @@ export const translations = {
     'settings.ai.ollama.models_label': 'Gefundene Modelle',
     'settings.ai.ollama.models_empty':
       'Keine Modelle installiert. Laden Sie ein Modell in Ollama und aktualisieren Sie.',
+    'settings.ai.ollama.models_discovery_failed':
+      'Verbunden, aber die Modellliste konnte nicht geladen werden. Später aktualisieren — das ausgewählte Modell wurde nicht gegen die Serverliste geprüft.',
     'settings.ai.ollama.models_placeholder': 'Gefundenes Modell wählen…',
     'settings.ai.ollama.model_missing':
       'Modell „{model}“ wurde auf dem Ollama-Server nicht gefunden. Laden Sie es oder wählen Sie ein gefundenes Modell.',

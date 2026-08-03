@@ -36,6 +36,7 @@ describe('probeOllamaHealth', () => {
     expect(first.ok).toBe(true);
     if (first.ok) {
       expect(first.version).toBe('0.5.0');
+      expect(first.modelsDiscovered).toBe(true);
       expect(first.models[0]?.name).toBe('llama3.1:8b');
       expect(first.models[0]?.parameterSize).toBe('8B');
     }
@@ -95,6 +96,20 @@ describe('probeOllamaHealth', () => {
     const result = await probeOllamaHealth('http://localhost:11434', { force: true });
     expect(result.ok).toBe(true);
     if (result.ok) {
+      expect(result.models).toEqual([]);
+      expect(result.modelsDiscovered).toBe(false);
+    }
+  });
+
+  it('marks empty tags payload as discovered (no false model-missing)', async () => {
+    global.fetch = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ version: '0.5.0' }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ models: [] }) });
+    const result = await probeOllamaHealth('http://localhost:11434', { force: true });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.modelsDiscovered).toBe(true);
       expect(result.models).toEqual([]);
     }
   });

@@ -194,11 +194,7 @@ export function createOllamaProvider(): AIProvider {
               error?: string;
             }>(response, { signal: request.signal })) {
               if (typeof chunk.error === 'string' && chunk.error.length > 0) {
-                throw new AppError({
-                  code: 'PROVIDER_UNAVAILABLE',
-                  message: `Ollama chat stream error: ${chunk.error}`,
-                  retryable: true,
-                });
+                throw mapOllamaError(new Error(chunk.error));
               }
               if (chunk.message?.content) {
                 assistant += chunk.message.content;

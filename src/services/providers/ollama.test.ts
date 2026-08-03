@@ -272,6 +272,43 @@ describe('createOllamaProvider', () => {
     ]);
   });
 
+  it('marks in-band chat model-not-found errors as non-retryable', async () => {
+    const encoder = new TextEncoder();
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      body: {
+        getReader: () => {
+          const payload = `${JSON.stringify({ error: "model 'missing' not found" })}\n`;
+          let done = false;
+          return {
+            read: async () => {
+              if (done) return { done: true, value: undefined };
+              done = true;
+              return { done: false, value: encoder.encode(payload) };
+            },
+          };
+        },
+      },
+    });
+
+    const provider = createOllamaProvider();
+    const session = await provider.createChatSession({
+      model: 'missing',
+      baseURL: 'http://127.0.0.1:11434',
+    });
+    await expect(
+      (async () => {
+        for await (const _chunk of await session.sendMessageStream({ message: 'hi' })) {
+          // drain
+        }
+      })(),
+    ).rejects.toMatchObject({
+      code: 'PROVIDER_UNAVAILABLE',
+      retryable: false,
+      context: 'ollama_model_not_found',
+    });
+  });
+
   it('does not commit history after in-band chat stream errors', async () => {
     const encoder = new TextEncoder();
     const ndjsonBody = (lines: unknown[]) => ({

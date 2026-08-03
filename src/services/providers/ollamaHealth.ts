@@ -31,6 +31,12 @@ export type OllamaHealthOk = {
   baseUrl: string;
   version: string;
   models: OllamaModelInfo[];
+  /**
+   * True when `/api/tags` returned a usable payload (including an empty model list).
+   * False when connectivity succeeded but model discovery failed — callers must not
+   * treat an empty `models` array as “model missing” in that case.
+   */
+  modelsDiscovered: boolean;
   checkedAt: number;
 };
 
@@ -231,10 +237,12 @@ export async function probeOllamaHealth(
 
     // Connectivity is established by /api/version. Model discovery is best-effort.
     const models: OllamaModelInfo[] = [];
+    let modelsDiscovered = false;
     const tagsResponse = await fetch(`${baseUrl}/api/tags`, { signal });
     if (tagsResponse.ok) {
       const tagsJson = (await tagsResponse.json().catch(() => null)) as TagsPayload | null;
       if (tagsJson && Array.isArray(tagsJson.models)) {
+        modelsDiscovered = true;
         for (const m of tagsJson.models) {
           const name = (m.name ?? m.model ?? '').trim();
           if (!name) continue;
@@ -255,6 +263,7 @@ export async function probeOllamaHealth(
       baseUrl,
       version,
       models,
+      modelsDiscovered,
       checkedAt,
     });
   } catch (error) {

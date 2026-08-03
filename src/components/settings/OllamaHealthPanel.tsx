@@ -80,9 +80,10 @@ export const OllamaHealthPanel: React.FC = () => {
   }, [runProbe]);
 
   const modelMissing =
-    health?.ok === true && selectedModel.trim().length > 0
+    health?.ok === true && health.modelsDiscovered && selectedModel.trim().length > 0
       ? !isOllamaModelAvailable(health.models, selectedModel)
       : false;
+  const discoveryFailed = health?.ok === true && !health.modelsDiscovered;
   const discoveredValue =
     health?.ok === true ? resolveDiscoveredModelValue(health.models, selectedModel) : '';
   const matchedModel =
@@ -130,7 +131,14 @@ export const OllamaHealthPanel: React.FC = () => {
               <label htmlFor="ollama-discovered-model" className="font-medium">
                 {t('settings.ai.ollama.models_label')}
               </label>
-              {health.models.length === 0 ? (
+              {discoveryFailed ? (
+                <p
+                  className="text-amber-700 dark:text-amber-300 mt-1"
+                  data-testid="ollama-discovery-failed"
+                >
+                  {t('settings.ai.ollama.models_discovery_failed')}
+                </p>
+              ) : health.models.length === 0 ? (
                 <p className="text-text-secondary mt-1">{t('settings.ai.ollama.models_empty')}</p>
               ) : (
                 <select
