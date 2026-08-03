@@ -38,13 +38,11 @@ function parseParameterBillions(model: string, parameterSize?: string): number {
 }
 
 function budgetFromContextLength(contextLength: number): OllamaInputBudgetEstimate {
-  const raw =
-    contextLength -
-    OLLAMA_OUTPUT_TOKEN_RESERVE -
-    OLLAMA_PROMPT_OVERHEAD_RESERVE -
-    OLLAMA_BUDGET_SAFETY_MARGIN;
-  const budget = Math.max(OLLAMA_MIN_INPUT_TOKEN_BUDGET, Math.floor(raw));
-  const warnTooSmall = contextLength < 8_192 || budget <= OLLAMA_MIN_INPUT_TOKEN_BUDGET;
+  const raw = contextLength - OLLAMA_OUTPUT_TOKEN_RESERVE - OLLAMA_BUDGET_SAFETY_MARGIN;
+  const usable = Math.max(0, Math.floor(raw));
+  // Never inflate above runtime context — stage overhead is applied once in promptBudget.
+  const budget = usable;
+  const warnTooSmall = contextLength < 8_192 || usable < OLLAMA_MIN_INPUT_TOKEN_BUDGET;
   return {
     budget,
     warnTooSmall,

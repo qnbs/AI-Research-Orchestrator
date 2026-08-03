@@ -4,7 +4,6 @@ import {
   OLLAMA_MIN_INPUT_TOKEN_BUDGET,
   OLLAMA_BUDGET_SAFETY_MARGIN,
   OLLAMA_OUTPUT_TOKEN_RESERVE,
-  OLLAMA_PROMPT_OVERHEAD_RESERVE,
 } from './ollamaContextBudget';
 
 describe('estimateOllamaInputTokenBudget', () => {
@@ -30,17 +29,14 @@ describe('estimateOllamaInputTokenBudget', () => {
     expect(fromContext.source).toBe('context-length');
     expect(fromContext.contextLength).toBe(32_768);
     expect(fromContext.budget).toBe(
-      32_768 -
-        OLLAMA_OUTPUT_TOKEN_RESERVE -
-        OLLAMA_PROMPT_OVERHEAD_RESERVE -
-        OLLAMA_BUDGET_SAFETY_MARGIN,
+      32_768 - OLLAMA_OUTPUT_TOKEN_RESERVE - OLLAMA_BUDGET_SAFETY_MARGIN,
     );
     expect(fromContext.budget).toBeGreaterThan(16_000);
   });
 
-  it('clamps small context windows to the minimum usable ranking budget', () => {
+  it('caps context-derived budget to the window minus output and safety', () => {
     const small = estimateOllamaInputTokenBudget('tiny', { contextLength: 4_096 });
-    expect(small.budget).toBe(OLLAMA_MIN_INPUT_TOKEN_BUDGET);
+    expect(small.budget).toBe(4_096 - OLLAMA_OUTPUT_TOKEN_RESERVE - OLLAMA_BUDGET_SAFETY_MARGIN);
     expect(small.warnTooSmall).toBe(true);
   });
 });
