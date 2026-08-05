@@ -17,6 +17,13 @@
     },
     "allowImportingTsExtensions": true,
     "noEmit": true,
+    // Cache per-file diagnostic info across invocations (still noEmit - no .js/.d.ts
+    // output). `tsc --noEmit` runs cold, full-project, with zero caching by default,
+    // and this repo's pre-commit + pre-push hooks each invoke it once back to back on
+    // the same unchanged tree - incremental mode is what makes the second invocation
+    // fast instead of redoing the same full check from scratch.
+    "incremental": true,
+    "tsBuildInfoFile": "node_modules/.cache/tsc/tsbuildinfo.json",
 
     /* Strict Type-Checking Options */
     "strict": true,
