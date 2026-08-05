@@ -17,6 +17,10 @@ import {
   analyzeSingleArticle,
   generateJournalProfileAnalysis,
 } from './geminiService';
+import {
+  selectArticlesForRankingPrompt,
+  selectArticlesForSynthesisPrompt,
+} from '../lib/promptBudget';
 
 const hoisted = vi.hoisted(() => ({
   generateContent: vi.fn(),
@@ -68,6 +72,15 @@ vi.mock('./pubmedUtils', () => ({
 vi.mock('./arxivUtils', () => ({
   searchAndFetchArxiv: vi.fn().mockResolvedValue([]),
 }));
+
+vi.mock('../lib/promptBudget', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../lib/promptBudget')>();
+  return {
+    ...actual,
+    selectArticlesForRankingPrompt: vi.fn(actual.selectArticlesForRankingPrompt),
+    selectArticlesForSynthesisPrompt: vi.fn(actual.selectArticlesForSynthesisPrompt),
+  };
+});
 
 const mockAi: Settings['ai'] = {
   model: 'gemini-2.5-flash',
@@ -431,6 +444,67 @@ describe('geminiService with mocked SDK', () => {
     expect(budgets.some((b) => b.stage === 'ranking')).toBe(true);
     expect(budgets.some((b) => b.stage === 'synthesis')).toBe(true);
     expect(budgets.every((b) => typeof b.selectionMode === 'string')).toBe(true);
+  });
+
+  it('generateResearchReportStream throws before the ranking AI call when no article fits the context budget', async () => {
+    hoisted.generateContent.mockResolvedValueOnce({
+      text: JSON.stringify({
+        generatedQueries: [{ query: 'cancer[Title]', explanation: 'e' }],
+      }),
+    });
+    const real = await vi.importActual<typeof import('../lib/promptBudget')>('../lib/promptBudget');
+    vi.mocked(selectArticlesForRankingPrompt).mockImplementationOnce((...args) => {
+      const result = real.selectArticlesForRankingPrompt(...args);
+      return { ...result, payloads: [], accounting: { ...result.accounting, includedInPrompt: 0 } };
+    });
+
+    const drain = async () => {
+      for await (const _chunk of generateResearchReportStream(mockInput, mockAi)) {
+        // drain
+      }
+    };
+    await expect(drain()).rejects.toMatchObject({ code: 'VALIDATION' });
+    expect(hoisted.generateContent).toHaveBeenCalledTimes(1);
+  });
+
+  it('generateResearchReportStream throws before the synthesis AI call when no article fits the context budget', async () => {
+    const rankingPayload = {
+      rankedArticles: [
+        {
+          pmid: '123',
+          relevanceScore: 95,
+          relevanceExplanation: 'r',
+          keywords: ['k'],
+          articleType: 'Study',
+          aiSummary: 'sum',
+        },
+      ],
+      aiGeneratedInsights: [],
+      overallKeywords: [],
+    };
+    hoisted.generateContent
+      .mockResolvedValueOnce({
+        text: JSON.stringify({
+          generatedQueries: [{ query: 'cancer[Title]', explanation: 'e' }],
+        }),
+      })
+      .mockResolvedValueOnce({
+        text: JSON.stringify(rankingPayload),
+      });
+
+    const real = await vi.importActual<typeof import('../lib/promptBudget')>('../lib/promptBudget');
+    vi.mocked(selectArticlesForSynthesisPrompt).mockImplementationOnce((...args) => {
+      const result = real.selectArticlesForSynthesisPrompt(...args);
+      return { ...result, payloads: [], accounting: { ...result.accounting, includedInPrompt: 0 } };
+    });
+
+    const drain = async () => {
+      for await (const _chunk of generateResearchReportStream(mockInput, mockAi)) {
+        // drain
+      }
+    };
+    await expect(drain()).rejects.toMatchObject({ code: 'VALIDATION' });
+    expect(hoisted.generateContentStream).not.toHaveBeenCalled();
   });
 
   it('generateResearchReportStream passes AbortSignal to synthesis stream', async () => {

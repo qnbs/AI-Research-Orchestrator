@@ -8,6 +8,7 @@ import type { AbstractStatus, RankedArticle } from '../types';
 import { estimateTokensFromText } from './resilience';
 import { rankArticles } from '../services/nonAi/ranker';
 import { estimateOllamaInputTokenBudget } from './ollamaContextBudget';
+import { resolveCachedOllamaContextLength } from './ollamaModelMetadata';
 import { resolveCachedOllamaParameterSize } from '../services/providers/ollamaHealth';
 
 export type PromptFieldLimits = {
@@ -78,10 +79,9 @@ export const getInputTokenBudget = (
   options?: PromptBudgetOptions,
 ): number => {
   if (provider === 'ollama') {
-    // Prefer parameterSize from the active endpoint's health cache only.
-    // Never scan other cached base URLs (cross-endpoint contamination).
     const parameterSize = resolveCachedOllamaParameterSize(options?.ollamaBaseUrl, model);
-    return estimateOllamaInputTokenBudget(model, parameterSize).budget;
+    const contextLength = resolveCachedOllamaContextLength(options?.ollamaBaseUrl, model);
+    return estimateOllamaInputTokenBudget(model, { parameterSize, contextLength }).budget;
   }
   const modelKey = model.toLowerCase();
   if (/pro|opus|gpt-5|o3/i.test(modelKey)) {
@@ -174,14 +174,17 @@ export const selectArticlesForRankingPrompt = (
   );
 
   const inputBudget = getInputTokenBudget(provider, model, options);
-  const availableTokens = Math.max(1_000, inputBudget - RANKING_RESERVED_TOKENS);
+  const availableTokens = Math.max(0, inputBudget - RANKING_RESERVED_TOKENS);
 
   let bestCount = 0;
   let bestPayloads: RankingArticlePromptPayload[] = [];
   let truncatedTitleCount = 0;
   let truncatedAbstractCount = 0;
 
-  for (let count = lexicallyRanked.length; count >= 1; count -= 1) {
+  // A context window smaller than the reserved overhead leaves no room for
+  // even a single article - skip the shape/fit loop entirely rather than
+  // running it to exhaustion only to land on the same bestCount: 0 default.
+  for (let count = availableTokens > 0 ? lexicallyRanked.length : 0; count >= 1; count -= 1) {
     const subset = lexicallyRanked.slice(0, count);
     const shaped = subset.map((article) => shapeArticleForRankingPrompt(article, limits));
     const payloads = shaped.map((s, index) => ({
@@ -270,7 +273,7 @@ export const selectArticlesForSynthesisPrompt = (
   options?: PromptBudgetOptions,
 ): SynthesisPromptSelection => {
   const inputBudget = getInputTokenBudget(provider, model, options);
-  const availableTokens = Math.max(800, inputBudget - SYNTHESIS_RESERVED_TOKENS);
+  const availableTokens = Math.max(0, inputBudget - SYNTHESIS_RESERVED_TOKENS);
 
   let bestCount = 0;
   let bestPayloads: SynthesisArticlePromptPayload[] = [];
@@ -278,7 +281,10 @@ export const selectArticlesForSynthesisPrompt = (
   let truncatedAbstractCount = 0;
   let truncatedAiSummaryCount = 0;
 
-  for (let count = articles.length; count >= 1; count -= 1) {
+  // See selectArticlesForRankingPrompt: skip the loop entirely when the
+  // budget can't fit even one article instead of exhausting every subset
+  // size only to land on the same bestCount: 0 default.
+  for (let count = availableTokens > 0 ? articles.length : 0; count >= 1; count -= 1) {
     const subset = articles.slice(0, count);
     const shaped = subset.map((article) => shapeArticleForSynthesisPrompt(article, limits));
     const payloads = shaped.map((s) => s.payload);

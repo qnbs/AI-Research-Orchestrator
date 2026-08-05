@@ -7,6 +7,7 @@ import {
   type OllamaHealthResult,
   type OllamaModelInfo,
 } from '../../services/providers/ollamaHealth';
+import { probeOllamaModelMetadata, type OllamaModelMetadata } from '../../lib/ollamaModelMetadata';
 
 function formatCheckedAt(ts: number): string {
   try {
@@ -79,6 +80,30 @@ export const OllamaHealthPanel: React.FC = () => {
     };
   }, [runProbe]);
 
+  const [modelMetaState, setModelMetaState] = useState<
+    { key: string; meta: OllamaModelMetadata | undefined } | undefined
+  >(undefined);
+  const metadataAbortRef = useRef<AbortController | null>(null);
+
+  const runMetadataProbe = useCallback(async (key: string, base: string, model: string) => {
+    metadataAbortRef.current?.abort();
+    const controller = new AbortController();
+    metadataAbortRef.current = controller;
+    const meta = await probeOllamaModelMetadata(base, model, {
+      signal: controller.signal,
+    }).catch(() => undefined);
+    setModelMetaState({ key, meta });
+  }, []);
+
+  useEffect(() => {
+    if (health?.ok !== true || !selectedModel.trim()) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- kicks off an async model-metadata probe when base URL/model/health changes; result is not derivable from render.
+    void runMetadataProbe(`${baseUrl}::${selectedModel}`, baseUrl, selectedModel);
+    return () => {
+      metadataAbortRef.current?.abort();
+    };
+  }, [baseUrl, health?.ok, runMetadataProbe, selectedModel]);
+
   const modelMissing =
     health?.ok === true && health.modelsDiscovered && selectedModel.trim().length > 0
       ? !isOllamaModelAvailable(health.models, selectedModel)
@@ -91,7 +116,16 @@ export const OllamaHealthPanel: React.FC = () => {
       ? (health.models.find((m) => m.name === discoveredValue) ??
         health.models.find((m) => m.name === selectedModel))
       : undefined;
-  const budgetHint = estimateOllamaInputTokenBudget(selectedModel, matchedModel?.parameterSize);
+  const modelMeta =
+    health?.ok === true &&
+    selectedModel.trim() &&
+    modelMetaState?.key === `${baseUrl}::${selectedModel}`
+      ? modelMetaState.meta
+      : undefined;
+  const budgetHint = estimateOllamaInputTokenBudget(selectedModel, {
+    parameterSize: matchedModel?.parameterSize ?? modelMeta?.parameterSize,
+    contextLength: modelMeta?.contextLength,
+  });
 
   return (
     <div
@@ -127,6 +161,13 @@ export const OllamaHealthPanel: React.FC = () => {
             <p className="text-text-secondary">
               {t('settings.ai.ollama.last_checked', { time: formatCheckedAt(health.checkedAt) })}
             </p>
+            {discoveryFailed && (
+              <p className="text-text-secondary">
+                {t('settings.ai.ollama.discovery_checked', {
+                  time: formatCheckedAt(health.discoveryCheckedAt),
+                })}
+              </p>
+            )}
             <div>
               <label htmlFor="ollama-discovered-model" className="font-medium">
                 {t('settings.ai.ollama.models_label')}

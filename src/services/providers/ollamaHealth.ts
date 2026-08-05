@@ -1,8 +1,8 @@
 /**
- * Ollama health probe + model discovery with a short TTL cache.
+ * Ollama health probe + model discovery with split TTL caches.
  *
- * Probes `/api/version` then `/api/tags`. Distinguishes CORS, timeout,
- * abort, HTTP, and generic unavailability for Settings diagnostics.
+ * Connectivity (`/api/version`) and model discovery (`/api/tags`) are cached
+ * independently so degraded discovery recovers quickly without masking offline.
  */
 
 import { AppError, isAbortError } from '../../lib/errors';
@@ -12,7 +12,12 @@ import { estimateOllamaInputTokenBudget } from '../../lib/ollamaContextBudget';
 export { estimateOllamaInputTokenBudget };
 
 export const OLLAMA_HEALTH_DEFAULT_TIMEOUT_MS = 15_000;
-export const OLLAMA_HEALTH_CACHE_TTL_MS = 30_000;
+export const OLLAMA_CONNECTIVITY_CACHE_TTL_MS = 30_000;
+export const OLLAMA_DISCOVERY_SUCCESS_TTL_MS = 30_000;
+export const OLLAMA_DISCOVERY_FAILURE_TTL_MS = 5_000;
+
+/** @deprecated Use OLLAMA_CONNECTIVITY_CACHE_TTL_MS — single-cache alias for legacy imports. */
+export const OLLAMA_HEALTH_CACHE_TTL_MS = OLLAMA_CONNECTIVITY_CACHE_TTL_MS;
 
 export type OllamaHealthFailureReason =
   'invalid_endpoint' | 'unavailable' | 'cors' | 'timeout' | 'aborted' | 'http' | 'model_list';
@@ -38,6 +43,8 @@ export type OllamaHealthOk = {
    */
   modelsDiscovered: boolean;
   checkedAt: number;
+  connectivityCheckedAt: number;
+  discoveryCheckedAt: number;
 };
 
 export type OllamaHealthFail = {
@@ -52,9 +59,21 @@ export type OllamaHealthFail = {
 
 export type OllamaHealthResult = OllamaHealthOk | OllamaHealthFail;
 
-type CacheEntry = { result: OllamaHealthResult; expiresAt: number };
+type ConnectivityCacheEntry = {
+  version: string;
+  checkedAt: number;
+  expiresAt: number;
+};
 
-const healthCache = new Map<string, CacheEntry>();
+type DiscoveryCacheEntry = {
+  models: OllamaModelInfo[];
+  modelsDiscovered: boolean;
+  checkedAt: number;
+  expiresAt: number;
+};
+
+const connectivityCache = new Map<string, ConnectivityCacheEntry>();
+const discoveryCache = new Map<string, DiscoveryCacheEntry>();
 
 function normalizeBaseUrl(
   raw?: string,
@@ -72,6 +91,84 @@ function normalizeBaseUrl(
   return { ok: true, baseUrl: validated.normalizedUrl, origin: validated.origin };
 }
 
+function readConnectivityCache(baseUrl: string): ConnectivityCacheEntry | undefined {
+  const entry = connectivityCache.get(baseUrl);
+  if (!entry || Date.now() > entry.expiresAt) {
+    connectivityCache.delete(baseUrl);
+    return undefined;
+  }
+  return entry;
+}
+
+function readDiscoveryCache(baseUrl: string): DiscoveryCacheEntry | undefined {
+  const entry = discoveryCache.get(baseUrl);
+  if (!entry || Date.now() > entry.expiresAt) {
+    discoveryCache.delete(baseUrl);
+    return undefined;
+  }
+  return entry;
+}
+
+function writeConnectivityCache(baseUrl: string, version: string): ConnectivityCacheEntry {
+  const checkedAt = Date.now();
+  const entry: ConnectivityCacheEntry = {
+    version,
+    checkedAt,
+    expiresAt: checkedAt + OLLAMA_CONNECTIVITY_CACHE_TTL_MS,
+  };
+  connectivityCache.set(baseUrl, entry);
+  return entry;
+}
+
+function writeDiscoveryCache(
+  baseUrl: string,
+  models: OllamaModelInfo[],
+  modelsDiscovered: boolean,
+  startedAt: number,
+): DiscoveryCacheEntry {
+  // startedAt (the probe's start time, not Date.now() at write time) is what
+  // makes the stale-write guard below effective: two overlapping probes can
+  // resolve out of order (a slower probe that started first can finish
+  // after a faster one that started later), and only comparing against when
+  // each probe actually STARTED tells them apart. Comparing against
+  // Date.now() computed fresh in this function can never be greater than an
+  // existing entry's already-past checkedAt, making the guard permanently
+  // dead code.
+  const checkedAt = startedAt;
+  const ttl = modelsDiscovered ? OLLAMA_DISCOVERY_SUCCESS_TTL_MS : OLLAMA_DISCOVERY_FAILURE_TTL_MS;
+  const entry: DiscoveryCacheEntry = {
+    models,
+    modelsDiscovered,
+    checkedAt,
+    expiresAt: checkedAt + ttl,
+  };
+  const existing = discoveryCache.get(baseUrl);
+  if (existing && existing.checkedAt > checkedAt) {
+    return existing;
+  }
+  discoveryCache.set(baseUrl, entry);
+  return entry;
+}
+
+function assembleHealthOk(
+  origin: string,
+  baseUrl: string,
+  connectivity: ConnectivityCacheEntry,
+  discovery: DiscoveryCacheEntry,
+): OllamaHealthOk {
+  return {
+    ok: true,
+    origin,
+    baseUrl,
+    version: connectivity.version,
+    models: discovery.models,
+    modelsDiscovered: discovery.modelsDiscovered,
+    checkedAt: Math.max(connectivity.checkedAt, discovery.checkedAt),
+    connectivityCheckedAt: connectivity.checkedAt,
+    discoveryCheckedAt: discovery.checkedAt,
+  };
+}
+
 function readErrorField(error: unknown, field: 'name' | 'message'): string {
   if (!error || typeof error !== 'object') return '';
   const value = (error as { name?: unknown; message?: unknown })[field];
@@ -79,7 +176,6 @@ function readErrorField(error: unknown, field: 'name' | 'message'): string {
 }
 
 function isTimeoutAbort(error: unknown): boolean {
-  // DOMException may not be `instanceof Error` under jsdom — read fields duck-typed.
   const name = readErrorField(error, 'name');
   const message = readErrorField(error, 'message');
   if (name === 'TimeoutError') return true;
@@ -96,7 +192,6 @@ function isTimeoutAbort(error: unknown): boolean {
 }
 
 function diagnoseFetchError(error: unknown): Pick<OllamaHealthFail, 'reason' | 'message'> {
-  // TimeoutError is not always classified as AbortError (see isAbortLikeError).
   if (isTimeoutAbort(error)) {
     return { reason: 'timeout', message: 'Ollama health probe timed out' };
   }
@@ -104,7 +199,6 @@ function diagnoseFetchError(error: unknown): Pick<OllamaHealthFail, 'reason' | '
     return { reason: 'aborted', message: 'Ollama health probe aborted' };
   }
   if (error instanceof TypeError) {
-    // Browsers surface CORS / failed fetch as TypeError("Failed to fetch").
     return {
       reason: 'cors',
       message:
@@ -152,30 +246,27 @@ export function mergeSignals(timeoutMs: number, external?: AbortSignal): AbortSi
 /** Clear cached health for one base URL, or the entire cache when omitted. */
 export function invalidateOllamaHealthCache(baseUrl?: string): void {
   if (!baseUrl) {
-    healthCache.clear();
+    connectivityCache.clear();
+    discoveryCache.clear();
     return;
   }
-  healthCache.delete(baseUrl);
+  // Caches are keyed by the normalized URL (see probeOllamaHealth); normalize
+  // here too so an equivalent but differently-formatted URL (e.g. a trailing
+  // slash) actually invalidates the entry it was stored under.
+  const normalized = normalizeBaseUrl(baseUrl);
+  const key = normalized.ok ? normalized.baseUrl : baseUrl;
+  connectivityCache.delete(key);
+  discoveryCache.delete(key);
 }
 
-/** Return a non-expired cached probe result when available (keyed by full base URL). */
+/** Return a non-expired assembled probe result when connectivity + discovery caches are fresh. */
 export function getCachedOllamaHealth(baseUrl: string): OllamaHealthResult | undefined {
-  const entry = healthCache.get(baseUrl);
-  if (!entry) return undefined;
-  if (Date.now() > entry.expiresAt) {
-    healthCache.delete(baseUrl);
-    return undefined;
-  }
-  return entry.result;
-}
-
-/** Cache successful probes only — transient failures must remain retriable. */
-function rememberSuccess(result: OllamaHealthOk): OllamaHealthOk {
-  healthCache.set(result.baseUrl, {
-    result,
-    expiresAt: Date.now() + OLLAMA_HEALTH_CACHE_TTL_MS,
-  });
-  return result;
+  const normalized = normalizeBaseUrl(baseUrl);
+  if (!normalized.ok) return undefined;
+  const connectivity = readConnectivityCache(normalized.baseUrl);
+  const discovery = readDiscoveryCache(normalized.baseUrl);
+  if (!connectivity || !discovery) return undefined;
+  return assembleHealthOk(normalized.origin, normalized.baseUrl, connectivity, discovery);
 }
 
 type TagsPayload = {
@@ -188,9 +279,67 @@ type TagsPayload = {
   }>;
 };
 
+async function probeConnectivity(
+  baseUrl: string,
+  origin: string,
+  signal: AbortSignal,
+  checkedAt: number,
+): Promise<OllamaHealthFail | ConnectivityCacheEntry> {
+  const versionResponse = await fetch(`${baseUrl}/api/version`, { signal });
+  if (!versionResponse.ok) {
+    return {
+      ok: false,
+      origin,
+      baseUrl,
+      reason: 'http',
+      message: `Ollama /api/version responded with ${versionResponse.status}`,
+      status: versionResponse.status,
+      checkedAt,
+    };
+  }
+  const versionJson = (await versionResponse.json().catch(() => ({}))) as { version?: string };
+  const version = typeof versionJson.version === 'string' ? versionJson.version : 'unknown';
+  return writeConnectivityCache(baseUrl, version);
+}
+
+async function probeDiscovery(
+  baseUrl: string,
+  signal: AbortSignal,
+  startedAt: number,
+): Promise<DiscoveryCacheEntry> {
+  const models: OllamaModelInfo[] = [];
+  let modelsDiscovered = false;
+  try {
+    const tagsResponse = await fetch(`${baseUrl}/api/tags`, { signal });
+    if (tagsResponse.ok) {
+      const tagsJson = (await tagsResponse.json().catch(() => null)) as TagsPayload | null;
+      if (tagsJson && Array.isArray(tagsJson.models)) {
+        modelsDiscovered = true;
+        for (const m of tagsJson.models) {
+          const name = (m.name ?? m.model ?? '').trim();
+          if (!name) continue;
+          const info: OllamaModelInfo = { name };
+          if (typeof m.size === 'number') info.size = m.size;
+          if (typeof m.modified_at === 'string') info.modifiedAt = m.modified_at;
+          if (typeof m.details?.parameter_size === 'string') {
+            info.parameterSize = m.details.parameter_size;
+          }
+          models.push(info);
+        }
+      }
+    }
+  } catch (tagsError) {
+    if (isTimeoutAbort(tagsError) || isAbortError(tagsError)) {
+      throw tagsError;
+    }
+    modelsDiscovered = false;
+  }
+  return writeDiscoveryCache(baseUrl, models, modelsDiscovered, startedAt);
+}
+
 /**
  * Probe Ollama `/api/version` + `/api/tags`.
- * Uses the TTL cache unless `force` is set.
+ * Uses split TTL caches unless `force` is set.
  */
 export async function probeOllamaHealth(
   rawBaseUrl?: string,
@@ -210,6 +359,7 @@ export async function probeOllamaHealth(
       checkedAt: Date.now(),
     };
   }
+
   if (!options.force) {
     const cached = getCachedOllamaHealth(baseUrl);
     if (cached) return cached;
@@ -220,62 +370,27 @@ export async function probeOllamaHealth(
   const checkedAt = Date.now();
 
   try {
-    const versionResponse = await fetch(`${baseUrl}/api/version`, { signal });
-    if (!versionResponse.ok) {
-      return {
-        ok: false,
-        origin,
-        baseUrl,
-        reason: 'http',
-        message: `Ollama /api/version responded with ${versionResponse.status}`,
-        status: versionResponse.status,
-        checkedAt,
-      };
-    }
-    const versionJson = (await versionResponse.json().catch(() => ({}))) as { version?: string };
-    const version = typeof versionJson.version === 'string' ? versionJson.version : 'unknown';
-
-    // Connectivity is established by /api/version. Model discovery is best-effort:
-    // HTTP failures and non-abort network errors on /api/tags must not mark the
-    // server offline after a successful version probe.
-    const models: OllamaModelInfo[] = [];
-    let modelsDiscovered = false;
-    try {
-      const tagsResponse = await fetch(`${baseUrl}/api/tags`, { signal });
-      if (tagsResponse.ok) {
-        const tagsJson = (await tagsResponse.json().catch(() => null)) as TagsPayload | null;
-        if (tagsJson && Array.isArray(tagsJson.models)) {
-          modelsDiscovered = true;
-          for (const m of tagsJson.models) {
-            const name = (m.name ?? m.model ?? '').trim();
-            if (!name) continue;
-            const info: OllamaModelInfo = { name };
-            if (typeof m.size === 'number') info.size = m.size;
-            if (typeof m.modified_at === 'string') info.modifiedAt = m.modified_at;
-            if (typeof m.details?.parameter_size === 'string') {
-              info.parameterSize = m.details.parameter_size;
-            }
-            models.push(info);
-          }
-        }
+    let connectivity: ConnectivityCacheEntry;
+    const cachedConnectivity = options.force ? undefined : readConnectivityCache(baseUrl);
+    if (cachedConnectivity) {
+      connectivity = cachedConnectivity;
+    } else {
+      const versionResult = await probeConnectivity(baseUrl, origin, signal, checkedAt);
+      if ('ok' in versionResult && versionResult.ok === false) {
+        return versionResult;
       }
-    } catch (tagsError) {
-      // Propagate cancel/timeout so the outer catch still reports aborted/timeout.
-      if (isTimeoutAbort(tagsError) || isAbortError(tagsError)) {
-        throw tagsError;
-      }
-      modelsDiscovered = false;
+      connectivity = versionResult as ConnectivityCacheEntry;
     }
 
-    return rememberSuccess({
-      ok: true,
-      origin,
-      baseUrl,
-      version,
-      models,
-      modelsDiscovered,
-      checkedAt,
-    });
+    let discovery: DiscoveryCacheEntry;
+    const cachedDiscovery = options.force ? undefined : readDiscoveryCache(baseUrl);
+    if (cachedDiscovery) {
+      discovery = cachedDiscovery;
+    } else {
+      discovery = await probeDiscovery(baseUrl, signal, checkedAt);
+    }
+
+    return assembleHealthOk(origin, baseUrl, connectivity, discovery);
   } catch (error) {
     const diagnosed = diagnoseFetchError(error);
     return {

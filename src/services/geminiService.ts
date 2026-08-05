@@ -407,6 +407,15 @@ Research Topic: ${wrapUntrustedTextBlock('research_topic', topicSafe)}
       promptBudget: rankingSelection.accounting,
     });
 
+    if (rankingSelection.accounting.includedInPrompt === 0) {
+      throw new AppError({
+        code: 'VALIDATION',
+        message:
+          'No retrieved articles fit within the model context budget for ranking. Try a model with a larger context window or reduce the number of articles to scan.',
+        retryable: false,
+      });
+    }
+
     const corpusScopeNote =
       rankingSelection.accounting.omittedFromPrompt > 0
         ? `Lexically pre-filtered corpus: ${rankingSelection.accounting.includedInPrompt} of ${rankingSelection.accounting.totalRetrieved} retrieved articles are in the untrusted JSON block below. Omitted PMIDs were scored locally but are not in this prompt: ${rankingSelection.omittedPmids.slice(0, 20).join(', ')}${rankingSelection.omittedPmids.length > 20 ? '…' : ''}. `
@@ -469,6 +478,15 @@ Research Topic: ${wrapUntrustedTextBlock('research_topic', topicSafe)}
     yield makePipelineEvent('synthesis', {
       promptBudget: synthesisSelection.accounting,
     });
+
+    if (synthesisSelection.accounting.includedInPrompt === 0) {
+      throw new AppError({
+        code: 'VALIDATION',
+        message:
+          'No ranked articles fit within the model context budget for synthesis. Try a model with a larger context window or reduce the number of articles to synthesize.',
+        retryable: false,
+      });
+    }
 
     const synthesisPrompt = `Based on the following articles, write a comprehensive synthesis focusing on ${wrapUntrustedTextBlock('synthesis_focus', focusSafe)}. This should be a well-structured narrative in markdown format. Cite PMIDs inline where claims are made. AI summaries are derived — verify against source abstracts when precision matters.
         

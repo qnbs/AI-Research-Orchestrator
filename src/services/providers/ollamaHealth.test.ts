@@ -5,6 +5,7 @@ import {
   invalidateOllamaHealthCache,
   isOllamaModelAvailable,
   mergeSignals,
+  OLLAMA_DISCOVERY_FAILURE_TTL_MS,
   probeOllamaHealth,
   resolveCachedOllamaParameterSize,
 } from './ollamaHealth';
@@ -17,6 +18,12 @@ describe('probeOllamaHealth', () => {
 
   afterEach(() => {
     invalidateOllamaHealthCache();
+    // Guaranteed to run even if an assertion above throws - a bare
+    // vi.useRealTimers() at the end of a test body only runs when every
+    // preceding assertion passes, so a failure mid-test leaves fake timers
+    // installed and turns later, unrelated tests into a cascade of
+    // misleading failures.
+    vi.useRealTimers();
   });
 
   it('returns version + models on success and caches by origin', async () => {
@@ -128,9 +135,69 @@ describe('probeOllamaHealth', () => {
     }
   });
 
+  it('re-probes discovery after degraded cache expires without re-checking version', async () => {
+    vi.useFakeTimers();
+    const start = Date.now();
+    vi.setSystemTime(start);
+
+    global.fetch = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ version: '0.5.0' }) })
+      .mockResolvedValueOnce({ ok: false, status: 500 });
+
+    const degraded = await probeOllamaHealth('http://localhost:11434', { force: true });
+    expect(degraded.ok).toBe(true);
+    if (degraded.ok) {
+      expect(degraded.modelsDiscovered).toBe(false);
+    }
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+
+    await probeOllamaHealth('http://localhost:11434');
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+
+    vi.setSystemTime(start + OLLAMA_DISCOVERY_FAILURE_TTL_MS + 1);
+
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ models: [{ name: 'llama3.1:8b' }] }),
+    });
+
+    const recovered = await probeOllamaHealth('http://localhost:11434');
+    expect(recovered.ok).toBe(true);
+    if (recovered.ok) {
+      expect(recovered.modelsDiscovered).toBe(true);
+      expect(recovered.models[0]?.name).toBe('llama3.1:8b');
+    }
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+    expect(global.fetch).toHaveBeenCalledWith('http://localhost:11434/api/tags', expect.anything());
+
+    vi.useRealTimers();
+  });
+
   it('does not cache failed probes', async () => {
     global.fetch = vi.fn().mockResolvedValueOnce({ ok: false, status: 503 });
     await probeOllamaHealth('http://localhost:11434', { force: true });
+    expect(getCachedOllamaHealth('http://localhost:11434')).toBeUndefined();
+  });
+
+  it('getCachedOllamaHealth normalizes baseUrl before lookup so a trailing slash still hits', async () => {
+    global.fetch = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ version: '0.5.0' }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ models: [] }) });
+    await probeOllamaHealth('http://localhost:11434', { force: true });
+    expect(getCachedOllamaHealth('http://localhost:11434/')?.ok).toBe(true);
+  });
+
+  it('invalidateOllamaHealthCache normalizes baseUrl before deleting so a trailing slash still invalidates', async () => {
+    global.fetch = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ version: '0.5.0' }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ models: [] }) });
+    await probeOllamaHealth('http://localhost:11434', { force: true });
+    expect(getCachedOllamaHealth('http://localhost:11434')?.ok).toBe(true);
+
+    invalidateOllamaHealthCache('http://localhost:11434/');
     expect(getCachedOllamaHealth('http://localhost:11434')).toBeUndefined();
   });
 
@@ -242,5 +309,8 @@ describe('isOllamaModelAvailable / estimateOllamaInputTokenBudget', () => {
     expect(estimateOllamaInputTokenBudget('qwen2.5:14b').warnTooSmall).toBe(false);
     expect(estimateOllamaInputTokenBudget('qwen2.5:32b').budget).toBe(16_000);
     expect(estimateOllamaInputTokenBudget('mixtral:8x7b').budget).toBe(16_000);
+    expect(
+      estimateOllamaInputTokenBudget('llama3.1:8b', { contextLength: 32_768 }).budget,
+    ).toBeGreaterThan(16_000);
   });
 });
