@@ -369,6 +369,15 @@ function rawWordTokens(text: string): string[] {
     .filter(Boolean);
 }
 
+/**
+ * Conservative like the other cross-occurrence checks in this file (see
+ * detectNumericConflict): claimIndices spans the *entire* claim while articleTokens is
+ * already scoped to the best-matching evidence span, so a repeated token can legitimately
+ * appear in an unrelated claim clause with different negation status than the clause that
+ * actually aligns with the evidence. Only report a conflict when EVERY claim/article
+ * occurrence pair for a token disagrees - a single agreeing pair proves at least one
+ * aligned occurrence, so an unrelated mismatched clause elsewhere must not override it.
+ */
 function detectNegationConflict(claimText: string, articleText: string): boolean {
   const claimTokens = rawWordTokens(claimText);
   const articleTokens = rawWordTokens(articleText);
@@ -382,13 +391,17 @@ function detectNegationConflict(claimText: string, articleText: string): boolean
     const articleIndices = findAllStemmedTokenIndices(articleTokens, token);
     if (claimIndices.length === 0 || articleIndices.length === 0) continue;
 
+    let hasComparablePair = false;
+    let hasAgreeingPair = false;
     for (const claimIdx of claimIndices) {
       const claimNegated = hasNegationNear(claimTokens, claimIdx);
       for (const articleIdx of articleIndices) {
         const articleNegated = hasNegationNear(articleTokens, articleIdx);
-        if (claimNegated !== articleNegated) return true;
+        hasComparablePair = true;
+        if (claimNegated === articleNegated) hasAgreeingPair = true;
       }
     }
+    if (hasComparablePair && !hasAgreeingPair) return true;
   }
   return false;
 }

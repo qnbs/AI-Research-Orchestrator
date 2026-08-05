@@ -190,7 +190,7 @@ describe('assessClaimArticleEvidence — adversarial', () => {
     expect(result.relation).toBe('insufficient');
   });
 
-  it('supports when abstract aligns despite contradicting title direction', () => {
+  it('marks insufficient when abstract aligns but title direction conflicts', () => {
     const art = article(
       'Aspirin increased major cardiovascular events trial',
       'Aspirin reduced major cardiovascular events compared with placebo.',
@@ -374,5 +374,17 @@ describe('assessClaimArticleEvidence — adversarial', () => {
       art,
     );
     expect(result.relation).toBe('contradicts');
+  });
+
+  it('does not contradict when an unrelated negated claim clause repeats a token that agrees elsewhere', () => {
+    const art = article(
+      'Aspirin cardiovascular trial',
+      'Aspirin reduced cardiovascular events in this trial.',
+    );
+    const result = assessClaimArticleEvidence(
+      'Aspirin did not reduce headache frequency, but aspirin reduced cardiovascular events in this trial.',
+      art,
+    );
+    expect(result.relation).toBe('supports');
   });
 });
