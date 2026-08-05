@@ -24,6 +24,30 @@
       "statements": 86,
       "branches": 82,
       "functions": 80
+    },
+    "claimEvidence": {
+      "lines": 95,
+      "statements": 93,
+      "branches": 82,
+      "functions": 95
+    },
+    "databaseService": {
+      "lines": 42,
+      "statements": 47,
+      "branches": 24,
+      "functions": 56
+    },
+    "retrieval": {
+      "lines": 90,
+      "statements": 88,
+      "branches": 68,
+      "functions": 95
+    },
+    "exportProvenance": {
+      "lines": 93,
+      "statements": 91,
+      "branches": 73,
+      "functions": 95
     }
   },
   "e2e": {
