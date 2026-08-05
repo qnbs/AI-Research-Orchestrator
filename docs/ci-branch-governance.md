@@ -95,11 +95,11 @@ workflow (push or `workflow_dispatch`) after hardening, do not blame the suite.
 
 ## Artifacts
 
-| Artifact                                        | Retention              | Purpose                        |
-| ----------------------------------------------- | ---------------------- | ------------------------------ |
-| Coverage (`deploy.yml`)                         | 14 days                | Incident / threshold debugging |
-| Playwright reports (e2e + cross-browser + a11y) | 14 days                | Failure triage                 |
-| Pages deploy artifact                           | GitHub Pages retention | Production bundle              |
+| Artifact                                                  | Retention              | Purpose                        |
+| --------------------------------------------------------- | ---------------------- | ------------------------------ |
+| Coverage (`deploy.yml`)                                   | 14 days                | Incident / threshold debugging |
+| Playwright reports (e2e + cross-browser + a11y + pwa-e2e) | 14 days                | Failure triage                 |
+| Pages deploy artifact                                     | GitHub Pages retention | Production bundle              |
 
 ## Stabilization window (high-risk changes)
 

@@ -42,7 +42,10 @@ jobs:
   pwa-e2e:
     name: PWA service-worker registration
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    # First real run (PR #221) completed in 1m12s end to end. 20 min still
+    # leaves comfortable headroom against the apt-mirror-driven Chromium
+    # install slowness docs/ci-branch-governance.md records for other lanes.
+    timeout-minutes: 20
     steps:
       - name: Checkout repository
         # actions/checkout@v7

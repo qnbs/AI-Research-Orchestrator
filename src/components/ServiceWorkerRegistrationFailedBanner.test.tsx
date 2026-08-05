@@ -51,4 +51,34 @@ describe('ServiceWorkerRegistrationFailedBanner', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }));
     expect(screen.queryByRole('status')).toBeNull();
   });
+
+  it('catches up on a failure that occurred before mount (register-sw.js runs from a window "load" handler, which can fire before React mounts this component)', () => {
+    (window as Window & { __swRegistrationFailedReason?: string }).__swRegistrationFailedReason =
+      'SecurityError';
+    try {
+      render(<ServiceWorkerRegistrationFailedBanner />);
+      expect(screen.getByRole('status')).toHaveTextContent(
+        'Offline support could not be enabled for this session (reason: SecurityError). Live features are unaffected.',
+      );
+    } finally {
+      delete (window as Window & { __swRegistrationFailedReason?: string })
+        .__swRegistrationFailedReason;
+    }
+  });
+
+  it('re-surfaces after a later failure even if an earlier one was dismissed', () => {
+    render(<ServiceWorkerRegistrationFailedBanner />);
+    act(() => {
+      dispatchRegistrationFailed('TypeError');
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }));
+    expect(screen.queryByRole('status')).toBeNull();
+
+    act(() => {
+      dispatchRegistrationFailed('SecurityError');
+    });
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Offline support could not be enabled for this session (reason: SecurityError). Live features are unaffected.',
+    );
+  });
 });

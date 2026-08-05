@@ -89,14 +89,22 @@
       // unhandled promise rejection. sw-integrity.test.ts asserts this file
       // never logs, so this stays event-based rather than console.*. The
       // event carries only the error's `name` (e.g. "SecurityError") - never
-      // the raw error object, message, or stack, which could include URLs -
-      // src/hooks/useServiceWorkerRegistrationStatus.ts listens for it to
-      // show a small, dismissible, non-blocking status instead of leaving
-      // registration failure completely invisible.
+      // the raw error object, message, or stack, which could include URLs.
+      //
+      // Stored on `window` BEFORE dispatching, same reason
+      // useServiceWorkerUpdate checks navigator.serviceWorker.getRegistration()
+      // on mount rather than relying solely on its live event listener: this
+      // "load" handler can run, and this catch can fire, before React finishes
+      // its loading/onboarding gates and mounts
+      // ServiceWorkerRegistrationFailedBanner - a plain window event with no
+      // listener yet attached would otherwise be lost forever.
+      // src/hooks/useServiceWorkerRegistrationStatus.ts reads this on mount as
+      // a fallback, then continues listening for the live event too (covering
+      // a failure that happens to occur after the hook has already mounted).
+      var reason = err && err.name ? String(err.name) : 'unknown';
+      window.__swRegistrationFailedReason = reason;
       window.dispatchEvent(
-        new CustomEvent('sw-registration-failed', {
-          detail: { reason: err && err.name ? String(err.name) : 'unknown' },
-        }),
+        new CustomEvent('sw-registration-failed', { detail: { reason: reason } }),
       );
       return undefined;
     });
