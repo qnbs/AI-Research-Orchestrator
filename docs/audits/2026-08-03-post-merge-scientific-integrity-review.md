@@ -20,7 +20,7 @@
 | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | Last CodeRabbit **APPROVED** review SHA | `f5b747ae684ffe71f0f331128b9b39baa1bd3975` (2026-08-03 13:12 UTC)                                                        |
 | Functional commits after that approval  | `8146f04`, `2387cdc`, `a943b76` (field overlap, direction scoping, qualifying-field guard)                               |
-| CodeRabbit on `a943b76`                 | **Review rate limited** placeholders only — no non-stale review body on final head                                       |
+| CodeRabbit on `a943b76`                 | **Review rate-limited** placeholders only — no non-stale review body on final head                                       |
 | PR merge condition (documented)         | Latest head green + threads resolved + **real review on latest head**                                                    |
 | Outcome                                 | Merge proceeded with `mergeStateStatus: CLEAN`, 0 unresolved threads, green blocking CI — **process gate not satisfied** |
 
@@ -77,7 +77,7 @@ pnpm run check:agent-eval
 
 1. **Population, counts, units** — no dedicated validation; lexical overlap only.
 2. **Cross-sentence direction leakage** — mitigated by per-field spans, not eliminated for all abstract structures.
-3. **Bot review rate limits** — can block CodeRabbit on latest head while CI is green; merge policy must treat rate-limit placeholders as **non-quiescence** (rules `011` / `013`).
+3. **Bot review rate limits** — can block CodeRabbit on latest head while CI is green; merge policy must treat rate-limited placeholders as **non-quiescence** (rules `011` / `013`).
 
 ## Recommended ruleset changes (GitHub `mainrules`)
 
