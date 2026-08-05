@@ -21,12 +21,14 @@ minimumReleaseAgeExclude:
   - dompurify@3.4.9
   - dompurify@3.4.8
   - undici@7.28.0
+  - undici@7.29.0
   - dompurify@3.4.11
   - js-yaml@4.1.2
   - ws@8.21.0
   - protobufjs@7.6.1
   - protobufjs@7.6.3
   - "@babel/core@7.29.1"
+  - ip-address@10.4.0
 onlyBuiltDependencies:
   - "@google/genai"
   - "@tailwindcss/oxide"
@@ -43,8 +45,16 @@ strictPeerDependencies: true
 
 overrides:
   vite: 8.1.5
-  undici: 7.28.0
+  # GHSA-4cwx-7wf7-3272 (<7.29.0), transitive via jsdom>vitest coverage tooling
+  undici: 7.29.0
   ws: 8.21.1
+  # GHSA-mwp4-54f8-5fhr: Address4 decodes leading-zero octets as decimal while
+  # resolvers decode them as octal (SSRF/trust-boundary bypass). Transitive via
+  # @lhci/cli's puppeteer-core > proxy-agent > socks chain.
+  ip-address: 10.4.0
+  # GHSA-6g55-p6wh-862q (incomplete fix, <=8.5.22): attacker-controlled
+  # sourceMappingURL reads arbitrary .map files when `from` is unset.
+  postcss: 8.5.25
   # GHSA-f38q-mgvj-vph7 (<=7.6.2) + GHSA-j3f2-48v5-ccww (<=7.6.4); @google/genai's own
   # range is ^7.5.4, satisfied by 7.6.5
   protobufjs: 7.6.5

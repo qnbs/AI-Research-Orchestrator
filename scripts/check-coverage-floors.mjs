@@ -30,6 +30,31 @@ const MODULE_FLOORS = [
     pathPattern: /\/src\/services\/apiKeyService\.ts$/,
     min: { lines: 91, statements: 86, branches: 82, functions: 80 },
   },
+  {
+    id: 'claimEvidence',
+    pathPattern:
+      /\/src\/lib\/claimEvidenceMatcher\.ts$|\/src\/lib\/claimEvidenceConflicts\.ts$|\/src\/lib\/claimValidation\.ts$/,
+    aggregate: true,
+    min: { lines: 95, statements: 93, branches: 82, functions: 95 },
+  },
+  {
+    id: 'databaseService',
+    pathPattern: /\/src\/services\/databaseService\.ts$/,
+    min: { lines: 42, statements: 47, branches: 24, functions: 56 },
+  },
+  {
+    id: 'retrieval',
+    pathPattern:
+      /\/src\/services\/pubmedUtils\.ts$|\/src\/services\/pubmedXmlParser\.ts$|\/src\/services\/arxivUtils\.ts$/,
+    aggregate: true,
+    min: { lines: 90, statements: 88, branches: 68, functions: 95 },
+  },
+  {
+    id: 'exportProvenance',
+    pathPattern: /\/src\/services\/exportService\.ts$|\/src\/lib\/reportExportProvenance\.ts$/,
+    aggregate: true,
+    min: { lines: 93, statements: 91, branches: 73, functions: 95 },
+  },
 ];
 
 const METRICS = ['lines', 'statements', 'branches', 'functions'];

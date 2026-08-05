@@ -25,6 +25,7 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "test:a11y": "playwright test src/test/e2e/a11y.spec.ts",
+    "test:e2e:pwa": "playwright test --config=playwright.pwa.config.ts",
     "test:e2e:report": "playwright show-report",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --max-warnings 0",

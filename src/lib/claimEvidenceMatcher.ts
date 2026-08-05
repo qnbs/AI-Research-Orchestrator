@@ -4,9 +4,16 @@
  */
 
 import type { RankedArticle } from '../types';
+import { detectNumericConflict, detectPopulationConflict } from './claimEvidenceConflicts';
+
+// NOTE: normalizeForTokenize/stemToken/rawWordTokens below are intentionally NOT
+// exported for reuse in claimEvidenceConflicts.ts - that would create an import cycle
+// (this file already imports FROM claimEvidenceConflicts.ts above). claimEvidenceConflicts.ts
+// keeps its own local copies instead, the same pattern stemToken itself already follows
+// to avoid a cycle through nonAi/utils.stem.
 
 /** Bump when matcher semantics change (exported in validation results). */
-export const CLAIM_EVIDENCE_MATCHER_VERSION = '2.1.0';
+export const CLAIM_EVIDENCE_MATCHER_VERSION = '2.2.0';
 
 const TOKEN_MIN_LEN = 3;
 
@@ -352,15 +359,18 @@ function claimTokensForDirectionCheck(
   return [...scoped];
 }
 
+/** Raw (unstemmed, unstopworded) word tokens — for markers that must stay out of
+ * lexical-overlap scoring (negation, population) but still need presence checks. */
+function rawWordTokens(text: string): string[] {
+  return normalizeForTokenize(text)
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .split(/\s+/)
+    .filter(Boolean);
+}
+
 function detectNegationConflict(claimText: string, articleText: string): boolean {
-  const claimTokens = normalizeForTokenize(claimText)
-    .replace(/[^\p{L}\p{N}]+/gu, ' ')
-    .split(/\s+/)
-    .filter(Boolean);
-  const articleTokens = normalizeForTokenize(articleText)
-    .replace(/[^\p{L}\p{N}]+/gu, ' ')
-    .split(/\s+/)
-    .filter(Boolean);
+  const claimTokens = rawWordTokens(claimText);
+  const articleTokens = rawWordTokens(articleText);
 
   const claimContent = tokenizeContent(claimText);
   const articleContentSet = uniqueTokens(tokenizeContent(articleText));
@@ -515,6 +525,8 @@ export function assessClaimArticleEvidence(
   let hasContradictingField = false;
   let hasDirectionConflict = false;
   let hasNegationConflict = false;
+  let hasNumericConflict = false;
+  let hasPopulationConflict = false;
 
   for (const fieldOverlap of fieldOverlaps) {
     if (fieldOverlap.overlapCount === 0) continue;
@@ -528,12 +540,20 @@ export function assessClaimArticleEvidence(
     );
     const fieldDirectionConflict = detectDirectionConflict(claimDirectionTokens, evidenceTokens);
     const fieldNegationConflict = detectNegationConflict(claimText, evidenceText);
-    const fieldContradicts = fieldDirectionConflict || fieldNegationConflict;
+    const fieldNumericConflict = detectNumericConflict(claimText, evidenceText);
+    const fieldPopulationConflict = detectPopulationConflict(claimText, evidenceText);
+    const fieldContradicts =
+      fieldDirectionConflict ||
+      fieldNegationConflict ||
+      fieldNumericConflict ||
+      fieldPopulationConflict;
 
     if (fieldContradicts) {
       hasContradictingField = true;
       if (fieldDirectionConflict) hasDirectionConflict = true;
       if (fieldNegationConflict) hasNegationConflict = true;
+      if (fieldNumericConflict) hasNumericConflict = true;
+      if (fieldPopulationConflict) hasPopulationConflict = true;
       if (fieldOverlap.overlapCount > bestContradictOverlap) {
         bestContradictOverlap = fieldOverlap.overlapCount;
         bestContradictSpan = fieldOverlap.span;
@@ -556,6 +576,12 @@ export function assessClaimArticleEvidence(
     }
     if (hasNegationConflict) {
       reasons.push('negation scope differs between claim and source');
+    }
+    if (hasNumericConflict) {
+      reasons.push('numeric value conflicts between claim and source (same unit)');
+    }
+    if (hasPopulationConflict) {
+      reasons.push('population or cohort terms conflict between claim and source');
     }
     return {
       relation: 'contradicts',

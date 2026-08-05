@@ -40,3 +40,23 @@ export function resolveSiteOrigin(): string {
   }
   return DEFAULT_SITE_ORIGIN;
 }
+
+export type BaseHrefTag = {
+  tag: 'base';
+  attrs: { href: string };
+  injectTo: 'head-prepend';
+};
+
+/**
+ * Vite `transformIndexHtml` tag descriptor for the `<base>` element.
+ * public/register-sw.js reads `document.querySelector('base[href]')` to derive its
+ * service-worker registration scope (ADR 0004) - this must stay the single source of
+ * truth for basePath so the two mechanisms can't diverge again (see 531885f regression).
+ */
+export function buildBaseHrefTag(basePath: string): BaseHrefTag {
+  return {
+    tag: 'base',
+    attrs: { href: normalizeBasePath(basePath) },
+    injectTo: 'head-prepend',
+  };
+}

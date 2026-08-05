@@ -2,7 +2,11 @@ import path from 'path';
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import { visualizer } from 'rollup-plugin-visualizer';
-import { DEFAULT_GH_PAGES_BASE, normalizeBasePath } from './src/lib/deploymentConfig';
+import {
+  buildBaseHrefTag,
+  DEFAULT_GH_PAGES_BASE,
+  normalizeBasePath,
+} from './src/lib/deploymentConfig';
 import { buildDefineConstants } from './scripts/build-meta.mjs';
 
 // Vendor chunk assignment by package name. Rolldown (Vite 8's default bundler) only supports
@@ -46,7 +50,7 @@ export default defineConfig(({ mode }) => {
     : '/';
 
   return {
-  // Configurable via VITE_BASE_PATH (default: GitHub Pages subpath in production)
+    // Configurable via VITE_BASE_PATH (default: GitHub Pages subpath in production)
     base: basePath,
 
     server: {
@@ -56,6 +60,16 @@ export default defineConfig(({ mode }) => {
 
     plugins: [
       react(),
+      {
+        name: 'inject-base-href',
+        // Single source of truth for register-sw.js's scope: the same `basePath`
+        // this config already uses for `base` (asset URL rewriting) below. Runs in
+        // both `vite dev` (basePath '/') and `vite build` (e.g. GitHub Pages
+        // subpath), so the two can never drift apart again (see ADR 0004).
+        transformIndexHtml() {
+          return [buildBaseHrefTag(basePath)];
+        },
+      },
       ...(enableBundleReport
         ? [
             visualizer({
