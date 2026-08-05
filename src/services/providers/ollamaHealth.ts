@@ -353,8 +353,9 @@ export async function probeOllamaHealth(
 
   try {
     let connectivity: ConnectivityCacheEntry;
-    if (!options.force && readConnectivityCache(baseUrl)) {
-      connectivity = readConnectivityCache(baseUrl)!;
+    const cachedConnectivity = options.force ? undefined : readConnectivityCache(baseUrl);
+    if (cachedConnectivity) {
+      connectivity = cachedConnectivity;
     } else {
       const versionResult = await probeConnectivity(baseUrl, origin, signal, checkedAt);
       if ('ok' in versionResult && versionResult.ok === false) {
@@ -364,8 +365,9 @@ export async function probeOllamaHealth(
     }
 
     let discovery: DiscoveryCacheEntry;
-    if (!options.force && readDiscoveryCache(baseUrl)) {
-      discovery = readDiscoveryCache(baseUrl)!;
+    const cachedDiscovery = options.force ? undefined : readDiscoveryCache(baseUrl);
+    if (cachedDiscovery) {
+      discovery = cachedDiscovery;
     } else {
       discovery = await probeDiscovery(baseUrl, signal);
     }

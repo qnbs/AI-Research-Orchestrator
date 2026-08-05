@@ -56,4 +56,22 @@ describe('probeOllamaModelMetadata', () => {
     await probeOllamaModelMetadata('http://localhost:11434', 'm1');
     expect(global.fetch).toHaveBeenCalledTimes(1);
   });
+
+  it('caches an undefined-baseUrl probe under a key a later undefined-baseUrl lookup can hit', async () => {
+    // Regression: probeOllamaModelMetadata used to pre-resolve a missing baseUrl to
+    // 'http://localhost:11434' before normalizing, while getCachedOllamaModelMetadata
+    // short-circuited to undefined for a missing baseUrl before ever normalizing - so a
+    // probe with no explicit baseUrl cached its result under a key a later no-baseUrl
+    // lookup could never hit.
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ model_info: { context_length: 2048 } }),
+    });
+    await probeOllamaModelMetadata(undefined, 'default-endpoint-model', { force: true });
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+    expect(getCachedOllamaModelMetadata(undefined, 'default-endpoint-model')?.contextLength).toBe(
+      2048,
+    );
+    expect(resolveCachedOllamaContextLength(undefined, 'default-endpoint-model')).toBe(2048);
+  });
 });

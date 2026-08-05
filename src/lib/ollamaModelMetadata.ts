@@ -27,8 +27,13 @@ function cacheKey(baseUrl: string, model: string): string {
   return `${baseUrl}::${model.trim().toLowerCase()}`;
 }
 
-function normalizeBaseUrl(raw: string): string | undefined {
-  const candidate = raw.trim().replace(/\/$/, '') || 'http://localhost:11434';
+// Optional so every caller shares the same undefined -> localhost default, rather than
+// each call site pre-resolving it differently (a prior divergence between probe and
+// cache-lookup calls meant a probe run with no explicit baseUrl cached its result under
+// the normalized localhost key, but a lookup with no explicit baseUrl short-circuited to
+// undefined before ever normalizing, so it could never hit that cache entry).
+function normalizeBaseUrl(raw?: string): string | undefined {
+  const candidate = (raw ?? '').trim().replace(/\/$/, '') || 'http://localhost:11434';
   const validated = validateCustomEndpointUrl(candidate);
   return validated.ok ? validated.normalizedUrl : undefined;
 }
@@ -80,7 +85,7 @@ export function getCachedOllamaModelMetadata(
   rawBaseUrl: string | undefined,
   model: string,
 ): OllamaModelMetadata | undefined {
-  const baseUrl = rawBaseUrl ? normalizeBaseUrl(rawBaseUrl) : undefined;
+  const baseUrl = normalizeBaseUrl(rawBaseUrl);
   if (!baseUrl || !model.trim()) return undefined;
   const entry = metadataCache.get(cacheKey(baseUrl, model));
   if (!entry || Date.now() > entry.expiresAt) {
@@ -108,7 +113,7 @@ export async function probeOllamaModelMetadata(
   model: string,
   options: { signal?: AbortSignal; timeoutMs?: number; force?: boolean } = {},
 ): Promise<OllamaModelMetadata | undefined> {
-  const baseUrl = normalizeBaseUrl(rawBaseUrl ?? 'http://localhost:11434');
+  const baseUrl = normalizeBaseUrl(rawBaseUrl);
   const trimmedModel = model.trim();
   if (!baseUrl || !trimmedModel) return undefined;
 
