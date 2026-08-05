@@ -189,4 +189,80 @@ describe('assessClaimArticleEvidence — adversarial', () => {
     );
     expect(result.relation).toBe('insufficient');
   });
+
+  it('contradicts when a same-unit percent value drifts beyond tolerance', () => {
+    const art = article(
+      'Aspirin cardiovascular trial',
+      'Aspirin reduced major cardiovascular events by 5% in this cohort.',
+    );
+    const result = assessClaimArticleEvidence(
+      'Aspirin reduced major cardiovascular events by 30% in this cohort.',
+      art,
+    );
+    expect(result.relation).toBe('contradicts');
+    expect(result.reasons).toContain('numeric value or unit conflicts between claim and source');
+  });
+
+  it('contradicts when a same-unit dose value drifts beyond tolerance', () => {
+    const art = article(
+      'Aspirin dosing trial',
+      'Patients received aspirin 81mg daily in the treatment cohort.',
+    );
+    const result = assessClaimArticleEvidence(
+      'Patients received aspirin 325mg daily in the treatment cohort.',
+      art,
+    );
+    expect(result.relation).toBe('contradicts');
+  });
+
+  it('supports when the same-unit numeric value matches within tolerance', () => {
+    const art = article(
+      'Aspirin cardiovascular trial',
+      'Aspirin reduced major cardiovascular events by 30% in this cohort.',
+    );
+    const result = assessClaimArticleEvidence(
+      'Aspirin reduced major cardiovascular events by 30% in this cohort.',
+      art,
+    );
+    expect(result.relation).toBe('supports');
+  });
+
+  it('does not treat different-unit numbers as a conflict', () => {
+    const art = article(
+      'Aspirin dosing trial',
+      'Patients received aspirin 81mg daily in the treatment cohort.',
+    );
+    const result = assessClaimArticleEvidence(
+      'Patients received aspirin daily for 12 months in the treatment cohort.',
+      art,
+    );
+    expect(result.relation).toBe('supports');
+  });
+
+  it('contradicts when population/cohort terms conflict', () => {
+    const art = article(
+      'Aspirin cardiovascular trial',
+      'Aspirin reduced major cardiovascular events in adults.',
+    );
+    const result = assessClaimArticleEvidence(
+      'Aspirin reduced major cardiovascular events in children.',
+      art,
+    );
+    expect(result.relation).toBe('contradicts');
+    expect(result.reasons).toContain(
+      'population or cohort terms conflict between claim and source',
+    );
+  });
+
+  it('does not contradict when population terms match', () => {
+    const art = article(
+      'Aspirin cardiovascular trial',
+      'Aspirin reduced major cardiovascular events in adults.',
+    );
+    const result = assessClaimArticleEvidence(
+      'Aspirin reduced major cardiovascular events in adults.',
+      art,
+    );
+    expect(result.relation).toBe('supports');
+  });
 });
