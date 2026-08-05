@@ -4,6 +4,13 @@
  */
 
 import type { RankedArticle } from '../types';
+import { detectNumericConflict, detectPopulationConflict } from './claimEvidenceConflicts';
+
+// NOTE: normalizeForTokenize/stemToken/rawWordTokens below are intentionally NOT
+// exported for reuse in claimEvidenceConflicts.ts - that would create an import cycle
+// (this file already imports FROM claimEvidenceConflicts.ts above). claimEvidenceConflicts.ts
+// keeps its own local copies instead, the same pattern stemToken itself already follows
+// to avoid a cycle through nonAi/utils.stem.
 
 /** Bump when matcher semantics change (exported in validation results). */
 export const CLAIM_EVIDENCE_MATCHER_VERSION = '2.2.0';
@@ -225,35 +232,6 @@ const DIRECTION_TERMS: Record<string, string[]> = {
   prevented: ['caused', 'induced'],
 };
 
-/** Contrastive population/cohort terms — mismatched pairs imply a population conflict. */
-const POPULATION_TERMS: Record<string, string[]> = {
-  child: ['adult', 'adults', 'elderly', 'geriatric'],
-  children: ['adult', 'adults', 'elderly', 'geriatric'],
-  pediatric: ['adult', 'adults', 'elderly', 'geriatric'],
-  infant: ['adult', 'adults', 'elderly'],
-  infants: ['adult', 'adults', 'elderly'],
-  adult: ['child', 'children', 'pediatric', 'infant', 'infants'],
-  adults: ['child', 'children', 'pediatric', 'infant', 'infants'],
-  elderly: ['child', 'children', 'pediatric', 'infant', 'infants'],
-  male: ['female', 'females'],
-  males: ['female', 'females'],
-  female: ['male', 'males'],
-  females: ['male', 'males'],
-  healthy: ['patient', 'patients'],
-};
-
-/**
- * Numeric mentions this matcher can compare across claim/evidence text. `\b` is only
- * applied to the word-based units - `%` is not a word character, so a trailing `\b`
- * right after it never matches (both neighbors would be non-word) and would silently
- * make every percent value invisible to this pattern.
- */
-const NUMERIC_UNIT_PATTERN =
-  /(\d+(?:[.,]\d+)?)\s*(%|percent\b|mg\b|mcg\b|g\b|kg\b|ml\b|l\b|mmhg\b|bpm\b)/giu;
-
-/** Relative drift beyond which a same-unit claim/evidence value pair is treated as conflicting. */
-const NUMERIC_TOLERANCE_RATIO = 0.2;
-
 export type EvidenceSpan = {
   field: 'title' | 'abstract';
   quote: string;
@@ -405,63 +383,6 @@ function detectNegationConflict(claimText: string, articleText: string): boolean
     const claimNegated = hasNegationNear(claimTokens, claimIdx);
     const articleNegated = hasNegationNear(articleTokens, articleIdx);
     if (claimNegated !== articleNegated) return true;
-  }
-  return false;
-}
-
-/** Detects a contrastive population/cohort term in the claim matched by its opposite in the
- * evidence text (e.g. claim says "children", evidence is about "adults") - checked on raw
- * tokens, same as detectNegationConflict, so these terms need not leave STOPWORDS to be
- * caught (removing them would also inflate lexical-overlap scoring for near-universal
- * words like "patients"/"adults"). */
-function detectPopulationConflict(claimText: string, articleText: string): boolean {
-  const claimSet = new Set(rawWordTokens(claimText).map(stemToken));
-  const articleSet = new Set(rawWordTokens(articleText).map(stemToken));
-  for (const [term, opposites] of Object.entries(POPULATION_TERMS)) {
-    const stemmedTerm = stemToken(term);
-    if (claimSet.has(stemmedTerm) && opposites.some((o) => articleSet.has(stemToken(o)))) {
-      return true;
-    }
-    if (articleSet.has(stemmedTerm) && opposites.some((o) => claimSet.has(stemToken(o)))) {
-      return true;
-    }
-  }
-  return false;
-}
-
-type NumericMention = { value: number; unit: string };
-
-function extractNumericMentions(text: string): NumericMention[] {
-  const mentions: NumericMention[] = [];
-  const normalized = normalizeForTokenize(text);
-  const re = new RegExp(NUMERIC_UNIT_PATTERN);
-  let match: RegExpExecArray | null;
-  while ((match = re.exec(normalized)) !== null) {
-    const value = Number.parseFloat(match[1].replace(',', '.'));
-    if (Number.isNaN(value)) continue;
-    const unit = match[2] === 'percent' ? '%' : match[2];
-    mentions.push({ value, unit });
-  }
-  return mentions;
-}
-
-/** Detects a same-unit numeric value (percent, dose, vitals) that drifts beyond tolerance
- * between claim and evidence text - e.g. claim "reduced risk by 30%" vs. evidence reporting
- * 12%. Conservative: only fires when EVERY same-unit evidence mention disagrees: a single
- * matching value anywhere in the field is treated as numeric support, not a conflict. */
-function detectNumericConflict(claimText: string, articleText: string): boolean {
-  const claimMentions = extractNumericMentions(claimText);
-  const articleMentions = extractNumericMentions(articleText);
-  if (claimMentions.length === 0 || articleMentions.length === 0) return false;
-
-  for (const claimMention of claimMentions) {
-    const sameUnit = articleMentions.filter((m) => m.unit === claimMention.unit);
-    if (sameUnit.length === 0) continue;
-    const allDisagree = sameUnit.every((articleMention) => {
-      const scale = Math.max(Math.abs(claimMention.value), Math.abs(articleMention.value), 1e-9);
-      return Math.abs(claimMention.value - articleMention.value) / scale > NUMERIC_TOLERANCE_RATIO;
-    });
-    if (allDisagree) return true;
   }
   return false;
 }
@@ -657,7 +578,7 @@ export function assessClaimArticleEvidence(
       reasons.push('negation scope differs between claim and source');
     }
     if (hasNumericConflict) {
-      reasons.push('numeric value or unit conflicts between claim and source');
+      reasons.push('numeric value conflicts between claim and source (same unit)');
     }
     if (hasPopulationConflict) {
       reasons.push('population or cohort terms conflict between claim and source');

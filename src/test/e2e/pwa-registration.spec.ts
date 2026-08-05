@@ -16,7 +16,10 @@ import { test, expect } from '@playwright/test';
  */
 test.describe('PWA service-worker registration on the deployed subpath', () => {
   test('registers with the correct scope and controls the page', async ({ page, baseURL }) => {
-    await page.goto('/');
+    // NOT '/' - an origin-absolute path overrides baseURL's own path
+    // (/AI-Research-Orchestrator/) per WHATWG URL resolution, navigating to the
+    // server root instead of the deployed subpath and escaping the worker's scope.
+    await page.goto('./');
     await page.waitForLoadState('load');
 
     const registration = await page.evaluate(async () => {
@@ -41,7 +44,10 @@ test.describe('PWA service-worker registration on the deployed subpath', () => {
     page,
     context,
   }) => {
-    await page.goto('/');
+    // NOT '/' - an origin-absolute path overrides baseURL's own path
+    // (/AI-Research-Orchestrator/) per WHATWG URL resolution, navigating to the
+    // server root instead of the deployed subpath and escaping the worker's scope.
+    await page.goto('./');
     await page.waitForLoadState('load');
     await page.evaluate(() => navigator.serviceWorker.ready);
     // Let precaching settle before going offline.

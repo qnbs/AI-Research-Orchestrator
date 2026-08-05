@@ -6,10 +6,17 @@
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { loadEnv } from 'vite';
 import { resolveDeploymentConfig } from './lib/deploymentConfig.mjs';
 
 const distDir = resolve(process.cwd(), 'dist');
-const config = resolveDeploymentConfig({ mode: 'production' });
+// Mirror vite.config.ts's own env resolution exactly (same loadEnv call) so a
+// VITE_BASE_PATH set only via .env.production - not process.env - still
+// produces the same base path Vite itself built dist/ with. Resolving from
+// process.env alone would silently diverge from Vite's actual <base> tag,
+// including for the build-time assertion below.
+const env = loadEnv('production', process.cwd(), '');
+const config = resolveDeploymentConfig({ mode: 'production', env });
 
 function patchFile(relPath, replacements) {
   const filePath = resolve(distDir, relPath);

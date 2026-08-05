@@ -32,7 +32,8 @@ const MODULE_FLOORS = [
   },
   {
     id: 'claimEvidence',
-    pathPattern: /\/src\/lib\/claimEvidenceMatcher\.ts$|\/src\/lib\/claimValidation\.ts$/,
+    pathPattern:
+      /\/src\/lib\/claimEvidenceMatcher\.ts$|\/src\/lib\/claimEvidenceConflicts\.ts$|\/src\/lib\/claimValidation\.ts$/,
     aggregate: true,
     min: { lines: 95, statements: 93, branches: 82, functions: 95 },
   },
