@@ -52,12 +52,12 @@ Required check contexts currently configured:
 
 ### Process gates (not GitHub-required checks)
 
-| Gate                              | Enforcement                                                                                                                                                                                                       |
-| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Automated review correction loop  | Rules `011` / `013` — CodeRabbit + DeepSource AI Review (`@deepsourcebot review`) + resolve threads                                                                                                               |
-| **Latest-head review quiescence** | CodeRabbit (or documented independent review) must target the **merge tree SHA** — rate-limit placeholders are **not** approval; see `docs/audits/2026-08-03-post-merge-scientific-integrity-review.md` (PR #213) |
-| Dismiss stale bot/human approvals | Enable ruleset **Dismiss stale pull request approvals when new commits are pushed** so post-approval commits cannot merge on superseded review SHAs                                                               |
-| Human/agent rebase before merge   | Prefer enabling ruleset “Require branches to be up to date”; until then rebase onto latest `main`                                                                                                                 |
+| Gate                              | Enforcement                                                                                                                                                                                                                |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Automated review correction loop  | Rules `011` / `013` — CodeRabbit + DeepSource AI Review (`@deepsourcebot review`) + resolve threads                                                                                                                        |
+| **Latest-head review quiescence** | CodeRabbit (or documented independent review) must target the **merge tree SHA** — rate-limit placeholders do **not** count as approvals; see `docs/audits/2026-08-03-post-merge-scientific-integrity-review.md` (PR #213) |
+| Dismiss stale bot/human approvals | Enable ruleset **Dismiss stale pull request approvals when new commits are pushed** so post-approval commits cannot merge on superseded review SHAs                                                                        |
+| Human/agent rebase before merge   | Prefer enabling ruleset “Require branches to be up to date”; until then rebase onto latest `main`                                                                                                                          |
 
 ## Advisory / non-blocking
 
