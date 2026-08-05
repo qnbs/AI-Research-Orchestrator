@@ -76,10 +76,10 @@ Required check contexts currently configured:
 
 ## Concurrency
 
-| Workflow                                       | Group                                      | Cancel in progress                                                                              |
-| ---------------------------------------------- | ------------------------------------------ | ----------------------------------------------------------------------------------------------- |
-| Deploy / E2E / cross-browser / a11y / security | `${{ github.workflow }}-${{ github.ref }}` | **PRs only** (`pull_request`) — never cancel an in-flight `main` push validation/deploy mid-run |
-| Prune deployments                              | dedicated                                  | `false`                                                                                         |
+| Workflow                                                 | Group                                      | Cancel in progress                                                                              |
+| -------------------------------------------------------- | ------------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| Deploy / E2E / cross-browser / a11y / security / pwa-e2e | `${{ github.workflow }}-${{ github.ref }}` | **PRs only** (`pull_request`) — never cancel an in-flight `main` push validation/deploy mid-run |
+| Prune deployments                                        | dedicated                                  | `false`                                                                                         |
 
 Rationale: canceling the only authoritative `main` quality + Pages deploy leaves
 `main` without a completed gate run after a burst of merges.

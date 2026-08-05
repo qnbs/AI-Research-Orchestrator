@@ -17,8 +17,16 @@ type WindowWithSwFailure = Window & { __swRegistrationFailedReason?: string };
  * problem useServiceWorkerUpdate already defends against for waiting
  * workers (by checking navigator.serviceWorker.getRegistration() on mount).
  * register-sw.js stores the same redacted reason on `window` before
- * dispatching, so this hook can catch up on mount even if it missed the
- * live event.
+ * dispatching, so this hook can catch up on it. Two catch-up points, not
+ * one: the lazy useState initializer covers a failure that already
+ * happened before this component's first render, but React 18+ schedules
+ * passive effects asynchronously after paint - a failure can still occur
+ * in the real gap between that render and this effect actually attaching
+ * the live listener. The effect re-checks the same marker immediately
+ * after attaching the listener and replays it through the same handler
+ * (so the state update happens inside a callback, the pattern
+ * react-hooks/set-state-in-effect expects - not a bare effect-body
+ * setState call), closing that gap too.
  */
 export function useServiceWorkerRegistrationStatus() {
   // Lazy initializer, not an effect-body setState: __swRegistrationFailedReason is set
@@ -38,6 +46,17 @@ export function useServiceWorkerRegistrationStatus() {
       setDismissed(false);
     };
     window.addEventListener('sw-registration-failed', onRegistrationFailed);
+
+    // Catch-up #2 (see the doc comment above): replay a marker that appeared
+    // during the async gap between this component's render and this effect
+    // running, through the same handler used for live events.
+    const reasonSetDuringGap = (window as WindowWithSwFailure).__swRegistrationFailedReason;
+    if (reasonSetDuringGap) {
+      onRegistrationFailed(
+        new CustomEvent('sw-registration-failed', { detail: { reason: reasonSetDuringGap } }),
+      );
+    }
+
     return () => window.removeEventListener('sw-registration-failed', onRegistrationFailed);
   }, []);
 
