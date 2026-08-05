@@ -391,13 +391,11 @@ function detectNegationConflict(claimText: string, articleText: string): boolean
     const articleIndices = findAllStemmedTokenIndices(articleTokens, token);
     if (claimIndices.length === 0 || articleIndices.length === 0) continue;
 
-    let hasComparablePair = false;
     let hasAgreeingPair = false;
     for (const claimIdx of claimIndices) {
       const claimNegated = hasNegationNear(claimTokens, claimIdx);
       for (const articleIdx of articleIndices) {
         const articleNegated = hasNegationNear(articleTokens, articleIdx);
-        hasComparablePair = true;
         if (claimNegated === articleNegated) {
           hasAgreeingPair = true;
           break;
@@ -405,7 +403,7 @@ function detectNegationConflict(claimText: string, articleText: string): boolean
       }
       if (hasAgreeingPair) break;
     }
-    if (hasComparablePair && !hasAgreeingPair) return true;
+    if (!hasAgreeingPair) return true;
   }
   return false;
 }
