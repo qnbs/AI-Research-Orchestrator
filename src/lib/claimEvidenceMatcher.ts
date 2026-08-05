@@ -384,7 +384,9 @@ function detectNegationConflict(claimText: string, articleText: string): boolean
 
   const claimContent = tokenizeContent(claimText);
   const articleContentSet = uniqueTokens(tokenizeContent(articleText));
-  const overlapping = claimContent.filter((t) => articleContentSet.has(t));
+  // A token repeated in the claim would otherwise redo the same
+  // findAllStemmedTokenIndices + all-pairs negation check once per repeat.
+  const overlapping = uniqueTokens(claimContent.filter((t) => articleContentSet.has(t)));
 
   for (const token of overlapping) {
     const claimIndices = findAllStemmedTokenIndices(claimTokens, token);

@@ -58,7 +58,7 @@ pnpm run check:agent-eval
 | Abstract contradicts, title generic overlap only         | `contradicts`          | **Pass**            | Weak title does not block abstract contradiction                         |
 | Multi-outcome abstract (CV reduced, bleeding increased)  | `supports` on CV claim | **Pass**            | Direction scoped to matched span                                         |
 | Negation on inflected overlap (`prevent` / `prevented`)  | `contradicts`          | **Pass**            | Stemmed token indices                                                    |
-| Negation at **second** overlapping token occurrence      | `contradicts`          | **Fail on `2.1.0`** | First-index-only lookup missed later `not` — fixed in follow-up `2.1.1`  |
+| Negation at **second** overlapping token occurrence      | `contradicts`          | **Fail on `2.1.0`** | First-index-only lookup missed later `not` — fixed in follow-up `2.3.0`  |
 | Affirming “not only …” phrasing                          | `supports`             | **Pass**            | `hasNegationNear` skips `not only`                                       |
 | Mixed supporting + contradicting PMIDs                   | `unverified`           | **Pass**            | `validateClaimAgainstCorpus`                                             |
 | Invalid citations + no lexical support                   | `rejected`             | **Pass**            | Invalid citation guard                                                   |
@@ -66,12 +66,12 @@ pnpm run check:agent-eval
 
 ## Follow-up corrective change (branch `cursor/post-merge-integrity-governance-8ad7`)
 
-| Change                                          | Purpose                                                                |
-| ----------------------------------------------- | ---------------------------------------------------------------------- |
-| `findAllStemmedTokenIndices` + negation pairing | Close second-occurrence negation gap                                   |
-| `CLAIM_EVIDENCE_MATCHER_VERSION` → `2.1.1`      | Provenance stamp for post-merge fix                                    |
-| Additional adversarial tests                    | Title/abstract conflict, multi-outcome, late negation                  |
-| This audit + `docs/ci-branch-governance.md`     | Document gap and enforce latest-head review technically where possible |
+| Change                                          | Purpose                                                                                                                                  |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `findAllStemmedTokenIndices` + negation pairing | Close second-occurrence negation gap                                                                                                     |
+| `CLAIM_EVIDENCE_MATCHER_VERSION` → `2.3.0`      | Provenance stamp for post-merge fix (intervening `2.2.0` came from unrelated numeric/population conflict work merged in the same window) |
+| Additional adversarial tests                    | Title/abstract conflict, multi-outcome, late negation                                                                                    |
+| This audit + `docs/ci-branch-governance.md`     | Document gap and enforce latest-head review technically where possible                                                                   |
 
 ## Residual risks (still open)
 
@@ -93,6 +93,6 @@ Enable on `main` ruleset **20291814**:
 - **No further high-risk merges** (scientific integrity, crypto, SW, PubMed/arXiv core) until:
   1. This audit is merged to `main`.
   2. `bec83e6` deploy SHA is observed on GitHub Pages.
-  3. Follow-up `2.1.1` negation fix PR completes its own correction loop.
+  3. Follow-up `2.3.0` negation fix PR completes its own correction loop.
 
 PR **#214** (Ollama runtime) remains **on hold** per stabilization window in `docs/ci-branch-governance.md`.
