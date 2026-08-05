@@ -76,7 +76,8 @@
       ".github/workflows/e2e.yml",
       ".github/workflows/e2e-cross-browser.yml",
       ".github/workflows/a11y.yml",
-      ".github/workflows/security.yml"
+      ".github/workflows/security.yml",
+      ".github/workflows/pwa-e2e.yml"
     ]
   },
   "staticAnalysis": {

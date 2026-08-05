@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Claim evidence matcher (post-merge, `CLAIM_EVIDENCE_MATCHER_VERSION` `2.3.0`):** Negation conflict checks all overlapping token occurrences (not only the first), closing a second-occurrence negation gap found in post-merge review of PR #213.
 - **Claim evidence matcher (P1 claim integrity):** Conservative deterministic matcher (`claimEvidenceMatcher.ts`) replaces 2-token lexical overlap — stop-word filtering, negation/direction conflict detection, exact evidence spans, `invalidCitations` preserved in metrics, supporting-only PMIDs on claim-supported results. Matcher version stamped on validated claims.
 - **Ollama runtime (P1 Local AI):** Split connectivity vs model-discovery caches (5s failure TTL for rapid recovery); generate streams require protocol `done: true` like chat; prompt budgets prefer `/api/show` context length over parameter-count heuristics (`ollamaModelMetadata.ts`).
 - **Cross-browser WebKit Ollama health E2E:** Block service workers in Playwright (`serviceWorkers: 'block'`) so WebKit cannot bypass `page.route` for Ollama mocks; CORS-aware fulfills + `127.0.0.1` loopback + forced refresh (`ollamaMocks.ts`). Previously WebKit reported `cors`/`connection refused` while Chromium/Firefox passed, and `continue-on-error` hid the failure on PR checks.

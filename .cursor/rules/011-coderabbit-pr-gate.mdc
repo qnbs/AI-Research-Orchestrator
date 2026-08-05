@@ -13,8 +13,9 @@ Before merging any PR to `main`, **trigger and fully resolve all automated revie
 
 Address findings from **all** of these when present:
 
-- **CodeRabbit** (`coderabbitai`) — **always** obtain a real review on the latest head before merge (not a rate-limit placeholder). See rate-limit loop below.
+- **CodeRabbit** (`coderabbitai`) — **always** obtain a real review on the latest head before merge (not a rate-limit placeholder), **except** under the bounded fallback in the rate-limit loop below (step 6): after 3 failed wait/re-trigger cycles, or a single wait exceeding 90 minutes, with no real CodeRabbit review yet posted for the current head, Sourcery may stand in.
 - **CodeAnt** / Code Antai (`codeant-ai`)
+- **Sourcery** (`sourcery-ai`) — comment `@sourcery-ai review` to trigger/re-trigger on the latest head. Address inline `suggestion`/`nitpick`/`suggestion (bug_risk)` comments the same as other bots — `bug_risk` findings are correctness issues, not style nits, and get the same fix-first treatment as CodeRabbit/CodeAnt findings.
 - **GitHub Copilot** (`copilot-pull-request-reviewer`)
 - **DeepSource** (`deepsource-io`) — **always** comment `@deepsourcebot review` after opening a PR and after every push that needs re-review (team AI Review is on-demand; static analysis alone is not enough). Prefer a top-level comment whose first line is exactly `@deepsourcebot review`. If the PR report still shows the on-demand notice / no `DeepSource: AI Review` check appears, a human collaborator may need to re-post (DeepSource can ignore GitHub App bot mentions). Also address Docker/Shell advisory findings when actionable. Dashboard JavaScript analyzer remains off (`docs/project-facts.json` / `docs/deepsource-javascript-ci.md`); ESLint + `deploy.yml` stay authoritative for TS/TSX.
 - Other automated PR reviewers that post inline or summary comments (e.g. Socket Security actionable items when they block merge, Cursor Bugbot when requested)
@@ -32,7 +33,7 @@ Address **every** item, including:
 
 ## Workflow (loop until clear)
 
-1. After pushing PR updates, **trigger on-demand reviewers**: `@coderabbitai review` when a full review is missing/stale/rate-limited, and **always** `@deepsourcebot review` (DeepSource AI Review is on-demand for this team — static analysis alone does not count as a completed AI Review).
+1. After pushing PR updates, **trigger on-demand reviewers**: `@coderabbitai review` when a full review is missing/stale/rate-limited, `@sourcery-ai review` when Sourcery hasn't reviewed the latest head yet, and **always** `@deepsourcebot review` (DeepSource AI Review is on-demand for this team — static analysis alone does not count as a completed AI Review).
 2. Collect **all** review threads (inline + summary + out-of-range) from every in-scope bot, including DeepSource AI Review findings.
 3. For each item: fix in code/docs, or reply with a clear English rationale if intentionally deferred (rare — prefer fixing).
 4. Push follow-up commits; re-trigger `@deepsourcebot review` and CodeRabbit as needed; **repeat until no new actionable comments remain**.
@@ -47,8 +48,14 @@ A green CodeRabbit check that only says **“Review rate limited”** is **not**
 3. Re-poll: issue comments + `pulls/N/reviews` for `coderabbitai[bot]` on the **current** head SHA.
 4. When the window has elapsed, post a clean top-level `@coderabbitai review` (and `@coderabbitai summary` only if needed). Prefer re-trigger over relying on auto-review after a rate-limit event.
 5. If still rate-limited, read the new wait time and **repeat** up to **3** wait/re-trigger cycles on the same head (document each attempt in a PR comment).
-6. After 3 failed cycles (or a single wait **> 90 minutes**), escalate: post a disposition comment with the last rate-limit text + timestamps, ping a human maintainer, and **do not merge** until a real review lands or a maintainer explicitly documents an exception for that PR.
-7. Quiescence requires a real CodeRabbit review (APPROVED / COMMENTED / CHANGES_REQUESTED with a review body) that targets the **latest** head commit, plus all actionable threads resolved.
+6. **After 3 failed wait/re-trigger cycles, or a single wait exceeding 90 minutes, with no real CodeRabbit review yet posted for the current head** — this exact threshold, repeated verbatim in `013` and `docs/ci-branch-governance.md` — CodeRabbit becomes **optional** for that PR rather than a hard block, **provided** Sourcery has posted a real review (not rate-limited) on the current head with all actionable findings resolved, and no other in-scope bot has an unresolved actionable finding or an active `CHANGES_REQUESTED`. Post a disposition comment documenting the rate-limit timestamps/cycles and that Sourcery is standing in as the primary review for this PR. This is a standing policy (maintainer-approved 2026-08-05), not a one-off exception — no need to re-request permission on future PRs that hit this same threshold. This fallback applies **only** while CodeRabbit has produced no real review of the current head; once a real review lands — including `CHANGES_REQUESTED` — the fallback no longer applies (see step 7).
+7. **Single exact quiescence predicate** (this is the one authoritative rule — `013` and `docs/ci-branch-governance.md` restate it, they do not vary it): quiescence requires **all** of the following:
+   - **Either (a)** a real, **non-`CHANGES_REQUESTED`** CodeRabbit review (`APPROVED` or `COMMENTED`, with a review body proving it isn't a rate-limit placeholder) targeting the **latest** head commit, **or (b)** the optional-CodeRabbit fallback in step 6.
+   - **`@deepsourcebot review` has been attempted on the current head** (a recorded attempt, per `013` — static analysis alone does not satisfy this).
+   - **No active human `CHANGES_REQUESTED` review targets the current head** (a stale human `CHANGES_REQUESTED` on a superseded commit is moot once a later, non-requesting human review or explicit approval supersedes it — same rule as for CodeRabbit).
+   - **All actionable GraphQL threads are resolved**, and **every body-only finding** (a CodeRabbit "outside diff range" comment, a human top-level review body, or any other finding with no thread ID) **has a recorded `fixed`, `replied`, or `deferred` disposition** in the disposition ledger or a PR comment — not literally a thread reply, since none exists for these — with a documented English rationale for every `deferred` finding.
+
+   A `CHANGES_REQUESTED` review (bot or human) **never** satisfies quiescence by itself, no matter how detailed its body — that state means changes are being actively requested, not that the PR is cleared. After fixing a `CHANGES_REQUESTED` review's findings, re-trigger the bot (or request a fresh human look) and wait for a non-requesting review on the new head; a `CHANGES_REQUESTED` review is only moot once **superseded** by such a review on a later commit (not resolved by thread-resolution alone).
 
 ## Exceptions
 
@@ -56,3 +63,15 @@ A green CodeRabbit check that only says **“Review rate limited”** is **not**
 - False positives: short English reply explaining why + resolve thread after confirmation.
 
 See also English content policy `@.cursor/rules/010-english-content.mdc`.
+
+<example>
+
+CodeRabbit shows "Review rate limited" on the current head. Parse the wait time, wait it out (+buffer), re-trigger `@coderabbitai review`, and repeat up to 3 cycles / 90 minutes. A real `APPROVED`/`COMMENTED` review lands on cycle 2 — all inline threads it raised are fixed and resolved, and its one body-only "outside diff range" finding is fixed and recorded as `fixed` in the PR disposition comment — then merge.
+
+</example>
+
+<example type="invalid">
+
+CodeRabbit shows "Review rate limited" once. Merge immediately without waiting, re-triggering, or checking whether Sourcery has a real review with everything resolved (step 6's fallback conditions were never met — no wait/re-trigger cycles were attempted at all).
+
+</example>
