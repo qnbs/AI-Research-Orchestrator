@@ -173,6 +173,30 @@ describe('service worker integrity', () => {
     expect(registerSwSource).toMatch(/postMessage|SKIP_WAITING|controllerchange/);
   });
 
+  it('surfaces a redacted registration-failure event instead of a fully silent catch', () => {
+    expect(registerSwSource).toMatch(/sw-registration-failed/);
+    // Only the coarse error name may be forwarded - never the raw error object,
+    // a .message, or a stack trace (which could leak URLs).
+    expect(registerSwSource).not.toMatch(/detail:\s*{\s*reason:\s*err\s*}/);
+    expect(registerSwSource).not.toMatch(/err\.message|err\.stack/);
+
+    // Positive assertion (not just the negative denylist above): the actual
+    // expression assigned to `reason` must be built from err.name with an
+    // 'unknown' fallback - a future refactor forwarding e.g. String(err) or
+    // err.toString() would satisfy every check above while leaking more than
+    // the coarse name, so pin down the specific expression too.
+    const reasonAssignment = registerSwSource.match(/var reason = ([^;]+);/)?.[1];
+    expect(reasonAssignment).toMatch(/err\s*&&\s*err\.name/);
+    expect(reasonAssignment).toMatch(/String\(\s*err\.name\s*\)/);
+    expect(reasonAssignment).toMatch(/['"]unknown['"]/);
+
+    // The value stored for late-mounting listeners to catch up on (see the
+    // runtime behavior describe block below) must be the same redacted
+    // `reason`, not a second, independently-computed expression that could
+    // drift from the event's own payload.
+    expect(registerSwSource).toMatch(/window\.__swRegistrationFailedReason = reason;/);
+  });
+
   it('CSP worker-src is free of external hosts', () => {
     const cspMatch = indexHtml.match(/worker-src\s+([^;]+);/);
     expect(cspMatch).not.toBeNull();
@@ -219,12 +243,18 @@ describe('register-sw.js runtime behavior', () => {
     };
   }
 
-  async function loadRegisterSw(options: { hadControllerAtLoad?: boolean } = {}) {
+  async function loadRegisterSw(
+    options: { hadControllerAtLoad?: boolean; registerRejection?: unknown } = {},
+  ) {
     const registration = createFakeRegistration();
     const swListeners: Record<string, Array<() => void>> = {};
     Object.defineProperty(navigator, 'serviceWorker', {
       value: {
-        register: vi.fn(() => Promise.resolve(registration)),
+        register: vi.fn(() =>
+          options.registerRejection
+            ? Promise.reject(options.registerRejection)
+            : Promise.resolve(registration),
+        ),
         addEventListener(event: string, cb: () => void) {
           (swListeners[event] ??= []).push(cb);
         },
@@ -263,7 +293,7 @@ describe('register-sw.js runtime behavior', () => {
       addedToWindow.push(entry);
       if (type !== 'load') sharedWindowListeners.push(entry);
     });
-    vi.spyOn(window, 'dispatchEvent').mockImplementation((event) => {
+    const dispatchEventSpy = vi.spyOn(window, 'dispatchEvent').mockImplementation((event) => {
       const e = event as Event;
       for (const [type, listener] of sharedWindowListeners) {
         if (type === e.type) listener.call(window, e);
@@ -279,7 +309,9 @@ describe('register-sw.js runtime behavior', () => {
     const loadListener = addedToWindow.find(([type]) => type === 'load')?.[1];
     if (!loadListener) throw new Error('register-sw.js did not add a "load" listener');
     loadListener(new Event('load'));
-    // Let register()'s .then()/.catch() microtasks settle before returning.
+    // Let register()'s .then()/.catch() microtasks settle before returning -
+    // a rejection resolves via the same number of hops as a resolution (one
+    // register() settle, then the .then()/.catch() handler runs).
     await Promise.resolve();
     await Promise.resolve();
 
@@ -289,6 +321,7 @@ describe('register-sw.js runtime behavior', () => {
         for (const cb of swListeners.controllerchange ?? []) cb();
       },
       reloadSpy,
+      dispatchEventSpy,
       cleanup: () => {
         for (const entry of addedToWindow) {
           const idx = sharedWindowListeners.indexOf(entry);
@@ -306,7 +339,38 @@ describe('register-sw.js runtime behavior', () => {
     sharedWindowListeners.length = 0;
     // @ts-expect-error - test-only cleanup of a property jsdom doesn't define by default
     delete navigator.serviceWorker;
+    delete window.__swRegistrationFailedReason;
     vi.restoreAllMocks();
+  });
+
+  it('dispatches a redacted sw-registration-failed event and stores the same reason on window when register() rejects', async () => {
+    const { dispatchEventSpy, cleanup } = await loadRegisterSw({
+      registerRejection: new DOMException('blocked', 'SecurityError'),
+    });
+    cleanupCurrent = cleanup;
+
+    const failureCall = dispatchEventSpy.mock.calls.find(
+      ([event]) => (event as CustomEvent).type === 'sw-registration-failed',
+    );
+    expect(failureCall).toBeDefined();
+    expect((failureCall?.[0] as CustomEvent<{ reason: string }>).detail).toEqual({
+      reason: 'SecurityError',
+    });
+    expect(window.__swRegistrationFailedReason).toBe('SecurityError');
+  });
+
+  it('falls back to "unknown" when register() rejects with something that has no .name', async () => {
+    const { dispatchEventSpy, cleanup } = await loadRegisterSw({
+      registerRejection: 'not an Error instance',
+    });
+    cleanupCurrent = cleanup;
+
+    const failureCall = dispatchEventSpy.mock.calls.find(
+      ([event]) => (event as CustomEvent).type === 'sw-registration-failed',
+    );
+    expect((failureCall?.[0] as CustomEvent<{ reason: string }>).detail).toEqual({
+      reason: 'unknown',
+    });
   });
 
   it('does not reload on the first controllerchange when this tab had no controller at load (first-ever activation, nothing to hand off from)', async () => {

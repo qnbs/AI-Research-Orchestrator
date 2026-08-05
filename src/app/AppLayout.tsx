@@ -2,6 +2,7 @@ import React, { Suspense, memo } from 'react';
 import { Header } from '../components/Header';
 import { OfflineBanner } from '../components/OfflineBanner';
 import { UpdateAvailableBanner } from '../components/UpdateAvailableBanner';
+import { ServiceWorkerRegistrationFailedBanner } from '../components/ServiceWorkerRegistrationFailedBanner';
 import { DemoDataBanner } from '../components/DemoDataBanner';
 import { Notification } from '../components/Notification';
 import { ConfirmationModal } from '../components/ConfirmationModal';
@@ -74,6 +75,7 @@ const AppLayout: React.FC = () => {
       <OfflineBanner />
       <DemoDataBanner />
       <UpdateAvailableBanner />
+      <ServiceWorkerRegistrationFailedBanner />
       <main
         id="main-content"
         tabIndex={-1}
