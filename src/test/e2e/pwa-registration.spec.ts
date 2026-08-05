@@ -54,6 +54,13 @@ test.describe('PWA service-worker registration on the deployed subpath', () => {
     await page.reload();
     await page.waitForLoadState('load');
 
+    // Prove the worker - not the browser's ordinary HTTP cache - is what's
+    // about to serve this page offline; without this, the assertion below
+    // could pass purely from disk/memory HTTP caching with no working
+    // service-worker fetch handler at all.
+    const hasController = await page.evaluate(() => Boolean(navigator.serviceWorker.controller));
+    expect(hasController).toBe(true);
+
     await context.setOffline(true);
     try {
       await page.reload();
