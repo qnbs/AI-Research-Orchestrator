@@ -398,8 +398,12 @@ function detectNegationConflict(claimText: string, articleText: string): boolean
       for (const articleIdx of articleIndices) {
         const articleNegated = hasNegationNear(articleTokens, articleIdx);
         hasComparablePair = true;
-        if (claimNegated === articleNegated) hasAgreeingPair = true;
+        if (claimNegated === articleNegated) {
+          hasAgreeingPair = true;
+          break;
+        }
       }
+      if (hasAgreeingPair) break;
     }
     if (hasComparablePair && !hasAgreeingPair) return true;
   }

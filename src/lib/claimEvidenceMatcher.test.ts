@@ -202,7 +202,14 @@ describe('assessClaimArticleEvidence — adversarial', () => {
     expect(result.relation).toBe('insufficient');
   });
 
-  it('contradicts when negation differs on a later overlapping token occurrence', () => {
+  it('contradicts when a later clause negation differs, regardless of an earlier repeated token', () => {
+    // "adults" repeats in both claim and article, but its second occurrence sits
+    // outside hasNegationNear's 3-token look-behind window either way, so this
+    // fixture does not exercise first-index-vs-all-occurrence pairing - the
+    // outcome is driven entirely by "reduced" (a single occurrence per side).
+    // The direct all-occurrence regression is covered separately below by
+    // 'does not contradict when an unrelated negated claim clause repeats a
+    // token that agrees elsewhere'.
     const art = article(
       'Aspirin cohort study',
       'Adults received aspirin; cardiovascular events in adults were reduced.',
