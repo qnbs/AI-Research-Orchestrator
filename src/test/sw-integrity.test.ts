@@ -339,8 +339,7 @@ describe('register-sw.js runtime behavior', () => {
     sharedWindowListeners.length = 0;
     // @ts-expect-error - test-only cleanup of a property jsdom doesn't define by default
     delete navigator.serviceWorker;
-    delete (window as Window & { __swRegistrationFailedReason?: string })
-      .__swRegistrationFailedReason;
+    delete window.__swRegistrationFailedReason;
     vi.restoreAllMocks();
   });
 
@@ -357,9 +356,7 @@ describe('register-sw.js runtime behavior', () => {
     expect((failureCall?.[0] as CustomEvent<{ reason: string }>).detail).toEqual({
       reason: 'SecurityError',
     });
-    expect(
-      (window as Window & { __swRegistrationFailedReason?: string }).__swRegistrationFailedReason,
-    ).toBe('SecurityError');
+    expect(window.__swRegistrationFailedReason).toBe('SecurityError');
   });
 
   it('falls back to "unknown" when register() rejects with something that has no .name', async () => {

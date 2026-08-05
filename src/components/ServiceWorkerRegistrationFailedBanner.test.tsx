@@ -53,16 +53,14 @@ describe('ServiceWorkerRegistrationFailedBanner', () => {
   });
 
   it('catches up on a failure that occurred before mount (register-sw.js runs from a window "load" handler, which can fire before React mounts this component)', () => {
-    (window as Window & { __swRegistrationFailedReason?: string }).__swRegistrationFailedReason =
-      'SecurityError';
+    window.__swRegistrationFailedReason = 'SecurityError';
     try {
       render(<ServiceWorkerRegistrationFailedBanner />);
       expect(screen.getByRole('status')).toHaveTextContent(
         'Offline support could not be enabled for this session (reason: SecurityError). Live features are unaffected.',
       );
     } finally {
-      delete (window as Window & { __swRegistrationFailedReason?: string })
-        .__swRegistrationFailedReason;
+      delete window.__swRegistrationFailedReason;
     }
   });
 

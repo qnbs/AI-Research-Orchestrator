@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react';
 
-type WindowWithSwFailure = Window & { __swRegistrationFailedReason?: string };
-
 /**
  * Bridges public/register-sw.js's "sw-registration-failed" window CustomEvent
  * into React state, so a failed service-worker registration (previously a
@@ -33,7 +31,7 @@ export function useServiceWorkerRegistrationStatus() {
   // by a plain <script> tag before React ever loads, so it's already synchronously
   // available at first render - no need to synchronize it in on mount.
   const [failureReason, setFailureReason] = useState<string | null>(
-    () => (window as WindowWithSwFailure).__swRegistrationFailedReason ?? null,
+    () => window.__swRegistrationFailedReason ?? null,
   );
   const [dismissed, setDismissed] = useState(false);
 
@@ -50,7 +48,7 @@ export function useServiceWorkerRegistrationStatus() {
     // Catch-up #2 (see the doc comment above): replay a marker that appeared
     // during the async gap between this component's render and this effect
     // running, through the same handler used for live events.
-    const reasonSetDuringGap = (window as WindowWithSwFailure).__swRegistrationFailedReason;
+    const reasonSetDuringGap = window.__swRegistrationFailedReason;
     if (reasonSetDuringGap) {
       onRegistrationFailed(
         new CustomEvent('sw-registration-failed', { detail: { reason: reasonSetDuringGap } }),
