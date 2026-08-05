@@ -180,6 +180,27 @@ describe('probeOllamaHealth', () => {
     expect(getCachedOllamaHealth('http://localhost:11434')).toBeUndefined();
   });
 
+  it('getCachedOllamaHealth normalizes baseUrl before lookup so a trailing slash still hits', async () => {
+    global.fetch = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ version: '0.5.0' }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ models: [] }) });
+    await probeOllamaHealth('http://localhost:11434', { force: true });
+    expect(getCachedOllamaHealth('http://localhost:11434/')?.ok).toBe(true);
+  });
+
+  it('invalidateOllamaHealthCache normalizes baseUrl before deleting so a trailing slash still invalidates', async () => {
+    global.fetch = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ version: '0.5.0' }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ models: [] }) });
+    await probeOllamaHealth('http://localhost:11434', { force: true });
+    expect(getCachedOllamaHealth('http://localhost:11434')?.ok).toBe(true);
+
+    invalidateOllamaHealthCache('http://localhost:11434/');
+    expect(getCachedOllamaHealth('http://localhost:11434')).toBeUndefined();
+  });
+
   it('reports an aborted probe', async () => {
     const controller = new AbortController();
     global.fetch = vi.fn().mockImplementation(() => {

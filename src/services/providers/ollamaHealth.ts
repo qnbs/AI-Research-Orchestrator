@@ -250,17 +250,22 @@ export function invalidateOllamaHealthCache(baseUrl?: string): void {
     discoveryCache.clear();
     return;
   }
-  connectivityCache.delete(baseUrl);
-  discoveryCache.delete(baseUrl);
+  // Caches are keyed by the normalized URL (see probeOllamaHealth); normalize
+  // here too so an equivalent but differently-formatted URL (e.g. a trailing
+  // slash) actually invalidates the entry it was stored under.
+  const normalized = normalizeBaseUrl(baseUrl);
+  const key = normalized.ok ? normalized.baseUrl : baseUrl;
+  connectivityCache.delete(key);
+  discoveryCache.delete(key);
 }
 
 /** Return a non-expired assembled probe result when connectivity + discovery caches are fresh. */
 export function getCachedOllamaHealth(baseUrl: string): OllamaHealthResult | undefined {
-  const connectivity = readConnectivityCache(baseUrl);
-  const discovery = readDiscoveryCache(baseUrl);
-  if (!connectivity || !discovery) return undefined;
   const normalized = normalizeBaseUrl(baseUrl);
   if (!normalized.ok) return undefined;
+  const connectivity = readConnectivityCache(normalized.baseUrl);
+  const discovery = readDiscoveryCache(normalized.baseUrl);
+  if (!connectivity || !discovery) return undefined;
   return assembleHealthOk(normalized.origin, normalized.baseUrl, connectivity, discovery);
 }
 

@@ -181,7 +181,10 @@ export const selectArticlesForRankingPrompt = (
   let truncatedTitleCount = 0;
   let truncatedAbstractCount = 0;
 
-  for (let count = lexicallyRanked.length; count >= 1; count -= 1) {
+  // A context window smaller than the reserved overhead leaves no room for
+  // even a single article - skip the shape/fit loop entirely rather than
+  // running it to exhaustion only to land on the same bestCount: 0 default.
+  for (let count = availableTokens > 0 ? lexicallyRanked.length : 0; count >= 1; count -= 1) {
     const subset = lexicallyRanked.slice(0, count);
     const shaped = subset.map((article) => shapeArticleForRankingPrompt(article, limits));
     const payloads = shaped.map((s, index) => ({
@@ -278,7 +281,10 @@ export const selectArticlesForSynthesisPrompt = (
   let truncatedAbstractCount = 0;
   let truncatedAiSummaryCount = 0;
 
-  for (let count = articles.length; count >= 1; count -= 1) {
+  // See selectArticlesForRankingPrompt: skip the loop entirely when the
+  // budget can't fit even one article instead of exhausting every subset
+  // size only to land on the same bestCount: 0 default.
+  for (let count = availableTokens > 0 ? articles.length : 0; count >= 1; count -= 1) {
     const subset = articles.slice(0, count);
     const shaped = subset.map((article) => shapeArticleForSynthesisPrompt(article, limits));
     const payloads = shaped.map((s) => s.payload);
