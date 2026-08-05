@@ -32,6 +32,20 @@ patchFile('index.html', [
 
 patchFile('manifest.json', [['__DEPLOY_BASE_PATH__', config.basePath]]);
 
+// Regression guard for the 531885f base-href defect: register-sw.js derives its
+// service-worker registration scope from document.querySelector('base[href]'),
+// so the built HTML must actually contain the <base> tag Vite's transformIndexHtml
+// plugin injects (src/lib/deploymentConfig.ts buildBaseHrefTag). A silently missing
+// tag here means SW registration would fail on any non-root deployment.
+const builtIndexHtml = readFileSync(resolve(distDir, 'index.html'), 'utf8');
+const expectedBaseTag = `<base href="${config.basePath}">`;
+if (!builtIndexHtml.includes(expectedBaseTag)) {
+  throw new Error(
+    `generate-deployment-artifacts: dist/index.html is missing ${expectedBaseTag} - ` +
+      'service-worker registration would silently fail on this deployment base path.',
+  );
+}
+
 console.log(
   `generate-deployment-artifacts: base=${config.basePath} site=${config.siteUrl}`,
 );

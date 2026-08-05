@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildAssetUrl,
+  buildBaseHrefTag,
   buildSiteUrl,
   normalizeBasePath,
   resolveSiteOrigin,
@@ -41,5 +42,33 @@ describe('buildAssetUrl', () => {
 describe('resolveSiteOrigin', () => {
   it('defaults to the public GitHub Pages origin', () => {
     expect(resolveSiteOrigin()).toMatch(/^https:\/\//);
+  });
+});
+
+describe('buildBaseHrefTag', () => {
+  it('emits a head-prepend <base> tag matching the normalized base path', () => {
+    expect(buildBaseHrefTag('/')).toEqual({
+      tag: 'base',
+      attrs: { href: '/' },
+      injectTo: 'head-prepend',
+    });
+    expect(buildBaseHrefTag('/AI-Research-Orchestrator/')).toEqual({
+      tag: 'base',
+      attrs: { href: '/AI-Research-Orchestrator/' },
+      injectTo: 'head-prepend',
+    });
+  });
+
+  it('normalizes an unnormalized base path the same way the Vite build config does', () => {
+    expect(buildBaseHrefTag('AI-Research-Orchestrator')).toEqual({
+      tag: 'base',
+      attrs: { href: '/AI-Research-Orchestrator/' },
+      injectTo: 'head-prepend',
+    });
+    expect(buildBaseHrefTag('/custom-subpath')).toEqual({
+      tag: 'base',
+      attrs: { href: '/custom-subpath/' },
+      injectTo: 'head-prepend',
+    });
   });
 });
