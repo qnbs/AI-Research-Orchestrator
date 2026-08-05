@@ -13,19 +13,27 @@ enforced by `pnpm run check:docs-drift`.
 Documented names match GitHub check titles. Settings → Branches / Rulesets
 should require these (or their workflow job equivalents) for `main`:
 
-| Check                                            | Workflow                      | Notes                                                               |
-| ------------------------------------------------ | ----------------------------- | ------------------------------------------------------------------- |
-| Typecheck, Lint & Tests                          | `deploy.yml`                  | Includes `format:check`, coverage gate, coverage floors, docs-drift |
-| Production Build                                 | `deploy.yml`                  | Bundle + CSP hash patch + `bundle:budget`                           |
-| Playwright E2E                                   | `e2e.yml`                     | Chromium blocking suite                                             |
-| Cross-browser (firefox / webkit / mobile-chrome) | `e2e-cross-browser.yml`       | Blocking since 2026-08-03 (`crossBrowserAdvisory: false`)           |
-| Axe critical/serious smoke                       | `a11y.yml`                    | Separate a11y smoke                                                 |
-| CodeQL                                           | `security.yml`                | `security-extended`                                                 |
-| Dependency Review                                | `security.yml`                | PRs                                                                 |
-| pnpm audit (high+)                               | `deploy.yml` + `security.yml` | High/critical only                                                  |
-| Secret scan (gitleaks)                           | `security.yml`                |                                                                     |
+| Check                                            | Workflow                      | Notes                                                                                                                                                                                                         |
+| ------------------------------------------------ | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Typecheck, Lint & Tests                          | `deploy.yml`                  | Includes `format:check`, coverage gate, coverage floors, docs-drift                                                                                                                                           |
+| Production Build                                 | `deploy.yml`                  | Bundle + CSP hash patch + `bundle:budget`                                                                                                                                                                     |
+| Playwright E2E                                   | `e2e.yml`                     | Chromium blocking suite                                                                                                                                                                                       |
+| Cross-browser (firefox / webkit / mobile-chrome) | `e2e-cross-browser.yml`       | Blocking since 2026-08-03 (`crossBrowserAdvisory: false`)                                                                                                                                                     |
+| Axe critical/serious smoke                       | `a11y.yml`                    | Separate a11y smoke                                                                                                                                                                                           |
+| CodeQL                                           | `security.yml`                | `security-extended`                                                                                                                                                                                           |
+| Dependency Review                                | `security.yml`                | PRs                                                                                                                                                                                                           |
+| pnpm audit (high+)                               | `deploy.yml` + `security.yml` | High/critical only                                                                                                                                                                                            |
+| Secret scan (gitleaks)                           | `security.yml`                |                                                                                                                                                                                                               |
+| PWA service-worker registration                  | `pwa-e2e.yml`                 | Blocking from creation (2026-08-05) — regression guard for the 531885f base-href defect (ADR 0004); real production build + `vite preview`, service workers enabled, unlike `e2e.yml`/`e2e-cross-browser.yml` |
 
 Review bots are **not** substitutes for the deterministic gates above.
+
+`pwa-e2e.yml`'s job (`PWA service-worker registration`) is not yet in the GitHub
+ruleset's required-status-checks list below — workflow-level blocking (no
+`continue-on-error`, red on failure) is in place now, but adding it as a
+GitHub-_enforced_ merge blocker needs the same ruleset update as the other
+pending items in this table (maintainer action, tracked with the
+conversation-resolution / strict-up-to-date items below).
 
 ### Live ruleset (2026-08-03)
 

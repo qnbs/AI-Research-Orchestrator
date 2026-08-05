@@ -173,6 +173,14 @@ describe('service worker integrity', () => {
     expect(registerSwSource).toMatch(/postMessage|SKIP_WAITING|controllerchange/);
   });
 
+  it('surfaces a redacted registration-failure event instead of a fully silent catch', () => {
+    expect(registerSwSource).toMatch(/sw-registration-failed/);
+    // Only the coarse error name may be forwarded - never the raw error object,
+    // a .message, or a stack trace (which could leak URLs).
+    expect(registerSwSource).not.toMatch(/detail:\s*{\s*reason:\s*err\s*}/);
+    expect(registerSwSource).not.toMatch(/err\.message|err\.stack/);
+  });
+
   it('CSP worker-src is free of external hosts', () => {
     const cspMatch = indexHtml.match(/worker-src\s+([^;]+);/);
     expect(cspMatch).not.toBeNull();

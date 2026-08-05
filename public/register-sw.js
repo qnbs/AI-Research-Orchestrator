@@ -83,11 +83,21 @@
           }
         });
       });
-    }).catch(function () {
+    }).catch(function (err) {
       // Registration can legitimately fail (browser policy, bad scope,
       // network failure fetching sw.js) - absorb it rather than leaving an
       // unhandled promise rejection. sw-integrity.test.ts asserts this file
-      // never logs, so this stays a silent no-op rather than console.*.
+      // never logs, so this stays event-based rather than console.*. The
+      // event carries only the error's `name` (e.g. "SecurityError") - never
+      // the raw error object, message, or stack, which could include URLs -
+      // src/hooks/useServiceWorkerRegistrationStatus.ts listens for it to
+      // show a small, dismissible, non-blocking status instead of leaving
+      // registration failure completely invisible.
+      window.dispatchEvent(
+        new CustomEvent('sw-registration-failed', {
+          detail: { reason: err && err.name ? String(err.name) : 'unknown' },
+        }),
+      );
       return undefined;
     });
 
