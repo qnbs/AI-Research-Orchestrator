@@ -190,6 +190,49 @@ describe('assessClaimArticleEvidence — adversarial', () => {
     expect(result.relation).toBe('insufficient');
   });
 
+  it('marks insufficient when abstract aligns but title direction conflicts', () => {
+    const art = article(
+      'Aspirin increased major cardiovascular events trial',
+      'Aspirin reduced major cardiovascular events compared with placebo.',
+    );
+    const result = assessClaimArticleEvidence(
+      'Aspirin reduced major cardiovascular events compared with placebo.',
+      art,
+    );
+    expect(result.relation).toBe('insufficient');
+  });
+
+  it('contradicts when a later clause negation differs, regardless of an earlier repeated token', () => {
+    // "adults" repeats in both claim and article, but its second occurrence sits
+    // outside hasNegationNear's 3-token look-behind window either way, so this
+    // fixture does not exercise first-index-vs-all-occurrence pairing - the
+    // outcome is driven entirely by "reduced" (a single occurrence per side).
+    // The direct all-occurrence regression is covered separately below by
+    // 'does not contradict when an unrelated negated claim clause repeats a
+    // token that agrees elsewhere'.
+    const art = article(
+      'Aspirin cohort study',
+      'Adults received aspirin; cardiovascular events in adults were reduced.',
+    );
+    const result = assessClaimArticleEvidence(
+      'Adults received aspirin; cardiovascular events in adults were not reduced.',
+      art,
+    );
+    expect(result.relation).toBe('contradicts');
+  });
+
+  it('does not contradict multi-outcome abstracts when matched span aligns', () => {
+    const art = article(
+      'Aspirin outcomes trial',
+      'Aspirin reduced cardiovascular events. Major bleeding was increased in the aspirin arm.',
+    );
+    const result = assessClaimArticleEvidence(
+      'Aspirin reduced cardiovascular events in adults.',
+      art,
+    );
+    expect(result.relation).toBe('supports');
+  });
+
   it('contradicts when a same-unit percent value drifts beyond tolerance', () => {
     const art = article(
       'Aspirin cardiovascular trial',
@@ -338,5 +381,17 @@ describe('assessClaimArticleEvidence — adversarial', () => {
       art,
     );
     expect(result.relation).toBe('contradicts');
+  });
+
+  it('does not contradict when an unrelated negated claim clause repeats a token that agrees elsewhere', () => {
+    const art = article(
+      'Aspirin cardiovascular trial',
+      'Aspirin reduced cardiovascular events in this trial.',
+    );
+    const result = assessClaimArticleEvidence(
+      'Aspirin did not reduce headache frequency, but aspirin reduced cardiovascular events in this trial.',
+      art,
+    );
+    expect(result.relation).toBe('supports');
   });
 });
