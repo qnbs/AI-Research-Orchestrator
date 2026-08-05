@@ -217,6 +217,7 @@ describe('createOllamaProvider', () => {
     ).rejects.toMatchObject({
       code: 'PROVIDER_UNAVAILABLE',
       message: expect.stringContaining('done marker'),
+      retryable: true,
     });
   });
 

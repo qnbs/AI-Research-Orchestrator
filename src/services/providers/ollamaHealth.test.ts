@@ -18,6 +18,12 @@ describe('probeOllamaHealth', () => {
 
   afterEach(() => {
     invalidateOllamaHealthCache();
+    // Guaranteed to run even if an assertion above throws - a bare
+    // vi.useRealTimers() at the end of a test body only runs when every
+    // preceding assertion passes, so a failure mid-test leaves fake timers
+    // installed and turns later, unrelated tests into a cascade of
+    // misleading failures.
+    vi.useRealTimers();
   });
 
   it('returns version + models on success and caches by origin', async () => {

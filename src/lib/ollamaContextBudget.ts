@@ -11,9 +11,6 @@ export const OLLAMA_MIN_INPUT_TOKEN_BUDGET = 6_000;
 /** Reserved tokens for model output during ranking/synthesis. */
 export const OLLAMA_OUTPUT_TOKEN_RESERVE = 2_048;
 
-/** System prompt, provenance, and structured-output overhead. */
-export const OLLAMA_PROMPT_OVERHEAD_RESERVE = 1_536;
-
 /** Safety margin to avoid edge truncation. */
 export const OLLAMA_BUDGET_SAFETY_MARGIN = 512;
 

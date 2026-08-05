@@ -39,13 +39,17 @@ describe('selectArticlesForRankingPrompt (small Ollama context)', () => {
   });
   afterEach(() => {
     invalidateOllamaModelMetadataCache();
+    vi.unstubAllGlobals();
   });
 
   it('omits corpus when runtime context cannot cover ranking overhead', async () => {
-    global.fetch = vi.fn().mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ model_info: { context_length: 4_096 } }),
-    });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ model_info: { context_length: 4_096 } }),
+      }),
+    );
     await probeOllamaModelMetadata('http://localhost:11434', 'tiny-local', { force: true });
 
     const articles = [makeArticle('1', 'aspirin trial'), makeArticle('2', 'cardiovascular study')];
@@ -75,18 +79,22 @@ describe('getInputTokenBudget (ollama active-endpoint metadata)', () => {
   afterEach(() => {
     invalidateOllamaHealthCache();
     invalidateOllamaModelMetadataCache();
+    vi.unstubAllGlobals();
   });
 
   it('uses parameterSize from the active Ollama endpoint cache only', async () => {
-    global.fetch = vi
-      .fn()
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ version: '0.5.0' }) })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          models: [{ name: 'custom-local', details: { parameter_size: '1B' } }],
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ version: '0.5.0' }) })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            models: [{ name: 'custom-local', details: { parameter_size: '1B' } }],
+          }),
         }),
-      });
+    );
     await probeOllamaHealth('http://localhost:11434', { force: true });
 
     expect(getInputTokenBudget('ollama', 'custom-local')).toBe(8_000);

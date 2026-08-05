@@ -28,6 +28,10 @@ describe('probeOllamaModelMetadata', () => {
     expect(meta?.parameterSize).toBe('8B');
     expect(meta?.source).toBe('model_info');
     expect(resolveCachedOllamaContextLength('http://localhost:11434', 'llama3.1:8b')).toBe(8192);
+    expect(global.fetch).toHaveBeenCalledWith(
+      'http://localhost:11434/api/show',
+      expect.objectContaining({ body: JSON.stringify({ model: 'llama3.1:8b' }) }),
+    );
   });
 
   it('falls back to num_ctx in parameters string', async () => {
@@ -55,6 +59,32 @@ describe('probeOllamaModelMetadata', () => {
     expect(getCachedOllamaModelMetadata('http://localhost:11434', 'm1')?.contextLength).toBe(4096);
     await probeOllamaModelMetadata('http://localhost:11434', 'm1');
     expect(global.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('falls back to unknown source on an HTTP failure without throwing', async () => {
+    global.fetch = vi.fn().mockResolvedValueOnce({ ok: false, status: 404 });
+
+    const meta = await probeOllamaModelMetadata('http://localhost:11434', 'missing-model', {
+      force: true,
+    });
+    expect(meta?.source).toBe('unknown');
+    expect(meta?.contextLength).toBeUndefined();
+  });
+
+  it('rethrows on abort instead of caching a failure', async () => {
+    const controller = new AbortController();
+    global.fetch = vi.fn().mockImplementation(() => {
+      controller.abort();
+      return Promise.reject(new DOMException('Aborted', 'AbortError'));
+    });
+
+    await expect(
+      probeOllamaModelMetadata('http://localhost:11434', 'aborted-model', {
+        force: true,
+        signal: controller.signal,
+      }),
+    ).rejects.toMatchObject({ name: 'AbortError' });
+    expect(getCachedOllamaModelMetadata('http://localhost:11434', 'aborted-model')).toBeUndefined();
   });
 
   it('caches an undefined-baseUrl probe under a key a later undefined-baseUrl lookup can hit', async () => {

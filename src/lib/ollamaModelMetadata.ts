@@ -5,6 +5,7 @@
 
 import { isAbortError } from './errors';
 import { validateCustomEndpointUrl } from './endpointPolicy';
+import { mergeSignals } from '../services/providers/ollamaHealth';
 
 export const OLLAMA_MODEL_METADATA_CACHE_TTL_MS = 300_000;
 export const OLLAMA_MODEL_METADATA_FAILURE_TTL_MS = 30_000;
@@ -123,14 +124,14 @@ export async function probeOllamaModelMetadata(
   }
 
   const timeoutMs = options.timeoutMs ?? OLLAMA_MODEL_METADATA_DEFAULT_TIMEOUT_MS;
-  const signal = options.signal ?? AbortSignal.timeout(timeoutMs);
+  const signal = mergeSignals(timeoutMs, options.signal);
   const checkedAt = Date.now();
 
   try {
     const response = await fetch(`${baseUrl}/api/show`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: trimmedModel }),
+      body: JSON.stringify({ model: trimmedModel }),
       signal,
     });
 

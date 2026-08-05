@@ -124,8 +124,17 @@ function writeDiscoveryCache(
   baseUrl: string,
   models: OllamaModelInfo[],
   modelsDiscovered: boolean,
+  startedAt: number,
 ): DiscoveryCacheEntry {
-  const checkedAt = Date.now();
+  // startedAt (the probe's start time, not Date.now() at write time) is what
+  // makes the stale-write guard below effective: two overlapping probes can
+  // resolve out of order (a slower probe that started first can finish
+  // after a faster one that started later), and only comparing against when
+  // each probe actually STARTED tells them apart. Comparing against
+  // Date.now() computed fresh in this function can never be greater than an
+  // existing entry's already-past checkedAt, making the guard permanently
+  // dead code.
+  const checkedAt = startedAt;
   const ttl = modelsDiscovered ? OLLAMA_DISCOVERY_SUCCESS_TTL_MS : OLLAMA_DISCOVERY_FAILURE_TTL_MS;
   const entry: DiscoveryCacheEntry = {
     models,
@@ -288,7 +297,11 @@ async function probeConnectivity(
   return writeConnectivityCache(baseUrl, version);
 }
 
-async function probeDiscovery(baseUrl: string, signal: AbortSignal): Promise<DiscoveryCacheEntry> {
+async function probeDiscovery(
+  baseUrl: string,
+  signal: AbortSignal,
+  startedAt: number,
+): Promise<DiscoveryCacheEntry> {
   const models: OllamaModelInfo[] = [];
   let modelsDiscovered = false;
   try {
@@ -316,7 +329,7 @@ async function probeDiscovery(baseUrl: string, signal: AbortSignal): Promise<Dis
     }
     modelsDiscovered = false;
   }
-  return writeDiscoveryCache(baseUrl, models, modelsDiscovered);
+  return writeDiscoveryCache(baseUrl, models, modelsDiscovered, startedAt);
 }
 
 /**
@@ -369,7 +382,7 @@ export async function probeOllamaHealth(
     if (cachedDiscovery) {
       discovery = cachedDiscovery;
     } else {
-      discovery = await probeDiscovery(baseUrl, signal);
+      discovery = await probeDiscovery(baseUrl, signal, checkedAt);
     }
 
     return assembleHealthOk(origin, baseUrl, connectivity, discovery);

@@ -39,4 +39,16 @@ describe('estimateOllamaInputTokenBudget', () => {
     expect(small.budget).toBe(4_096 - OLLAMA_OUTPUT_TOKEN_RESERVE - OLLAMA_BUDGET_SAFETY_MARGIN);
     expect(small.warnTooSmall).toBe(true);
   });
+
+  it('falls back to the parameter heuristic for a non-finite or non-positive contextLength', () => {
+    expect(estimateOllamaInputTokenBudget('llama3.1:8b', { contextLength: NaN }).source).toBe(
+      'parameter-heuristic',
+    );
+    expect(estimateOllamaInputTokenBudget('llama3.1:8b', { contextLength: 0 }).source).toBe(
+      'parameter-heuristic',
+    );
+    expect(estimateOllamaInputTokenBudget('llama3.1:8b', { contextLength: -1 }).source).toBe(
+      'parameter-heuristic',
+    );
+  });
 });
