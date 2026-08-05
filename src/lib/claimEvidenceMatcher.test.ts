@@ -253,6 +253,18 @@ describe('assessClaimArticleEvidence — adversarial', () => {
     expect(result.relation).toBe('supports');
   });
 
+  it('does not contradict when one of several claim values has a matching same-unit evidence value', () => {
+    const art = article(
+      'Aspirin cardiovascular trial',
+      'Aspirin reduced major cardiovascular events by 30% and minor events by 70% in this cohort.',
+    );
+    const result = assessClaimArticleEvidence(
+      'Aspirin reduced major cardiovascular events by 30% and minor events by 50% in this cohort.',
+      art,
+    );
+    expect(result.relation).toBe('supports');
+  });
+
   it('parses comma-grouped thousands as thousands, not a decimal separator', () => {
     const art = article(
       'Aspirin dosing trial',
@@ -314,5 +326,17 @@ describe('assessClaimArticleEvidence — adversarial', () => {
       art,
     );
     expect(result.relation).toBe('supports');
+  });
+
+  it('still contradicts an age-cohort mismatch even when both texts share an unrelated sex cohort term', () => {
+    const art = article(
+      'Aspirin cardiovascular trial',
+      'Aspirin reduced major cardiovascular events in male adults.',
+    );
+    const result = assessClaimArticleEvidence(
+      'Aspirin reduced major cardiovascular events in male children.',
+      art,
+    );
+    expect(result.relation).toBe('contradicts');
   });
 });

@@ -57,16 +57,17 @@ const POPULATION_TERMS: Record<string, string[]> = {
  * caught (removing them would also inflate lexical-overlap scoring for near-universal
  * words like "patients"/"adults").
  *
- * Two false-positive classes this guards against:
- *  - identical/shared cohort text (e.g. "healthy patients" appearing in both) - fixed by
- *    requiring a shared population term anywhere in either text to short-circuit to "no
- *    conflict" before ever checking opposites;
- *  - mixed-cohort evidence (e.g. "improved outcomes in both children and adults" as
- *    evidence for a claim about "children") - the same shared-term check covers this too,
- *    since "children" is present in both, even though the evidence separately also
- *    mentions "adults".
- * This is deliberately conservative: any shared population term is treated as proof the
- * two texts are not describing disjoint cohorts, even if another dimension differs.
+ * Three false-positive classes this guards against:
+ *  - identical/shared cohort text (e.g. "healthy patients" appearing in both) - the
+ *    matching term itself present on both sides suppresses that term's own opposite check;
+ *  - mixed-cohort evidence on the SAME dimension (e.g. "improved outcomes in both children
+ *    and adults" as evidence for a claim about "children") - a term shared as one side of
+ *    the opposite pair being checked suppresses just that pair;
+ *  - a shared term on an UNRELATED dimension must not blanket-suppress every other
+ *    dimension - "male children" vs "male adults" shares "male" (sex), which must not hide
+ *    the genuine children-vs-adults (age) conflict. Each POPULATION_TERMS pair is checked
+ *    independently rather than via one global "any shared term ⇒ no conflict" shortcut, so
+ *    a shared term only neutralizes conflicts on its own dimension.
  */
 export function detectPopulationConflict(claimText: string, articleText: string): boolean {
   const claimSet = new Set(rawWordTokens(claimText).map(stemToken));
@@ -79,17 +80,30 @@ export function detectPopulationConflict(claimText: string, articleText: string)
     if (claimSet.has(stemmedTerm)) claimTerms.add(stemmedTerm);
     if (articleSet.has(stemmedTerm)) articleTerms.add(stemmedTerm);
   }
-  for (const term of claimTerms) {
-    if (articleTerms.has(term)) return false;
-  }
 
   for (const [term, opposites] of Object.entries(POPULATION_TERMS)) {
     const stemmedTerm = stemToken(term);
     const stemmedOpposites = opposites.map(stemToken);
-    if (claimTerms.has(stemmedTerm) && stemmedOpposites.some((o) => articleTerms.has(o))) {
+    // A shared opposite-pair term (e.g. both texts also mention "children" while this
+    // pair is "adult") proves the pair's own dimension overlaps - don't let this
+    // specific pair fire even if the direct-term checks below otherwise would.
+    const hasSharedOpposite = stemmedOpposites.some(
+      (opposite) => claimTerms.has(opposite) && articleTerms.has(opposite),
+    );
+    if (
+      claimTerms.has(stemmedTerm) &&
+      !articleTerms.has(stemmedTerm) &&
+      !hasSharedOpposite &&
+      stemmedOpposites.some((opposite) => articleTerms.has(opposite))
+    ) {
       return true;
     }
-    if (articleTerms.has(stemmedTerm) && stemmedOpposites.some((o) => claimTerms.has(o))) {
+    if (
+      articleTerms.has(stemmedTerm) &&
+      !claimTerms.has(stemmedTerm) &&
+      !hasSharedOpposite &&
+      stemmedOpposites.some((opposite) => claimTerms.has(opposite))
+    ) {
       return true;
     }
   }
@@ -144,23 +158,28 @@ function extractNumericMentions(text: string): NumericMention[] {
 
 /** Detects a same-unit numeric value (percent, dose, vitals) that drifts beyond tolerance
  * between claim and evidence text - e.g. claim "reduced risk by 30%" vs. evidence reporting
- * 12%. Conservative: only fires when EVERY same-unit evidence mention disagrees: a single
- * matching value anywhere in the field is treated as numeric support, not a conflict.
- * Different units are never compared, so this can only ever report a same-unit value
- * conflict, never a "unit conflict". */
+ * 12%. Conservative: a single same-unit claim/evidence pair matching within tolerance
+ * anywhere is treated as support and short-circuits the whole check, even if the claim or
+ * evidence also contains other, unrelated same-unit values that individually disagree
+ * (e.g. claim "30%, 50%" vs evidence "30%, 70%" - the matching 30% pair is support, the
+ * unrelated 50%-vs-70% mismatch must not override that). Only reports a conflict when at
+ * least one same-unit pair existed to compare and none of them matched. Different units
+ * are never compared, so this can only ever report a same-unit value conflict, never a
+ * "unit conflict". */
 export function detectNumericConflict(claimText: string, articleText: string): boolean {
   const claimMentions = extractNumericMentions(claimText);
   const articleMentions = extractNumericMentions(articleText);
-  if (claimMentions.length === 0 || articleMentions.length === 0) return false;
 
+  let hasComparablePair = false;
   for (const claimMention of claimMentions) {
-    const sameUnit = articleMentions.filter((m) => m.unit === claimMention.unit);
-    if (sameUnit.length === 0) continue;
-    const allDisagree = sameUnit.every((articleMention) => {
+    for (const articleMention of articleMentions) {
+      if (articleMention.unit !== claimMention.unit) continue;
+      hasComparablePair = true;
       const scale = Math.max(Math.abs(claimMention.value), Math.abs(articleMention.value), 1e-9);
-      return Math.abs(claimMention.value - articleMention.value) / scale > NUMERIC_TOLERANCE_RATIO;
-    });
-    if (allDisagree) return true;
+      if (Math.abs(claimMention.value - articleMention.value) / scale <= NUMERIC_TOLERANCE_RATIO) {
+        return false;
+      }
+    }
   }
-  return false;
+  return hasComparablePair;
 }
