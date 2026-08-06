@@ -51,11 +51,16 @@ const PDF_CONSTANTS = {
 
 // Strips tags via a real HTML parser (DOMPurify) rather than a naive `<[^>]*>` regex,
 // which can be bypassed by nested/malformed markup that reconstructs a tag once stripped.
+// RETURN_DOM_FRAGMENT lets DOMPurify build the DOM itself instead of app code doing its
+// own innerHTML assignment - same zero-tag sanitization, decodes HTML entities via
+// textContent.
 const stripHtmlTags = (text: string): string => {
-  const sanitized = DOMPurify.sanitize(text, { ALLOWED_TAGS: [], ALLOWED_ATTR: [] });
-  const tempDiv = document.createElement('div');
-  tempDiv.innerHTML = sanitized;
-  return tempDiv.textContent || tempDiv.innerText || '';
+  const sanitizedFragment = DOMPurify.sanitize(text, {
+    ALLOWED_TAGS: [],
+    ALLOWED_ATTR: [],
+    RETURN_DOM_FRAGMENT: true,
+  });
+  return sanitizedFragment.textContent || '';
 };
 
 const cleanText = (text: string) =>

@@ -63,11 +63,15 @@ const secureMarkdownToHtml = (text: string): string => {
 const stripMarkdown = (markdown: string): string => {
   if (!markdown) return '';
   const html = marked.parse(markdown) as string;
-  const sanitized = DOMPurify.sanitize(html, { ALLOWED_TAGS: [], ALLOWED_ATTR: [] });
-  // To handle potential HTML entities, create a temporary element
-  const tempDiv = document.createElement('div');
-  tempDiv.innerHTML = sanitized;
-  return tempDiv.textContent || tempDiv.innerText || '';
+  // RETURN_DOM_FRAGMENT (rather than a sanitized string assigned to innerHTML) lets
+  // DOMPurify build the DOM itself instead of app code doing its own innerHTML
+  // assignment - same zero-tag sanitization, decodes HTML entities via textContent.
+  const sanitizedFragment = DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: [],
+    ALLOWED_ATTR: [],
+    RETURN_DOM_FRAGMENT: true,
+  });
+  return sanitizedFragment.textContent || '';
 };
 
 const AccordionSection: React.FC<{
