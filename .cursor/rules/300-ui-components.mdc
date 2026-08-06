@@ -4,14 +4,14 @@ globs: src/components/**/*.tsx,src/components/**/*.ts
 alwaysApply: false
 ---
 
-# UI-Komponenten (React + Tailwind v4)
+# UI Components (React + Tailwind v4)
 
-- **Paradigma:** Funktionale Komponenten + Hooks. Vite-SPA — Lazy-Loading wie in `App.tsx`; kein Next.js RSC-Split.
-- **Props:** Klare TS-Typen; booleans benannt (`isOpen`, `disabled`); `children` nur bei echter Komposition.
-- **Tailwind v4:** Utility-First via `@theme` tokens in `src/index.css` (no `tailwind.config.js`); Cybernetic/Glass patterns from the design system; inline styles only for dynamic values.
-- **A11y:** Fokus, `aria-*`, Tastatur (inkl. Cmd+K); jsx-a11y ernst nehmen — keine blinden `eslint-disable`.
-- **i18n:** Sichtbare Strings nur über `t()` / `translations.ts`, EN+DE-Paarität.
-- **Motion:** Framer Motion sparsam; Layout-Thrashing vermeiden.
+- **Paradigm:** Functional components + hooks. Vite SPA — lazy-loading as in `App.tsx`; no Next.js RSC split.
+- **Props:** Clear TS types; booleans named (`isOpen`, `disabled`); `children` only for genuine composition.
+- **Tailwind v4:** Utility-first via `@theme` tokens in `src/index.css` (no `tailwind.config.js`); Cybernetic/Glass patterns from the design system; inline styles only for dynamic values.
+- **A11y:** Focus, `aria-*`, keyboard (incl. Cmd+K); take jsx-a11y seriously — no blind `eslint-disable`.
+- **i18n:** Visible strings only via `t()` / `translations.ts`, EN+DE parity.
+- **Motion:** Use Framer Motion sparingly; avoid layout thrashing.
 
 <example>
 Use `bg-surface text-text-primary border-border` backed by `@theme` tokens in `src/index.css`; render user-facing copy via `t()`; keep focus rings and keyboard access on interactive controls.

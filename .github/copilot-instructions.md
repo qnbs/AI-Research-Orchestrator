@@ -9,6 +9,7 @@ You are an expert React 19 + TypeScript engineer working on **AI Research Orches
 3. [`.cursor/rules/`](../.cursor/rules/) (modular `.mdc` rules — see `000-cursor-rules.mdc`)
 4. [`docs/adr/README.md`](../docs/adr/README.md) (ADRs 0001–0021)
 5. [`docs/ci-branch-governance.md`](../docs/ci-branch-governance.md) + [`docs/project-facts.json`](../docs/project-facts.json)
+6. Repo root [`CLAUDE.md`](../CLAUDE.md) (Claude Code's own entry point; kept consistent with `AGENTS.md`)
 
 ## Tech stack (current)
 

@@ -1,10 +1,10 @@
 # AI Research Orchestrator — Agent Guide
 
-Guidance for AI coding agents (Kimi, Cursor, Copilot) working in this repository. Assumes no prior project knowledge. Follow it together with the required reading listed below.
+Guidance for AI coding agents (Claude, Kimi, Cursor, Copilot) working in this repository. Assumes no prior project knowledge. Follow it together with the required reading listed below.
 
 ## Project Overview
 
-**AI Research Orchestration Author** (`ai-research-orchestrator`, v0.4.1, MIT, private package) is a **client-only React 19 PWA** for agentic biomedical literature research. It couples **PubMed (NCBI E-utilities)** and **arXiv** retrieval with a **pluggable AI provider layer** (Google Gemini, OpenAI, Anthropic, local Ollama, or the deterministic heuristic fallback) to autonomously run literature reviews: query formulation → live fetch → semantic ranking (0–100 relevance) → streaming, cited synthesis.
+**AI Research Orchestrator** (`ai-research-orchestrator`, v0.4.1, MIT, private package) is a **client-only React 19 PWA** for agentic biomedical literature research. It couples **PubMed (NCBI E-utilities)** and **arXiv** retrieval with a **pluggable AI provider layer** (Google Gemini, OpenAI, Anthropic, local Ollama, or the deterministic heuristic fallback) to autonomously run literature reviews: query formulation → live fetch → semantic ranking (0–100 relevance) → streaming, cited synthesis.
 
 - **Local-first / zero app backend**: all user data (reports, history, settings, knowledge base, collections) lives in the browser's IndexedDB via Dexie 4. There is **no application server** that stores research — in live mode the browser still sends prompts and article metadata to the selected AI provider and calls PubMed/arXiv (see `SECURITY.md` / README).
 - **Direct-to-API**: the browser talks directly to the selected AI provider, `eutils.ncbi.nlm.nih.gov`, and `export.arxiv.org` (see CSP in `index.html`).
@@ -20,6 +20,7 @@ Main features: Orchestrator pipeline, Knowledge Base (dedup, faceted filtering, 
 3. **`.cursor/rules/*.mdc`** — contextual rules (Security, APIs, Architecture, UI, QA — numbering scheme in `000-cursor-rules.mdc`).
 4. **`docs/adr/`** — architecture decisions; see `docs/adr/README.md` for the full, current index (0001 state management … **0021** partial report completion state).
 5. **`docs/ci-branch-governance.md`** + **`docs/project-facts.json`** — required CI checks, concurrency, ruleset expectations, drift-gated facts.
+6. **`CLAUDE.md`** — Claude Code's own entry point (session-start context, commands, architecture summary). Kept consistent with this file; if the two ever disagree, this file (`AGENTS.md`) wins.
 
 ## Technology Stack
 
@@ -92,8 +93,8 @@ pnpm run format                  # Prettier write (src + root md/json)
 ```
 
 - **Coverage gate** (`vitest.config.ts`): scoped to logic layers (`src/store`, `src/services`, `src/hooks`, `src/lib`) — **80% lines, 80% statements, 55% branches, 55% functions**.
-- **Pre-commit**: husky runs `lint-staged` (eslint --fix + prettier).
-- **Pre-commit / pre-push**: Husky runs `typecheck` on commit and `check:fast` (`typecheck` + `lint` + `format:check`) on push — do not use `--no-verify` except for documented hook failures.
+- **Pre-commit**: Husky runs `lint-staged` (eslint --fix + prettier --write on staged files) → `typecheck` → full `lint` → `format:check` → `check:conflict-markers`. On success it records the about-to-be-committed tree hash (`git write-tree`) to `node_modules/.cache/.last-verified-tree`.
+- **Pre-push**: if `HEAD`'s tree matches that marker (the common case — nothing changed since the last commit's checks passed), pre-push skips straight to the push instead of re-running `typecheck`/`lint`/`format:check` — any commit made with `--no-verify`, or any tree that differs, still falls through to the full check. Do not use `--no-verify` except for documented hook failures.
 - **Before touching the core flow** (orchestration, KB, services), run: `typecheck`, `lint`, `test:coverage` — same as CI.
 
 ## CI / CD

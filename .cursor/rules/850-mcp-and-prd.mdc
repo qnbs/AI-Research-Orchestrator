@@ -5,6 +5,6 @@ alwaysApply: false
 
 # PRD, Consciousness Stream & MCP
 
-- **PRD:** Vor größeren Architektur-/Produktentscheidungen Anforderungen lesen — `instructions.md` / `PRD.md` sobald vorhanden; bis dahin `AGENTS.md`, `README.md`, `CHANGELOG.md`.
-- **`.notes/meeting_notes.md`:** Kurze datierte Entscheidungen (Warum/Was/Impact) für spätere Sessions.
-- **MCP:** Nur mit Nutzerfreigabe aktivieren (GitHub-Issues/PRs, Docs-Suche). Keine Tokens oder Repo-URLs mit Credentials in Regeln committen.
+- **PRD:** Before major architecture/product decisions, read the requirements — `instructions.md` / `PRD.md` once one exists; until then, `AGENTS.md`, `README.md`, `CHANGELOG.md`.
+- **`.notes/meeting_notes.md`:** Short, dated decisions (why/what/impact) for later sessions.
+- **MCP:** Enable only with user approval (GitHub issues/PRs, docs search). Never commit tokens or repo URLs with embedded credentials into rules.

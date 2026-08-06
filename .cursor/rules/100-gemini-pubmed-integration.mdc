@@ -4,12 +4,12 @@ globs: src/services/**/*.ts,src/store/slices/geminiApiSlice.ts,src/store/slices/
 alwaysApply: false
 ---
 
-# Gemini, PubMed & verwandte APIs
+# Gemini, PubMed & Related APIs
 
-- **Gemini:** `@google/genai` nur über `geminiService` / RTK-Patterns (Streams, AbortSignal). Model-/Routing-Änderungen zentral; keine Keys in diesen Dateien.
-- **PubMed/NCBI:** Rate-Limits und Backoff aus `pubmedUtils`; keine Scraping-Umgehungen gegenüber NCBI-ToS.
-- **arXiv:** Nur über `arxivUtils` anbinden.
-- **TanStack Query / RTK Query:** Keys/Tags/Invalidierung konsistent zu bestehenden Endpoints.
-- **Netzwerk:** Fehler abfangen; Feedback über Redux/UI statt stiller `alert`-Only-Pfade.
+- **Gemini:** `@google/genai` only via `geminiService` / RTK patterns (streams, `AbortSignal`). Model/routing changes stay centralized; no keys in these files.
+- **PubMed/NCBI:** Rate limits and backoff live in `pubmedUtils`; no scraping workarounds against NCBI's ToS.
+- **arXiv:** Only integrate via `arxivUtils`.
+- **TanStack Query / RTK Query:** Keys/tags/invalidation stay consistent with existing endpoints.
+- **Network:** Catch errors; surface feedback via Redux/UI, not silent `alert`-only paths.
 
-Siehe `@src/services/geminiService.ts`, `@src/services/pubmedUtils.ts`, `@src/store/slices/geminiApiSlice.ts`.
+See `@src/services/geminiService.ts`, `@src/services/pubmedUtils.ts`, `@src/store/slices/geminiApiSlice.ts`.

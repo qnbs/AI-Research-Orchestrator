@@ -6,9 +6,9 @@ alwaysApply: false
 
 # Dexie / IndexedDB (Local-First)
 
-- **Single entry:** Persistenz und Schema über `@src/services/databaseService.ts` bündeln; keine zweite parallele Dexie-Instanz ohne Review.
-- **Migrationen:** Version bumps und Upgrade-Transaktionen explizit; Defaults für neue Felder dokumentieren; Breaking Changes in CHANGELOG erwähnen.
-- **Tests:** `fake-indexeddb` / Setup aus `@src/test/setup.ts` nutzen; keine Live-Netzwerk/IndexedDB-Abhängigkeit in Unit-Tests.
-- **Performance:** Indizes nur wo nötig; große Writes batchen wo das Schema es erlaubt.
+- **Single entry point:** Keep persistence and schema consolidated in `@src/services/databaseService.ts`; no second parallel Dexie instance without review.
+- **Migrations:** Explicit version bumps and upgrade transactions; document defaults for new fields; mention breaking changes in the CHANGELOG.
+- **Tests:** Use `fake-indexeddb` / the setup in `@src/test/setup.ts`; no live network/IndexedDB dependency in unit tests.
+- **Performance:** Indexes only where needed; batch large writes where the schema allows it.
 
-Siehe `@src/services/databaseService.ts`, `@vitest.config.ts` (Coverage-Scope).
+See `@src/services/databaseService.ts`, `@vitest.config.ts` (coverage scope).

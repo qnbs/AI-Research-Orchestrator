@@ -6,11 +6,11 @@ alwaysApply: false
 
 # Core Security & Secrets
 
-- **Secrets:** Keine API-Keys/Tokens/Passwörter in Quelltext oder Git. Gemini nur über `apiKeyService` / Einstellungen; AES-GCM wie implementiert. Lokale Hilfsvariablen nur über `.env`/`.env.example`-Muster — nie Keys committen.
-- **Frontend-Env:** In Vite/SPA sind `VITE_*` Werte clientseitig sichtbar; dort niemals echte Secrets hinterlegen.
-- **IndexedDB/Dexie:** Nutzerdaten nur clientseitig; keine Secrets außerhalb der vorgesehenen Key-Verwaltung persistieren.
-- **Externe Aufrufe:** Über bestehende Services (`geminiService`, `pubmedUtils`, `arxivUtils`, RTK-Slices); keine Fetch-URLs mit eingebetteten Credentials.
-- **Fehler:** Nutzer Meldungen per i18n; keine Stacktraces/IDs in UI leaken; kein sensibles Logging in Produktion.
-- **HTML/Markdown:** Sanitisierung wie im Projekt etabliert (DOMPurify); kein `dangerouslySetInnerHTML` ohne bestehendes Review-Muster.
+- **Secrets:** No API keys/tokens/passwords in source or git. Gemini only via `apiKeyService` / Settings; AES-GCM as implemented. Local helper variables only via the `.env`/`.env.example` pattern — never commit keys.
+- **Frontend env:** In Vite/SPA, `VITE_*` values are client-visible; never put real secrets there.
+- **IndexedDB/Dexie:** User data client-side only; never persist secrets outside the dedicated key management.
+- **External calls:** Route through existing services (`geminiService`, `pubmedUtils`, `arxivUtils`, RTK slices); no fetch URLs with embedded credentials.
+- **Errors:** User-facing messages via i18n; never leak stack traces/IDs in the UI; no sensitive logging in production.
+- **HTML/Markdown:** Sanitize as already established in the project (DOMPurify); no `dangerouslySetInnerHTML` outside the existing reviewed pattern.
 
-Siehe `@src/services/apiKeyService.ts`, `@AGENTS.md`, `@.env.example`.
+See `@src/services/apiKeyService.ts`, `@AGENTS.md`, `@.env.example`.
