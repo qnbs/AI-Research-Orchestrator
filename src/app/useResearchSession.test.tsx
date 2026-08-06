@@ -61,8 +61,10 @@ describe('useResearchSession handleCancelResearch', () => {
       { wrapper: wrap },
     );
 
+    let formSubmitPromise: Promise<void> | undefined;
+
     await act(async () => {
-      void result.current.handleFormSubmit(input);
+      formSubmitPromise = result.current.handleFormSubmit(input);
       await Promise.resolve();
       await Promise.resolve();
     });
@@ -72,8 +74,11 @@ describe('useResearchSession handleCancelResearch', () => {
 
     await act(async () => {
       result.current.handleCancelResearch();
-      await Promise.resolve();
-      await Promise.resolve();
+      // Awaiting the retained promise (rather than a fixed number of microtask
+      // flushes) lets handleFormSubmit's catch path - including
+      // handleResearchStreamFailure's own checkpoint persistence - fully settle
+      // before the test ends, so no state update can leak past cleanup.
+      await formSubmitPromise;
     });
 
     expect(capturedSignal?.aborted).toBe(true);

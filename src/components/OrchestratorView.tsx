@@ -9,6 +9,7 @@ import { ResearchInput, ResearchReport, KnowledgeBaseEntry, Settings, ChatMessag
 import type { ResearchCheckpoint } from '../lib/researchCheckpoint';
 import { useKnowledgeBase } from '../contexts/KnowledgeBaseContext';
 import { useTranslation } from '../hooks/useTranslation';
+import { XIcon } from './icons/XIcon';
 
 interface OrchestratorViewProps {
   reportStatus: 'idle' | 'generating' | 'streaming' | 'done' | 'error';
@@ -169,6 +170,22 @@ const OrchestratorViewComponent: React.FC<OrchestratorViewProps> = ({
         />
       )}
 
+      {isProcessing && (
+        // Persists across both 'generating' and 'streaming' - LoadingIndicator (and
+        // its own cancel button) unmounts once the first partial report arrives and
+        // ReportDisplay takes over, but the stream itself is still active until 'done'.
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={handleCancelResearch}
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md text-text-primary bg-surface border border-border hover:bg-surface-hover focus-ring-aa touch-target-aa"
+          >
+            <XIcon className="h-4 w-4" />
+            {t('orchestrator.cancel.button')}
+          </button>
+        </div>
+      )}
+
       {showLoadingIndicator && (
         <LoadingIndicator
           title={t('orchestrator.title')}
@@ -178,7 +195,6 @@ const OrchestratorViewComponent: React.FC<OrchestratorViewProps> = ({
           phaseDetails={phaseDetailsById}
           timelineIndex={timelineIndex}
           footerText="This may take up to a minute. The AI is performing multiple complex steps, including live database searches and synthesis."
-          onCancel={handleCancelResearch}
         />
       )}
 

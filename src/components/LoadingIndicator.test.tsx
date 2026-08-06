@@ -1,13 +1,21 @@
 import React from 'react';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import { LoadingIndicator } from './LoadingIndicator';
 import settingsReducer, { defaultSettings } from '../store/slices/settingsSlice';
 
-// jsdom does not implement scrollIntoView; PipelineTimeline's auto-scroll effect calls it.
-Element.prototype.scrollIntoView = vi.fn();
+// jsdom does not implement scrollIntoView; PipelineTimeline's auto-scroll effect
+// calls it. Installed/restored per suite (not module-level) so this shared
+// jsdom prototype mutation never leaks into other test files.
+const originalScrollIntoView = Element.prototype.scrollIntoView;
+beforeAll(() => {
+  Element.prototype.scrollIntoView = vi.fn();
+});
+afterAll(() => {
+  Element.prototype.scrollIntoView = originalScrollIntoView;
+});
 
 const baseProps = {
   title: 'Orchestrator AI',
@@ -25,19 +33,21 @@ function wrap(ui: React.ReactElement) {
 }
 
 describe('LoadingIndicator cancel control', () => {
-  it('renders no cancel button when onCancel is not provided', () => {
+  it('renders no cancel button when the cancel prop is not provided', () => {
     wrap(<LoadingIndicator {...baseProps} />);
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 
-  it('renders a cancel button and invokes onCancel when clicked', () => {
-    const onCancel = vi.fn();
-    wrap(<LoadingIndicator {...baseProps} onCancel={onCancel} />);
+  it('renders the caller-provided label and invokes onClick when clicked', () => {
+    const onClick = vi.fn();
+    // A caller-controlled label proves LoadingIndicator itself makes no
+    // assumption about translation/locale - it just renders what it's given.
+    wrap(<LoadingIndicator {...baseProps} cancel={{ label: 'Stop the thing', onClick }} />);
 
-    const button = screen.getByRole('button', { name: 'Cancel research' });
+    const button = screen.getByRole('button', { name: 'Stop the thing' });
     expect(button).toBeInTheDocument();
 
     fireEvent.click(button);
-    expect(onCancel).toHaveBeenCalledTimes(1);
+    expect(onClick).toHaveBeenCalledTimes(1);
   });
 });

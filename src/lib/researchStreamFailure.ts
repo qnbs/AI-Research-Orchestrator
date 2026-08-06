@@ -68,24 +68,31 @@ export async function handleResearchStreamFailure({
   if (isResumableCheckpoint(checkpoint)) {
     try {
       await persistCheckpoint(checkpoint);
-      if (finalReport) {
-        setReport({ ...finalReport, synthesis: finalSynthesis || finalReport.synthesis });
+      // Re-check after the async persist gap: a new run may have started (and
+      // already set its own report/notification) while this one's checkpoint
+      // write was still in flight - never let a stale run overwrite it.
+      if (getActiveGenerationId() === currentGenerationId) {
+        if (finalReport) {
+          setReport({ ...finalReport, synthesis: finalSynthesis || finalReport.synthesis });
+        }
+        setNotification({
+          id: Date.now(),
+          type: aborted ? 'success' : 'error',
+          message: aborted
+            ? 'Partial research saved locally. You can review ranked articles already collected.'
+            : `Research failed — partial results saved locally. ${appErr.toUserMessage()}`,
+        });
       }
-      setNotification({
-        id: Date.now(),
-        type: aborted ? 'success' : 'error',
-        message: aborted
-          ? 'Partial research saved locally. You can review ranked articles already collected.'
-          : `Research failed — partial results saved locally. ${appErr.toUserMessage()}`,
-      });
     } catch (saveErr) {
       safeLogError('Failed to persist research checkpoint', saveErr);
-      setNotification({
-        id: Date.now(),
-        type: 'error',
-        message:
-          'Research stopped, but partial results could not be saved locally. Please export or copy any visible results before leaving this page.',
-      });
+      if (getActiveGenerationId() === currentGenerationId) {
+        setNotification({
+          id: Date.now(),
+          type: 'error',
+          message:
+            'Research stopped, but partial results could not be saved locally. Please export or copy any visible results before leaving this page.',
+        });
+      }
     }
   }
 

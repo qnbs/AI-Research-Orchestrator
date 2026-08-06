@@ -134,7 +134,7 @@ const ResearchBody: React.FC<{
           phase={displayPhase}
           phases={researchPhases}
           phaseDetails={researchPhaseDetails}
-          onCancel={onClearResearch}
+          cancel={{ label: t('research.cancel.button'), onClick: onClearResearch }}
         />
       </div>
     );

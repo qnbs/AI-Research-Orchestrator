@@ -14,7 +14,10 @@ interface LoadingIndicatorProps {
   phaseId?: string;
   footerText?: string;
   swipeHintText?: string;
-  onCancel?: () => void;
+  /** Cancel affordance is opt-in and caller-labeled - this component is shared
+   * across contexts (Orchestrator, Rapid Research), so the label text is not
+   * assumed to be orchestrator-specific. */
+  cancel?: { label: string; onClick: () => void };
 }
 
 // ── Cybernetic Spinner (unchanged) ───────────────────────────────────────────
@@ -189,9 +192,8 @@ export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
   phaseId,
   footerText,
   swipeHintText,
-  onCancel,
+  cancel,
 }) => {
-  const { t } = useTranslation();
   const [currentPhaseIndex, setCurrentPhaseIndex] = useState(0);
   const [currentSubPhase, setCurrentSubPhase] = useState('');
   const subPhaseIntervalRef = useRef<number | null>(null);
@@ -289,14 +291,14 @@ export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
 
         {footerText && <p className="text-xs text-text-secondary/70 mt-4">{footerText}</p>}
 
-        {onCancel && (
+        {cancel && (
           <button
             type="button"
-            onClick={onCancel}
+            onClick={cancel.onClick}
             className="mt-6 inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md text-text-primary bg-surface border border-border hover:bg-surface-hover focus-ring-aa touch-target-aa"
           >
             <XIcon className="h-4 w-4" />
-            {t('orchestrator.cancel.button')}
+            {cancel.label}
           </button>
         )}
       </div>

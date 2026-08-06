@@ -145,4 +145,38 @@ describe('handleResearchStreamFailure', () => {
     );
     expect(handlers.setReportStatus).toHaveBeenCalledWith('error');
   });
+
+  it('still persists the checkpoint but skips report/notification updates when a newer run starts while the write is in flight', async () => {
+    let activeGenerationId = 1;
+    const setReport = vi.fn();
+    const setNotification = vi.fn();
+    const persistCheckpoint = vi.fn().mockImplementation(async () => {
+      // Simulates a new search bumping generationIdRef while this cancelled
+      // run's checkpoint write is still resolving (the async gap this fix closes).
+      activeGenerationId = 2;
+      return 'checkpoint-id';
+    });
+    const abortError = new DOMException('Aborted', 'AbortError');
+
+    await handleResearchStreamFailure({
+      error: abortError,
+      currentGenerationId: 1,
+      input,
+      phase: 'Phase 5',
+      finalReport: report,
+      finalSynthesis: 'partial synthesis',
+      dispatch: vi.fn() as unknown as AppDispatch,
+      setReport,
+      setReportStatus: vi.fn(),
+      setError: vi.fn(),
+      setNotification,
+      persistCheckpoint,
+      getActiveGenerationId: () => activeGenerationId,
+      previousAgent: null,
+    });
+
+    expect(persistCheckpoint).toHaveBeenCalled();
+    expect(setReport).not.toHaveBeenCalled();
+    expect(setNotification).not.toHaveBeenCalled();
+  });
 });
