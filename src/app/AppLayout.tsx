@@ -13,7 +13,6 @@ import { useAppLogic } from './useAppLogic';
 import { AppViewRouter } from './AppViewRouter';
 import { OnboardingView, CommandPalette, QuickAddModal, AgentDebugger } from './lazyViews';
 import { useElementHeight } from '../hooks/useElementHeight';
-import { ChromeHeightContext } from './ChromeHeightContext';
 
 /**
  * App shell: banners, chrome, and view routing.
@@ -86,14 +85,24 @@ const AppLayout: React.FC = () => {
         tabIndex={-1}
         // pt-20/md:pt-36 are the pre-measurement fallback (first paint, no-JS);
         // once chromeHeight is measured, the inline style below supersedes them.
+        // Also exposes --chrome-height as a CSS custom property so descendant
+        // views (e.g. SettingsView's sticky action bar) can react to it via
+        // max() without needing the exact JS-computed value threaded down as
+        // a prop/context - see SettingsView.tsx for why an exact-pixel sticky
+        // `top` is intentionally avoided.
         className="container mx-auto px-4 sm:px-6 lg:px-8 md:pt-36 pt-20 pb-24 focus-ring-aa rounded-sm"
-        style={chromeHeight != null ? { paddingTop: `${chromeHeight}px` } : undefined}
+        style={
+          chromeHeight != null
+            ? ({
+                paddingTop: `${chromeHeight}px`,
+                '--chrome-height': `${chromeHeight}px`,
+              } as React.CSSProperties)
+            : undefined
+        }
       >
-        <ChromeHeightContext.Provider value={chromeHeight}>
-          <Suspense fallback={<ContentSpinner label={t('common.loading')} />}>
-            <AppViewRouter {...logic} />
-          </Suspense>
-        </ChromeHeightContext.Provider>
+        <Suspense fallback={<ContentSpinner label={t('common.loading')} />}>
+          <AppViewRouter {...logic} />
+        </Suspense>
       </main>
       <BottomNavBar
         currentView={currentView}
