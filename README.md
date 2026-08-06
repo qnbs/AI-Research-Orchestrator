@@ -74,7 +74,7 @@ Without a usable live-provider key, while offline, or with **Force Heuristic Mod
 
 ### Technical architecture
 
-Progressive Web App (service worker, installable, GitHub Pages SPA via `404.html`).
+Progressive Web App (service worker, installable, GitHub Pages SPA via `404.html`) — ADR [0004](docs/adr/0004-pwa-offline-strategy.md).
 
 | Area   | Choice                                                                                                                                    |
 | ------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
@@ -96,7 +96,7 @@ Progressive Web App (service worker, installable, GitHub Pages SPA via `404.html
 3. Choose a provider and save a key **or** use **Local AI (Ollama)** / **Heuristic (local)** without a cloud key.
 4. Start from Orchestrator or Rapid Research.
 
-Keys are AES-GCM encrypted in IndexedDB (Web Crypto). Encryption protects keys at rest; it does **not** protect against malware or XSS in a compromised session — [SECURITY.md](./SECURITY.md).
+Keys are AES-GCM encrypted in IndexedDB (Web Crypto). Encryption protects keys at rest; it does **not** protect against malware or XSS in a compromised session — [SECURITY.md](./SECURITY.md), ADR [0003](docs/adr/0003-security-model-client-side-keys.md).
 
 #### Local development
 
@@ -132,6 +132,7 @@ On every **push** to `main` and every **PR** targeting `main`, GitHub Actions ru
 | Playwright E2E (Chromium, seven specs)                                          | `e2e.yml` (**blocking**)               |
 | Cross-browser E2E (Firefox, WebKit, mobile Chrome — same seven specs)           | `e2e-cross-browser.yml` (**blocking**) |
 | Axe critical/serious smoke                                                      | `a11y.yml` (**blocking**)              |
+| PWA service-worker registration (real production build + `vite preview`)        | `pwa-e2e.yml` (**blocking**)           |
 | CodeQL, Dependency Review, `pnpm audit` (high+), gitleaks                       | `security.yml`                         |
 
 GitHub Pages upload/deploy runs only on `refs/heads/main` (not on pull requests). Required checks, PR-only `cancel-in-progress`, and ruleset expectations: [`docs/ci-branch-governance.md`](./docs/ci-branch-governance.md). Contributor review loop: [`CONTRIBUTING.md`](./CONTRIBUTING.md).
@@ -144,13 +145,13 @@ GitHub Pages upload/deploy runs only on `refs/heads/main` (not on pull requests)
 
 **Settings → AI Configuration → AI Provider**
 
-| Provider          | Key format | Notes                                                                                                 |
-| ----------------- | ---------- | ----------------------------------------------------------------------------------------------------- |
-| Google Gemini     | `AIza…`    | Default live model `gemini-2.5-flash`; optional Google Search grounding                               |
-| OpenAI            | `sk-…`     | Official API or OpenRouter-compatible proxies via **Base URL**                                        |
-| Anthropic         | `sk-ant-…` | Claude models via the Messages API                                                                    |
-| Local AI (Ollama) | none       | Default `http://localhost:11434` (or custom Base URL); PubMed/arXiv still use the network when online |
-| Heuristic (local) | none       | Deterministic fallback; `$0`; no provider network                                                     |
+| Provider          | Key format | Notes                                                                                                                                                                                                                                                                      |
+| ----------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Google Gemini     | `AIza…`    | Default live model `gemini-2.5-flash`; optional Google Search grounding                                                                                                                                                                                                    |
+| OpenAI            | `sk-…`     | Official API or OpenRouter-compatible proxies via **Base URL**                                                                                                                                                                                                             |
+| Anthropic         | `sk-ant-…` | Claude models via the Messages API                                                                                                                                                                                                                                         |
+| Local AI (Ollama) | none       | Default `http://localhost:11434` (or custom Base URL); prompt budgets prefer the model's real runtime context window (`/api/show`) over a parameter-count guess; PubMed/arXiv still use the network when online — ADR [0019](docs/adr/0019-ollama-first-class-local-ai.md) |
+| Heuristic (local) | none       | Deterministic fallback; `$0`; no provider network                                                                                                                                                                                                                          |
 
 OpenRouter example: Base URL `https://openrouter.ai/api/v1` + an OpenRouter API key.
 
@@ -266,7 +267,7 @@ Ohne nutzbaren Live-Key, offline oder mit **Force Heuristic Mode** (Einstellunge
 
 ### Technische Architektur
 
-PWA (Service Worker, installierbar, GitHub Pages mit `404.html`-Fallback).
+PWA (Service Worker, installierbar, GitHub Pages mit `404.html`-Fallback) — ADR [0004](docs/adr/0004-pwa-offline-strategy.md).
 
 | Bereich | Wahl                                                                                                                              |
 | ------- | --------------------------------------------------------------------------------------------------------------------------------- |
@@ -286,7 +287,7 @@ PWA (Service Worker, installierbar, GitHub Pages mit `404.html`-Fallback).
 3. Anbieter + Key **oder** Ollama / Heuristik ohne Cloud-Key.
 4. Orchestrator oder Rapid Research starten.
 
-Keys: AES-GCM in IndexedDB — schützt at rest, nicht vor Malware/XSS ([SECURITY.md](./SECURITY.md)).
+Keys: AES-GCM in IndexedDB — schützt at rest, nicht vor Malware/XSS ([SECURITY.md](./SECURITY.md), ADR [0003](docs/adr/0003-security-model-client-side-keys.md)).
 
 #### Lokale Entwicklung
 
@@ -314,7 +315,7 @@ pnpm run test:e2e    # lokal eher scoped; volle Suite in CI
 pnpm run build
 ```
 
-Push/PR gegen `main`: `deploy.yml`, blockierendes Chromium-E2E, blockierendes Cross-Browser-E2E (Firefox/WebKit/mobile Chrome), Axe-A11y, Security. Pages-Deploy nur auf `main`. Details: [`docs/ci-branch-governance.md`](./docs/ci-branch-governance.md).
+Push/PR gegen `main`: `deploy.yml`, blockierendes Chromium-E2E, blockierendes Cross-Browser-E2E (Firefox/WebKit/mobile Chrome), Axe-A11y, blockierendes PWA-Service-Worker-Registrierungs-Gate (`pwa-e2e.yml`), Security. Pages-Deploy nur auf `main`. Details: [`docs/ci-branch-governance.md`](./docs/ci-branch-governance.md).
 
 #### Cursor / IDE
 
