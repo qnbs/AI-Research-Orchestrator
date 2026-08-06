@@ -95,6 +95,51 @@ describe('useElementHeight', () => {
     expect(result.current[1]).toBe(64);
   });
 
+  it('clears the cached height on detach instead of returning a stale value', () => {
+    stubResizeObserver();
+    const node = document.createElement('div');
+    vi.spyOn(node, 'getBoundingClientRect').mockReturnValue({ height: 144 } as DOMRect);
+
+    const { result } = renderHook(() => useElementHeight());
+    act(() => {
+      result.current[0](node);
+    });
+    expect(result.current[1]).toBe(144);
+
+    act(() => {
+      // Element unmounts (e.g. AppLayout falls back to a loading screen again).
+      // There is no future ResizeObserver callback to correct a stale value
+      // once detached, so the ref callback itself must reset it.
+      result.current[0](null);
+    });
+
+    expect(result.current[1]).toBeNull();
+  });
+
+  it('re-measures correctly after a detach + re-attach cycle', () => {
+    stubResizeObserver();
+    const nodeA = document.createElement('div');
+    vi.spyOn(nodeA, 'getBoundingClientRect').mockReturnValue({ height: 144 } as DOMRect);
+    const nodeB = document.createElement('div');
+    vi.spyOn(nodeB, 'getBoundingClientRect').mockReturnValue({ height: 96 } as DOMRect);
+
+    const { result } = renderHook(() => useElementHeight());
+    act(() => {
+      result.current[0](nodeA);
+    });
+    expect(result.current[1]).toBe(144);
+
+    act(() => {
+      result.current[0](null);
+    });
+    expect(result.current[1]).toBeNull();
+
+    act(() => {
+      result.current[0](nodeB);
+    });
+    expect(result.current[1]).toBe(96);
+  });
+
   it('observes the node and disconnects on unmount', () => {
     const { observe, disconnect } = stubResizeObserver();
     const node = document.createElement('div');

@@ -17,6 +17,11 @@ export function useElementHeight<T extends HTMLElement>(): [RefCallback<T>, numb
 
   const ref = useCallback<RefCallback<T>>((el) => {
     setNode(el);
+    if (!el) {
+      // On detach there's no future re-measurement to correct a stale value -
+      // the effect below only re-measures when a (non-null) node is present.
+      setHeight(null);
+    }
   }, []);
 
   useEffect(() => {
