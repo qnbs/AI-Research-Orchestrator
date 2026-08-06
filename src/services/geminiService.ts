@@ -396,12 +396,14 @@ Research Topic: ${wrapUntrustedTextBlock('research_topic', topicSafe)}
     // opened this session (OllamaHealthPanel was the only prior caller of
     // probeOllamaModelMetadata) - the model's actual context window would never
     // be honored on the ordinary research path. Both probes are read-only and
-    // independent, so run them concurrently; neither throws on failure except
-    // abort (see their own non-abort-failure fallbacks), so a slow/unreachable
-    // /api/show cannot block generation - it only leaves the heuristic budget in
-    // place, same as before this probe existed.
+    // independent, so run them concurrently. allSettled (not all) so neither
+    // probe's own internal timeout - which can present as an abort-classified
+    // rejection depending on runtime fetch behavior - fails the whole stream;
+    // a genuine caller cancellation is still honored via throwIfAborted right
+    // after. A slow/unreachable /api/show only leaves the heuristic budget in
+    // place, same as before this probe existed - it must never abort generation.
     if (providerId === 'ollama') {
-      await Promise.all([
+      await Promise.allSettled([
         probeOllamaHealth(ollamaBudgetOptions.ollamaBaseUrl, { signal }),
         probeOllamaModelMetadata(ollamaBudgetOptions.ollamaBaseUrl, aiSettings.model, { signal }),
       ]);

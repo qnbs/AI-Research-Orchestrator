@@ -204,6 +204,7 @@ describe('geminiService with mocked SDK', () => {
     resetAIInstance();
     invalidateOllamaHealthCache();
     invalidateOllamaModelMetadataCache();
+    vi.unstubAllGlobals();
   });
 
   it('findSimilarArticles returns parsed array', async () => {
@@ -520,37 +521,40 @@ describe('geminiService with mocked SDK', () => {
   it('generateResearchReportStream warms the /api/show metadata cache before ranking so the Ollama budget reflects the real context window, not the parameter heuristic - even when Settings/OllamaHealthPanel was never opened this session', async () => {
     const ollamaAi: Settings['ai'] = { ...mockAi, provider: 'ollama', model: 'llama3.1:8b' };
 
-    global.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
-      const url = String(input);
-      if (url.endsWith('/api/version')) {
-        return Promise.resolve({ ok: true, json: async () => ({ version: '0.5.0' }) });
-      }
-      if (url.endsWith('/api/tags')) {
-        return Promise.resolve({
-          ok: true,
-          json: async () => ({ models: [{ name: 'llama3.1:8b' }] }),
-        });
-      }
-      if (url.endsWith('/api/show')) {
-        // Runtime num_ctx is far smaller than the 8_000-token parameter-count
-        // heuristic an 8B model would otherwise get.
-        return Promise.resolve({
-          ok: true,
-          json: async () => ({ model_info: { 'llama.context_length': 4_096 } }),
-        });
-      }
-      if (url.endsWith('/api/generate')) {
-        return Promise.resolve({
-          ok: true,
-          json: async () => ({
-            response: JSON.stringify({
-              generatedQueries: [{ query: 'cancer[Title]', explanation: 'e' }],
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockImplementation((input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url.endsWith('/api/version')) {
+          return Promise.resolve({ ok: true, json: async () => ({ version: '0.5.0' }) });
+        }
+        if (url.endsWith('/api/tags')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ models: [{ name: 'llama3.1:8b' }] }),
+          });
+        }
+        if (url.endsWith('/api/show')) {
+          // Runtime num_ctx is far smaller than the 8_000-token parameter-count
+          // heuristic an 8B model would otherwise get.
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ model_info: { 'llama.context_length': 4_096 } }),
+          });
+        }
+        if (url.endsWith('/api/generate')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({
+              response: JSON.stringify({
+                generatedQueries: [{ query: 'cancer[Title]', explanation: 'e' }],
+              }),
             }),
-          }),
-        });
-      }
-      return Promise.reject(new Error(`Unexpected fetch in test: ${url}`));
-    });
+          });
+        }
+        return Promise.reject(new Error(`Unexpected fetch in test: ${url}`));
+      }),
+    );
 
     const rankingBudgets: number[] = [];
     for await (const chunk of generateResearchReportStream(mockInput, ollamaAi)) {
@@ -569,32 +573,35 @@ describe('geminiService with mocked SDK', () => {
   it('generateResearchReportStream falls back to the parameter heuristic (not a crash or hang) when /api/show errors', async () => {
     const ollamaAi: Settings['ai'] = { ...mockAi, provider: 'ollama', model: 'llama3.1:8b' };
 
-    global.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
-      const url = String(input);
-      if (url.endsWith('/api/version')) {
-        return Promise.resolve({ ok: true, json: async () => ({ version: '0.5.0' }) });
-      }
-      if (url.endsWith('/api/tags')) {
-        return Promise.resolve({
-          ok: true,
-          json: async () => ({ models: [{ name: 'llama3.1:8b' }] }),
-        });
-      }
-      if (url.endsWith('/api/show')) {
-        return Promise.resolve({ ok: false, status: 500 });
-      }
-      if (url.endsWith('/api/generate')) {
-        return Promise.resolve({
-          ok: true,
-          json: async () => ({
-            response: JSON.stringify({
-              generatedQueries: [{ query: 'cancer[Title]', explanation: 'e' }],
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockImplementation((input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url.endsWith('/api/version')) {
+          return Promise.resolve({ ok: true, json: async () => ({ version: '0.5.0' }) });
+        }
+        if (url.endsWith('/api/tags')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ models: [{ name: 'llama3.1:8b' }] }),
+          });
+        }
+        if (url.endsWith('/api/show')) {
+          return Promise.resolve({ ok: false, status: 500 });
+        }
+        if (url.endsWith('/api/generate')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({
+              response: JSON.stringify({
+                generatedQueries: [{ query: 'cancer[Title]', explanation: 'e' }],
+              }),
             }),
-          }),
-        });
-      }
-      return Promise.reject(new Error(`Unexpected fetch in test: ${url}`));
-    });
+          });
+        }
+        return Promise.reject(new Error(`Unexpected fetch in test: ${url}`));
+      }),
+    );
 
     const rankingBudgets: number[] = [];
     for await (const chunk of generateResearchReportStream(mockInput, ollamaAi)) {
@@ -608,6 +615,59 @@ describe('geminiService with mocked SDK', () => {
     // No cached context length -> falls back to the 8_000 parameter-count
     // heuristic for an 8B model instead of crashing or hanging the pipeline.
     expect(rankingBudgets[0]).toBe(8_000);
+  });
+
+  it('generateResearchReportStream does not fail the whole stream when the /api/show probe itself rejects with an abort-classified error (its own internal timeout), only the caller aborting should stop generation', async () => {
+    const ollamaAi: Settings['ai'] = { ...mockAi, provider: 'ollama', model: 'llama3.1:8b' };
+
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockImplementation((input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url.endsWith('/api/version')) {
+          return Promise.resolve({ ok: true, json: async () => ({ version: '0.5.0' }) });
+        }
+        if (url.endsWith('/api/tags')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ models: [{ name: 'llama3.1:8b' }] }),
+          });
+        }
+        if (url.endsWith('/api/show')) {
+          // Simulates probeOllamaModelMetadata's own internal timeout firing
+          // (an abort-classified rejection) - distinct from the caller's
+          // signal (never aborted in this test) being cancelled.
+          return Promise.reject(new DOMException('Aborted', 'AbortError'));
+        }
+        if (url.endsWith('/api/generate')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({
+              response: JSON.stringify({
+                generatedQueries: [{ query: 'cancer[Title]', explanation: 'e' }],
+              }),
+            }),
+          });
+        }
+        return Promise.reject(new Error(`Unexpected fetch in test: ${url}`));
+      }),
+    );
+
+    const rankingBudgets: number[] = [];
+    const drain = async () => {
+      for await (const chunk of generateResearchReportStream(mockInput, ollamaAi)) {
+        if (chunk.promptBudget?.stage === 'ranking') {
+          rankingBudgets.push(chunk.promptBudget.inputTokenBudget);
+          break;
+        }
+      }
+    };
+
+    // The stream must not reject just because one of the two concurrent
+    // probes threw - only the caller's own signal being aborted should do that.
+    await expect(drain()).resolves.toBeUndefined();
+    expect(rankingBudgets).toHaveLength(1);
+    expect(rankingBudgets[0]).toBe(8_000); // heuristic fallback, not a crash
   });
 
   it('generateResearchReportStream passes AbortSignal to synthesis stream', async () => {
