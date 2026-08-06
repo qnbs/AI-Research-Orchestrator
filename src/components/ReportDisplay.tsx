@@ -60,7 +60,8 @@ const secureMarkdownToHtml = (text: string): string => {
   return DOMPurify.sanitize(rawMarkup);
 };
 
-const stripMarkdown = (markdown: string): string => {
+/** Exported for unit tests (`ReportDisplay.test.tsx`); used internally for the copy-plain-text action. */
+export const stripMarkdown = (markdown: string): string => {
   if (!markdown) return '';
   const html = marked.parse(markdown) as string;
   // RETURN_DOM_FRAGMENT (rather than a sanitized string assigned to innerHTML) lets
