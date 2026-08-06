@@ -56,7 +56,7 @@ export const chromeTranslations = {
     'error.feature.body':
       'Something went wrong in this section. Your data in other areas is unaffected.',
     'error.feature.retry': 'Try again',
-    'error.feature.name.orchestrator': 'Research Orchestrator',
+    'error.feature.name.orchestrator': 'AI Research Orchestrator',
     'error.feature.name.research': 'Research Assistant',
     'error.feature.name.knowledgeBase': 'Knowledge Base',
   },
@@ -116,7 +116,7 @@ export const chromeTranslations = {
     'error.feature.body':
       'In diesem Bereich ist etwas schiefgelaufen. Ihre Daten in anderen Bereichen sind unberührt.',
     'error.feature.retry': 'Erneut versuchen',
-    'error.feature.name.orchestrator': 'Research Orchestrator',
+    'error.feature.name.orchestrator': 'AI Research Orchestrator',
     'error.feature.name.research': 'Recherche-Assistent',
     'error.feature.name.knowledgeBase': 'Wissensdatenbank',
   },
