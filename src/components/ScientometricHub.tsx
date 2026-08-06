@@ -23,6 +23,7 @@ import {
 import type { AggregatedArticle, OverallKeyword } from '../types';
 import { useTranslation } from '../hooks/useTranslation';
 import type { TranslationKey } from '../hooks/useTranslation';
+import { ChartAccessibleTable } from './charts/ChartAccessibleTable';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface AuthorNode {
@@ -350,46 +351,63 @@ const ScientometricHub: React.FC<Props> = ({ articles, keywords = [], title }) =
 
           {/* Journal Distribution Pie */}
           {activeTab === 'journals' && (
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={journalData}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={110}
-                  dataKey="value"
-                  nameKey="name"
-                  label={({ value }) => `${value}`}
-                  labelLine={false}
-                >
-                  {journalData.map((entry, index) => (
-                    <Cell
-                      key={entry.name}
-                      fill={NEON_COLORS[index % NEON_COLORS.length]}
-                      fillOpacity={0.8}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{
-                    background: 'var(--color-surface)',
-                    border: '1px solid var(--color-border)',
-                    borderRadius: 8,
-                  }}
-                  labelStyle={{ color: 'var(--color-text-primary)', fontSize: 12 }}
+            <>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={journalData}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={110}
+                    dataKey="value"
+                    nameKey="name"
+                    label={({ value }) => `${value}`}
+                    labelLine={false}
+                  >
+                    {journalData.map((entry, index) => (
+                      <Cell
+                        key={entry.name}
+                        fill={NEON_COLORS[index % NEON_COLORS.length]}
+                        fillOpacity={0.8}
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{
+                      background: 'var(--color-surface)',
+                      border: '1px solid var(--color-border)',
+                      borderRadius: 8,
+                    }}
+                    labelStyle={{ color: 'var(--color-text-primary)', fontSize: 12 }}
+                  />
+                  <Legend
+                    formatter={(value) => (
+                      <span
+                        style={{ color: 'var(--color-text-secondary)', fontSize: 11 }}
+                        title={value}
+                      >
+                        {value.length > 30 ? value.slice(0, 28) + '…' : value}
+                      </span>
+                    )}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="sr-only">
+                <ChartAccessibleTable
+                  caption={t('scientometrics.journals')}
+                  columns={[
+                    { key: 'name', label: t('dashboard.a11y.journal'), render: (r) => r.name },
+                    {
+                      key: 'value',
+                      label: t('dashboard.a11y.articles'),
+                      render: (r) => r.value,
+                    },
+                  ]}
+                  rows={journalData}
+                  rowKey={(r) => r.name}
                 />
-                <Legend
-                  formatter={(value) => (
-                    <span
-                      style={{ color: 'var(--color-text-secondary)', fontSize: 11 }}
-                      title={value}
-                    >
-                      {value.length > 30 ? value.slice(0, 28) + '…' : value}
-                    </span>
-                  )}
-                />
-              </PieChart>
-            </ResponsiveContainer>
+              </div>
+            </>
           )}
 
           {/* Keyword Cloud */}
