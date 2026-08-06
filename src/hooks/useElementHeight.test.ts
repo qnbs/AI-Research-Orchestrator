@@ -2,7 +2,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useElementHeight } from './useElementHeight';
 
-type ResizeCallback = (entries: Array<{ contentRect: { height: number } }>) => void;
+type ResizeCallback = (entries: Array<{ target: Element }>) => void;
 
 function stubResizeObserver() {
   let capturedCallback: ResizeCallback | null = null;
@@ -23,8 +23,8 @@ function stubResizeObserver() {
   return {
     observe,
     disconnect,
-    fireResize: (height: number) => {
-      capturedCallback?.([{ contentRect: { height } }]);
+    fireResize: (target: Element) => {
+      capturedCallback?.([{ target }]);
     },
   };
 }
@@ -34,46 +34,75 @@ describe('useElementHeight', () => {
     vi.unstubAllGlobals();
   });
 
-  it('returns null before a ref is attached', () => {
+  it('returns null before the ref callback attaches a node', () => {
     stubResizeObserver();
-    const ref = { current: null };
-    const { result } = renderHook(() => useElementHeight(ref));
-    expect(result.current).toBeNull();
+    const { result } = renderHook(() => useElementHeight());
+    expect(result.current[1]).toBeNull();
   });
 
-  it('measures the initial height once the ref points to a node', () => {
+  it('measures via getBoundingClientRect once the ref callback attaches a node', () => {
     stubResizeObserver();
     const node = document.createElement('div');
     vi.spyOn(node, 'getBoundingClientRect').mockReturnValue({ height: 144 } as DOMRect);
-    const ref = { current: node };
 
-    const { result } = renderHook(() => useElementHeight(ref));
-
-    expect(result.current).toBe(144);
-  });
-
-  it('updates when ResizeObserver reports a new height', () => {
-    const { fireResize } = stubResizeObserver();
-    const node = document.createElement('div');
-    vi.spyOn(node, 'getBoundingClientRect').mockReturnValue({ height: 80 } as DOMRect);
-    const ref = { current: node };
-
-    const { result } = renderHook(() => useElementHeight(ref));
-    expect(result.current).toBe(80);
-
+    const { result } = renderHook(() => useElementHeight());
     act(() => {
-      fireResize(216);
+      result.current[0](node);
     });
 
-    expect(result.current).toBe(216);
+    expect(result.current[1]).toBe(144);
+  });
+
+  it('re-measures via getBoundingClientRect when ResizeObserver fires (ignores contentRect)', () => {
+    const { fireResize } = stubResizeObserver();
+    const node = document.createElement('div');
+    const rectSpy = vi
+      .spyOn(node, 'getBoundingClientRect')
+      .mockReturnValueOnce({ height: 80 } as DOMRect)
+      .mockReturnValueOnce({ height: 216 } as DOMRect);
+
+    const { result } = renderHook(() => useElementHeight());
+    act(() => {
+      result.current[0](node);
+    });
+    expect(result.current[1]).toBe(80);
+
+    act(() => {
+      // Entry deliberately omits contentRect - the hook must not depend on it,
+      // only on re-reading getBoundingClientRect (border-box) from the target.
+      fireResize(node);
+    });
+
+    expect(rectSpy).toHaveBeenCalledTimes(2);
+    expect(result.current[1]).toBe(216);
+  });
+
+  it('starts measuring once the node attaches, even if that happens on a later render (late attachment)', () => {
+    stubResizeObserver();
+    const node = document.createElement('div');
+    vi.spyOn(node, 'getBoundingClientRect').mockReturnValue({ height: 64 } as DOMRect);
+
+    // Simulates AppLayout: useElementHeight() is called on an early render while
+    // a loading/onboarding screen is shown (no element to attach yet), then the
+    // real chrome mounts on a later render and the ref callback fires then.
+    const { result } = renderHook(() => useElementHeight());
+    expect(result.current[1]).toBeNull();
+
+    act(() => {
+      result.current[0](node);
+    });
+
+    expect(result.current[1]).toBe(64);
   });
 
   it('observes the node and disconnects on unmount', () => {
     const { observe, disconnect } = stubResizeObserver();
     const node = document.createElement('div');
-    const ref = { current: node };
 
-    const { unmount } = renderHook(() => useElementHeight(ref));
+    const { result, unmount } = renderHook(() => useElementHeight());
+    act(() => {
+      result.current[0](node);
+    });
     expect(observe).toHaveBeenCalledWith(node);
 
     unmount();
@@ -84,10 +113,12 @@ describe('useElementHeight', () => {
     vi.stubGlobal('ResizeObserver', undefined);
     const node = document.createElement('div');
     vi.spyOn(node, 'getBoundingClientRect').mockReturnValue({ height: 64 } as DOMRect);
-    const ref = { current: node };
 
-    const { result } = renderHook(() => useElementHeight(ref));
+    const { result } = renderHook(() => useElementHeight());
+    act(() => {
+      result.current[0](node);
+    });
 
-    expect(result.current).toBe(64);
+    expect(result.current[1]).toBe(64);
   });
 });

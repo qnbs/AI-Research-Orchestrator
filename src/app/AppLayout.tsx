@@ -1,4 +1,4 @@
-import React, { Suspense, memo, useRef } from 'react';
+import React, { Suspense, memo } from 'react';
 import { Header } from '../components/Header';
 import { OfflineBanner } from '../components/OfflineBanner';
 import { UpdateAvailableBanner } from '../components/UpdateAvailableBanner';
@@ -19,8 +19,7 @@ import { useElementHeight } from '../hooks/useElementHeight';
  * State/effects/handlers live in useAppLogic (composed domain hooks).
  */
 const AppLayout: React.FC = () => {
-  const chromeRef = useRef<HTMLDivElement>(null);
-  const chromeHeight = useElementHeight(chromeRef);
+  const [chromeRef, chromeHeight] = useElementHeight<HTMLDivElement>();
   const logic = useAppLogic();
   const {
     isLoading,
@@ -84,6 +83,8 @@ const AppLayout: React.FC = () => {
       <main
         id="main-content"
         tabIndex={-1}
+        // pt-20/md:pt-36 are the pre-measurement fallback (first paint, no-JS);
+        // once chromeHeight is measured, the inline style below supersedes them.
         className="container mx-auto px-4 sm:px-6 lg:px-8 md:pt-36 pt-20 pb-24 focus-ring-aa rounded-sm"
         style={chromeHeight != null ? { paddingTop: `${chromeHeight}px` } : undefined}
       >
