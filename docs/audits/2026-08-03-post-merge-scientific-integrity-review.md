@@ -81,12 +81,14 @@ pnpm run check:agent-eval
 
 ## Recommended ruleset changes (GitHub `mainrules`)
 
-Enable on `main` ruleset **20291814**:
+Status on `main` ruleset **20291814** (re-verified 2026-08-06 directly against
+`gh api repos/qnbs/AI-Research-Orchestrator/rulesets/20291814` — see
+`docs/ci-branch-governance.md` for the full live table):
 
-1. **Require conversation resolution** — currently **Off**; was blocking merge hygiene on #213.
-2. **Dismiss stale pull request approvals when new commits are pushed** — invalidates approvals on superseded SHAs.
-3. **Require branches to be up to date before merging** — pairs with strict status checks.
-4. **Optional:** add a required check for CodeRabbit only when GitHub exposes a stable non-placeholder context (today: process gate in rules `011`/`013` + human/agent disposition).
+1. ~~**Require conversation resolution** — currently Off; was blocking merge hygiene on #213.~~ **Done** — `required_review_thread_resolution` is `true` as of the ruleset's `updated_at` (2026-08-03T14:07:58+02:00).
+2. **Dismiss stale pull request approvals when new commits are pushed** — invalidates approvals on superseded SHAs. **Still open.**
+3. ~~**Require branches to be up to date before merging** — pairs with strict status checks.~~ **Done** — `strict_required_status_checks_policy` is `true` as of the same `updated_at`.
+4. **Optional:** add a required check for CodeRabbit only when GitHub exposes a stable non-placeholder context (today: process gate in rules `011`/`013` + human/agent disposition). **Still open.**
 
 ## Merge hold (standing until this review lands)
 
