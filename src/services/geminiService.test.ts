@@ -21,6 +21,12 @@ import {
   selectArticlesForRankingPrompt,
   selectArticlesForSynthesisPrompt,
 } from '../lib/promptBudget';
+import { invalidateOllamaHealthCache } from './providers/ollamaHealth';
+import { invalidateOllamaModelMetadataCache } from '../lib/ollamaModelMetadata';
+import {
+  OLLAMA_OUTPUT_TOKEN_RESERVE,
+  OLLAMA_BUDGET_SAFETY_MARGIN,
+} from '../lib/ollamaContextBudget';
 
 const hoisted = vi.hoisted(() => ({
   generateContent: vi.fn(),
@@ -176,6 +182,8 @@ describe('resetAIInstance', () => {
 describe('geminiService with mocked SDK', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    invalidateOllamaHealthCache();
+    invalidateOllamaModelMetadataCache();
     mockPubMed.searchPubMedForIds.mockResolvedValue(['123']);
     mockPubMed.fetchArticleDetails.mockResolvedValue([
       {
@@ -194,6 +202,8 @@ describe('geminiService with mocked SDK', () => {
 
   afterEach(() => {
     resetAIInstance();
+    invalidateOllamaHealthCache();
+    invalidateOllamaModelMetadataCache();
   });
 
   it('findSimilarArticles returns parsed array', async () => {
@@ -505,6 +515,99 @@ describe('geminiService with mocked SDK', () => {
     };
     await expect(drain()).rejects.toMatchObject({ code: 'VALIDATION' });
     expect(hoisted.generateContentStream).not.toHaveBeenCalled();
+  });
+
+  it('generateResearchReportStream warms the /api/show metadata cache before ranking so the Ollama budget reflects the real context window, not the parameter heuristic - even when Settings/OllamaHealthPanel was never opened this session', async () => {
+    const ollamaAi: Settings['ai'] = { ...mockAi, provider: 'ollama', model: 'llama3.1:8b' };
+
+    global.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.endsWith('/api/version')) {
+        return Promise.resolve({ ok: true, json: async () => ({ version: '0.5.0' }) });
+      }
+      if (url.endsWith('/api/tags')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ models: [{ name: 'llama3.1:8b' }] }),
+        });
+      }
+      if (url.endsWith('/api/show')) {
+        // Runtime num_ctx is far smaller than the 8_000-token parameter-count
+        // heuristic an 8B model would otherwise get.
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ model_info: { 'llama.context_length': 4_096 } }),
+        });
+      }
+      if (url.endsWith('/api/generate')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            response: JSON.stringify({
+              generatedQueries: [{ query: 'cancer[Title]', explanation: 'e' }],
+            }),
+          }),
+        });
+      }
+      return Promise.reject(new Error(`Unexpected fetch in test: ${url}`));
+    });
+
+    const rankingBudgets: number[] = [];
+    for await (const chunk of generateResearchReportStream(mockInput, ollamaAi)) {
+      if (chunk.promptBudget?.stage === 'ranking') {
+        rankingBudgets.push(chunk.promptBudget.inputTokenBudget);
+        break; // the budget is computed and yielded before any ranking AI call is made
+      }
+    }
+
+    expect(rankingBudgets).toHaveLength(1);
+    const contextBasedBudget = 4_096 - OLLAMA_OUTPUT_TOKEN_RESERVE - OLLAMA_BUDGET_SAFETY_MARGIN;
+    expect(rankingBudgets[0]).toBe(contextBasedBudget);
+    expect(rankingBudgets[0]).not.toBe(8_000); // the parameter-heuristic default for an 8B model
+  });
+
+  it('generateResearchReportStream falls back to the parameter heuristic (not a crash or hang) when /api/show errors', async () => {
+    const ollamaAi: Settings['ai'] = { ...mockAi, provider: 'ollama', model: 'llama3.1:8b' };
+
+    global.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.endsWith('/api/version')) {
+        return Promise.resolve({ ok: true, json: async () => ({ version: '0.5.0' }) });
+      }
+      if (url.endsWith('/api/tags')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ models: [{ name: 'llama3.1:8b' }] }),
+        });
+      }
+      if (url.endsWith('/api/show')) {
+        return Promise.resolve({ ok: false, status: 500 });
+      }
+      if (url.endsWith('/api/generate')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            response: JSON.stringify({
+              generatedQueries: [{ query: 'cancer[Title]', explanation: 'e' }],
+            }),
+          }),
+        });
+      }
+      return Promise.reject(new Error(`Unexpected fetch in test: ${url}`));
+    });
+
+    const rankingBudgets: number[] = [];
+    for await (const chunk of generateResearchReportStream(mockInput, ollamaAi)) {
+      if (chunk.promptBudget?.stage === 'ranking') {
+        rankingBudgets.push(chunk.promptBudget.inputTokenBudget);
+        break;
+      }
+    }
+
+    expect(rankingBudgets).toHaveLength(1);
+    // No cached context length -> falls back to the 8_000 parameter-count
+    // heuristic for an 8B model instead of crashing or hanging the pipeline.
+    expect(rankingBudgets[0]).toBe(8_000);
   });
 
   it('generateResearchReportStream passes AbortSignal to synthesis stream', async () => {
