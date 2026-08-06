@@ -17,6 +17,7 @@ import { defaultGeminiThinkingBudget } from './providers/provider';
 import { getProviderForSettings, resetProviderInstances } from './providers/factory';
 import type { AIContentRequest, AIJsonSchema } from './providers/types';
 import { probeOllamaHealth } from './providers/ollamaHealth';
+import { probeOllamaModelMetadata } from '../lib/ollamaModelMetadata';
 import { searchPubMedForIds, fetchArticleDetails } from './pubmedUtils';
 import { searchAndFetchArxiv } from './arxivUtils';
 import { sanitizePromptFragment } from '../lib/promptSanitize';
@@ -388,10 +389,24 @@ Research Topic: ${wrapUntrustedTextBlock('research_topic', topicSafe)}
     const ollamaBudgetOptions = {
       ollamaBaseUrl: aiSettings.customBaseUrl?.trim() || 'http://localhost:11434',
     };
-    // Warm the active-endpoint health cache so prompt budgets can use tag
-    // parameterSize for custom model names (TTL cache; no-op when fresh).
+    // Warm the active-endpoint health cache (tag parameterSize fallback) AND the
+    // /api/show metadata cache (real runtime context_length) before computing any
+    // prompt budget below. Without the second probe, getInputTokenBudget silently
+    // falls back to the parameter-count heuristic whenever Settings was never
+    // opened this session (OllamaHealthPanel was the only prior caller of
+    // probeOllamaModelMetadata) - the model's actual context window would never
+    // be honored on the ordinary research path. Both probes are read-only and
+    // independent, so run them concurrently. allSettled (not all) so neither
+    // probe's own internal timeout - which can present as an abort-classified
+    // rejection depending on runtime fetch behavior - fails the whole stream;
+    // a genuine caller cancellation is still honored via throwIfAborted right
+    // after. A slow/unreachable /api/show only leaves the heuristic budget in
+    // place, same as before this probe existed - it must never abort generation.
     if (providerId === 'ollama') {
-      await probeOllamaHealth(ollamaBudgetOptions.ollamaBaseUrl, { signal });
+      await Promise.allSettled([
+        probeOllamaHealth(ollamaBudgetOptions.ollamaBaseUrl, { signal }),
+        probeOllamaModelMetadata(ollamaBudgetOptions.ollamaBaseUrl, aiSettings.model, { signal }),
+      ]);
       throwIfAborted(signal);
     }
     const rankingSelection = selectArticlesForRankingPrompt(
