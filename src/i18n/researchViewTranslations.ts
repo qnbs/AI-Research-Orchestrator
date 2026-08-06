@@ -8,6 +8,7 @@ export const researchViewTranslations = {
     'research.placeholder': "Enter a research question, abstract, a paper's full text, or a topic…",
     'research.submit': 'Analyze',
     'research.submit.loading': 'Analyzing…',
+    'research.cancel.button': 'Cancel research',
     'research.empty.title': 'Ask a question or analyze a paper.',
     'research.empty.body':
       'Paste in a research question, topic, abstract, or even a PMID/DOI. The AI will provide a concise summary, extract key findings, and find related articles for you.',
@@ -39,6 +40,7 @@ export const researchViewTranslations = {
       'Geben Sie eine Forschungsfrage, ein Abstract, den Volltext eines Papers oder ein Thema ein…',
     'research.submit': 'Analysieren',
     'research.submit.loading': 'Analysiere…',
+    'research.cancel.button': 'Recherche abbrechen',
     'research.empty.title': 'Stellen Sie eine Frage oder analysieren Sie ein Paper.',
     'research.empty.body':
       'Fügen Sie eine Forschungsfrage, ein Thema, ein Abstract oder eine PMID/DOI ein. Die KI liefert eine kurze Zusammenfassung, extrahiert Kernergebnisse und findet verwandte Artikel.',
