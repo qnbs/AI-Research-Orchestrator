@@ -1,7 +1,8 @@
 import React from 'react';
 
 export interface ChartAccessibleTableColumn<T> {
-  key: string;
+  /** Must name an actual field on T - catches column/row-shape drift at compile time. */
+  key: keyof T & string;
   label: string;
   render: (row: T) => React.ReactNode;
 }
@@ -10,7 +11,7 @@ export interface ChartAccessibleTableProps<T> {
   caption: string;
   columns: ChartAccessibleTableColumn<T>[];
   rows: T[];
-  rowKey: (row: T) => string;
+  rowKey: (row: T) => React.Key;
 }
 
 /**
@@ -30,7 +31,9 @@ export function ChartAccessibleTable<T>({
       <thead>
         <tr>
           {columns.map((col) => (
-            <th key={col.key}>{col.label}</th>
+            <th key={col.key} scope="col">
+              {col.label}
+            </th>
           ))}
         </tr>
       </thead>

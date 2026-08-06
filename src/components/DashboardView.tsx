@@ -395,7 +395,11 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({ onFilterChange, 
             { key: 'value', label: t('dashboard.a11y.articles'), render: (r) => r.value },
           ]}
           rows={data.types}
-          rowKey={(r) => r.articleType || r.name}
+          // Disambiguated, not derived from the translated display label: an
+          // empty articleType bucket renders as "Other" (dashboard.type.other)
+          // and can coexist with a genuine articleType === "Other" bucket,
+          // which would otherwise collide on the same React key.
+          rowKey={(r) => (r.articleType ? `type:${r.articleType}` : 'type:__missing__')}
         />
         <ChartAccessibleTable
           caption={t('dashboard.a11y.oa_caption')}

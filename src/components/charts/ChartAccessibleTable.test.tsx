@@ -30,8 +30,12 @@ describe('ChartAccessibleTable', () => {
 
     expect(screen.getByText('Article types')).toBeInTheDocument();
     const table = screen.getByRole('table');
-    expect(within(table).getByRole('columnheader', { name: 'Type' })).toBeInTheDocument();
-    expect(within(table).getByRole('columnheader', { name: 'Articles' })).toBeInTheDocument();
+    const typeHeader = within(table).getByRole('columnheader', { name: 'Type' });
+    const articlesHeader = within(table).getByRole('columnheader', { name: 'Articles' });
+    expect(typeHeader).toBeInTheDocument();
+    expect(articlesHeader).toBeInTheDocument();
+    expect(typeHeader).toHaveAttribute('scope', 'col');
+    expect(articlesHeader).toHaveAttribute('scope', 'col');
 
     const bodyRows = within(table).getAllByRole('row').slice(1);
     expect(bodyRows).toHaveLength(2);

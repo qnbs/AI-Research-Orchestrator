@@ -452,7 +452,10 @@ export const AnalysisCharts: React.FC = () => {
                     { key: 'name', label: t('journals.charts.topic'), render: (r) => r.name },
                     {
                       key: 'value',
-                      label: t('journals.charts.articles'),
+                      // Word-occurrence count across article titles, not a count
+                      // of distinct articles - a title mentioning a topic twice
+                      // counts twice, so "Articles" would misstate the data.
+                      label: t('journals.charts.occurrences'),
                       render: (r) => r.value,
                     },
                   ]}
