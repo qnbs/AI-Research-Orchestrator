@@ -166,7 +166,11 @@ const HeaderComponent: React.FC<HeaderProps> = ({
             <div className="flex items-center gap-3">
               <InferenceModeBadge />
               <nav
-                className="flex items-center gap-1 p-1.5 rounded-xl border border-white/5 bg-black/5 backdrop-blur-md shadow-inner"
+                // Defensive fallback: this many icon+label buttons plus the
+                // logo/badge can outgrow the available width right at the md
+                // breakpoint (before lg gives more room) - scroll rather than
+                // clip/overflow the pill container if that happens.
+                className="flex items-center gap-1 p-1.5 rounded-xl border border-white/5 bg-black/5 backdrop-blur-md shadow-inner overflow-x-auto max-w-full"
                 aria-label={t('chrome.aria.main_nav')}
               >
                 <NavButton

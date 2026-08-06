@@ -37,7 +37,7 @@ const NavItem: React.FC<{
     <button
       onClick={handleClick}
       disabled={isDisabled}
-      className={`flex flex-col items-center justify-center w-full min-h-[44px] touch-target-aa pt-3 pb-2 text-[10px] font-medium transition-all duration-200 focus-ring-aa rounded-lg relative ${
+      className={`flex flex-shrink-0 flex-col items-center justify-center min-w-[44px] min-h-[44px] touch-target-aa px-2 pt-3 pb-2 text-[10px] font-medium transition-all duration-200 focus-ring-aa rounded-lg relative ${
         isActive ? 'text-brand-accent' : 'text-text-secondary hover:text-text-primary'
       } ${isDisabled ? 'opacity-30 cursor-not-allowed grayscale' : ''}`}
       aria-current={isActive ? 'page' : undefined}
@@ -61,7 +61,7 @@ const NavItem: React.FC<{
         {icon}
       </div>
       <span
-        className={`mt-1 transition-opacity ${isActive ? 'opacity-100 font-bold text-brand-accent drop-shadow-sm' : 'opacity-80'}`}
+        className={`mt-1 whitespace-nowrap transition-opacity ${isActive ? 'opacity-100 font-bold text-brand-accent drop-shadow-sm' : 'opacity-80'}`}
       >
         {label}
       </span>
@@ -115,7 +115,12 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
 
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-surface/80 backdrop-blur-xl border-t border-border z-30 shadow-[0_-5px_20px_rgba(0,0,0,0.2)] pb-safe">
-      <div className="flex justify-around items-center h-16 max-w-lg mx-auto">
+      {/* justify-around still evenly distributes items when there's slack space;
+          overflow-x-auto is the fallback for when there isn't - 7 items at the
+          44px WCAG touch-target floor already total 308px, leaving ~12px of
+          slack on a 320px viewport, not enough room for longer labels (e.g.
+          "Collections") to render on one line without scrolling. */}
+      <div className="flex justify-around items-center h-16 max-w-lg mx-auto overflow-x-auto px-1">
         {navItems.map((item) => (
           <NavItem
             key={item.view}

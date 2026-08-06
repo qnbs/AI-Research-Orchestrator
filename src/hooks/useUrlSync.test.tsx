@@ -37,4 +37,18 @@ describe('useUrlSync', () => {
     renderHook(() => useUrlSync('home', setCurrentView));
     expect(setCurrentView).toHaveBeenCalledWith('collections' as View);
   });
+
+  it('does not push a spurious history entry on a deep-linked initial mount', () => {
+    // Regression: the hook is initialized with currentView='home' (the Redux
+    // default, before the hash->state effect's setCurrentView('collections')
+    // dispatch has taken effect) while the URL already reads #collections. The
+    // state->hash effect must not race that dispatch and push '#home' first -
+    // that would insert a spurious history entry, breaking Back navigation.
+    const pushStateSpy = vi.spyOn(window.history, 'pushState');
+    window.location.hash = '#collections';
+
+    renderHook(() => useUrlSync('home', vi.fn()));
+
+    expect(pushStateSpy).not.toHaveBeenCalledWith(null, '', '#home');
+  });
 });
