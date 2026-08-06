@@ -267,6 +267,7 @@ export function useAppLogic() {
     handleFormSubmit: research.handleFormSubmit,
     handleRerunCheckpoint: research.handleRerunCheckpoint,
     handleSaveReport: research.handleSaveReport,
+    handleCancelResearch: research.handleCancelResearch,
     handleNewSearch: research.handleNewSearch,
     handleClearKnowledgeBase,
     handleViewChange,
