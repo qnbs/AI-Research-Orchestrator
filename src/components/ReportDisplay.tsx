@@ -267,7 +267,7 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(function R
           {isPartial && (
             <div
               role="status"
-              className="mb-4 rounded-md border border-red-500/60 bg-red-500/10 px-3 py-2 text-sm font-semibold text-red-900 dark:text-red-100"
+              className="mb-4 rounded-md border border-danger/60 bg-danger/10 px-3 py-2 text-sm font-semibold text-danger"
             >
               {report.cancelledAtPhase
                 ? t('report.partial.bannerWithPhase', { phase: report.cancelledAtPhase })
@@ -650,7 +650,7 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(function R
           }}
           onCancel={() => setModalState(null)}
           title={t('report.saveModal.title')}
-          message={t('report.saveModal.message')}
+          message={t(isPartial ? 'report.saveModal.messagePartial' : 'report.saveModal.message')}
           confirmText={t('report.saveModal.confirm')}
           confirmButtonClass="bg-brand-accent hover:bg-opacity-90"
           titleClass="text-brand-accent"

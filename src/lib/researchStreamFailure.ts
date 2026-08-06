@@ -70,6 +70,20 @@ export async function handleResearchStreamFailure({
           cancelledAt: Date.now(),
         }
       : null;
+
+  // Stamp the visible report now, synchronously - still safe without a
+  // generation-id re-check since nothing async has happened yet since the
+  // entry check above. Doing this before the checkpoint-persistence attempt
+  // (rather than only inside its success branch) guarantees the cancellation
+  // marker reaches the UI even if persistCheckpoint fails or the checkpoint
+  // turns out non-resumable; previously a persistence failure left
+  // reportStatus 'partial' while the report object itself stayed unstamped -
+  // no banner, no export watermark, chat gate silently keyed off a value
+  // that was never set.
+  if (partialReport) {
+    setReport(partialReport);
+  }
+
   const checkpoint = createResearchCheckpoint({
     input,
     phase,
@@ -86,9 +100,10 @@ export async function handleResearchStreamFailure({
       // already set its own report/notification) while this one's checkpoint
       // write was still in flight - never let a stale run overwrite it.
       if (getActiveGenerationId() === currentGenerationId) {
-        if (partialReport) {
-          setReport(partialReport);
-        } else if (finalReport) {
+        // partialReport was already set above (synchronously, pre-await) -
+        // only the non-aborted "real error with a usable report" case still
+        // needs a setReport call here.
+        if (!partialReport && finalReport) {
           setReport({ ...finalReport, synthesis: mergedSynthesis });
         }
         setNotification({

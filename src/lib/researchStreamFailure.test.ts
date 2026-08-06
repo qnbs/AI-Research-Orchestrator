@@ -175,7 +175,7 @@ describe('handleResearchStreamFailure', () => {
     expect(handlers.setReportStatus).toHaveBeenCalledWith('error');
   });
 
-  it('still persists the checkpoint but skips report/notification updates when a newer run starts while the write is in flight', async () => {
+  it('stamps the partial report synchronously before the checkpoint write, and skips only the notification when a newer run starts while the write is in flight', async () => {
     let activeGenerationId = 1;
     const setReport = vi.fn();
     const setNotification = vi.fn();
@@ -205,7 +205,15 @@ describe('handleResearchStreamFailure', () => {
     });
 
     expect(persistCheckpoint).toHaveBeenCalled();
-    expect(setReport).not.toHaveBeenCalled();
+    // setReport fires exactly once, synchronously, before the async persist
+    // gap even opens - this generation was still active at that point, so
+    // stamping the visible report is correct regardless of what happens
+    // afterward. Only the notification (guarded inside the async branch)
+    // correctly gets skipped once a newer generation has taken over.
+    expect(setReport).toHaveBeenCalledTimes(1);
+    expect(setReport).toHaveBeenCalledWith(
+      expect.objectContaining({ completionStatus: 'partial', cancelledAtPhase: 'Phase 5' }),
+    );
     expect(setNotification).not.toHaveBeenCalled();
   });
 });

@@ -43,10 +43,15 @@ export const useChat = (
 
   useEffect(() => {
     if (!(report && reportStatus === 'done')) {
+      // Covers leaving 'done' for any other status (e.g. a cancelled report
+      // becoming 'partial' while its chat history/session is still around) -
+      // without this, chatHistory only got cleared on the *next* transition
+      // into 'done', not immediately on leaving it.
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- clears stale chat state in reaction to reportStatus/report changing; not derivable from render.
+      invalidateSession();
       return;
     }
     const abort = new AbortController();
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- resets chat session state before starting a new async chat init; bundled with the network call and cleanup below, which must be an effect.
     invalidateSession();
 
     const initChat = async () => {
