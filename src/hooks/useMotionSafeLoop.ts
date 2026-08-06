@@ -1,8 +1,8 @@
-import { useReducedMotion } from 'framer-motion';
+import { useReducedMotion, type Transition } from 'framer-motion';
 
 export interface MotionSafeLoopResult<T> {
   animate: T;
-  transition: Record<string, unknown>;
+  transition: Transition;
 }
 
 /**
@@ -13,11 +13,15 @@ export interface MotionSafeLoopResult<T> {
  */
 export function useMotionSafeLoop<T extends Record<string, unknown>>(
   animate: T,
-  transition: Record<string, unknown>,
+  transition: Transition,
 ): MotionSafeLoopResult<T> {
   const prefersReducedMotion = useReducedMotion();
 
-  if (!prefersReducedMotion) {
+  // useReducedMotion() returns null while the media query is still resolving
+  // on first render - only skip the reduction once we're certain the user
+  // does NOT want it, so an unresolved preference is treated conservatively
+  // (reduced) rather than briefly starting the loop and correcting later.
+  if (prefersReducedMotion === false) {
     return { animate, transition };
   }
 

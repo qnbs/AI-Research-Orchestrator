@@ -39,12 +39,16 @@ const AgentDebuggerPanel: React.FC = () => {
     if (currentTrace?.status === 'running') setActiveTab('trace');
   }, [currentTrace?.sessionId, currentTrace?.status]);
 
+  // Arrays start/end at full opacity (not the pulse's dim midpoint) so
+  // useMotionSafeLoop's reduced-motion collapse - which settles on the last
+  // keyframe - leaves these status indicators fully visible instead of
+  // permanently dim; the looping animation's rhythm is unaffected either way.
   const livePulse = useMotionSafeLoop(
-    { opacity: [0.5, 1, 0.5] },
+    { opacity: [1, 0.5, 1] },
     { duration: 1.4, repeat: Infinity },
   );
   const processingPulse = useMotionSafeLoop(
-    { opacity: [0.4, 1, 0.4] },
+    { opacity: [1, 0.4, 1] },
     { duration: 1.5, repeat: Infinity },
   );
 

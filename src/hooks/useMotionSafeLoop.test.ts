@@ -45,4 +45,18 @@ describe('useMotionSafeLoop', () => {
     expect(result.current.animate).toEqual({ scale: 1.08 });
     expect(result.current.transition).toEqual({ duration: 0 });
   });
+
+  it('treats an unresolved (null) preference conservatively, same as reduced motion', () => {
+    // useReducedMotion() returns null while the media query is still resolving
+    // on first render. Treating that as "not reduced" would briefly start the
+    // loop before a later render corrects it - it must collapse immediately.
+    mockedUseReducedMotion.mockReturnValue(null);
+
+    const { result } = renderHook(() =>
+      useMotionSafeLoop({ scale: [1, 1.35, 1] }, { duration: 1, repeat: Infinity }),
+    );
+
+    expect(result.current.animate).toEqual({ scale: 1 });
+    expect(result.current.transition).toEqual({ duration: 0 });
+  });
 });
