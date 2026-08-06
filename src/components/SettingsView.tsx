@@ -100,15 +100,19 @@ const SettingsViewLayout: React.FC = () => {
   return (
     <div className="animate-fadeIn">
       <div
-        // top-[max(5rem,var(--chrome-height,0px))] keeps the original static
-        // 5rem/9rem breakpoint values as a floor and only grows past them
-        // when AppLayout's measured --chrome-height (set on <main>, see
-        // AppLayout.tsx) is genuinely taller - e.g. a banner is visible. Using
-        // the exact measured height directly (no floor) previously caused the
-        // sticky bar to overlap content further down the page whenever the
-        // measurement came in smaller than these breakpoints assume, which is
-        // the common case with no banner - a real, CI-caught regression.
-        className="sticky top-[max(5rem,var(--chrome-height,0px))] md:top-[max(9rem,var(--chrome-height,0px))] z-10 flex flex-col sm:flex-row sm:justify-between items-end sm:items-center gap-2 sm:gap-0 mb-8 py-2 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 bg-surface/70 backdrop-blur-xl border-b border-border/50"
+        // Sticky only from md: up. On mobile, the fixed header (z-20) and
+        // fixed bottom nav (z-30) already claim most of a short viewport's
+        // vertical space; adding a third sticky element there repeatedly
+        // caused it (or the toast/nav it then competes with) to overlap
+        // content further down the page - a real, CI-caught E2E regression
+        // (pointer events intercepted trying to reach fields below this bar).
+        // The long-scroll convenience this bar exists for mainly matters on
+        // desktop's wider, taller viewports anyway. md:top-[max(9rem,...)]
+        // keeps the original static 9rem breakpoint value as a floor and only
+        // grows past it when AppLayout's measured --chrome-height (set on
+        // <main>, see AppLayout.tsx) is genuinely taller - e.g. a banner
+        // visible - instead of tracking the exact measured height directly.
+        className="static md:sticky md:top-[max(9rem,var(--chrome-height,0px))] z-10 flex flex-col sm:flex-row sm:justify-between items-end sm:items-center gap-2 sm:gap-0 mb-8 py-2 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 bg-surface/70 backdrop-blur-xl border-b border-border/50"
       >
         <div className="w-full sm:w-auto">
           <h1 className="text-4xl font-bold brand-gradient-text">{t('settings.title')}</h1>
