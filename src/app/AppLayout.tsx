@@ -133,7 +133,12 @@ const AppLayout: React.FC = () => {
           />
         )}
         {isQuickAddModalOpen && <QuickAddModal onClose={() => setIsQuickAddModalOpen(false)} />}
-        <AgentDebugger />
+        {/* Gated on the render itself, not just the header toggle: the panel's
+            own isVisible Redux state can also be forced true by a research run
+            starting (useResearchSession dispatches setDebuggerVisible(true)
+            unconditionally), independent of developerMode. Gating here covers
+            every path, not just "close it if it was already open". */}
+        {settings.developerMode && <AgentDebugger />}
       </Suspense>
     </>
   );
