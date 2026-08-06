@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import { useChromeHeight } from '../app/ChromeHeightContext';
 import { SettingsViewProvider, useSettingsView } from './settings/SettingsViewContext';
 import { useSettingsViewLogic, SettingsTab } from './settings/useSettingsViewLogic';
 import {
@@ -24,6 +25,7 @@ interface SettingsViewProps {
 }
 
 const SettingsViewLayout: React.FC = () => {
+  const chromeHeight = useChromeHeight();
   const {
     activeTab,
     setActiveTab,
@@ -99,7 +101,15 @@ const SettingsViewLayout: React.FC = () => {
 
   return (
     <div className="animate-fadeIn">
-      <div className="sticky top-20 md:top-36 z-10 flex flex-col sm:flex-row sm:justify-between items-end sm:items-center gap-2 sm:gap-0 mb-8 py-2 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 bg-surface/70 backdrop-blur-xl border-b border-border/50">
+      <div
+        // top-20/md:top-36 are the pre-measurement fallback (mirrors AppLayout's
+        // <main> padding-top pattern); once the real chrome height is measured,
+        // the inline style below supersedes them so a visible banner (which
+        // makes the fixed chrome taller than these breakpoints assume) can't
+        // push this sticky bar under the fixed header/banner container.
+        className="sticky top-20 md:top-36 z-10 flex flex-col sm:flex-row sm:justify-between items-end sm:items-center gap-2 sm:gap-0 mb-8 py-2 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 bg-surface/70 backdrop-blur-xl border-b border-border/50"
+        style={chromeHeight != null ? { top: `${chromeHeight}px` } : undefined}
+      >
         <div className="w-full sm:w-auto">
           <h1 className="text-4xl font-bold brand-gradient-text">{t('settings.title')}</h1>
           <p className="mt-1 text-lg text-text-secondary">{t('settings.subtitle')}</p>

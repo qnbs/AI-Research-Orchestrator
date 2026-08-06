@@ -13,6 +13,7 @@ import { useAppLogic } from './useAppLogic';
 import { AppViewRouter } from './AppViewRouter';
 import { OnboardingView, CommandPalette, QuickAddModal, AgentDebugger } from './lazyViews';
 import { useElementHeight } from '../hooks/useElementHeight';
+import { ChromeHeightContext } from './ChromeHeightContext';
 
 /**
  * App shell: banners, chrome, and view routing.
@@ -88,9 +89,11 @@ const AppLayout: React.FC = () => {
         className="container mx-auto px-4 sm:px-6 lg:px-8 md:pt-36 pt-20 pb-24 focus-ring-aa rounded-sm"
         style={chromeHeight != null ? { paddingTop: `${chromeHeight}px` } : undefined}
       >
-        <Suspense fallback={<ContentSpinner label={t('common.loading')} />}>
-          <AppViewRouter {...logic} />
-        </Suspense>
+        <ChromeHeightContext.Provider value={chromeHeight}>
+          <Suspense fallback={<ContentSpinner label={t('common.loading')} />}>
+            <AppViewRouter {...logic} />
+          </Suspense>
+        </ChromeHeightContext.Provider>
       </main>
       <BottomNavBar
         currentView={currentView}
