@@ -103,6 +103,37 @@ describe('sanitizeReportForExport', () => {
     expect(result.report.synthesis).toContain('zero-result');
   });
 
+  it('watermarks a cancelled/partial report on export instead of exporting it as if complete', () => {
+    const report = baseReport();
+    report.aiGeneratedInsights = [{ question: 'Q?', answer: 'A.', supportingArticles: ['1'] }];
+    report.synthesis = 'Cited finding (PMID: 1).';
+    report.completionStatus = 'partial';
+    report.cancelledAtPhase = 'Phase 4: Ranking articles...';
+    report.cancelledAt = 42;
+    const result = sanitizeReportForExport(report);
+    expect(result.sanitized).toBe(true);
+    expect(result.report.synthesis).toMatch(/^PARTIAL REPORT — RESEARCH WAS CANCELLED/);
+    // Cancellation provenance must survive export, not just the watermark text.
+    expect(result.report.completionStatus).toBe('partial');
+    expect(result.report.cancelledAtPhase).toBe('Phase 4: Ranking articles...');
+  });
+
+  it('watermarks a partial report even when it hit before any articles were ranked (empty-retrieval early return)', () => {
+    const report: ResearchReport = {
+      generatedQueries: [],
+      rankedArticles: [],
+      synthesis: '',
+      aiGeneratedInsights: [],
+      overallKeywords: [],
+      completionStatus: 'partial',
+      cancelledAtPhase: 'Phase 1: Generating queries...',
+      cancelledAt: 7,
+    };
+    const result = sanitizeReportForExport(report);
+    expect(result.sanitized).toBe(true);
+    expect(result.report.synthesis).toMatch(/^PARTIAL REPORT — RESEARCH WAS CANCELLED/);
+  });
+
   it('does not relabel mixed corpora as demo-only on export', () => {
     const report = baseReport();
     report.rankedArticles = [

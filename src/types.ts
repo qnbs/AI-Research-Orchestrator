@@ -142,7 +142,23 @@ export interface ResearchReport {
     | 'retrieval_failed'
     | 'offline_without_demo'
     | 'educational_demo';
+  /**
+   * Set only when the run was cancelled or interrupted before the success
+   * path's finalization (provenance stamping, claim extraction, grounded-
+   * synthesis assessment) ran — absent means normally completed. Must never
+   * be inferred from other fields: a partial report can otherwise carry
+   * stale/absent groundedSynthesis or retrievalOutcome that looks identical
+   * to a genuinely finished report.
+   */
+  completionStatus?: 'partial';
+  /** Pipeline phase active when the run stopped short (only set alongside completionStatus). */
+  cancelledAtPhase?: string;
+  /** Unix ms timestamp when the run stopped short (only set alongside completionStatus). */
+  cancelledAt?: number;
 }
+
+/** Single source of truth for research-report lifecycle status (mirrors useResearchSession's local state). */
+export type ReportStatus = 'idle' | 'generating' | 'streaming' | 'partial' | 'done' | 'error';
 
 /** Identifies the app build and frozen execution context that produced a research report. */
 export interface ReportGenerationProvenance {

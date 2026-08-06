@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import type { ChatMessage, ResearchReport, Settings } from '../types';
+import type { ChatMessage, ReportStatus, ResearchReport, Settings } from '../types';
 import { startChatWithReport, type ReportChatSession } from '../services/geminiService';
 import { useUI } from '../contexts/UIContext';
 import { safeLogError } from '../lib/safeLog';
@@ -7,6 +7,9 @@ import { safeLogError } from '../lib/safeLog';
 /**
  * Report-grounded chat session: initializes when a report reaches `done`,
  * streams model replies into `chatHistory`, and resets when the report clears.
+ * Deliberately excludes `'partial'` (a cancelled/incomplete report) - chatting
+ * against data the model never finished ranking/synthesizing risks answers
+ * that look authoritative but aren't grounded in the full intended corpus.
  *
  * Session lives only in a ref. A monotonic `sessionGenerationRef` invalidates
  * in-flight streams when the report changes so delayed chunks cannot mutate
@@ -14,7 +17,7 @@ import { safeLogError } from '../lib/safeLog';
  */
 export const useChat = (
   report: ResearchReport | null,
-  reportStatus: 'idle' | 'generating' | 'streaming' | 'done' | 'error',
+  reportStatus: ReportStatus,
   aiSettings: Settings['ai'],
 ) => {
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);

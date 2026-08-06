@@ -21,6 +21,8 @@ export interface ExportProvenanceResult {
 }
 
 const DEMO_EXPORT_WATERMARK = 'SYNTHETIC EDUCATIONAL DEMO — NOT RETRIEVED LITERATURE.\n\n';
+const PARTIAL_EXPORT_WATERMARK =
+  'PARTIAL REPORT — RESEARCH WAS CANCELLED BEFORE COMPLETION. Results are incomplete and have not been fully verified.\n\n';
 
 function isEmptyRetrievalReport(report: ResearchReport): boolean {
   return (
@@ -41,6 +43,12 @@ export const sanitizeReportForExport = (report: ResearchReport): ExportProvenanc
     (ranked.length > 0 && ranked.every(isDemoSyntheticArticle)) ||
     isAllDemoCorpus(ranked);
 
+  const isPartial = report.completionStatus === 'partial';
+  const withPartialWatermark = (synthesis: string): string =>
+    isPartial && !synthesis.startsWith('PARTIAL REPORT')
+      ? `${PARTIAL_EXPORT_WATERMARK}${synthesis}`
+      : synthesis;
+
   // Empty-retrieval explanations are intentional UX copy, not uncited narrative claims.
   if (isEmptyRetrievalReport(report) && ranked.length === 0) {
     return {
@@ -48,8 +56,9 @@ export const sanitizeReportForExport = (report: ResearchReport): ExportProvenanc
         ...report,
         rankedArticles: ranked,
         corpusClass: report.corpusClass ?? 'empty-retrieval',
+        synthesis: withPartialWatermark(report.synthesis),
       },
-      sanitized: false,
+      sanitized: isPartial,
       droppedInsights: 0,
       droppedRankedArticles: 0,
       droppedClaims: 0,
@@ -81,6 +90,7 @@ export const sanitizeReportForExport = (report: ResearchReport): ExportProvenanc
   if (containsDemo && !synthesis.startsWith('SYNTHETIC EDUCATIONAL DEMO')) {
     synthesis = `${DEMO_EXPORT_WATERMARK}${synthesis}`;
   }
+  synthesis = withPartialWatermark(synthesis);
 
   const nextCorpusClass = isDemoOnly
     ? 'demo-only'

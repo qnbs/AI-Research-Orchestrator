@@ -5,14 +5,21 @@ import { LoadingIndicator } from './LoadingIndicator';
 import { OrchestratorDashboard } from './OrchestratorDashboard';
 import { Welcome } from './Welcome';
 import { CheckpointResumeBanner } from './CheckpointResumeBanner';
-import { ResearchInput, ResearchReport, KnowledgeBaseEntry, Settings, ChatMessage } from '../types';
+import {
+  ResearchInput,
+  ResearchReport,
+  KnowledgeBaseEntry,
+  Settings,
+  ChatMessage,
+  type ReportStatus,
+} from '../types';
 import type { ResearchCheckpoint } from '../lib/researchCheckpoint';
 import { useKnowledgeBase } from '../contexts/KnowledgeBaseContext';
 import { useTranslation } from '../hooks/useTranslation';
 import { XIcon } from './icons/XIcon';
 
 interface OrchestratorViewProps {
-  reportStatus: 'idle' | 'generating' | 'streaming' | 'done' | 'error';
+  reportStatus: ReportStatus;
   currentPhase: string;
   /** Stable timeline index from typed pipeline phaseId (ADR 0020). */
   timelineIndex?: number;
@@ -148,7 +155,9 @@ const OrchestratorViewComponent: React.FC<OrchestratorViewProps> = ({
 
   const isProcessing = reportStatus === 'generating' || reportStatus === 'streaming';
   const showLoadingIndicator = reportStatus === 'generating';
-  const showReport = (reportStatus === 'streaming' || reportStatus === 'done') && report;
+  const showReport =
+    (reportStatus === 'streaming' || reportStatus === 'done' || reportStatus === 'partial') &&
+    report;
   const showResumeBanner = !isProcessing && resumeCheckpoints.length > 0;
 
   return (

@@ -225,6 +225,13 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(function R
     }, 50);
   };
 
+  // Cancelled run, not a completed one — the success path's finalization
+  // (provenance stamping, claim extraction, grounded-synthesis assessment)
+  // never ran, so this is checked and surfaced independently of, and before,
+  // the trust-level banners below (which would otherwise show a normal
+  // "unverified narrative draft" banner indistinguishable from any other
+  // ordinary draft-trust report).
+  const isPartial = report.completionStatus === 'partial';
   // Missing trust is fail-safe draft — do not infer corpus-supported from mode alone.
   const synthesisTrustLevel =
     normalizeSynthesisTrustLevel(report.groundedSynthesis?.trustLevel) ?? 'narrative-draft';
@@ -257,6 +264,16 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(function R
     <>
       <div className="animate-fadeIn bg-surface rounded-lg border border-border flex flex-col shadow-lg">
         <div className="flex-shrink-0 border-b border-border p-4 sm:p-6">
+          {isPartial && (
+            <div
+              role="status"
+              className="mb-4 rounded-md border border-red-500/60 bg-red-500/10 px-3 py-2 text-sm font-semibold text-red-900 dark:text-red-100"
+            >
+              {report.cancelledAtPhase
+                ? t('report.partial.bannerWithPhase', { phase: report.cancelledAtPhase })
+                : t('report.partial.banner')}
+            </div>
+          )}
           {isDemoCorpus && (
             <div
               role="status"
