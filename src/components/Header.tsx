@@ -16,6 +16,7 @@ import { DocumentPlusIcon } from './icons/DocumentPlusIcon';
 import { SearchIcon } from './icons/SearchIcon';
 import { EllipsisHorizontalIcon } from './icons/EllipsisHorizontalIcon';
 import { BookOpenIcon } from './icons/BookOpenIcon';
+import { CollectionIcon } from './icons/CollectionIcon';
 import { AppBrandMark } from './AppBrandMark';
 import { useTranslation } from '../hooks/useTranslation';
 import { GlobeAltIcon } from './icons/GlobeAltIcon';
@@ -156,7 +157,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
                 aria-hidden
               />
               <span className="font-bold text-lg tracking-tight text-text-primary">
-                {t('chrome.brand.research')}
+                {t('chrome.brand.research')}{' '}
                 <span className="text-brand-accent drop-shadow-sm">
                   {t('chrome.brand.orchestrator')}
                 </span>
@@ -202,6 +203,13 @@ const HeaderComponent: React.FC<HeaderProps> = ({
                 >
                   <BookOpenIcon className="h-4 w-4 mr-2" />
                   {t('nav.journals')}
+                </NavButton>
+                <NavButton
+                  onClick={() => onViewChange('collections')}
+                  isActive={currentView === 'collections'}
+                >
+                  <CollectionIcon className="h-4 w-4 mr-2" />
+                  {t('nav.collections')}
                 </NavButton>
                 <div className="w-px h-5 bg-border mx-1"></div>
                 <NavButton
@@ -344,6 +352,20 @@ const HeaderComponent: React.FC<HeaderProps> = ({
               </button>
               {isMobileMenuOpen && (
                 <div className="absolute right-0 mt-2 w-56 bg-surface/95 backdrop-blur-xl border border-border rounded-xl shadow-2xl z-50 animate-fadeIn overflow-hidden">
+                  <button
+                    onClick={() => handleMobileMenuSelect(() => onViewChange('dashboard'))}
+                    disabled={!hasReports}
+                    className={`w-full text-left flex items-center gap-3 px-4 py-3 text-sm hover:bg-surface-hover border-b border-border/50 ${!hasReports ? 'opacity-40 cursor-not-allowed' : ''}`}
+                  >
+                    <ChartBarIcon className="h-5 w-5" /> {t('nav.dashboard')}
+                  </button>
+                  <button
+                    onClick={() => handleMobileMenuSelect(() => onViewChange('history'))}
+                    disabled={!hasReports}
+                    className={`w-full text-left flex items-center gap-3 px-4 py-3 text-sm hover:bg-surface-hover border-b border-border/50 ${!hasReports ? 'opacity-40 cursor-not-allowed' : ''}`}
+                  >
+                    <HistoryIcon className="h-5 w-5" /> {t('nav.history')}
+                  </button>
                   <button
                     onClick={() => handleMobileMenuSelect(() => onViewChange('settings'))}
                     className="w-full text-left flex items-center gap-3 px-4 py-3 text-sm hover:bg-surface-hover border-b border-border/50"

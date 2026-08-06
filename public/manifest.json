@@ -1,5 +1,5 @@
 {
-  "name": "AI Research Orchestration Author",
+  "name": "AI Research Orchestrator",
   "short_name": "AI Research",
   "start_url": "__DEPLOY_BASE_PATH__",
   "scope": "__DEPLOY_BASE_PATH__",

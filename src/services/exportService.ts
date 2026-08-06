@@ -22,6 +22,7 @@ import {
   formatReportReleaseLabel,
   getAppReleaseInfo,
 } from '../lib/appReleaseInfo';
+import { BRAND_APP_NAME } from '../lib/brand';
 
 // ===================================================================================
 //
@@ -29,7 +30,7 @@ import {
 //
 // ===================================================================================
 
-const APP_NAME = 'AI Research Orchestration Author';
+const APP_NAME = BRAND_APP_NAME;
 const PDF_CONSTANTS = {
   MARGIN: 15,
   FONT_SIZES: {

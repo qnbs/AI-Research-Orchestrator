@@ -20,6 +20,7 @@ export const useUrlSync = (currentView: View, setCurrentView: (view: View) => vo
         'help',
         'dashboard',
         'history',
+        'collections',
       ];
 
       if (hash && validViews.includes(hash as View)) {

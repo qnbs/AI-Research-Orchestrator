@@ -15,7 +15,7 @@ import { dashboardTranslations } from './dashboardTranslations';
 
 export const translations = {
   en: {
-    'app.name': 'Research Orchestrator',
+    'app.name': 'AI Research Orchestrator',
     'nav.home': 'Home',
     'nav.research': 'Research',
     'nav.orchestrator': 'Orchestrator',
@@ -360,7 +360,7 @@ export const translations = {
       'Your saved API keys were reset during a security upgrade and need to be re-entered.',
   },
   de: {
-    'app.name': 'Research Orchestrator',
+    'app.name': 'AI Research Orchestrator',
     'nav.home': 'Startseite',
     'nav.research': 'Recherche',
     'nav.orchestrator': 'Orchestrator',

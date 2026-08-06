@@ -8,6 +8,7 @@ import { DatabaseIcon } from './icons/DatabaseIcon';
 import { BeakerIcon } from './icons/BeakerIcon';
 import { AuthorIcon } from './icons/AuthorIcon';
 import { BookOpenIcon } from './icons/BookOpenIcon';
+import { CollectionIcon } from './icons/CollectionIcon';
 
 interface BottomNavBarProps {
   currentView: View;
@@ -101,7 +102,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
     {
       view: 'collections',
       label: t('nav.collections'),
-      icon: <span className="text-base">📚</span>,
+      icon: <CollectionIcon className="h-5 w-5" />,
     },
     {
       view: 'knowledgeBase',

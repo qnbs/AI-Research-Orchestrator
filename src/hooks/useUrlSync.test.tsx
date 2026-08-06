@@ -30,4 +30,11 @@ describe('useUrlSync', () => {
     act(() => rerender({ view: 'dashboard' as View }));
     expect(window.location.hash).toContain('dashboard');
   });
+
+  it('recognizes #collections as a valid view', () => {
+    const setCurrentView = vi.fn();
+    window.location.hash = '#collections';
+    renderHook(() => useUrlSync('home', setCurrentView));
+    expect(setCurrentView).toHaveBeenCalledWith('collections' as View);
+  });
 });

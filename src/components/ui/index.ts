@@ -3,9 +3,6 @@
  * Barrel export for all Cybernetic Glassmorphism UI primitives.
  */
 
-export { ParticleBackground } from './ParticleBackground';
-export type {} from './ParticleBackground';
-
 export { AgentCard } from './AgentCard';
 export type { AgentCardProps, AgentCardMetrics } from './AgentCard';
 
