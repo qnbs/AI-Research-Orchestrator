@@ -32,5 +32,14 @@ export function useMotionSafeLoop<T extends Record<string, unknown>>(
     ]),
   ) as T;
 
-  return { animate: staticAnimate, transition: { duration: 0 } };
+  // Preserve any other transition properties (e.g. a custom `ease`) the caller
+  // set, but explicitly zero everything that could reintroduce motion here:
+  // `repeat`/`repeatDelay` would otherwise still carry over as `Infinity`,
+  // turning this into an infinitely-looping zero-duration transition instead
+  // of a static settle, and a nonzero `delay` would reintroduce the same
+  // "briefly shows the wrong state" flash the null-handling above avoids.
+  return {
+    animate: staticAnimate,
+    transition: { ...transition, duration: 0, delay: 0, repeat: 0, repeatDelay: 0 },
+  };
 }

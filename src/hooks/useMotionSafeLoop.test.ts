@@ -32,7 +32,7 @@ describe('useMotionSafeLoop', () => {
     );
 
     expect(result.current.animate).toEqual({ scale: 1, opacity: 0.5 });
-    expect(result.current.transition).toEqual({ duration: 0 });
+    expect(result.current.transition).toEqual({ duration: 0, delay: 0, repeat: 0, repeatDelay: 0 });
   });
 
   it('leaves non-array animate values untouched when reduced motion is requested', () => {
@@ -43,7 +43,7 @@ describe('useMotionSafeLoop', () => {
     );
 
     expect(result.current.animate).toEqual({ scale: 1.08 });
-    expect(result.current.transition).toEqual({ duration: 0 });
+    expect(result.current.transition).toEqual({ duration: 0, delay: 0, repeat: 0, repeatDelay: 0 });
   });
 
   it('treats an unresolved (null) preference conservatively, same as reduced motion', () => {
@@ -57,6 +57,30 @@ describe('useMotionSafeLoop', () => {
     );
 
     expect(result.current.animate).toEqual({ scale: 1 });
-    expect(result.current.transition).toEqual({ duration: 0 });
+    expect(result.current.transition).toEqual({ duration: 0, delay: 0, repeat: 0, repeatDelay: 0 });
+  });
+
+  it('preserves non-looping transition properties but zeroes duration/delay/repeat/repeatDelay when reduced motion is requested', () => {
+    // Naively spreading the caller's transition would carry repeat: Infinity
+    // and delay straight through, turning this into an infinitely-looping
+    // zero-duration transition (or a delayed flash to the wrong state)
+    // instead of an immediate static settle - both keys must be forced to 0
+    // even though other properties like `ease` are preserved.
+    mockedUseReducedMotion.mockReturnValue(true);
+
+    const { result } = renderHook(() =>
+      useMotionSafeLoop(
+        { x: ['-100%', '200%'] },
+        { duration: 1.8, delay: 0.5, repeat: Infinity, repeatDelay: 2, ease: 'linear' },
+      ),
+    );
+
+    expect(result.current.transition).toEqual({
+      duration: 0,
+      delay: 0,
+      repeat: 0,
+      repeatDelay: 0,
+      ease: 'linear',
+    });
   });
 });
