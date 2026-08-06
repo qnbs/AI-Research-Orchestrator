@@ -31,14 +31,19 @@ Review bots are **not** substitutes for the deterministic gates above.
 `pwa-e2e.yml`'s job (`PWA service-worker registration`) is not yet in the GitHub
 ruleset's required-status-checks list below — workflow-level blocking (no
 `continue-on-error`, red on failure) is in place now, but adding it as a
-GitHub-_enforced_ merge blocker needs the same ruleset update as the other
-pending items in this table (maintainer action, tracked with the
-conversation-resolution / strict-up-to-date items below).
+GitHub-_enforced_ merge blocker needs a separate ruleset update (maintainer
+action: add a `required_status_checks` entry for this context) — independent
+of the conversation-resolution / strict-up-to-date items below, which are
+already enabled.
 
-### Live ruleset (2026-08-03)
+### Live ruleset (2026-08-06)
 
 Repository ruleset **`mainrules`** (`id` 20291814) targets `~DEFAULT_BRANCH`,
-enforcement **active**:
+enforcement **active**. Re-verified directly against the GitHub API
+(`gh api repos/qnbs/AI-Research-Orchestrator/rulesets/20291814`) rather than
+trusting this doc's prior text — `required_review_thread_resolution` and
+`strict_required_status_checks_policy` were already `true` as of the
+ruleset's `updated_at` (2026-08-03T14:07:58+02:00), predating that prior text:
 
 | Rule                                                                            | Status                                                               |
 | ------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
@@ -47,9 +52,9 @@ enforcement **active**:
 | Required status checks (11 contexts below)                                      | On — names match workflow job titles                                 |
 | Code scanning (CodeQL errors / high+)                                           | On                                                                   |
 | Code quality (errors)                                                           | On                                                                   |
-| Require conversation resolution                                                 | **Off** — **enable** (2026-08-03 post-merge review #213)             |
-| Require branch up to date before merge (`strict_required_status_checks_policy`) | **Off** — **enable**                                                 |
-| Dismiss stale reviews on push                                                   | **Off** — **enable** for latest-head review integrity (PR #213 gap)  |
+| Require conversation resolution (`required_review_thread_resolution`)           | **On**                                                               |
+| Require branch up to date before merge (`strict_required_status_checks_policy`) | **On**                                                               |
+| Dismiss stale reviews on push (`dismiss_stale_reviews_on_push`)                 | **Off** — **enable** for latest-head review integrity (PR #213 gap)  |
 
 Required check contexts currently configured:
 
