@@ -34,6 +34,7 @@ import {
   CoAuthorshipNetwork,
   CHART_PALETTE,
 } from './dashboard/DashboardSubComponents';
+import { ChartAccessibleTable } from './charts/ChartAccessibleTable';
 
 interface DashboardViewProps {
   onFilterChange: (f: Partial<KnowledgeBaseFilter>) => void;
@@ -366,42 +367,69 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({ onFilterChange, 
         <CoAuthorshipNetwork articles={articles} />
       </motion.div>
 
-      {/* Screen-reader data tables */}
+      {/* Screen-reader data tables — twin every chart that relies on color alone
+          (pie/treemap) as well as the two bar charts, so no chart is color-only. */}
       <div className="sr-only" aria-label={t('dashboard.a11y.tables')}>
-        <table>
-          <caption>{t('dashboard.a11y.years_caption')}</caption>
-          <thead>
-            <tr>
-              <th>{t('dashboard.a11y.year')}</th>
-              <th>{t('dashboard.a11y.articles')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.years.map((r) => (
-              <tr key={r.year}>
-                <td>{r.year}</td>
-                <td>{r.count}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        <table>
-          <caption>{t('dashboard.a11y.journals_caption')}</caption>
-          <thead>
-            <tr>
-              <th>{t('dashboard.a11y.journal')}</th>
-              <th>{t('dashboard.a11y.articles')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.journals.map((r) => (
-              <tr key={r.fullName}>
-                <td>{r.name}</td>
-                <td>{r.count}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <ChartAccessibleTable
+          caption={t('dashboard.a11y.years_caption')}
+          columns={[
+            { key: 'year', label: t('dashboard.a11y.year'), render: (r) => r.year },
+            { key: 'count', label: t('dashboard.a11y.articles'), render: (r) => r.count },
+          ]}
+          rows={data.years}
+          rowKey={(r) => r.year}
+        />
+        <ChartAccessibleTable
+          caption={t('dashboard.a11y.journals_caption')}
+          columns={[
+            { key: 'name', label: t('dashboard.a11y.journal'), render: (r) => r.name },
+            { key: 'count', label: t('dashboard.a11y.articles'), render: (r) => r.count },
+          ]}
+          rows={data.journals}
+          rowKey={(r) => r.fullName}
+        />
+        <ChartAccessibleTable
+          caption={t('dashboard.a11y.types_caption')}
+          columns={[
+            { key: 'name', label: t('dashboard.a11y.type'), render: (r) => r.name },
+            { key: 'value', label: t('dashboard.a11y.articles'), render: (r) => r.value },
+          ]}
+          rows={data.types}
+          // Disambiguated, not derived from the translated display label: an
+          // empty articleType bucket renders as "Other" (dashboard.type.other)
+          // and can coexist with a genuine articleType === "Other" bucket,
+          // which would otherwise collide on the same React key.
+          rowKey={(r) => (r.articleType ? `type:${r.articleType}` : 'type:__missing__')}
+        />
+        <ChartAccessibleTable
+          caption={t('dashboard.a11y.oa_caption')}
+          columns={[
+            { key: 'name', label: t('dashboard.a11y.access_status'), render: (r) => r.name },
+            { key: 'value', label: t('dashboard.a11y.articles'), render: (r) => r.value },
+          ]}
+          rows={data.oa}
+          rowKey={(r) => r.name}
+        />
+        <ChartAccessibleTable
+          caption={t('dashboard.a11y.source_caption')}
+          columns={[
+            { key: 'name', label: t('dashboard.a11y.source'), render: (r) => r.name },
+            { key: 'value', label: t('dashboard.a11y.articles'), render: (r) => r.value },
+          ]}
+          rows={data.source}
+          rowKey={(r) => r.name}
+        />
+        {data.keywords.length > 0 && (
+          <ChartAccessibleTable
+            caption={t('dashboard.a11y.keywords_caption')}
+            columns={[
+              { key: 'name', label: t('dashboard.a11y.keyword'), render: (r) => r.name },
+              { key: 'value', label: t('dashboard.a11y.articles'), render: (r) => r.value },
+            ]}
+            rows={data.keywords}
+            rowKey={(r) => r.name}
+          />
+        )}
       </div>
     </div>
   );

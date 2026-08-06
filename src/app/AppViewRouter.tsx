@@ -33,6 +33,7 @@ type AppViewRouterProps = Pick<
   | 'prefilledTopic'
   | 'handleFormSubmit'
   | 'handleSaveReport'
+  | 'handleCancelResearch'
   | 'handleNewSearch'
   | 'handlePrefillConsumed'
   | 'handleViewEntry'
@@ -92,6 +93,7 @@ export function AppViewRouter(props: AppViewRouterProps): React.ReactElement {
     prefilledTopic,
     handleFormSubmit,
     handleSaveReport,
+    handleCancelResearch,
     handleNewSearch,
     handlePrefillConsumed,
     handleViewEntry,
@@ -150,6 +152,7 @@ export function AppViewRouter(props: AppViewRouterProps): React.ReactElement {
             prefilledTopic={prefilledTopic}
             handleFormSubmit={handleFormSubmit}
             handleSaveReport={handleSaveReport}
+            handleCancelResearch={handleCancelResearch}
             handleNewSearch={handleNewSearch}
             onPrefillConsumed={handlePrefillConsumed}
             handleViewReportFromHistory={handleViewEntry}
