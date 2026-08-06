@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import { useReducedMotion } from 'framer-motion';
@@ -73,5 +73,25 @@ describe('LoadingIndicator CyberneticSpinner reduced-motion', () => {
 
     expect(container.querySelectorAll('animateTransform')).toHaveLength(0);
     expect(container.querySelectorAll('animate')).toHaveLength(0);
+  });
+});
+
+describe('LoadingIndicator cancel control', () => {
+  it('renders no cancel button when the cancel prop is not provided', () => {
+    wrap(<LoadingIndicator {...baseProps} />);
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+  });
+
+  it('renders the caller-provided label and invokes onClick when clicked', () => {
+    const onClick = vi.fn();
+    // A caller-controlled label proves LoadingIndicator itself makes no
+    // assumption about translation/locale - it just renders what it's given.
+    wrap(<LoadingIndicator {...baseProps} cancel={{ label: 'Stop the thing', onClick }} />);
+
+    const button = screen.getByRole('button', { name: 'Stop the thing' });
+    expect(button).toBeInTheDocument();
+
+    fireEvent.click(button);
+    expect(onClick).toHaveBeenCalledTimes(1);
   });
 });

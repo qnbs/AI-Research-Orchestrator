@@ -23,6 +23,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts';
+import { ChartAccessibleTable } from '../charts/ChartAccessibleTable';
 
 const categoryIcons: { [key: string]: React.FC<React.SVGProps<SVGSVGElement>> } = {
   'Open Access Mega-Journals': UnlockIcon,
@@ -420,29 +421,49 @@ export const AnalysisCharts: React.FC = () => {
         </h3>
         <div className="h-48">
           {analyticsData.topicData.length > 0 ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={analyticsData.topicData}
-                  dataKey="value"
-                  nameKey="name"
-                  innerRadius="70%"
-                  outerRadius="95%"
-                  paddingAngle={2}
-                >
-                  {analyticsData.topicData.map((entry, index) => (
-                    <Cell key={entry.name} fill={TOPIC_COLORS[index % TOPIC_COLORS.length]} />
-                  ))}
-                </Pie>
-                <Legend
-                  layout="vertical"
-                  align="right"
-                  verticalAlign="middle"
-                  wrapperStyle={{ fontSize: 11, color: tickColor }}
+            <>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={analyticsData.topicData}
+                    dataKey="value"
+                    nameKey="name"
+                    innerRadius="70%"
+                    outerRadius="95%"
+                    paddingAngle={2}
+                  >
+                    {analyticsData.topicData.map((entry, index) => (
+                      <Cell key={entry.name} fill={TOPIC_COLORS[index % TOPIC_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Legend
+                    layout="vertical"
+                    align="right"
+                    verticalAlign="middle"
+                    wrapperStyle={{ fontSize: 11, color: tickColor }}
+                  />
+                  <RechartsTooltip />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="sr-only">
+                <ChartAccessibleTable
+                  caption={t('journals.charts.topic_landscape')}
+                  columns={[
+                    { key: 'name', label: t('journals.charts.topic'), render: (r) => r.name },
+                    {
+                      key: 'value',
+                      // Word-occurrence count across article titles, not a count
+                      // of distinct articles - a title mentioning a topic twice
+                      // counts twice, so "Articles" would misstate the data.
+                      label: t('journals.charts.occurrences'),
+                      render: (r) => r.value,
+                    },
+                  ]}
+                  rows={analyticsData.topicData}
+                  rowKey={(r) => r.name}
                 />
-                <RechartsTooltip />
-              </PieChart>
-            </ResponsiveContainer>
+              </div>
+            </>
           ) : (
             <p className="h-full flex items-center justify-center text-sm text-text-secondary">
               {t('charts.no_topic_data')}
