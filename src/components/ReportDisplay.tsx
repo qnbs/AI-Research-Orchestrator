@@ -624,11 +624,21 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(function R
               </div>
             }
           >
-            <ChatInterface
-              history={chatHistory}
-              isChatting={isChatting}
-              onSendMessage={onSendMessage}
-            />
+            {isPartial ? (
+              // useChat only creates a session once reportStatus === 'done'
+              // (deliberately, see useChat.ts) - rendering the interactive
+              // ChatInterface here would let users type messages that
+              // sendMessage silently drops (no session to send through).
+              <p className="text-sm text-text-secondary p-2">
+                {t('report.partial.chatUnavailable')}
+              </p>
+            ) : (
+              <ChatInterface
+                history={chatHistory}
+                isChatting={isChatting}
+                onSendMessage={onSendMessage}
+              />
+            )}
           </AccordionSection>
         </div>
       </div>

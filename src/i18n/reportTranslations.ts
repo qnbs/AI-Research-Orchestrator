@@ -63,6 +63,8 @@ export const reportTranslations = {
       'PARTIAL REPORT — this research run was cancelled before finishing. Results below are incomplete and have not been fully verified.',
     'report.partial.bannerWithPhase':
       'PARTIAL REPORT — this research run was cancelled during "{phase}" before finishing. Results below are incomplete and have not been fully verified.',
+    'report.partial.chatUnavailable':
+      'Chat is unavailable for a partial report — the underlying research run did not finish, so there is no complete synthesis to chat against.',
     'report.saveModal.title': 'Save Report',
     'report.saveModal.message': 'Are you sure you want to save this report to your Knowledge Base?',
     'report.saveModal.confirm': 'Save',
@@ -135,6 +137,8 @@ export const reportTranslations = {
       'TEILBERICHT — dieser Forschungslauf wurde vor Abschluss abgebrochen. Die unten stehenden Ergebnisse sind unvollständig und wurden nicht vollständig verifiziert.',
     'report.partial.bannerWithPhase':
       'TEILBERICHT — dieser Forschungslauf wurde während „{phase}" vor Abschluss abgebrochen. Die unten stehenden Ergebnisse sind unvollständig und wurden nicht vollständig verifiziert.',
+    'report.partial.chatUnavailable':
+      'Chat ist für einen Teilbericht nicht verfügbar — der zugrunde liegende Forschungslauf wurde nicht abgeschlossen, daher gibt es keine vollständige Synthese, über die man chatten könnte.',
     'report.saveModal.title': 'Bericht speichern',
     'report.saveModal.message':
       'Möchten Sie diesen Bericht wirklich in Ihrer Knowledge Base speichern?',
