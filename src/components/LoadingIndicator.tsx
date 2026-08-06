@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from '../hooks/useTranslation';
+import { useMotionSafeLoop } from '../hooks/useMotionSafeLoop';
 
 interface LoadingIndicatorProps {
   title: string;
@@ -112,6 +113,10 @@ const PipelineTimeline: React.FC<{
 }> = ({ phases, currentIndex }) => {
   const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const activeChipPulse = useMotionSafeLoop(
+    { scaleX: [0.4, 1, 0.4] },
+    { repeat: Infinity, duration: 1.4 },
+  );
 
   // Auto-scroll active chip into view
   useEffect(() => {
@@ -166,8 +171,8 @@ const PipelineTimeline: React.FC<{
             {isActive && (
               <motion.span
                 className="inline-block w-4 h-[2px] rounded-full bg-brand-accent/60 mt-0.5"
-                animate={{ scaleX: [0.4, 1, 0.4] }}
-                transition={{ repeat: Infinity, duration: 1.4 }}
+                animate={activeChipPulse.animate}
+                transition={activeChipPulse.transition}
               />
             )}
           </motion.div>
@@ -191,6 +196,10 @@ export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
   const [currentPhaseIndex, setCurrentPhaseIndex] = useState(0);
   const [currentSubPhase, setCurrentSubPhase] = useState('');
   const subPhaseIntervalRef = useRef<number | null>(null);
+  const shimmer = useMotionSafeLoop(
+    { x: ['-100%', '200%'] },
+    { repeat: Infinity, duration: 1.8, ease: 'linear' },
+  );
 
   useEffect(() => {
     const indexFromId =
@@ -255,8 +264,8 @@ export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
           {/* Shimmer overlay */}
           <motion.div
             className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-            animate={{ x: ['-100%', '200%'] }}
-            transition={{ repeat: Infinity, duration: 1.8, ease: 'linear' }}
+            animate={shimmer.animate}
+            transition={shimmer.transition}
             style={{ width: '50%' }}
           />
         </div>
