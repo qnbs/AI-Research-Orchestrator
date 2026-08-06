@@ -1,5 +1,5 @@
 import React from 'react';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
@@ -19,8 +19,18 @@ vi.mock('framer-motion', async (importOriginal) => {
 
 const mockedUseReducedMotion = vi.mocked(useReducedMotion);
 
-// jsdom does not implement scrollIntoView; PipelineTimeline's auto-scroll effect calls it.
-Element.prototype.scrollIntoView = vi.fn();
+// jsdom does not implement scrollIntoView; PipelineTimeline's auto-scroll effect
+// calls it. Installed/restored per test so the mock doesn't leak into other test
+// files sharing this jsdom global.
+const originalScrollIntoView = Element.prototype.scrollIntoView;
+
+beforeEach(() => {
+  Element.prototype.scrollIntoView = vi.fn();
+});
+
+afterEach(() => {
+  Element.prototype.scrollIntoView = originalScrollIntoView;
+});
 
 const baseProps = {
   title: 'Orchestrator AI',
