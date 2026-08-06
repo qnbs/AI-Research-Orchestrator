@@ -24,6 +24,7 @@ interface OrchestratorViewProps {
   prefilledTopic: string | null;
   handleFormSubmit: (data: ResearchInput) => void;
   handleSaveReport: () => void;
+  handleCancelResearch: () => void;
   handleNewSearch: () => void;
   onPrefillConsumed: () => void;
   handleViewReportFromHistory: (entry: KnowledgeBaseEntry) => void;
@@ -95,6 +96,7 @@ const OrchestratorViewComponent: React.FC<OrchestratorViewProps> = ({
   prefilledTopic,
   handleFormSubmit,
   handleSaveReport,
+  handleCancelResearch,
   handleNewSearch,
   onPrefillConsumed,
   handleViewReportFromHistory,
@@ -176,6 +178,7 @@ const OrchestratorViewComponent: React.FC<OrchestratorViewProps> = ({
           phaseDetails={phaseDetailsById}
           timelineIndex={timelineIndex}
           footerText="This may take up to a minute. The AI is performing multiple complex steps, including live database searches and synthesis."
+          onCancel={handleCancelResearch}
         />
       )}
 

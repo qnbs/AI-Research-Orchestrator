@@ -134,6 +134,7 @@ const ResearchBody: React.FC<{
           phase={displayPhase}
           phases={researchPhases}
           phaseDetails={researchPhaseDetails}
+          onCancel={onClearResearch}
         />
       </div>
     );

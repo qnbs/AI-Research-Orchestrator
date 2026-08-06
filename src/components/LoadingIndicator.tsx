@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from '../hooks/useTranslation';
+import { XIcon } from './icons/XIcon';
 
 interface LoadingIndicatorProps {
   title: string;
@@ -13,6 +14,7 @@ interface LoadingIndicatorProps {
   phaseId?: string;
   footerText?: string;
   swipeHintText?: string;
+  onCancel?: () => void;
 }
 
 // ── Cybernetic Spinner (unchanged) ───────────────────────────────────────────
@@ -187,7 +189,9 @@ export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
   phaseId,
   footerText,
   swipeHintText,
+  onCancel,
 }) => {
+  const { t } = useTranslation();
   const [currentPhaseIndex, setCurrentPhaseIndex] = useState(0);
   const [currentSubPhase, setCurrentSubPhase] = useState('');
   const subPhaseIntervalRef = useRef<number | null>(null);
@@ -284,6 +288,17 @@ export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
         )}
 
         {footerText && <p className="text-xs text-text-secondary/70 mt-4">{footerText}</p>}
+
+        {onCancel && (
+          <button
+            type="button"
+            onClick={onCancel}
+            className="mt-6 inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md text-text-primary bg-surface border border-border hover:bg-surface-hover focus-ring-aa touch-target-aa"
+          >
+            <XIcon className="h-4 w-4" />
+            {t('orchestrator.cancel.button')}
+          </button>
+        )}
       </div>
     </div>
   );
