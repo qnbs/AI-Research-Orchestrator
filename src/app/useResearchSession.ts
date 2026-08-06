@@ -392,6 +392,17 @@ export function useResearchSession({
     }
   }, [report, localResearchInput, saveReport, haptic]);
 
+  /**
+   * Cancels the in-flight stream without superseding it (generationIdRef is left
+   * untouched) so the existing abort-handling path in handleFormSubmit's catch
+   * block runs as usual: it persists a resumable checkpoint and surfaces a
+   * "partial research saved" notification, exactly like the supersede-by-new-
+   * search/new-report paths already do internally.
+   */
+  const handleCancelResearch = useCallback(() => {
+    streamAbortRef.current?.abort();
+  }, []);
+
   const handleNewSearch = useCallback(() => {
     generationIdRef.current += 1;
     streamAbortRef.current?.abort();
@@ -455,6 +466,7 @@ export function useResearchSession({
     handleFormSubmit,
     handleRerunCheckpoint,
     handleSaveReport,
+    handleCancelResearch,
     handleNewSearch,
     openStoredResearchEntry,
     handleTagsUpdate,

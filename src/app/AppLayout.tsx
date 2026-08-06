@@ -12,12 +12,14 @@ import { ContentSpinner, FullScreenSpinner } from './AppSpinners';
 import { useAppLogic } from './useAppLogic';
 import { AppViewRouter } from './AppViewRouter';
 import { OnboardingView, CommandPalette, QuickAddModal, AgentDebugger } from './lazyViews';
+import { useElementHeight } from '../hooks/useElementHeight';
 
 /**
  * App shell: banners, chrome, and view routing.
  * State/effects/handlers live in useAppLogic (composed domain hooks).
  */
 const AppLayout: React.FC = () => {
+  const [chromeRef, chromeHeight] = useElementHeight<HTMLDivElement>();
   const logic = useAppLogic();
   const {
     isLoading,
@@ -64,22 +66,27 @@ const AppLayout: React.FC = () => {
   return (
     <>
       <SkipToContentLink />
-      <Header
-        onViewChange={handleViewChange}
-        currentView={currentView}
-        knowledgeBaseArticleCount={uniqueArticles.length}
-        hasReports={knowledgeBase.length > 0}
-        isResearching={isResearching}
-        onQuickAdd={() => setIsQuickAddModalOpen(true)}
-      />
-      <OfflineBanner />
-      <DemoDataBanner />
-      <UpdateAvailableBanner />
-      <ServiceWorkerRegistrationFailedBanner />
+      <div ref={chromeRef} className="fixed top-0 left-0 right-0 z-20">
+        <Header
+          onViewChange={handleViewChange}
+          currentView={currentView}
+          knowledgeBaseArticleCount={uniqueArticles.length}
+          hasReports={knowledgeBase.length > 0}
+          isResearching={isResearching}
+          onQuickAdd={() => setIsQuickAddModalOpen(true)}
+        />
+        <OfflineBanner />
+        <DemoDataBanner />
+        <UpdateAvailableBanner />
+        <ServiceWorkerRegistrationFailedBanner />
+      </div>
       <main
         id="main-content"
         tabIndex={-1}
+        // pt-20/md:pt-36 are the pre-measurement fallback (first paint, no-JS);
+        // once chromeHeight is measured, the inline style below supersedes them.
         className="container mx-auto px-4 sm:px-6 lg:px-8 md:pt-36 pt-20 pb-24 focus-ring-aa rounded-sm"
+        style={chromeHeight != null ? { paddingTop: `${chromeHeight}px` } : undefined}
       >
         <Suspense fallback={<ContentSpinner label={t('common.loading')} />}>
           <AppViewRouter {...logic} />

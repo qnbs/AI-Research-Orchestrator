@@ -138,7 +138,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
   const displayCount = knowledgeBaseArticleCount > 999 ? '999+' : knowledgeBaseArticleCount;
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-20 transition-all duration-300 border-b border-border bg-surface/70 backdrop-blur-xl shadow-sm">
+    <header className="transition-all duration-300 border-b border-border bg-surface/70 backdrop-blur-xl shadow-sm">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* --- DESKTOP HEADER (TWO-LINE) --- */}
         <div className="hidden md:flex flex-col py-3 gap-3">
