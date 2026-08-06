@@ -498,6 +498,78 @@ describe('export helpers', () => {
     });
   });
 
+  it('exportCitations bib decodes HTML entities via the stripHtmlTags RETURN_DOM_FRAGMENT path', () => {
+    const articles: AggregatedArticle[] = [
+      {
+        pmid: '1',
+        title: 'Risk &amp; benefit of therapy',
+        authors: 'A1',
+        journal: 'J',
+        pubYear: '2020',
+        summary: 'S',
+        relevanceScore: 1,
+        relevanceExplanation: '',
+        keywords: [],
+        isOpenAccess: false,
+        sourceTitle: 'src',
+        sourceId: 'sid',
+      },
+    ];
+    const cite: Settings['export']['citation'] = {
+      includeAbstract: false,
+      includeKeywords: false,
+      includeTags: false,
+      includePmcid: false,
+    };
+    exportCitations(articles, cite, 'bib');
+    const blob = vi.mocked(URL.createObjectURL).mock.calls.at(-1)?.[0] as Blob;
+    return blob.text().then((content) => {
+      // "&amp;" must decode to a literal "&" (proving DOMPurify's
+      // RETURN_DOM_FRAGMENT + .textContent still decodes entities like the
+      // old innerHTML-readback path did), which BibTeX then escapes to "\&" -
+      // not survive as the literal, un-decoded string "&amp;".
+      expect(content).toContain('Risk \\& benefit of');
+      expect(content).not.toContain('&amp;');
+    });
+  });
+
+  it('exportCitations bib leaves HTML-entity-encoded angle brackets as inert decoded text, never re-parsed as a tag', () => {
+    const articles: AggregatedArticle[] = [
+      {
+        pmid: '1',
+        title: 'Safe title &lt;script&gt;alert(1)&lt;/script&gt;',
+        authors: 'A1',
+        journal: 'J',
+        pubYear: '2020',
+        summary: 'S',
+        relevanceScore: 1,
+        relevanceExplanation: '',
+        keywords: [],
+        isOpenAccess: false,
+        sourceTitle: 'src',
+        sourceId: 'sid',
+      },
+    ];
+    const cite: Settings['export']['citation'] = {
+      includeAbstract: false,
+      includeKeywords: false,
+      includeTags: false,
+      includePmcid: false,
+    };
+    exportCitations(articles, cite, 'bib');
+    const blob = vi.mocked(URL.createObjectURL).mock.calls.at(-1)?.[0] as Blob;
+    return blob.text().then((content) => {
+      // HTML entity references decode at the character level during parsing, not
+      // as a second reparse pass over the result - "&lt;script&gt;" becomes the
+      // literal characters "<script>" as plain text content, never a real,
+      // strippable <script> element. This is exactly why the output is safe to
+      // write as plain text (BibTeX field / clipboard): the decoded angle
+      // brackets can never execute, only display, in any of this app's sinks.
+      expect(content).toContain('Safe title <script>alert(1)</script>');
+      expect(content).not.toContain('&lt;script&gt;');
+    });
+  });
+
   it('exportCitations builds ris file with optional fields', () => {
     const articles: AggregatedArticle[] = [
       {
