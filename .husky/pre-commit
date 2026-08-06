@@ -1,2 +1,8 @@
 set -eu
-pnpm exec lint-staged && pnpm run typecheck && pnpm run format:check && pnpm run check:conflict-markers
+# Full `lint` (not just lint-staged) so the verified-tree marker below means the
+# same thing pre-push checks - lint-staged only auto-fixes staged files, it
+# doesn't verify the whole repo the way pre-push's `pnpm run lint` does. This
+# is fast in practice: eslint's own --cache skips unchanged files.
+pnpm exec lint-staged && pnpm run typecheck && pnpm run lint && pnpm run format:check && pnpm run check:conflict-markers
+mkdir -p node_modules/.cache
+git write-tree > node_modules/.cache/.last-verified-tree
