@@ -99,7 +99,7 @@ const SettingsViewLayout: React.FC = () => {
 
   return (
     <div className="animate-fadeIn">
-      <div className="flex justify-between items-center mb-8">
+      <div className="sticky top-20 md:top-24 z-10 flex justify-between items-center mb-8 py-2 -mx-4 px-4 bg-surface/70 backdrop-blur-xl border-b border-border/50">
         <div>
           <h1 className="text-4xl font-bold brand-gradient-text">{t('settings.title')}</h1>
           <p className="mt-1 text-lg text-text-secondary">{t('settings.subtitle')}</p>
