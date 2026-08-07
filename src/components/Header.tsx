@@ -360,7 +360,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
                     type="button"
                     onClick={() => handleMobileMenuSelect(() => onViewChange('dashboard'))}
                     disabled={!hasReports}
-                    className={`w-full text-left flex items-center gap-3 px-4 py-3 text-sm hover:bg-surface-hover border-b border-border/50 ${!hasReports ? 'opacity-40 cursor-not-allowed' : ''}`}
+                    className={`w-full text-left flex items-center gap-3 px-4 py-3 text-sm hover:bg-surface-hover focus-ring-aa border-b border-border/50 ${!hasReports ? 'opacity-40 cursor-not-allowed' : ''}`}
                   >
                     <ChartBarIcon className="h-5 w-5" /> {t('nav.dashboard')}
                   </button>
@@ -368,7 +368,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
                     type="button"
                     onClick={() => handleMobileMenuSelect(() => onViewChange('history'))}
                     disabled={!hasReports}
-                    className={`w-full text-left flex items-center gap-3 px-4 py-3 text-sm hover:bg-surface-hover border-b border-border/50 ${!hasReports ? 'opacity-40 cursor-not-allowed' : ''}`}
+                    className={`w-full text-left flex items-center gap-3 px-4 py-3 text-sm hover:bg-surface-hover focus-ring-aa border-b border-border/50 ${!hasReports ? 'opacity-40 cursor-not-allowed' : ''}`}
                   >
                     <HistoryIcon className="h-5 w-5" /> {t('nav.history')}
                   </button>
