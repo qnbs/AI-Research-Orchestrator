@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useTranslation } from '../hooks/useTranslation';
+import { useMotionSafeLoop } from '../hooks/useMotionSafeLoop';
 import { XIcon } from './icons/XIcon';
 
 interface LoadingIndicatorProps {
@@ -20,79 +21,105 @@ interface LoadingIndicatorProps {
   cancel?: { label: string; onClick: () => void };
 }
 
-// ── Cybernetic Spinner (unchanged) ───────────────────────────────────────────
-const CyberneticSpinner: React.FC = () => (
-  <svg viewBox="0 0 100 100" className="w-24 h-24">
-    <circle
-      cx="50"
-      cy="50"
-      r="45"
-      fill="none"
-      stroke="var(--color-border-subtle)"
-      strokeWidth="1"
-      opacity="0.5"
-    />
-    <circle
-      cx="50"
-      cy="50"
-      r="35"
-      fill="none"
-      stroke="var(--color-border-subtle)"
-      strokeWidth="1"
-      strokeDasharray="3 3"
-      opacity="0.5"
-    />
-    <circle
-      cx="50"
-      cy="50"
-      r="45"
-      fill="none"
-      stroke="var(--color-brand-accent)"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeDasharray="60 220"
-    >
-      <animateTransform
-        attributeName="transform"
-        type="rotate"
-        from="0 50 50"
-        to="360 50 50"
-        dur="8s"
-        repeatCount="indefinite"
+// ── Cybernetic Spinner ────────────────────────────────────────────────────────
+// SVG SMIL animations (animateTransform/animate) are not covered by
+// prefers-reduced-motion CSS media queries or useMotionSafeLoop (which only
+// wraps Framer Motion) - they must be conditionally omitted here instead.
+const CyberneticSpinner: React.FC = () => {
+  const prefersReducedMotion = useReducedMotion();
+  // Conservative: only render the indefinite rotation/pulse when we're
+  // certain the user does NOT want reduced motion (matches useMotionSafeLoop's
+  // handling of useReducedMotion()'s unresolved null on first render).
+  const animateEnabled = prefersReducedMotion === false;
+
+  return (
+    <svg viewBox="0 0 100 100" className="w-24 h-24">
+      <circle
+        cx="50"
+        cy="50"
+        r="45"
+        fill="none"
+        stroke="var(--color-border-subtle)"
+        strokeWidth="1"
+        opacity="0.5"
       />
-    </circle>
-    <circle
-      cx="50"
-      cy="50"
-      r="35"
-      fill="none"
-      stroke="var(--color-accent-cyan)"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeDasharray="40 180"
-    >
-      <animateTransform
-        attributeName="transform"
-        type="rotate"
-        from="360 50 50"
-        to="0 50 50"
-        dur="6s"
-        repeatCount="indefinite"
+      <circle
+        cx="50"
+        cy="50"
+        r="35"
+        fill="none"
+        stroke="var(--color-border-subtle)"
+        strokeWidth="1"
+        strokeDasharray="3 3"
+        opacity="0.5"
       />
-    </circle>
-    <circle cx="50" cy="50" r="10" fill="var(--color-brand-accent)">
-      <animate attributeName="r" from="10" to="12" dur="1s" begin="0s" repeatCount="indefinite" />
-      <animate
-        attributeName="opacity"
-        from="1"
-        to="0.5"
-        dur="1s"
-        begin="0s"
-        repeatCount="indefinite"
-      />
-    </circle>
-  </svg>
-);
+      <circle
+        cx="50"
+        cy="50"
+        r="45"
+        fill="none"
+        stroke="var(--color-brand-accent)"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeDasharray="60 220"
+      >
+        {animateEnabled && (
+          <animateTransform
+            attributeName="transform"
+            type="rotate"
+            from="0 50 50"
+            to="360 50 50"
+            dur="8s"
+            repeatCount="indefinite"
+          />
+        )}
+      </circle>
+      <circle
+        cx="50"
+        cy="50"
+        r="35"
+        fill="none"
+        stroke="var(--color-accent-cyan)"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeDasharray="40 180"
+      >
+        {animateEnabled && (
+          <animateTransform
+            attributeName="transform"
+            type="rotate"
+            from="360 50 50"
+            to="0 50 50"
+            dur="6s"
+            repeatCount="indefinite"
+          />
+        )}
+      </circle>
+      <circle cx="50" cy="50" r="10" fill="var(--color-brand-accent)">
+        {animateEnabled && (
+          <>
+            <animate
+              attributeName="r"
+              from="10"
+              to="12"
+              dur="1s"
+              begin="0s"
+              repeatCount="indefinite"
+            />
+            <animate
+              attributeName="opacity"
+              from="1"
+              to="0.5"
+              dur="1s"
+              begin="0s"
+              repeatCount="indefinite"
+            />
+          </>
+        )}
+      </circle>
+    </svg>
+  );
+};
 
 // ── Phase chip short label ────────────────────────────────────────────────────
 function shortLabel(phase: string): string {
@@ -117,6 +144,14 @@ const PipelineTimeline: React.FC<{
 }> = ({ phases, currentIndex }) => {
   const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
+  // Starts/ends at full scale (not the pulse's shrunken midpoint) so
+  // useMotionSafeLoop's reduced-motion collapse leaves the active-step marker
+  // fully visible instead of permanently shrunken; see AgentDebuggerPanel's
+  // livePulse/processingPulse for the same reasoning.
+  const activeChipPulse = useMotionSafeLoop(
+    { scaleX: [1, 0.4, 1] },
+    { repeat: Infinity, duration: 1.4 },
+  );
 
   // Auto-scroll active chip into view
   useEffect(() => {
@@ -171,8 +206,8 @@ const PipelineTimeline: React.FC<{
             {isActive && (
               <motion.span
                 className="inline-block w-4 h-[2px] rounded-full bg-brand-accent/60 mt-0.5"
-                animate={{ scaleX: [0.4, 1, 0.4] }}
-                transition={{ repeat: Infinity, duration: 1.4 }}
+                animate={activeChipPulse.animate}
+                transition={activeChipPulse.transition}
               />
             )}
           </motion.div>
@@ -197,6 +232,10 @@ export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
   const [currentPhaseIndex, setCurrentPhaseIndex] = useState(0);
   const [currentSubPhase, setCurrentSubPhase] = useState('');
   const subPhaseIntervalRef = useRef<number | null>(null);
+  const shimmer = useMotionSafeLoop(
+    { x: ['-100%', '200%'] },
+    { repeat: Infinity, duration: 1.8, ease: 'linear' },
+  );
 
   useEffect(() => {
     const indexFromId =
@@ -261,8 +300,8 @@ export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
           {/* Shimmer overlay */}
           <motion.div
             className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-            animate={{ x: ['-100%', '200%'] }}
-            transition={{ repeat: Infinity, duration: 1.8, ease: 'linear' }}
+            animate={shimmer.animate}
+            transition={shimmer.transition}
             style={{ width: '50%' }}
           />
         </div>

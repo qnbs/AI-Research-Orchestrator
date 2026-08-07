@@ -3,12 +3,17 @@ import { motion } from 'framer-motion';
 import { useAppSelector, useAppDispatch } from '../../store/hooks';
 import { toggleDebugger } from '../../store/slices/agentDebugSlice';
 import { useTranslation } from '../../hooks/useTranslation';
+import { useMotionSafeLoop } from '../../hooks/useMotionSafeLoop';
 
 export const AgentDebuggerToggle: React.FC = () => {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const { isVisible, currentTrace } = useAppSelector((s) => s.agentDebug);
   const isRunning = currentTrace?.status === 'running';
+  const runningPulse = useMotionSafeLoop(
+    { scale: [1, 1.35, 1] },
+    { duration: 1, repeat: Infinity },
+  );
 
   return (
     <motion.button
@@ -29,8 +34,8 @@ export const AgentDebuggerToggle: React.FC = () => {
       {isRunning && (
         <motion.span
           className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-brand-accent"
-          animate={{ scale: [1, 1.35, 1] }}
-          transition={{ duration: 1, repeat: Infinity }}
+          animate={runningPulse.animate}
+          transition={runningPulse.transition}
         />
       )}
     </motion.button>
