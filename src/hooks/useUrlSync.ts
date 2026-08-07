@@ -3,6 +3,7 @@ import { View } from '../contexts/UIContext';
 
 export const useUrlSync = (currentView: View, setCurrentView: (view: View) => void) => {
   const isInitialMount = useRef(true);
+  const isInitialStateSync = useRef(true);
 
   // Sync URL Hash -> State (On Load & PopState)
   useEffect(() => {
@@ -20,6 +21,7 @@ export const useUrlSync = (currentView: View, setCurrentView: (view: View) => vo
         'help',
         'dashboard',
         'history',
+        'collections',
       ];
 
       if (hash && validViews.includes(hash as View)) {
@@ -41,6 +43,17 @@ export const useUrlSync = (currentView: View, setCurrentView: (view: View) => vo
 
   // Sync State -> URL Hash
   useEffect(() => {
+    if (isInitialStateSync.current) {
+      // Skip on the very first commit: the hash->state effect above (running in
+      // this same initial commit) is the source of truth for a deep-linked URL.
+      // currentView here still reflects the pre-hydration value from this
+      // render's closure - pushing it now would race that effect's dispatch and
+      // insert a spurious history entry (e.g. #home) before the real view
+      // settles, breaking Back navigation on a fresh #<view> deep link.
+      isInitialStateSync.current = false;
+      return;
+    }
+
     const currentHash = window.location.hash.replace('#', '');
     if (currentHash !== currentView) {
       // In blob environments (like AI Studio) or sandboxes, pushState is often blocked for security.

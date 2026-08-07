@@ -1,3 +1,11 @@
 # Mirror deploy.yml fast gates before push — catches TS/lint/format issues missed when commit used --no-verify.
 set -eu
+verified_tree_file="node_modules/.cache/.last-verified-tree"
+current_tree=$(git rev-parse HEAD^{tree} 2>/dev/null || true)
+if [ -n "$current_tree" ] && [ -f "$verified_tree_file" ] && [ "$(cat "$verified_tree_file")" = "$current_tree" ]; then
+  echo "pre-push: HEAD's tree was already verified by pre-commit (typecheck+lint+format) — skipping the redundant re-run."
+  exit 0
+fi
 pnpm run typecheck && pnpm run lint && pnpm run format:check
+mkdir -p node_modules/.cache
+[ -n "$current_tree" ] && echo "$current_tree" > "$verified_tree_file" || true
