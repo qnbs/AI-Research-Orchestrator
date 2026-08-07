@@ -77,6 +77,7 @@ export const defaultSettings: Settings = {
     defaultSort: 'relevance',
   },
   hasCompletedOnboarding: false,
+  developerMode: false,
 };
 
 interface SettingsState {

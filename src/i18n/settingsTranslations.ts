@@ -49,6 +49,11 @@ export const settingsTranslations = {
       'Manage performance-related settings. Disabling animations may improve responsiveness on older devices.',
     'settings.performance.enable_animations': 'Enable UI Animations',
 
+    'settings.developerMode.title': 'Developer Mode',
+    'settings.developerMode.desc':
+      'Shows internal diagnostic tooling, such as the Agent Debugger, in the header. Intended for development and troubleshooting.',
+    'settings.developerMode.toggle': 'Show Agent Debugger in header',
+
     // ── AI tab ──
     'settings.ai.desc': "Fine-tune the AI's behavior, language, and core instructions.",
     'settings.ai.persona': 'AI Persona',
@@ -305,6 +310,11 @@ export const settingsTranslations = {
     'settings.performance.desc':
       'Leistungsbezogene Einstellungen verwalten. Das Deaktivieren von Animationen kann die Reaktionsfähigkeit auf älteren Geräten verbessern.',
     'settings.performance.enable_animations': 'UI-Animationen aktivieren',
+
+    'settings.developerMode.title': 'Entwicklermodus',
+    'settings.developerMode.desc':
+      'Zeigt interne Diagnosewerkzeuge, wie den Agent-Debugger, in der Kopfzeile an. Gedacht für Entwicklung und Fehlersuche.',
+    'settings.developerMode.toggle': 'Agent-Debugger in der Kopfzeile anzeigen',
 
     'settings.ai.desc': 'Verhalten, Sprache und Kernanweisungen der KI fein abstimmen.',
     'settings.ai.persona': 'KI-Persona',
