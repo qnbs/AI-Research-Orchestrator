@@ -4,5 +4,13 @@ set -eu
 # doesn't verify the whole repo the way pre-push's `pnpm run lint` does. This
 # is fast in practice: eslint's own --cache skips unchanged files.
 pnpm exec lint-staged && pnpm run typecheck && pnpm run lint && pnpm run format:check && pnpm run check:conflict-markers
-mkdir -p node_modules/.cache
-git write-tree > node_modules/.cache/.last-verified-tree
+
+# The checks above ran against the working directory, not the staged index -
+# only record the tree as verified when the two are identical (no unstaged
+# modifications, no untracked files). Otherwise the marker could bless a tree
+# whose content was never actually checked, and a later commit reproducing
+# that same tree hash would wrongly skip pre-push verification.
+if [ -z "$(git status --porcelain | cut -c2 | tr -d ' \n')" ]; then
+  mkdir -p node_modules/.cache
+  git write-tree > node_modules/.cache/.last-verified-tree
+fi
