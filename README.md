@@ -1,4 +1,4 @@
-# AI Research Orchestration Author
+# AI Research Orchestrator
 
 <p align="center">
   <img src="public/icons/icon-512.png" alt="AI Research Orchestrator logo" width="128" height="128" />
@@ -24,7 +24,7 @@ Provider keys (optional): [Gemini](https://aistudio.google.com/) · OpenAI · An
 
 ### Executive overview
 
-**AI Research Orchestration Author** is a **client-only** React Progressive Web App. It couples **PubMed** (NCBI E-utilities) and optional **arXiv** retrieval with a pluggable AI layer — default live model **Google Gemini `gemini-2.5-flash`**, plus OpenAI, Anthropic, local **Ollama**, or a deterministic **heuristic** engine.
+**AI Research Orchestrator** is a **client-only** React Progressive Web App. It couples **PubMed** (NCBI E-utilities) and optional **arXiv** retrieval with a pluggable AI layer — default live model **Google Gemini `gemini-2.5-flash`**, plus OpenAI, Anthropic, local **Ollama**, or a deterministic **heuristic** engine.
 
 The orchestrator runs a multi-phase pipeline: natural-language intent → Boolean/MeSH-oriented query formulation → live fetch → relevance ranking (semantic when live; lexical in heuristic mode) → streaming, cited synthesis where the runtime supports it.
 
@@ -233,7 +233,7 @@ MIT — see [`LICENSE`](./LICENSE).
 
 ### Überblick
 
-**AI Research Orchestration Author** ist eine **clientseitige** Progressive Web App für biomedizinische Literaturrecherchen: **PubMed** (NCBI) und optional **arXiv**, plus austauschbare KI — Standard-Live-Modell **Google Gemini `gemini-2.5-flash`**, außerdem OpenAI, Anthropic, lokales **Ollama** oder eine deterministische **Heuristik**.
+**AI Research Orchestrator** ist eine **clientseitige** Progressive Web App für biomedizinische Literaturrecherchen: **PubMed** (NCBI) und optional **arXiv**, plus austauschbare KI — Standard-Live-Modell **Google Gemini `gemini-2.5-flash`**, außerdem OpenAI, Anthropic, lokales **Ollama** oder eine deterministische **Heuristik**.
 
 Die Pipeline: natürliche Sprache → boolesche/MeSH-orientierte Query → Live-Abruf → Relevanzranking (semantisch live; lexikalisch in der Heuristik) → gestreamte, zitierte Synthese, soweit der Runtime-Pfad das unterstützt.
 
