@@ -53,6 +53,7 @@ Without a usable live-provider key, while offline, or with **Force Heuristic Mod
 - **Live retrieval** — NCBI E-utilities (and optional arXiv), with rate limits and backoff.
 - **Relevance ranking** — Scores 0–100 from titles and available abstracts (metadata-only records ranked accordingly). Live providers may use model reasoning budgets; heuristic mode uses lexical ranking.
 - **Synthesis** — Streams a cited executive summary when possible. Treat unverified narrative sections as drafts pending primary-source review.
+- **Cancel anytime** — Stop a running pipeline and keep whatever was collected so far; partial results are clearly marked as such (never shown or exported as if the run finished) and remain resumable from a saved checkpoint.
 
 #### 2. Knowledge Base
 
@@ -251,7 +252,7 @@ Ohne nutzbaren Live-Key, offline oder mit **Force Heuristic Mode** (Einstellunge
 
 #### 1. Orchestrator
 
-- Query-Formulierung, NCBI-/arXiv-Abruf mit Rate-Limits, Ranking 0–100 aus Titel/Abstracts, gestreamte Synthese. Unverifizierte Narrative als Entwurf behandeln.
+- Query-Formulierung, NCBI-/arXiv-Abruf mit Rate-Limits, Ranking 0–100 aus Titel/Abstracts, gestreamte Synthese. Unverifizierte Narrative als Entwurf behandeln. Jederzeit abbrechbar — Teilergebnisse bleiben erhalten, sind aber eindeutig als unvollständig markiert (nie als abgeschlossen dargestellt oder exportiert).
 
 #### 2. Wissensdatenbank
 

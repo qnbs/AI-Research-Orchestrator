@@ -4,17 +4,17 @@ globs: src/**/*.ts,src/**/*.tsx
 alwaysApply: false
 ---
 
-# Architektur: KISS, DRY, Dateigröße
+# Architecture: KISS, DRY, File Size
 
-- **KISS / DRY:** Duplikate in `src/hooks/`, `src/services/`, `src/lib/` oder Subkomponenten konsolidieren.
-- **Größe:** Ziel **200–400 Zeilen** pro Datei; **harte Obergrenze 700**. Darüber: View + Context + `use*Logic` splitten (vgl. Authors/Journals/KB).
-- **Redux:** Neue Domain-Zustände in passende Slices; bei Slice-Wachstum Selektoren/Hilfsfunktionen auslagern.
-- **Komplexität:** Tiefe Verschachtelung vermeiden; große JSX-Blöcke extrahieren.
+- **KISS / DRY:** Consolidate duplicates in `src/hooks/`, `src/services/`, `src/lib/`, or subcomponents.
+- **Size:** Target **200-400 lines** per file; **hard ceiling 700**. Above that: split into View + Context + `use*Logic` (see Authors/Journals/Knowledge-Base).
+- **Redux:** Put new domain state in the appropriate slice; as a slice grows, extract selectors/helper functions.
+- **Complexity:** Avoid deep nesting; extract large JSX blocks.
 
 <example>
-Feature wird groß → `FeatureView.tsx` + `FeatureViewContext.tsx` + `useFeatureLogic.ts`.
+A feature grows too large → split into `FeatureView.tsx` + `FeatureViewContext.tsx` + `useFeatureLogic.ts`.
 </example>
 
 <example type="invalid">
-Eine Datei mit Orchestrator-Logik, drei Modalen und Export — alles inline >900 Zeilen.
+A single file with orchestrator logic, three modals, and export — all inline, >900 lines.
 </example>

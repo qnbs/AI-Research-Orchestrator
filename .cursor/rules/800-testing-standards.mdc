@@ -6,12 +6,12 @@ alwaysApply: false
 
 # Testing (Vitest / Playwright)
 
-- **Determinismus:** Keine Abhängigkeit von Uhrzeit, Netzwerk-Randomness oder nicht-deterministischer Reihenfolge. Gemini/PubMed/arXiv/IndexedDB/Crypto **mocken** (`@src/test/setup.ts`, bestehende Specs als Vorlage).
-- **Verboten:** Tests auskommentieren/löschen, um CI grün zu tricksen — Ursachen beheben oder Assertions präzisieren.
-- **Isolation:** Specs unabhängig lauffähig; kein geteilter mutable Global-State zwischen Files.
-- **E2E:** `src/test/e2e/` — stabile Selektoren (`getByRole` bevorzugt); `sleep` nur mit Begründung.
+- **Determinism:** No dependency on wall-clock time, network randomness, or non-deterministic ordering. **Mock** Gemini/PubMed/arXiv/IndexedDB/crypto (`@src/test/setup.ts`, use existing specs as a template).
+- **Forbidden:** Commenting out or deleting tests to trick CI green — fix the root cause or sharpen the assertions instead.
+- **Isolation:** Specs must run independently; no shared mutable global state across files.
+- **E2E:** `src/test/e2e/` — stable selectors (`getByRole` preferred); `sleep` only with justification.
 - **Full local `pnpm run test:e2e` (eight specs under `testDir`, including `a11y.spec.ts`) belongs in CI only**, not on the local dev machine (~3.7 GB RAM) — it reliably gets OOM-killed there regardless of whether the code under test is correct. Locally, only run a single spec file or a `-g "<pattern>"` scoped subset. Blocking CI scopes: Chromium + cross-browser workflows each run the seven-spec list from `docs/project-facts.json` `ciSpecPaths`; `a11y.spec.ts` runs separately in `.github/workflows/a11y.yml`.
 
-Coverage-Schwellen für Logik-Layer: `@vitest.config.ts`. CI nutzt `pnpm run test:coverage`.
+Coverage thresholds for the logic layer: `@vitest.config.ts`. CI uses `pnpm run test:coverage`.
 
-Siehe `@src/test/setup.ts`, `@vitest.config.ts`.
+See `@src/test/setup.ts`, `@vitest.config.ts`.

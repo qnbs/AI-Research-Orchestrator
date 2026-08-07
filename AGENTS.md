@@ -1,6 +1,6 @@
 # AI Research Orchestrator — Agent Guide
 
-Guidance for AI coding agents (Kimi, Cursor, Copilot) working in this repository. Assumes no prior project knowledge. Follow it together with the required reading listed below.
+Guidance for AI coding agents (Claude, Kimi, Cursor, Copilot) working in this repository. Assumes no prior project knowledge. Follow it together with the required reading listed below.
 
 ## Project Overview
 
@@ -18,8 +18,9 @@ Main features: Orchestrator pipeline, Knowledge Base (dedup, faceted filtering, 
 1. **`.github/copilot-instructions.md`** — current stack, folder structure, state management, testing, safety rules.
 2. **`.cursor/index.mdc`** — always-on project manifest.
 3. **`.cursor/rules/*.mdc`** — contextual rules (Security, APIs, Architecture, UI, QA — numbering scheme in `000-cursor-rules.mdc`).
-4. **`docs/adr/`** — architecture decisions; see `docs/adr/README.md` for the full, current index (0001 state management … **0020** typed pipeline events).
+4. **`docs/adr/`** — architecture decisions; see `docs/adr/README.md` for the full, current index (0001 state management … **0021** partial report completion state).
 5. **`docs/ci-branch-governance.md`** + **`docs/project-facts.json`** — required CI checks, concurrency, ruleset expectations, drift-gated facts.
+6. **`CLAUDE.md`** — Claude Code's own entry point (session-start context, commands, architecture summary). Kept consistent with this file; if the two ever disagree, this file (`AGENTS.md`) wins.
 
 ## Technology Stack
 
@@ -43,6 +44,7 @@ Main features: Orchestrator pipeline, Knowledge Base (dedup, faceted filtering, 
 - **AI provider layer**: transport adapters live in `src/services/providers/` (`gemini.ts`, `openai.ts`, `anthropic.ts`, `ollama.ts`, `heuristic.ts`) and are loaded lazily via `getProviderForSettings()` so SDKs do not inflate the initial bundle. `geminiService.ts` remains the feature façade and routes AI calls through the selected provider.
 - **InferenceMode** `live | heuristic`: derived from API-key presence, `navigator.onLine`, and an optional Force-Heuristic toggle (`src/services/inferenceMode.ts`, `resolveActiveInferenceMode.ts`, hook `useInferenceMode`). Without a key or offline, the app **never** throws `NO_API_KEY` into an empty UI — the consolidated deterministic engine (`src/services/nonAi/`: query formulation, lexical ranking, template synthesis, extractive TL;DR, report-grounded chat, author/journal tools, demo corpus) keeps every feature usable (ADR 0007, consolidated in ADR 0009).
 - **State**: Redux is the single source of truth (slices: settings, ui, knowledgeBase, collections, theme, agentDebug + RTK Query slices). Contexts only hydrate/compose: `SettingsProvider` hydrates IndexedDB → Redux once; `KnowledgeBaseContext`/`PresetContext` compose Dexie + Redux actions; `UIContext` is a barrel. **Never duplicate** the same flags in Context and Redux.
+- **Report completion state** (ADR 0021): `ReportStatus` (`src/types.ts`) is `'idle' | 'generating' | 'streaming' | 'partial' | 'done' | 'error'` — a single source of truth, not duplicated per-file. `'partial'` (cancelled or checkpoint-restored, `ResearchReport.completionStatus`) must never be conflated with `'done'`: only the success path in `useResearchSession.ts` runs full finalization (provenance stamp, claim extraction, grounded-synthesis assessment), so a partial report needs its own status to stay honestly marked through save, export, and reopen.
 - **Resilience**: external calls use typed `AppError`/`toAppError` (`src/lib/errors.ts`), circuit breakers (`src/lib/circuitBreaker.ts` — never retry `AbortError`), exponential backoff honoring `Retry-After` (`src/lib/resilience.ts`, `pubmedUtils.ts`). See `.cursor/rules/102-resilience-external-calls.mdc`.
 - **Security model**: provider API keys (Gemini `AIza…`, OpenAI `sk-…`, Anthropic `sk-ant-…`) and the optional NCBI key are entered in Settings → AI Configuration and stored **AES-GCM encrypted** in IndexedDB via `apiKeyService.ts` (per-provider storage slot, legacy key migrates to Gemini slot). Keys are **not** env secrets — `.env.example` is documentation only; never put secrets in `VITE_*` (client-visible). Threat model: `SECURITY.md` + ADR 0003.
 - **PWA**: service worker `public/sw.js`, `public/manifest.json`; production SPA routing via `404.html` fallback. `index.html` carries a CSP meta (a hash for the inline JSON-LD block only — no CDN import map, removed in ADR 0011; every JS dependency is bundled by Vite); `pnpm run build` runs `scripts/patch-csp-hashes.mjs` to re-hash after bundling, and `pnpm run check:no-cdn-scripts` (wired into CI) guards against a CDN `<script>` or import map reappearing.
@@ -91,8 +93,8 @@ pnpm run format                  # Prettier write (src + root md/json)
 ```
 
 - **Coverage gate** (`vitest.config.ts`): scoped to logic layers (`src/store`, `src/services`, `src/hooks`, `src/lib`) — **80% lines, 80% statements, 55% branches, 55% functions**.
-- **Pre-commit**: husky runs `lint-staged` (eslint --fix + prettier).
-- **Pre-commit / pre-push**: Husky runs `typecheck` on commit and `check:fast` (`typecheck` + `lint` + `format:check`) on push — do not use `--no-verify` except for documented hook failures.
+- **Pre-commit**: Husky runs `lint-staged` (eslint --fix + prettier --write on staged files) → `typecheck` → full `lint` → `format:check` → `check:conflict-markers`. On success it records the about-to-be-committed tree hash (`git write-tree`) to `node_modules/.cache/.last-verified-tree`.
+- **Pre-push**: if `HEAD`'s tree matches that marker (the common case — nothing changed since the last commit's checks passed), pre-push skips straight to the push instead of re-running `typecheck`/`lint`/`format:check` — any commit made with `--no-verify`, or any tree that differs, still falls through to the full check. Do not use `--no-verify` except for documented hook failures.
 - **Before touching the core flow** (orchestration, KB, services), run: `typecheck`, `lint`, `test:coverage` — same as CI.
 
 ## CI / CD

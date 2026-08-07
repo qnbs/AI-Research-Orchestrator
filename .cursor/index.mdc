@@ -17,4 +17,4 @@ alwaysApply: true
 
 **Modular rules:** `.cursor/rules/` — `001–099` Security/PR gates, `100–199` APIs, `200–299` Architecture, `300–399` UI, `800–899` QA/Workflows; details in `000-cursor-rules.mdc`.
 
-**Canonical:** `AGENTS.md`, `.github/copilot-instructions.md`, `README.md`, `docs/ci-branch-governance.md`, `.github/workflows/deploy.yml`.
+**Canonical:** `AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `README.md`, `docs/ci-branch-governance.md`, `.github/workflows/deploy.yml`.
