@@ -68,8 +68,9 @@ overrides:
   uuid: 11.1.1
   # @lhci/cli pulls tmp@0.0.33 / 0.1.0 (GHSA-ph9p-34f9-6g65); pin patched release
   tmp: 0.2.7
-  # GHSA-5p4m-2wfm-xmqj (CVE-2026-59870): quadratic CPU consumption in !!omap
-  # resolution. Two independent major lines in the tree need separate pins
-  # (js-yaml@3 via @lhci/utils, js-yaml@4 via @eslint/eslintrc).
+  # GHSA-5p4m-2wfm-xmqj, the same weakness tracked as CVE-2026-59870:
+  # quadratic CPU consumption in !!omap resolution. Two independent major
+  # lines in the tree need separate pins (js-yaml@3 via @lhci/utils,
+  # js-yaml@4 via @eslint/eslintrc).
   "js-yaml@^3.13.1": 3.15.1
   "js-yaml@^4.1.1": 4.3.1
