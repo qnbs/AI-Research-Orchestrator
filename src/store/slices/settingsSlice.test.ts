@@ -29,4 +29,8 @@ describe('settingsSlice', () => {
     const s1 = settingsReducer(s0, resetSettings());
     expect(s1.data.theme).toBe(defaultSettings.theme);
   });
+
+  it('developerMode defaults to false', () => {
+    expect(defaultSettings.developerMode).toBe(false);
+  });
 });

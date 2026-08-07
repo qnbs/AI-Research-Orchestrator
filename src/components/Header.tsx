@@ -69,7 +69,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
   isResearching,
   onQuickAdd,
 }) => {
-  const { updateSettings } = useSettings();
+  const { settings, updateSettings } = useSettings();
   const { isSettingsDirty, setIsCommandPaletteOpen } = useUI();
   const { t, lang } = useTranslation();
 
@@ -295,7 +295,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
               >
                 {themeIcon}
               </button>
-              <AgentDebuggerToggle />
+              {settings.developerMode && <AgentDebuggerToggle />}
             </div>
           </div>
         </div>

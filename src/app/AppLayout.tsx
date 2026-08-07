@@ -85,8 +85,20 @@ const AppLayout: React.FC = () => {
         tabIndex={-1}
         // pt-20/md:pt-36 are the pre-measurement fallback (first paint, no-JS);
         // once chromeHeight is measured, the inline style below supersedes them.
+        // Also exposes --chrome-height as a CSS custom property so descendant
+        // views (e.g. SettingsView's sticky action bar) can react to it via
+        // max() without needing the exact JS-computed value threaded down as
+        // a prop/context - see SettingsView.tsx for why an exact-pixel sticky
+        // `top` is intentionally avoided.
         className="container mx-auto px-4 sm:px-6 lg:px-8 md:pt-36 pt-20 pb-24 focus-ring-aa rounded-sm"
-        style={chromeHeight != null ? { paddingTop: `${chromeHeight}px` } : undefined}
+        style={
+          chromeHeight != null
+            ? ({
+                paddingTop: `${chromeHeight}px`,
+                '--chrome-height': `${chromeHeight}px`,
+              } as React.CSSProperties)
+            : undefined
+        }
       >
         <Suspense fallback={<ContentSpinner label={t('common.loading')} />}>
           <AppViewRouter {...logic} />
@@ -140,7 +152,12 @@ const AppLayout: React.FC = () => {
           />
         )}
         {isQuickAddModalOpen && <QuickAddModal onClose={() => setIsQuickAddModalOpen(false)} />}
-        <AgentDebugger />
+        {/* Gated on the render itself, not just the header toggle: the panel's
+            own isVisible Redux state can also be forced true by a research run
+            starting (useResearchSession dispatches setDebuggerVisible(true)
+            unconditionally), independent of developerMode. Gating here covers
+            every path, not just "close it if it was already open". */}
+        {settings.developerMode && <AgentDebugger />}
       </Suspense>
     </>
   );
