@@ -59,8 +59,16 @@ export const reportTranslations = {
       'SYNTHETIC EDUCATIONAL DEMO — NOT RETRIEVED LITERATURE. These records are local fixtures, not PubMed or arXiv results.',
     'report.emptyRetrieval.banner':
       'No retrieved literature in this report. Empty or failed search — demo fixtures were not substituted.',
+    'report.partial.banner':
+      'PARTIAL REPORT — this research run did not finish. Results below are incomplete and have not been fully verified.',
+    'report.partial.bannerWithPhase':
+      'PARTIAL REPORT — this research run stopped during "{phase}" before finishing. Results below are incomplete and have not been fully verified.',
+    'report.partial.chatUnavailable':
+      'Chat is unavailable for a partial report — the underlying research run did not finish, so there is no complete synthesis to chat against.',
     'report.saveModal.title': 'Save Report',
     'report.saveModal.message': 'Are you sure you want to save this report to your Knowledge Base?',
+    'report.saveModal.messagePartial':
+      'This report is partial — the research run did not finish. Save it to your Knowledge Base anyway?',
     'report.saveModal.confirm': 'Save',
     'report.chat.empty': 'Ask questions about this report to explore the data further.',
     'report.chat.placeholder': 'Ask a follow-up question…',
@@ -127,9 +135,17 @@ export const reportTranslations = {
       'SYNTHETISCHE BILDUNGS-DEMO — KEINE ABGERUFENE LITERATUR. Diese Einträge sind lokale Fixtures, keine PubMed- oder arXiv-Ergebnisse.',
     'report.emptyRetrieval.banner':
       'Keine abgerufene Literatur in diesem Bericht. Leere oder fehlgeschlagene Suche — Demo-Fixtures wurden nicht substituiert.',
+    'report.partial.banner':
+      'TEILBERICHT — dieser Forschungslauf wurde nicht abgeschlossen. Die unten stehenden Ergebnisse sind unvollständig und wurden nicht vollständig verifiziert.',
+    'report.partial.bannerWithPhase':
+      'TEILBERICHT — dieser Forschungslauf wurde während „{phase}“ gestoppt, bevor er abgeschlossen war. Die unten stehenden Ergebnisse sind unvollständig und wurden nicht vollständig verifiziert.',
+    'report.partial.chatUnavailable':
+      'Chat ist für einen Teilbericht nicht verfügbar — der zugrunde liegende Forschungslauf wurde nicht abgeschlossen, daher gibt es keine vollständige Synthese, über die man chatten könnte.',
     'report.saveModal.title': 'Bericht speichern',
     'report.saveModal.message':
       'Möchten Sie diesen Bericht wirklich in Ihrer Knowledge Base speichern?',
+    'report.saveModal.messagePartial':
+      'Dieser Bericht ist unvollständig — der Forschungslauf wurde nicht abgeschlossen. Trotzdem in der Knowledge Base speichern?',
     'report.saveModal.confirm': 'Speichern',
     'report.chat.empty': 'Stellen Sie Fragen zu diesem Bericht, um die Daten weiter zu erkunden.',
     'report.chat.placeholder': 'Stellen Sie eine Anschlussfrage…',

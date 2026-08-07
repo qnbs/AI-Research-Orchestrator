@@ -88,8 +88,14 @@ export function formatCheckpointAge(updatedAt: number, now = Date.now()): string
   return `${days}d ago`;
 }
 
-/** Merge checkpoint synthesis into a displayable report for soft resume. */
-export function reportFromCheckpoint(ckpt: ResearchCheckpoint) {
+/**
+ * Merge checkpoint synthesis into a displayable report for soft resume.
+ * Always stamped as partial: by construction this omits groundedSynthesis,
+ * corpusClass, retrievalOutcome, and generationProvenance, which only the
+ * normal completion path in useResearchSession populates - it must never be
+ * shown or saved as if it were a finished report (see researchStreamFailure.ts).
+ */
+export function reportFromCheckpoint(ckpt: ResearchCheckpoint): ResearchReport | null {
   const base = ckpt.report;
   const synthesis = ckpt.synthesisSoFar.trim() || base?.synthesis || '';
   if (!base && !synthesis) return null;
@@ -99,5 +105,8 @@ export function reportFromCheckpoint(ckpt: ResearchCheckpoint) {
     generatedQueries: base?.generatedQueries ?? [],
     aiGeneratedInsights: base?.aiGeneratedInsights ?? [],
     overallKeywords: base?.overallKeywords ?? [],
+    completionStatus: 'partial',
+    cancelledAtPhase: ckpt.phase,
+    cancelledAt: ckpt.updatedAt,
   };
 }

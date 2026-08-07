@@ -21,6 +21,8 @@ export interface ExportProvenanceResult {
 }
 
 const DEMO_EXPORT_WATERMARK = 'SYNTHETIC EDUCATIONAL DEMO — NOT RETRIEVED LITERATURE.\n\n';
+const PARTIAL_EXPORT_WATERMARK =
+  'PARTIAL REPORT — RESEARCH DID NOT FINISH. Results are incomplete and have not been fully verified.\n\n';
 
 function isEmptyRetrievalReport(report: ResearchReport): boolean {
   return (
@@ -41,6 +43,15 @@ export const sanitizeReportForExport = (report: ResearchReport): ExportProvenanc
     (ranked.length > 0 && ranked.every(isDemoSyntheticArticle)) ||
     isAllDemoCorpus(ranked);
 
+  const isPartial = report.completionStatus === 'partial';
+  // Exact-prefix match against the full watermark text (not just its opening
+  // words) - a narrative that happens to start with "PARTIAL REPORT" for
+  // unrelated reasons must still get watermarked.
+  const withPartialWatermark = (synthesis: string): string =>
+    isPartial && !synthesis.startsWith(PARTIAL_EXPORT_WATERMARK)
+      ? `${PARTIAL_EXPORT_WATERMARK}${synthesis}`
+      : synthesis;
+
   // Empty-retrieval explanations are intentional UX copy, not uncited narrative claims.
   if (isEmptyRetrievalReport(report) && ranked.length === 0) {
     return {
@@ -48,8 +59,9 @@ export const sanitizeReportForExport = (report: ResearchReport): ExportProvenanc
         ...report,
         rankedArticles: ranked,
         corpusClass: report.corpusClass ?? 'empty-retrieval',
+        synthesis: withPartialWatermark(report.synthesis),
       },
-      sanitized: false,
+      sanitized: isPartial,
       droppedInsights: 0,
       droppedRankedArticles: 0,
       droppedClaims: 0,
@@ -77,9 +89,22 @@ export const sanitizeReportForExport = (report: ResearchReport): ExportProvenanc
     corpusPmids,
   );
 
-  let synthesis = synthesisSanitized.synthesis;
-  if (containsDemo && !synthesis.startsWith('SYNTHETIC EDUCATIONAL DEMO')) {
+  // Check both watermarks against the same pre-watermark base text - checking
+  // "needs partial watermark" only after conditionally prepending the demo
+  // watermark would shift what startsWith('PARTIAL REPORT...') sees on a
+  // demo+partial re-export round-trip, defeating that idempotency check and
+  // doubling the partial watermark.
+  const baseSynthesis = synthesisSanitized.synthesis;
+  const needsDemoWatermark =
+    containsDemo && !baseSynthesis.startsWith('SYNTHETIC EDUCATIONAL DEMO');
+  const needsPartialWatermark = isPartial && !baseSynthesis.startsWith(PARTIAL_EXPORT_WATERMARK);
+
+  let synthesis = baseSynthesis;
+  if (needsDemoWatermark) {
     synthesis = `${DEMO_EXPORT_WATERMARK}${synthesis}`;
+  }
+  if (needsPartialWatermark) {
+    synthesis = `${PARTIAL_EXPORT_WATERMARK}${synthesis}`;
   }
 
   const nextCorpusClass = isDemoOnly
@@ -98,7 +123,8 @@ export const sanitizeReportForExport = (report: ResearchReport): ExportProvenanc
     synthesisSanitized.uncitedParagraphsRemoved > 0 ||
     synthesis !== report.synthesis ||
     isDemoOnly ||
-    containsDemo;
+    containsDemo ||
+    isPartial;
 
   return {
     report: {

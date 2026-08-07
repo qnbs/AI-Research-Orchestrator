@@ -73,7 +73,7 @@ describe('handleResearchStreamFailure', () => {
     expect(handlers.setError).not.toHaveBeenCalled();
   });
 
-  it('saves resumable abort checkpoints and returns to a done report state', async () => {
+  it('marks an aborted report with a partial report already collected as partial, never done, and stamps cancellation provenance', async () => {
     vi.spyOn(Date, 'now').mockReturnValue(123);
     const handlers = createHandlers();
     const abortError = new DOMException('Aborted', 'AbortError');
@@ -96,7 +96,17 @@ describe('handleResearchStreamFailure', () => {
         errorMessage: undefined,
       }),
     );
-    expect(handlers.setReport).toHaveBeenCalledWith({ ...report, synthesis: 'partial synthesis' });
+    // Regression coverage: a cancelled report with a partial result must never
+    // be indistinguishable from a normally completed one - the report itself
+    // carries the cancellation marker (so it survives save/export/reopen),
+    // and the status is 'partial', never 'done'.
+    expect(handlers.setReport).toHaveBeenCalledWith({
+      ...report,
+      synthesis: 'partial synthesis',
+      completionStatus: 'partial',
+      cancelledAtPhase: 'Phase 5',
+      cancelledAt: 123,
+    });
     expect(handlers.setNotification).toHaveBeenCalledWith(
       expect.objectContaining({
         id: 123,
@@ -105,8 +115,27 @@ describe('handleResearchStreamFailure', () => {
       }),
     );
     expect(handlers.dispatch).toHaveBeenCalledWith(completeTrace({ status: 'error' }));
-    expect(handlers.setReportStatus).toHaveBeenCalledWith('done');
+    expect(handlers.setReportStatus).toHaveBeenCalledWith('partial');
+    expect(handlers.setReportStatus).not.toHaveBeenCalledWith('done');
     expect(handlers.setError).not.toHaveBeenCalled();
+  });
+
+  it('returns to idle, not done, when the stream is aborted before any report exists', async () => {
+    const handlers = createHandlers();
+    const abortError = new DOMException('Aborted', 'AbortError');
+
+    await handleResearchStreamFailure({
+      error: abortError,
+      currentGenerationId: 1,
+      input,
+      phase: 'Phase 1',
+      finalReport: null,
+      finalSynthesis: '',
+      ...handlers,
+    });
+
+    expect(handlers.setReportStatus).toHaveBeenCalledWith('idle');
+    expect(handlers.setReportStatus).not.toHaveBeenCalledWith('done');
   });
 
   it('saves resumable error checkpoints and marks the active trace as failed', async () => {
@@ -146,7 +175,7 @@ describe('handleResearchStreamFailure', () => {
     expect(handlers.setReportStatus).toHaveBeenCalledWith('error');
   });
 
-  it('still persists the checkpoint but skips report/notification updates when a newer run starts while the write is in flight', async () => {
+  it('stamps the partial report synchronously before the checkpoint write, and skips only the notification when a newer run starts while the write is in flight', async () => {
     let activeGenerationId = 1;
     const setReport = vi.fn();
     const setNotification = vi.fn();
@@ -176,7 +205,15 @@ describe('handleResearchStreamFailure', () => {
     });
 
     expect(persistCheckpoint).toHaveBeenCalled();
-    expect(setReport).not.toHaveBeenCalled();
+    // setReport fires exactly once, synchronously, before the async persist
+    // gap even opens - this generation was still active at that point, so
+    // stamping the visible report is correct regardless of what happens
+    // afterward. Only the notification (guarded inside the async branch)
+    // correctly gets skipped once a newer generation has taken over.
+    expect(setReport).toHaveBeenCalledTimes(1);
+    expect(setReport).toHaveBeenCalledWith(
+      expect.objectContaining({ completionStatus: 'partial', cancelledAtPhase: 'Phase 5' }),
+    );
     expect(setNotification).not.toHaveBeenCalled();
   });
 });
