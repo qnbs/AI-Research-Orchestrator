@@ -375,6 +375,8 @@ export interface Settings {
     defaultSort: 'relevance' | 'newest';
   };
   hasCompletedOnboarding: boolean;
+  /** Shows internal/diagnostic tooling (e.g. the Agent Debugger) in the header. Off by default. */
+  developerMode: boolean;
 }
 
 export interface SimilarArticle {

@@ -11,6 +11,7 @@ import { InstallIcon } from '../icons/InstallIcon';
 import { CheckCircleIcon } from '../icons/CheckCircleIcon';
 import { BellIcon } from '../icons/BellIcon';
 import { CogIcon } from '../icons/CogIcon';
+import { BugAntIcon } from '../icons/BugAntIcon';
 import { AppBrandMark } from '../AppBrandMark';
 import { BRAND_APP_NAME } from '../../lib/brand';
 import type { Settings } from '../../types';
@@ -448,6 +449,24 @@ const PerformanceSettingsCard: React.FC = () => {
   );
 };
 
+const DeveloperModeSettingsCard: React.FC = () => {
+  const { tempSettings, setTempSettings, t } = useSettingsView();
+  return (
+    <SettingCard
+      icon={<BugAntIcon className="w-6 h-6 text-text-secondary" />}
+      title={t('settings.developerMode.title')}
+      description={t('settings.developerMode.desc')}
+    >
+      <Toggle
+        checked={tempSettings.developerMode}
+        onChange={(checked) => setTempSettings((s) => ({ ...s, developerMode: checked }))}
+      >
+        {t('settings.developerMode.toggle')}
+      </Toggle>
+    </SettingCard>
+  );
+};
+
 export const GeneralSettingsTab: React.FC = () => (
   <div className="space-y-8">
     <LanguageSettingsCard />
@@ -455,5 +474,6 @@ export const GeneralSettingsTab: React.FC = () => (
     <PwaSettingsCard />
     <NotificationsSettingsCard />
     <PerformanceSettingsCard />
+    <DeveloperModeSettingsCard />
   </div>
 );

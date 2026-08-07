@@ -218,7 +218,7 @@ export const helpTranslations = {
     'help.glossary.synthesis.title': 'Synthesis Focus',
     'help.glossary.synthesis.desc':
       'A setting in the Orchestrator form that directs the AI on what aspect of the research to focus on when writing its summary. For example, focusing on "Clinical Implications" will yield a different synthesis than "Gaps in Research".',
-    'help.about.title': 'About AI Research Orchestration Author',
+    'help.about.title': 'About AI Research Orchestrator',
     'help.about.description':
       'This application is a tool designed to accelerate the process of scientific literature review. It leverages generative AI to automate the tedious tasks of searching, filtering, and synthesizing information from the PubMed database.',
     'help.about.version.label': 'Version:',
@@ -461,7 +461,7 @@ export const helpTranslations = {
     'help.glossary.synthesis.title': 'Synthesefokus',
     'help.glossary.synthesis.desc':
       'Eine Einstellung im Orchestrator-Formular, die der KI vorgibt, auf welchen Aspekt der Forschung sie sich beim Schreiben der Zusammenfassung konzentrieren soll. Ein Fokus auf "Klinische Implikationen" erzeugt beispielsweise eine andere Synthese als "Forschungslücken".',
-    'help.about.title': 'Über AI Research Orchestration Author',
+    'help.about.title': 'Über AI Research Orchestrator',
     'help.about.description':
       'Diese Anwendung ist ein Werkzeug, das den Prozess wissenschaftlicher Literaturrecherche beschleunigen soll. Sie nutzt generative KI, um aufwendige Aufgaben wie Suchen, Filtern und Synthetisieren von Informationen aus der PubMed-Datenbank zu automatisieren.',
     'help.about.version.label': 'Version:',
