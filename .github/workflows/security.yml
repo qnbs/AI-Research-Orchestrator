@@ -40,18 +40,18 @@ jobs:
 
       - name: Initialize CodeQL
         # github/codeql-action/init@v4
-        uses: github/codeql-action/init@f205ea1c3313d32999d8d6a48b4f6530d4437b38
+        uses: github/codeql-action/init@cdf488f595d80d6e07e03d4674febd5ab45fa938
         with:
           languages: javascript-typescript
           queries: security-extended
 
       - name: Autobuild
         # github/codeql-action/autobuild@v4
-        uses: github/codeql-action/autobuild@f205ea1c3313d32999d8d6a48b4f6530d4437b38
+        uses: github/codeql-action/autobuild@cdf488f595d80d6e07e03d4674febd5ab45fa938
 
       - name: Perform CodeQL Analysis
         # github/codeql-action/analyze@v4
-        uses: github/codeql-action/analyze@f205ea1c3313d32999d8d6a48b4f6530d4437b38
+        uses: github/codeql-action/analyze@cdf488f595d80d6e07e03d4674febd5ab45fa938
         with:
           category: "/language:javascript-typescript"
 
@@ -90,7 +90,7 @@ jobs:
 
       - name: Setup pnpm
         # pnpm/action-setup@v6
-        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271
+        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86
         with:
           run_install: false
 
