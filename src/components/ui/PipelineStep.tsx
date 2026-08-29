@@ -14,6 +14,11 @@ import type { AgentStatus } from '../../types';
 import { useTranslation } from '../../hooks/useTranslation';
 import { useMotionSafeLoop } from '../../hooks/useMotionSafeLoop';
 
+const H_RUNNING_PULSE_ANIMATE = { scale: [1, 1.08, 1] };
+const H_RUNNING_PULSE_TRANSITION = { duration: 1.5, repeat: Infinity, ease: 'easeInOut' as const };
+const V_RUNNING_PULSE_ANIMATE = { scale: [1, 1.1, 1] };
+const V_RUNNING_PULSE_TRANSITION = { duration: 1.5, repeat: Infinity };
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface PipelineStepItem {
@@ -101,10 +106,7 @@ const HStepNode: React.FC<{
   isCurrent: boolean;
   onClick?: () => void;
 }> = ({ step, status, isCurrent, onClick }) => {
-  const runningPulse = useMotionSafeLoop(
-    { scale: [1, 1.08, 1] },
-    { duration: 1.5, repeat: Infinity, ease: 'easeInOut' },
-  );
+  const runningPulse = useMotionSafeLoop(H_RUNNING_PULSE_ANIMATE, H_RUNNING_PULSE_TRANSITION);
 
   return (
     <div className="flex flex-col items-center gap-1.5 flex-shrink-0" style={{ minWidth: 60 }}>
@@ -192,10 +194,7 @@ const VPipelineStep: React.FC<PipelineStepProps & { stepsAriaLabel: string }> = 
   className = '',
   stepsAriaLabel,
 }) => {
-  const runningPulse = useMotionSafeLoop(
-    { scale: [1, 1.1, 1] },
-    { duration: 1.5, repeat: Infinity },
-  );
+  const runningPulse = useMotionSafeLoop(V_RUNNING_PULSE_ANIMATE, V_RUNNING_PULSE_TRANSITION);
 
   return (
     <ol className={`space-y-0 ${className}`} aria-label={stepsAriaLabel}>

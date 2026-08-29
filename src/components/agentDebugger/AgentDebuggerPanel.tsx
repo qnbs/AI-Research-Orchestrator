@@ -11,6 +11,11 @@ import { TokenBudgetBar } from './TokenBudgetBar';
 import { EventRow } from './EventRow';
 import { HistoryRow } from './HistoryRow';
 
+const LIVE_PULSE_ANIMATE = { opacity: [1, 0.5, 1] };
+const LIVE_PULSE_TRANSITION = { duration: 1.4, repeat: Infinity };
+const PROCESSING_PULSE_ANIMATE = { opacity: [1, 0.4, 1] };
+const PROCESSING_PULSE_TRANSITION = { duration: 1.5, repeat: Infinity };
+
 const AgentDebuggerPanel: React.FC = () => {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
@@ -43,14 +48,8 @@ const AgentDebuggerPanel: React.FC = () => {
   // useMotionSafeLoop's reduced-motion collapse - which settles on the last
   // keyframe - leaves these status indicators fully visible instead of
   // permanently dim; the looping animation's rhythm is unaffected either way.
-  const livePulse = useMotionSafeLoop(
-    { opacity: [1, 0.5, 1] },
-    { duration: 1.4, repeat: Infinity },
-  );
-  const processingPulse = useMotionSafeLoop(
-    { opacity: [1, 0.4, 1] },
-    { duration: 1.5, repeat: Infinity },
-  );
+  const livePulse = useMotionSafeLoop(LIVE_PULSE_ANIMATE, LIVE_PULSE_TRANSITION);
+  const processingPulse = useMotionSafeLoop(PROCESSING_PULSE_ANIMATE, PROCESSING_PULSE_TRANSITION);
 
   if (!isVisible) return null;
 

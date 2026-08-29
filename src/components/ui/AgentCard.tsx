@@ -13,6 +13,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import type { AgentName, AgentStatus } from '../../types';
 import { useMotionSafeLoop } from '../../hooks/useMotionSafeLoop';
 
+const SCANLINE_ANIMATE = { x: ['-100%', '400%'] };
+const SCANLINE_TRANSITION = { duration: 2, repeat: Infinity, ease: 'linear' as const };
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const STATUS_LABELS: Record<AgentStatus, string> = {
@@ -106,10 +109,7 @@ const AgentCardInner: React.FC<AgentCardProps> = ({
   index = 0,
 }) => {
   const isRunning = status === 'running';
-  const scanlineShimmer = useMotionSafeLoop(
-    { x: ['-100%', '400%'] },
-    { duration: 2, repeat: Infinity, ease: 'linear' },
-  );
+  const scanlineShimmer = useMotionSafeLoop(SCANLINE_ANIMATE, SCANLINE_TRANSITION);
 
   return (
     <motion.div

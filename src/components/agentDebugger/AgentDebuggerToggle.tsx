@@ -5,15 +5,15 @@ import { toggleDebugger } from '../../store/slices/agentDebugSlice';
 import { useTranslation } from '../../hooks/useTranslation';
 import { useMotionSafeLoop } from '../../hooks/useMotionSafeLoop';
 
+const RUNNING_PULSE_ANIMATE = { scale: [1, 1.35, 1] };
+const RUNNING_PULSE_TRANSITION = { duration: 1, repeat: Infinity };
+
 export const AgentDebuggerToggle: React.FC = () => {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const { isVisible, currentTrace } = useAppSelector((s) => s.agentDebug);
   const isRunning = currentTrace?.status === 'running';
-  const runningPulse = useMotionSafeLoop(
-    { scale: [1, 1.35, 1] },
-    { duration: 1, repeat: Infinity },
-  );
+  const runningPulse = useMotionSafeLoop(RUNNING_PULSE_ANIMATE, RUNNING_PULSE_TRANSITION);
 
   return (
     <motion.button

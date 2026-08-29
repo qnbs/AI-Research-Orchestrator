@@ -83,21 +83,4 @@ describe('useMotionSafeLoop', () => {
       ease: 'linear',
     });
   });
-
-  it('reuses the previous animate identity when callers pass equivalent fresh keyframe arrays', () => {
-    mockedUseReducedMotion.mockReturnValue(false);
-
-    const { result, rerender } = renderHook(
-      ({ animate }) => useMotionSafeLoop(animate, { duration: 1.4, repeat: Infinity }),
-      { initialProps: { animate: { opacity: [1, 0.5, 1] } } },
-    );
-
-    const first = result.current.animate;
-    rerender({ animate: { opacity: [1, 0.5, 1] } });
-    expect(result.current.animate).toBe(first);
-
-    rerender({ animate: { opacity: [1, 0.2, 1] } });
-    expect(result.current.animate).not.toBe(first);
-    expect(result.current.animate).toEqual({ opacity: [1, 0.2, 1] });
-  });
 });

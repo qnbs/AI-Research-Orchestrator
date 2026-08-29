@@ -4,6 +4,11 @@ import { useTranslation } from '../hooks/useTranslation';
 import { useMotionSafeLoop } from '../hooks/useMotionSafeLoop';
 import { XIcon } from './icons/XIcon';
 
+const ACTIVE_CHIP_PULSE_ANIMATE = { scaleX: [1, 0.4, 1] };
+const ACTIVE_CHIP_PULSE_TRANSITION = { repeat: Infinity, duration: 1.4 };
+const SHIMMER_ANIMATE = { x: ['-100%', '200%'] };
+const SHIMMER_TRANSITION = { repeat: Infinity, duration: 1.8, ease: 'linear' as const };
+
 interface LoadingIndicatorProps {
   title: string;
   phase: string;
@@ -149,8 +154,8 @@ const PipelineTimeline: React.FC<{
   // fully visible instead of permanently shrunken; see AgentDebuggerPanel's
   // livePulse/processingPulse for the same reasoning.
   const activeChipPulse = useMotionSafeLoop(
-    { scaleX: [1, 0.4, 1] },
-    { repeat: Infinity, duration: 1.4 },
+    ACTIVE_CHIP_PULSE_ANIMATE,
+    ACTIVE_CHIP_PULSE_TRANSITION,
   );
 
   // Auto-scroll active chip into view
@@ -232,10 +237,7 @@ export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
   const [currentPhaseIndex, setCurrentPhaseIndex] = useState(0);
   const [currentSubPhase, setCurrentSubPhase] = useState('');
   const subPhaseIntervalRef = useRef<number | null>(null);
-  const shimmer = useMotionSafeLoop(
-    { x: ['-100%', '200%'] },
-    { repeat: Infinity, duration: 1.8, ease: 'linear' },
-  );
+  const shimmer = useMotionSafeLoop(SHIMMER_ANIMATE, SHIMMER_TRANSITION);
 
   useEffect(() => {
     const indexFromId =
