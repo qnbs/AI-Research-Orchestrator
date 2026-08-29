@@ -52,6 +52,8 @@ interface ReportDisplayProps {
   chatHistory: ChatMessage[];
   isChatting: boolean;
   onSendMessage: (message: string) => void;
+  /** When false (streaming/generating), hide the send box — `useChat` has no session yet. */
+  chatEnabled?: boolean;
 }
 
 const secureMarkdownToHtml = (text: string): string => {
@@ -141,6 +143,7 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(function R
   chatHistory,
   isChatting,
   onSendMessage,
+  chatEnabled = true,
 }) {
   const [modalState, setModalState] = useState<{
     type: 'pdf' | 'csv' | 'insights' | 'save';
@@ -225,6 +228,13 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(function R
     }, 50);
   };
 
+  // Cancelled run, not a completed one — the success path's finalization
+  // (provenance stamping, claim extraction, grounded-synthesis assessment)
+  // never ran, so this is checked and surfaced independently of, and before,
+  // the trust-level banners below (which would otherwise show a normal
+  // "unverified narrative draft" banner indistinguishable from any other
+  // ordinary draft-trust report).
+  const isPartial = report.completionStatus === 'partial';
   // Missing trust is fail-safe draft — do not infer corpus-supported from mode alone.
   const synthesisTrustLevel =
     normalizeSynthesisTrustLevel(report.groundedSynthesis?.trustLevel) ?? 'narrative-draft';
@@ -257,6 +267,16 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(function R
     <>
       <div className="animate-fadeIn bg-surface rounded-lg border border-border flex flex-col shadow-lg">
         <div className="flex-shrink-0 border-b border-border p-4 sm:p-6">
+          {isPartial && (
+            <div
+              role="status"
+              className="mb-4 rounded-md border border-danger/60 bg-danger/10 px-3 py-2 text-sm font-semibold text-danger"
+            >
+              {report.cancelledAtPhase
+                ? t('report.partial.bannerWithPhase', { phase: report.cancelledAtPhase })
+                : t('report.partial.banner')}
+            </div>
+          )}
           {isDemoCorpus && (
             <div
               role="status"
@@ -607,11 +627,23 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(function R
               </div>
             }
           >
-            <ChatInterface
-              history={chatHistory}
-              isChatting={isChatting}
-              onSendMessage={onSendMessage}
-            />
+            {isPartial || !chatEnabled ? (
+              // useChat only creates a session once reportStatus === 'done'
+              // (deliberately, see useChat.ts) - rendering the interactive
+              // ChatInterface here would let users type messages that
+              // sendMessage silently drops (no session to send through).
+              <p className="text-sm text-text-secondary p-2">
+                {t(
+                  isPartial ? 'report.partial.chatUnavailable' : 'report.chat.unavailableUntilDone',
+                )}
+              </p>
+            ) : (
+              <ChatInterface
+                history={chatHistory}
+                isChatting={isChatting}
+                onSendMessage={onSendMessage}
+              />
+            )}
           </AccordionSection>
         </div>
       </div>
@@ -623,7 +655,7 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(function R
           }}
           onCancel={() => setModalState(null)}
           title={t('report.saveModal.title')}
-          message={t('report.saveModal.message')}
+          message={t(isPartial ? 'report.saveModal.messagePartial' : 'report.saveModal.message')}
           confirmText={t('report.saveModal.confirm')}
           confirmButtonClass="bg-brand-accent hover:bg-opacity-90"
           titleClass="text-brand-accent"

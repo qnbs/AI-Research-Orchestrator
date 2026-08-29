@@ -104,6 +104,14 @@ const ResearchEntryMeta: React.FC<{
 
   return (
     <>
+      {entry.report.completionStatus === 'partial' && (
+        <div
+          role="status"
+          className="rounded-md border border-danger/60 bg-danger/10 px-2 py-1 text-xs font-semibold text-danger"
+        >
+          {t('history.list.partialBadge')}
+        </div>
+      )}
       <div>{articlesLabel}</div>
       <div>
         <strong>{t('history.list.focus')}</strong> {t(focusKey)}

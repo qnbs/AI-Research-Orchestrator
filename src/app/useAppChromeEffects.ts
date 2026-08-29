@@ -5,6 +5,7 @@ import { setVaultResetListener } from '../services/apiKeyService';
 import { setNotification as setNotificationAction } from '../store/slices/uiSlice';
 import { getLatestResearchCheckpoints } from '../services/databaseService';
 import type { ResearchCheckpoint } from '../lib/researchCheckpoint';
+import type { ReportStatus } from '../types';
 import type { View, BeforeInstallPromptEvent } from '../types/ui';
 import type { TranslationKey } from '../i18n/translations';
 import { useUrlSync } from '../hooks/useUrlSync';
@@ -19,7 +20,7 @@ interface UseAppChromeEffectsArgs {
   t: (key: TranslationKey | (string & {}), values?: Record<string, string | number>) => string;
   selectedKbPmidsLength: number;
   clearSelectedKbPmids: () => void;
-  reportStatus: 'idle' | 'generating' | 'streaming' | 'done' | 'error';
+  reportStatus: ReportStatus;
   checkpointRefreshToken: number;
   setResumeCheckpoints: (checkpoints: ResearchCheckpoint[]) => void;
 }

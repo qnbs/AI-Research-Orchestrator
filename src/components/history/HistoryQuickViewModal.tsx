@@ -146,6 +146,14 @@ export const HistoryQuickViewModal: React.FC<{
         aria-labelledby="quick-view-title"
       >
         <QuickViewHeader typeTitle={typeTitle} title={title} onClose={onClose} />
+        {entry.sourceType === 'research' && entry.report.completionStatus === 'partial' && (
+          <div
+            role="status"
+            className="mb-4 rounded-md border border-danger/60 bg-danger/10 px-3 py-2 text-sm font-semibold text-danger"
+          >
+            {t('history.quick.partialBanner')}
+          </div>
+        )}
         <QuickViewStats
           foundLabel={foundLabel}
           articleCount={articles.length}

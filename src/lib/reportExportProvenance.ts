@@ -21,6 +21,38 @@ export interface ExportProvenanceResult {
 }
 
 const DEMO_EXPORT_WATERMARK = 'SYNTHETIC EDUCATIONAL DEMO — NOT RETRIEVED LITERATURE.\n\n';
+const PARTIAL_EXPORT_WATERMARK =
+  'PARTIAL REPORT — RESEARCH DID NOT FINISH. Results are incomplete and have not been fully verified.\n\n';
+
+/** Strip either export watermark from the start, in any order, so re-export is idempotent. */
+function stripLeadingExportWatermarks(synthesis: string): string {
+  let text = synthesis;
+  let changed = true;
+  while (changed) {
+    changed = false;
+    if (text.startsWith(PARTIAL_EXPORT_WATERMARK)) {
+      text = text.slice(PARTIAL_EXPORT_WATERMARK.length);
+      changed = true;
+    }
+    if (text.startsWith(DEMO_EXPORT_WATERMARK)) {
+      text = text.slice(DEMO_EXPORT_WATERMARK.length);
+      changed = true;
+    }
+  }
+  return text;
+}
+
+/** Canonical prefix order: partial outermost, then demo. */
+function applyExportWatermarks(
+  synthesis: string,
+  opts: { demo: boolean; partial: boolean },
+): string {
+  const body = stripLeadingExportWatermarks(synthesis);
+  let next = body;
+  if (opts.demo) next = `${DEMO_EXPORT_WATERMARK}${next}`;
+  if (opts.partial) next = `${PARTIAL_EXPORT_WATERMARK}${next}`;
+  return next;
+}
 
 function isEmptyRetrievalReport(report: ResearchReport): boolean {
   return (
@@ -41,6 +73,10 @@ export const sanitizeReportForExport = (report: ResearchReport): ExportProvenanc
     (ranked.length > 0 && ranked.every(isDemoSyntheticArticle)) ||
     isAllDemoCorpus(ranked);
 
+  const isPartial = report.completionStatus === 'partial';
+  const withPartialWatermark = (synthesis: string): string =>
+    applyExportWatermarks(synthesis, { demo: false, partial: isPartial });
+
   // Empty-retrieval explanations are intentional UX copy, not uncited narrative claims.
   if (isEmptyRetrievalReport(report) && ranked.length === 0) {
     return {
@@ -48,8 +84,9 @@ export const sanitizeReportForExport = (report: ResearchReport): ExportProvenanc
         ...report,
         rankedArticles: ranked,
         corpusClass: report.corpusClass ?? 'empty-retrieval',
+        synthesis: withPartialWatermark(report.synthesis),
       },
-      sanitized: false,
+      sanitized: isPartial,
       droppedInsights: 0,
       droppedRankedArticles: 0,
       droppedClaims: 0,
@@ -77,10 +114,21 @@ export const sanitizeReportForExport = (report: ResearchReport): ExportProvenanc
     corpusPmids,
   );
 
-  let synthesis = synthesisSanitized.synthesis;
-  if (containsDemo && !synthesis.startsWith('SYNTHETIC EDUCATIONAL DEMO')) {
-    synthesis = `${DEMO_EXPORT_WATERMARK}${synthesis}`;
+  // A cancelled run can have a visible narrative with no extractable PMID
+  // claims yet. The claim sanitizer would then return '' and the export would
+  // be watermark-only — dropping the collected body this change exists to
+  // preserve. Keep the original (already-watermark-stripped) text and label it.
+  let uncitedParagraphsRemoved = synthesisSanitized.uncitedParagraphsRemoved;
+  let baseSynthesis = synthesisSanitized.synthesis;
+  if (isPartial && !baseSynthesis.trim() && report.synthesis.trim()) {
+    baseSynthesis = stripLeadingExportWatermarks(report.synthesis);
+    uncitedParagraphsRemoved = 0;
   }
+
+  const synthesis = applyExportWatermarks(baseSynthesis, {
+    demo: containsDemo,
+    partial: isPartial,
+  });
 
   const nextCorpusClass = isDemoOnly
     ? 'demo-only'
@@ -98,7 +146,8 @@ export const sanitizeReportForExport = (report: ResearchReport): ExportProvenanc
     synthesisSanitized.uncitedParagraphsRemoved > 0 ||
     synthesis !== report.synthesis ||
     isDemoOnly ||
-    containsDemo;
+    containsDemo ||
+    isPartial;
 
   return {
     report: {
@@ -115,6 +164,6 @@ export const sanitizeReportForExport = (report: ResearchReport): ExportProvenanc
     droppedRankedArticles: grounded.metrics.droppedRankedArticles,
     droppedClaims: claimGrounding.metrics.droppedClaims,
     invalidCitations: grounded.metrics.invalidCitations + claimGrounding.metrics.invalidCitations,
-    uncitedParagraphsRemoved: synthesisSanitized.uncitedParagraphsRemoved,
+    uncitedParagraphsRemoved,
   };
 };

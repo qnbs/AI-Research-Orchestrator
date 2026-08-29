@@ -103,6 +103,88 @@ describe('sanitizeReportForExport', () => {
     expect(result.report.synthesis).toContain('zero-result');
   });
 
+  it('watermarks a cancelled/partial report on export instead of exporting it as if complete', () => {
+    const report = baseReport();
+    report.aiGeneratedInsights = [{ question: 'Q?', answer: 'A.', supportingArticles: ['1'] }];
+    report.synthesis = 'Cited finding (PMID: 1).';
+    report.completionStatus = 'partial';
+    report.cancelledAtPhase = 'Phase 4: Ranking articles...';
+    report.cancelledAt = 42;
+    const result = sanitizeReportForExport(report);
+    expect(result.sanitized).toBe(true);
+    expect(result.report.synthesis).toMatch(/^PARTIAL REPORT — RESEARCH DID NOT FINISH/);
+    // Cancellation provenance must survive export, not just the watermark text.
+    expect(result.report.completionStatus).toBe('partial');
+    expect(result.report.cancelledAtPhase).toBe('Phase 4: Ranking articles...');
+    expect(result.report.cancelledAt).toBe(42);
+  });
+
+  it('watermarks a partial report even when it hit before any articles were ranked (empty-retrieval early return)', () => {
+    const report: ResearchReport = {
+      generatedQueries: [],
+      rankedArticles: [],
+      synthesis: '',
+      aiGeneratedInsights: [],
+      overallKeywords: [],
+      completionStatus: 'partial',
+      cancelledAtPhase: 'Phase 1: Generating queries...',
+      cancelledAt: 7,
+    };
+    const result = sanitizeReportForExport(report);
+    expect(result.sanitized).toBe(true);
+    expect(result.report.synthesis).toMatch(/^PARTIAL REPORT — RESEARCH DID NOT FINISH/);
+    expect(result.report.completionStatus).toBe('partial');
+    expect(result.report.cancelledAtPhase).toBe('Phase 1: Generating queries...');
+    expect(result.report.cancelledAt).toBe(7);
+  });
+
+  it('does not double-watermark a demo+partial report on a re-export round trip', () => {
+    // Guards against a real bug: checking for the partial watermark *after*
+    // conditionally prepending the demo watermark shifted what
+    // startsWith('PARTIAL REPORT...') saw, defeating that idempotency check.
+    const report = baseReport();
+    report.rankedArticles = [
+      { ...report.rankedArticles[0], pmid: 'demo:1', sourceClass: 'demo-synthetic' },
+    ];
+    report.aiGeneratedInsights = [];
+    report.completionStatus = 'partial';
+    report.synthesis =
+      'PARTIAL REPORT — RESEARCH DID NOT FINISH. Results are incomplete and have not been fully verified.\n\nSYNTHETIC EDUCATIONAL DEMO — NOT RETRIEVED LITERATURE.\n\nOriginal narrative.';
+    const result = sanitizeReportForExport(report);
+    expect(result.report.synthesis.match(/PARTIAL REPORT — RESEARCH DID NOT FINISH/g)).toHaveLength(
+      1,
+    );
+    expect(result.report.synthesis.match(/SYNTHETIC EDUCATIONAL DEMO/g)).toHaveLength(1);
+  });
+
+  it('does not double-watermark when a prior export stored demo before partial', () => {
+    const report = baseReport();
+    report.rankedArticles = [
+      { ...report.rankedArticles[0], pmid: 'demo:1', sourceClass: 'demo-synthetic' },
+    ];
+    report.aiGeneratedInsights = [];
+    report.completionStatus = 'partial';
+    report.synthesis =
+      'SYNTHETIC EDUCATIONAL DEMO — NOT RETRIEVED LITERATURE.\n\nPARTIAL REPORT — RESEARCH DID NOT FINISH. Results are incomplete and have not been fully verified.\n\nOriginal narrative.';
+    const result = sanitizeReportForExport(report);
+    expect(result.report.synthesis.match(/PARTIAL REPORT — RESEARCH DID NOT FINISH/g)).toHaveLength(
+      1,
+    );
+    expect(result.report.synthesis.match(/SYNTHETIC EDUCATIONAL DEMO/g)).toHaveLength(1);
+    expect(result.report.synthesis).toMatch(/^PARTIAL REPORT — RESEARCH DID NOT FINISH/);
+  });
+
+  it('preserves an uncited partial narrative instead of exporting only the watermark', () => {
+    const report = baseReport();
+    report.aiGeneratedInsights = [];
+    report.completionStatus = 'partial';
+    report.synthesis = 'Streaming draft with no PMID citations yet.';
+    const result = sanitizeReportForExport(report);
+    expect(result.report.synthesis).toMatch(/^PARTIAL REPORT — RESEARCH DID NOT FINISH/);
+    expect(result.report.synthesis).toContain('Streaming draft with no PMID citations yet.');
+    expect(result.uncitedParagraphsRemoved).toBe(0);
+  });
+
   it('does not relabel mixed corpora as demo-only on export', () => {
     const report = baseReport();
     report.rankedArticles = [
