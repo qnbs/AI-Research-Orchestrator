@@ -43,7 +43,7 @@ export function parseIgnoreGhsas(yaml) {
       continue;
     }
     if (!inList) continue;
-    const item = line.match(/^\s+-\s+(GHSA-[A-Za-z0-9-]+)\s*$/);
+    const item = line.match(/^\s+-\s+["']?(GHSA-[A-Za-z0-9-]+)["']?\s*$/);
     if (item) {
       ids.push(item[1]);
       continue;
@@ -176,6 +176,14 @@ function main() {
   const parsedSample = parseIgnoreGhsas(sample);
   if (parsedSample.length !== 1 || parsedSample[0] !== 'GHSA-jmr9-qjv8-65gv') {
     fail(`parser self-check failed: ${JSON.stringify(parsedSample)}`);
+  }
+
+  const quotedDouble = parseIgnoreGhsas('auditConfig:\n  ignoreGhsas:\n    - "GHSA-jmr9-qjv8-65gv"\n');
+  const quotedSingle = parseIgnoreGhsas("auditConfig:\n  ignoreGhsas:\n    - 'GHSA-jmr9-qjv8-65gv'\n");
+  if (quotedDouble[0] !== 'GHSA-jmr9-qjv8-65gv' || quotedSingle[0] !== 'GHSA-jmr9-qjv8-65gv') {
+    fail(
+      `quoted GHSA parser fixture failed: ${JSON.stringify({ quotedDouble, quotedSingle })}`,
+    );
   }
 
   const workspace = readFileSync(path.join(ROOT, 'pnpm-workspace.yaml'), 'utf8');
