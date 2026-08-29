@@ -85,7 +85,8 @@ overrides:
 # lighthouse → puppeteer-core → @puppeteer/browsers unpacking Chrome for
 # Lighthouse CI — never the production PWA bundle. Ignore until LHCI moves
 # off extract-zip or a compatible patched distro is published. Do not treat
-# this as a license to ignore other highs.
+# this as a license to ignore other highs. `pnpm run check:audit-ignore-paths`
+# fails CI if this GHSA appears on any other path or the exception goes stale.
 auditConfig:
   ignoreGhsas:
     - GHSA-jmr9-qjv8-65gv
