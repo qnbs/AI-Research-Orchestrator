@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Cancelled reports never marked `done` (P0 scientific integrity, ADR 0021, #260):** Cancelling a running pipeline (or restoring a checkpoint) with a collected body previously fell through to `reportStatus: 'done'` — identical to a finished run, skipping provenance, claim extraction, and grounded-synthesis assessment. Unified `ReportStatus` now includes `'partial'`; `ResearchReport.completionStatus` / `cancelledAtPhase` / `cancelledAt` survive save, export, and reopen. `useChat` stays gated on `=== 'done'`; `ReportDisplay` shows a non-dismissible banner; exports prepend `PARTIAL REPORT — RESEARCH DID NOT FINISH`.
+- **Sticky settings action bar mobile overlap (#230 post-merge):** Sticky settings chrome is desktop-only (`md:`) with a `max()` floor so a third fixed element (bottom nav) cannot overlap page content on narrow viewports.
+- **Status banners rendering behind the fixed header (#228):** `useElementHeight` measures real chrome height and drives `<main>` padding instead of a static Tailwind breakpoint guess.
+- **Navigation gaps and canonical product naming (#229):** Closed keyboard/mobile nav-overflow gaps; unified the product name across UI copy, `manifest.json`, and README; extracted `orchestratorTranslations.ts` / `helpTranslations.ts`.
+- **Supply-chain audit gate (#259):** Pin `nanoid@3.3.18` (GHSA-2v37-7h3g-55p8). Ignore unfixable `extract-zip` GHSA-jmr9-qjv8-65gv only on the `@lhci/cli` devDependency path; `scripts/check-audit-ignore-paths.mjs` walks `pnpm why --json` chains and parses quoted YAML GHSA scalars so a global ignore cannot cover production.
 - **Claim evidence matcher (post-merge, `CLAIM_EVIDENCE_MATCHER_VERSION` `2.3.0`):** Negation conflict checks all overlapping token occurrences (not only the first), closing a second-occurrence negation gap found in post-merge review of PR #213.
 - **Claim evidence matcher (P1 claim integrity):** Conservative deterministic matcher (`claimEvidenceMatcher.ts`) replaces 2-token lexical overlap — stop-word filtering, negation/direction conflict detection, exact evidence spans, `invalidCitations` preserved in metrics, supporting-only PMIDs on claim-supported results. Matcher version stamped on validated claims.
 - **Ollama runtime (P1 Local AI):** Split connectivity vs model-discovery caches (5s failure TTL for rapid recovery); generate streams require protocol `done: true` like chat; prompt budgets prefer `/api/show` context length over parameter-count heuristics (`ollamaModelMetadata.ts`).
@@ -22,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Docs / ADR floor 21:** Agent entrypoints (`AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.cursor/index.mdc`) and `docs/project-facts.json` `adr.minNumberedRecords` track ADR [0021](docs/adr/0021-partial-report-completion-state.md); README EN/DE document cancel + `'partial'` honesty.
 - **Docs / metadata accuracy (PR11):** Synced agent entrypoints (`AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.cursor/index.mdc`) to multi-provider + ADR 0001–0020 + blocking cross-browser + DeepSource AI Review + PR-only concurrency; README EN/DE CI sections; `package.json` description; DeepSource setup AI Review gate; audit/prompt supersession banners; Help dead `HELP_VERSION` removed (About uses `formatReleaseLabel()`); ADR floor 20 in `project-facts.json`.
 - **CI concurrency (PR11):** Deploy, E2E, cross-browser, a11y, and security cancel in-progress runs on `pull_request` only — never cancel an in-flight `main` validation or Pages deploy.
 - **Product truthfulness docs (PR10):** Calibrated README (EN/DE), Help/About, onboarding, and PWA manifest claims — local-first storage vs provider egress, corpus-supported vs unverified narrative draft, estimated scientometrics, encryption XSS caveat. Extended `forbiddenReadmePhrases` drift gate. Badges: Local-First PWA / Multi-Provider (removed Production_Ready / Gemini_Pro overclaims).
@@ -31,6 +37,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Cancel/Stop control for running research (#231):** Visible Cancel while the pipeline is `generating` / `streaming`; abort persists a resumable checkpoint of whatever was collected.
+- **Accessible data-table fallback for color-only-encoded charts (#232):** Shared `ChartAccessibleTable` gives pie/treemap charts a screen-reader-only tabular equivalent (Dashboard bar charts already had one).
+- **Sticky settings action bar + developer-mode gating for Agent Debugger (#230):** Settings title/Save/Cancel stay visible while scrolling a long tab (desktop); Agent Debugger is gated behind `developerMode`.
+- **Partial report completion state (ADR 0021, #260):** `'partial'` is a first-class `ReportStatus`; cancelled/restored runs are never `'done'`.
 - **CI / branch governance doc (PR11 / P1-7):** `docs/ci-branch-governance.md` — required checks, advisory bots, concurrency policy, artifact retention, stabilization window, merge-queue note; drift-gated via `docs/project-facts.json`.
 - **Typed pipeline events (P1 / ADR 0020):** Research streams emit stable `phaseId` values; Agent Debugger and Orchestrator timeline map from IDs (not English substring heuristics / i18n string equality).
 - **Ollama first-class Local AI (P1 / ADR 0019):** Health probe (`/api/version` + `/api/tags`) with TTL cache and Settings diagnostics; bounded NDJSON stream parser; CSP/`endpointPolicy` loopback parity for `127.0.0.1` and `[::1]`; model-missing / small-model warnings; privacy copy that PubMed/arXiv still use the network.

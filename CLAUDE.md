@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 AI Research Orchestrator — a client-only React 19 PWA for agentic biomedical literature research. It couples PubMed (NCBI E-utilities) and arXiv retrieval with a pluggable AI provider layer (Gemini, OpenAI, Anthropic, local Ollama, or a deterministic heuristic fallback) to run: query formulation → live fetch → relevance ranking → streaming, cited synthesis. All user data (reports, history, settings, knowledge base, collections) lives in the browser via Dexie/IndexedDB — there is no backend. Live at `https://qnbs.github.io/AI-Research-Orchestrator/`.
 
-**Canonical docs** — read before non-trivial changes: `AGENTS.md` (full agent guide with required-reading order), `docs/adr/0001`–`0020` (architecture decisions — see `docs/adr/README.md`), `docs/ci-branch-governance.md` + `docs/project-facts.json` (CI/ruleset), `.cursor/rules/*.mdc` (numbered: `000` meta, `001` security, `010`/`011`/`012`/`013` content & PR-bot gates, `100`s APIs, `200`s architecture limits, `300`s UI, `800`s testing). Prefer `AGENTS.md` if anything conflicts with older notes.
+**Canonical docs** — read before non-trivial changes: `AGENTS.md` (full agent guide with required-reading order), `docs/adr/0001`–`0021` (architecture decisions — see `docs/adr/README.md`), `docs/ci-branch-governance.md` + `docs/project-facts.json` (CI/ruleset), `.cursor/rules/*.mdc` (numbered: `000` meta, `001` security, `010`/`011`/`012`/`013` content & PR-bot gates, `100`s APIs, `200`s architecture limits, `300`s UI, `800`s testing). Prefer `AGENTS.md` if anything conflicts with older notes.
 
 ## Commands
 
