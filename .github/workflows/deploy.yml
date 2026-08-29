@@ -62,6 +62,9 @@ jobs:
       - name: pnpm audit (high+)
         run: pnpm audit --audit-level=high
 
+      - name: Audit ignore path guard
+        run: pnpm run check:audit-ignore-paths
+
       - name: Type check
         run: pnpm run typecheck
 

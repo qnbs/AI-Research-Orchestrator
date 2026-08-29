@@ -108,6 +108,9 @@ jobs:
       - name: Audit
         run: pnpm audit --audit-level=high
 
+      - name: Audit ignore path guard
+        run: pnpm run check:audit-ignore-paths
+
   gitleaks:
     name: Secret scan (gitleaks)
     runs-on: ubuntu-24.04
