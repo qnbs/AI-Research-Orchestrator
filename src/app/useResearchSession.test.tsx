@@ -9,6 +9,7 @@ import { defaultSettings } from '../store/slices/settingsSlice';
 import agentDebugReducer from '../store/slices/agentDebugSlice';
 import type { ResearchInput, ResearchReport } from '../types';
 import { deleteResearchCheckpoint } from '../services/databaseService';
+import type { ResearchCheckpoint } from '../lib/researchCheckpoint';
 import type { TranslationKey } from '../i18n/translations';
 
 let capturedSignal: AbortSignal | undefined;
@@ -197,7 +198,7 @@ describe('useResearchSession handleRestoreCheckpoint', () => {
       () =>
         new Promise<void>((resolve) => {
           releaseDelete = resolve;
-        }),
+        }) as ReturnType<typeof deleteResearchCheckpoint>,
     );
 
     const { result } = renderSession();
