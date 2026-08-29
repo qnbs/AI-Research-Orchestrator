@@ -12,6 +12,7 @@ import {
   ResearchReport,
   KnowledgeBaseEntry,
   type AgentName,
+  type ReportStatus,
   type Settings,
 } from '../types';
 import { generateResearchReportStream } from '../services/geminiService';
@@ -36,8 +37,6 @@ import {
 import type { PipelinePhaseId } from '../types/pipelineEvents';
 import { PIPELINE_PHASE_LABEL, PIPELINE_TIMELINE_INDEX } from '../types/pipelineEvents';
 import { safeLogError } from '../lib/safeLog';
-
-type ReportStatus = 'idle' | 'generating' | 'streaming' | 'done' | 'error';
 
 interface NotificationState {
   id: number;
@@ -131,14 +130,21 @@ export function useResearchSession({
     async (ckpt: ResearchCheckpoint) => {
       const restored = reportFromCheckpoint(ckpt);
       if (!restored) return;
+      // Invalidate in-flight work *before* awaiting IndexedDB so a concurrent
+      // search/navigation cannot be overwritten when this continuation resumes.
+      generationIdRef.current += 1;
+      const restoreGenId = generationIdRef.current;
+      streamAbortRef.current?.abort();
       const ok = await guardedDeleteCheckpoint(ckpt.id);
       if (!ok) return;
+      if (generationIdRef.current !== restoreGenId) return;
 
-      generationIdRef.current += 1;
-      streamAbortRef.current?.abort();
       setLocalResearchInput(ckpt.input);
       setReport(restored);
-      setReportStatus('done');
+      // 'partial', never 'done' - reportFromCheckpoint always stamps
+      // completionStatus: 'partial' since a restored checkpoint is missing
+      // groundedSynthesis/provenance/corpusClass by construction.
+      setReportStatus('partial');
       setError(ckpt.errorMessage ?? null);
       setCurrentPhase(ckpt.phase);
       setIsCurrentReportSaved(false);
@@ -423,7 +429,10 @@ export function useResearchSession({
       streamAbortRef.current?.abort();
       setLocalResearchInput(entry.input);
       setReport(entry.report);
-      setReportStatus('done');
+      // A report saved while still partial (Save is not blocked for partial
+      // reports - it's a legitimate way to keep cancelled work) must reopen
+      // as 'partial' too, not silently promoted to 'done'.
+      setReportStatus(entry.report.completionStatus === 'partial' ? 'partial' : 'done');
       setError(null);
       setIsCurrentReportSaved(true);
       setCurrentView('orchestrator');

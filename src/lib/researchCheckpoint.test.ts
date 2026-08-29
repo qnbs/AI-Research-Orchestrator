@@ -104,4 +104,29 @@ describe('researchCheckpoint', () => {
     expect(report?.synthesis).toBe('Hello synth');
     expect(report?.generatedQueries).toHaveLength(1);
   });
+
+  it('reportFromCheckpoint always stamps the reconstructed report as partial, never as a completed report', () => {
+    const ckpt = createResearchCheckpoint({
+      input,
+      phase: 'Phase 4: Ranking articles...',
+      reason: 'abort',
+      synthesisSoFar: 'partial synth',
+      report: {
+        synthesis: 'old',
+        rankedArticles: [],
+        generatedQueries: [],
+        aiGeneratedInsights: [],
+        overallKeywords: [],
+      },
+      now: 999,
+    });
+    // updatedAt reflects when the checkpoint was captured, not `now`
+    // necessarily elsewhere, but createResearchCheckpoint sets both to the
+    // same value on creation - assert against the checkpoint's own field
+    // rather than re-deriving it, so this stays correct if that changes.
+    const report = reportFromCheckpoint(ckpt);
+    expect(report?.completionStatus).toBe('partial');
+    expect(report?.cancelledAtPhase).toBe('Phase 4: Ranking articles...');
+    expect(report?.cancelledAt).toBe(ckpt.updatedAt);
+  });
 });

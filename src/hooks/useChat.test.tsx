@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor, act } from '@testing-library/react';
 import { useChat } from './useChat';
-import type { ResearchReport, Settings } from '../types';
+import type { ReportStatus, ResearchReport, Settings } from '../types';
 import * as geminiService from '../services/geminiService';
 
 const chatMocks = vi.hoisted(() => ({
@@ -332,5 +332,46 @@ describe('useChat', () => {
         expect.objectContaining({ type: 'error', message: expect.stringContaining('stream fail') }),
       );
     });
+  });
+
+  it('does not start a chat session for a partial report', () => {
+    const partialReport: ResearchReport = { ...minimalReport, completionStatus: 'partial' };
+    renderHook(() => useChat(partialReport, 'partial', ai));
+    expect(vi.mocked(geminiService.startChatWithReport)).not.toHaveBeenCalled();
+  });
+
+  it('tears down an existing session when status becomes partial', async () => {
+    type Props = { report: ResearchReport | null; status: ReportStatus };
+    const { result, rerender } = renderHook(
+      ({ report, status }: Props) => useChat(report, status, ai),
+      {
+        initialProps: {
+          report: minimalReport as ResearchReport | null,
+          status: 'done' as ReportStatus,
+        },
+      },
+    );
+
+    await waitFor(() => {
+      expect(vi.mocked(geminiService.startChatWithReport)).toHaveBeenCalledTimes(1);
+    });
+
+    await act(async () => {
+      await result.current.sendMessage('Hi');
+    });
+    await waitFor(() => {
+      expect(result.current.chatHistory.length).toBeGreaterThan(0);
+    });
+
+    rerender({
+      report: { ...minimalReport, completionStatus: 'partial' },
+      status: 'partial',
+    });
+
+    await waitFor(() => {
+      expect(result.current.chatHistory).toEqual([]);
+      expect(result.current.isChatting).toBe(false);
+    });
+    expect(vi.mocked(geminiService.startChatWithReport)).toHaveBeenCalledTimes(1);
   });
 });

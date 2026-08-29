@@ -1,13 +1,11 @@
 import type { Dispatch, SetStateAction } from 'react';
-import type { AgentName, ResearchInput, ResearchReport } from '../types';
+import type { AgentName, ReportStatus, ResearchInput, ResearchReport } from '../types';
 import type { AppDispatch } from '../store/store';
 import { completeTrace, setAgentStatus } from '../store/slices/agentDebugSlice';
 import { saveResearchCheckpoint } from '../services/databaseService';
 import { createResearchCheckpoint, isResumableCheckpoint } from './researchCheckpoint';
 import { isAbortError, isAppError, toAppError } from './errors';
 import { safeLogError } from './safeLog';
-
-export type ResearchReportStatus = 'idle' | 'generating' | 'streaming' | 'done' | 'error';
 
 export interface ResearchFailureNotification {
   id: number;
@@ -26,7 +24,7 @@ export interface HandleResearchStreamFailureParams {
   previousAgent: AgentName | null;
   dispatch: AppDispatch;
   setReport: Dispatch<SetStateAction<ResearchReport | null>>;
-  setReportStatus: (status: ResearchReportStatus) => void;
+  setReportStatus: (status: ReportStatus) => void;
   setError: (message: string | null) => void;
   setNotification: (notification: ResearchFailureNotification | null) => void;
   persistCheckpoint?: typeof saveResearchCheckpoint;
@@ -54,13 +52,43 @@ export async function handleResearchStreamFailure({
 
   const aborted = isAbortError(error);
   const appErr = toAppError(error, phase);
+  const mergedSynthesis = finalSynthesis || (finalReport?.synthesis ?? '');
+  // Stamped once so every place that surfaces this report (the optimistic
+  // setReport below, and reportStatus itself) agrees it's incomplete. The
+  // abort path skips the success path's finalization entirely (provenance
+  // stamping, claim extraction, grounded-synthesis assessment at
+  // useResearchSession.ts) - without this, a report cancelled mid-ranking or
+  // mid-synthesis is otherwise indistinguishable from a genuinely finished
+  // one once it's visible in the UI, save flow, or export.
+  const partialReport: ResearchReport | null =
+    aborted && finalReport
+      ? {
+          ...finalReport,
+          synthesis: mergedSynthesis,
+          completionStatus: 'partial',
+          cancelledAtPhase: phase,
+          cancelledAt: Date.now(),
+        }
+      : null;
+
+  // Stamp the visible report now, synchronously - still safe without a
+  // generation-id re-check since nothing async has happened yet since the
+  // entry check above. Doing this before the checkpoint-persistence attempt
+  // (rather than only inside its success branch) guarantees the cancellation
+  // marker reaches the UI even if persistCheckpoint fails or the checkpoint
+  // turns out non-resumable; previously a persistence failure left
+  // reportStatus 'partial' while the report object itself stayed unstamped -
+  // no banner, no export watermark, chat gate silently keyed off a value
+  // that was never set.
+  if (partialReport) {
+    setReport(partialReport);
+  }
+
   const checkpoint = createResearchCheckpoint({
     input,
     phase,
     reason: aborted ? 'abort' : 'error',
-    report: finalReport
-      ? { ...finalReport, synthesis: finalSynthesis || finalReport.synthesis }
-      : null,
+    report: finalReport ? { ...finalReport, synthesis: mergedSynthesis } : null,
     synthesisSoFar: finalSynthesis,
     errorMessage: aborted ? undefined : appErr.toUserMessage(),
   });
@@ -72,8 +100,11 @@ export async function handleResearchStreamFailure({
       // already set its own report/notification) while this one's checkpoint
       // write was still in flight - never let a stale run overwrite it.
       if (getActiveGenerationId() === currentGenerationId) {
-        if (finalReport) {
-          setReport({ ...finalReport, synthesis: finalSynthesis || finalReport.synthesis });
+        // partialReport was already set above (synchronously, pre-await) -
+        // only the non-aborted "real error with a usable report" case still
+        // needs a setReport call here.
+        if (!partialReport && finalReport) {
+          setReport({ ...finalReport, synthesis: mergedSynthesis });
         }
         setNotification({
           id: Date.now(),
@@ -99,7 +130,11 @@ export async function handleResearchStreamFailure({
   if (aborted) {
     if (getActiveGenerationId() === currentGenerationId) {
       dispatch(completeTrace({ status: 'error' }));
-      setReportStatus(finalReport ? 'done' : 'idle');
+      // Never 'done' here - that status means the success path's
+      // finalization actually ran. A cancelled run with a partial report is
+      // 'partial' (still visible, clearly marked incomplete); with nothing
+      // at all it's back to 'idle'.
+      setReportStatus(partialReport ? 'partial' : 'idle');
     }
     return;
   }
