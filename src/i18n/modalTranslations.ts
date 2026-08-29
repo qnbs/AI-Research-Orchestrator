@@ -45,6 +45,9 @@ export const modalTranslations = {
     'history.list.date_any': 'Any time',
     'history.list.date_last_years': 'Last {years} years',
     'history.list.date_last_years_one': 'Last {years} year',
+    'history.list.partialBadge': 'Partial report',
+    'history.quick.partialBanner':
+      'PARTIAL REPORT — this research run did not finish. Results are incomplete.',
     'history.empty.title': 'No History Yet',
     'history.empty.message':
       'Your saved reports will appear here. Start a new search on the Orchestrator tab to begin building your research history.',
@@ -104,6 +107,9 @@ export const modalTranslations = {
     'history.list.date_any': 'Jederzeit',
     'history.list.date_last_years': 'Letzte {years} Jahre',
     'history.list.date_last_years_one': 'Letztes {years} Jahr',
+    'history.list.partialBadge': 'Teilbericht',
+    'history.quick.partialBanner':
+      'TEILBERICHT — dieser Forschungslauf wurde nicht abgeschlossen. Die Ergebnisse sind unvollständig.',
     'history.empty.title': 'Noch kein Verlauf',
     'history.empty.message':
       'Ihre gespeicherten Berichte erscheinen hier. Starten Sie eine neue Suche im Orchestrator-Tab, um Ihren Forschungsverlauf aufzubauen.',
