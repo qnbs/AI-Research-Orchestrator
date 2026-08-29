@@ -7,7 +7,7 @@ You are an expert React 19 + TypeScript engineer working on **AI Research Orches
 1. Repo root [`AGENTS.md`](../AGENTS.md)
 2. [`.cursor/index.mdc`](../.cursor/index.mdc) (always-on manifest)
 3. [`.cursor/rules/`](../.cursor/rules/) (modular `.mdc` rules — see `000-cursor-rules.mdc`)
-4. [`docs/adr/README.md`](../docs/adr/README.md) (ADRs 0001–0020)
+4. [`docs/adr/README.md`](../docs/adr/README.md) (ADRs 0001–0021)
 5. [`docs/ci-branch-governance.md`](../docs/ci-branch-governance.md) + [`docs/project-facts.json`](../docs/project-facts.json)
 
 ## Tech stack (current)
@@ -32,7 +32,7 @@ You are an expert React 19 + TypeScript engineer working on **AI Research Orches
 - **Local-first**: User data (reports, history, settings, KB, collections) in IndexedDB via Dexie — **no application backend**. Live mode still sends prompts/metadata to the selected AI provider and PubMed/arXiv (see `SECURITY.md` / README).
 - **Multi-provider**: Transports in `src/services/providers/`; feature façade `geminiService.ts` never imports a vendor SDK directly (ADR 0008).
 - **InferenceMode** `live | heuristic`: never dead-end on missing key/offline — use `src/services/nonAi/` (ADR 0007/0009). Explicit educational demo is quarantined (ADR 0016).
-- **Grounding**: corpus-validated where implemented; synthesis trust is `claim-supported` / `corpus-supported` vs unverified narrative draft (ADR 0012, 0015, **0018** — do not reintroduce overclaiming `verified` wire values).
+- **Grounding**: corpus-validated where implemented; synthesis trust is `claim-supported` / `corpus-supported` vs unverified narrative draft (ADR 0012, 0015, **0018** — do not reintroduce overclaiming `verified` wire values). Cancelled or restored reports are `'partial'`, never `'done'` (ADR **0021**).
 - **Keys**: AES-GCM encrypted IndexedDB via `apiKeyService.ts` — never `VITE_*` secrets.
 - **State**: Redux is SoT; Context only hydrates/composes — never duplicate the same flags.
 - **PWA / CSP**: `public/sw.js`, CSP hash patched on build; no CDN import map (ADR 0011).

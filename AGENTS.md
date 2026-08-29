@@ -8,7 +8,7 @@ Guidance for AI coding agents (Kimi, Cursor, Copilot) working in this repository
 
 - **Local-first / zero app backend**: all user data (reports, history, settings, knowledge base, collections) lives in the browser's IndexedDB via Dexie 4. There is **no application server** that stores research — in live mode the browser still sends prompts and article metadata to the selected AI provider and calls PubMed/arXiv (see `SECURITY.md` / README).
 - **Direct-to-API**: the browser talks directly to the selected AI provider, `eutils.ncbi.nlm.nih.gov`, and `export.arxiv.org` (see CSP in `index.html`).
-- **Grounding**: ranked insights and exports are corpus-validated where implemented; narrative synthesis is labeled **corpus-supported / claim-supported** vs. unverified narrative draft (ADR 0012, 0015, **0018**). Source identifiers: PMID, PMC, DOI, arXiv.
+- **Grounding**: ranked insights and exports are corpus-validated where implemented; narrative synthesis is labeled **corpus-supported / claim-supported** vs. unverified narrative draft (ADR 0012, 0015, **0018**). Cancelled or restored runs are `'partial'`, never `'done'` (ADR **0021**). Source identifiers: PMID, PMC, DOI, arXiv.
 - **Live demo / deployment**: GitHub Pages at `https://qnbs.github.io/AI-Research-Orchestrator/` (base path `/AI-Research-Orchestrator/`).
 
 Main features: Orchestrator pipeline, Knowledge Base (dedup, faceted filtering, charts), Rapid Research Assistant (TL;DR, similar articles, report chat), scientometric Author/Journal hubs, Collections, Agent Debugger (visual traces), Dashboard, History, and export to JSON/CSV/RIS/BibTeX/PDF.
@@ -18,7 +18,7 @@ Main features: Orchestrator pipeline, Knowledge Base (dedup, faceted filtering, 
 1. **`.github/copilot-instructions.md`** — current stack, folder structure, state management, testing, safety rules.
 2. **`.cursor/index.mdc`** — always-on project manifest.
 3. **`.cursor/rules/*.mdc`** — contextual rules (Security, APIs, Architecture, UI, QA — numbering scheme in `000-cursor-rules.mdc`).
-4. **`docs/adr/`** — architecture decisions; see `docs/adr/README.md` for the full, current index (0001 state management … **0020** typed pipeline events).
+4. **`docs/adr/`** — architecture decisions; see `docs/adr/README.md` for the full, current index (0001 state management … **0021** partial-report completion state).
 5. **`docs/ci-branch-governance.md`** + **`docs/project-facts.json`** — required CI checks, concurrency, ruleset expectations, drift-gated facts.
 
 ## Technology Stack

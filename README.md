@@ -53,6 +53,7 @@ Without a usable live-provider key, while offline, or with **Force Heuristic Mod
 - **Live retrieval** — NCBI E-utilities (and optional arXiv), with rate limits and backoff.
 - **Relevance ranking** — Scores 0–100 from titles and available abstracts (metadata-only records ranked accordingly). Live providers may use model reasoning budgets; heuristic mode uses lexical ranking.
 - **Synthesis** — Streams a cited executive summary when possible. Treat unverified narrative sections as drafts pending primary-source review.
+- **Cancel anytime** — Stop a running pipeline and keep whatever was collected so far. Partial results are `'partial'`, never `'done'` (ADR [0021](docs/adr/0021-partial-report-completion-state.md)): UI banner, no report chat, and exports watermark `PARTIAL REPORT — RESEARCH DID NOT FINISH`. A saved checkpoint remains resumable.
 
 #### 2. Knowledge Base
 
@@ -251,7 +252,7 @@ Ohne nutzbaren Live-Key, offline oder mit **Force Heuristic Mode** (Einstellunge
 
 #### 1. Orchestrator
 
-- Query-Formulierung, NCBI-/arXiv-Abruf mit Rate-Limits, Ranking 0–100 aus Titel/Abstracts, gestreamte Synthese. Unverifizierte Narrative als Entwurf behandeln.
+- Query-Formulierung, NCBI-/arXiv-Abruf mit Rate-Limits, Ranking 0–100 aus Titel/Abstracts, gestreamte Synthese. Unverifizierte Narrative als Entwurf behandeln. Jederzeit abbrechbar — Teilergebnisse bleiben erhalten, sind aber eindeutig `'partial'` (nie `'done'`; ADR [0021](docs/adr/0021-partial-report-completion-state.md)): Banner, kein Report-Chat, Export-Wasserzeichen `PARTIAL REPORT — RESEARCH DID NOT FINISH`. Ein gespeicherter Checkpoint bleibt fortsetzbar.
 
 #### 2. Wissensdatenbank
 

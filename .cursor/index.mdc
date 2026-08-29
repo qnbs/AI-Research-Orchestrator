@@ -9,7 +9,7 @@ alwaysApply: true
 
 **Stack:** React 19, TypeScript strict, Vite 8, Redux Toolkit, Dexie 4 + dexie-react-hooks (IndexedDB), Tailwind CSS v4, lazy provider SDKs, Marked/DOMPurify, jsPDF, **Recharts only**, Framer Motion, cmdk, Vitest + Testing Library, Playwright E2E (blocking Chromium + blocking Firefox/WebKit/mobile Chrome). Inference: `live | heuristic` (`src/services/nonAi/`, ADR 0007/0009).
 
-**Architecture:** Browser talks directly to the selected AI provider + NCBI E-utilities (+ arXiv); AES-GCM keys via `apiKeyService`; Redux is the single source of truth; Context only hydrates/composes (`SettingsProvider`, KB) — never duplicate the same settings/UI flags. Synthesis trust: corpus-/claim-supported vs unverified narrative draft (ADR 0018).
+**Architecture:** Browser talks directly to the selected AI provider + NCBI E-utilities (+ arXiv); AES-GCM keys via `apiKeyService`; Redux is the single source of truth; Context only hydrates/composes (`SettingsProvider`, KB) — never duplicate the same settings/UI flags. Synthesis trust: corpus-/claim-supported vs unverified narrative draft (ADR 0018). Cancelled/restored reports are `partial`, never `done` (ADR 0021).
 
 **Conventions:** EN+DE in `src/i18n/translations.ts`; WCAG-oriented (ARIA, keyboard); new persistent data → Dexie schema in `databaseService`; Node **≥22**; `pnpm install --frozen-lockfile`. Before commit: `typecheck` + `lint`; for core orchestration / Knowledge Base / `src/services` flows also run `pnpm run test:coverage` (or read the blocking CI coverage job). Prefer scoped Vitest/Playwright locally for unrelated UI edits; full coverage/E2E from CI. English-only new repo content (rule `010`).
 
