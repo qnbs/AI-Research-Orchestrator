@@ -252,7 +252,7 @@ Ohne nutzbaren Live-Key, offline oder mit **Force Heuristic Mode** (Einstellunge
 
 #### 1. Orchestrator
 
-- Query-Formulierung, NCBI-/arXiv-Abruf mit Rate-Limits, Ranking 0–100 aus Titel/Abstracts, gestreamte Synthese. Unverifizierte Narrative als Entwurf behandeln. Jederzeit abbrechbar — Teilergebnisse bleiben erhalten, sind aber eindeutig `'partial'` (nie `'done'`; ADR [0021](docs/adr/0021-partial-report-completion-state.md)): Banner, kein Report-Chat, Export-Wasserzeichen `PARTIAL REPORT — RESEARCH DID NOT FINISH`.
+- Query-Formulierung, NCBI-/arXiv-Abruf mit Rate-Limits, Ranking 0–100 aus Titel/Abstracts, gestreamte Synthese. Unverifizierte Narrative als Entwurf behandeln. Jederzeit abbrechbar — Teilergebnisse bleiben erhalten, sind aber eindeutig `'partial'` (nie `'done'`; ADR [0021](docs/adr/0021-partial-report-completion-state.md)): Banner, kein Report-Chat, Export-Wasserzeichen `PARTIAL REPORT — RESEARCH DID NOT FINISH`. Ein gespeicherter Checkpoint bleibt fortsetzbar.
 
 #### 2. Wissensdatenbank
 

@@ -143,7 +143,7 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(function R
   chatHistory,
   isChatting,
   onSendMessage,
-  chatEnabled = true,
+  chatEnabled = false,
 }) {
   const [modalState, setModalState] = useState<{
     type: 'pdf' | 'csv' | 'insights' | 'save';
@@ -248,9 +248,12 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(function R
     report.retrievalOutcome === 'zero_results' ||
     report.retrievalOutcome === 'retrieval_failed' ||
     report.retrievalOutcome === 'offline_without_demo';
-  // Demo corpora must never show the green corpus-supported trust chrome.
-  const showNarrativeDraftBanner =
-    !isDemoCorpus && !isEmptyRetrieval && synthesisTrustLevel === 'narrative-draft';
+  // Demo corpora and cancelled/partial runs must never show green
+  // corpus-supported chrome — a partial stream can still carry trustLevel.
+  const trustChromeOk = !isPartial && !isDemoCorpus && !isEmptyRetrieval;
+  const showNarrativeDraftBanner = trustChromeOk && synthesisTrustLevel === 'narrative-draft';
+  const showCorpusSupportedBanner = trustChromeOk && synthesisTrustLevel === 'corpus-supported';
+  const canSaveReport = isPartial || chatEnabled;
 
   const handleCopySynthesis = useCallback(() => {
     const plainText = stripMarkdown(report.synthesis);
@@ -372,7 +375,7 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(function R
                   <CheckCircleIcon className="h-5 w-5 mr-2" />
                   {t('report.saved')}
                 </div>
-              ) : (
+              ) : canSaveReport ? (
                 <button
                   onClick={() => setModalState({ type: 'save' })}
                   className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-brand-text-on-accent bg-brand-accent hover:bg-opacity-90"
@@ -380,7 +383,7 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(function R
                   <BookmarkSquareIcon className="h-5 w-5 mr-2" />
                   {t('report.save')}
                 </button>
-              )}
+              ) : null}
             </div>
           </div>
         </div>
@@ -407,7 +410,7 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(function R
               >
                 {t('report.synthesis.narrativeDraftBanner')}
               </p>
-            ) : !isDemoCorpus && !isEmptyRetrieval && synthesisTrustLevel === 'corpus-supported' ? (
+            ) : showCorpusSupportedBanner ? (
               <p
                 className="mb-3 rounded-md border border-green-500/30 bg-green-500/10 px-3 py-2 text-sm text-green-200"
                 role="status"
