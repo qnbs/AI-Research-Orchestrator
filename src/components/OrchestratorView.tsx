@@ -225,6 +225,7 @@ const OrchestratorViewComponent: React.FC<OrchestratorViewProps> = ({
           chatHistory={chatHistory}
           isChatting={isChatting}
           onSendMessage={onSendMessage}
+          chatEnabled={reportStatus === 'done'}
         />
       )}
 

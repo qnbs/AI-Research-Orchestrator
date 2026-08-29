@@ -24,6 +24,36 @@ const DEMO_EXPORT_WATERMARK = 'SYNTHETIC EDUCATIONAL DEMO — NOT RETRIEVED LITE
 const PARTIAL_EXPORT_WATERMARK =
   'PARTIAL REPORT — RESEARCH DID NOT FINISH. Results are incomplete and have not been fully verified.\n\n';
 
+/** Strip either export watermark from the start, in any order, so re-export is idempotent. */
+function stripLeadingExportWatermarks(synthesis: string): string {
+  let text = synthesis;
+  let changed = true;
+  while (changed) {
+    changed = false;
+    if (text.startsWith(PARTIAL_EXPORT_WATERMARK)) {
+      text = text.slice(PARTIAL_EXPORT_WATERMARK.length);
+      changed = true;
+    }
+    if (text.startsWith(DEMO_EXPORT_WATERMARK)) {
+      text = text.slice(DEMO_EXPORT_WATERMARK.length);
+      changed = true;
+    }
+  }
+  return text;
+}
+
+/** Canonical prefix order: partial outermost, then demo. */
+function applyExportWatermarks(
+  synthesis: string,
+  opts: { demo: boolean; partial: boolean },
+): string {
+  const body = stripLeadingExportWatermarks(synthesis);
+  let next = body;
+  if (opts.demo) next = `${DEMO_EXPORT_WATERMARK}${next}`;
+  if (opts.partial) next = `${PARTIAL_EXPORT_WATERMARK}${next}`;
+  return next;
+}
+
 function isEmptyRetrievalReport(report: ResearchReport): boolean {
   return (
     report.corpusClass === 'empty-retrieval' ||
@@ -44,13 +74,8 @@ export const sanitizeReportForExport = (report: ResearchReport): ExportProvenanc
     isAllDemoCorpus(ranked);
 
   const isPartial = report.completionStatus === 'partial';
-  // Exact-prefix match against the full watermark text (not just its opening
-  // words) - a narrative that happens to start with "PARTIAL REPORT" for
-  // unrelated reasons must still get watermarked.
   const withPartialWatermark = (synthesis: string): string =>
-    isPartial && !synthesis.startsWith(PARTIAL_EXPORT_WATERMARK)
-      ? `${PARTIAL_EXPORT_WATERMARK}${synthesis}`
-      : synthesis;
+    applyExportWatermarks(synthesis, { demo: false, partial: isPartial });
 
   // Empty-retrieval explanations are intentional UX copy, not uncited narrative claims.
   if (isEmptyRetrievalReport(report) && ranked.length === 0) {
@@ -89,23 +114,21 @@ export const sanitizeReportForExport = (report: ResearchReport): ExportProvenanc
     corpusPmids,
   );
 
-  // Check both watermarks against the same pre-watermark base text - checking
-  // "needs partial watermark" only after conditionally prepending the demo
-  // watermark would shift what startsWith('PARTIAL REPORT...') sees on a
-  // demo+partial re-export round-trip, defeating that idempotency check and
-  // doubling the partial watermark.
-  const baseSynthesis = synthesisSanitized.synthesis;
-  const needsDemoWatermark =
-    containsDemo && !baseSynthesis.startsWith('SYNTHETIC EDUCATIONAL DEMO');
-  const needsPartialWatermark = isPartial && !baseSynthesis.startsWith(PARTIAL_EXPORT_WATERMARK);
+  // A cancelled run can have a visible narrative with no extractable PMID
+  // claims yet. The claim sanitizer would then return '' and the export would
+  // be watermark-only — dropping the collected body this change exists to
+  // preserve. Keep the original (already-watermark-stripped) text and label it.
+  let uncitedParagraphsRemoved = synthesisSanitized.uncitedParagraphsRemoved;
+  let baseSynthesis = synthesisSanitized.synthesis;
+  if (isPartial && !baseSynthesis.trim() && report.synthesis.trim()) {
+    baseSynthesis = stripLeadingExportWatermarks(report.synthesis);
+    uncitedParagraphsRemoved = 0;
+  }
 
-  let synthesis = baseSynthesis;
-  if (needsDemoWatermark) {
-    synthesis = `${DEMO_EXPORT_WATERMARK}${synthesis}`;
-  }
-  if (needsPartialWatermark) {
-    synthesis = `${PARTIAL_EXPORT_WATERMARK}${synthesis}`;
-  }
+  const synthesis = applyExportWatermarks(baseSynthesis, {
+    demo: containsDemo,
+    partial: isPartial,
+  });
 
   const nextCorpusClass = isDemoOnly
     ? 'demo-only'
@@ -141,6 +164,6 @@ export const sanitizeReportForExport = (report: ResearchReport): ExportProvenanc
     droppedRankedArticles: grounded.metrics.droppedRankedArticles,
     droppedClaims: claimGrounding.metrics.droppedClaims,
     invalidCitations: grounded.metrics.invalidCitations + claimGrounding.metrics.invalidCitations,
-    uncitedParagraphsRemoved: synthesisSanitized.uncitedParagraphsRemoved,
+    uncitedParagraphsRemoved,
   };
 };

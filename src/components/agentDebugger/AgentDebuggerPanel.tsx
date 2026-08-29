@@ -6,9 +6,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAppSelector, useAppDispatch } from '../../store/hooks';
 import { togglePinned, clearHistory, setDebuggerVisible } from '../../store/slices/agentDebugSlice';
 import { useTranslation } from '../../hooks/useTranslation';
+import { useMotionSafeLoop } from '../../hooks/useMotionSafeLoop';
 import { TokenBudgetBar } from './TokenBudgetBar';
 import { EventRow } from './EventRow';
 import { HistoryRow } from './HistoryRow';
+
+const LIVE_PULSE_ANIMATE = { opacity: [1, 0.5, 1] };
+const LIVE_PULSE_TRANSITION = { duration: 1.4, repeat: Infinity };
+const PROCESSING_PULSE_ANIMATE = { opacity: [1, 0.4, 1] };
+const PROCESSING_PULSE_TRANSITION = { duration: 1.5, repeat: Infinity };
 
 const AgentDebuggerPanel: React.FC = () => {
   const { t } = useTranslation();
@@ -37,6 +43,13 @@ const AgentDebuggerPanel: React.FC = () => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- auto-switches to the trace tab when a new run starts; activeTab remains independently user-controlled afterward, so this can't be a pure render derivation.
     if (currentTrace?.status === 'running') setActiveTab('trace');
   }, [currentTrace?.sessionId, currentTrace?.status]);
+
+  // Arrays start/end at full opacity (not the pulse's dim midpoint) so
+  // useMotionSafeLoop's reduced-motion collapse - which settles on the last
+  // keyframe - leaves these status indicators fully visible instead of
+  // permanently dim; the looping animation's rhythm is unaffected either way.
+  const livePulse = useMotionSafeLoop(LIVE_PULSE_ANIMATE, LIVE_PULSE_TRANSITION);
+  const processingPulse = useMotionSafeLoop(PROCESSING_PULSE_ANIMATE, PROCESSING_PULSE_TRANSITION);
 
   if (!isVisible) return null;
 
@@ -92,8 +105,8 @@ const AgentDebuggerPanel: React.FC = () => {
               <span className="text-sm font-semibold text-text-primary">{t('debugger.title')}</span>
               {currentTrace?.status === 'running' && (
                 <motion.span
-                  animate={{ opacity: [0.5, 1, 0.5] }}
-                  transition={{ duration: 1.4, repeat: Infinity }}
+                  animate={livePulse.animate}
+                  transition={livePulse.transition}
                   className="flex items-center gap-1 text-[10px] text-brand-accent bg-brand-accent/10 px-2 py-0.5 rounded-full border border-brand-accent/30"
                 >
                   <span className="w-1.5 h-1.5 rounded-full bg-brand-accent" />
@@ -204,8 +217,8 @@ const AgentDebuggerPanel: React.FC = () => {
                     ))}
                     {currentTrace.status === 'running' && (
                       <motion.div
-                        animate={{ opacity: [0.4, 1, 0.4] }}
-                        transition={{ duration: 1.5, repeat: Infinity }}
+                        animate={processingPulse.animate}
+                        transition={processingPulse.transition}
                         className="flex items-center gap-2 text-xs text-brand-accent pl-12 py-1 mt-1"
                       >
                         <span className="w-1.5 h-1.5 rounded-full bg-brand-accent" />
