@@ -101,7 +101,7 @@
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.1.1",
     "fake-indexeddb": "^6.2.5",
-    "globals": "^17.6.0",
+    "globals": "^17.11.0",
     "husky": "^9.1.7",
     "jsdom": "^29.1.1",
     "lint-staged": "^17.1.1",
