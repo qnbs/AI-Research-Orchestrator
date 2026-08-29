@@ -165,7 +165,7 @@ These IDs come from the post-sprint prompt. Evidence: `docs/audits/2026-08-29-ba
 | ID                   | Sev | Status                                      | Evidence                                                                                                |
 | -------------------- | --- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
 | `NOW-P0-PARTIAL`     | P0  | **Open** — PR #234 mergeable, 22 days stale | Abort path stamps `reportStatus: 'done'` in `researchStreamFailure.ts` L102                             |
-| `NOW-P0-AUDIT`       | P0  | **Open** — scheduled Security red           | `extract-zip` GHSA-jmr9-qjv8-65gv + `nanoid` GHSA-2v37-7h3g-55p8; pin before merge-ready heads          |
+| `NOW-P0-AUDIT`       | P0  | **Open on `main`** — addressed on #259      | `nanoid@3.3.18` pin + LHCI-only `extract-zip` ignore + `check:audit-ignore-paths` (not on `main` yet)   |
 | `NOW-P1-MOTION`      | P1  | **Open** — PR #233                          | Looping Framer Motion ignores `prefers-reduced-motion`. `ParticleBackground.tsx` already deleted (#229) |
 | `NOW-P1-DOCS-WAVE`   | P1  | **Open** — PR #235 BLOCKED                  | ADR 0021 + CHANGELOG for #228–#234 not on `main`; CodeRabbit `CHANGES_REQUESTED`. Land after #234       |
 | `NOW-P1-DEP-STALL`   | P1  | **Open** — 15 Dependabot PRs                | Rule 012 violation. CodeQL trio #256/#257/#258 must move together. Skip unused `lucide-react`           |

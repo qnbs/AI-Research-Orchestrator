@@ -45,6 +45,7 @@
     "check:docs-drift": "node scripts/check-docs-drift.mjs",
     "check:coverage-floors": "node scripts/check-coverage-floors.mjs",
     "check:log-redaction": "node scripts/check-log-redaction.mjs",
+    "check:audit-ignore-paths": "node scripts/check-audit-ignore-paths.mjs",
     "check:csp-endpoint-drift": "node scripts/check-docs-drift.mjs --csp-endpoint",
     "check:agent-eval": "vitest run src/lib/agentEval.test.ts src/lib/heuristicEval.test.ts src/lib/liveOrchestratorEval.test.ts",
     "i18n:ratchet": "node scripts/check-i18n-ratchet.mjs",

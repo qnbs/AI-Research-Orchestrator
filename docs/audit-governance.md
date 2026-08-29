@@ -64,6 +64,11 @@ Moderate findings are **tracked but not CI-blocking** because:
 - Emergency merge with known moderate in a **devDependency** only: document in PR
   body + `dependabot-disposition.md`; fix in follow-up PR.
 - Never ignore **high** or **critical** in production paths.
+- `pnpm.auditConfig.ignoreGhsas` is allowed only for an unpatched advisory whose
+  **only** tree path is a documented non-production tool (today: `GHSA-jmr9-qjv8-65gv`
+  via `@lhci/cli` → `extract-zip`). `pnpm run check:audit-ignore-paths` fails CI if
+  that GHSA appears on any other path, if the package becomes a production
+  dependency, or if the ignore goes stale after the package leaves the tree.
 
 ## Cross-references
 

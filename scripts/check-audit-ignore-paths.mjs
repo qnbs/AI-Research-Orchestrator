@@ -1,0 +1,135 @@
+#!/usr/bin/env node
+/**
+ * Guard `pnpm.auditConfig.ignoreGhsas` so a global advisory ignore cannot hide
+ * the same GHSA on a production dependency path.
+ *
+ * Each ignored GHSA must be listed in ALLOWED_AUDIT_IGNORES with the package
+ * and the only allowed ancestor. If that package leaves the tree, remove the
+ * ignore — this script fails on a stale exception.
+ */
+import { execFileSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const ROOT = fileURLToPath(new URL('..', import.meta.url));
+
+/**
+ * Allow-list for `auditConfig.ignoreGhsas`. Adding a GHSA to the workspace
+ * file without a matching entry here fails CI.
+ *
+ * @type {Record<string, { packageName: string, mustPassThrough: string }>}
+ */
+const ALLOWED_AUDIT_IGNORES = {
+  // Unpatched extract-zip (GHSA-jmr9-qjv8-65gv). Only path: LHCI Chrome unpack.
+  'GHSA-jmr9-qjv8-65gv': {
+    packageName: 'extract-zip',
+    mustPassThrough: '@lhci/cli',
+  },
+};
+
+/**
+ * @param {string} yaml
+ * @returns {string[]}
+ */
+export function parseIgnoreGhsas(yaml) {
+  const ids = [];
+  let inList = false;
+  for (const line of yaml.split('\n')) {
+    if (/^\s*ignoreGhsas:\s*$/.test(line)) {
+      inList = true;
+      continue;
+    }
+    if (!inList) continue;
+    const item = line.match(/^\s+-\s+(GHSA-[A-Za-z0-9-]+)\s*$/);
+    if (item) {
+      ids.push(item[1]);
+      continue;
+    }
+    if (/^\s*$/.test(line) || /^\s+#/.test(line)) continue;
+    break;
+  }
+  return ids;
+}
+
+function fail(message) {
+  console.error(`check-audit-ignore-paths FAILED:\n  ${message}`);
+  process.exit(1);
+}
+
+function whyPackage(packageName) {
+  try {
+    return execFileSync('pnpm', ['why', packageName], {
+      cwd: ROOT,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+  } catch (err) {
+    if (err && typeof err === 'object' && 'code' in err && err.code === 'ENOENT') {
+      throw err;
+    }
+    const stderr = typeof err === 'object' && err && 'stderr' in err ? String(err.stderr) : '';
+    const stdout = typeof err === 'object' && err && 'stdout' in err ? String(err.stdout) : '';
+    return `${stdout}\n${stderr}`;
+  }
+}
+
+function main() {
+  const workspace = readFileSync(path.join(ROOT, 'pnpm-workspace.yaml'), 'utf8');
+  const pkg = JSON.parse(readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
+  const ignored = parseIgnoreGhsas(workspace);
+
+  for (const ghsa of ignored) {
+    const rule = ALLOWED_AUDIT_IGNORES[ghsa];
+    if (!rule) {
+      fail(
+        `${ghsa} is in auditConfig.ignoreGhsas but not in ALLOWED_AUDIT_IGNORES ` +
+          `(scripts/check-audit-ignore-paths.mjs). Document the production-safe path or remove the ignore.`,
+      );
+    }
+
+    if (pkg.dependencies?.[rule.packageName]) {
+      fail(
+        `${ghsa} ignore covers ${rule.packageName}, which is a production dependency. ` +
+          `Remove the ignore or move the package off the production graph.`,
+      );
+    }
+
+    const why = whyPackage(rule.packageName);
+    const found = why.includes(`${rule.packageName}@`);
+    if (!found) {
+      fail(
+        `${ghsa} is ignored, but ${rule.packageName} is no longer in the tree. ` +
+          `Remove ${ghsa} from auditConfig.ignoreGhsas.`,
+      );
+    }
+
+    if (!why.includes(rule.mustPassThrough)) {
+      fail(
+        `${ghsa}: ${rule.packageName} is in the tree but not via ${rule.mustPassThrough}.\n${why}`,
+      );
+    }
+
+    if (!/\(devDependencies\)/.test(why)) {
+      fail(
+        `${ghsa}: ${rule.packageName} must enter the app only through a devDependency ` +
+          `(expected ${rule.mustPassThrough} as a devDependency).\n${why}`,
+      );
+    }
+  }
+
+  const sample = 'auditConfig:\n  ignoreGhsas:\n    - GHSA-jmr9-qjv8-65gv\n';
+  const parsedSample = parseIgnoreGhsas(sample);
+  if (parsedSample.length !== 1 || parsedSample[0] !== 'GHSA-jmr9-qjv8-65gv') {
+    fail(`parser self-check failed: ${JSON.stringify(parsedSample)}`);
+  }
+
+  console.log(
+    `check-audit-ignore-paths OK (${ignored.length} ignored GHSA(s), all on documented non-production paths).`,
+  );
+}
+
+const isDirectRun = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (isDirectRun) {
+  main();
+}
