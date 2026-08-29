@@ -135,7 +135,7 @@ Severity: P0 = stop-the-line · P1 = pre-release hardening · P2 = architecture/
 | Note       | Do not mutate settings without maintainer authorization                                                                                                                                                                                                                        |
 | Status     | **Partially resolved** (2026-08-06; reconfirmed 2026-08-29) — ruleset already had `required_review_thread_resolution` and `strict_required_status_checks_policy`. **CODEOWNERS still missing.** Dismiss-stale-approvals-on-new-commits remains maintainer-gated (do not flip). |
 
-### ISSUE-P1-TRANSPORT-001 — Ollama bounded response bodies
+### ISSUE-P1-TRANSPORT-001 — Bounded Ollama response bodies
 
 | Field      | Value                                                                                                        |
 | ---------- | ------------------------------------------------------------------------------------------------------------ |
@@ -168,7 +168,7 @@ These IDs come from the post-sprint prompt. Evidence: `docs/audits/2026-08-29-ba
 | `NOW-P0-AUDIT`       | P0  | **Open** — scheduled Security red           | `extract-zip` GHSA-jmr9-qjv8-65gv + `nanoid` GHSA-2v37-7h3g-55p8; pin before merge-ready heads          |
 | `NOW-P1-MOTION`      | P1  | **Open** — PR #233                          | Looping Framer Motion ignores `prefers-reduced-motion`. `ParticleBackground.tsx` already deleted (#229) |
 | `NOW-P1-DOCS-WAVE`   | P1  | **Open** — PR #235 BLOCKED                  | ADR 0021 + CHANGELOG for #228–#234 not on `main`; CodeRabbit `CHANGES_REQUESTED`. Land after #234       |
-| `NOW-P1-DEP-STALL`   | P1  | **Open** — 18 Dependabot PRs                | Rule 012 violation. CodeQL trio #256/#257/#258 must move together. Skip unused `lucide-react`           |
+| `NOW-P1-DEP-STALL`   | P1  | **Open** — 15 Dependabot PRs                | Rule 012 violation. CodeQL trio #256/#257/#258 must move together. Skip unused `lucide-react`           |
 | `NOW-P1-RELEASE`     | P1  | **Open**                                    | Tag `v0.4.1` exists at `2c7a032`; GitHub Release does not. Cut `v0.4.2` after #234 + docs + deps        |
 | `NOW-P1-SW-NCBI-KEY` | P1  | **Resolved** on `main`                      | `public/sw.js` `NetworkOnly` for credentialed NCBI + activate purge; `sw-integrity.test.ts`             |
 | `NOW-P1-CODEOWNERS`  | P1  | **Open**                                    | No `CODEOWNERS` file                                                                                    |
