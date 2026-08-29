@@ -11,6 +11,10 @@
 import React, { memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { AgentName, AgentStatus } from '../../types';
+import { useMotionSafeLoop } from '../../hooks/useMotionSafeLoop';
+
+const SCANLINE_ANIMATE = { x: ['-100%', '400%'] };
+const SCANLINE_TRANSITION = { duration: 2, repeat: Infinity, ease: 'linear' as const };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -105,6 +109,7 @@ const AgentCardInner: React.FC<AgentCardProps> = ({
   index = 0,
 }) => {
   const isRunning = status === 'running';
+  const scanlineShimmer = useMotionSafeLoop(SCANLINE_ANIMATE, SCANLINE_TRANSITION);
 
   return (
     <motion.div
@@ -141,8 +146,8 @@ const AgentCardInner: React.FC<AgentCardProps> = ({
                 background:
                   'linear-gradient(90deg, transparent, color-mix(in srgb, var(--color-brand-accent) 12%, transparent), transparent)',
               }}
-              animate={{ x: ['-100%', '400%'] }}
-              transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+              animate={scanlineShimmer.animate}
+              transition={scanlineShimmer.transition}
             />
           </motion.div>
         )}

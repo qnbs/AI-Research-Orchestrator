@@ -12,6 +12,12 @@ import React, { memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { AgentStatus } from '../../types';
 import { useTranslation } from '../../hooks/useTranslation';
+import { useMotionSafeLoop } from '../../hooks/useMotionSafeLoop';
+
+const H_RUNNING_PULSE_ANIMATE = { scale: [1, 1.08, 1] };
+const H_RUNNING_PULSE_TRANSITION = { duration: 1.5, repeat: Infinity, ease: 'easeInOut' as const };
+const V_RUNNING_PULSE_ANIMATE = { scale: [1, 1.1, 1] };
+const V_RUNNING_PULSE_TRANSITION = { duration: 1.5, repeat: Infinity };
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -99,50 +105,54 @@ const HStepNode: React.FC<{
   status: AgentStatus;
   isCurrent: boolean;
   onClick?: () => void;
-}> = ({ step, status, isCurrent, onClick }) => (
-  <div className="flex flex-col items-center gap-1.5 flex-shrink-0" style={{ minWidth: 60 }}>
-    <motion.button
-      className={`pipeline-node pipeline-node--${status} ${onClick ? 'cursor-pointer' : ''}`}
-      animate={status === 'running' ? { scale: [1, 1.08, 1] } : { scale: 1 }}
-      transition={
-        status === 'running'
-          ? { duration: 1.5, repeat: Infinity, ease: 'easeInOut' }
-          : { type: 'spring', stiffness: 400, damping: 25 }
-      }
-      onClick={onClick}
-      aria-current={isCurrent ? 'step' : undefined}
-      tabIndex={onClick ? 0 : -1}
-    >
-      <NodeIcon status={status} icon={step.icon} label={step.label} />
-    </motion.button>
+}> = ({ step, status, isCurrent, onClick }) => {
+  const runningPulse = useMotionSafeLoop(H_RUNNING_PULSE_ANIMATE, H_RUNNING_PULSE_TRANSITION);
 
-    <div className="text-center" style={{ maxWidth: 80 }}>
-      <p
-        className={`text-[11px] font-semibold leading-tight truncate ${
+  return (
+    <div className="flex flex-col items-center gap-1.5 flex-shrink-0" style={{ minWidth: 60 }}>
+      <motion.button
+        className={`pipeline-node pipeline-node--${status} ${onClick ? 'cursor-pointer' : ''}`}
+        animate={status === 'running' ? runningPulse.animate : { scale: 1 }}
+        transition={
           status === 'running'
-            ? 'text-brand-accent'
-            : status === 'done'
-              ? 'text-accent-green'
-              : status === 'error'
-                ? 'text-red-400'
-                : 'text-text-secondary'
-        }`}
+            ? runningPulse.transition
+            : { type: 'spring', stiffness: 400, damping: 25 }
+        }
+        onClick={onClick}
+        aria-current={isCurrent ? 'step' : undefined}
+        tabIndex={onClick ? 0 : -1}
       >
-        {step.label}
-      </p>
-      {step.description && isCurrent && (
-        <motion.p
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
-          exit={{ opacity: 0, height: 0 }}
-          className="text-[10px] text-text-secondary mt-0.5 leading-tight"
+        <NodeIcon status={status} icon={step.icon} label={step.label} />
+      </motion.button>
+
+      <div className="text-center" style={{ maxWidth: 80 }}>
+        <p
+          className={`text-[11px] font-semibold leading-tight truncate ${
+            status === 'running'
+              ? 'text-brand-accent'
+              : status === 'done'
+                ? 'text-accent-green'
+                : status === 'error'
+                  ? 'text-red-400'
+                  : 'text-text-secondary'
+          }`}
         >
-          {step.description}
-        </motion.p>
-      )}
+          {step.label}
+        </p>
+        {step.description && isCurrent && (
+          <motion.p
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="text-[10px] text-text-secondary mt-0.5 leading-tight"
+          >
+            {step.description}
+          </motion.p>
+        )}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 // ─── Connector ────────────────────────────────────────────────────────────────
 
@@ -184,6 +194,8 @@ const VPipelineStep: React.FC<PipelineStepProps & { stepsAriaLabel: string }> = 
   className = '',
   stepsAriaLabel,
 }) => {
+  const runningPulse = useMotionSafeLoop(V_RUNNING_PULSE_ANIMATE, V_RUNNING_PULSE_TRANSITION);
+
   return (
     <ol className={`space-y-0 ${className}`} aria-label={stepsAriaLabel}>
       {steps.map((step, i) => {
@@ -195,8 +207,8 @@ const VPipelineStep: React.FC<PipelineStepProps & { stepsAriaLabel: string }> = 
           <li key={step.id} className="timeline-step" aria-current={isCurrent ? 'step' : undefined}>
             <motion.div
               className={`pipeline-node pipeline-node--${stepStatus} relative z-10`}
-              animate={stepStatus === 'running' ? { scale: [1, 1.1, 1] } : { scale: 1 }}
-              transition={stepStatus === 'running' ? { duration: 1.5, repeat: Infinity } : {}}
+              animate={stepStatus === 'running' ? runningPulse.animate : { scale: 1 }}
+              transition={stepStatus === 'running' ? runningPulse.transition : {}}
               onClick={onStepClick ? () => onStepClick(i) : undefined}
             >
               <NodeIcon status={stepStatus} icon={step.icon} label={step.label} />
