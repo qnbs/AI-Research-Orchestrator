@@ -8,7 +8,7 @@ import { generateResearchReportStream } from '../services/geminiService';
 import { defaultSettings } from '../store/slices/settingsSlice';
 import agentDebugReducer from '../store/slices/agentDebugSlice';
 import type { ResearchInput, ResearchReport } from '../types';
-import type { ResearchCheckpoint } from '../lib/researchCheckpoint';
+import { deleteResearchCheckpoint } from '../services/databaseService';
 import type { TranslationKey } from '../i18n/translations';
 
 let capturedSignal: AbortSignal | undefined;
@@ -189,6 +189,49 @@ describe('useResearchSession handleRestoreCheckpoint', () => {
     expect(result.current.report?.completionStatus).toBe('partial');
     expect(result.current.report?.cancelledAtPhase).toBe('Phase 4: Ranking articles...');
     expect(result.current.report?.cancelledAt).toBe(200);
+  });
+
+  it('does not apply a stale restore after a newer generation starts during checkpoint delete', async () => {
+    let releaseDelete: (() => void) | undefined;
+    vi.mocked(deleteResearchCheckpoint).mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          releaseDelete = resolve;
+        }),
+    );
+
+    const { result } = renderSession();
+    const ckpt: ResearchCheckpoint = {
+      id: 'ckpt_stale',
+      createdAt: 100,
+      updatedAt: 200,
+      reason: 'abort',
+      phase: 'Phase 4: Ranking articles...',
+      topic: 'Immunotherapy',
+      input,
+      report: partialReport,
+      synthesisSoFar: 'stale synthesis',
+    };
+
+    let restoreP!: Promise<boolean | void>;
+    act(() => {
+      restoreP = result.current.handleRestoreCheckpoint(ckpt);
+    });
+
+    act(() => {
+      result.current.handleNewSearch();
+    });
+    expect(result.current.reportStatus).toBe('idle');
+    expect(result.current.report).toBeNull();
+
+    await act(async () => {
+      releaseDelete?.();
+      await restoreP;
+    });
+
+    expect(result.current.reportStatus).toBe('idle');
+    expect(result.current.report).toBeNull();
+    vi.mocked(deleteResearchCheckpoint).mockResolvedValue(undefined);
   });
 });
 

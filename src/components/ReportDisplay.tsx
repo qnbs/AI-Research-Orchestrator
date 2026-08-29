@@ -52,6 +52,8 @@ interface ReportDisplayProps {
   chatHistory: ChatMessage[];
   isChatting: boolean;
   onSendMessage: (message: string) => void;
+  /** When false (streaming/generating), hide the send box — `useChat` has no session yet. */
+  chatEnabled?: boolean;
 }
 
 const secureMarkdownToHtml = (text: string): string => {
@@ -141,6 +143,7 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(function R
   chatHistory,
   isChatting,
   onSendMessage,
+  chatEnabled = true,
 }) {
   const [modalState, setModalState] = useState<{
     type: 'pdf' | 'csv' | 'insights' | 'save';
@@ -624,13 +627,15 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(function R
               </div>
             }
           >
-            {isPartial ? (
+            {isPartial || !chatEnabled ? (
               // useChat only creates a session once reportStatus === 'done'
               // (deliberately, see useChat.ts) - rendering the interactive
               // ChatInterface here would let users type messages that
               // sendMessage silently drops (no session to send through).
               <p className="text-sm text-text-secondary p-2">
-                {t('report.partial.chatUnavailable')}
+                {t(
+                  isPartial ? 'report.partial.chatUnavailable' : 'report.chat.unavailableUntilDone',
+                )}
               </p>
             ) : (
               <ChatInterface

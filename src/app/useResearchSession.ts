@@ -130,11 +130,15 @@ export function useResearchSession({
     async (ckpt: ResearchCheckpoint) => {
       const restored = reportFromCheckpoint(ckpt);
       if (!restored) return;
+      // Invalidate in-flight work *before* awaiting IndexedDB so a concurrent
+      // search/navigation cannot be overwritten when this continuation resumes.
+      generationIdRef.current += 1;
+      const restoreGenId = generationIdRef.current;
+      streamAbortRef.current?.abort();
       const ok = await guardedDeleteCheckpoint(ckpt.id);
       if (!ok) return;
+      if (generationIdRef.current !== restoreGenId) return;
 
-      generationIdRef.current += 1;
-      streamAbortRef.current?.abort();
       setLocalResearchInput(ckpt.input);
       setReport(restored);
       // 'partial', never 'done' - reportFromCheckpoint always stamps

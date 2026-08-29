@@ -157,6 +157,34 @@ describe('sanitizeReportForExport', () => {
     expect(result.report.synthesis.match(/SYNTHETIC EDUCATIONAL DEMO/g)).toHaveLength(1);
   });
 
+  it('does not double-watermark when a prior export stored demo before partial', () => {
+    const report = baseReport();
+    report.rankedArticles = [
+      { ...report.rankedArticles[0], pmid: 'demo:1', sourceClass: 'demo-synthetic' },
+    ];
+    report.aiGeneratedInsights = [];
+    report.completionStatus = 'partial';
+    report.synthesis =
+      'SYNTHETIC EDUCATIONAL DEMO — NOT RETRIEVED LITERATURE.\n\nPARTIAL REPORT — RESEARCH DID NOT FINISH. Results are incomplete and have not been fully verified.\n\nOriginal narrative.';
+    const result = sanitizeReportForExport(report);
+    expect(result.report.synthesis.match(/PARTIAL REPORT — RESEARCH DID NOT FINISH/g)).toHaveLength(
+      1,
+    );
+    expect(result.report.synthesis.match(/SYNTHETIC EDUCATIONAL DEMO/g)).toHaveLength(1);
+    expect(result.report.synthesis).toMatch(/^PARTIAL REPORT — RESEARCH DID NOT FINISH/);
+  });
+
+  it('preserves an uncited partial narrative instead of exporting only the watermark', () => {
+    const report = baseReport();
+    report.aiGeneratedInsights = [];
+    report.completionStatus = 'partial';
+    report.synthesis = 'Streaming draft with no PMID citations yet.';
+    const result = sanitizeReportForExport(report);
+    expect(result.report.synthesis).toMatch(/^PARTIAL REPORT — RESEARCH DID NOT FINISH/);
+    expect(result.report.synthesis).toContain('Streaming draft with no PMID citations yet.');
+    expect(result.uncitedParagraphsRemoved).toBe(0);
+  });
+
   it('does not relabel mixed corpora as demo-only on export', () => {
     const report = baseReport();
     report.rankedArticles = [
