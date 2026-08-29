@@ -178,6 +178,7 @@ describe('handleResearchStreamFailure', () => {
   it('stamps the partial report synchronously before the checkpoint write, and skips only the notification when a newer run starts while the write is in flight', async () => {
     let activeGenerationId = 1;
     const setReport = vi.fn();
+    const setReportStatus = vi.fn();
     const setNotification = vi.fn();
     const persistCheckpoint = vi.fn().mockImplementation(async () => {
       // Simulates a new search bumping generationIdRef while this cancelled
@@ -196,7 +197,7 @@ describe('handleResearchStreamFailure', () => {
       finalSynthesis: 'partial synthesis',
       dispatch: vi.fn() as unknown as AppDispatch,
       setReport,
-      setReportStatus: vi.fn(),
+      setReportStatus,
       setError: vi.fn(),
       setNotification,
       persistCheckpoint,
@@ -205,15 +206,50 @@ describe('handleResearchStreamFailure', () => {
     });
 
     expect(persistCheckpoint).toHaveBeenCalled();
-    // setReport fires exactly once, synchronously, before the async persist
+    // setReport and setReportStatus fire synchronously, before the async persist
     // gap even opens - this generation was still active at that point, so
-    // stamping the visible report is correct regardless of what happens
-    // afterward. Only the notification (guarded inside the async branch)
-    // correctly gets skipped once a newer generation has taken over.
+    // stamping the visible report + leaving `streaming` is correct regardless
+    // of what happens afterward. Only the notification (guarded inside the
+    // async branch) correctly gets skipped once a newer generation has taken over.
     expect(setReport).toHaveBeenCalledTimes(1);
     expect(setReport).toHaveBeenCalledWith(
       expect.objectContaining({ completionStatus: 'partial', cancelledAtPhase: 'Phase 5' }),
     );
+    expect(setReportStatus).toHaveBeenCalledWith('partial');
     expect(setNotification).not.toHaveBeenCalled();
+  });
+
+  it('sets partial lifecycle status before persistCheckpoint is awaited', async () => {
+    const order: string[] = [];
+    const persistCheckpoint = vi.fn().mockImplementation(async () => {
+      order.push('persist');
+      return 'checkpoint-id';
+    });
+    const setReport = vi.fn().mockImplementation(() => {
+      order.push('report');
+    });
+    const setReportStatus = vi.fn().mockImplementation(() => {
+      order.push('status');
+    });
+    const abortError = new DOMException('Aborted', 'AbortError');
+
+    await handleResearchStreamFailure({
+      error: abortError,
+      currentGenerationId: 1,
+      input,
+      phase: 'Phase 5',
+      finalReport: report,
+      finalSynthesis: 'partial synthesis',
+      dispatch: vi.fn() as unknown as AppDispatch,
+      setReport,
+      setReportStatus,
+      setError: vi.fn(),
+      setNotification: vi.fn(),
+      persistCheckpoint,
+      getActiveGenerationId: () => 1,
+      previousAgent: null,
+    });
+
+    expect(order.slice(0, 3)).toEqual(['report', 'status', 'persist']);
   });
 });

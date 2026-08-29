@@ -82,6 +82,11 @@ export async function handleResearchStreamFailure({
   // that was never set.
   if (partialReport) {
     setReport(partialReport);
+    // Same synchronous tick as the stamped report so the UI leaves
+    // `streaming` (cancel/loading chrome, unsaved snapshot) immediately —
+    // do not wait for persistCheckpoint. The generation-id guard below still
+    // protects the post-await notification.
+    setReportStatus('partial');
   }
 
   const checkpoint = createResearchCheckpoint({
@@ -131,10 +136,12 @@ export async function handleResearchStreamFailure({
     if (getActiveGenerationId() === currentGenerationId) {
       dispatch(completeTrace({ status: 'error' }));
       // Never 'done' here - that status means the success path's
-      // finalization actually ran. A cancelled run with a partial report is
-      // 'partial' (still visible, clearly marked incomplete); with nothing
-      // at all it's back to 'idle'.
-      setReportStatus(partialReport ? 'partial' : 'idle');
+      // finalization actually ran. A cancelled run with a partial report
+      // already flipped to 'partial' above (pre-persist). With nothing at
+      // all, return to 'idle'.
+      if (!partialReport) {
+        setReportStatus('idle');
+      }
     }
     return;
   }
