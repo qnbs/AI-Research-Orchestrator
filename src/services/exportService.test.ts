@@ -72,7 +72,7 @@ describe('sanitizeCsvFormulaInjection', () => {
 
 describe('export helpers', () => {
   const originalCreate = document.createElement.bind(document);
-  const anchorMocks: { click: ReturnType<typeof vi.fn>; href: string }[] = [];
+  const anchorMocks: HTMLAnchorElement[] = [];
 
   beforeEach(() => {
     vi.useRealTimers();
@@ -82,12 +82,12 @@ describe('export helpers', () => {
     pdfOutputSpy.mockReset();
     pdfOutputSpy.mockReturnValue(new ArrayBuffer(64));
     vi.spyOn(document, 'createElement').mockImplementation((tag: string) => {
+      const el = originalCreate(tag);
       if (tag === 'a') {
-        const mock = { click: vi.fn(), href: '', download: '' };
-        anchorMocks.push(mock);
-        return mock as unknown as HTMLAnchorElement;
+        vi.spyOn(el, 'click').mockImplementation(() => undefined);
+        anchorMocks.push(el as HTMLAnchorElement);
       }
-      return originalCreate(tag);
+      return el;
     });
     Object.defineProperty(URL, 'createObjectURL', {
       configurable: true,
@@ -104,6 +104,7 @@ describe('export helpers', () => {
   afterEach(() => {
     vi.useRealTimers();
     vi.restoreAllMocks();
+    document.querySelectorAll('a[download]').forEach((el) => el.remove());
   });
 
   it('exportInsightsToCsv triggers download', () => {

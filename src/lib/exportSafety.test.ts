@@ -65,17 +65,17 @@ describe('assertExportWithinByteLimit', () => {
 
 describe('utf8ByteLength / downloadUtf8File', () => {
   const originalCreate = document.createElement.bind(document);
-  const anchorMocks: { click: ReturnType<typeof vi.fn>; href: string; download: string }[] = [];
+  const anchors: HTMLAnchorElement[] = [];
 
   beforeEach(() => {
-    anchorMocks.length = 0;
+    anchors.length = 0;
     vi.spyOn(document, 'createElement').mockImplementation((tag: string) => {
+      const el = originalCreate(tag);
       if (tag === 'a') {
-        const mock = { click: vi.fn(), href: '', download: '' };
-        anchorMocks.push(mock);
-        return mock as unknown as HTMLAnchorElement;
+        vi.spyOn(el, 'click').mockImplementation(() => undefined);
+        anchors.push(el as HTMLAnchorElement);
       }
-      return originalCreate(tag);
+      return el;
     });
     Object.defineProperty(URL, 'createObjectURL', {
       configurable: true,
@@ -90,6 +90,7 @@ describe('utf8ByteLength / downloadUtf8File', () => {
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
@@ -99,15 +100,21 @@ describe('utf8ByteLength / downloadUtf8File', () => {
   });
 
   it('downloads in-budget text and skips the download when over budget', () => {
+    vi.useFakeTimers();
     downloadUtf8File('ok', 't.csv', 'text/csv;charset=utf-8;');
-    expect(anchorMocks[0].click).toHaveBeenCalled();
-    expect(anchorMocks[0].download).toBe('t.csv');
+    expect(anchors[0].click).toHaveBeenCalled();
+    expect(anchors[0].download).toBe('t.csv');
+    expect(document.body.contains(anchors[0])).toBe(true);
+    expect(URL.revokeObjectURL).not.toHaveBeenCalled();
+    vi.runAllTimers();
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:mock');
+    expect(document.body.contains(anchors[0])).toBe(false);
 
     const oversized = 'x'.repeat(MAX_EXPORT_BYTES + 1);
     expect(() => downloadUtf8File(oversized, 'big.csv', 'text/csv;charset=utf-8;')).toThrow(
       AppError,
     );
-    expect(anchorMocks.length).toBe(1);
+    expect(anchors.length).toBe(1);
   });
 });
 

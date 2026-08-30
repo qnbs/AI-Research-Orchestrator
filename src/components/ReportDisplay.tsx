@@ -11,6 +11,7 @@ import { PdfIcon } from './icons/PdfIcon';
 import { CsvIcon } from './icons/CsvIcon';
 import { ConfirmationModal } from './ConfirmationModal';
 import { exportToPdf, exportToCsv, exportInsightsToCsv } from '../services/exportService';
+import { exportErrorUserMessage } from '../lib/exportSafety';
 import { XCircleIcon } from './icons/XCircleIcon';
 import { SparklesIcon } from './icons/SparklesIcon';
 import { useSettings } from '../contexts/SettingsContext';
@@ -181,13 +182,18 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(function R
     return data.length > 0 ? data : null;
   }, [report]);
 
-  const handlePdfExport = () => {
+  const runExport = (label: string, fn: () => void) => {
     setIsExporting(true);
     setTimeout(() => {
       try {
-        exportToPdf(report, input, settings.export.pdf);
+        fn();
       } catch (e) {
-        safeLogError('PDF Export failed', e);
+        safeLogError(label, e);
+        setNotification({
+          id: Date.now(),
+          message: t('kb.export.failed', { error: exportErrorUserMessage(e) }),
+          type: 'error',
+        });
       } finally {
         setIsExporting(false);
         setModalState(null);
@@ -195,38 +201,23 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(function R
     }, 50);
   };
 
-  const handleCsvExport = () => {
-    setIsExporting(true);
-    setTimeout(() => {
-      try {
-        const aggregatedArticles: AggregatedArticle[] = report.rankedArticles.map((a) => ({
-          ...a,
-          sourceTitle: input.researchTopic,
-          sourceId: `current-report-${a.pmid}`,
-        }));
-        exportToCsv(aggregatedArticles, input.researchTopic, settings.export.csv);
-      } catch (e) {
-        safeLogError('CSV Export failed', e);
-      } finally {
-        setIsExporting(false);
-        setModalState(null);
-      }
-    }, 50);
-  };
+  const handlePdfExport = () =>
+    runExport('PDF Export failed', () => exportToPdf(report, input, settings.export.pdf));
 
-  const handleInsightsExport = () => {
-    setIsExporting(true);
-    setTimeout(() => {
-      try {
-        exportInsightsToCsv(report.aiGeneratedInsights, input.researchTopic);
-      } catch (e) {
-        safeLogError('Insights CSV Export failed', e);
-      } finally {
-        setIsExporting(false);
-        setModalState(null);
-      }
-    }, 50);
-  };
+  const handleCsvExport = () =>
+    runExport('CSV Export failed', () => {
+      const aggregatedArticles: AggregatedArticle[] = report.rankedArticles.map((a) => ({
+        ...a,
+        sourceTitle: input.researchTopic,
+        sourceId: `current-report-${a.pmid}`,
+      }));
+      exportToCsv(aggregatedArticles, input.researchTopic, settings.export.csv);
+    });
+
+  const handleInsightsExport = () =>
+    runExport('Insights CSV Export failed', () =>
+      exportInsightsToCsv(report.aiGeneratedInsights, input.researchTopic),
+    );
 
   // Cancelled run, not a completed one — the success path's finalization
   // (provenance stamping, claim extraction, grounded-synthesis assessment)

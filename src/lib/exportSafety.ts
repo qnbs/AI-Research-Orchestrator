@@ -73,11 +73,20 @@ export function sanitizeCsvFormulaInjection(value: string): string {
 export function downloadUtf8File(content: string, filename: string, mimeType: string): void {
   assertExportWithinByteLimit(utf8ByteLength(content));
   const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
+  link.href = url;
   link.download = filename;
+  link.rel = 'noopener';
+  document.body.appendChild(link);
   link.click();
-  URL.revokeObjectURL(link.href);
+  // Revoke on the next macrotask so browsers that start the download
+  // asynchronously still have a live blob URL (detached + immediate revoke
+  // can drop the file).
+  window.setTimeout(() => {
+    link.remove();
+    URL.revokeObjectURL(url);
+  }, 0);
 }
 
 /** User-facing export failure text (translated AppError, else Error.message). */
