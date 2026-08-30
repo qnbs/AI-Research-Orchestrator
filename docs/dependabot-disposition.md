@@ -124,7 +124,7 @@ Dependabot retargeted #98 to **openai 6.48.0 → 7.1.0** after #113 landed 4→6
 
 ## 2026-08-29 consolidation (rule 012)
 
-Consolidation PR: `cursor/chore-dependabot-consolidation-7093`. Base: `main` after #259 (audit gate), #260 (partial-status), and #261 (reduced motion). **Skip** unused `lucide-react` (#248): `package.json` remains `^1.14.0`; the lockfile currently resolves `1.24.0`, which is the Dependabot from-version toward `1.30.0`. No `src/` imports — drop the unused package in a later dedicated PR rather than bumping it here.
+Consolidation PR: `cursor/chore-dependabot-consolidation-7093`. Base: `main` after #259 (audit gate), #260 (partial-status), #261 (reduced motion), and #262 (ADR 0021 docs). **Skip** unused `lucide-react` (#248): `package.json` remains `^1.14.0`; the lockfile currently resolves `1.24.0`, which is the Dependabot from-version toward `1.30.0`. No `src/` imports — drop the unused package in a later dedicated PR rather than bumping it here.
 
 | PR   | Change                                                                     | SemVer          | Disposition                                                                                                                                                                   | Status     |
 | ---- | -------------------------------------------------------------------------- | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
