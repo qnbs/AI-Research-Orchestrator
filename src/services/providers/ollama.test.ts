@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createOllamaProvider } from './ollama';
-import { OLLAMA_MAX_NONSTREAM_BODY_BYTES } from './ollama';
+import { OLLAMA_MAX_ERROR_BODY_BYTES, OLLAMA_MAX_NONSTREAM_BODY_BYTES } from './ollama';
 
 describe('createOllamaProvider', () => {
   beforeEach(() => {
@@ -540,6 +540,35 @@ describe('createOllamaProvider', () => {
     ).rejects.toMatchObject({
       code: 'PROVIDER_PARSE_FAILURE',
       context: 'ollama_body_size',
+    });
+  });
+
+  it('keeps oversized-body error messages to a short excerpt', async () => {
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      text: async () => 'x'.repeat(OLLAMA_MAX_NONSTREAM_BODY_BYTES + 1),
+    });
+    const provider = createOllamaProvider();
+    const error = await provider
+      .generateContent({ model: 'llama3.1:8b', prompt: 'x' })
+      .catch((err: unknown) => err);
+    expect(error).toMatchObject({ code: 'PROVIDER_PARSE_FAILURE' });
+    expect((error as Error).message.length).toBeLessThan(500);
+  });
+
+  it('maps HTTP 503 with an oversized error body as retryable unavailable', async () => {
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: false,
+      status: 503,
+      text: async () => 'x'.repeat(OLLAMA_MAX_ERROR_BODY_BYTES + 1),
+    });
+    const provider = createOllamaProvider();
+    await expect(
+      provider.generateContent({ model: 'llama3.1:8b', prompt: 'x' }),
+    ).rejects.toMatchObject({
+      code: 'PROVIDER_UNAVAILABLE',
+      status: 503,
+      retryable: true,
     });
   });
 

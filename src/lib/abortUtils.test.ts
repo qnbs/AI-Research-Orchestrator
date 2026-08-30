@@ -3,24 +3,26 @@ import { combineAbortSignals, isTimeoutAbortReason } from './abortUtils';
 
 describe('combineAbortSignals', () => {
   it('returns timeout-only signal when external is undefined', () => {
-    const s = combineAbortSignals(60_000);
-    expect(s).toBeDefined();
+    const { signal, dispose } = combineAbortSignals(60_000);
+    expect(signal).toBeDefined();
+    dispose();
   });
 
   it('aborts when external signal aborts', async () => {
     const outer = new AbortController();
-    const signal = combineAbortSignals(60_000, outer.signal);
+    const { signal, dispose } = combineAbortSignals(60_000, outer.signal);
     const p = new Promise<void>((resolve) => {
       signal.addEventListener('abort', () => resolve());
     });
     outer.abort();
     await expect(p).resolves.toBeUndefined();
+    dispose();
   });
 
   it('starts already aborted when the external signal is already aborted', () => {
     const outer = new AbortController();
     outer.abort();
-    const signal = combineAbortSignals(60_000, outer.signal);
+    const { signal } = combineAbortSignals(60_000, outer.signal);
     expect(signal.aborted).toBe(true);
   });
 
@@ -28,7 +30,7 @@ describe('combineAbortSignals', () => {
     vi.useFakeTimers();
     try {
       const outer = new AbortController();
-      const signal = combineAbortSignals(50, outer.signal);
+      const { signal, dispose } = combineAbortSignals(50, outer.signal);
       const p = new Promise<void>((resolve) => {
         signal.addEventListener('abort', () => resolve(), { once: true });
       });
@@ -36,6 +38,23 @@ describe('combineAbortSignals', () => {
       await p;
       expect(signal.aborted).toBe(true);
       expect(isTimeoutAbortReason(signal.reason)).toBe(true);
+      dispose();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('removes the external abort listener when the timeout fires before caller abort', async () => {
+    vi.useFakeTimers();
+    try {
+      const outer = new AbortController();
+      const removeSpy = vi.spyOn(outer.signal, 'removeEventListener');
+      const { signal, dispose } = combineAbortSignals(50, outer.signal);
+      await vi.advanceTimersByTimeAsync(50);
+      expect(signal.aborted).toBe(true);
+      expect(isTimeoutAbortReason(signal.reason)).toBe(true);
+      expect(removeSpy).toHaveBeenCalled();
+      dispose();
     } finally {
       vi.useRealTimers();
     }

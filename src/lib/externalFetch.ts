@@ -75,21 +75,26 @@ export async function fetchWithExternalPolicy(
   return withExponentialBackoff(
     async (attempt) => {
       throwIfBudgetExceeded();
-      const response = await fetch(url, {
-        ...init,
-        signal: combineAbortSignals(timeoutMs, signal),
-      });
+      const { signal: combined, dispose } = combineAbortSignals(timeoutMs, signal);
+      try {
+        const response = await fetch(url, {
+          ...init,
+          signal: combined,
+        });
 
-      if (isRetryableHttpStatus(response.status) && attempt < retries) {
-        throw new RetryableHttpResponseError(
-          response,
-          response.status === 429
-            ? parseRetryAfterMs(response.headers.get('Retry-After'))
-            : undefined,
-        );
+        if (isRetryableHttpStatus(response.status) && attempt < retries) {
+          throw new RetryableHttpResponseError(
+            response,
+            response.status === 429
+              ? parseRetryAfterMs(response.headers.get('Retry-After'))
+              : undefined,
+          );
+        }
+
+        return response;
+      } finally {
+        dispose();
       }
-
-      return response;
     },
     {
       retries,

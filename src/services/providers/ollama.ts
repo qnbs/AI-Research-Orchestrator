@@ -24,12 +24,13 @@ import type {
 import { providerCapabilities } from './types';
 import { probeOllamaHealth } from './ollamaHealth';
 
-/** Headers/connect budget for non-stream generate. Stream body uses idle + total caps. */
-export const OLLAMA_FETCH_TIMEOUT_MS = 15_000;
+/** Wall-clock cap for one non-stream `/api/generate` (headers + inference + body). */
+export const OLLAMA_FETCH_TIMEOUT_MS = 300_000;
 /** Wall-clock cap for one generate/chat NDJSON stream (headers + body). */
 export const OLLAMA_STREAM_TOTAL_TIMEOUT_MS = 300_000;
 export const OLLAMA_MAX_ERROR_BODY_BYTES = 65_536;
 export const OLLAMA_MAX_NONSTREAM_BODY_BYTES = 2_097_152;
+const OLLAMA_BODY_ERROR_EXCERPT_CHARS = 256;
 
 function getBaseUrl(requestBaseURL?: string): string {
   if (requestBaseURL) return requestBaseURL.replace(/\/$/, '');
@@ -102,9 +103,10 @@ function mapOllamaError(error: unknown, transport?: OllamaTransportAbort): AppEr
 }
 
 function throwBodyTooLarge(maxBytes: number, received: number, head: string): never {
+  const excerpt = head.slice(0, OLLAMA_BODY_ERROR_EXCERPT_CHARS);
   throw new AppError({
     code: 'PROVIDER_PARSE_FAILURE',
-    message: `Ollama response exceeded ${maxBytes} bytes (${received} received): ${head}`,
+    message: `Ollama response exceeded ${maxBytes} bytes (${received} received): ${excerpt}`,
     retryable: false,
     context: 'ollama_body_size',
   });
@@ -223,8 +225,9 @@ function ollamaResponseText(value: unknown): string {
 async function readErrorBody(response: Response): Promise<string> {
   try {
     return await readCappedText(response, OLLAMA_MAX_ERROR_BODY_BYTES);
-  } catch (err) {
-    if (err instanceof AppError && err.code === 'PROVIDER_PARSE_FAILURE') throw err;
+  } catch {
+    // Keep the HTTP status authoritative: an unreadable or oversized error body
+    // must not replace the status-based mapping in throwHttpError.
     return 'Unknown error';
   }
 }
@@ -258,6 +261,7 @@ export function createOllamaProvider(): AIProvider {
     async generateContent(request: AIContentRequest): Promise<AIContentResponse> {
       const baseURL = getBaseUrl(request.baseURL);
       const fullPrompt = request.system ? `${request.system}\n\n${request.prompt}` : request.prompt;
+      const { signal, dispose } = combineAbortSignals(OLLAMA_FETCH_TIMEOUT_MS, request.signal);
       try {
         const response = await fetch(`${baseURL}/api/generate`, {
           method: 'POST',
@@ -272,7 +276,7 @@ export function createOllamaProvider(): AIProvider {
               num_predict: request.maxOutputTokens,
             },
           }),
-          signal: combineAbortSignals(OLLAMA_FETCH_TIMEOUT_MS, request.signal),
+          signal,
         });
 
         if (!response.ok) {
@@ -308,13 +312,18 @@ export function createOllamaProvider(): AIProvider {
         return { text: ollamaResponseText(data.response) };
       } catch (error) {
         throw mapOllamaError(error, { callerSignal: request.signal });
+      } finally {
+        dispose();
       }
     },
 
     async *generateContentStream(request: AIContentRequest): AsyncGenerator<AIStreamChunk> {
       const baseURL = getBaseUrl(request.baseURL);
       const fullPrompt = request.system ? `${request.system}\n\n${request.prompt}` : request.prompt;
-      const streamSignal = combineAbortSignals(OLLAMA_STREAM_TOTAL_TIMEOUT_MS, request.signal);
+      const { signal: streamSignal, dispose } = combineAbortSignals(
+        OLLAMA_STREAM_TOTAL_TIMEOUT_MS,
+        request.signal,
+      );
       try {
         const response = await fetch(`${baseURL}/api/generate`, {
           method: 'POST',
@@ -366,6 +375,8 @@ export function createOllamaProvider(): AIProvider {
         yield { done: true };
       } catch (error) {
         throw mapOllamaError(error, { callerSignal: request.signal });
+      } finally {
+        dispose();
       }
     },
 
@@ -380,7 +391,10 @@ export function createOllamaProvider(): AIProvider {
       return {
         async sendMessageStream({ message }) {
           const chatMessages = [...messages, { role: 'user' as const, content: message }];
-          const streamSignal = combineAbortSignals(OLLAMA_STREAM_TOTAL_TIMEOUT_MS, request.signal);
+          const { signal: streamSignal, dispose } = combineAbortSignals(
+            OLLAMA_STREAM_TOTAL_TIMEOUT_MS,
+            request.signal,
+          );
           try {
             const response = await fetch(`${baseURL}/api/chat`, {
               method: 'POST',
@@ -437,9 +451,12 @@ export function createOllamaProvider(): AIProvider {
                 messages.push({ role: 'assistant', content: assistant });
               } catch (error) {
                 throw mapOllamaError(error, { callerSignal: request.signal });
+              } finally {
+                dispose();
               }
             })();
           } catch (error) {
+            dispose();
             throw mapOllamaError(error, { callerSignal: request.signal });
           }
         },
