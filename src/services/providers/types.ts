@@ -73,6 +73,47 @@ export function providerCapabilities(
   };
 }
 
+/**
+ * Typed heuristic adapter operations. Production callers must set
+ * `AIContentRequest.heuristicOperation` — the adapter does not guess from
+ * prompt substrings.
+ */
+export const HEURISTIC_OPERATIONS = [
+  'tldr',
+  'related-online',
+  'analysis',
+  'synthesis',
+  'fallback',
+] as const;
+
+export type HeuristicOperation = (typeof HEURISTIC_OPERATIONS)[number];
+
+/** Runtime guard for persisted or caller-supplied heuristic operations. */
+export function isHeuristicOperation(value: unknown): value is HeuristicOperation {
+  return typeof value === 'string' && (HEURISTIC_OPERATIONS as readonly string[]).includes(value);
+}
+
+/**
+ * Honest heuristic capability set: local, abortable, no live web, no JSON schema.
+ * Shared by the adapter instance and `AI_PROVIDERS.heuristic` so UI and runtime cannot drift.
+ */
+export function heuristicProviderCapabilities(): ProviderCapabilities {
+  return providerCapabilities({
+    requiresApiKey: false,
+    streaming: true,
+    chat: true,
+    webGrounding: false,
+    supportsAbort: true,
+    supportsCustomBaseUrl: false,
+    jsonMode: false,
+    structuredOutput: {
+      jsonObjectMode: false,
+      nativeJsonSchema: false,
+      streamingStructuredOutput: false,
+    },
+  });
+}
+
 /** JSON Schema subset used for structured responses. */
 export type AIJsonSchema = Record<string, unknown>;
 
@@ -99,6 +140,11 @@ export interface AIContentRequest {
   baseURL?: string;
   /** Abort signal. */
   signal?: AbortSignal;
+  /**
+   * Heuristic adapter only. Ignored by live providers.
+   * Missing or unknown values dispatch to the deterministic fallback envelope.
+   */
+  heuristicOperation?: HeuristicOperation;
 }
 
 /** Generic web source extracted by providers that support grounding. */

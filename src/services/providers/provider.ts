@@ -10,7 +10,7 @@ import type {
   ProviderChatSession,
   ProviderMeta,
 } from './types';
-import { providerCapabilities } from './types';
+import { heuristicProviderCapabilities, providerCapabilities } from './types';
 
 /**
  * Transport-level abstraction for an AI backend.
@@ -119,7 +119,7 @@ export const AI_PROVIDERS: Record<AIProviderSelection, ProviderMeta> = {
     label: 'Heuristic (local)',
     defaultModel: 'local',
     modelSuggestions: ['local'],
-    capabilities: providerCapabilities({ requiresApiKey: false }),
+    capabilities: heuristicProviderCapabilities(),
   },
 };
 

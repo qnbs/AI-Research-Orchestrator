@@ -4,6 +4,7 @@ import { createAnthropicProvider } from './anthropic';
 import { createGeminiProvider } from './gemini';
 import { createOllamaProvider } from './ollama';
 import { createHeuristicProvider } from './heuristic';
+import { AI_PROVIDERS } from './provider';
 
 const providers = [
   createGeminiProvider(),
@@ -32,5 +33,15 @@ describe('provider capability contract', () => {
     const caps = createOpenAIProvider().capabilities.structuredOutput;
     expect(caps.jsonObjectMode).toBe(true);
     expect(caps.nativeJsonSchema).toBe(false);
+  });
+
+  it('documents heuristic as local-only without JSON schema or web grounding', () => {
+    const caps = createHeuristicProvider().capabilities;
+    expect(caps.webGrounding).toBe(false);
+    expect(caps.jsonMode).toBe(false);
+    expect(caps.structuredOutput.jsonObjectMode).toBe(false);
+    expect(caps.structuredOutput.nativeJsonSchema).toBe(false);
+    expect(caps.requiresApiKey).toBe(false);
+    expect(AI_PROVIDERS.heuristic.capabilities).toEqual(caps);
   });
 });
