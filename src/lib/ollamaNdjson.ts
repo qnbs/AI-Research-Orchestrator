@@ -5,6 +5,7 @@
  * records, and always releases the body reader (including on abort).
  */
 
+import { isTimeoutAbortReason } from './abortUtils';
 import { AppError } from './errors';
 
 export const OLLAMA_NDJSON_DEFAULT_MAX_BUFFER_BYTES = 1_048_576;
@@ -27,14 +28,22 @@ export type OllamaNdjsonOptions = {
 };
 
 function throwIfAborted(signal?: AbortSignal): void {
-  if (signal?.aborted) {
+  if (!signal?.aborted) return;
+  if (isTimeoutAbortReason(signal.reason)) {
     throw new AppError({
-      code: 'STREAM_ABORTED',
-      message: 'Ollama stream aborted',
-      retryable: false,
+      code: 'PROVIDER_UNAVAILABLE',
+      message: 'Ollama stream exceeded wall-clock timeout',
+      retryable: true,
       cause: signal.reason,
+      context: 'ollama_wall_clock_timeout',
     });
   }
+  throw new AppError({
+    code: 'STREAM_ABORTED',
+    message: 'Ollama stream aborted',
+    retryable: false,
+    cause: signal.reason,
+  });
 }
 
 async function readWithIdleTimeout(

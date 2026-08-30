@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **Ollama stream/body bounds (ISSUE-P1-TRANSPORT-001):** Generate/chat NDJSON streams abort after 30s idle or 8 MiB accumulated body, with a 5-minute wall-clock cap. Non-stream generate and error bodies are size-capped. `combineAbortSignals` honors an already-aborted caller signal.
+- **Ollama stream/body bounds (ISSUE-P1-TRANSPORT-001):** Generate/chat NDJSON streams abort after 30s idle or 8 MiB accumulated body, with a 5-minute wall-clock cap. Non-stream generate and error bodies are size-capped incrementally via `body.getReader()` (with `text()` / `json()` fallbacks for test doubles). Wall-clock timeout is retryable `PROVIDER_UNAVAILABLE`; caller abort stays non-retryable `STREAM_ABORTED`. `combineAbortSignals` honors an already-aborted caller signal and stamps `TimeoutError` as the timeout reason.
 
 ## [0.4.2] - 2026-08-30
 

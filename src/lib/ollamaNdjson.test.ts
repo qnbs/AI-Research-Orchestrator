@@ -99,6 +99,23 @@ describe('streamOllamaNdjson', () => {
     }
   });
 
+  it('maps a TimeoutError abort reason to retryable PROVIDER_UNAVAILABLE', async () => {
+    const cancel = vi.fn();
+    const response = mockResponse(['{"a":1}\n'], { cancel });
+    const controller = new AbortController();
+    controller.abort(new DOMException('Timeout', 'TimeoutError'));
+    await expect(async () => {
+      for await (const _ of streamOllamaNdjson(response, { signal: controller.signal })) {
+        // drain
+      }
+    }).rejects.toMatchObject({
+      code: 'PROVIDER_UNAVAILABLE',
+      retryable: true,
+      context: 'ollama_wall_clock_timeout',
+    });
+    expect(cancel).toHaveBeenCalled();
+  });
+
   it('throws when accumulated stream bytes exceed maxTotalBytes', async () => {
     const response = mockResponse(['{"a":1}\n', '{"b":2}\n']);
     await expect(async () => {

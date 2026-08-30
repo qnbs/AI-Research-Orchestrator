@@ -95,7 +95,7 @@ describe('createOllamaProvider', () => {
     });
   });
 
-  it('respects abort signal', async () => {
+  it('maps caller abort to non-retryable STREAM_ABORTED', async () => {
     global.fetch = vi.fn().mockRejectedValueOnce(new DOMException('Aborted', 'AbortError'));
 
     const provider = createOllamaProvider();
@@ -103,7 +103,46 @@ describe('createOllamaProvider', () => {
     controller.abort();
     await expect(
       provider.generateContent({ model: 'llama3.1:8b', prompt: 'x', signal: controller.signal }),
-    ).rejects.toBeInstanceOf(DOMException);
+    ).rejects.toMatchObject({ code: 'STREAM_ABORTED', retryable: false });
+  });
+
+  it('maps a fetch abort without a caller signal as retryable timeout', async () => {
+    global.fetch = vi.fn().mockRejectedValueOnce(new DOMException('Aborted', 'AbortError'));
+    const provider = createOllamaProvider();
+    await expect(
+      provider.generateContent({ model: 'llama3.1:8b', prompt: 'x' }),
+    ).rejects.toMatchObject({
+      code: 'PROVIDER_UNAVAILABLE',
+      retryable: true,
+      context: 'ollama_wall_clock_timeout',
+    });
+  });
+
+  it('reads json()-only generate mocks used by pipeline warmup specs', async () => {
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ response: '{"answer":1}' }),
+    });
+    const provider = createOllamaProvider();
+    const response = await provider.generateContent({
+      model: 'llama3.1:8b',
+      prompt: 'hello',
+      json: true,
+    });
+    expect(response.text).toBe('{"answer":1}');
+  });
+
+  it('coerces a non-string generate response field to empty text', async () => {
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      text: async () => JSON.stringify({ response: 42 }),
+    });
+    const provider = createOllamaProvider();
+    const response = await provider.generateContent({
+      model: 'llama3.1:8b',
+      prompt: 'hello',
+    });
+    expect(response.text).toBe('');
   });
 
   it('defaults to localhost and prefixes system prompt', async () => {
@@ -494,6 +533,35 @@ describe('createOllamaProvider', () => {
     global.fetch = vi.fn().mockResolvedValueOnce({
       ok: true,
       text: async () => 'x'.repeat(OLLAMA_MAX_NONSTREAM_BODY_BYTES + 1),
+    });
+    const provider = createOllamaProvider();
+    await expect(
+      provider.generateContent({ model: 'llama3.1:8b', prompt: 'x' }),
+    ).rejects.toMatchObject({
+      code: 'PROVIDER_PARSE_FAILURE',
+      context: 'ollama_body_size',
+    });
+  });
+
+  it('rejects oversized generate bodies from a streaming reader', async () => {
+    const encoder = new TextEncoder();
+    const oversized = encoder.encode('x'.repeat(OLLAMA_MAX_NONSTREAM_BODY_BYTES + 1));
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      body: {
+        getReader: () => {
+          let sent = false;
+          return {
+            read: async () => {
+              if (sent) return { done: true, value: undefined };
+              sent = true;
+              return { done: false, value: oversized };
+            },
+            cancel: vi.fn(),
+            releaseLock: vi.fn(),
+          };
+        },
+      },
     });
     const provider = createOllamaProvider();
     await expect(
