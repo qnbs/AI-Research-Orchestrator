@@ -66,6 +66,32 @@ describe('rankArticles', () => {
   it('returns an empty array for an empty article list', () => {
     expect(rankArticles([], 'diabetes')).toEqual([]);
   });
+
+  it('labels scores as a relative rank in this result set', () => {
+    const ranked = rankArticles(mockArticles, 'diabetes treatment');
+    expect(ranked[0].relevanceExplanation).toMatch(/Relative rank in this result set/i);
+    expect(ranked[0].relevanceScore).toBeGreaterThanOrEqual(0);
+    expect(ranked[0].relevanceScore).toBeLessThanOrEqual(100);
+  });
+
+  it('min-maxes mixed raw scores so the best hit is 100 and the worst is 0 when they differ', () => {
+    const ranked = rankArticles(mockArticles, 'diabetes treatment');
+    const scores = ranked.map((a) => a.relevanceScore);
+    expect(Math.max(...scores)).toBe(100);
+    expect(Math.min(...scores)).toBe(0);
+  });
+
+  it('keeps a non-negative BM25 contribution when the query term is in every document', () => {
+    const corpus: RankedArticle[] = [
+      { ...mockArticles[0], pmid: '1', title: 'Diabetes notes', summary: 'diabetes overview' },
+      { ...mockArticles[1], pmid: '2', title: 'Diabetes review', summary: 'diabetes overview' },
+    ];
+    const ranked = rankArticles(corpus, 'diabetes');
+    for (const article of ranked) {
+      expect(article.scoringExplanation?.baseScore).toBeGreaterThanOrEqual(0);
+    }
+    expect(ranked[0].pmid).toBe('1');
+  });
 });
 
 describe('getTopArticles', () => {

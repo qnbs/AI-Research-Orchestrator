@@ -75,7 +75,8 @@ export const reportTranslations = {
     'report.chat.empty': 'Ask questions about this report to explore the data further.',
     'report.chat.placeholder': 'Ask a follow-up question…',
     'report.chat.send': 'Send',
-    'report.relevance.aria': 'Relevance Score: {score} out of 100',
+    'report.relevance.aria':
+      'Relevance {score} on a 0–100 display scale (relative rank in this result set)',
   },
   de: {
     'report.title': 'Forschungsbericht',
@@ -154,6 +155,7 @@ export const reportTranslations = {
     'report.chat.empty': 'Stellen Sie Fragen zu diesem Bericht, um die Daten weiter zu erkunden.',
     'report.chat.placeholder': 'Stellen Sie eine Anschlussfrage…',
     'report.chat.send': 'Senden',
-    'report.relevance.aria': 'Relevanzscore: {score} von 100',
+    'report.relevance.aria':
+      'Relevanz {score} auf einer 0–100-Anzeigeskala (relativer Rang in dieser Treffermenge)',
   },
 } as const;

@@ -61,7 +61,7 @@ export const DEFAULT_RANKING_WEIGHTS: RankingWeights = {
 
 /** Scoring explanation for a ranked article. */
 export interface ScoringExplanation {
-  /** Base BM25/TF-IDF score (0-100). */
+  /** Uncalibrated BM25+ term contribution (not a 0–100 probability). */
   baseScore: number;
   /** MeSH overlap contribution. */
   meshOverlap: number;

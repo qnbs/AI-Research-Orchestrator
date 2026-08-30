@@ -74,6 +74,7 @@ export interface RankedArticle {
   retrievedAt?: number;
   /** Provenance class — required for scientific honesty on demo vs retrieved. */
   sourceClass?: ArticleSourceClass;
+  /** 0–100 display-scale rank used for ordering (relative within a result set in heuristic mode). */
   relevanceScore: number;
   relevanceExplanation: string;
   keywords: string[];

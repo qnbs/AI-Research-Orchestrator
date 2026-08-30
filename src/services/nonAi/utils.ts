@@ -54,14 +54,20 @@ export function termFrequency(term: string, tokens: string[]): number {
   return count / tokens.length;
 }
 
-/** Calculate inverse document frequency. */
+/**
+ * Lucene / Elasticsearch BM25+ IDF: ln(1 + (N − df + 0.5) / (df + 0.5)).
+ * Always ≥ 0. The classic Robertson/Sparck-Jones ln((N − df + 0.5)/(df + 0.5))
+ * and the previous ln(N / (1 + df)) both go negative when a term appears in
+ * every document (df === N), which inverted BM25 contributions.
+ */
 export function inverseDocumentFrequency(
   _term: string,
   documentCount: number,
   totalDocuments: number,
 ): number {
-  const idf = Math.log(totalDocuments / (1 + documentCount));
-  return idf;
+  if (totalDocuments <= 0) return 0;
+  const df = Math.min(Math.max(documentCount, 0), totalDocuments);
+  return Math.log(1 + (totalDocuments - df + 0.5) / (df + 0.5));
 }
 
 /** BM25 scoring parameters. */
@@ -93,10 +99,26 @@ export function bm25Score(
   return idf * (numerator / denominator);
 }
 
-/** Normalize score to 0-100 range. */
+/** Linear map of `score` onto 0–100 given an observed [min, max]. Equal range → 50. */
 export function normalizeScore(score: number, min: number, max: number): number {
   if (max === min) return 50;
   return Math.max(0, Math.min(100, ((score - min) / (max - min)) * 100));
+}
+
+/**
+ * Min-max map a result set onto the 0–100 display scale (relative rank, not a
+ * calibrated probability). Uses a loop instead of `Math.min(...arr)` so large
+ * corpora cannot overflow the call stack.
+ */
+export function relativeMinMaxScores(rawScores: readonly number[]): number[] {
+  if (rawScores.length === 0) return [];
+  let min = Infinity;
+  let max = -Infinity;
+  for (const score of rawScores) {
+    if (score < min) min = score;
+    if (score > max) max = score;
+  }
+  return rawScores.map((score) => Math.round(normalizeScore(score, min, max)));
 }
 
 /** Calculate recency decay factor (newer = higher score). */

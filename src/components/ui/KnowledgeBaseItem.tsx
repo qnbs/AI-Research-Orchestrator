@@ -3,7 +3,7 @@
  *
  * Features:
  *  • `backdrop-blur-2xl` glass surface via `.kb-item` CSS class
- *  • Left accent bar coloured by relevance score (0–1 → grey → cyan)
+ *  • Left accent bar coloured by relevance score (0–100 display scale → grey → cyan)
  *  • Neon-cyan hover glow, selected state ring
  *  • Staggered Framer Motion entry when rendered in a list
  *  • Accessible: keyboard navigable, aria-selected, role="option"
@@ -15,34 +15,37 @@ import React, { memo } from 'react';
 import { motion } from 'framer-motion';
 import type { RankedArticle } from '../../types';
 import { useTranslation, type TranslationKey } from '../../hooks/useTranslation';
+import { relevanceBand, RELEVANCE_BAND_THRESHOLDS } from '../../lib/relevanceScore';
 
 // ─── Relevance colour helper ──────────────────────────────────────────────────
 
-/** Maps 0–1 relevance score to a CSS colour string. */
+/** Maps a 0–100 display-scale score to a CSS colour string. */
 const relevanceColor = (score: number): string => {
-  if (score >= 0.85) return 'var(--color-accent-green)';
-  if (score >= 0.7) return 'var(--color-brand-accent)';
-  if (score >= 0.5) return 'var(--color-accent-cyan)';
-  if (score >= 0.3) return 'var(--color-accent-amber)';
+  const band = relevanceBand(score);
+  if (band === 'high') return 'var(--color-accent-green)';
+  if (band === 'medium') return 'var(--color-brand-accent)';
+  if (band === 'possible') return 'var(--color-accent-cyan)';
+  if (score >= RELEVANCE_BAND_THRESHOLDS.accent) return 'var(--color-accent-amber)';
   // Lowest relevance tier renders as a plain, decorative accent bar rather
   // than a semantic color - --color-border-subtle, not the WCAG-AA-bumped
   // --color-border, matches index.css's own fallback for this same bar.
   return 'var(--color-border-subtle)';
 };
 
-/** Short human-readable label for the relevance score. */
+/** Short human-readable label for the 0–100 display-scale relevance score. */
 const relevanceLabel = (score: number): { labelKey: TranslationKey; className: string } => {
-  if (score >= 0.85)
+  const band = relevanceBand(score);
+  if (band === 'high')
     return {
       labelKey: 'chrome.kb_item.relevance.high',
       className: 'bg-accent-green/10 text-accent-green border-accent-green/30',
     };
-  if (score >= 0.7)
+  if (band === 'medium')
     return {
       labelKey: 'chrome.kb_item.relevance.medium',
       className: 'bg-brand-accent/10 text-brand-accent border-brand-accent/30',
     };
-  if (score >= 0.5)
+  if (band === 'possible')
     return {
       labelKey: 'chrome.kb_item.relevance.possible',
       className: 'bg-accent-cyan/10 text-accent-cyan border-accent-cyan/30',
