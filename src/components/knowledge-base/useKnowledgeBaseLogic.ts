@@ -4,6 +4,7 @@ import { useKnowledgeBase } from '../../contexts/KnowledgeBaseContext';
 import { useUI } from '../../contexts/UIContext';
 import { KnowledgeBaseFilter, AggregatedArticle } from '../../types';
 import { View } from '../../contexts/UIContext';
+import { exportErrorUserMessage } from '../../lib/exportSafety';
 import {
   exportKnowledgeBaseToPdf,
   exportToCsv,
@@ -158,9 +159,7 @@ export const useKnowledgeBaseLogic = (
       } catch (error) {
         setNotification({
           id: Date.now(),
-          message: t('kb.export.failed', {
-            error: error instanceof Error ? error.message : t('errors.code.unknown'),
-          }),
+          message: t('kb.export.failed', { error: exportErrorUserMessage(error) }),
           type: 'error',
         });
       } finally {

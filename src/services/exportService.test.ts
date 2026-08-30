@@ -1,12 +1,15 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 const pdfTextSpy = vi.hoisted(() => vi.fn());
+const pdfOutputSpy = vi.hoisted(() => vi.fn(() => new ArrayBuffer(64)));
+const pdfSaveSpy = vi.hoisted(() => vi.fn());
 const pdfDocMock = vi.hoisted(() => {
   const chain = new Proxy({} as Record<string, unknown>, {
     get(_target, prop: string) {
       if (prop === 'internal') return { pageSize: { getHeight: () => 842, getWidth: () => 595 } };
       if (prop === 'splitTextToSize') return vi.fn((s: string) => [String(s)]);
-      if (prop === 'save') return vi.fn();
+      if (prop === 'save') return pdfSaveSpy;
+      if (prop === 'output') return pdfOutputSpy;
       if (prop === 'text') {
         return (...args: unknown[]) => {
           pdfTextSpy(...args);
@@ -33,6 +36,8 @@ import type {
   ResearchReport,
   Settings,
 } from '../types';
+import { AppError } from '../lib/errors';
+import { MAX_EXPORT_BYTES } from '../lib/exportSafety';
 import {
   sanitizeCsvFormulaInjection,
   exportHistoryToJson,
@@ -45,11 +50,18 @@ import {
 } from './exportService';
 
 describe('sanitizeCsvFormulaInjection', () => {
-  it('prefixes formula-risk starters', () => {
+  it('prefixes formula-risk starters including whitespace, Unicode, DDE, and script tags', () => {
     expect(sanitizeCsvFormulaInjection('=1+1')).toBe('\t=1+1');
     expect(sanitizeCsvFormulaInjection('+sum')).toBe('\t+sum');
     expect(sanitizeCsvFormulaInjection('-x')).toBe('\t-x');
     expect(sanitizeCsvFormulaInjection('@ref')).toBe('\t@ref');
+    expect(sanitizeCsvFormulaInjection(' =SUM(1)')).toBe('\t =SUM(1)');
+    expect(sanitizeCsvFormulaInjection('\uFEFF=1+1')).toBe('\t=1+1');
+    expect(sanitizeCsvFormulaInjection('\uFF1D1+1')).toBe('\t\uFF1D1+1');
+    expect(sanitizeCsvFormulaInjection("|cmd|' /C calc'!A0")).toBe("\t|cmd|' /C calc'!A0");
+    expect(sanitizeCsvFormulaInjection('<script>alert(1)</script>')).toBe(
+      "'&lt;script>alert(1)&lt;/script>",
+    );
   });
 
   it('leaves safe strings', () => {
@@ -60,35 +72,31 @@ describe('sanitizeCsvFormulaInjection', () => {
 
 describe('export helpers', () => {
   const originalCreate = document.createElement.bind(document);
-  const anchorMocks: { click: ReturnType<typeof vi.fn>; href: string }[] = [];
+  const anchorMocks: HTMLAnchorElement[] = [];
 
   beforeEach(() => {
     vi.useRealTimers();
     anchorMocks.length = 0;
     pdfTextSpy.mockClear();
+    pdfSaveSpy.mockClear();
+    pdfOutputSpy.mockReset();
+    pdfOutputSpy.mockReturnValue(new ArrayBuffer(64));
     vi.spyOn(document, 'createElement').mockImplementation((tag: string) => {
+      const el = originalCreate(tag);
       if (tag === 'a') {
-        const mock = { click: vi.fn(), href: '', download: '' };
-        anchorMocks.push(mock);
-        return mock as unknown as HTMLAnchorElement;
+        vi.spyOn(el, 'click').mockImplementation(() => undefined);
+        anchorMocks.push(el as HTMLAnchorElement);
       }
-      return originalCreate(tag);
+      return el;
     });
-    Object.defineProperty(URL, 'createObjectURL', {
-      configurable: true,
-      writable: true,
-      value: vi.fn().mockReturnValue('blob:mock'),
-    });
-    Object.defineProperty(URL, 'revokeObjectURL', {
-      configurable: true,
-      writable: true,
-      value: vi.fn(),
-    });
+    vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock');
+    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
   });
 
   afterEach(() => {
     vi.useRealTimers();
     vi.restoreAllMocks();
+    document.querySelectorAll('a[download]').forEach((el) => el.remove());
   });
 
   it('exportInsightsToCsv triggers download', () => {
@@ -97,7 +105,7 @@ describe('export helpers', () => {
     expect(anchorMocks[0].click).toHaveBeenCalled();
   });
 
-  it('exportHistoryToJson includes build release meta in wrapper', () => {
+  it('exportHistoryToJson includes build release meta in wrapper', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-08-02T12:00:00.000Z'));
     const entries = [
@@ -125,8 +133,9 @@ describe('export helpers', () => {
       },
     ] as KnowledgeBaseEntry[];
     exportHistoryToJson(entries);
-    const href = anchorMocks[0].href;
-    const payload = decodeURIComponent(href.replace('data:text/json;charset=utf-8,', ''));
+    vi.useRealTimers();
+    const blob = vi.mocked(URL.createObjectURL).mock.calls[0][0] as Blob;
+    const payload = await blob.text();
     const parsed = JSON.parse(payload) as {
       meta: {
         appVersion: string;
@@ -351,6 +360,91 @@ describe('export helpers', () => {
     const csv = await blob.text();
     expect(csv).toContain('\t=HACK');
     expect(csv).not.toContain(',=HACK,');
+  });
+
+  it('exportToCsv prefixes Unicode, DDE, whitespace, and script payloads', async () => {
+    const articles: AggregatedArticle[] = [
+      {
+        pmid: '1',
+        title: '\uFF1D1+1',
+        authors: ' =cmd',
+        journal: "|cmd|' /C calc'!A0",
+        pubYear: '2020',
+        summary: '<script>alert(1)</script>',
+        relevanceScore: 1,
+        relevanceExplanation: '',
+        keywords: ['k'],
+        isOpenAccess: true,
+        pmcId: 'PMC1',
+        sourceTitle: 'src',
+        sourceId: 'sid',
+      },
+    ];
+    exportToCsv(articles, 'topic', {
+      columns: ['title', 'authors', 'journal', 'summary'],
+      delimiter: ',',
+    });
+    const blob = vi.mocked(URL.createObjectURL).mock.calls[0][0] as Blob;
+    const csv = await blob.text();
+    expect(csv).toContain('\t\uFF1D1+1');
+    expect(csv).toContain('\t =cmd');
+    expect(csv).toContain("\t|cmd|' /C calc'!A0");
+    expect(csv).toContain("'&lt;script>alert(1)&lt;/script>");
+    expect(csv).not.toContain('<script>');
+  });
+
+  it('exportToCsv refuses an oversized payload without downloading', () => {
+    const articles: AggregatedArticle[] = [
+      {
+        pmid: '1',
+        title: 'T',
+        authors: 'A',
+        journal: 'J',
+        pubYear: '2020',
+        summary: 'x'.repeat(MAX_EXPORT_BYTES + 1),
+        relevanceScore: 1,
+        relevanceExplanation: '',
+        keywords: [],
+        isOpenAccess: false,
+        sourceTitle: 'src',
+        sourceId: 'sid',
+      },
+    ];
+    expect(() => exportToCsv(articles, 'topic', { columns: ['summary'], delimiter: ',' })).toThrow(
+      AppError,
+    );
+    expect(anchorMocks.length).toBe(0);
+  });
+
+  it('exportToPdf refuses an oversized ArrayBuffer without saving', () => {
+    pdfOutputSpy.mockReturnValue(new ArrayBuffer(MAX_EXPORT_BYTES + 1));
+    const pdfSettings: Settings['export']['pdf'] = {
+      includeCoverPage: false,
+      preparedFor: '',
+      includeSynthesis: false,
+      includeInsights: false,
+      includeQueries: false,
+      includeToc: false,
+      includeHeader: false,
+      includeFooter: false,
+    };
+    const report: ResearchReport = {
+      synthesis: '',
+      rankedArticles: [],
+      generatedQueries: [],
+      aiGeneratedInsights: [],
+      overallKeywords: [],
+    };
+    const input: ResearchInput = {
+      researchTopic: 'Topic',
+      dateRange: 'any',
+      articleTypes: [],
+      synthesisFocus: 'outcomes',
+      maxArticlesToScan: 10,
+      topNToSynthesize: 3,
+    };
+    expect(() => exportToPdf(report, input, pdfSettings)).toThrow(AppError);
+    expect(pdfSaveSpy).not.toHaveBeenCalled();
   });
 
   it('exportToPdf with cover, toc, insights, header and footer paths', () => {

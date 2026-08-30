@@ -23,6 +23,13 @@ import {
   getAppReleaseInfo,
 } from '../lib/appReleaseInfo';
 import { BRAND_APP_NAME } from '../lib/brand';
+import {
+  downloadBinaryFile,
+  downloadUtf8File,
+  sanitizeCsvFormulaInjection,
+} from '../lib/exportSafety';
+
+export { sanitizeCsvFormulaInjection } from '../lib/exportSafety';
 
 // ===================================================================================
 //
@@ -70,15 +77,6 @@ const cleanText = (text: string) =>
         .replace(/[\u2018\u2019]/g, "'")
         .replace(/[\u201C\u201D]/g, '"')
     : '';
-
-/** Prefix cells that could be interpreted as spreadsheet formulas (=, +, -, @, tab, carriage return). */
-export function sanitizeCsvFormulaInjection(value: string): string {
-  const s = String(value ?? '');
-  if (/^[=+\-@\t\r]/.test(s)) {
-    return `\t${s}`;
-  }
-  return s;
-}
 
 // ===================================================================================
 //
@@ -256,7 +254,7 @@ class PdfExporter {
     this.currentY += 10;
   }
 
-  /** Saves the generated PDF. */
+  /** Saves the generated PDF after the 8 MiB export ceiling. */
   public save(filename: string) {
     if (this.settings.includeFooter) {
       for (let i = 1; i <= this.pageNumber; i++) {
@@ -264,7 +262,11 @@ class PdfExporter {
         this.addFooter();
       }
     }
-    this.doc.save(filename);
+    const output = this.doc.output('arraybuffer');
+    if (!(output instanceof ArrayBuffer)) {
+      throw new TypeError('PDF exporter did not produce an ArrayBuffer');
+    }
+    downloadBinaryFile(output, filename, 'application/pdf');
   }
 
   public exportResearchReport(report: ResearchReport, input: ResearchInput) {
@@ -509,12 +511,11 @@ export const exportToCsv = (
   });
 
   const csvContent = [headers.join(settings.delimiter), ...rows].join('\n');
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = `report_export_${topic.substring(0, 20).replace(/\s/g, '_')}.csv`;
-  link.click();
-  URL.revokeObjectURL(link.href);
+  downloadUtf8File(
+    csvContent,
+    `report_export_${topic.substring(0, 20).replace(/\s/g, '_')}.csv`,
+    'text/csv;charset=utf-8;',
+  );
 };
 
 export const exportInsightsToCsv = (
@@ -538,12 +539,11 @@ export const exportInsightsToCsv = (
   );
 
   const csvContent = [headers.join(','), ...rows].join('\n');
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = `ai_insights_${topic.substring(0, 20).replace(/\s/g, '_')}.csv`;
-  link.click();
-  URL.revokeObjectURL(link.href);
+  downloadUtf8File(
+    csvContent,
+    `ai_insights_${topic.substring(0, 20).replace(/\s/g, '_')}.csv`,
+    'text/csv;charset=utf-8;',
+  );
 };
 
 // --- JSON Export with Metadata ---
@@ -564,12 +564,13 @@ const createJsonExport = <T>(data: T, type: string, count: number) => {
     },
     data,
   };
-  const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(exportObject, null, 2))}`;
-  const link = document.createElement('a');
-  link.href = jsonString;
+  const jsonString = JSON.stringify(exportObject, null, 2);
   const date = new Date().toISOString().split('T')[0];
-  link.download = `ai_research_orchestration_author_${type}_${date}.json`;
-  link.click();
+  downloadUtf8File(
+    jsonString,
+    `ai_research_orchestration_author_${type}_${date}.json`,
+    'application/json;charset=utf-8',
+  );
 };
 
 export const exportHistoryToJson = (entries: KnowledgeBaseEntry[]): void => {
@@ -671,10 +672,5 @@ export const exportCitations = (
       })
       .join('\n');
   }
-  const blob = new Blob([content], { type: 'application/octet-stream;charset=utf-8' });
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = `citations.${type}`;
-  link.click();
-  URL.revokeObjectURL(link.href);
+  downloadUtf8File(content, `citations.${type}`, 'application/octet-stream;charset=utf-8');
 };

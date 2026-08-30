@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import type { AggregatedArticle, KnowledgeBaseEntry, Settings } from '../types';
 import type { TranslationKey } from '../i18n/translations';
 import { exportKnowledgeBaseToPdf, exportToCsv, exportCitations } from '../services/exportService';
+import { exportErrorUserMessage } from '../lib/exportSafety';
 
 interface NotificationState {
   id: number;
@@ -52,29 +53,39 @@ export function useKbExports({
       return;
     }
 
-    switch (showExportModal) {
-      case 'pdf':
-        exportKnowledgeBaseToPdf(
-          articlesToExport,
-          t('kb.export.pdfTitle'),
-          (pmid) =>
-            knowledgeBase
-              .flatMap((e) =>
-                e.sourceType === 'research' ? e.report.aiGeneratedInsights || [] : [],
-              )
-              .filter((i) => (i.supportingArticles || []).includes(pmid)),
-          exportSettings.pdf,
-        );
-        break;
-      case 'csv':
-        exportToCsv(articlesToExport, 'knowledge_base_selection', exportSettings.csv);
-        break;
-      case 'bib':
-      case 'ris':
-        exportCitations(articlesToExport, exportSettings.citation, showExportModal);
-        break;
-      default:
-        break;
+    try {
+      switch (showExportModal) {
+        case 'pdf':
+          exportKnowledgeBaseToPdf(
+            articlesToExport,
+            t('kb.export.pdfTitle'),
+            (pmid) =>
+              knowledgeBase
+                .flatMap((e) =>
+                  e.sourceType === 'research' ? e.report.aiGeneratedInsights || [] : [],
+                )
+                .filter((i) => (i.supportingArticles || []).includes(pmid)),
+            exportSettings.pdf,
+          );
+          break;
+        case 'csv':
+          exportToCsv(articlesToExport, 'knowledge_base_selection', exportSettings.csv);
+          break;
+        case 'bib':
+        case 'ris':
+          exportCitations(articlesToExport, exportSettings.citation, showExportModal);
+          break;
+        default:
+          break;
+      }
+    } catch (error) {
+      setShowExportModal(null);
+      setNotification({
+        id: Date.now(),
+        message: t('kb.export.failed', { error: exportErrorUserMessage(error) }),
+        type: 'error',
+      });
+      return;
     }
     const format = showExportModal.toUpperCase();
     setShowExportModal(null);
