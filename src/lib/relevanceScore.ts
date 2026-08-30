@@ -25,7 +25,16 @@ export function relevanceBand(score: number): RelevanceBand {
   return 'low';
 }
 
-/** Honest chat/export phrasing: relative rank, not a calibrated /100 probability. */
+/** Honest chat phrasing: relative rank, not a calibrated /100 probability. */
 export function formatRelativeRelevanceScore(score: number): string {
   return `relative score ${score} (this result set)`;
+}
+
+/** Shared ring/text colors so the score ring matches Knowledge Base bands. */
+export function relevanceBandChrome(score: number): { textClass: string; ringColor: string } {
+  const band = relevanceBand(score);
+  if (band === 'high') return { textClass: 'text-green-400', ringColor: '#4ade80' };
+  if (band === 'medium') return { textClass: 'text-cyan-400', ringColor: '#22d3ee' };
+  if (band === 'possible') return { textClass: 'text-amber-400', ringColor: '#fbbf24' };
+  return { textClass: 'text-red-400', ringColor: '#f87171' };
 }

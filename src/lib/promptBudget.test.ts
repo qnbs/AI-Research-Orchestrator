@@ -158,6 +158,32 @@ describe('selectArticlesForRankingPrompt', () => {
     expect(selection.accounting.selectionMode).toBe('lexical-prefilter');
   });
 
+  it('does not let recency or OA boosts outrank a better BM25 match', () => {
+    const topical = makeArticle(
+      '1',
+      'Aspirin for cardiovascular prevention',
+      'Aspirin reduces cardiovascular events in primary prevention trials.',
+    );
+    topical.pubYear = '2010';
+
+    const recencyOnly = makeArticle(
+      '2',
+      'Unrelated oncology immunotherapy cohort',
+      'Checkpoint blockade in metastatic melanoma with no aspirin mention.',
+    );
+    recencyOnly.pubYear = '2025';
+    recencyOnly.isOpenAccess = true;
+    recencyOnly.articleType = 'Randomized Controlled Trial';
+
+    const selection = selectArticlesForRankingPrompt(
+      [recencyOnly, topical],
+      'aspirin cardiovascular prevention',
+      'heuristic',
+      'local',
+    );
+    expect(selection.payloads[0]?.pmid).toBe('1');
+  });
+
   it('handles Unicode titles without breaking JSON wrapping', () => {
     const articles = [
       makeArticle(

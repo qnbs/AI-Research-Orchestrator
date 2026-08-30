@@ -3,6 +3,7 @@ import {
   relevanceBand,
   RELEVANCE_BAND_THRESHOLDS,
   formatRelativeRelevanceScore,
+  relevanceBandChrome,
 } from './relevanceScore';
 
 describe('relevanceBand', () => {
@@ -27,5 +28,14 @@ describe('formatRelativeRelevanceScore', () => {
   it('does not overclaim a calibrated /100 probability', () => {
     expect(formatRelativeRelevanceScore(92)).toBe('relative score 92 (this result set)');
     expect(formatRelativeRelevanceScore(92)).not.toContain('/100');
+  });
+});
+
+describe('relevanceBandChrome', () => {
+  it('aligns the score ring with KB bands (80 is medium, not green/high)', () => {
+    expect(relevanceBand(80)).toBe('medium');
+    expect(relevanceBandChrome(80).ringColor).not.toBe('#4ade80');
+    expect(relevanceBandChrome(90).ringColor).toBe('#4ade80');
+    expect(relevanceBandChrome(80).ringColor).toBe('#22d3ee');
   });
 });

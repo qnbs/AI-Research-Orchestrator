@@ -7,6 +7,7 @@ import type { AIProviderSelection } from '../services/providers/types';
 import type { AbstractStatus, RankedArticle } from '../types';
 import { estimateTokensFromText } from './resilience';
 import { rankArticles } from '../services/nonAi/ranker';
+import { LEXICAL_ONLY_RANKING_WEIGHTS } from '../services/nonAi/types';
 import { estimateOllamaInputTokenBudget } from './ollamaContextBudget';
 import { resolveCachedOllamaContextLength } from './ollamaModelMetadata';
 import { resolveCachedOllamaParameterSize } from '../services/providers/ollamaHealth';
@@ -157,8 +158,9 @@ export type RankingPromptSelection = {
 };
 
 /**
- * Deterministic lexical pre-rank, then include the maximum prefix that fits the token budget.
- * Articles omitted from the LLM prompt remain lexically scored and listed in accounting.
+ * Deterministic BM25+ term-match pre-rank (no recency / pub-type / OA mix),
+ * then include the maximum prefix that fits the token budget.
+ * Articles omitted from the LLM prompt remain scored and listed in accounting.
  */
 export const selectArticlesForRankingPrompt = (
   articles: Partial<RankedArticle>[],
@@ -169,7 +171,7 @@ export const selectArticlesForRankingPrompt = (
   options?: PromptBudgetOptions,
 ): RankingPromptSelection => {
   const rankable = articles.filter((a) => a.pmid).map(toRankableArticle);
-  const lexicallyRanked = rankArticles(rankable, topic).sort(
+  const lexicallyRanked = rankArticles(rankable, topic, LEXICAL_ONLY_RANKING_WEIGHTS).sort(
     (a, b) => b.relevanceScore - a.relevanceScore,
   );
 
