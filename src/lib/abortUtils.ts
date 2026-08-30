@@ -36,23 +36,25 @@ export function combineAbortSignals(
     return { signal: ctrl.signal, dispose: () => {} };
   }
   let disposed = false;
-  const onExternalAbort = () => {
-    dispose();
-    if (!ctrl.signal.aborted && caller) ctrl.abort(caller.reason);
-  };
-  function dispose() {
-    if (disposed) return;
+  const release = (): boolean => {
+    if (disposed) return false;
     disposed = true;
     clearTimeout(timer);
     caller?.removeEventListener('abort', onExternalAbort);
+    return true;
+  };
+  const onExternalAbort = () => {
+    if (!release()) return;
+    if (!ctrl.signal.aborted && caller) ctrl.abort(caller.reason);
+  };
+  function dispose() {
+    if (!release()) return;
     if (!ctrl.signal.aborted) {
       ctrl.abort(new DOMException('Aborted', 'AbortError'));
     }
   }
   const timer = setTimeout(() => {
-    if (disposed) return;
-    disposed = true;
-    caller?.removeEventListener('abort', onExternalAbort);
+    if (!release()) return;
     if (!ctrl.signal.aborted) {
       ctrl.abort(new DOMException(`Timeout of ${timeoutMs}ms exceeded`, 'TimeoutError'));
     }

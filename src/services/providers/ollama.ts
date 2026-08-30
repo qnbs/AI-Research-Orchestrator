@@ -373,6 +373,7 @@ export function createOllamaProvider(): AIProvider {
             retryable: true,
           });
         }
+        dispose();
         yield { done: true };
       } catch (error) {
         throw mapOllamaError(error, { callerSignal: request.signal });

@@ -73,4 +73,17 @@ describe('combineAbortSignals', () => {
       vi.useRealTimers();
     }
   });
+
+  it('forwards the caller abort reason instead of replacing it', async () => {
+    const outer = new AbortController();
+    const { signal, dispose } = combineAbortSignals(60_000, outer.signal);
+    const reason = new Error('caller-stop');
+    const p = new Promise<void>((resolve) => {
+      signal.addEventListener('abort', () => resolve(), { once: true });
+    });
+    outer.abort(reason);
+    await p;
+    expect(signal.reason).toBe(reason);
+    dispose();
+  });
 });
