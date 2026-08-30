@@ -1,5 +1,22 @@
 import { describe, it, expect, vi } from 'vitest';
-import { combineAbortSignals, isTimeoutAbortReason } from './abortUtils';
+import { combineAbortSignals, isAbortLikeError, isTimeoutAbortReason } from './abortUtils';
+
+describe('isAbortLikeError', () => {
+  it('detects DOMException AbortError and SDK APIUserAbortError', () => {
+    expect(isAbortLikeError(new DOMException('Aborted', 'AbortError'))).toBe(true);
+    expect(isAbortLikeError(new Error('AbortError'))).toBe(false);
+    const named = new Error('Request was aborted.');
+    named.name = 'AbortError';
+    expect(isAbortLikeError(named)).toBe(true);
+    class APIUserAbortError extends Error {
+      constructor() {
+        super('Request was aborted.');
+      }
+    }
+    expect(isAbortLikeError(new APIUserAbortError())).toBe(true);
+    expect(isAbortLikeError({ status: 429 })).toBe(false);
+  });
+});
 
 describe('combineAbortSignals', () => {
   it('returns timeout-only signal when external is undefined', () => {
