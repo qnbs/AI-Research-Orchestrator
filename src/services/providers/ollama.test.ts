@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createOllamaProvider } from './ollama';
+import { OLLAMA_MAX_ERROR_BODY_BYTES, OLLAMA_MAX_NONSTREAM_BODY_BYTES } from './ollama';
 
 describe('createOllamaProvider', () => {
   beforeEach(() => {
@@ -9,7 +10,7 @@ describe('createOllamaProvider', () => {
   it('generates content', async () => {
     global.fetch = vi.fn().mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ response: '{"answer": 42}' }),
+      text: async () => JSON.stringify({ response: '{"answer": 42}' }),
     });
 
     const provider = createOllamaProvider();
@@ -94,7 +95,7 @@ describe('createOllamaProvider', () => {
     });
   });
 
-  it('respects abort signal', async () => {
+  it('maps caller abort to non-retryable STREAM_ABORTED', async () => {
     global.fetch = vi.fn().mockRejectedValueOnce(new DOMException('Aborted', 'AbortError'));
 
     const provider = createOllamaProvider();
@@ -102,13 +103,52 @@ describe('createOllamaProvider', () => {
     controller.abort();
     await expect(
       provider.generateContent({ model: 'llama3.1:8b', prompt: 'x', signal: controller.signal }),
-    ).rejects.toBeInstanceOf(DOMException);
+    ).rejects.toMatchObject({ code: 'STREAM_ABORTED', retryable: false });
+  });
+
+  it('maps a fetch abort without a caller signal as retryable timeout', async () => {
+    global.fetch = vi.fn().mockRejectedValueOnce(new DOMException('Aborted', 'AbortError'));
+    const provider = createOllamaProvider();
+    await expect(
+      provider.generateContent({ model: 'llama3.1:8b', prompt: 'x' }),
+    ).rejects.toMatchObject({
+      code: 'PROVIDER_UNAVAILABLE',
+      retryable: true,
+      context: 'ollama_wall_clock_timeout',
+    });
+  });
+
+  it('reads json()-only generate mocks used by pipeline warmup specs', async () => {
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ response: '{"answer":1}' }),
+    });
+    const provider = createOllamaProvider();
+    const response = await provider.generateContent({
+      model: 'llama3.1:8b',
+      prompt: 'hello',
+      json: true,
+    });
+    expect(response.text).toBe('{"answer":1}');
+  });
+
+  it('coerces a non-string generate response field to empty text', async () => {
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      text: async () => JSON.stringify({ response: 42 }),
+    });
+    const provider = createOllamaProvider();
+    const response = await provider.generateContent({
+      model: 'llama3.1:8b',
+      prompt: 'hello',
+    });
+    expect(response.text).toBe('');
   });
 
   it('defaults to localhost and prefixes system prompt', async () => {
     global.fetch = vi.fn().mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ response: 'ok' }),
+      text: async () => JSON.stringify({ response: 'ok' }),
     });
     const provider = createOllamaProvider();
     await provider.generateContent({
@@ -487,5 +527,100 @@ describe('createOllamaProvider', () => {
     const provider = createOllamaProvider();
     expect(provider.capabilities.requiresApiKey).toBe(false);
     expect(provider.capabilities.supportsCustomBaseUrl).toBe(true);
+  });
+
+  it('rejects oversized non-stream generate bodies', async () => {
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      text: async () => 'x'.repeat(OLLAMA_MAX_NONSTREAM_BODY_BYTES + 1),
+    });
+    const provider = createOllamaProvider();
+    await expect(
+      provider.generateContent({ model: 'llama3.1:8b', prompt: 'x' }),
+    ).rejects.toMatchObject({
+      code: 'PROVIDER_PARSE_FAILURE',
+      context: 'ollama_body_size',
+    });
+  });
+
+  it('keeps oversized-body error messages to a short excerpt', async () => {
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      text: async () => 'x'.repeat(OLLAMA_MAX_NONSTREAM_BODY_BYTES + 1),
+    });
+    const provider = createOllamaProvider();
+    const error = await provider
+      .generateContent({ model: 'llama3.1:8b', prompt: 'x' })
+      .catch((err: unknown) => err);
+    expect(error).toMatchObject({ code: 'PROVIDER_PARSE_FAILURE' });
+    expect((error as Error).message.length).toBeLessThan(500);
+  });
+
+  it('maps HTTP 503 with an oversized error body as retryable unavailable', async () => {
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: false,
+      status: 503,
+      text: async () => 'x'.repeat(OLLAMA_MAX_ERROR_BODY_BYTES + 1),
+    });
+    const provider = createOllamaProvider();
+    await expect(
+      provider.generateContent({ model: 'llama3.1:8b', prompt: 'x' }),
+    ).rejects.toMatchObject({
+      code: 'PROVIDER_UNAVAILABLE',
+      status: 503,
+      retryable: true,
+    });
+  });
+
+  it('maps caller abort while reading a non-OK body as STREAM_ABORTED', async () => {
+    const controller = new AbortController();
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: false,
+      status: 503,
+      text: async () => {
+        controller.abort();
+        throw new DOMException('Aborted', 'AbortError');
+      },
+    });
+    const provider = createOllamaProvider();
+    await expect(
+      provider.generateContent({
+        model: 'llama3.1:8b',
+        prompt: 'x',
+        signal: controller.signal,
+      }),
+    ).rejects.toMatchObject({
+      code: 'STREAM_ABORTED',
+      retryable: false,
+    });
+  });
+
+  it('rejects oversized generate bodies from a streaming reader', async () => {
+    const encoder = new TextEncoder();
+    const oversized = encoder.encode('x'.repeat(OLLAMA_MAX_NONSTREAM_BODY_BYTES + 1));
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      body: {
+        getReader: () => {
+          let sent = false;
+          return {
+            read: async () => {
+              if (sent) return { done: true, value: undefined };
+              sent = true;
+              return { done: false, value: oversized };
+            },
+            cancel: vi.fn(),
+            releaseLock: vi.fn(),
+          };
+        },
+      },
+    });
+    const provider = createOllamaProvider();
+    await expect(
+      provider.generateContent({ model: 'llama3.1:8b', prompt: 'x' }),
+    ).rejects.toMatchObject({
+      code: 'PROVIDER_PARSE_FAILURE',
+      context: 'ollama_body_size',
+    });
   });
 });

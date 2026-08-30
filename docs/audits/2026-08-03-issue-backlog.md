@@ -144,7 +144,7 @@ Severity: P0 = stop-the-line · P1 = pre-release hardening · P2 = architecture/
 | Evidence   | Master prompt §7.4; `ollama.ts` lacks max body / idle bounds                                                 |
 | Acceptance | Connect/total/idle timeouts; max error and non-stream body caps                                              |
 | Owner      | local-ai                                                                                                     |
-| Status     | **Open** (2026-08-29) — NDJSON parser is bounded; generate/chat streams still lack max body / idle timeouts. |
+| Status     | **Resolved** — generate/chat idle 30s, 8 MiB stream cap, 5-minute total, capped error/non-stream bodies; `combineAbortSignals` honors already-aborted callers. |
 
 ### ISSUE-P1-CLAIM-002 — Mixed supporting/contradicting claim policy
 

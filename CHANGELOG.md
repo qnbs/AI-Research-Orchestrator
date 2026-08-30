@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **CODEOWNERS (`NOW-P1-CODEOWNERS`):** `.github/CODEOWNERS` routes critical paths (`src/services`, `src/lib`, workflows, `public/sw.js`, security/governance docs) to `@qnbs`. The `mainrules` ruleset still does **not** require Code Owner reviews (solo-maintainer; do not flip that setting here).
 
+### Fixed
+
+- **Ollama stream/body bounds (ISSUE-P1-TRANSPORT-001):** Generate/chat NDJSON streams abort after 30s idle or 8 MiB accumulated body, with a 5-minute wall-clock cap. Non-stream generate uses the same 5-minute wall-clock (not a 15s headers-only budget). Error/non-stream bodies are size-capped incrementally via `body.getReader()` (`text()` / `json()` fallbacks for test doubles); oversized-body error messages keep a 256-character excerpt. HTTP status mapping stays authoritative when an error body is oversized; caller abort while reading an error body stays `STREAM_ABORTED`. Wall-clock timeout is retryable `PROVIDER_UNAVAILABLE`; caller abort stays non-retryable `STREAM_ABORTED`. `combineAbortSignals` returns a disposer that clears the timer (including the timeout-only path), honors an already-aborted caller signal, and stamps `TimeoutError` as the timeout reason. `fetchWithExternalPolicy` keeps the combined signal attached until the caller consumes the body.
+
 ## [0.4.2] - 2026-08-30
 
 > Post-sprint stabilization: cancelled reports never persist as `done` (ADR 0021 / #260), reduced-motion looping animations (#261), Dependabot consolidation (#263), ADR floor 21 (#262), and the audit-gate pin (#259), plus the Aug 2–29 Unreleased wave on `main`.

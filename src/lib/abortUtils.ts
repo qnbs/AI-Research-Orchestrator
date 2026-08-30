@@ -1,6 +1,11 @@
 /**
  * Combines an optional caller AbortSignal with a wall-clock timeout.
  * Aborting either the external signal or the timeout aborts the merged signal.
+ * Timeout aborts use `TimeoutError` as `signal.reason` so callers can tell them
+ * apart from a user/caller abort (`AbortError`).
+ *
+ * Call `dispose` when the operation (including response-body consumption)
+ * settles so the timer and external listener do not outlive the request.
  */
 export function isAbortLikeError(error: unknown): boolean {
   if (!error || typeof error !== 'object') return false;
@@ -9,14 +14,51 @@ export function isAbortLikeError(error: unknown): boolean {
   return false;
 }
 
-export function combineAbortSignals(timeoutMs: number, external?: AbortSignal | null): AbortSignal {
-  if (!external) return AbortSignal.timeout(timeoutMs);
+/** True when an AbortSignal (or thrown reason) is a wall-clock timeout. */
+export function isTimeoutAbortReason(reason: unknown): boolean {
+  if (!reason || typeof reason !== 'object') return false;
+  return 'name' in reason && reason.name === 'TimeoutError';
+}
+
+export type CombinedAbortSignal = {
+  signal: AbortSignal;
+  dispose: () => void;
+};
+
+export function combineAbortSignals(
+  timeoutMs: number,
+  external?: AbortSignal | null,
+): CombinedAbortSignal {
   const ctrl = new AbortController();
-  const abort = () => ctrl.abort();
-  const timer = setTimeout(abort, timeoutMs);
-  external.addEventListener('abort', () => {
+  const caller = external ?? null;
+  if (caller?.aborted) {
+    ctrl.abort(caller.reason);
+    return { signal: ctrl.signal, dispose: () => {} };
+  }
+  let disposed = false;
+  const release = (): boolean => {
+    if (disposed) return false;
+    disposed = true;
     clearTimeout(timer);
-    abort();
-  });
-  return ctrl.signal;
+    caller?.removeEventListener('abort', onExternalAbort);
+    return true;
+  };
+  const onExternalAbort = () => {
+    if (!release()) return;
+    if (!ctrl.signal.aborted && caller) ctrl.abort(caller.reason);
+  };
+  function dispose() {
+    if (!release()) return;
+    if (!ctrl.signal.aborted) {
+      ctrl.abort(new DOMException('Aborted', 'AbortError'));
+    }
+  }
+  const timer = setTimeout(() => {
+    if (!release()) return;
+    if (!ctrl.signal.aborted) {
+      ctrl.abort(new DOMException(`Timeout of ${timeoutMs}ms exceeded`, 'TimeoutError'));
+    }
+  }, timeoutMs);
+  caller?.addEventListener('abort', onExternalAbort, { once: true });
+  return { signal: ctrl.signal, dispose };
 }

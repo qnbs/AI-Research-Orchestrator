@@ -68,4 +68,60 @@ describe('streamOllamaNdjson', () => {
     }).rejects.toMatchObject({ code: 'STREAM_ABORTED' });
     expect(cancel).toHaveBeenCalled();
   });
+
+  it('throws when a chunk stalls past idleTimeoutMs', async () => {
+    vi.useFakeTimers();
+    const cancel = vi.fn();
+    const response = {
+      body: {
+        getReader: () => ({
+          read: () => new Promise<{ done: boolean; value?: Uint8Array }>(() => {}),
+          cancel,
+          releaseLock: vi.fn(),
+        }),
+      },
+    } as unknown as Response;
+    try {
+      const pending = (async () => {
+        for await (const _ of streamOllamaNdjson(response, { idleTimeoutMs: 25 })) {
+          // drain
+        }
+      })();
+      const expectation = expect(pending).rejects.toMatchObject({
+        code: 'PROVIDER_UNAVAILABLE',
+        context: 'ollama_idle_timeout',
+      });
+      await vi.advanceTimersByTimeAsync(30);
+      await expectation;
+      expect(cancel).toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('maps a TimeoutError abort reason to retryable PROVIDER_UNAVAILABLE', async () => {
+    const cancel = vi.fn();
+    const response = mockResponse(['{"a":1}\n'], { cancel });
+    const controller = new AbortController();
+    controller.abort(new DOMException('Timeout', 'TimeoutError'));
+    await expect(async () => {
+      for await (const _ of streamOllamaNdjson(response, { signal: controller.signal })) {
+        // drain
+      }
+    }).rejects.toMatchObject({
+      code: 'PROVIDER_UNAVAILABLE',
+      retryable: true,
+      context: 'ollama_wall_clock_timeout',
+    });
+    expect(cancel).toHaveBeenCalled();
+  });
+
+  it('throws when accumulated stream bytes exceed maxTotalBytes', async () => {
+    const response = mockResponse(['{"a":1}\n', '{"b":2}\n']);
+    await expect(async () => {
+      for await (const _ of streamOllamaNdjson(response, { maxTotalBytes: 8 })) {
+        // drain
+      }
+    }).rejects.toMatchObject({ code: 'PROVIDER_PARSE_FAILURE', context: 'ollama_stream_size' });
+  });
 });

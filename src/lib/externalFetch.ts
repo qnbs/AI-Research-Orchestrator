@@ -51,6 +51,35 @@ const DEFAULT_RETRIES = 3;
 const DEFAULT_TIMEOUT_MS = 15_000;
 const DEFAULT_MAX_ELAPSED_MS = 60_000;
 
+const BODY_READ_METHODS = ['json', 'text', 'arrayBuffer', 'blob', 'formData'] as const;
+
+/**
+ * Keep the combined abort/timeout attached while the caller reads the body,
+ * then dispose once json()/text()/… settles (without aborting mid-read).
+ */
+function attachDisposeAfterBodyRead(response: Response, dispose: () => void): Response {
+  for (const name of BODY_READ_METHODS) {
+    const original = response[name];
+    if (typeof original !== 'function') continue;
+    const bound = original.bind(response);
+    try {
+      Object.defineProperty(response, name, {
+        configurable: true,
+        value: async () => {
+          try {
+            return await bound();
+          } finally {
+            dispose();
+          }
+        },
+      });
+    } catch {
+      // Response methods may be non-configurable in some runtimes.
+    }
+  }
+  return response;
+}
+
 /**
  * Fetch with exponential backoff, jitter, Retry-After, abort-aware sleeps, and elapsed budget.
  */
@@ -75,21 +104,27 @@ export async function fetchWithExternalPolicy(
   return withExponentialBackoff(
     async (attempt) => {
       throwIfBudgetExceeded();
-      const response = await fetch(url, {
-        ...init,
-        signal: combineAbortSignals(timeoutMs, signal),
-      });
+      const { signal: combined, dispose } = combineAbortSignals(timeoutMs, signal);
+      try {
+        const response = await fetch(url, {
+          ...init,
+          signal: combined,
+        });
 
-      if (isRetryableHttpStatus(response.status) && attempt < retries) {
-        throw new RetryableHttpResponseError(
-          response,
-          response.status === 429
-            ? parseRetryAfterMs(response.headers.get('Retry-After'))
-            : undefined,
-        );
+        if (isRetryableHttpStatus(response.status) && attempt < retries) {
+          throw new RetryableHttpResponseError(
+            response,
+            response.status === 429
+              ? parseRetryAfterMs(response.headers.get('Retry-After'))
+              : undefined,
+          );
+        }
+
+        return attachDisposeAfterBodyRead(response, dispose);
+      } catch (error) {
+        dispose();
+        throw error;
       }
-
-      return response;
     },
     {
       retries,

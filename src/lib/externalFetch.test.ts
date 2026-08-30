@@ -161,4 +161,15 @@ describe('fetchWithExternalPolicy', () => {
     expect(err.response).toBe(response);
     expect(err.retryAfterMs).toBe(2000);
   });
+
+  it('still allows reading json() after a successful fetch', async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
+    const res = await fetchWithExternalPolicy('https://example.com');
+    await expect(res.json()).resolves.toEqual({ ok: true });
+  });
 });
