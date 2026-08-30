@@ -46,16 +46,20 @@ const ScoreRingSvg: React.FC<{
   </svg>
 );
 
-export const RelevanceScoreDisplay: React.FC<{ score: number }> = ({ score }) => {
+export const RelevanceScoreDisplay: React.FC<{ score: number; relative?: boolean }> = ({
+  score,
+  relative = false,
+}) => {
   const { t } = useTranslation();
   const { textClass: scoreColor, ringColor } = relevanceBandChrome(score);
   const circumference = 2 * Math.PI * 18;
   const offset = circumference - (score / 100) * circumference;
+  const ariaKey = relative ? 'report.relevance.ariaRelative' : 'report.relevance.aria';
 
   return (
     <div
       role="img"
-      aria-label={t('report.relevance.aria', { score })}
+      aria-label={t(ariaKey, { score })}
       className="relative h-12 w-12 flex-shrink-0 flex items-center justify-center group"
     >
       <ScoreRingSvg

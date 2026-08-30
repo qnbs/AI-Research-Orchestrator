@@ -304,7 +304,10 @@ export const ArticleDetailPanel: React.FC<ArticleDetailPanelProps> = ({
                 </a>
               </div>
             </div>
-            <RelevanceScoreDisplay score={article.relevanceScore} />
+            <RelevanceScoreDisplay
+              score={article.relevanceScore}
+              relative={article.relevanceScale === 'relative'}
+            />
           </div>
 
           {article.isOpenAccess && (

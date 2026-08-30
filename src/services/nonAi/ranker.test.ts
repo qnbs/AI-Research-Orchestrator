@@ -70,6 +70,7 @@ describe('rankArticles', () => {
   it('labels scores as a relative rank in this result set', () => {
     const ranked = rankArticles(mockArticles, 'diabetes treatment');
     expect(ranked[0].relevanceExplanation).toMatch(/Relative rank in this result set/i);
+    expect(ranked[0].relevanceScale).toBe('relative');
     expect(ranked[0].relevanceScore).toBeGreaterThanOrEqual(0);
     expect(ranked[0].relevanceScore).toBeLessThanOrEqual(100);
   });

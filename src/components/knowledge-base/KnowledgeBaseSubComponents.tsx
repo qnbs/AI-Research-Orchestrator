@@ -365,7 +365,10 @@ const KBArticleCard: React.FC<{
         </div>
       </div>
       <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/50">
-        <RelevanceScoreDisplay score={article.relevanceScore} />
+        <RelevanceScoreDisplay
+          score={article.relevanceScore}
+          relative={article.relevanceScale === 'relative'}
+        />
         <div className="flex items-center gap-1 text-xs text-text-secondary truncate">
           <DocumentIcon className="h-3 w-3" />
           <span className="truncate" title={article.sourceTitle}>
@@ -421,7 +424,10 @@ const KBArticleListItem: React.FC<{
         </div>
       </div>
       <div className="flex flex-col items-end gap-2">
-        <RelevanceScoreDisplay score={article.relevanceScore} />
+        <RelevanceScoreDisplay
+          score={article.relevanceScore}
+          relative={article.relevanceScale === 'relative'}
+        />
         {article.isOpenAccess && (
           <div className="flex items-center text-xs text-green-400 font-medium">
             <UnlockIcon className="h-4 w-4 mr-1" />

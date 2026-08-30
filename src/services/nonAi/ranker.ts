@@ -111,6 +111,7 @@ export function rankArticles(
   const ranked = scoredArticles.map((row, index) => ({
     ...row.rankedArticle,
     relevanceScore: relativeScores[index],
+    relevanceScale: 'relative' as const,
   }));
 
   return ranked.sort((a, b) => (b.relevanceScore ?? 0) - (a.relevanceScore ?? 0));

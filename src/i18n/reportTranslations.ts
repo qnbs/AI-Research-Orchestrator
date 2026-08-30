@@ -76,6 +76,8 @@ export const reportTranslations = {
     'report.chat.placeholder': 'Ask a follow-up question…',
     'report.chat.send': 'Send',
     'report.relevance.aria': 'Relevance {score} on a 0–100 display scale',
+    'report.relevance.ariaRelative':
+      'Relevance {score} as a relative rank on a 0–100 display scale',
   },
   de: {
     'report.title': 'Forschungsbericht',
@@ -155,5 +157,7 @@ export const reportTranslations = {
     'report.chat.placeholder': 'Stellen Sie eine Anschlussfrage…',
     'report.chat.send': 'Senden',
     'report.relevance.aria': 'Relevanz {score} auf einer 0–100-Anzeigeskala',
+    'report.relevance.ariaRelative':
+      'Relevanz {score} als relativer Rang auf einer 0–100-Anzeigeskala',
   },
 } as const;

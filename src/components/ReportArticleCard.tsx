@@ -63,7 +63,10 @@ const ArticleHeader: React.FC<{
           </div>
         ) : null}
       </div>
-      <RelevanceScoreDisplay score={article.relevanceScore} />
+      <RelevanceScoreDisplay
+        score={article.relevanceScore}
+        relative={article.relevanceScale === 'relative'}
+      />
     </div>
   );
 };
