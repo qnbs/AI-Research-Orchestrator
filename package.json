@@ -47,7 +47,7 @@
     "check:log-redaction": "node scripts/check-log-redaction.mjs",
     "check:audit-ignore-paths": "node scripts/check-audit-ignore-paths.mjs",
     "check:csp-endpoint-drift": "node scripts/check-docs-drift.mjs --csp-endpoint",
-    "check:agent-eval": "vitest run src/lib/agentEval.test.ts src/lib/heuristicEval.test.ts src/lib/liveOrchestratorEval.test.ts",
+    "check:agent-eval": "vitest run src/lib/agentEval.test.ts src/lib/agentEval.adversarial.test.ts src/lib/heuristicEval.test.ts src/lib/liveOrchestratorEval.test.ts",
     "i18n:ratchet": "node scripts/check-i18n-ratchet.mjs",
     "csp:hashes": "node scripts/patch-csp-hashes.mjs",
     "test:lighthouse": "pnpm run build && node scripts/run-lighthouse.mjs"
