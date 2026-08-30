@@ -67,14 +67,14 @@ Severity: P0 = stop-the-line · P1 = pre-release hardening · P2 = architecture/
 
 ### ISSUE-P1-HEURISTIC-001 — Truthful capability flags and typed operations
 
-| Field      | Value                                                                                 |
-| ---------- | ------------------------------------------------------------------------------------- |
-| Severity   | P1                                                                                    |
-| Impact     | Advertised capabilities exceed heuristic behavior                                     |
-| Evidence   | `src/services/providers/heuristic.ts` prompt substring guessing                       |
-| Acceptance | `providerCapabilities` matches tests; typed `HeuristicOperation` for production paths |
-| Owner      | heuristic-engine                                                                      |
-| Status     | **Open** (2026-08-29) — still on `main`; no typed `HeuristicOperation` yet.           |
+| Field      | Value                                                                                                                                                                                                                                                                       |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Severity   | P1                                                                                                                                                                                                                                                                          |
+| Impact     | Advertised capabilities exceed heuristic behavior                                                                                                                                                                                                                           |
+| Evidence   | `src/services/providers/heuristic.ts` prompt substring guessing                                                                                                                                                                                                             |
+| Acceptance | `providerCapabilities` matches tests; typed `HeuristicOperation` for production paths                                                                                                                                                                                       |
+| Owner      | heuristic-engine                                                                                                                                                                                                                                                            |
+| Status     | **Resolved** (2026-08-30) — `HeuristicOperation` on `AIContentRequest`; adapter dispatch is typed (no prompt-substring guessing). `heuristicProviderCapabilities()` is shared by the adapter and `AI_PROVIDERS.heuristic` (`jsonMode`/`webGrounding` false; abort honored). |
 
 ### ISSUE-P1-HEURISTIC-002 — BM25 IDF and score semantics
 
