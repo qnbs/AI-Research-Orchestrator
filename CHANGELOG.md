@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Dependabot consolidation (2026-08-29):** Same-major npm bumps (`marked`, `recharts`, `@tanstack/react-virtual`, `terser`, `globals`, `lint-staged`, `@types/react`, `@types/node`, `@playwright/test`) plus Actions pins (`pnpm/action-setup` 6.0.10, `github/codeql-action` 4.37.9 as a unit, `anthropics/claude-code-action` 1.0.206). Unused `lucide-react` bump (#248) skipped.
 - **Docs / ADR floor 21:** Agent entrypoints (`AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.cursor/index.mdc`) and `docs/project-facts.json` `adr.minNumberedRecords` track ADR [0021](docs/adr/0021-partial-report-completion-state.md); README EN/DE document cancel + `'partial'` honesty.
 - **Docs / metadata accuracy (PR11):** Synced agent entrypoints (`AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.cursor/index.mdc`) to multi-provider + ADR 0001–0020 + blocking cross-browser + DeepSource AI Review + PR-only concurrency; README EN/DE CI sections; `package.json` description; DeepSource setup AI Review gate; audit/prompt supersession banners; Help dead `HELP_VERSION` removed (About uses `formatReleaseLabel()`); ADR floor 20 in `project-facts.json`.
 - **CI concurrency (PR11):** Deploy, E2E, cross-browser, a11y, and security cancel in-progress runs on `pull_request` only — never cancel an in-flight `main` validation or Pages deploy.
