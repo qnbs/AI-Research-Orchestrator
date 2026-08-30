@@ -118,12 +118,12 @@ Severity: P0 = stop-the-line · P1 = pre-release hardening · P2 = architecture/
 
 ### ISSUE-P1-SECURITY-001 — XSS/export hardening regression suite
 
-| Field      | Value                                                                                                                                                                                            |
-| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Severity   | P1                                                                                                                                                                                               |
-| Impact     | Markdown/CSV/PDF attack surface                                                                                                                                                                  |
-| Acceptance | Blocking fixtures for script, formula injection, oversized export                                                                                                                                |
-| Status     | **Partially resolved** (2026-08-29) — #223 closed the `innerHTML` entity-decode XSS path (`RETURN_DOM_FRAGMENT`). Full formula-injection + oversized-export suite still thinner than acceptance. |
+| Field      | Value                                                                                                                                                                                                                                                                                                                            |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Severity   | P1                                                                                                                                                                                                                                                                                                                               |
+| Impact     | Markdown/CSV/PDF attack surface                                                                                                                                                                                                                                                                                                  |
+| Acceptance | Blocking fixtures for script, formula injection, oversized export                                                                                                                                                                                                                                                                |
+| Status     | **Resolved** (2026-08-30) — #223 closed the `innerHTML` entity-decode XSS path (`RETURN_DOM_FRAGMENT`). Formula-injection now covers whitespace/BOM, Unicode lookalikes, pipe-DDE, and `<script>` cells; CSV/JSON/citation/PDF downloads abort above 8 MiB (`VALIDATION` / `errors.code.exportTooLarge`) with blocking fixtures. |
 
 ### ISSUE-P1-CI-001 — Live branch ruleset vs documentation
 
