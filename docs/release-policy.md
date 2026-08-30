@@ -15,8 +15,8 @@ Between named releases, `main` may advance many commits while `package.json` sta
 ## Git tags and CHANGELOG
 
 1. Move entries from `CHANGELOG.md` `[Unreleased]` into a dated version section.
-2. Create an annotated tag: `git tag -a v0.4.1 -m "v0.4.1"`.
-3. Push tag: `git push origin v0.4.1`.
+2. Create an annotated tag: `git tag -a v0.4.2 -m "v0.4.2"`.
+3. Push tag: `git push origin v0.4.2`.
 
 Tags are optional for every `main` deploy but **required** when promoting `[Unreleased]` to a version section.
 

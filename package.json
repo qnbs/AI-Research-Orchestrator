@@ -1,7 +1,7 @@
 {
   "name": "ai-research-orchestrator",
   "private": true,
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "Client-only React PWA for PubMed/arXiv literature review with multi-provider AI (or heuristic fallback) and a local IndexedDB knowledge base.",
   "type": "module",
   "packageManager": "pnpm@11.13.1",

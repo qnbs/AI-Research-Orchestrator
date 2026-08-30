@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.2] - 2026-08-30
+
+> Post-sprint stabilization: cancelled reports never persist as `done` (ADR 0021 / #260), reduced-motion looping animations (#261), Dependabot consolidation (#263), ADR floor 21 (#262), and the audit-gate pin (#259), plus the Aug 2–29 Unreleased wave on `main`.
+
 ### Fixed
 
 - **Cancelled reports never marked `done` (P0 scientific integrity, ADR 0021, #260):** Cancelling a running pipeline (or restoring a checkpoint) with a collected body previously fell through to `reportStatus: 'done'` — identical to a finished run, skipping provenance, claim extraction, and grounded-synthesis assessment. Unified `ReportStatus` now includes `'partial'`; `ResearchReport.completionStatus` / `cancelledAtPhase` / `cancelledAt` survive save, export, and reopen. `useChat` stays gated on `=== 'done'`; `ReportDisplay` shows a non-dismissible banner; exports prepend `PARTIAL REPORT — RESEARCH DID NOT FINISH`. Chat defaults off; save is unavailable while streaming; green corpus-supported chrome is suppressed for `'partial'`; `setReportStatus('partial')` is stamped in the same tick as the report object (before checkpoint persist).
@@ -371,7 +375,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - DevContainer support for GitHub Codespaces
 - Vitest unit tests + Playwright E2E test infrastructure
 
-[Unreleased]: https://github.com/qnbs/AI-Research-Orchestrator/compare/v0.4.1...HEAD
+[Unreleased]: https://github.com/qnbs/AI-Research-Orchestrator/compare/v0.4.2...HEAD
+[0.4.2]: https://github.com/qnbs/AI-Research-Orchestrator/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/qnbs/AI-Research-Orchestrator/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/qnbs/AI-Research-Orchestrator/compare/v0.2.1...v0.4.0
 [0.3.0]: https://github.com/qnbs/AI-Research-Orchestrator/compare/v0.2.1...v0.3.0
