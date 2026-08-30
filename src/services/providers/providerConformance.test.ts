@@ -153,13 +153,14 @@ describe('provider HTTP conformance harness', () => {
         server.setScenario('hang');
         const provider = create();
         const controller = new AbortController();
+        const seen = server.waitForNextRequest();
         const pending = generateOrMap(provider, {
           model,
           prompt: 'ping',
           baseURL: baseURL(),
           signal: controller.signal,
         });
-        await new Promise((resolve) => setTimeout(resolve, 40));
+        await seen;
         controller.abort();
         const result = await pending;
         expect(result.ok).toBe(false);

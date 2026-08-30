@@ -13,6 +13,8 @@ export type ProviderHttpScenario = 'ok' | 'rate-limit' | 'unavailable' | 'malfor
 export interface FakeProviderHttpServer {
   origin: string;
   setScenario: (scenario: ProviderHttpScenario) => void;
+  /** Resolves on the next inbound HTTP request (including hang-scenario accepts). */
+  waitForNextRequest: () => Promise<void>;
   close: () => Promise<void>;
 }
 
@@ -97,8 +99,15 @@ function pathnameOf(req: http.IncomingMessage): string {
 export async function startFakeProviderHttpServer(): Promise<FakeProviderHttpServer> {
   let scenario: ProviderHttpScenario = 'ok';
   const hanging: http.ServerResponse[] = [];
+  const requestWaiters: Array<() => void> = [];
+
+  const notifyRequest = (): void => {
+    const waiters = requestWaiters.splice(0, requestWaiters.length);
+    for (const waiter of waiters) waiter();
+  };
 
   const server = http.createServer((req, res) => {
+    notifyRequest();
     const pathname = pathnameOf(req);
 
     if (scenario === 'hang') {
@@ -145,6 +154,10 @@ export async function startFakeProviderHttpServer(): Promise<FakeProviderHttpSer
     setScenario: (next) => {
       scenario = next;
     },
+    waitForNextRequest: () =>
+      new Promise<void>((resolve) => {
+        requestWaiters.push(resolve);
+      }),
     close: () =>
       new Promise((resolve, reject) => {
         for (const res of hanging) {
