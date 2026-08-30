@@ -110,7 +110,10 @@ export function answerFromReport(report: ResearchReport, question: string): stri
   if (wantsList && report.rankedArticles?.length) {
     return `${HEURISTIC_BADGE}\n\nTop ranked articles:\n${report.rankedArticles
       .slice(0, 8)
-      .map((a, i) => `${i + 1}. ${a.pmid} — ${a.title} (${a.relevanceScore})`)
+      .map(
+        (a, i) =>
+          `${i + 1}. ${a.pmid} — ${a.title} (${formatRelativeRelevanceScore(a.relevanceScore)})`,
+      )
       .join('\n')}`;
   }
 

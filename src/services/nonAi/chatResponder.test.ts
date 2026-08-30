@@ -84,6 +84,7 @@ describe('answerFromReport', () => {
   it('lists top ranked articles on request', () => {
     const answer = answerFromReport(makeReport(), 'List the top articles');
     expect(answer).toContain('Aspirin for cardiovascular prevention');
+    expect(answer).toContain('relative score 90 (this result set)');
   });
 
   it('returns the synthesis for a summary request', () => {
