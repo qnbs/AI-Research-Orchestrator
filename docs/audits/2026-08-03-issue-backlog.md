@@ -108,13 +108,13 @@ Severity: P0 = stop-the-line · P1 = pre-release hardening · P2 = architecture/
 
 ### ISSUE-P1-PERSIST-001 — Dexie upgrade transaction tests
 
-| Field      | Value                                                                                                                            |
-| ---------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| Severity   | P1                                                                                                                               |
-| Impact     | Migration data loss undetected                                                                                                   |
-| Evidence   | Master prompt §13; transform-only tests today                                                                                    |
-| Acceptance | `fake-indexeddb` open old schema → upgrade → assert records                                                                      |
-| Status     | **Open** (2026-08-29) — `databaseService` coverage is a regression ratchet (44.89% lines / floor 42), not N-1/N-2 upgrade tests. |
+| Field      | Value                                                                                                                                                                                                                                                                          |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Severity   | P1                                                                                                                                                                                                                                                                             |
+| Impact     | Migration data loss undetected                                                                                                                                                                                                                                                 |
+| Evidence   | Master prompt §13; transform-only tests today                                                                                                                                                                                                                                  |
+| Acceptance | `fake-indexeddb` open old schema → upgrade → assert records                                                                                                                                                                                                                    |
+| Status     | **Resolved** (2026-08-30) — `databaseService.upgrade.test.ts` opens v2/v4/v6 with `fake-indexeddb`, then the production v7 singleton upgrades; records are asserted (hydration, demo stamp, trust rename, checkpoints, poison skip). Coverage floors ratcheted to 90/92/88/95. |
 
 ### ISSUE-P1-SECURITY-001 — XSS/export hardening regression suite
 
@@ -137,13 +137,13 @@ Severity: P0 = stop-the-line · P1 = pre-release hardening · P2 = architecture/
 
 ### ISSUE-P1-TRANSPORT-001 — Bounded Ollama response bodies
 
-| Field      | Value                                                                                                        |
-| ---------- | ------------------------------------------------------------------------------------------------------------ |
-| Severity   | P1                                                                                                           |
-| Impact     | Oversized or idle streams can exhaust browser memory                                                         |
-| Evidence   | Master prompt §7.4; `ollama.ts` lacks max body / idle bounds                                                 |
-| Acceptance | Connect/total/idle timeouts; max error and non-stream body caps                                              |
-| Owner      | local-ai                                                                                                     |
+| Field      | Value                                                                                                                                                          |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Severity   | P1                                                                                                                                                             |
+| Impact     | Oversized or idle streams can exhaust browser memory                                                                                                           |
+| Evidence   | Master prompt §7.4; `ollama.ts` lacks max body / idle bounds                                                                                                   |
+| Acceptance | Connect/total/idle timeouts; max error and non-stream body caps                                                                                                |
+| Owner      | local-ai                                                                                                                                                       |
 | Status     | **Resolved** — generate/chat idle 30s, 8 MiB stream cap, 5-minute total, capped error/non-stream bodies; `combineAbortSignals` honors already-aborted callers. |
 
 ### ISSUE-P1-CLAIM-002 — Mixed supporting/contradicting claim policy

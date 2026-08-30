@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **CODEOWNERS (`NOW-P1-CODEOWNERS`):** `.github/CODEOWNERS` routes critical paths (`src/services`, `src/lib`, workflows, `public/sw.js`, security/governance docs) to `@qnbs`. The `mainrules` ruleset still does **not** require Code Owner reviews (solo-maintainer; do not flip that setting here).
+- **Dexie upgrade transaction tests (ISSUE-P1-PERSIST-001):** `fake-indexeddb` opens schema v2 / v4 / v6, then the production v7 instance upgrades in-place. Assertions cover `articleId` hydration, demo quarantine stamps, ADR 0018 trust terminology, checkpoint reports, sibling-table survival, and poison-record skip (one bad row must not drop the rest). `databaseService` coverage floors ratchet to 90/92/88/95.
 
 ### Fixed
 
