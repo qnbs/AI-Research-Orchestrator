@@ -16,4 +16,11 @@ describe('combineAbortSignals', () => {
     outer.abort();
     await expect(p).resolves.toBeUndefined();
   });
+
+  it('starts already aborted when the external signal is already aborted', () => {
+    const outer = new AbortController();
+    outer.abort();
+    const signal = combineAbortSignals(60_000, outer.signal);
+    expect(signal.aborted).toBe(true);
+  });
 });

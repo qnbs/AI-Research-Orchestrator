@@ -7,7 +7,12 @@
  */
 
 import { AppError, isAbortError } from '../../lib/errors';
-import { streamOllamaNdjson } from '../../lib/ollamaNdjson';
+import { combineAbortSignals } from '../../lib/abortUtils';
+import {
+  OLLAMA_NDJSON_DEFAULT_IDLE_TIMEOUT_MS,
+  OLLAMA_NDJSON_DEFAULT_MAX_TOTAL_BYTES,
+  streamOllamaNdjson,
+} from '../../lib/ollamaNdjson';
 import type { AIProvider } from './provider';
 import type {
   AIChatSessionRequest,
@@ -18,6 +23,13 @@ import type {
 } from './types';
 import { providerCapabilities } from './types';
 import { probeOllamaHealth } from './ollamaHealth';
+
+/** Headers/connect budget for non-stream generate. Stream body uses idle + total caps. */
+export const OLLAMA_FETCH_TIMEOUT_MS = 15_000;
+/** Wall-clock cap for one generate/chat NDJSON stream (headers + body). */
+export const OLLAMA_STREAM_TOTAL_TIMEOUT_MS = 300_000;
+export const OLLAMA_MAX_ERROR_BODY_BYTES = 65_536;
+export const OLLAMA_MAX_NONSTREAM_BODY_BYTES = 2_097_152;
 
 function getBaseUrl(requestBaseURL?: string): string {
   if (requestBaseURL) return requestBaseURL.replace(/\/$/, '');
@@ -64,6 +76,49 @@ function mapOllamaError(error: unknown): AppError {
   });
 }
 
+async function readCappedText(response: Response, maxBytes: number): Promise<string> {
+  if (typeof response.arrayBuffer === 'function') {
+    const buf = new Uint8Array(await response.arrayBuffer());
+    if (buf.byteLength > maxBytes) {
+      const head = new TextDecoder().decode(buf.subarray(0, maxBytes));
+      throw new AppError({
+        code: 'PROVIDER_PARSE_FAILURE',
+        message: `Ollama response exceeded ${maxBytes} bytes (${buf.byteLength} received): ${head}`,
+        retryable: false,
+        context: 'ollama_body_size',
+      });
+    }
+    return new TextDecoder().decode(buf);
+  }
+  if (typeof response.text === 'function') {
+    const text = await response.text();
+    if (new TextEncoder().encode(text).byteLength > maxBytes) {
+      throw new AppError({
+        code: 'PROVIDER_PARSE_FAILURE',
+        message: `Ollama response exceeded ${maxBytes} bytes`,
+        retryable: false,
+        context: 'ollama_body_size',
+      });
+    }
+    return text;
+  }
+  throw new AppError({
+    code: 'PROVIDER_PARSE_FAILURE',
+    message: 'Ollama response body is unreadable',
+    retryable: false,
+    context: 'ollama_body_size',
+  });
+}
+
+async function readErrorBody(response: Response): Promise<string> {
+  try {
+    return await readCappedText(response, OLLAMA_MAX_ERROR_BODY_BYTES);
+  } catch (err) {
+    if (err instanceof AppError && err.code === 'PROVIDER_PARSE_FAILURE') throw err;
+    return 'Unknown error';
+  }
+}
+
 function throwHttpError(status: number, text: string, label: string): never {
   // Require an explicit model-missing body — bare 404/proxy "Not Found" is not enough.
   const modelMissing =
@@ -106,15 +161,27 @@ export function createOllamaProvider(): AIProvider {
             num_predict: request.maxOutputTokens,
           },
         }),
-        signal: request.signal,
+        signal: combineAbortSignals(OLLAMA_FETCH_TIMEOUT_MS, request.signal),
       });
 
       if (!response.ok) {
-        const text = await response.text().catch(() => 'Unknown error');
+        const text = await readErrorBody(response);
         throwHttpError(response.status, text, 'generate');
       }
 
-      const data = (await response.json()) as { response?: string; error?: string };
+      const raw = await readCappedText(response, OLLAMA_MAX_NONSTREAM_BODY_BYTES);
+      let data: { response?: string; error?: string };
+      try {
+        data = JSON.parse(raw) as { response?: string; error?: string };
+      } catch (cause) {
+        throw new AppError({
+          code: 'PROVIDER_PARSE_FAILURE',
+          message: 'Ollama generate returned invalid JSON',
+          retryable: true,
+          cause,
+          context: 'ollama_body_json',
+        });
+      }
       if (typeof data.error === 'string' && data.error.length > 0) {
         throw mapOllamaError(new Error(data.error));
       }
@@ -124,6 +191,7 @@ export function createOllamaProvider(): AIProvider {
     async *generateContentStream(request: AIContentRequest): AsyncGenerator<AIStreamChunk> {
       const baseURL = getBaseUrl(request.baseURL);
       const fullPrompt = request.system ? `${request.system}\n\n${request.prompt}` : request.prompt;
+      const streamSignal = combineAbortSignals(OLLAMA_STREAM_TOTAL_TIMEOUT_MS, request.signal);
       const response = await fetch(`${baseURL}/api/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -137,11 +205,11 @@ export function createOllamaProvider(): AIProvider {
             num_predict: request.maxOutputTokens,
           },
         }),
-        signal: request.signal,
+        signal: streamSignal,
       });
 
       if (!response.ok) {
-        const text = await response.text().catch(() => 'Unknown error');
+        const text = await readErrorBody(response);
         throwHttpError(response.status, text, 'generate stream');
       }
 
@@ -150,7 +218,11 @@ export function createOllamaProvider(): AIProvider {
         response?: string;
         error?: string;
         done?: boolean;
-      }>(response, { signal: request.signal })) {
+      }>(response, {
+        signal: streamSignal,
+        idleTimeoutMs: OLLAMA_NDJSON_DEFAULT_IDLE_TIMEOUT_MS,
+        maxTotalBytes: OLLAMA_NDJSON_DEFAULT_MAX_TOTAL_BYTES,
+      })) {
         if (typeof chunk.error === 'string' && chunk.error.length > 0) {
           throw mapOllamaError(new Error(chunk.error));
         }
@@ -180,6 +252,7 @@ export function createOllamaProvider(): AIProvider {
       return {
         async sendMessageStream({ message }) {
           const chatMessages = [...messages, { role: 'user' as const, content: message }];
+          const streamSignal = combineAbortSignals(OLLAMA_STREAM_TOTAL_TIMEOUT_MS, request.signal);
           const response = await fetch(`${baseURL}/api/chat`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -189,11 +262,11 @@ export function createOllamaProvider(): AIProvider {
               stream: true,
               options: { temperature: request.temperature ?? 0.7 },
             }),
-            signal: request.signal,
+            signal: streamSignal,
           });
 
           if (!response.ok) {
-            const text = await response.text().catch(() => 'Unknown error');
+            const text = await readErrorBody(response);
             throwHttpError(response.status, text, 'chat');
           }
 
@@ -204,7 +277,11 @@ export function createOllamaProvider(): AIProvider {
               message?: { content?: string };
               done?: boolean;
               error?: string;
-            }>(response, { signal: request.signal })) {
+            }>(response, {
+              signal: streamSignal,
+              idleTimeoutMs: OLLAMA_NDJSON_DEFAULT_IDLE_TIMEOUT_MS,
+              maxTotalBytes: OLLAMA_NDJSON_DEFAULT_MAX_TOTAL_BYTES,
+            })) {
               if (typeof chunk.error === 'string' && chunk.error.length > 0) {
                 throw mapOllamaError(new Error(chunk.error));
               }

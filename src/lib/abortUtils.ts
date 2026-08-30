@@ -13,6 +13,10 @@ export function combineAbortSignals(timeoutMs: number, external?: AbortSignal | 
   if (!external) return AbortSignal.timeout(timeoutMs);
   const ctrl = new AbortController();
   const abort = () => ctrl.abort();
+  if (external.aborted) {
+    abort();
+    return ctrl.signal;
+  }
   const timer = setTimeout(abort, timeoutMs);
   external.addEventListener('abort', () => {
     clearTimeout(timer);

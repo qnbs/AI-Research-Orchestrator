@@ -9,12 +9,20 @@ import { AppError } from './errors';
 
 export const OLLAMA_NDJSON_DEFAULT_MAX_BUFFER_BYTES = 1_048_576;
 export const OLLAMA_NDJSON_DEFAULT_MAX_MALFORMED = 5;
+/** Stall between body chunks (generate/chat streams). */
+export const OLLAMA_NDJSON_DEFAULT_IDLE_TIMEOUT_MS = 30_000;
+/** Accumulated NDJSON bytes for one generate/chat stream. */
+export const OLLAMA_NDJSON_DEFAULT_MAX_TOTAL_BYTES = 8_388_608;
 
 export type OllamaNdjsonOptions = {
   /** Abort when the unfinished line buffer exceeds this size. */
   maxBufferBytes?: number;
   /** Throw after this many non-blank JSON parse failures. */
   maxMalformedRecords?: number;
+  /** Abort if `reader.read()` does not resolve within this many ms. Unset = no idle cap. */
+  idleTimeoutMs?: number;
+  /** Abort if decoded body bytes across the stream exceed this size. Unset = no total cap. */
+  maxTotalBytes?: number;
   signal?: AbortSignal;
 };
 
@@ -29,6 +37,39 @@ function throwIfAborted(signal?: AbortSignal): void {
   }
 }
 
+async function readWithIdleTimeout(
+  reader: ReadableStreamDefaultReader<Uint8Array>,
+  idleTimeoutMs: number | undefined,
+  signal?: AbortSignal,
+): Promise<ReadableStreamReadResult<Uint8Array>> {
+  if (idleTimeoutMs === undefined) {
+    return reader.read();
+  }
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const idle = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {
+      reject(
+        new AppError({
+          code: 'PROVIDER_UNAVAILABLE',
+          message: `Ollama stream idle for ${idleTimeoutMs}ms`,
+          retryable: true,
+          context: 'ollama_idle_timeout',
+        }),
+      );
+    }, idleTimeoutMs);
+  });
+  const onAbort = () => {
+    if (timer !== undefined) clearTimeout(timer);
+  };
+  signal?.addEventListener('abort', onAbort, { once: true });
+  try {
+    return await Promise.race([reader.read(), idle]);
+  } finally {
+    if (timer !== undefined) clearTimeout(timer);
+    signal?.removeEventListener('abort', onAbort);
+  }
+}
+
 /**
  * Yield parsed NDJSON objects from an HTTP response body.
  * Blank lines are skipped. Malformed non-blank lines increment a counter and
@@ -40,6 +81,8 @@ export async function* streamOllamaNdjson<T>(
 ): AsyncGenerator<T> {
   const maxBufferBytes = options.maxBufferBytes ?? OLLAMA_NDJSON_DEFAULT_MAX_BUFFER_BYTES;
   const maxMalformed = options.maxMalformedRecords ?? OLLAMA_NDJSON_DEFAULT_MAX_MALFORMED;
+  const idleTimeoutMs = options.idleTimeoutMs;
+  const maxTotalBytes = options.maxTotalBytes;
   const { signal } = options;
 
   if (!response.body) return;
@@ -50,12 +93,24 @@ export async function* streamOllamaNdjson<T>(
   let buffer = '';
   let pendingBytes = 0;
   let malformed = 0;
+  let totalBytes = 0;
 
   try {
     while (true) {
       throwIfAborted(signal);
-      const { done, value } = await reader.read();
+      const { done, value } = await readWithIdleTimeout(reader, idleTimeoutMs, signal);
       throwIfAborted(signal);
+      if (value && maxTotalBytes !== undefined) {
+        totalBytes += value.byteLength;
+        if (totalBytes > maxTotalBytes) {
+          throw new AppError({
+            code: 'PROVIDER_PARSE_FAILURE',
+            message: `Ollama stream exceeded ${maxTotalBytes} bytes`,
+            retryable: false,
+            context: 'ollama_stream_size',
+          });
+        }
+      }
 
       if (done) {
         buffer += decoder.decode();

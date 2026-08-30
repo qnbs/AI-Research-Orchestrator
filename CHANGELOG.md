@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **CODEOWNERS (`NOW-P1-CODEOWNERS`):** `.github/CODEOWNERS` routes critical paths (`src/services`, `src/lib`, workflows, `public/sw.js`, security/governance docs) to `@qnbs`. The `mainrules` ruleset still does **not** require Code Owner reviews (solo-maintainer; do not flip that setting here).
 
+### Fixed
+
+- **Ollama stream/body bounds (ISSUE-P1-TRANSPORT-001):** Generate/chat NDJSON streams abort after 30s idle or 8 MiB accumulated body, with a 5-minute wall-clock cap. Non-stream generate and error bodies are size-capped. `combineAbortSignals` honors an already-aborted caller signal.
+
 ## [0.4.2] - 2026-08-30
 
 > Post-sprint stabilization: cancelled reports never persist as `done` (ADR 0021 / #260), reduced-motion looping animations (#261), Dependabot consolidation (#263), ADR floor 21 (#262), and the audit-gate pin (#259), plus the Aug 2–29 Unreleased wave on `main`.

@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createOllamaProvider } from './ollama';
+import { OLLAMA_MAX_NONSTREAM_BODY_BYTES } from './ollama';
 
 describe('createOllamaProvider', () => {
   beforeEach(() => {
@@ -9,7 +10,7 @@ describe('createOllamaProvider', () => {
   it('generates content', async () => {
     global.fetch = vi.fn().mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ response: '{"answer": 42}' }),
+      text: async () => JSON.stringify({ response: '{"answer": 42}' }),
     });
 
     const provider = createOllamaProvider();
@@ -108,7 +109,7 @@ describe('createOllamaProvider', () => {
   it('defaults to localhost and prefixes system prompt', async () => {
     global.fetch = vi.fn().mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ response: 'ok' }),
+      text: async () => JSON.stringify({ response: 'ok' }),
     });
     const provider = createOllamaProvider();
     await provider.generateContent({
@@ -487,5 +488,19 @@ describe('createOllamaProvider', () => {
     const provider = createOllamaProvider();
     expect(provider.capabilities.requiresApiKey).toBe(false);
     expect(provider.capabilities.supportsCustomBaseUrl).toBe(true);
+  });
+
+  it('rejects oversized non-stream generate bodies', async () => {
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      text: async () => 'x'.repeat(OLLAMA_MAX_NONSTREAM_BODY_BYTES + 1),
+    });
+    const provider = createOllamaProvider();
+    await expect(
+      provider.generateContent({ model: 'llama3.1:8b', prompt: 'x' }),
+    ).rejects.toMatchObject({
+      code: 'PROVIDER_PARSE_FAILURE',
+      context: 'ollama_body_size',
+    });
   });
 });
