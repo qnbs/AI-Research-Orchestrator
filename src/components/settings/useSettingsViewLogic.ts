@@ -7,6 +7,7 @@ import { Settings, Preset, KnowledgeBaseEntry, CSV_EXPORT_COLUMNS } from '../../
 import { db } from '../../services/databaseService';
 import { useTranslation } from '../../hooks/useTranslation';
 import { exportHistoryToJson, exportKnowledgeBaseToJson } from '../../services/exportService';
+import { exportErrorUserMessage } from '../../lib/exportSafety';
 import {
   parseAndSanitizeKnowledgeBaseImport,
   type KnowledgeBaseImportQuarantine,
@@ -194,12 +195,20 @@ export const useSettingsViewLogic = (
       });
       return;
     }
-    exportHistoryToJson(knowledgeBase);
-    setNotification({
-      id: Date.now(),
-      message: t('settings.toast.history_exported'),
-      type: 'success',
-    });
+    try {
+      exportHistoryToJson(knowledgeBase);
+      setNotification({
+        id: Date.now(),
+        message: t('settings.toast.history_exported'),
+        type: 'success',
+      });
+    } catch (error) {
+      setNotification({
+        id: Date.now(),
+        message: t('kb.export.failed', { error: exportErrorUserMessage(error) }),
+        type: 'error',
+      });
+    }
   }, [knowledgeBase, setNotification, t]);
 
   const handleExportKnowledgeBase = useCallback(() => {
@@ -211,12 +220,20 @@ export const useSettingsViewLogic = (
       });
       return;
     }
-    exportKnowledgeBaseToJson(uniqueArticles);
-    setNotification({
-      id: Date.now(),
-      message: t('settings.toast.kb_exported'),
-      type: 'success',
-    });
+    try {
+      exportKnowledgeBaseToJson(uniqueArticles);
+      setNotification({
+        id: Date.now(),
+        message: t('settings.toast.kb_exported'),
+        type: 'success',
+      });
+    } catch (error) {
+      setNotification({
+        id: Date.now(),
+        message: t('kb.export.failed', { error: exportErrorUserMessage(error) }),
+        type: 'error',
+      });
+    }
   }, [uniqueArticles, setNotification, t]);
 
   const handleImport = useCallback(

@@ -297,6 +297,8 @@ export const translations = {
     'errors.code.circuitOpen':
       'External service temporarily blocked (circuit breaker). Try again later.',
     'errors.code.storage': 'Local storage error. Check browser storage and try again.',
+    'errors.code.exportTooLarge':
+      'Export is too large (maximum 8 MiB). Narrow the selection and try again.',
     'errors.code.unknown': 'An unexpected error occurred.',
     'common.cancel': 'Cancel',
     'common.close': 'Close',
@@ -623,6 +625,8 @@ export const translations = {
       'Externer Dienst vorübergehend blockiert (Circuit Breaker). Später erneut versuchen.',
     'errors.code.storage':
       'Lokaler Speicherfehler. Überprüfen Sie den Browser-Speicher und versuchen Sie es erneut.',
+    'errors.code.exportTooLarge':
+      'Export ist zu groß (maximal 8 MiB). Auswahl eingrenzen und erneut versuchen.',
     'errors.code.unknown': 'Ein unerwarteter Fehler ist aufgetreten.',
     'common.cancel': 'Abbrechen',
     'common.close': 'Schließen',
