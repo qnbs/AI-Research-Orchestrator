@@ -35,6 +35,7 @@ describe('createHeuristicProvider', () => {
     ['tldr', 'Aspirin reduces cardiovascular events in high-risk adults.'],
     ['related-online', 'topic: aspirin'],
     ['analysis', 'topic: aspirin cardiovascular prevention'],
+    ['synthesis', 'topic: aspirin'],
   ] as const satisfies ReadonlyArray<readonly [HeuristicOperation, string]>)(
     'dispatches typed %s operation',
     async (operation, prompt) => {
@@ -46,6 +47,11 @@ describe('createHeuristicProvider', () => {
       });
       if (operation === 'tldr') {
         expect(response.text.toLowerCase()).toMatch(/aspirin|cardiovascular|heuristic/);
+        expect(() => JSON.parse(response.text)).toThrow();
+        return;
+      }
+      if (operation === 'synthesis') {
+        expect(response.text).toContain('Heuristic synthesis');
         expect(() => JSON.parse(response.text)).toThrow();
         return;
       }

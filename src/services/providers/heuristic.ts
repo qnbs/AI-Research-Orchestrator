@@ -54,6 +54,10 @@ function inferTopicFromPrompt(prompt: string): string {
   return (match?.[1] ?? prompt).slice(0, 160).trim();
 }
 
+function heuristicSynthesisMarkdown(topic: string): string {
+  return `# Heuristic synthesis: ${topic}\n\nThis is a deterministic local fallback. Connect a live provider for full semantic ranking and cited synthesis.`;
+}
+
 /** Resolve a typed operation; unknown or omitted values become `fallback`. */
 export function resolveHeuristicOperation(request: AIContentRequest): HeuristicOperation {
   return isHeuristicOperation(request.heuristicOperation) ? request.heuristicOperation : 'fallback';
@@ -72,6 +76,7 @@ function generateTypedHeuristicResponse(request: AIContentRequest): AIContentRes
     case 'analysis':
       return { text: JSON.stringify(generateResearchAnalysisHeuristic(topic)) };
     case 'synthesis':
+      return { text: heuristicSynthesisMarkdown(topic) };
     case 'fallback':
       return {
         text: JSON.stringify({
@@ -96,7 +101,7 @@ export function createHeuristicProvider(): AIProvider {
     async *generateContentStream(request: AIContentRequest): AsyncGenerator<AIStreamChunk> {
       throwIfAborted(request.signal);
       const topic = inferTopicFromPrompt(request.prompt);
-      const markdown = `# Heuristic synthesis: ${topic}\n\nThis is a deterministic local fallback. Connect a live provider for full semantic ranking and cited synthesis.`;
+      const markdown = heuristicSynthesisMarkdown(topic);
       for await (const chunk of streamSynthesisChunks(markdown)) {
         throwIfAborted(request.signal);
         yield { text: chunk };
