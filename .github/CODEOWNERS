@@ -1,0 +1,25 @@
+# Path owners for review routing. The `mainrules` ruleset does **not** enable
+# "Require review from Code Owners" (solo-maintainer; required_approving_review_count
+# remains 0). Do not flip that GitHub setting in this file's PR.
+#
+# Syntax: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+* @qnbs
+
+# Pipeline, providers, IndexedDB, inference
+/src/services/ @qnbs
+/src/lib/ @qnbs
+/src/store/ @qnbs
+
+# Service worker / CSP / Pages
+/public/sw.js @qnbs
+/index.html @qnbs
+/scripts/ @qnbs
+
+# CI, security, governance
+/.github/ @qnbs
+/SECURITY.md @qnbs
+/docs/adr/ @qnbs
+/docs/ci-branch-governance.md @qnbs
+/docs/release-policy.md @qnbs
+/docs/project-facts.json @qnbs
