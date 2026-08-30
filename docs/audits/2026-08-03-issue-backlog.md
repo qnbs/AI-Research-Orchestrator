@@ -98,13 +98,13 @@ Severity: P0 = stop-the-line · P1 = pre-release hardening · P2 = architecture/
 
 ### ISSUE-P1-EVAL-001 — Adversarial scientific eval expansion
 
-| Field      | Value                                                                                                                |
-| ---------- | -------------------------------------------------------------------------------------------------------------------- |
-| Severity   | P1                                                                                                                   |
-| Impact     | Eval passes mirror implementation weaknesses                                                                         |
-| Evidence   | Master prompt §11; partial coverage in `agentEval.test.ts`                                                           |
-| Acceptance | Negation, numbers, units, German claims, injection, malformed JSON blocking                                          |
-| Status     | **Open** (2026-08-29) — `check:agent-eval` 27/27 green; adversarial German/injection still thinner than matcher 2.3. |
+| Field      | Value                                                                                                                                                                                                                     |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Severity   | P1                                                                                                                                                                                                                        |
+| Impact     | Eval passes mirror implementation weaknesses                                                                                                                                                                              |
+| Evidence   | Master prompt §11; partial coverage in `agentEval.test.ts`                                                                                                                                                                |
+| Acceptance | Negation, numbers, units, German claims, injection, malformed JSON blocking                                                                                                                                               |
+| Status     | **Resolved** (2026-08-30) — `agentEval.adversarial.test.ts` in `check:agent-eval`: German support/stopwords/negation, same-unit numeric and dose drift, prompt-injection titles, malformed JSON parser + schema blocking. |
 
 ### ISSUE-P1-PERSIST-001 — Dexie upgrade transaction tests
 
