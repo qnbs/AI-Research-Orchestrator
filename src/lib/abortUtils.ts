@@ -4,8 +4,8 @@
  * Timeout aborts use `TimeoutError` as `signal.reason` so callers can tell them
  * apart from a user/caller abort (`AbortError`).
  *
- * Call `dispose` when the operation settles so the timer and external
- * listener do not outlive a successful request.
+ * Call `dispose` when the operation (including response-body consumption)
+ * settles so the timer and external listener do not outlive the request.
  */
 export function isAbortLikeError(error: unknown): boolean {
   if (!error || typeof error !== 'object') return false;
@@ -29,32 +29,34 @@ export function combineAbortSignals(
   timeoutMs: number,
   external?: AbortSignal | null,
 ): CombinedAbortSignal {
-  if (!external) {
-    return { signal: AbortSignal.timeout(timeoutMs), dispose: () => {} };
-  }
-  const caller = external;
   const ctrl = new AbortController();
-  if (caller.aborted) {
+  const caller = external ?? null;
+  if (caller?.aborted) {
     ctrl.abort(caller.reason);
     return { signal: ctrl.signal, dispose: () => {} };
   }
   let disposed = false;
   const onExternalAbort = () => {
     dispose();
-    if (!ctrl.signal.aborted) ctrl.abort(caller.reason);
+    if (!ctrl.signal.aborted && caller) ctrl.abort(caller.reason);
   };
   function dispose() {
     if (disposed) return;
     disposed = true;
     clearTimeout(timer);
-    caller.removeEventListener('abort', onExternalAbort);
+    caller?.removeEventListener('abort', onExternalAbort);
+    if (!ctrl.signal.aborted) {
+      ctrl.abort(new DOMException('Aborted', 'AbortError'));
+    }
   }
   const timer = setTimeout(() => {
-    dispose();
+    if (disposed) return;
+    disposed = true;
+    caller?.removeEventListener('abort', onExternalAbort);
     if (!ctrl.signal.aborted) {
       ctrl.abort(new DOMException(`Timeout of ${timeoutMs}ms exceeded`, 'TimeoutError'));
     }
   }, timeoutMs);
-  caller.addEventListener('abort', onExternalAbort, { once: true });
+  caller?.addEventListener('abort', onExternalAbort, { once: true });
   return { signal: ctrl.signal, dispose };
 }

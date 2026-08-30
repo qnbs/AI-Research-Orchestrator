@@ -91,9 +91,12 @@ export async function fetchWithExternalPolicy(
           );
         }
 
+        // Keep combined abort/timeout attached until the caller consumes the
+        // body. Disposing here would drop cancellation for response.json()/text().
         return response;
-      } finally {
+      } catch (error) {
         dispose();
+        throw error;
       }
     },
     {

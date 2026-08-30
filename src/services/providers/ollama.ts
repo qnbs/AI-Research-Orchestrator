@@ -225,7 +225,8 @@ function ollamaResponseText(value: unknown): string {
 async function readErrorBody(response: Response): Promise<string> {
   try {
     return await readCappedText(response, OLLAMA_MAX_ERROR_BODY_BYTES);
-  } catch {
+  } catch (error) {
+    if (isAbortError(error)) throw error;
     // Keep the HTTP status authoritative: an unreadable or oversized error body
     // must not replace the status-based mapping in throwHttpError.
     return 'Unknown error';

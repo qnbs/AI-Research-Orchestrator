@@ -572,6 +572,29 @@ describe('createOllamaProvider', () => {
     });
   });
 
+  it('maps caller abort while reading a non-OK body as STREAM_ABORTED', async () => {
+    const controller = new AbortController();
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: false,
+      status: 503,
+      text: async () => {
+        controller.abort();
+        throw new DOMException('Aborted', 'AbortError');
+      },
+    });
+    const provider = createOllamaProvider();
+    await expect(
+      provider.generateContent({
+        model: 'llama3.1:8b',
+        prompt: 'x',
+        signal: controller.signal,
+      }),
+    ).rejects.toMatchObject({
+      code: 'STREAM_ABORTED',
+      retryable: false,
+    });
+  });
+
   it('rejects oversized generate bodies from a streaming reader', async () => {
     const encoder = new TextEncoder();
     const oversized = encoder.encode('x'.repeat(OLLAMA_MAX_NONSTREAM_BODY_BYTES + 1));

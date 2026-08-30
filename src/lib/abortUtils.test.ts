@@ -59,4 +59,18 @@ describe('combineAbortSignals', () => {
       vi.useRealTimers();
     }
   });
+
+  it('clears the timeout-only timer when dispose runs before the deadline', async () => {
+    vi.useFakeTimers();
+    try {
+      const { signal, dispose } = combineAbortSignals(50);
+      dispose();
+      expect(signal.aborted).toBe(true);
+      expect(isTimeoutAbortReason(signal.reason)).toBe(false);
+      await vi.advanceTimersByTimeAsync(50);
+      expect(isTimeoutAbortReason(signal.reason)).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
