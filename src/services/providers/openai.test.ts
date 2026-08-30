@@ -160,6 +160,15 @@ describe('createOpenAIProvider', () => {
       code: 'PROVIDER_UNAVAILABLE',
       retryable: false,
     });
+    class APIUserAbortError extends Error {
+      constructor() {
+        super('Request was aborted.');
+      }
+    }
+    expect(provider.mapError(new APIUserAbortError())).toMatchObject({
+      code: 'PROVIDER_UNAVAILABLE',
+      retryable: false,
+    });
     const existing = new AppError({ code: 'PROVIDER_AUTH', message: 'x', retryable: false });
     expect(provider.mapError(existing)).toBe(existing);
   });

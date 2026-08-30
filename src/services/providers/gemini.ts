@@ -1,4 +1,5 @@
 import { GoogleGenAI } from '@google/genai';
+import { isAbortLikeError } from '../../lib/abortUtils';
 import { AppError } from '../../lib/errors';
 import { getProviderApiKey } from '../apiKeyService';
 import type { AIProvider } from './provider';
@@ -148,19 +149,11 @@ function getGeminiErrorMessage(error: unknown): string {
 function mapGeminiError(error: unknown): AppError {
   if (error instanceof AppError) return error;
 
-  // AbortError must never be retried - user explicitly cancelled
-  if (error instanceof DOMException && error.name === 'AbortError') {
+  // AbortError / SDK APIUserAbortError must never be retried — user cancelled.
+  if (isAbortLikeError(error)) {
     return new AppError({
       code: 'PROVIDER_UNAVAILABLE',
-      message: error.message,
-      retryable: false,
-      cause: error,
-    });
-  }
-  if (error instanceof Error && error.name === 'AbortError') {
-    return new AppError({
-      code: 'PROVIDER_UNAVAILABLE',
-      message: error.message,
+      message: error instanceof Error ? error.message : 'Aborted',
       retryable: false,
       cause: error,
     });
