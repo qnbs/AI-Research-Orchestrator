@@ -40,7 +40,7 @@ const MODULE_FLOORS = [
   {
     id: 'databaseService',
     pathPattern: /\/src\/services\/databaseService\.ts$/,
-    min: { lines: 42, statements: 47, branches: 24, functions: 56 },
+    min: { lines: 90, statements: 92, branches: 88, functions: 95 },
   },
   {
     id: 'retrieval',

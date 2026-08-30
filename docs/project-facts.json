@@ -32,10 +32,10 @@
       "functions": 95
     },
     "databaseService": {
-      "lines": 42,
-      "statements": 47,
-      "branches": 24,
-      "functions": 56
+      "lines": 90,
+      "statements": 92,
+      "branches": 88,
+      "functions": 95
     },
     "retrieval": {
       "lines": 90,
