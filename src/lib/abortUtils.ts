@@ -10,8 +10,13 @@
 export function isAbortLikeError(error: unknown): boolean {
   if (!error || typeof error !== 'object') return false;
   if (error instanceof DOMException && error.name === 'AbortError') return true;
-  if (error instanceof Error && error.name === 'AbortError') return true;
-  return false;
+  if (
+    error instanceof Error &&
+    (error.name === 'AbortError' || error.name === 'APIUserAbortError')
+  ) {
+    return true;
+  }
+  return error.constructor?.name === 'APIUserAbortError';
 }
 
 /** True when an AbortSignal (or thrown reason) is a wall-clock timeout. */

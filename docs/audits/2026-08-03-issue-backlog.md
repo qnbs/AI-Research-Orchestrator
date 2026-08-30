@@ -88,13 +88,13 @@ Severity: P0 = stop-the-line · P1 = pre-release hardening · P2 = architecture/
 
 ### ISSUE-P1-PROVIDER-001 — Shared provider conformance harness
 
-| Field      | Value                                                                          |
-| ---------- | ------------------------------------------------------------------------------ |
-| Severity   | P1                                                                             |
-| Impact     | Provider drift undetected across Gemini/OpenAI/Anthropic/Ollama/heuristic      |
-| Acceptance | Single contract suite with fake HTTP server                                    |
-| Owner      | providers                                                                      |
-| Status     | **Open** (2026-08-29) — per-provider tests exist; no shared fake-HTTP harness. |
+| Field      | Value                                                                                                                                                                                                                                                                                        |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Severity   | P1                                                                                                                                                                                                                                                                                           |
+| Impact     | Provider drift undetected across Gemini/OpenAI/Anthropic/Ollama/heuristic                                                                                                                                                                                                                    |
+| Acceptance | Single contract suite with fake HTTP server                                                                                                                                                                                                                                                  |
+| Owner      | providers                                                                                                                                                                                                                                                                                    |
+| Status     | **Resolved** (2026-08-30) — `providerConformance.test.ts` drives Ollama/OpenAI/Anthropic `generateContent` against `conformance/fakeProviderHttpServer.ts` (200, 429, 5xx, malformed, caller abort). Heuristic is a no-network control. SDK `APIUserAbortError` maps as non-retryable abort. |
 
 ### ISSUE-P1-EVAL-001 — Adversarial scientific eval expansion
 
