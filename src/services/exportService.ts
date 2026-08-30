@@ -24,7 +24,7 @@ import {
 } from '../lib/appReleaseInfo';
 import { BRAND_APP_NAME } from '../lib/brand';
 import {
-  assertExportWithinByteLimit,
+  downloadBinaryFile,
   downloadUtf8File,
   sanitizeCsvFormulaInjection,
 } from '../lib/exportSafety';
@@ -263,9 +263,10 @@ class PdfExporter {
       }
     }
     const output = this.doc.output('arraybuffer');
-    const byteLength = output instanceof ArrayBuffer ? output.byteLength : new Blob([output]).size;
-    assertExportWithinByteLimit(byteLength, 'export.pdf');
-    this.doc.save(filename);
+    if (!(output instanceof ArrayBuffer)) {
+      throw new TypeError('PDF exporter did not produce an ArrayBuffer');
+    }
+    downloadBinaryFile(output, filename, 'application/pdf');
   }
 
   public exportResearchReport(report: ResearchReport, input: ResearchInput) {

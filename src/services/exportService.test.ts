@@ -60,7 +60,7 @@ describe('sanitizeCsvFormulaInjection', () => {
     expect(sanitizeCsvFormulaInjection('\uFF1D1+1')).toBe('\t\uFF1D1+1');
     expect(sanitizeCsvFormulaInjection("|cmd|' /C calc'!A0")).toBe("\t|cmd|' /C calc'!A0");
     expect(sanitizeCsvFormulaInjection('<script>alert(1)</script>')).toBe(
-      '\t<script>alert(1)</script>',
+      "'&lt;script>alert(1)&lt;/script>",
     );
   });
 
@@ -89,16 +89,8 @@ describe('export helpers', () => {
       }
       return el;
     });
-    Object.defineProperty(URL, 'createObjectURL', {
-      configurable: true,
-      writable: true,
-      value: vi.fn().mockReturnValue('blob:mock'),
-    });
-    Object.defineProperty(URL, 'revokeObjectURL', {
-      configurable: true,
-      writable: true,
-      value: vi.fn(),
-    });
+    vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock');
+    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
   });
 
   afterEach(() => {
@@ -397,7 +389,8 @@ describe('export helpers', () => {
     expect(csv).toContain('\t\uFF1D1+1');
     expect(csv).toContain('\t =cmd');
     expect(csv).toContain("\t|cmd|' /C calc'!A0");
-    expect(csv).toContain('\t<script>alert(1)</script>');
+    expect(csv).toContain("'&lt;script>alert(1)&lt;/script>");
+    expect(csv).not.toContain('<script>');
   });
 
   it('exportToCsv refuses an oversized payload without downloading', () => {

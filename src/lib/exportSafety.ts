@@ -26,7 +26,6 @@ const FORMULA_STARTERS = new Set<string>([
   '\r',
   '\n',
   '|',
-  '<',
   '\uFF1D', // fullwidth equals
   '\uFF0B', // fullwidth plus
   '\uFF0D', // fullwidth hyphen-minus
@@ -63,16 +62,16 @@ export function sanitizeCsvFormulaInjection(value: string): string {
   const withoutBom = original.replace(/^\uFEFF+/, '');
   const significant = withoutBom.replace(LEADING_JUNK, '');
   const first = significant.charAt(0);
+  if (first === '<') {
+    return `'${withoutBom.replace(/</g, '&lt;')}`;
+  }
   if (first && FORMULA_STARTERS.has(first)) {
     return `\t${withoutBom}`;
   }
   return original;
 }
 
-/** Blob-download a UTF-8 payload after the byte-cap check. */
-export function downloadUtf8File(content: string, filename: string, mimeType: string): void {
-  assertExportWithinByteLimit(utf8ByteLength(content));
-  const blob = new Blob([content], { type: mimeType });
+function triggerBlobDownload(blob: Blob, filename: string): void {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
@@ -89,9 +88,20 @@ export function downloadUtf8File(content: string, filename: string, mimeType: st
   }, 0);
 }
 
-/** User-facing export failure text (translated AppError, else Error.message). */
+/** Blob-download a UTF-8 payload after the byte-cap check. */
+export function downloadUtf8File(content: string, filename: string, mimeType: string): void {
+  assertExportWithinByteLimit(utf8ByteLength(content));
+  triggerBlobDownload(new Blob([content], { type: mimeType }), filename);
+}
+
+/** Blob-download a binary payload (PDF) after the byte-cap check. */
+export function downloadBinaryFile(data: ArrayBuffer, filename: string, mimeType: string): void {
+  assertExportWithinByteLimit(data.byteLength, 'export.pdf');
+  triggerBlobDownload(new Blob([data], { type: mimeType }), filename);
+}
+
+/** User-facing export failure text. Never echo raw Error.message (may leak internals). */
 export function exportErrorUserMessage(error: unknown): string {
   if (isAppError(error)) return error.toUserMessage();
-  if (error instanceof Error && error.message) return error.message;
   return translateSync('errors.code.unknown');
 }

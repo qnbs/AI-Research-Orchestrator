@@ -34,7 +34,7 @@ describe('sanitizeCsvFormulaInjection', () => {
     expect(sanitizeCsvFormulaInjection('\u2212cmd')).toBe('\t\u2212cmd');
     expect(sanitizeCsvFormulaInjection("|cmd|' /C calc'!A0")).toBe("\t|cmd|' /C calc'!A0");
     expect(sanitizeCsvFormulaInjection('<script>alert(1)</script>')).toBe(
-      '\t<script>alert(1)</script>',
+      "'&lt;script>alert(1)&lt;/script>",
     );
   });
 
@@ -77,16 +77,8 @@ describe('utf8ByteLength / downloadUtf8File', () => {
       }
       return el;
     });
-    Object.defineProperty(URL, 'createObjectURL', {
-      configurable: true,
-      writable: true,
-      value: vi.fn().mockReturnValue('blob:mock'),
-    });
-    Object.defineProperty(URL, 'revokeObjectURL', {
-      configurable: true,
-      writable: true,
-      value: vi.fn(),
-    });
+    vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock');
+    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
   });
 
   afterEach(() => {
@@ -119,11 +111,13 @@ describe('utf8ByteLength / downloadUtf8File', () => {
 });
 
 describe('exportErrorUserMessage', () => {
-  it('prefers AppError.toUserMessage and falls back to Error.message', () => {
+  it('uses AppError.toUserMessage and never echoes raw Error.message', () => {
     expect(
       exportErrorUserMessage(new AppError({ code: 'VALIDATION', message: 'Title is required' })),
     ).toBe('Title is required');
-    expect(exportErrorUserMessage(new Error('disk full'))).toBe('disk full');
+    expect(exportErrorUserMessage(new Error('disk full /internal/endpoint'))).toMatch(
+      /unexpected error/i,
+    );
     expect(exportErrorUserMessage('nope')).toMatch(/unexpected error/i);
   });
 });
