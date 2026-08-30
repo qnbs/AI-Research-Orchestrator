@@ -54,6 +54,7 @@ pnpm run test:e2e
 ## Pull requests
 
 - Target branch: **`main`**
+- Path owners: `.github/CODEOWNERS` (routing only; GitHub does not currently require Code Owner reviews)
 - Describe **what** changed and **why** in the PR description
 - Keep changes focused; avoid unrelated refactors
 - New user-visible strings: add keys in **English and German** in `src/i18n/translations.ts`

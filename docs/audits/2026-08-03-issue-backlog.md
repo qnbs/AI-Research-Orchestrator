@@ -171,7 +171,7 @@ These IDs come from the post-sprint prompt. Evidence: `docs/audits/2026-08-29-ba
 | `NOW-P1-DEP-STALL`   | P1  | **Open** — 15 Dependabot PRs                | Rule 012 violation. CodeQL trio #256/#257/#258 must move together. Skip unused `lucide-react`           |
 | `NOW-P1-RELEASE`     | P1  | **Open**                                    | Tag `v0.4.1` exists at `2c7a032`; GitHub Release does not. Cut `v0.4.2` after #234 + docs + deps        |
 | `NOW-P1-SW-NCBI-KEY` | P1  | **Resolved** on `main`                      | `public/sw.js` `NetworkOnly` for credentialed NCBI + activate purge; `sw-integrity.test.ts`             |
-| `NOW-P1-CODEOWNERS`  | P1  | **Open**                                    | No `CODEOWNERS` file                                                                                    |
+| `NOW-P1-CODEOWNERS`  | P1  | **In progress**                             | Adding `.github/CODEOWNERS` (routing only; ruleset Code Owner reviews stay Off)                         |
 | `NOW-P2-FACADE`      | P2  | **Open**                                    | `geminiService.ts` 1216 lines / 46 KB                                                                   |
 
 ---
