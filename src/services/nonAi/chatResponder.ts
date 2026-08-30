@@ -14,6 +14,7 @@ import { HEURISTIC_BADGE } from './types';
 import { extractKeywordsFromText } from './keywordExtractor';
 import { generateHeuristicTldr, extractKeySentences } from './synthesizer';
 import { tokenize, jaccardSimilarity } from './utils';
+import { formatRelativeRelevanceScore } from '../../lib/relevanceScore';
 
 /**
  * Research-assistant style analysis without a live AI provider.
@@ -78,7 +79,7 @@ export function answerFromReport(report: ResearchReport, question: string): stri
     if (!bestArticle || score > bestArticle.score) {
       bestArticle = {
         score,
-        text: `**${a.title}** (PMID ${a.pmid}, score ${a.relevanceScore}/100)\n\n${(a.aiSummary || a.summary || '').slice(0, 500)}`,
+        text: `**${a.title}** (PMID ${a.pmid}, ${formatRelativeRelevanceScore(a.relevanceScore)})\n\n${(a.aiSummary || a.summary || '').slice(0, 500)}`,
       };
     }
   }
@@ -93,7 +94,7 @@ export function answerFromReport(report: ResearchReport, question: string): stri
       (a) => a.pmid.toLowerCase() === requestedPmid.toLowerCase(),
     );
     if (hit) {
-      return `${HEURISTIC_BADGE}\n\n**${hit.title}** (PMID ${hit.pmid}, score ${hit.relevanceScore}/100)\n\n${(hit.aiSummary || hit.summary || '').slice(0, 700)}`;
+      return `${HEURISTIC_BADGE}\n\n**${hit.title}** (PMID ${hit.pmid}, ${formatRelativeRelevanceScore(hit.relevanceScore)})\n\n${(hit.aiSummary || hit.summary || '').slice(0, 700)}`;
     }
     return `${HEURISTIC_BADGE}: PMID ${requestedPmid} is not in this report's ranked articles. Ask for the top list or a PMID shown in the panel.`;
   }
@@ -109,7 +110,10 @@ export function answerFromReport(report: ResearchReport, question: string): stri
   if (wantsList && report.rankedArticles?.length) {
     return `${HEURISTIC_BADGE}\n\nTop ranked articles:\n${report.rankedArticles
       .slice(0, 8)
-      .map((a, i) => `${i + 1}. ${a.pmid} — ${a.title} (${a.relevanceScore})`)
+      .map(
+        (a, i) =>
+          `${i + 1}. ${a.pmid} — ${a.title} (${formatRelativeRelevanceScore(a.relevanceScore)})`,
+      )
       .join('\n')}`;
   }
 

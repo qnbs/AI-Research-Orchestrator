@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTranslation } from '../hooks/useTranslation';
+import { relevanceBandChrome } from '../lib/relevanceScore';
 
 const ScoreRingSvg: React.FC<{
   score: number;
@@ -45,17 +46,20 @@ const ScoreRingSvg: React.FC<{
   </svg>
 );
 
-export const RelevanceScoreDisplay: React.FC<{ score: number }> = ({ score }) => {
+export const RelevanceScoreDisplay: React.FC<{ score: number; relative?: boolean }> = ({
+  score,
+  relative = false,
+}) => {
   const { t } = useTranslation();
-  const scoreColor = score > 75 ? 'text-green-400' : score > 50 ? 'text-amber-400' : 'text-red-400';
-  const ringColor = score > 75 ? '#4ade80' : score > 50 ? '#fbbf24' : '#f87171';
+  const { textClass: scoreColor, ringColor } = relevanceBandChrome(score);
   const circumference = 2 * Math.PI * 18;
   const offset = circumference - (score / 100) * circumference;
+  const ariaKey = relative ? 'report.relevance.ariaRelative' : 'report.relevance.aria';
 
   return (
     <div
       role="img"
-      aria-label={t('report.relevance.aria', { score })}
+      aria-label={t(ariaKey, { score })}
       className="relative h-12 w-12 flex-shrink-0 flex items-center justify-center group"
     >
       <ScoreRingSvg

@@ -59,9 +59,21 @@ export const DEFAULT_RANKING_WEIGHTS: RankingWeights = {
   keywordDensity: 0.1,
 };
 
+/**
+ * Feature weights zeroed so prompt pre-rank is BM25+ term match only
+ * (no recency / pub-type / OA / density mix).
+ */
+export const LEXICAL_ONLY_RANKING_WEIGHTS: RankingWeights = {
+  meshOverlap: 0,
+  pubTypeBoost: 0,
+  recencyDecay: 0,
+  openAccess: 0,
+  keywordDensity: 0,
+};
+
 /** Scoring explanation for a ranked article. */
 export interface ScoringExplanation {
-  /** Base BM25/TF-IDF score (0-100). */
+  /** Uncalibrated BM25+ term contribution (not a 0–100 probability). */
   baseScore: number;
   /** MeSH overlap contribution. */
   meshOverlap: number;

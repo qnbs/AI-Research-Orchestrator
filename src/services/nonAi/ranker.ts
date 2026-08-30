@@ -1,6 +1,6 @@
 /**
  * Ranker for the Non-AI Programmatic Research Engine.
- * BM25/TF-IDF hybrid scoring with feature boosts and explanations.
+ * BM25+ / TF hybrid scoring with feature boosts and relative (min-max) ranks.
  */
 
 import type { RankedArticle } from '../../types';
@@ -11,7 +11,8 @@ import {
   bm25Score,
   recencyDecayFactor,
   isHighQualityPubType,
-  normalizeScore,
+  inverseDocumentFrequency,
+  relativeMinMaxScores,
 } from './utils';
 import { DEFAULT_RANKING_WEIGHTS } from './types';
 import { findMeshTermsInQuery } from './meshDictionary';
@@ -22,18 +23,22 @@ export interface RankedArticleWithExplanation extends RankedArticle {
 }
 
 /**
- * Rank articles using BM25/TF-IDF hybrid with feature boosts.
+ * Rank articles using BM25+ with feature boosts.
+ * `relevanceScore` is a relative 0–100 rank within this result set (min-max of
+ * the mixed raw score), not a calibrated probability.
  */
 export function rankArticles(
   articles: RankedArticle[],
   query: string,
   weights: Partial<RankingWeights> = {},
 ): RankedArticleWithExplanation[] {
+  if (articles.length === 0) return [];
+
   const finalWeights: RankingWeights = { ...DEFAULT_RANKING_WEIGHTS, ...weights };
   const queryTokens = tokenize(query, 'en');
   const queryMeshTerms = findMeshTermsInQuery(query);
 
-  // Calculate document frequencies for IDF (corpus-wide, not per-document)
+  // Document frequencies for IDF (corpus-wide, not per-document)
   const docLengths = articles.map((a) => tokenize(`${a.title} ${a.summary}`, 'en').length);
   const avgDocLength = docLengths.reduce((sum, len) => sum + len, 0) / articles.length || 150;
   const docFreq = new Map<string, number>();
@@ -49,12 +54,10 @@ export function rankArticles(
     docFreq.set(stemmed, df);
   }
 
-  // Calculate scores
   const scoredArticles = articles.map((article, index) => {
     const docTokens = tokenize(`${article.title} ${article.summary}`, 'en');
     const docLength = docLengths[index];
 
-    // BM25 score
     let bm25Total = 0;
     const termCounts = new Map<string, number>();
 
@@ -65,19 +68,17 @@ export function rankArticles(
     }
 
     for (const [term, count] of termCounts) {
-      const df = docFreq.get(term) ?? 1;
-      const idf = Math.log(articles.length / (1 + df));
+      const df = docFreq.get(term) ?? 0;
+      const idf = inverseDocumentFrequency(term, df, articles.length);
       bm25Total += bm25Score(count, docLength, avgDocLength, idf);
     }
 
-    // Feature scores
     const meshOverlap = calculateMeshOverlap(article, queryMeshTerms);
     const pubTypeBoost = isHighQualityPubType([article.articleType ?? '']) ? 1 : 0;
     const recency = recencyDecayFactor(article.pubYear);
     const oaBonus = article.isOpenAccess ? 1 : 0;
     const keywordDensity = calculateKeywordDensity(article, queryTokens);
 
-    // Combined score
     const rawScore =
       bm25Total * 0.4 +
       meshOverlap * finalWeights.meshOverlap * 100 +
@@ -87,25 +88,33 @@ export function rankArticles(
       keywordDensity * finalWeights.keywordDensity * 100;
 
     const explanation: ScoringExplanation = {
-      baseScore: bm25Total * 10,
+      baseScore: bm25Total,
       meshOverlap,
       pubTypeBoost,
       recencyDecay: recency,
       openAccess: oaBonus,
       keywordDensity,
-      explanation: buildExplanation(meshOverlap, pubTypeBoost, recency, oaBonus, keywordDensity),
+      explanation: `Relative rank in this result set. ${buildExplanation(meshOverlap, pubTypeBoost, recency, oaBonus, keywordDensity)}`,
     };
 
     return {
-      ...article,
-      relevanceScore: Math.round(normalizeScore(rawScore, 0, 100)),
-      relevanceExplanation: explanation.explanation,
-      scoringExplanation: explanation,
+      rankedArticle: {
+        ...article,
+        relevanceExplanation: explanation.explanation,
+        scoringExplanation: explanation,
+      } satisfies RankedArticleWithExplanation,
+      rawScore,
     };
   });
 
-  // Sort by score descending
-  return scoredArticles.sort((a, b) => (b.relevanceScore ?? 0) - (a.relevanceScore ?? 0));
+  const relativeScores = relativeMinMaxScores(scoredArticles.map((row) => row.rawScore));
+  const ranked = scoredArticles.map((row, index) => ({
+    ...row.rankedArticle,
+    relevanceScore: relativeScores[index],
+    relevanceScale: 'relative' as const,
+  }));
+
+  return ranked.sort((a, b) => (b.relevanceScore ?? 0) - (a.relevanceScore ?? 0));
 }
 
 /** Calculate MeSH overlap score. */

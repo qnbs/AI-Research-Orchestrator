@@ -74,7 +74,13 @@ export interface RankedArticle {
   retrievedAt?: number;
   /** Provenance class — required for scientific honesty on demo vs retrieved. */
   sourceClass?: ArticleSourceClass;
+  /** 0–100 display-scale rank used for ordering (relative within a result set in heuristic mode). */
   relevanceScore: number;
+  /**
+   * When `relative`, `relevanceScore` is min-max within the current heuristic result set.
+   * Omit for live-provider estimates (still 0–100, not a calibrated probability).
+   */
+  relevanceScale?: 'relative';
   relevanceExplanation: string;
   keywords: string[];
   isOpenAccess: boolean;

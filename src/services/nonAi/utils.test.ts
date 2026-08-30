@@ -11,6 +11,10 @@ import {
   splitSentences,
   stemmedTokens,
   cosineBag,
+  inverseDocumentFrequency,
+  bm25Score,
+  relativeMinMaxScores,
+  normalizeScore,
 } from './utils';
 
 describe('tokenize', () => {
@@ -128,5 +132,70 @@ describe('cosineBag', () => {
 
   it('returns 0 for an empty input', () => {
     expect(cosineBag([], ['a'])).toBe(0);
+  });
+});
+
+describe('inverseDocumentFrequency (Lucene BM25+)', () => {
+  it('matches golden Lucene BM25+ IDF values', () => {
+    // ln(1 + (N − df + 0.5) / (df + 0.5))
+    const n10df1 = Math.log(1 + (10 - 1 + 0.5) / (1 + 0.5));
+    const n10df10 = Math.log(1 + (10 - 10 + 0.5) / (10 + 0.5));
+    expect(inverseDocumentFrequency('term', 1, 10)).toBeCloseTo(n10df1, 10);
+    expect(inverseDocumentFrequency('term', 10, 10)).toBeCloseTo(n10df10, 10);
+    expect(n10df1).toBeCloseTo(1.9924301647, 5);
+    expect(n10df10).toBeCloseTo(0.0465200156, 5);
+  });
+
+  it('stays non-negative when a term appears in every document', () => {
+    const n = 5;
+    const previousFormula = Math.log(n / (1 + n));
+    expect(previousFormula).toBeLessThan(0);
+    expect(inverseDocumentFrequency('ubiquitous', n, n)).toBeGreaterThan(0);
+  });
+
+  it('decreases as document frequency increases', () => {
+    const rare = inverseDocumentFrequency('term', 1, 20);
+    const mid = inverseDocumentFrequency('term', 10, 20);
+    const common = inverseDocumentFrequency('term', 20, 20);
+    expect(rare).toBeGreaterThan(mid);
+    expect(mid).toBeGreaterThan(common);
+  });
+
+  it('returns 0 for an empty collection', () => {
+    expect(inverseDocumentFrequency('term', 0, 0)).toBe(0);
+  });
+
+  it('clamps df into [0, N]', () => {
+    expect(inverseDocumentFrequency('term', -3, 10)).toBe(inverseDocumentFrequency('term', 0, 10));
+    expect(inverseDocumentFrequency('term', 99, 10)).toBe(inverseDocumentFrequency('term', 10, 10));
+  });
+});
+
+describe('bm25Score golden Okapi TF × BM25+ IDF', () => {
+  it('matches a hand-computed Okapi TF with Lucene IDF', () => {
+    const idf = inverseDocumentFrequency('metformin', 1, 10);
+    const score = bm25Score(2, 100, 150, idf);
+    // k1=1.2, b=0.75: TF = 2*(1.2+1) / (2 + 1.2*(1-0.75+0.75*(100/150))) = 4.4/2.9
+    const tf = 4.4 / 2.9;
+    expect(score).toBeCloseTo(idf * tf, 10);
+    expect(score).toBeGreaterThan(0);
+  });
+});
+
+describe('relativeMinMaxScores', () => {
+  it('maps the observed min and max onto 0 and 100', () => {
+    expect(relativeMinMaxScores([10, 20, 30])).toEqual([0, 50, 100]);
+  });
+
+  it('maps a tied result set to 50 rather than claiming a calibrated 0–100', () => {
+    expect(relativeMinMaxScores([7, 7, 7])).toEqual([50, 50, 50]);
+  });
+
+  it('returns an empty array for an empty input', () => {
+    expect(relativeMinMaxScores([])).toEqual([]);
+  });
+
+  it('clamps via normalizeScore when min === max', () => {
+    expect(normalizeScore(12, 5, 5)).toBe(50);
   });
 });

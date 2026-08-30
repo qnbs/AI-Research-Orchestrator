@@ -78,13 +78,13 @@ Severity: P0 = stop-the-line · P1 = pre-release hardening · P2 = architecture/
 
 ### ISSUE-P1-HEURISTIC-002 — BM25 IDF and score semantics
 
-| Field      | Value                                                                 |
-| ---------- | --------------------------------------------------------------------- |
-| Severity   | P1                                                                    |
-| Impact     | Ranking may not match BM25 reference; 0–100 scores overclaimed        |
-| Evidence   | `src/services/nonAi/utils.ts` IDF; `ranker.ts` weighted normalization |
-| Acceptance | Golden fixtures; label scores as relative or calibrated bands         |
-| Status     | **Open** (2026-08-29).                                                |
+| Field      | Value                                                                                                                                                                                                                                                                                                                         |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Severity   | P1                                                                                                                                                                                                                                                                                                                            |
+| Impact     | Ranking may not match BM25 reference; 0–100 scores overclaimed                                                                                                                                                                                                                                                                |
+| Evidence   | `src/services/nonAi/utils.ts` IDF; `ranker.ts` weighted normalization                                                                                                                                                                                                                                                         |
+| Acceptance | Golden fixtures; label scores as relative or calibrated bands                                                                                                                                                                                                                                                                 |
+| Status     | **Resolved** (2026-08-30) — Lucene BM25+ IDF (`ln(1+(N−df+0.5)/(df+0.5))`, always ≥ 0) shared by `inverseDocumentFrequency` and the ranker; golden IDF/Okapi fixtures; `relevanceScore` is min-max relative rank within the result set; chat/Help/KB bands stop treating 0–100 as a calibrated probability or a 0–1 fraction. |
 
 ### ISSUE-P1-PROVIDER-001 — Shared provider conformance harness
 

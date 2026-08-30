@@ -67,6 +67,8 @@ describe('answerFromReport', () => {
   it('answers a PMID-specific question from ranked articles', () => {
     const answer = answerFromReport(makeReport(), 'Tell me about PMID 12345678');
     expect(answer).toContain('Aspirin for cardiovascular prevention');
+    expect(answer).toContain('relative score 90 (this result set)');
+    expect(answer).not.toMatch(/score 90\/100/);
   });
 
   it('reports an honest miss for an unknown PMID', () => {
@@ -82,6 +84,7 @@ describe('answerFromReport', () => {
   it('lists top ranked articles on request', () => {
     const answer = answerFromReport(makeReport(), 'List the top articles');
     expect(answer).toContain('Aspirin for cardiovascular prevention');
+    expect(answer).toContain('relative score 90 (this result set)');
   });
 
   it('returns the synthesis for a summary request', () => {
