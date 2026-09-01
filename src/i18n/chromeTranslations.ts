@@ -35,7 +35,8 @@ export const chromeTranslations = {
 
     'welcome.title': 'Start a New Literature Review',
     'welcome.body': 'Set your topic and sources above to run a literature search and synthesis.',
-    'welcome.footnote': 'Live mode queries PubMed and arXiv from this browser.',
+    'welcome.footnote':
+      'Live mode queries PubMed from this browser, and arXiv when that source is enabled.',
 
     'orchestrator.dashboard.empty.title': 'Start a New Literature Review',
     'orchestrator.dashboard.empty.body':
@@ -96,7 +97,8 @@ export const chromeTranslations = {
     'welcome.title': 'Neue Literaturübersicht starten',
     'welcome.body':
       'Legen Sie oben Thema und Quellen fest, um eine Literatursuche und Synthese zu starten.',
-    'welcome.footnote': 'Im Live-Modus fragt dieser Browser PubMed und arXiv ab.',
+    'welcome.footnote':
+      'Im Live-Modus fragt dieser Browser PubMed ab, und arXiv wenn diese Quelle aktiviert ist.',
 
     'orchestrator.dashboard.empty.title': 'Neue Literaturübersicht starten',
     'orchestrator.dashboard.empty.body':
