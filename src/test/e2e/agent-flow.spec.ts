@@ -534,6 +534,8 @@ test.describe('11. Partial report cancel-mid-stream', () => {
     const csvPath = await download.path();
     expect(csvPath).toBeTruthy();
     const csv = await readFile(csvPath!, 'utf8');
-    expect(csv).toMatch(/^"PARTIAL REPORT — RESEARCH DID NOT FINISH/);
+    const csvLines = csv.split(/\r?\n/);
+    expect(csvLines[0]).not.toMatch(/PARTIAL REPORT/);
+    expect(csvLines[1]).toMatch(/^"PARTIAL REPORT — RESEARCH DID NOT FINISH/);
   });
 });

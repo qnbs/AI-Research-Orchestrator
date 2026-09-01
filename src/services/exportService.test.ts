@@ -111,11 +111,11 @@ describe('export helpers', () => {
     });
     const blob = vi.mocked(URL.createObjectURL).mock.calls[0][0] as Blob;
     const csv = await blob.text();
-    expect(csv.startsWith('"PARTIAL REPORT — RESEARCH DID NOT FINISH')).toBe(true);
-    expect(csv).toContain('ReportTopic,Question,Answer,Supporting PMIDs');
+    expect(csv.startsWith('ReportTopic,Question,Answer,Supporting PMIDs\n')).toBe(true);
+    expect(csv).toContain('\n"PARTIAL REPORT — RESEARCH DID NOT FINISH');
   });
 
-  it('exportToCsv watermarks a partial report before the header row', async () => {
+  it('exportToCsv watermarks a partial report as the first data row after headers', async () => {
     const articles: AggregatedArticle[] = [
       {
         pmid: '1',
@@ -140,8 +140,11 @@ describe('export helpers', () => {
     );
     const blob = vi.mocked(URL.createObjectURL).mock.calls[0][0] as Blob;
     const csv = await blob.text();
-    expect(csv.startsWith('"PARTIAL REPORT — RESEARCH DID NOT FINISH')).toBe(true);
-    expect(csv).toContain('\npmid,title\n');
+    expect(csv.startsWith('pmid,title\n')).toBe(true);
+    expect(csv).toContain('\n"PARTIAL REPORT — RESEARCH DID NOT FINISH');
+    const watermarkLine = csv.split('\n')[1];
+    expect(watermarkLine.startsWith('"PARTIAL REPORT — RESEARCH DID NOT FINISH')).toBe(true);
+    expect(watermarkLine.endsWith(',')).toBe(true);
   });
 
   it('exportToCsv omits the watermark for a finished report', async () => {

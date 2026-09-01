@@ -21,15 +21,26 @@ export interface ExportProvenanceResult {
 }
 
 const DEMO_EXPORT_WATERMARK = 'SYNTHETIC EDUCATIONAL DEMO — NOT RETRIEVED LITERATURE.\n\n';
-/** Single-line partial watermark (CSV prefix + narrative body share this text). */
+/** Single-line partial watermark (CSV first data row + narrative body share this text). */
 export const PARTIAL_EXPORT_WATERMARK_LINE =
   'PARTIAL REPORT — RESEARCH DID NOT FINISH. Results are incomplete and have not been fully verified.';
 const PARTIAL_EXPORT_WATERMARK = `${PARTIAL_EXPORT_WATERMARK_LINE}\n\n`;
 
-/** Quoted first CSV row so spreadsheet exports of a cancelled run are not silent. */
-export function csvPartialProvenancePrefix(partial: boolean): string {
+/**
+ * First *data* row after headers for a cancelled run.
+ * Spreadsheet importers keep the configured header schema; the watermark is
+ * still the first visible cell. Pads empty fields so the row matches `columnCount`.
+ */
+export function csvPartialProvenanceRow(
+  partial: boolean,
+  columnCount: number,
+  delimiter = ',',
+): string {
   if (!partial) return '';
-  return `"${PARTIAL_EXPORT_WATERMARK_LINE.replace(/"/g, '""')}"\n`;
+  const count = Math.max(1, columnCount);
+  const quoted = `"${PARTIAL_EXPORT_WATERMARK_LINE.replace(/"/g, '""')}"`;
+  if (count === 1) return quoted;
+  return [quoted, ...Array.from({ length: count - 1 }, () => '')].join(delimiter);
 }
 
 /** Strip either export watermark from the start, in any order, so re-export is idempotent. */

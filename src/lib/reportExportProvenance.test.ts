@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { sanitizeReportForExport, csvPartialProvenancePrefix } from './reportExportProvenance';
+import { sanitizeReportForExport, csvPartialProvenanceRow } from './reportExportProvenance';
 import type { ResearchReport } from '../types';
 
 const baseReport = (): ResearchReport => ({
@@ -210,15 +210,20 @@ describe('sanitizeReportForExport', () => {
   });
 });
 
-describe('csvPartialProvenancePrefix', () => {
-  it('returns an empty prefix for finished reports', () => {
-    expect(csvPartialProvenancePrefix(false)).toBe('');
+describe('csvPartialProvenanceRow', () => {
+  it('returns an empty row for finished reports', () => {
+    expect(csvPartialProvenanceRow(false, 4)).toBe('');
   });
 
-  it('quotes the canonical partial watermark as a CSV first row', () => {
-    const prefix = csvPartialProvenancePrefix(true);
-    expect(prefix.startsWith('"PARTIAL REPORT — RESEARCH DID NOT FINISH')).toBe(true);
-    expect(prefix.endsWith('"\n')).toBe(true);
-    expect(prefix).not.toContain('\n\n');
+  it('quotes the canonical partial watermark and pads to the header width', () => {
+    const row = csvPartialProvenanceRow(true, 3, ',');
+    expect(row.startsWith('"PARTIAL REPORT — RESEARCH DID NOT FINISH')).toBe(true);
+    expect(row.endsWith(',,')).toBe(true);
+    expect(row.split(',').length).toBeGreaterThanOrEqual(3);
+    expect(row).not.toContain('\n');
+  });
+
+  it('uses the caller delimiter when padding empty fields', () => {
+    expect(csvPartialProvenanceRow(true, 2, ';')).toMatch(/";$/);
   });
 });
