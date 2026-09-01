@@ -157,7 +157,5 @@ Consolidation PR: this branch (`cursor/chore-dependabot-2026-08-31-7093`). Base:
 | #282 | `@eslint/js` 9.39.4 → 9.39.5                       | Patch (dev)     | **Included** (`^9.39.5`).                                                                            | Superseded here |
 | #283 | rollup-plugin-visualizer 7.0.1 → 7.1.1             | Minor (dev)     | **Included** (`^7.1.1`). Analyze-only.                                                               | Superseded here |
 | #284 | lucide-react 1.24.0 → 1.35.0                       | Minor           | **Skipped bump. Removed** unused package + `vite.config.ts` `manualChunks` entry. No `src/` imports. | Superseded here |
-| #255 | anthropics/claude-code-action 1.0.183 → 1.0.206    | Patch (Actions) | **Included** SHA `1f291e1` in `claude.yml`                                                           | Closed via #263 |
-| #256 | codeql-action/analyze 4.37.4 → 4.37.9              | Patch (Actions) | **Included** as a unit with #257/#258 (SHA `cdf488f`)                                                | Closed via #263 |
-| #257 | codeql-action/init 4.37.4 → 4.37.9                 | Patch (Actions) | **Included** as a unit with #256/#258                                                                | Closed via #263 |
-| #258 | codeql-action/autobuild 4.37.4 → 4.37.9            | Patch (Actions) | **Included** as a unit with #256/#257                                                                | Closed via #263 |
+
+August 29 Actions rows (#255–#258) remain in the 2026-08-29 table only (closed via #263). They are not part of this wave.
