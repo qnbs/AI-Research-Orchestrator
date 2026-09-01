@@ -4,6 +4,7 @@
  * Covers: Bootstrap, Navigation, Orchestrator Form, Mocked Pipeline,
  *         Knowledge Base, Command Palette, Settings, Mobile UX, Accessibility.
  */
+import { readFile } from 'node:fs/promises';
 import { test, expect } from '@playwright/test';
 import {
   navigateToView,
@@ -11,11 +12,17 @@ import {
   openHelpFromChrome,
   openSettingsFromChrome,
   prepareFirstLaunchDemoKb,
+  seedFakeGeminiApiKey,
   skipOnboarding,
   waitForKbArticleCount,
   DEMO_KB_UNIQUE_ARTICLE_COUNT,
 } from './e2eHelpers';
-import { mockAgentPipelineApis, mockGeminiUnavailable } from './fixtures/networkMocks';
+import {
+  mockAgentPipelineApis,
+  mockGeminiHangingSynthesis,
+  mockGeminiUnavailable,
+  mockPubMedRoutes,
+} from './fixtures/networkMocks';
 
 const FAKE_API_KEY = 'AIzaFAKEKEY000000000000000000000000001';
 
@@ -473,5 +480,60 @@ test.describe('10. Heuristic inference (no API key)', () => {
         .getByText(/heuristic mode|streaming synthesis|finalizing|background|ranked|relevance/i)
         .first(),
     ).toBeVisible({ timeout: 45_000 });
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 11. PARTIAL REPORT (CANCEL MID-STREAM)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+test.describe('11. Partial report cancel-mid-stream', () => {
+  test('cancel during hanging synthesis stamps partial banner, disables chat, watermarks CSV', async ({
+    page,
+  }) => {
+    test.setTimeout(90_000);
+    await mockPubMedRoutes(page);
+    await mockGeminiHangingSynthesis(page);
+    await skipOnboarding(page);
+    await seedFakeGeminiApiKey(page);
+    await navigateToView(page, '#orchestrator');
+
+    const input = page.locator('#researchTopic');
+    await input.waitFor({ state: 'visible', timeout: 20_000 });
+    await input.fill('COVID cognition');
+    await page.locator('button[type="submit"]').first().click();
+
+    await expect(
+      page.getByRole('button', { name: /Cancel research|Recherche abbrechen/i }),
+    ).toBeVisible({ timeout: 20_000 });
+
+    await expect(
+      page.getByRole('heading', { name: /Research Report|Forschungsbericht/i }),
+    ).toBeVisible({ timeout: 45_000 });
+
+    await page.getByRole('button', { name: /Cancel research|Recherche abbrechen/i }).click();
+
+    await expect(
+      page.getByRole('status').filter({ hasText: /PARTIAL REPORT|TEILBERICHT/ }),
+    ).toBeVisible({ timeout: 15_000 });
+
+    await page
+      .getByRole('button', { name: /Chat with this Report|Mit diesem Bericht chatten/i })
+      .click();
+    await expect(
+      page.getByText(
+        /Chat is unavailable for a partial report|Chat ist für einen Teilbericht nicht verfügbar/i,
+      ),
+    ).toBeVisible({ timeout: 10_000 });
+
+    await page.getByRole('button', { name: /^Export(ieren)?$/i }).click();
+    await page.getByRole('button', { name: /^CSV$/i }).click();
+    const downloadPromise = page.waitForEvent('download');
+    await page.getByRole('button', { name: /Yes, Export|Ja, exportieren/i }).click();
+    const download = await downloadPromise;
+    const csvPath = await download.path();
+    expect(csvPath).toBeTruthy();
+    const csv = await readFile(csvPath!, 'utf8');
+    expect(csv).toMatch(/^"PARTIAL REPORT — RESEARCH DID NOT FINISH/);
   });
 });

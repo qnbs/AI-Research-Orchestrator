@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { sanitizeReportForExport } from './reportExportProvenance';
+import { sanitizeReportForExport, csvPartialProvenancePrefix } from './reportExportProvenance';
 import type { ResearchReport } from '../types';
 
 const baseReport = (): ResearchReport => ({
@@ -207,5 +207,18 @@ describe('sanitizeReportForExport', () => {
     expect(result.report.corpusClass).toBe('mixed-retrieved');
     expect(result.report.retrievalOutcome).toBe('ok');
     expect(result.report.synthesis).toMatch(/SYNTHETIC EDUCATIONAL DEMO/);
+  });
+});
+
+describe('csvPartialProvenancePrefix', () => {
+  it('returns an empty prefix for finished reports', () => {
+    expect(csvPartialProvenancePrefix(false)).toBe('');
+  });
+
+  it('quotes the canonical partial watermark as a CSV first row', () => {
+    const prefix = csvPartialProvenancePrefix(true);
+    expect(prefix.startsWith('"PARTIAL REPORT — RESEARCH DID NOT FINISH')).toBe(true);
+    expect(prefix.endsWith('"\n')).toBe(true);
+    expect(prefix).not.toContain('\n\n');
   });
 });

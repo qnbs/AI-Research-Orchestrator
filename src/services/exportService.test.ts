@@ -105,6 +105,69 @@ describe('export helpers', () => {
     expect(anchorMocks[0].click).toHaveBeenCalled();
   });
 
+  it('exportInsightsToCsv watermarks a partial report', async () => {
+    exportInsightsToCsv([{ question: 'Q', answer: 'A', supportingArticles: ['1'] }], 'topic', {
+      partial: true,
+    });
+    const blob = vi.mocked(URL.createObjectURL).mock.calls[0][0] as Blob;
+    const csv = await blob.text();
+    expect(csv.startsWith('"PARTIAL REPORT — RESEARCH DID NOT FINISH')).toBe(true);
+    expect(csv).toContain('ReportTopic,Question,Answer,Supporting PMIDs');
+  });
+
+  it('exportToCsv watermarks a partial report before the header row', async () => {
+    const articles: AggregatedArticle[] = [
+      {
+        pmid: '1',
+        title: 'T',
+        authors: 'A',
+        journal: 'J',
+        pubYear: '2020',
+        summary: 'S',
+        relevanceScore: 1,
+        relevanceExplanation: '',
+        keywords: ['k'],
+        isOpenAccess: true,
+        sourceTitle: 'src',
+        sourceId: 'sid',
+      },
+    ];
+    exportToCsv(
+      articles,
+      'topic',
+      { columns: ['pmid', 'title'], delimiter: ',' },
+      { partial: true },
+    );
+    const blob = vi.mocked(URL.createObjectURL).mock.calls[0][0] as Blob;
+    const csv = await blob.text();
+    expect(csv.startsWith('"PARTIAL REPORT — RESEARCH DID NOT FINISH')).toBe(true);
+    expect(csv).toContain('\npmid,title\n');
+  });
+
+  it('exportToCsv omits the watermark for a finished report', async () => {
+    const articles: AggregatedArticle[] = [
+      {
+        pmid: '1',
+        title: 'T',
+        authors: 'A',
+        journal: 'J',
+        pubYear: '2020',
+        summary: 'S',
+        relevanceScore: 1,
+        relevanceExplanation: '',
+        keywords: ['k'],
+        isOpenAccess: true,
+        sourceTitle: 'src',
+        sourceId: 'sid',
+      },
+    ];
+    exportToCsv(articles, 'topic', { columns: ['pmid', 'title'], delimiter: ',' });
+    const blob = vi.mocked(URL.createObjectURL).mock.calls[0][0] as Blob;
+    const csv = await blob.text();
+    expect(csv.startsWith('pmid,title')).toBe(true);
+    expect(csv).not.toContain('PARTIAL REPORT');
+  });
+
   it('exportHistoryToJson includes build release meta in wrapper', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-08-02T12:00:00.000Z'));

@@ -21,8 +21,16 @@ export interface ExportProvenanceResult {
 }
 
 const DEMO_EXPORT_WATERMARK = 'SYNTHETIC EDUCATIONAL DEMO — NOT RETRIEVED LITERATURE.\n\n';
-const PARTIAL_EXPORT_WATERMARK =
-  'PARTIAL REPORT — RESEARCH DID NOT FINISH. Results are incomplete and have not been fully verified.\n\n';
+/** Single-line partial watermark (CSV prefix + narrative body share this text). */
+export const PARTIAL_EXPORT_WATERMARK_LINE =
+  'PARTIAL REPORT — RESEARCH DID NOT FINISH. Results are incomplete and have not been fully verified.';
+const PARTIAL_EXPORT_WATERMARK = `${PARTIAL_EXPORT_WATERMARK_LINE}\n\n`;
+
+/** Quoted first CSV row so spreadsheet exports of a cancelled run are not silent. */
+export function csvPartialProvenancePrefix(partial: boolean): string {
+  if (!partial) return '';
+  return `"${PARTIAL_EXPORT_WATERMARK_LINE.replace(/"/g, '""')}"\n`;
+}
 
 /** Strip either export watermark from the start, in any order, so re-export is idempotent. */
 function stripLeadingExportWatermarks(synthesis: string): string {

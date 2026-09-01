@@ -9,7 +9,7 @@ import {
   type CsvExportColumn,
   KnowledgeBaseEntry,
 } from '../types';
-import { sanitizeReportForExport } from '../lib/reportExportProvenance';
+import { csvPartialProvenancePrefix, sanitizeReportForExport } from '../lib/reportExportProvenance';
 import {
   articleExternalUrl,
   canonicalArticleKey,
@@ -471,6 +471,7 @@ export const exportToCsv = (
   articlesToExport: AggregatedArticle[],
   topic: string,
   settings: Settings['export']['csv'],
+  options?: { partial?: boolean },
 ): void => {
   const escapeCsvField = (field: unknown): string => {
     if (field === null || field === undefined) return '';
@@ -510,7 +511,7 @@ export const exportToCsv = (
     return headers.map((header) => escapeCsvField(rowData[header])).join(settings.delimiter);
   });
 
-  const csvContent = [headers.join(settings.delimiter), ...rows].join('\n');
+  const csvContent = `${csvPartialProvenancePrefix(Boolean(options?.partial))}${[headers.join(settings.delimiter), ...rows].join('\n')}`;
   downloadUtf8File(
     csvContent,
     `report_export_${topic.substring(0, 20).replace(/\s/g, '_')}.csv`,
@@ -521,6 +522,7 @@ export const exportToCsv = (
 export const exportInsightsToCsv = (
   insights: ResearchReport['aiGeneratedInsights'],
   topic: string,
+  options?: { partial?: boolean },
 ): void => {
   const escapeCsvField = (field: unknown): string => {
     if (field === null || field === undefined) return '';
@@ -538,7 +540,7 @@ export const exportInsightsToCsv = (
       .join(','),
   );
 
-  const csvContent = [headers.join(','), ...rows].join('\n');
+  const csvContent = `${csvPartialProvenancePrefix(Boolean(options?.partial))}${[headers.join(','), ...rows].join('\n')}`;
   downloadUtf8File(
     csvContent,
     `ai_insights_${topic.substring(0, 20).replace(/\s/g, '_')}.csv`,

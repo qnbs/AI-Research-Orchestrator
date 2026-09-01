@@ -211,12 +211,16 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(function R
         sourceTitle: input.researchTopic,
         sourceId: `current-report-${a.pmid}`,
       }));
-      exportToCsv(aggregatedArticles, input.researchTopic, settings.export.csv);
+      exportToCsv(aggregatedArticles, input.researchTopic, settings.export.csv, {
+        partial: report.completionStatus === 'partial',
+      });
     });
 
   const handleInsightsExport = () =>
     runExport('Insights CSV Export failed', () =>
-      exportInsightsToCsv(report.aiGeneratedInsights, input.researchTopic),
+      exportInsightsToCsv(report.aiGeneratedInsights, input.researchTopic, {
+        partial: report.completionStatus === 'partial',
+      }),
     );
 
   // Cancelled run, not a completed one — the success path's finalization
