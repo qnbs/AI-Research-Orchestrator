@@ -172,6 +172,16 @@ async function checkProjectFacts(errors, facts) {
     }
   }
 
+  const productCopyPaths = facts.productCopyPaths ?? [];
+  for (const file of productCopyPaths) {
+    const text = await read(file);
+    for (const phrase of facts.forbiddenProductCopyPhrases ?? []) {
+      if (text.includes(phrase)) {
+        errors.push(`${file} contains forbidden overstated claim: "${phrase}"`);
+      }
+    }
+  }
+
   if (facts.e2e?.mainWorkflowPath) {
     const e2eYaml = await read(facts.e2e.mainWorkflowPath);
     const listed = extractE2eSpecPathsFromWorkflow(e2eYaml);

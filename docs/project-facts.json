@@ -127,5 +127,25 @@
   ],
   "forbiddenAgentsPhrases": [
     "That job is `continue-on-error: true`, so its green badge alone doesn't prove 0 failures"
+  ],
+  "productCopyPaths": [
+    "src/i18n/translations.ts",
+    "src/i18n/chromeTranslations.ts",
+    "src/i18n/inputFormTranslations.ts",
+    "src/i18n/helpTranslations.ts",
+    "metadata.json"
+  ],
+  "forbiddenProductCopyPhrases": [
+    "Future of Research",
+    "AI agents conduct",
+    "the AI agents conduct",
+    "Configure the AI agents",
+    "Define the scope for the AI agents",
+    "This helps the AI agents focus",
+    "swarm of specialized",
+    "Zukunft der Recherche",
+    "KI-Agenten führen",
+    "Legen Sie den Umfang für die KI-Agenten fest",
+    "Das hilft den KI-Agenten"
   ]
 }

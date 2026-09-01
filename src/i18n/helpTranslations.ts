@@ -40,7 +40,7 @@ export const helpTranslations = {
     'help.guide.orchestrator.topic.middle': ', try',
     'help.guide.orchestrator.topic.good':
       'the effects of caffeine on sleep quality in young adults',
-    'help.guide.orchestrator.topic.end': '. This helps the AI agents focus their search.',
+    'help.guide.orchestrator.topic.end': '. This helps the pipeline focus the search.',
     'help.guide.orchestrator.date.label': 'Publication Date:',
     'help.guide.orchestrator.date.desc': 'Choose a timeframe relevant to your topic.',
     'help.guide.orchestrator.types.label': 'Article Types:',
@@ -53,7 +53,7 @@ export const helpTranslations = {
     'help.guide.orchestrator.focus.label': 'Synthesis Focus:',
     'help.guide.orchestrator.focus.desc':
       'This tells the AI what angle to take when summarizing the findings. Are you interested in a general overview, or specifically looking for gaps in the research?',
-    'help.guide.orchestrator.config.label': 'AI Agent Configuration:',
+    'help.guide.orchestrator.config.label': 'Pipeline configuration:',
     'help.guide.orchestrator.config.desc':
       'The sliders control the scope. "Max Articles to Scan" is the initial pool of papers the AI will consider. "Top Articles to Synthesize" is the number of highest-ranked papers that will be used for the detailed report.',
     'help.guide.orchestrator.tip.start': 'Use boolean operators',
@@ -277,7 +277,7 @@ export const helpTranslations = {
     'help.guide.orchestrator.topic.middle': ', versuchen Sie',
     'help.guide.orchestrator.topic.good':
       'die Effekte von Koffein auf die Schlafqualität bei jungen Erwachsenen',
-    'help.guide.orchestrator.topic.end': '. Das hilft den KI-Agenten, ihre Suche zu fokussieren.',
+    'help.guide.orchestrator.topic.end': '. Das hilft der Pipeline, die Suche zu fokussieren.',
     'help.guide.orchestrator.date.label': 'Publikationsdatum:',
     'help.guide.orchestrator.date.desc': 'Wählen Sie einen Zeitraum, der zu Ihrem Thema passt.',
     'help.guide.orchestrator.types.label': 'Artikeltypen:',
@@ -291,7 +291,7 @@ export const helpTranslations = {
     'help.guide.orchestrator.focus.label': 'Synthesefokus:',
     'help.guide.orchestrator.focus.desc':
       'Dies gibt der KI vor, welchen Blickwinkel sie beim Zusammenfassen der Ergebnisse einnehmen soll. Interessieren Sie sich für einen allgemeinen Überblick oder suchen Sie gezielt nach Forschungslücken?',
-    'help.guide.orchestrator.config.label': 'KI-Agenten-Konfiguration:',
+    'help.guide.orchestrator.config.label': 'Pipeline-Konfiguration:',
     'help.guide.orchestrator.config.desc':
       'Die Regler steuern den Umfang. "Max. zu scannende Artikel" ist der anfängliche Pool von Papers, den die KI berücksichtigt. "Top-Artikel für die Synthese" ist die Anzahl der höchstbewerteten Papers, die für den Detailbericht verwendet werden.',
     'help.guide.orchestrator.tip.start': 'Verwenden Sie boolesche Operatoren',

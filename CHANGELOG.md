@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Onboarding product-truth (`NOW-P1-LIVE-COPY`):** Welcome highlight is `AI Research Orchestrator` (not “Future of Research”). Step copy describes the client-only pipeline (PubMed/arXiv → rank → cited synthesis) and live vs heuristic inference. Empty-state / Help / input-form strings no longer claim that “AI agents conduct” the review. Privacy footer unchanged. `metadata.json` drops “swarm of specialized AI agents”. `check:docs-drift` gates those phrases in product-copy files.
 - **Audit docs truth (2026-09-01):** `docs/audits/2026-09-01-baseline.md` pins live `main` at `8a76bda` (`v0.4.2`). The 2026-08-03 backlog header no longer lists landed P0/P1s as Open. `ISSUE-P1-CI-001` is **Resolved** (CODEOWNERS #265). Execution prompt is `docs/prompts/2026-09-01-cursor-grok-audit-remediation-master-prompt.md`. Unmerged docs PR #273 is folded here.
 - **Dependabot wave 2 (2026-08-31, `NOW-P1-DEP-WAVE-2`):** Same-major/patch npm bumps (`dexie` 4.4.5, `typescript-eslint` ^8.68, `sharp` 0.35.4, `@axe-core/playwright` 4.13.0, `@vitejs/plugin-react` 6.1.1, `@eslint/js` 9.39.5, `rollup-plugin-visualizer` 7.1.1) plus `jsdom` 30 / `@types/jsdom` 30 (dev-only major, unit tests green) and `anthropics/claude-code-action` 1.0.210 (commit SHA `a874e9e`). Unused `lucide-react` **removed** instead of bumping #284. TypeScript 6 (#274) deferred.
 

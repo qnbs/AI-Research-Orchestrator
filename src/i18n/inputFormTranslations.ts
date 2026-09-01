@@ -1,7 +1,7 @@
 export const inputFormTranslations = {
   en: {
     'inputForm.header.title': 'Research Parameters',
-    'inputForm.header.subtitle': 'Define the scope for the AI agents.',
+    'inputForm.header.subtitle': 'Define the scope of this literature search.',
     'inputForm.topic.label': 'Primary Research Topic or Question',
     'inputForm.topic.placeholder':
       'e.g., What are the long-term neurocognitive effects of COVID-19?',
@@ -35,7 +35,7 @@ export const inputFormTranslations = {
   },
   de: {
     'inputForm.header.title': 'Rechercheparameter',
-    'inputForm.header.subtitle': 'Legen Sie den Umfang für die KI-Agenten fest.',
+    'inputForm.header.subtitle': 'Legen Sie den Umfang dieser Literatursuche fest.',
     'inputForm.topic.label': 'Primäres Forschungsthema oder Frage',
     'inputForm.topic.placeholder':
       'z. B. Welche langfristigen neurokognitiven Auswirkungen hat COVID-19?',
