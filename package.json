@@ -71,7 +71,7 @@
     "dompurify": "^3.4.12",
     "framer-motion": "^12.38.0",
     "jspdf": "^4.2.0",
-    "lucide-react": "^1.14.0",
+    "lucide-react": "^1.37.0",
     "marked": "^18.0.11",
     "openai": "^7.2.0",
     "react": "^19.2.8",
