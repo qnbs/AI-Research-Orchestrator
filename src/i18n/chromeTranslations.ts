@@ -102,7 +102,7 @@ export const chromeTranslations = {
 
     'orchestrator.dashboard.empty.title': 'Neue Literaturübersicht starten',
     'orchestrator.dashboard.empty.body':
-      'Legen Sie oben Ihre Rechercheparameter fest. Die Pipeline holt PubMed- (und optional arXiv-) Treffer, bewertet sie und streamt eine zitierte Synthese.',
+      'Legen Sie oben Ihre Rechercheparameter fest. Die Pipeline holt immer PubMed-Treffer, optional arXiv, bewertet sie und streamt eine zitierte Synthese.',
     'orchestrator.dashboard.recent': 'Letzte Aktivität',
     'orchestrator.dashboard.report_from': 'Bericht vom {date}',
     'orchestrator.dashboard.articles': '{count} Artikel',

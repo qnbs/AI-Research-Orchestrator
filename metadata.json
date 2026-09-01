@@ -1,5 +1,5 @@
 {
   "name": "AI Research Orchestrator",
-  "description": "Client-only PWA for biomedical literature reviews: PubMed and arXiv retrieval, ranking, and cited synthesis via a chosen AI provider or a built-in heuristic engine.",
+  "description": "Client-only PWA for biomedical literature reviews: PubMed retrieval, optional arXiv retrieval, ranking, and cited synthesis via a chosen AI provider or a built-in heuristic engine.",
   "requestFramePermissions": []
 }
