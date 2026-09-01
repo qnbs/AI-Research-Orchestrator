@@ -142,20 +142,20 @@ Consolidation PR: [#263](https://github.com/qnbs/AI-Research-Orchestrator/pull/2
 
 ## 2026-08-31 consolidation (rule 012)
 
-Consolidation PR: this branch (`cursor/chore-dependabot-2026-08-31-7093`). Base: `main` after #271 plus the 2026-09-01 baseline / `browserslist@4.28.8` pin (#285). **Skip** TypeScript 6 (#274) — dedicated major. **Remove** unused `lucide-react` instead of bumping #284.
+Consolidation PR: #286 (`cursor/chore-dependabot-2026-08-31-7093`), squash-merged. TypeScript 6 (#274) is this dedicated PR (`cursor/chore-typescript-6-7093`). **Remove** unused `lucide-react` instead of bumping #284 (landed in #286).
 
-| PR   | Change                                             | SemVer          | Disposition                                                                                          | Status          |
-| ---- | -------------------------------------------------- | --------------- | ---------------------------------------------------------------------------------------------------- | --------------- |
-| #274 | typescript 5.8.3 → 6.0.3                           | Major (dev)     | **Deferred** — language-major; dedicated ADR + PR after `typecheck` and full CI.                     | Open (deferred) |
-| #275 | dexie 4.4.4 → 4.4.5                                | Patch           | **Included** (`^4.4.5`). `databaseService.upgrade.test.ts` 3/3 green.                                | Superseded here |
-| #276 | typescript-eslint 8.65.0 → 8.68.0                  | Minor (dev)     | **Included** (`^8.68.0`; lockfile resolved **8.69.0**). Lint zero-warning.                           | Superseded here |
-| #277 | sharp 0.35.3 → 0.35.4                              | Patch (dev)     | **Included** (`^0.35.4`). Icons path still works (`pnpm run build`).                                 | Superseded here |
-| #278 | `@axe-core/playwright` 4.12.1 → 4.13.0             | Minor (dev)     | **Included** (`^4.13.0`). Watch a11y CI.                                                             | Superseded here |
-| #279 | anthropics/claude-code-action 1.0.206 → 1.0.210    | Patch (Actions) | **Included** commit SHA `a874e9e` (v1.0.210 tag peeled to commit, not the annotated-tag object).     | Superseded here |
-| #280 | jsdom 29.1.1 → 30.0.1 + `@types/jsdom` 28.0.3 → 30 | Major (dev)     | **Included** after `pnpm run test:run` 125/125. Dev-only test DOM.                                   | Superseded here |
-| #281 | `@vitejs/plugin-react` 6.0.3 → 6.1.1               | Minor (dev)     | **Included** (`^6.1.1`). Build + CSP hash patch + bundle budget green.                               | Superseded here |
-| #282 | `@eslint/js` 9.39.4 → 9.39.5                       | Patch (dev)     | **Included** (`^9.39.5`).                                                                            | Superseded here |
-| #283 | rollup-plugin-visualizer 7.0.1 → 7.1.1             | Minor (dev)     | **Included** (`^7.1.1`). Analyze-only.                                                               | Superseded here |
-| #284 | lucide-react 1.24.0 → 1.35.0                       | Minor           | **Skipped bump. Removed** unused package + `vite.config.ts` `manualChunks` entry. No `src/` imports. | Superseded here |
+| PR   | Change                                             | SemVer          | Disposition                                                                                                                                                   | Status          |
+| ---- | -------------------------------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- |
+| #274 | typescript 5.8.3 → 6.0.3                           | Major (dev)     | **Included** here. `tsc --noEmit` + ESLint zero-warning on 6.0.3. Workspace peer pin `6.0.3`. No compiler-option ADR (`strict` already on). Not TypeScript 7. | This PR         |
+| #275 | dexie 4.4.4 → 4.4.5                                | Patch           | **Included** (`^4.4.5`). `databaseService.upgrade.test.ts` 3/3 green.                                                                                         | Closed via #286 |
+| #276 | typescript-eslint 8.65.0 → 8.68.0                  | Minor (dev)     | **Included** (`^8.68.0`; lockfile resolved **8.69.0**). Lint zero-warning.                                                                                    | Closed via #286 |
+| #277 | sharp 0.35.3 → 0.35.4                              | Patch (dev)     | **Included** (`^0.35.4`). Icons path still works (`pnpm run build`).                                                                                          | Closed via #286 |
+| #278 | `@axe-core/playwright` 4.12.1 → 4.13.0             | Minor (dev)     | **Included** (`^4.13.0`). Watch a11y CI.                                                                                                                      | Closed via #286 |
+| #279 | anthropics/claude-code-action 1.0.206 → 1.0.210    | Patch (Actions) | **Included** commit SHA `a874e9e` (v1.0.210 tag peeled to commit, not the annotated-tag object).                                                              | Closed via #286 |
+| #280 | jsdom 29.1.1 → 30.0.1 + `@types/jsdom` 28.0.3 → 30 | Major (dev)     | **Included** after `pnpm run test:run` 125/125. Dev-only test DOM.                                                                                            | Closed via #286 |
+| #281 | `@vitejs/plugin-react` 6.0.3 → 6.1.1               | Minor (dev)     | **Included** (`^6.1.1`). Build + CSP hash patch + bundle budget green.                                                                                        | Closed via #286 |
+| #282 | `@eslint/js` 9.39.4 → 9.39.5                       | Patch (dev)     | **Included** (`^9.39.5`).                                                                                                                                     | Closed via #286 |
+| #283 | rollup-plugin-visualizer 7.0.1 → 7.1.1             | Minor (dev)     | **Included** (`^7.1.1`). Analyze-only.                                                                                                                        | Closed via #286 |
+| #284 | lucide-react 1.24.0 → 1.35.0                       | Minor           | **Skipped bump. Removed** unused package + `vite.config.ts` `manualChunks` entry. No `src/` imports.                                                          | Closed via #286 |
 
 August 29 Actions rows (#255–#258) remain in the 2026-08-29 table only (closed via #263). They are not part of this wave.
