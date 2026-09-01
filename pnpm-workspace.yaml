@@ -78,6 +78,11 @@ overrides:
   # GHSA-2v37-7h3g-55p8: custom generators can loop indefinitely when size is
   # zero. Transitive via postcss (Tailwind / Vite / Vitest).
   nanoid: 3.3.18
+  # GHSA-c83g-rgw3-j3cx (unbounded memory via distinct query results) +
+  # GHSA-73wf-gq98-2v4g (prototype write via untrusted browserslist-stats.json).
+  # Transitive via autoprefixer and eslint-plugin-react-hooks → @babel/core.
+  # Patched releases start at 4.28.7; pin current patched 4.28.8 (2026-08-08).
+  browserslist: 4.28.8
 
 # extract-zip (GHSA-jmr9-qjv8-65gv / CVE-2026-56876): npm has no patched
 # release (latest still 2.0.1; the advisory's ">=2.0.2" pin does not exist).
