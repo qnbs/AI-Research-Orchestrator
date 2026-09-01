@@ -190,11 +190,11 @@ Live queue. Evidence: `docs/audits/2026-09-01-baseline.md`.
 | `NOW-P0-AUDIT-DRIFT`         | P0  | **This PR** | August docs listed landed P0/P1s as Open. Closed by the 2026-09-01 baseline + this header.       |
 | `NOW-P0-AUDIT-BROWSERSLIST`  | P0  | **This PR** | Pin `browserslist@4.28.8` for CVE-2026-73088 / CVE-2026-73089 (floor 4.28.7). Not a GHSA ignore. |
 | `NOW-P0-PARTIAL-E2E`         | P0  | **Open**    | Unit/hook coverage exists; no Playwright cancel-mid-stream spec.                                 |
-| `NOW-P1-DEP-WAVE-2`          | P1  | **Open**    | Dependabot #274–#284. Skip TS 6; skip/remove unused `lucide-react`.                              |
+| `NOW-P1-DEP-WAVE-2`          | P1  | **This PR** | Dependabot #275–#283 included; #274 TS 6 deferred; #284 lucide removed unused.                   |
 | `NOW-P1-PARTIAL-EXPORT-GAPS` | P1  | **Open**    | CSV/insights exports are not watermarked for `'partial'` (narrative paths are).                  |
 | `NOW-P1-LIVE-COPY`           | P1  | **Open**    | Onboarding still says “Future of Research” / “AI agents conduct”.                                |
 | `NOW-P2-OPENROUTER`          | P2  | **Open**    | ADR 0010 still Proposed (2026-07-21). Accept, reject, or dated deferral.                         |
-| `NOW-P2-LUCIDE`              | P2  | **Open**    | `lucide-react` unused in `src/`. Prefer remove over bumping #284.                                |
+| `NOW-P2-LUCIDE`              | P2  | **This PR** | Unused `lucide-react` removed rather than bumped.                                                |
 
 ---
 

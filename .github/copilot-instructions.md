@@ -22,7 +22,7 @@ You are an expert React 19 + TypeScript engineer working on **AI Research Orches
 | AI                | `@google/genai`, `openai`, `@anthropic-ai/sdk`, Ollama `fetch`, **heuristic** | Lazy-loaded via `getProviderForSettings()`; default live model `gemini-2.5-flash` |
 | Styling           | Tailwind CSS v4 (`@tailwindcss/postcss`)                                      | Cybernetic glassmorphism                                                          |
 | Charts            | **Recharts only** (ADR 0005)                                                  | Do not re-add Chart.js                                                            |
-| UI extras         | Framer Motion 12, lucide-react, cmdk, `@tanstack/react-virtual`               |                                                                                   |
+| UI extras         | Framer Motion 12, cmdk, `@tanstack/react-virtual`                             | Custom icons; unused `lucide-react` removed                                       |
 | Export / sanitize | jsPDF + marked, DOMPurify                                                     |                                                                                   |
 | Tests             | Vitest + Testing Library; Playwright                                          | Blocking Chromium + blocking cross-browser + axe                                  |
 | Toolchain         | Node ≥22, pnpm 11                                                             | `pnpm install --frozen-lockfile`                                                  |
