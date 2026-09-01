@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Audit docs truth (2026-09-01):** `docs/audits/2026-09-01-baseline.md` pins live `main` at `8a76bda` (`v0.4.2`). The 2026-08-03 backlog header no longer lists landed P0/P1s as Open. `ISSUE-P1-CI-001` is **Resolved** (CODEOWNERS #265). Execution prompt is `docs/prompts/2026-09-01-cursor-grok-audit-remediation-master-prompt.md`. Unmerged docs PR #273 is folded here.
+
 ### Added
 
 - **CODEOWNERS (`NOW-P1-CODEOWNERS`):** `.github/CODEOWNERS` routes critical paths (`src/services`, `src/lib`, workflows, `public/sw.js`, security/governance docs) to `@qnbs`. The `mainrules` ruleset still does **not** require Code Owner reviews (solo-maintainer; do not flip that setting here).
@@ -17,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Heuristic BM25+ IDF and relative ranks (ISSUE-P1-HEURISTIC-002):** `inverseDocumentFrequency` uses Lucene BM25+ `ln(1+(N−df+0.5)/(df+0.5))` so a term in every document no longer yields a negative IDF. Ranker min-maxes the mixed raw score within the current result set. Chat, Help glossary, and KB bands label 0–100 as a display/relative scale (bands at 85/70/50, not 0–1 fractions).
 
 ### Fixed
+
+- **`browserslist` CVEs (`NOW-P0-AUDIT-BROWSERSLIST`):** Workspace override pins `browserslist@4.28.8` (latest patched; security floor is 4.28.7). Covers [CVE-2026-73088](https://github.com/advisories/GHSA-73wf-gq98-2v4g) (`normalizeStats` crash / prototype write, High) and [CVE-2026-73089](https://github.com/advisories/GHSA-c83g-rgw3-j3cx) (unbounded query/parse caches; GitHub Moderate, `pnpm audit` High). Confirmed in 4.28.8 source (`CACHE_MAX_ENTRIES = 500`, `hasOwnProperty` + `Object.create(null)`). Paths are dev-only (`autoprefixer`, `eslint-plugin-react-hooks` → `@babel/core`). Pin, not a GHSA ignore. No newer 4.29+/5.x release exists.
 
 - **CSV/export hardening (ISSUE-P1-SECURITY-001):** Formula-injection sanitizer now treats leading whitespace/BOM, Unicode lookalikes (fullwidth `=`/`+`/`−`/`@`), pipe-DDE, and HTML-risk `<` as spreadsheet-dangerous (tab prefix; apostrophe + `&lt;` for cells that start with `<`). UTF-8 CSV/JSON/citation downloads and PDF downloads are blocked above 8 MiB after `arraybuffer` size validation. JSON history/KB export uses a Blob download (same cap) instead of an uncapped `data:` URI.
 - **Ollama stream/body bounds (ISSUE-P1-TRANSPORT-001):** Generate/chat NDJSON streams abort after 30s idle or 8 MiB accumulated body, with a 5-minute wall-clock cap. Non-stream generate uses the same 5-minute wall-clock (not a 15s headers-only budget). Error/non-stream bodies are size-capped incrementally via `body.getReader()` (`text()` / `json()` fallbacks for test doubles); oversized-body error messages keep a 256-character excerpt. HTTP status mapping stays authoritative when an error body is oversized; caller abort while reading an error body stays `STREAM_ABORTED`. Wall-clock timeout is retryable `PROVIDER_UNAVAILABLE`; caller abort stays non-retryable `STREAM_ABORTED`. `combineAbortSignals` returns a disposer that clears the timer (including the timeout-only path), honors an already-aborted caller signal, and stamps `TimeoutError` as the timeout reason. `fetchWithExternalPolicy` keeps the combined signal attached until the caller consumes the body.

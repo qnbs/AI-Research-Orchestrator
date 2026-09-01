@@ -1,10 +1,17 @@
 # Issue Backlog — 2026-08-03 (Master Remediation)
 
-> **Status refresh:** 2026-08-29. Live `main` is `b02af1be`. Authoritative Phase 0 evidence is `docs/audits/2026-08-29-baseline.md`. This file keeps the original IDs; statuses below are current. GitHub Issues remain at zero — Cloud `gh` is read-only, so IDs were not promoted to tracker issues in that session.
+> **Status refresh:** 2026-09-01. Live `main` is `8a76bda` (`v0.4.2`). **Authoritative Phase 0 evidence is `docs/audits/2026-09-01-baseline.md`.** This file keeps original IDs; do not treat August “Open” rows as a live work order. GitHub Issues remain at zero — markdown IDs are the tracker.
+
+**Landed since the 2026-08-29 refresh (do not re-open):** `NOW-P0-PARTIAL` / ADR 0021 (#260), `NOW-P1-MOTION` (#261), `NOW-P1-DOCS-WAVE` (#262), `NOW-P1-DEP-STALL` (#263), `NOW-P1-RELEASE` (#264), `NOW-P1-CODEOWNERS` (#265), Ollama bounds (#266), Dexie upgrade tests (#267), heuristic ops (#268), eval adversarial (#269), provider harness (#270), BM25+ (#271), CSV/export hardening (#272).
+
+**Still real (see 2026-09-01 baseline):** `NOW-P0-PARTIAL-E2E`, `NOW-P1-DEP-WAVE-2`, `NOW-P1-PARTIAL-EXPORT-GAPS`, `NOW-P1-LIVE-COPY`, P2 façade/file-cap/OpenRouter/chart-a11y/lucide.
+
+**New P0 this baseline:** `NOW-P0-AUDIT-BROWSERSLIST` — CVE-2026-73088 / CVE-2026-73089 on `browserslist@4.28.6`. Pin latest patched `4.28.8` (security floor 4.28.7). Same pattern as #259 nanoid. Not a GHSA ignore.
 
 **Baseline SHA (original):** `84fbcdf1f29b93416d2574d78ef988c83399fdad`  
 **Revalidated SHA (2026-08-29):** `b02af1bebb97f44eda6450ba980d5ceed5a1abb0`  
-**Tracker:** Markdown IDs (GitHub Issues still empty as of 2026-08-29)
+**Revalidated SHA (2026-09-01):** `8a76bda7bbe221d21cb9d5924d8d81cee162fa48`  
+**Tracker:** Markdown IDs (GitHub Issues still empty as of 2026-09-01)
 
 Severity: P0 = stop-the-line · P1 = pre-release hardening · P2 = architecture/docs · P3 = defer with rationale
 
@@ -127,13 +134,13 @@ Severity: P0 = stop-the-line · P1 = pre-release hardening · P2 = architecture/
 
 ### ISSUE-P1-CI-001 — Live branch ruleset vs documentation
 
-| Field      | Value                                                                                                                                                                                                                                                                          |
-| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Severity   | P1                                                                                                                                                                                                                                                                             |
-| Impact     | Governance doc may not match GitHub settings                                                                                                                                                                                                                                   |
-| Acceptance | Verified ruleset snapshot; CODEOWNERS for critical paths                                                                                                                                                                                                                       |
-| Note       | Do not mutate settings without maintainer authorization                                                                                                                                                                                                                        |
-| Status     | **Partially resolved** (2026-08-06; reconfirmed 2026-08-29) — ruleset already had `required_review_thread_resolution` and `strict_required_status_checks_policy`. **CODEOWNERS still missing.** Dismiss-stale-approvals-on-new-commits remains maintainer-gated (do not flip). |
+| Field      | Value                                                                                                                                                                                                                                                           |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Severity   | P1                                                                                                                                                                                                                                                              |
+| Impact     | Governance doc may not match GitHub settings                                                                                                                                                                                                                    |
+| Acceptance | Verified ruleset snapshot; CODEOWNERS for critical paths                                                                                                                                                                                                        |
+| Note       | Do not mutate settings without maintainer authorization                                                                                                                                                                                                         |
+| Status     | **Resolved** (2026-08-30, #265) — `.github/CODEOWNERS` routes critical paths to `@qnbs`. The `mainrules` ruleset still does **not** require Code Owner reviews (solo-maintainer; do not flip). Dismiss-stale-approvals-on-new-commits remains maintainer-gated. |
 
 ### ISSUE-P1-TRANSPORT-001 — Bounded Ollama response bodies
 
@@ -158,21 +165,36 @@ Severity: P0 = stop-the-line · P1 = pre-release hardening · P2 = architecture/
 
 ---
 
-## New items (2026-08-29)
+## New items (2026-08-29) — historical, statuses as of 2026-09-01
 
-These IDs come from the post-sprint prompt. Evidence: `docs/audits/2026-08-29-baseline.md`.
+These IDs came from the post-sprint prompt. Evidence: `docs/audits/2026-08-29-baseline.md` (historical) and `docs/audits/2026-09-01-baseline.md` (live).
 
-| ID                   | Sev | Status                                      | Evidence                                                                                                |
-| -------------------- | --- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| `NOW-P0-PARTIAL`     | P0  | **Open** — PR #234 mergeable, 22 days stale | Abort path stamps `reportStatus: 'done'` in `researchStreamFailure.ts` L102                             |
-| `NOW-P0-AUDIT`       | P0  | **Open on `main`** — addressed on #259      | `nanoid@3.3.18` pin + LHCI-only `extract-zip` ignore + `check:audit-ignore-paths` (not on `main` yet)   |
-| `NOW-P1-MOTION`      | P1  | **Open** — PR #233                          | Looping Framer Motion ignores `prefers-reduced-motion`. `ParticleBackground.tsx` already deleted (#229) |
-| `NOW-P1-DOCS-WAVE`   | P1  | **Open** — PR #235 BLOCKED                  | ADR 0021 + CHANGELOG for #228–#234 not on `main`; CodeRabbit `CHANGES_REQUESTED`. Land after #234       |
-| `NOW-P1-DEP-STALL`   | P1  | **Open** — 15 Dependabot PRs                | Rule 012 violation. CodeQL trio #256/#257/#258 must move together. Skip unused `lucide-react`           |
-| `NOW-P1-RELEASE`     | P1  | **Open**                                    | Tag `v0.4.1` exists at `2c7a032`; GitHub Release does not. Cut `v0.4.2` after #234 + docs + deps        |
-| `NOW-P1-SW-NCBI-KEY` | P1  | **Resolved** on `main`                      | `public/sw.js` `NetworkOnly` for credentialed NCBI + activate purge; `sw-integrity.test.ts`             |
-| `NOW-P1-CODEOWNERS`  | P1  | **In progress**                             | Adding `.github/CODEOWNERS` (routing only; ruleset Code Owner reviews stay Off)                         |
-| `NOW-P2-FACADE`      | P2  | **Open**                                    | `geminiService.ts` 1216 lines / 46 KB                                                                   |
+| ID                   | Sev | Status                         | Evidence                                                                                                |
+| -------------------- | --- | ------------------------------ | ------------------------------------------------------------------------------------------------------- |
+| `NOW-P0-PARTIAL`     | P0  | **Resolved** (#260 / ADR 0021) | Cancel/restore stamps `reportStatus: 'partial'`, never `'done'`. Residual E2E: `NOW-P0-PARTIAL-E2E`.    |
+| `NOW-P0-AUDIT`       | P0  | **Resolved** (#259)            | `nanoid@3.3.18` pin + LHCI-only `extract-zip` ignore + `check:audit-ignore-paths` on `main`.            |
+| `NOW-P1-MOTION`      | P1  | **Resolved** (#261)            | `useMotionSafeLoop` + SMIL gating. `ParticleBackground.tsx` stays deleted.                              |
+| `NOW-P1-DOCS-WAVE`   | P1  | **Resolved** (#262)            | ADR 0021 + CHANGELOG + agent docs on `main`.                                                            |
+| `NOW-P1-DEP-STALL`   | P1  | **Resolved** (#263)            | Mid-August Dependabot wave consolidated. New wave: `NOW-P1-DEP-WAVE-2` (#274–#284).                     |
+| `NOW-P1-RELEASE`     | P1  | **Resolved** (#264)            | GitHub Releases `v0.4.1` (historical) and `v0.4.2` (Latest). Package version `0.4.2`.                   |
+| `NOW-P1-SW-NCBI-KEY` | P1  | **Resolved** on `main`         | `public/sw.js` `NetworkOnly` for credentialed NCBI + activate purge; `sw-integrity.test.ts`             |
+| `NOW-P1-CODEOWNERS`  | P1  | **Resolved** (#265)            | `.github/CODEOWNERS` routing only; ruleset Code Owner reviews stay Off. Folded docs from unmerged #273. |
+| `NOW-P2-FACADE`      | P2  | **Open**                       | `geminiService.ts` still 1216 lines / 46 KB (rule `200` hard max 700).                                  |
+
+## New items (2026-09-01)
+
+Live queue. Evidence: `docs/audits/2026-09-01-baseline.md`.
+
+| ID                           | Sev | Status      | Evidence                                                                                         |
+| ---------------------------- | --- | ----------- | ------------------------------------------------------------------------------------------------ |
+| `NOW-P0-AUDIT-DRIFT`         | P0  | **This PR** | August docs listed landed P0/P1s as Open. Closed by the 2026-09-01 baseline + this header.       |
+| `NOW-P0-AUDIT-BROWSERSLIST`  | P0  | **This PR** | Pin `browserslist@4.28.8` for CVE-2026-73088 / CVE-2026-73089 (floor 4.28.7). Not a GHSA ignore. |
+| `NOW-P0-PARTIAL-E2E`         | P0  | **Open**    | Unit/hook coverage exists; no Playwright cancel-mid-stream spec.                                 |
+| `NOW-P1-DEP-WAVE-2`          | P1  | **Open**    | Dependabot #274–#284. Skip TS 6; skip/remove unused `lucide-react`.                              |
+| `NOW-P1-PARTIAL-EXPORT-GAPS` | P1  | **Open**    | CSV/insights exports are not watermarked for `'partial'` (narrative paths are).                  |
+| `NOW-P1-LIVE-COPY`           | P1  | **Open**    | Onboarding still says “Future of Research” / “AI agents conduct”.                                |
+| `NOW-P2-OPENROUTER`          | P2  | **Open**    | ADR 0010 still Proposed (2026-07-21). Accept, reject, or dated deferral.                         |
+| `NOW-P2-LUCIDE`              | P2  | **Open**    | `lucide-react` unused in `src/`. Prefer remove over bumping #284.                                |
 
 ---
 
@@ -184,7 +206,7 @@ These IDs come from the post-sprint prompt. Evidence: `docs/audits/2026-08-29-ba
 | Severity | P2 |
 | Files | `geminiService.ts`, `researchOrchestratorAdapter.ts` |
 | Acceptance | Single mode resolution; smaller facade; phase unit tests |
-| Status | **Open** (2026-08-29) — typed `phaseId` landed (#206 / ADR 0020); facade still 1216 lines. |
+| Status | **Open** (2026-09-01) — typed `phaseId` landed (#206 / ADR 0020); facade still 1216 lines. |
 
 ### ISSUE-P2-DOCS-001 — Product-truth matrix automation
 
