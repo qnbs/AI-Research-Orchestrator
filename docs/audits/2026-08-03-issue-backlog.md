@@ -192,7 +192,7 @@ Live queue. Evidence: `docs/audits/2026-09-01-baseline.md`.
 | `NOW-P0-PARTIAL-E2E`         | P0  | **Open**    | Unit/hook coverage exists; no Playwright cancel-mid-stream spec.                                 |
 | `NOW-P1-DEP-WAVE-2`          | P1  | **This PR** | Dependabot #275–#283 included; #274 TS 6 deferred; #284 lucide removed unused.                   |
 | `NOW-P1-PARTIAL-EXPORT-GAPS` | P1  | **Open**    | CSV/insights exports are not watermarked for `'partial'` (narrative paths are).                  |
-| `NOW-P1-LIVE-COPY`           | P1  | **Open**    | Onboarding still says “Future of Research” / “AI agents conduct”.                                |
+| `NOW-P1-LIVE-COPY`           | P1  | **This PR** | Onboarding/chrome/Help/input-form product-truth pass; GitHub repo description stays P2.          |
 | `NOW-P2-OPENROUTER`          | P2  | **Open**    | ADR 0010 still Proposed (2026-07-21). Accept, reject, or dated deferral.                         |
 | `NOW-P2-LUCIDE`              | P2  | **This PR** | Unused `lucide-react` removed rather than bumped.                                                |
 
@@ -213,7 +213,7 @@ Live queue. Evidence: `docs/audits/2026-09-01-baseline.md`.
 | Field | Value |
 | Severity | P2 |
 | Acceptance | `docs/product-truth-matrix.md` linked to code/tests; drift check in CI |
-| Status | **Partial** — `forbiddenReadmePhrases` + `check:docs-drift` exist; no standalone product-truth matrix file. |
+| Status | **Partial** — `forbiddenReadmePhrases` + `forbiddenProductCopyPhrases` + `check:docs-drift` exist; no standalone product-truth matrix file. |
 
 ### ISSUE-P2-AGENT-001 — Pipeline naming consolidation
 

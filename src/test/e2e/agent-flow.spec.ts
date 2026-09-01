@@ -53,6 +53,11 @@ test.describe('1. Application Bootstrap', () => {
     await expect(page.getByRole('button', { name: /start researching/i })).toBeVisible({
       timeout: 15_000,
     });
+    await expect(
+      page.getByRole('heading', { name: /Welcome to\s+AI Research Orchestrator/i }),
+    ).toBeVisible();
+    await expect(page.locator('body')).not.toContainText('Future of Research');
+    await expect(page.locator('body')).not.toContainText('AI agents conduct');
   });
 
   test('completing onboarding shows main header', async ({ page }) => {

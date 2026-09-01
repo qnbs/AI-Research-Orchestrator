@@ -34,12 +34,13 @@ export const chromeTranslations = {
     'chrome.kb_item.open_aria': 'Open article: {title}',
 
     'welcome.title': 'Start a New Literature Review',
-    'welcome.body': 'Configure the AI agents above to orchestrate a comprehensive search.',
-    'welcome.footnote': 'The system will analyze PubMed in real-time.',
+    'welcome.body': 'Set your topic and sources above to run a literature search and synthesis.',
+    'welcome.footnote':
+      'Live mode queries PubMed from this browser, and arXiv when that source is enabled.',
 
     'orchestrator.dashboard.empty.title': 'Start a New Literature Review',
     'orchestrator.dashboard.empty.body':
-      'Define your research parameters in the form above to have the AI agents conduct a comprehensive review of the PubMed database for you.',
+      'Set your research parameters above. The pipeline retrieves PubMed (and optional arXiv) records, ranks them, and streams a cited synthesis.',
     'orchestrator.dashboard.recent': 'Recent Activity',
     'orchestrator.dashboard.report_from': 'Report from {date}',
     'orchestrator.dashboard.articles': '{count} articles',
@@ -94,12 +95,14 @@ export const chromeTranslations = {
     'chrome.kb_item.open_aria': 'Artikel öffnen: {title}',
 
     'welcome.title': 'Neue Literaturübersicht starten',
-    'welcome.body': 'Konfigurieren Sie oben die KI-Agenten für eine umfassende Literatursuche.',
-    'welcome.footnote': 'Das System analysiert PubMed in Echtzeit.',
+    'welcome.body':
+      'Legen Sie oben Thema und Quellen fest, um eine Literatursuche und Synthese zu starten.',
+    'welcome.footnote':
+      'Im Live-Modus fragt dieser Browser PubMed ab, und arXiv wenn diese Quelle aktiviert ist.',
 
     'orchestrator.dashboard.empty.title': 'Neue Literaturübersicht starten',
     'orchestrator.dashboard.empty.body':
-      'Legen Sie oben Ihre Rechercheparameter fest, damit die KI-Agenten eine umfassende PubMed-Übersicht für Sie erstellen.',
+      'Legen Sie oben Ihre Rechercheparameter fest. Die Pipeline holt immer PubMed-Treffer, optional arXiv, bewertet sie und streamt eine zitierte Synthese.',
     'orchestrator.dashboard.recent': 'Letzte Aktivität',
     'orchestrator.dashboard.report_from': 'Bericht vom {date}',
     'orchestrator.dashboard.articles': '{count} Artikel',

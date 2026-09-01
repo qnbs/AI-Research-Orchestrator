@@ -172,6 +172,21 @@ async function checkProjectFacts(errors, facts) {
     }
   }
 
+  const productCopyPaths = facts.productCopyPaths ?? [];
+  // `check:csp-endpoint-drift` reuses this script with `--csp-endpoint`. Keep
+  // that command scoped to connect-src vs endpointPolicy; product-copy phrases
+  // stay on the default `check:docs-drift` path.
+  if (!process.argv.includes('--csp-endpoint')) {
+    for (const file of productCopyPaths) {
+      const text = await read(file);
+      for (const phrase of facts.forbiddenProductCopyPhrases ?? []) {
+        if (text.includes(phrase)) {
+          errors.push(`${file} contains forbidden overstated claim: "${phrase}"`);
+        }
+      }
+    }
+  }
+
   if (facts.e2e?.mainWorkflowPath) {
     const e2eYaml = await read(facts.e2e.mainWorkflowPath);
     const listed = extractE2eSpecPathsFromWorkflow(e2eYaml);

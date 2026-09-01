@@ -248,15 +248,15 @@ export const translations = {
       'Model “{model}” was not found on the Ollama server. Pull it or pick a discovered model.',
     'settings.ai.ollama.model_small_warn':
       '“{model}” looks small for structured ranking/synthesis (prompt budget ≈ {budget} tokens). Prefer a larger local model when possible.',
-    'onboarding.welcome_prefix': 'Welcome to the',
-    'onboarding.welcome_highlight': 'Future of Research',
-    'onboarding.subtitle': 'Your intelligent assistant for scientific literature reviews.',
+    'onboarding.welcome_prefix': 'Welcome to',
+    'onboarding.welcome_highlight': 'AI Research Orchestrator',
+    'onboarding.subtitle': 'A client-only PWA for biomedical literature reviews.',
     'onboarding.step1.title': 'Define Your Topic',
     'onboarding.step1.desc':
-      'Enter any research query to have AI agents conduct a comprehensive review of the PubMed database.',
-    'onboarding.step2.title': 'Receive AI Analysis',
+      'Enter a research query. The pipeline searches PubMed (and optionally arXiv), ranks the hits, and streams a cited synthesis.',
+    'onboarding.step2.title': 'Receive a cited synthesis',
     'onboarding.step2.desc':
-      'The AI researches, filters, and synthesizes the most relevant articles into an actionable report.',
+      'Live mode uses your chosen AI provider. Offline or without a key, the built-in heuristic engine still runs the same phases.',
     'onboarding.step3.title': 'Leverage Your Knowledge',
     'onboarding.step3.desc':
       'Build a personal, de-duplicated knowledge base and export your findings for any workflow.',
@@ -571,15 +571,15 @@ export const translations = {
       'Modell „{model}“ wurde auf dem Ollama-Server nicht gefunden. Laden Sie es oder wählen Sie ein gefundenes Modell.',
     'settings.ai.ollama.model_small_warn':
       '„{model}“ wirkt klein für strukturiertes Ranking/Synthese (Prompt-Budget ≈ {budget} Tokens). Bevorzugen Sie nach Möglichkeit ein größeres lokales Modell.',
-    'onboarding.welcome_prefix': 'Willkommen in der',
-    'onboarding.welcome_highlight': 'Zukunft der Recherche',
-    'onboarding.subtitle': 'Ihr intelligenter Assistent für wissenschaftliche Literaturrecherchen.',
+    'onboarding.welcome_prefix': 'Willkommen beim',
+    'onboarding.welcome_highlight': 'AI Research Orchestrator',
+    'onboarding.subtitle': 'Eine clientseitige PWA für biomedizinische Literaturrecherchen.',
     'onboarding.step1.title': 'Thema definieren',
     'onboarding.step1.desc':
-      'Geben Sie eine beliebige Forschungsfrage ein — KI-Agenten führen eine umfassende Auswertung der PubMed-Datenbank durch.',
-    'onboarding.step2.title': 'KI-Analyse erhalten',
+      'Geben Sie eine Forschungsfrage ein. Die Pipeline durchsucht PubMed (optional arXiv), bewertet die Treffer und streamt eine zitierte Synthese.',
+    'onboarding.step2.title': 'Zitierte Synthese erhalten',
     'onboarding.step2.desc':
-      'Die KI recherchiert, filtert und destilliert die relevantesten Artikel zu einem umsetzbaren Bericht.',
+      'Im Live-Modus nutzt die App Ihren gewählten KI-Anbieter. Offline oder ohne Schlüssel übernimmt die eingebaute heuristische Engine dieselben Phasen.',
     'onboarding.step3.title': 'Wissen nutzen',
     'onboarding.step3.desc':
       'Bauen Sie eine persönliche, deduplizierte Wissensdatenbank auf und exportieren Sie Ihre Ergebnisse für jeden Workflow.',

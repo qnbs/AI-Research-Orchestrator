@@ -1,5 +1,5 @@
 {
   "name": "AI Research Orchestrator",
-  "description": "An expert system for authoring comprehensive literature reviews by managing a swarm of specialized AI agents. It uses the PubMed database to collect, curate, and synthesize scientific research based on user-defined criteria.",
+  "description": "Client-only PWA for biomedical literature reviews: PubMed retrieval, optional arXiv retrieval, ranking, and cited synthesis via a chosen AI provider or a built-in heuristic engine.",
   "requestFramePermissions": []
 }
