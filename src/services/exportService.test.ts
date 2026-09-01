@@ -38,6 +38,7 @@ import type {
 } from '../types';
 import { AppError } from '../lib/errors';
 import { MAX_EXPORT_BYTES } from '../lib/exportSafety';
+import { csvPartialProvenanceRow } from '../lib/reportExportProvenance';
 import {
   sanitizeCsvFormulaInjection,
   exportHistoryToJson,
@@ -112,7 +113,7 @@ describe('export helpers', () => {
     const blob = vi.mocked(URL.createObjectURL).mock.calls[0][0] as Blob;
     const csv = await blob.text();
     expect(csv.startsWith('ReportTopic,Question,Answer,Supporting PMIDs\n')).toBe(true);
-    expect(csv).toContain('\n"PARTIAL REPORT — RESEARCH DID NOT FINISH');
+    expect(csv.split('\n')[1]).toBe(csvPartialProvenanceRow(true, 4, ','));
   });
 
   it('exportToCsv watermarks a partial report as the first data row after headers', async () => {
@@ -141,10 +142,7 @@ describe('export helpers', () => {
     const blob = vi.mocked(URL.createObjectURL).mock.calls[0][0] as Blob;
     const csv = await blob.text();
     expect(csv.startsWith('pmid,title\n')).toBe(true);
-    expect(csv).toContain('\n"PARTIAL REPORT — RESEARCH DID NOT FINISH');
-    const watermarkLine = csv.split('\n')[1];
-    expect(watermarkLine.startsWith('"PARTIAL REPORT — RESEARCH DID NOT FINISH')).toBe(true);
-    expect(watermarkLine.endsWith(',')).toBe(true);
+    expect(csv.split('\n')[1]).toBe(csvPartialProvenanceRow(true, 2, ','));
   });
 
   it('exportToCsv omits the watermark for a finished report', async () => {

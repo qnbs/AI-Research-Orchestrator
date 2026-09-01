@@ -744,18 +744,35 @@ describe('geminiService with mocked SDK', () => {
           overallKeywords: [],
         }),
       });
-    hoisted.generateContentStream.mockImplementation(async () => {
-      throw new DOMException('Aborted', 'AbortError');
-    });
     const ac = new AbortController();
+    hoisted.generateContentStream.mockImplementation(async () =>
+      (async function* () {
+        yield { text: 'syn ' };
+        await new Promise<void>((_resolve, reject) => {
+          const fail = (): void => {
+            reject(new DOMException('Aborted', 'AbortError'));
+          };
+          if (ac.signal.aborted) {
+            fail();
+            return;
+          }
+          ac.signal.addEventListener('abort', fail, { once: true });
+        });
+      })(),
+    );
     const gen = generateResearchReportStream(mockInput, mockAi, ac.signal);
+    let sawSynthesisChunk = false;
     await expect(
       (async () => {
-        for await (const _event of gen) {
-          /* drain until abort */
+        for await (const event of gen) {
+          if (event.phaseId === 'synthesis-stream') {
+            sawSynthesisChunk = true;
+            ac.abort();
+          }
         }
       })(),
     ).rejects.toMatchObject({ code: 'STREAM_ABORTED', retryable: false });
+    expect(sawSynthesisChunk).toBe(true);
   });
 
   it('generateResearchReportStream rejects invalid PubMed queries before search', async () => {
