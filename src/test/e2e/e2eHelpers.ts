@@ -253,8 +253,8 @@ async function waitForDemoKbSeed(page: Page, timeout = 60_000) {
   );
 }
 
-/** Valid-format Gemini fixture key (not a real secret). */
-export const E2E_FAKE_GEMINI_KEY = 'AIzaFAKEKEY000000000000000000000000001';
+/** Valid-format Gemini fixture key: AIza + 35 alphanumerics (39 chars). Not a real secret. */
+export const E2E_FAKE_GEMINI_KEY = 'AIza1234567890123456789012345678901234a';
 
 /**
  * Persist a fake Gemini key through Settings so live-mode inference is active.
@@ -268,6 +268,7 @@ export async function seedFakeGeminiApiKey(page: Page, key = E2E_FAKE_GEMINI_KEY
   await page.locator('#api-key-input').waitFor({ state: 'visible', timeout: 10_000 });
   await page.locator('#api-key-input').fill(key);
   await page
+    .getByRole('tabpanel')
     .getByRole('button', { name: /^(save|speichern)$/i })
     .first()
     .click();

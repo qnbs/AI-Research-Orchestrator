@@ -721,6 +721,41 @@ describe('geminiService with mocked SDK', () => {
     await expect(gen.next()).rejects.toMatchObject({ code: 'STREAM_ABORTED' });
   });
 
+  it('generateResearchReportStream maps a mid-synthesis AbortError to STREAM_ABORTED', async () => {
+    hoisted.generateContent
+      .mockResolvedValueOnce({
+        text: JSON.stringify({
+          generatedQueries: [{ query: 'cancer[Title]', explanation: 'e' }],
+        }),
+      })
+      .mockResolvedValueOnce({
+        text: JSON.stringify({
+          rankedArticles: [
+            {
+              pmid: '123',
+              relevanceScore: 95,
+              relevanceExplanation: 'r',
+              keywords: ['k'],
+              articleType: 'Study',
+              aiSummary: 'sum',
+            },
+          ],
+          aiGeneratedInsights: [],
+          overallKeywords: [],
+        }),
+      });
+    hoisted.generateContentStream.mockImplementation(async () => {
+      throw new DOMException('Aborted', 'AbortError');
+    });
+    const ac = new AbortController();
+    const gen = generateResearchReportStream(mockInput, mockAi, ac.signal);
+    await expect(async () => {
+      for await (const _event of gen) {
+        /* drain until abort */
+      }
+    }).rejects.toMatchObject({ code: 'STREAM_ABORTED', retryable: false });
+  });
+
   it('generateResearchReportStream rejects invalid PubMed queries before search', async () => {
     hoisted.generateContent.mockResolvedValueOnce({
       text: JSON.stringify({

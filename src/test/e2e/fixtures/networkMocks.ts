@@ -9,6 +9,7 @@ import {
   PIPELINE_PUBMED_ARTICLE,
   type PubMedMockArticle,
   buildEsearchJson,
+  buildEsummaryJson,
   buildPubmedArticleXml,
 } from './pubmedArticle';
 
@@ -25,6 +26,14 @@ export async function mockPubMedRoutes(
           status: 200,
           contentType: 'application/json',
           body: buildEsearchJson(article.pmid),
+        });
+        return;
+      }
+      if (url.includes('esummary')) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: buildEsummaryJson(article),
         });
         return;
       }

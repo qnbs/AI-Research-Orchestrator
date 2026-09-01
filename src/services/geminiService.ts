@@ -526,6 +526,17 @@ Research Topic: ${wrapUntrustedTextBlock('research_topic', topicSafe)}
     yield makePipelineEvent('finalizing');
   } catch (error) {
     safeLogError('Error generating research report:', error);
+    // mapError turns AbortError into PROVIDER_UNAVAILABLE. Cancelled runs must
+    // stay STREAM_ABORTED so the session stamps `'partial'` (ADR 0021), not an
+    // "AI unavailable" error. Honor the caller signal even after that remap.
+    if (isAbortError(error) || signal?.aborted) {
+      throw new AppError({
+        code: 'STREAM_ABORTED',
+        message: 'Aborted',
+        retryable: false,
+        cause: error,
+      });
+    }
     throw provider.mapError(error);
   }
 }
