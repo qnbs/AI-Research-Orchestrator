@@ -78,10 +78,15 @@ overrides:
   # GHSA-2v37-7h3g-55p8: custom generators can loop indefinitely when size is
   # zero. Transitive via postcss (Tailwind / Vite / Vitest).
   nanoid: 3.3.18
-  # GHSA-c83g-rgw3-j3cx (unbounded memory via distinct query results) +
-  # GHSA-73wf-gq98-2v4g (prototype write via untrusted browserslist-stats.json).
-  # Transitive via autoprefixer and eslint-plugin-react-hooks → @babel/core.
-  # Patched releases start at 4.28.7; pin current patched 4.28.8 (2026-08-08).
+  # CVE-2026-73089 / GHSA-c83g-rgw3-j3cx — unbounded result/parse caches
+  # (CWE-770). CVE-2026-73088 / GHSA-73wf-gq98-2v4g — uncaught crash /
+  # prototype write in normalizeStats() on untrusted browserslist-stats.json
+  # (CWE-1321). Both: affected ≤4.28.6, patched 4.28.7. Pin latest patched
+  # 4.28.8 (2026-08-08 kaios query fix on top of the security release).
+  # Verified in 4.28.8: CACHE_MAX_ENTRIES=500 + boundedCacheSet; normalizeStats
+  # uses Object.create(null) + Object.prototype.hasOwnProperty.call.
+  # Transitive via autoprefixer and eslint-plugin-react-hooks → @babel/core
+  # (dev-only; not in the production PWA bundle). Pin, not a GHSA ignore.
   browserslist: 4.28.8
 
 # extract-zip (GHSA-jmr9-qjv8-65gv / CVE-2026-56876): npm has no patched

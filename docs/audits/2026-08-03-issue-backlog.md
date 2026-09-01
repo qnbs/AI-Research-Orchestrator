@@ -6,7 +6,7 @@
 
 **Still real (see 2026-09-01 baseline):** `NOW-P0-PARTIAL-E2E`, `NOW-P1-DEP-WAVE-2`, `NOW-P1-PARTIAL-EXPORT-GAPS`, `NOW-P1-LIVE-COPY`, P2 façade/file-cap/OpenRouter/chart-a11y/lucide.
 
-**New P0 this baseline:** `NOW-P0-AUDIT-BROWSERSLIST` — high GHSAs on `browserslist@4.28.6`. Pin `4.28.8` in this PR (same pattern as #259 nanoid).
+**New P0 this baseline:** `NOW-P0-AUDIT-BROWSERSLIST` — CVE-2026-73088 / CVE-2026-73089 on `browserslist@4.28.6`. Pin latest patched `4.28.8` (security floor 4.28.7). Same pattern as #259 nanoid. Not a GHSA ignore.
 
 **Baseline SHA (original):** `84fbcdf1f29b93416d2574d78ef988c83399fdad`  
 **Revalidated SHA (2026-08-29):** `b02af1bebb97f44eda6450ba980d5ceed5a1abb0`  
@@ -185,16 +185,16 @@ These IDs came from the post-sprint prompt. Evidence: `docs/audits/2026-08-29-ba
 
 Live queue. Evidence: `docs/audits/2026-09-01-baseline.md`.
 
-| ID                           | Sev | Status      | Evidence                                                                                   |
-| ---------------------------- | --- | ----------- | ------------------------------------------------------------------------------------------ |
-| `NOW-P0-AUDIT-DRIFT`         | P0  | **This PR** | August docs listed landed P0/P1s as Open. Closed by the 2026-09-01 baseline + this header. |
-| `NOW-P0-AUDIT-BROWSERSLIST`  | P0  | **This PR** | Pin `browserslist@4.28.8` (GHSA-c83g-rgw3-j3cx, GHSA-73wf-gq98-2v4g). Not a GHSA ignore.   |
-| `NOW-P0-PARTIAL-E2E`         | P0  | **Open**    | Unit/hook coverage exists; no Playwright cancel-mid-stream spec.                           |
-| `NOW-P1-DEP-WAVE-2`          | P1  | **Open**    | Dependabot #274–#284. Skip TS 6; skip/remove unused `lucide-react`.                        |
-| `NOW-P1-PARTIAL-EXPORT-GAPS` | P1  | **Open**    | CSV/insights exports are not watermarked for `'partial'` (narrative paths are).            |
-| `NOW-P1-LIVE-COPY`           | P1  | **Open**    | Onboarding still says “Future of Research” / “AI agents conduct”.                          |
-| `NOW-P2-OPENROUTER`          | P2  | **Open**    | ADR 0010 still Proposed (2026-07-21). Accept, reject, or dated deferral.                   |
-| `NOW-P2-LUCIDE`              | P2  | **Open**    | `lucide-react` unused in `src/`. Prefer remove over bumping #284.                          |
+| ID                           | Sev | Status      | Evidence                                                                                         |
+| ---------------------------- | --- | ----------- | ------------------------------------------------------------------------------------------------ |
+| `NOW-P0-AUDIT-DRIFT`         | P0  | **This PR** | August docs listed landed P0/P1s as Open. Closed by the 2026-09-01 baseline + this header.       |
+| `NOW-P0-AUDIT-BROWSERSLIST`  | P0  | **This PR** | Pin `browserslist@4.28.8` for CVE-2026-73088 / CVE-2026-73089 (floor 4.28.7). Not a GHSA ignore. |
+| `NOW-P0-PARTIAL-E2E`         | P0  | **Open**    | Unit/hook coverage exists; no Playwright cancel-mid-stream spec.                                 |
+| `NOW-P1-DEP-WAVE-2`          | P1  | **Open**    | Dependabot #274–#284. Skip TS 6; skip/remove unused `lucide-react`.                              |
+| `NOW-P1-PARTIAL-EXPORT-GAPS` | P1  | **Open**    | CSV/insights exports are not watermarked for `'partial'` (narrative paths are).                  |
+| `NOW-P1-LIVE-COPY`           | P1  | **Open**    | Onboarding still says “Future of Research” / “AI agents conduct”.                                |
+| `NOW-P2-OPENROUTER`          | P2  | **Open**    | ADR 0010 still Proposed (2026-07-21). Accept, reject, or dated deferral.                         |
+| `NOW-P2-LUCIDE`              | P2  | **Open**    | `lucide-react` unused in `src/`. Prefer remove over bumping #284.                                |
 
 ---
 
