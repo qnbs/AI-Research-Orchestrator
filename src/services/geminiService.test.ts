@@ -749,11 +749,13 @@ describe('geminiService with mocked SDK', () => {
     });
     const ac = new AbortController();
     const gen = generateResearchReportStream(mockInput, mockAi, ac.signal);
-    await expect(async () => {
-      for await (const _event of gen) {
-        /* drain until abort */
-      }
-    }).rejects.toMatchObject({ code: 'STREAM_ABORTED', retryable: false });
+    await expect(
+      (async () => {
+        for await (const _event of gen) {
+          /* drain until abort */
+        }
+      })(),
+    ).rejects.toMatchObject({ code: 'STREAM_ABORTED', retryable: false });
   });
 
   it('generateResearchReportStream rejects invalid PubMed queries before search', async () => {
