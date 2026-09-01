@@ -23,7 +23,6 @@ const VENDOR_CHUNKS: Record<string, string> = {
   '@reduxjs/toolkit': 'vendor-redux',
   recharts: 'vendor-charts',
   'framer-motion': 'vendor-motion',
-  'lucide-react': 'vendor-ui',
   cmdk: 'vendor-ui',
 };
 

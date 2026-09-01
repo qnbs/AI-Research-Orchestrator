@@ -31,7 +31,7 @@ Main features: Orchestrator pipeline, Knowledge Base (dedup, faceted filtering, 
 | Local DB             | Dexie 4 + dexie-react-hooks (IndexedDB), single entry `src/services/databaseService.ts`                                                                     |
 | AI                   | `@google/genai`, `openai`, `@anthropic-ai/sdk` (lazy-loaded), Ollama `fetch`, **or** heuristic fallback. Default live model: **Gemini `gemini-2.5-flash`**. |
 | Styling              | Tailwind CSS v4 (`@tailwindcss/postcss`), "Cybernetic" glassmorphism design system                                                                          |
-| UI extras            | Framer Motion 12, lucide-react, cmdk (`⌘+K` palette), @tanstack/react-virtual                                                                               |
+| UI extras            | Framer Motion 12, cmdk (`⌘+K` palette), @tanstack/react-virtual (custom icons; `lucide-react` removed as unused)                                            |
 | Charts               | Recharts (ADR 0005 — Recharts-only; do not re-add Chart.js)                                                                                                 |
 | Export / sanitize    | jsPDF + marked, DOMPurify                                                                                                                                   |
 | Tests                | Vitest + Testing Library (jsdom), Playwright (**blocking** Chromium + Firefox/WebKit/mobile Chrome + axe)                                                   |
