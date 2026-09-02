@@ -53,7 +53,8 @@ const MODULE_FLOORS = [
   },
   {
     id: 'exportProvenance',
-    pathPattern: /\/src\/services\/exportService\.ts$|\/src\/lib\/reportExportProvenance\.ts$/,
+    pathPattern:
+      /\/src\/services\/exportService\.ts$|\/src\/services\/exportPdf\.ts$|\/src\/services\/exportCsv\.ts$|\/src\/services\/exportText\.ts$|\/src\/lib\/reportExportProvenance\.ts$/,
     aggregate: true,
     min: { lines: 93, statements: 91, branches: 73, functions: 95 },
   },

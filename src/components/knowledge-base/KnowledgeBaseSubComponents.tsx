@@ -16,6 +16,7 @@ import { RelevanceScoreDisplay } from '../RelevanceScoreDisplay';
 import { useSettings } from '../../contexts/SettingsContext';
 import { AggregatedArticle } from '../../types';
 import { useTranslation } from '../../hooks/useTranslation';
+import { STICKY_BELOW_CHROME_CLASS } from '../../lib/layoutChrome';
 
 export const PdfExportingOverlay: React.FC = () => {
   const { t } = useTranslation();
@@ -127,7 +128,9 @@ export const SidebarFilters: React.FC = () => {
   const { t } = useTranslation();
   const { filter, onFilterChange, topics, tags, articleTypes, journals } = useKnowledgeBaseView();
   return (
-    <aside className="w-64 flex-shrink-0 space-y-4 sticky top-24 self-start hidden md:block">
+    <aside
+      className={`w-64 flex-shrink-0 space-y-4 ${STICKY_BELOW_CHROME_CLASS} self-start hidden md:block`}
+    >
       <h3 className="text-lg font-semibold text-text-primary">{t('kb.filters')}</h3>
       <div className="relative">
         <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-secondary" />

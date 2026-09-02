@@ -1,6 +1,6 @@
 # Sourcery high-level feedback backlog — 2026-08-06 (PR wave #228-233)
 
-> **Status (2026-09-02):** BACKLOG-P2-001 / 003 / 006 are **in flight on PR #290** (not on `main` until merge). Remaining after that merge: 002 / 004 / 005 (`NOW-P1-SOURCERY-RESIDUAL`). See `docs/audits/2026-09-02-baseline.md`.
+> **Status (2026-09-02 post-#290):** BACKLOG-P2-001 / 003 / 006 landed in **#290**. 002 / 004 / 005: sidebar sticky offset shared as `STICKY_BELOW_CHROME_CLASS`; LoadingIndicator cancel is caller-labeled; OrchestratorView uses that cancel during generate and keeps a streaming-only cancel after the indicator unmounts.
 
 **Context:** Sourcery posts two kinds of feedback on a PR — inline review-thread comments
 (tracked and resolved via the normal GraphQL `reviewThreads` correction loop) and **top-level
@@ -37,32 +37,32 @@ Severity: P2 = worth doing, not blocking · P3 = defer with rationale (cosmetic/
 
 ### BACKLOG-P2-001 — Centralize `developerMode` gating condition
 
-| Field      | Value                                                                                                                                          |
-| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| Source     | Sourcery, PR #230 (both reviews)                                                                                                               |
-| Impact     | `settings.developerMode` is checked ad hoc in both `Header.tsx` and `AppLayout.tsx`; a third gate site would be easy to add inconsistently     |
-| Suggestion | Extract a `selectIsDeveloperToolsEnabled` selector or `isDeveloperToolsEnabled(settings)` helper                                               |
-| Files      | `src/components/Header.tsx`, `src/app/AppLayout.tsx`                                                                                           |
-| Status     | **In flight (#290)** — `isDeveloperToolsEnabled()` in `settingsSlice.ts`; Header + AppLayout both call it. Not on `main` until this PR merges. |
+| Field      | Value                                                                                                                                      |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Source     | Sourcery, PR #230 (both reviews)                                                                                                           |
+| Impact     | `settings.developerMode` is checked ad hoc in both `Header.tsx` and `AppLayout.tsx`; a third gate site would be easy to add inconsistently |
+| Suggestion | Extract a `selectIsDeveloperToolsEnabled` selector or `isDeveloperToolsEnabled(settings)` helper                                           |
+| Files      | `src/components/Header.tsx`, `src/app/AppLayout.tsx`                                                                                       |
+| Status     | **Resolved (#290)** — `isDeveloperToolsEnabled()` in `settingsSlice.ts`; Header + AppLayout both call it.                                  |
 
 ### BACKLOG-P2-002 — Sticky offset constants duplicated/misaligned
 
-| Field  | Value                                                                                                                                          |
-| ------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| Source | Sourcery, PR #230                                                                                                                              |
-| Impact | New sticky settings header uses `top-20 md:top-36`; existing sidebar uses `sticky top-24` — worth confirming intentional, otherwise centralize |
-| Files  | `src/components/SettingsView.tsx` and wherever the sidebar's `top-24` is defined                                                               |
-| Status | **Open** after #290 — not in the façade/a11y PR. `NOW-P1-SOURCERY-RESIDUAL`.                                                                   |
+| Field  | Value                                                                                                                                           |
+| ------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Source | Sourcery, PR #230                                                                                                                               |
+| Impact | New sticky settings header uses `top-20 md:top-36`; existing sidebar uses `sticky top-24` — worth confirming intentional, otherwise centralize  |
+| Files  | `src/components/SettingsView.tsx` and wherever the sidebar's `top-24` is defined                                                                |
+| Status | **Resolved** — Settings + KB sidebars share `STICKY_BELOW_CHROME_CLASS` (`sticky top-24`). Settings page header already uses `--chrome-height`. |
 
 ### BACKLOG-P2-003 — `validViews` hardcoded, can drift from `View` type
 
-| Field      | Value                                                                                                                                                                |
-| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Source     | Sourcery, PR #229 (both reviews)                                                                                                                                     |
-| Impact     | `useUrlSync`'s `validViews` array is a manually maintained string list separate from the `View` union type — adding/renaming a view won't get a compile error here   |
-| Suggestion | Derive `validViews` from `View` (e.g. `Object.values`/`as const` tuple shared with the type)                                                                         |
-| Files      | `src/hooks/useUrlSync.ts`                                                                                                                                            |
-| Status     | **In flight (#290)** — `VIEWS` const tuple in `src/types/ui.ts`; `View` is `typeof VIEWS[number]`; `isView()` is the hash guard. Not on `main` until this PR merges. |
+| Field      | Value                                                                                                                                                              |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Source     | Sourcery, PR #229 (both reviews)                                                                                                                                   |
+| Impact     | `useUrlSync`'s `validViews` array is a manually maintained string list separate from the `View` union type — adding/renaming a view won't get a compile error here |
+| Suggestion | Derive `validViews` from `View` (e.g. `Object.values`/`as const` tuple shared with the type)                                                                       |
+| Files      | `src/hooks/useUrlSync.ts`                                                                                                                                          |
+| Status     | **Resolved (#290)** — `VIEWS` const tuple in `src/types/ui.ts`; `View` is `typeof VIEWS[number]`; `isView()` is the hash guard.                                    |
 
 ### BACKLOG-P2-004 — `LoadingIndicator` cancel-button i18n key is orchestrator-specific
 
@@ -72,7 +72,7 @@ Severity: P2 = worth doing, not blocking · P3 = defer with rationale (cosmetic/
 | Impact     | `LoadingIndicator` is a shared/generic component but its cancel-button label is hard-wired to `orchestrator.cancel.button` — reusing it in another context (author/journal loading) would show the wrong label |
 | Suggestion | Generic i18n key, or pass the label in via props                                                                                                                                                               |
 | Files      | `src/components/LoadingIndicator.tsx`                                                                                                                                                                          |
-| Status     | **Open** after #290 — not in the façade/a11y PR. `NOW-P1-SOURCERY-RESIDUAL`.                                                                                                                                   |
+| Status     | **Resolved** — `cancel?: { label; onClick }` is caller-supplied. Rapid Research already passed `research.cancel.button`; Orchestrator now passes `orchestrator.cancel.button`.                                 |
 
 ### BACKLOG-P2-005 — Possible duplicate cancel-button UI (OrchestratorView vs LoadingIndicator)
 
@@ -82,7 +82,7 @@ Severity: P2 = worth doing, not blocking · P3 = defer with rationale (cosmetic/
 | Impact     | `OrchestratorView` renders its own cancel button while `LoadingIndicator` now also wires in a cancel affordance for other contexts — worth confirming these don't both render simultaneously in the orchestrator flow |
 | Suggestion | Reuse the shared control, or extract a `CancelButton` component                                                                                                                                                       |
 | Files      | `src/components/OrchestratorView.tsx`, `src/components/LoadingIndicator.tsx`                                                                                                                                          |
-| Status     | **Open** after #290 — not in the façade/a11y PR. `NOW-P1-SOURCERY-RESIDUAL`.                                                                                                                                          |
+| Status     | **Resolved** — Orchestrator generate-phase cancel is the LoadingIndicator control. The standalone button renders only while streaming after the indicator unmounts (cancel-mid-stream E2E).                           |
 
 ### BACKLOG-P2-006 — `ScientometricHub` a11y table reuses `dashboard.a11y.*` keys
 
@@ -92,7 +92,7 @@ Severity: P2 = worth doing, not blocking · P3 = defer with rationale (cosmetic/
 | Impact     | Implicit coupling between the dashboard and scientometrics feature areas via shared i18n keys — a dashboard-only wording change would silently affect ScientometricHub's table too |
 | Suggestion | Introduce scientometrics-specific `a11y.*` keys                                                                                                                                    |
 | Files      | `src/components/ScientometricHub.tsx`, `src/i18n/dashboardTranslations.ts`                                                                                                         |
-| Status     | **In flight (#290)** — `scientometrics.a11y.*` keys for scatter, timeline, and journal pie tables. Not on `main` until this PR merges.                                             |
+| Status     | **Resolved (#290)** — `scientometrics.a11y.*` keys for scatter, timeline, and journal pie tables.                                                                                  |
 
 ---
 
