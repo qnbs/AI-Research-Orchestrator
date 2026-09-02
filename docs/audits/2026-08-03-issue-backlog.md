@@ -1,17 +1,17 @@
 # Issue Backlog — 2026-08-03 (Master Remediation)
 
-> **Status refresh:** 2026-09-02. Live `main` is `660cf8c` (`v0.4.2` plus the 2026-09-01 wave and #287). **Authoritative Phase 0 evidence is `docs/audits/2026-09-02-baseline.md`.** The 2026-09-01 baseline stays historical (Phase 0 pinned at `8a76bda`). This file keeps original IDs; do not treat August “Open” rows as a live work order. GitHub Issues remain at zero — markdown IDs are the tracker.
+> **Status refresh:** 2026-09-02 post-#290. Live `main` is `01165e8` (`docs+P2: façade split, chart a11y, ADR 0010 deferral (#290)`). **Authoritative closeout is `docs/audits/2026-09-02-closeout.md`.** The 2026-09-02 baseline stays as Phase 0 evidence (with a post-merge addendum). The 2026-09-01 baseline stays historical. This file keeps original IDs; do not treat August “Open” rows as a live work order. GitHub Issues remain at zero — markdown IDs are the tracker.
 
 **Landed since the 2026-08-29 refresh (do not re-open):** `NOW-P0-PARTIAL` / ADR 0021 (#260), `NOW-P1-MOTION` (#261), `NOW-P1-DOCS-WAVE` (#262), `NOW-P1-DEP-STALL` (#263), `NOW-P1-RELEASE` (#264), `NOW-P1-CODEOWNERS` (#265), Ollama bounds (#266), Dexie upgrade tests (#267), heuristic ops (#268), eval adversarial (#269), provider harness (#270), BM25+ (#271), CSV/export hardening (#272), browserslist pin (#285), Dependabot wave 2 (#286), onboarding product-truth (#288), TypeScript 6 (#289), partial-report E2E + CSV watermark (#287).
 
-**Still real / in flight:** `NOW-P0-PR-290-MERGE` (PR **#290** is open — façade, chart a11y, ADR 0010 dated deferral). Residual Sourcery P2 after that merge: BACKLOG-P2-002/004/005. GitHub repo description (`ISSUE-P2-AGENT-001` / `NOW-P1-REPO-DESCRIPTION`) still says “swarm…”. `NOW-P2-LUCIDE` landed in #286; `NOW-P1-LIVE-COPY` in #288; `NOW-P1-DEP-WAVE-2` in #286 / #289; `NOW-P0-PARTIAL-E2E` / `NOW-P1-PARTIAL-EXPORT-GAPS` in #287. Do **not** list façade / chart a11y / ADR 0010 deferral as Resolved on `main` until #290 merges.
+**Still real / in flight:** GitHub repo description (`ISSUE-P2-AGENT-001` / `NOW-P1-REPO-DESCRIPTION`) still says “swarm…” (cloud agent PATCH 403). Residual Sourcery P2: BACKLOG-P2-002/004/005. `exportService.ts` 686 (`NOW-P1-FILE-CAP`). `NOW-P0-PR-290-MERGE` / façade / chart a11y / ADR 0010 dated deferral **landed in #290**. `NOW-P2-LUCIDE` landed in #286; `NOW-P1-LIVE-COPY` in #288; `NOW-P1-DEP-WAVE-2` in #286 / #289; `NOW-P0-PARTIAL-E2E` / `NOW-P1-PARTIAL-EXPORT-GAPS` in #287.
 
 **New P0 this baseline (closed):** `NOW-P0-AUDIT-BROWSERSLIST` — CVE-2026-73088 / CVE-2026-73089 on `browserslist@4.28.6`. Pin latest patched `4.28.8` (security floor 4.28.7). Same pattern as #259 nanoid. Not a GHSA ignore. Landed #285.
 
 **Baseline SHA (original):** `84fbcdf1f29b93416d2574d78ef988c83399fdad`  
 **Revalidated SHA (2026-08-29):** `b02af1bebb97f44eda6450ba980d5ceed5a1abb0`  
 **Revalidated SHA (2026-09-01):** `8a76bda7bbe221d21cb9d5924d8d81cee162fa48`  
-**Revalidated SHA (2026-09-02):** `660cf8c5f186fcd041000248aa2b85c55449d384` (`test(partial): cancel-mid-stream E2E and CSV/insights watermark (#287)`)  
+**Revalidated SHA (2026-09-02):** `01165e8176c7d97a2246ab53f757609dae498566` (`docs+P2: façade split, chart a11y, ADR 0010 deferral (#290)`; earlier same-day pin was `660cf8c` before that merge)  
 **Tracker:** Markdown IDs (GitHub Issues still empty as of 2026-09-02)
 
 Severity: P0 = stop-the-line · P1 = pre-release hardening · P2 = architecture/docs · P3 = defer with rationale
@@ -224,7 +224,7 @@ Live queue. Evidence: `docs/audits/2026-09-02-baseline.md`. The 2026-09-01 basel
 | Field | Value |
 | Severity | P2 |
 | Acceptance | No “swarm” language unless experimental graph ships behind flag |
-| Status | **Open** — product copy and `metadata.json` no longer claim a swarm (#288). GitHub repository description still says “swarm of specialized agents” (`NOW-P1-REPO-DESCRIPTION`). Fix after #290, not inside the XXL PR. |
+| Status | **Open** — product copy and `metadata.json` no longer claim a swarm (#288). GitHub repository description still says “swarm of specialized agents” (`NOW-P1-REPO-DESCRIPTION`). Cloud agent cannot PATCH the description (403). Maintainer paste text is in `docs/audits/2026-09-02-closeout.md`. |
 
 ---
 
