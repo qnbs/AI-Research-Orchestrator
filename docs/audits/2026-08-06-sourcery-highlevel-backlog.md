@@ -47,12 +47,12 @@ Severity: P2 = worth doing, not blocking · P3 = defer with rationale (cosmetic/
 
 ### BACKLOG-P2-002 — Sticky offset constants duplicated/misaligned
 
-| Field  | Value                                                                                                                                           |
-| ------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| Source | Sourcery, PR #230                                                                                                                               |
-| Impact | New sticky settings header uses `top-20 md:top-36`; existing sidebar uses `sticky top-24` — worth confirming intentional, otherwise centralize  |
-| Files  | `src/components/SettingsView.tsx` and wherever the sidebar's `top-24` is defined                                                                |
-| Status | **Resolved** — Settings + KB sidebars share `STICKY_BELOW_CHROME_CLASS` (`sticky top-24`). Settings page header already uses `--chrome-height`. |
+| Field  | Value                                                                                                                                                                                       |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Source | Sourcery, PR #230                                                                                                                                                                           |
+| Impact | New sticky settings header uses `top-20 md:top-36`; existing sidebar uses `sticky top-24` — worth confirming intentional, otherwise centralize                                              |
+| Files  | `src/components/SettingsView.tsx` and wherever the sidebar's `top-24` is defined                                                                                                            |
+| Status | **Resolved** — Settings + KB sidebars share `STICKY_BELOW_CHROME_CLASS` (`md:sticky` + `md:top-[max(6rem,var(--chrome-height,0px))]`). Settings page header already uses `--chrome-height`. |
 
 ### BACKLOG-P2-003 — `validViews` hardcoded, can drift from `View` type
 

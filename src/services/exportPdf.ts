@@ -67,9 +67,8 @@ class PdfExporter {
     });
   }
 
-  /** Adds a new page to the document, including headers and footers if enabled. */
+  /** Adds a new page. Footers are stamped once in `save` with the correct page index. */
   private addPage() {
-    if (this.settings.includeFooter) this.addFooter();
     this.doc.addPage();
     this.pageNumber++;
     this.currentY = PDF_CONSTANTS.MARGIN;
@@ -99,20 +98,20 @@ class PdfExporter {
       .line(PDF_CONSTANTS.MARGIN, 12, this.pageWidth - PDF_CONSTANTS.MARGIN, 12);
   }
 
-  /** Adds a footer to the current page. */
-  private addFooter() {
+  /** Adds a footer labeled with `page`, not the exporter's high-water `pageNumber`. */
+  private addFooter(page: number) {
     this.doc
       .setFontSize(PDF_CONSTANTS.FONT_SIZES.FOOTER)
       .setFont('helvetica', 'italic')
       .setTextColor(PDF_CONSTANTS.COLORS.TEXT_SECONDARY);
-    const footerText = `Page ${this.pageNumber} | ${formatReleaseLabel()} | ${APP_NAME}`;
+    const footerText = `Page ${page} | ${formatReleaseLabel()} | ${APP_NAME}`;
     this.doc.text(footerText, this.pageWidth / 2, this.pageHeight - 10, { align: 'center' });
   }
 
-  /** Adds a main section title. */
+  /** Adds a main section title. Record TOC after any page break so the entry matches the title page. */
   private addSectionTitle(title: string, options: { addToToc?: boolean } = {}) {
-    if (options.addToToc) this.tocEntries.push({ title, page: this.pageNumber });
     this.checkPageBreak(30);
+    if (options.addToToc) this.tocEntries.push({ title, page: this.pageNumber });
     this.doc
       .setFontSize(PDF_CONSTANTS.FONT_SIZES.H1)
       .setFont('helvetica', 'bold')
@@ -212,7 +211,7 @@ class PdfExporter {
     if (this.settings.includeFooter) {
       for (let i = 1; i <= this.pageNumber; i++) {
         this.doc.setPage(i);
-        this.addFooter();
+        this.addFooter(i);
       }
     }
     const output = this.doc.output('arraybuffer');
@@ -269,25 +268,15 @@ class PdfExporter {
     }
 
     if (this.settings.includeToc) {
-      if (this.settings.includeSynthesis)
-        this.tocEntries.push({ title: 'Executive Synthesis', page: this.pageNumber });
-      if (this.settings.includeInsights)
-        this.tocEntries.push({ title: 'AI-Generated Insights', page: this.pageNumber });
-      this.tocEntries.push({
-        title: `Ranked Articles (Top ${report.rankedArticles.length})`,
-        page: -1,
-      });
-      if (this.settings.includeQueries)
-        this.tocEntries.push({ title: 'Generated PubMed Queries', page: -1 });
       const tocPage = this.pageNumber;
       this.addPage();
 
       if (this.settings.includeSynthesis) {
-        this.addSectionTitle('Executive Synthesis', { addToToc: false });
+        this.addSectionTitle('Executive Synthesis', { addToToc: true });
         this.addBodyText(report.synthesis);
       }
       if (this.settings.includeInsights) {
-        this.addSectionTitle('AI-Generated Insights', { addToToc: false });
+        this.addSectionTitle('AI-Generated Insights', { addToToc: true });
         report.aiGeneratedInsights.forEach((insight) => {
           this.checkPageBreak(25);
           this.addKeyValue('Question:', insight.question);
@@ -297,22 +286,13 @@ class PdfExporter {
         });
       }
 
-      const rankedArticlesTocIndex = this.tocEntries.findIndex((e) =>
-        e.title.startsWith('Ranked Articles'),
-      );
-      if (rankedArticlesTocIndex !== -1)
-        this.tocEntries[rankedArticlesTocIndex].page = this.pageNumber;
       this.addSectionTitle(`Ranked Articles (Top ${report.rankedArticles.length})`, {
-        addToToc: false,
+        addToToc: true,
       });
       report.rankedArticles.forEach((article, index) => this.addArticle(article, index));
 
       if (this.settings.includeQueries) {
-        const queriesTocIndex = this.tocEntries.findIndex((e) =>
-          e.title.startsWith('Generated PubMed Queries'),
-        );
-        if (queriesTocIndex !== -1) this.tocEntries[queriesTocIndex].page = this.pageNumber;
-        this.addSectionTitle('Generated PubMed Queries', { addToToc: false });
+        this.addSectionTitle('Generated PubMed Queries', { addToToc: true });
         report.generatedQueries.forEach((q) => {
           this.checkPageBreak(20);
           this.addKeyValue('Query:', q.query);

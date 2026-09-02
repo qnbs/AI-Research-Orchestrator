@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 const pdfTextSpy = vi.hoisted(() => vi.fn());
 const pdfOutputSpy = vi.hoisted(() => vi.fn(() => new ArrayBuffer(64)));
 const pdfSaveSpy = vi.hoisted(() => vi.fn());
+const pdfSetPageSpy = vi.hoisted(() => vi.fn());
 const pdfDocMock = vi.hoisted(() => {
   const chain = new Proxy({} as Record<string, unknown>, {
     get(_target, prop: string) {
@@ -10,6 +11,12 @@ const pdfDocMock = vi.hoisted(() => {
       if (prop === 'splitTextToSize') return vi.fn((s: string) => [String(s)]);
       if (prop === 'save') return pdfSaveSpy;
       if (prop === 'output') return pdfOutputSpy;
+      if (prop === 'setPage') {
+        return (...args: unknown[]) => {
+          pdfSetPageSpy(...args);
+          return chain;
+        };
+      }
       if (prop === 'text') {
         return (...args: unknown[]) => {
           pdfTextSpy(...args);
@@ -80,6 +87,7 @@ describe('export helpers', () => {
     anchorMocks.length = 0;
     pdfTextSpy.mockClear();
     pdfSaveSpy.mockClear();
+    pdfSetPageSpy.mockClear();
     pdfOutputSpy.mockReset();
     pdfOutputSpy.mockReturnValue(new ArrayBuffer(64));
     vi.spyOn(document, 'createElement').mockImplementation((tag: string) => {
@@ -555,6 +563,15 @@ describe('export helpers', () => {
       topNToSynthesize: 3,
     };
     expect(() => exportToPdf(report, input, pdfSettings)).not.toThrow();
+    const footerLabels = pdfTextSpy.mock.calls
+      .map((args) => args[0])
+      .filter((text): text is string => typeof text === 'string' && /^Page \d+ \|/.test(text));
+    const pageNumbers = footerLabels.map((text) => Number(/^Page (\d+)/.exec(text)?.[1]));
+    expect(pageNumbers.length).toBeGreaterThan(1);
+    expect(pageNumbers).toEqual([...Array(pageNumbers.length).keys()].map((i) => i + 1));
+    for (const page of pageNumbers) {
+      expect(pdfSetPageSpy).toHaveBeenCalledWith(page);
+    }
   });
 
   it('exportCitations bib escapes backslash and special chars in a single pass', () => {
