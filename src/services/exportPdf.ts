@@ -183,13 +183,17 @@ class PdfExporter {
       .setFontSize(PDF_CONSTANTS.FONT_SIZES.H2)
       .setFont('helvetica', 'bold')
       .setTextColor(PDF_CONSTANTS.COLORS.LINK);
-    this.doc.textWithLink(
-      `${index + 1}. ${cleanText(article.title)}`,
-      PDF_CONSTANTS.MARGIN,
-      this.currentY,
-      { url: articleLink },
-    );
-    this.currentY += PDF_CONSTANTS.FONT_SIZES.H2 * 1.5;
+    const title = `${index + 1}. ${cleanText(article.title)}`;
+    const titleLines = this.doc.splitTextToSize(
+      title,
+      this.pageWidth - PDF_CONSTANTS.MARGIN * 2,
+    ) as string[];
+    for (const line of titleLines) {
+      this.checkPageBreak(PDF_CONSTANTS.FONT_SIZES.H2);
+      this.doc.textWithLink(line, PDF_CONSTANTS.MARGIN, this.currentY, { url: articleLink });
+      this.currentY += PDF_CONSTANTS.FONT_SIZES.H2 * 1.2;
+    }
+    this.currentY += PDF_CONSTANTS.FONT_SIZES.H2 * 0.3;
 
     this.addKeyValue('Authors:', `${article.authors} (${article.pubYear})`);
     this.addKeyValue('Journal:', article.journal);
@@ -265,41 +269,48 @@ class PdfExporter {
       ];
       this.doc.text(params.join('\n'), this.pageWidth / 2, 140, { align: 'center' });
       this.addPage();
+    } else if (this.settings.includeHeader) {
+      this.addHeader();
     }
 
-    if (this.settings.includeToc) {
-      const tocPage = this.pageNumber;
+    const addToToc = this.settings.includeToc;
+    let tocPage: number | null = null;
+    if (addToToc) {
+      tocPage = this.pageNumber;
       this.addPage();
+    }
 
-      if (this.settings.includeSynthesis) {
-        this.addSectionTitle('Executive Synthesis', { addToToc: true });
-        this.addBodyText(report.synthesis);
-      }
-      if (this.settings.includeInsights) {
-        this.addSectionTitle('AI-Generated Insights', { addToToc: true });
-        report.aiGeneratedInsights.forEach((insight) => {
-          this.checkPageBreak(25);
-          this.addKeyValue('Question:', insight.question);
-          this.addKeyValue('Answer:', insight.answer);
-          this.addKeyValue('Sources (PMID):', insight.supportingArticles.join(', '));
-          this.currentY += 5;
-        });
-      }
-
-      this.addSectionTitle(`Ranked Articles (Top ${report.rankedArticles.length})`, {
-        addToToc: true,
+    if (this.settings.includeSynthesis) {
+      this.addSectionTitle('Executive Synthesis', { addToToc });
+      this.addBodyText(report.synthesis);
+    }
+    if (this.settings.includeInsights) {
+      this.addSectionTitle('AI-Generated Insights', { addToToc });
+      report.aiGeneratedInsights.forEach((insight) => {
+        this.checkPageBreak(25);
+        this.addKeyValue('Question:', insight.question);
+        this.addKeyValue('Answer:', insight.answer);
+        this.addKeyValue('Sources (PMID):', insight.supportingArticles.join(', '));
+        this.currentY += 5;
       });
-      report.rankedArticles.forEach((article, index) => this.addArticle(article, index));
+    }
 
-      if (this.settings.includeQueries) {
-        this.addSectionTitle('Generated PubMed Queries', { addToToc: true });
-        report.generatedQueries.forEach((q) => {
-          this.checkPageBreak(20);
-          this.addKeyValue('Query:', q.query);
-          this.addKeyValue('Explanation:', q.explanation);
-          this.currentY += 5;
-        });
-      }
+    this.addSectionTitle(`Ranked Articles (Top ${report.rankedArticles.length})`, {
+      addToToc,
+    });
+    report.rankedArticles.forEach((article, index) => this.addArticle(article, index));
+
+    if (this.settings.includeQueries) {
+      this.addSectionTitle('Generated PubMed Queries', { addToToc });
+      report.generatedQueries.forEach((q) => {
+        this.checkPageBreak(20);
+        this.addKeyValue('Query:', q.query);
+        this.addKeyValue('Explanation:', q.explanation);
+        this.currentY += 5;
+      });
+    }
+
+    if (tocPage !== null) {
       this.doc.setPage(tocPage);
       this.currentY = PDF_CONSTANTS.MARGIN;
       this.addTableOfContents();
@@ -342,6 +353,8 @@ class PdfExporter {
         });
       }
       this.addPage();
+    } else if (this.settings.includeHeader) {
+      this.addHeader();
     }
 
     this.addSectionTitle('Exported Articles', {});

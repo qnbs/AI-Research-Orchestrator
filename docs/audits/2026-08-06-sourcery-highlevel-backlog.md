@@ -7,9 +7,8 @@
 "high level feedback" review comments**, which are not threads and don't surface in a
 `reviewThreads` sweep. This backlog exists because that second category was being missed by
 the correction loop across PRs #228-233. Each PR's Sourcery review body was pulled directly
-(`gh api graphql` on `reviews`, not `reviewThreads`) and triaged against current code. Items
-that were false positives or already fixed are noted as such, not carried forward here — only
-genuinely open, deferred items are listed.
+(`gh api graphql` on `reviews`, not `reviewThreads`) and triaged against current code. P2 IDs
+below are **resolved** (kept for lookup). P3 remains deferred.
 
 Severity: P2 = worth doing, not blocking · P3 = defer with rationale (cosmetic/low-risk)
 
@@ -33,7 +32,7 @@ Severity: P2 = worth doing, not blocking · P3 = defer with rationale (cosmetic/
 
 ---
 
-## P2 — worth doing as a follow-up
+## P2 — resolved (IDs kept for lookup)
 
 ### BACKLOG-P2-001 — Centralize `developerMode` gating condition
 

@@ -3,6 +3,14 @@ import { csvPartialProvenanceRow } from '../lib/reportExportProvenance';
 import { articleExternalUrl } from '../lib/sourceIdentifier';
 import { downloadUtf8File, sanitizeCsvFormulaInjection } from '../lib/exportSafety';
 
+/** Quote when a delimiter, quote, or line break would split or unmask a cell. */
+function quoteCsvField(str: string, delimiter: string): string {
+  if (str.includes(delimiter) || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+  return str;
+}
+
 export const exportToCsv = (
   articlesToExport: AggregatedArticle[],
   topic: string,
@@ -11,10 +19,8 @@ export const exportToCsv = (
 ): void => {
   const escapeCsvField = (field: unknown): string => {
     if (field === null || field === undefined) return '';
-    let str = sanitizeCsvFormulaInjection(String(field));
-    if (str.includes(settings.delimiter) || str.includes('"') || str.includes('\n'))
-      str = `"${str.replace(/"/g, '""')}"`;
-    return str;
+    const str = sanitizeCsvFormulaInjection(String(field));
+    return quoteCsvField(str, settings.delimiter);
   };
 
   const headers = settings.columns;
@@ -68,11 +74,8 @@ export const exportInsightsToCsv = (
 ): void => {
   const escapeCsvField = (field: unknown): string => {
     if (field === null || field === undefined) return '';
-    let str = sanitizeCsvFormulaInjection(String(field));
-    if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-      str = `"${str.replace(/"/g, '""')}"`;
-    }
-    return str;
+    const str = sanitizeCsvFormulaInjection(String(field));
+    return quoteCsvField(str, ',');
   };
 
   const headers = ['ReportTopic', 'Question', 'Answer', 'Supporting PMIDs'];

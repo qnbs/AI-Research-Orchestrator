@@ -108,6 +108,17 @@ describe('export helpers', () => {
     document.querySelectorAll('a[download]').forEach((el) => el.remove());
   });
 
+  it('exportInsightsToCsv quotes carriage-return fields so a sanitized formula stays one cell', async () => {
+    exportInsightsToCsv(
+      [{ question: 'Q', answer: '\r=SUM(1)', supportingArticles: ['1'] }],
+      'topic',
+    );
+    const blob = vi.mocked(URL.createObjectURL).mock.calls[0][0] as Blob;
+    const csv = await blob.text();
+    expect(csv).toContain('"\t\r=SUM(1)"');
+    expect(csv.split('\n').some((line) => line.startsWith('=SUM'))).toBe(false);
+  });
+
   it('exportInsightsToCsv triggers download', () => {
     exportInsightsToCsv([{ question: 'Q', answer: 'A', supportingArticles: ['1'] }], 'topic');
     expect(anchorMocks.length).toBe(1);
@@ -374,6 +385,14 @@ describe('export helpers', () => {
       topNToSynthesize: 3,
     };
     expect(() => exportToPdf(report, input, pdfSettings)).not.toThrow();
+    expect(
+      pdfTextSpy.mock.calls.some(
+        ([text]) => typeof text === 'string' && text.includes('Executive Synthesis'),
+      ),
+    ).toBe(true);
+    expect(
+      pdfTextSpy.mock.calls.some(([text]) => typeof text === 'string' && text.includes('Synth')),
+    ).toBe(true);
   });
 
   it('exportCitations builds bib file', () => {
