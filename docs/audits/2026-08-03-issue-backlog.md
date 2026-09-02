@@ -4,7 +4,7 @@
 
 **Landed since the 2026-08-29 refresh (do not re-open):** `NOW-P0-PARTIAL` / ADR 0021 (#260), `NOW-P1-MOTION` (#261), `NOW-P1-DOCS-WAVE` (#262), `NOW-P1-DEP-STALL` (#263), `NOW-P1-RELEASE` (#264), `NOW-P1-CODEOWNERS` (#265), Ollama bounds (#266), Dexie upgrade tests (#267), heuristic ops (#268), eval adversarial (#269), provider harness (#270), BM25+ (#271), CSV/export hardening (#272).
 
-**Still real (see 2026-09-01 baseline):** P2 façade/file-cap/OpenRouter/chart-a11y. `NOW-P0-PARTIAL-E2E` and `NOW-P1-PARTIAL-EXPORT-GAPS` close in this PR. `NOW-P2-LUCIDE` landed in #286; `NOW-P1-LIVE-COPY` in #288; `NOW-P1-DEP-WAVE-2` in #286 / #289.
+**Still real (see 2026-09-01 baseline):** P2 façade/file-cap/OpenRouter/chart-a11y/Sourcery. `NOW-P0-PARTIAL-E2E` and `NOW-P1-PARTIAL-EXPORT-GAPS` close in this PR. `NOW-P2-LUCIDE` landed in #286; `NOW-P1-LIVE-COPY` in #288; `NOW-P1-DEP-WAVE-2` in #286 / #289.
 
 **New P0 this baseline:** `NOW-P0-AUDIT-BROWSERSLIST` — CVE-2026-73088 / CVE-2026-73089 on `browserslist@4.28.6`. Pin latest patched `4.28.8` (security floor 4.28.7). Same pattern as #259 nanoid. Not a GHSA ignore.
 
