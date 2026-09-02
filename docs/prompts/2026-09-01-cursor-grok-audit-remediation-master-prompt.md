@@ -1,5 +1,7 @@
 # AI Research Orchestrator — Cursor Cloud Agent / Grok 4.5 Master Prompt
 
+> **Superseded for execution by `docs/prompts/2026-09-02-cursor-grok-audit-remediation-master-prompt.md`. Keep for history.**
+
 **Document type:** Authoritative post-v0.4.2 audit, correction, and perfectionization master prompt  
 **Audience:** Cursor Cloud Agent running Grok 4.5 (or equivalent coding agent) in this repository  
 **Language:** English only for all repo artifacts this prompt produces  

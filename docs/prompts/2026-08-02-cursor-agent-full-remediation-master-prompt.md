@@ -1,6 +1,6 @@
 # Cursor Agent Master Prompt — Full-Scale Audit Remediation and Production Hardening
 
-> **Superseded for execution by `docs/prompts/2026-09-01-cursor-grok-audit-remediation-master-prompt.md`. Keep for history.**
+> **Superseded for execution by `docs/prompts/2026-09-02-cursor-grok-audit-remediation-master-prompt.md` (2026-09-01 prompt is also historical). Keep for history.**
 >
 > **Status (2026-08-03):** Large portions of this prompt are **executed / archived**. Do not re-litigate completed gates: cross-browser is **blocking** (not advisory); Claude Code Review was **removed** from CI (on-demand `@claude` only); DeepSource **AI Review** is mandatory via `@deepsourcebot review`; P1-7 governance lives in `docs/ci-branch-governance.md` + live ruleset `mainrules`. Prefer current `AGENTS.md`, `docs/project-facts.json`, and open GitHub issues for remaining P2/P3 work.
 >

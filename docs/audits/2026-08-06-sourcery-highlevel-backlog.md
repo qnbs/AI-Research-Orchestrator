@@ -1,5 +1,7 @@
 # Sourcery high-level feedback backlog — 2026-08-06 (PR wave #228-233)
 
+> **Status (2026-09-02):** Live remaining IDs after #290 are BACKLOG-P2-002 / 004 / 005 (`NOW-P1-SOURCERY-RESIDUAL`). 001 / 003 / 006 are in PR #290. See `docs/audits/2026-09-02-baseline.md`.
+
 **Context:** Sourcery posts two kinds of feedback on a PR — inline review-thread comments
 (tracked and resolved via the normal GraphQL `reviewThreads` correction loop) and **top-level
 "high level feedback" review comments**, which are not threads and don't surface in a
@@ -50,6 +52,7 @@ Severity: P2 = worth doing, not blocking · P3 = defer with rationale (cosmetic/
 | Source | Sourcery, PR #230                                                                                                                              |
 | Impact | New sticky settings header uses `top-20 md:top-36`; existing sidebar uses `sticky top-24` — worth confirming intentional, otherwise centralize |
 | Files  | `src/components/SettingsView.tsx` and wherever the sidebar's `top-24` is defined                                                               |
+| Status | **Open** after #290 — not in the façade/a11y PR. `NOW-P1-SOURCERY-RESIDUAL`.                                                                   |
 
 ### BACKLOG-P2-003 — `validViews` hardcoded, can drift from `View` type
 
@@ -69,6 +72,7 @@ Severity: P2 = worth doing, not blocking · P3 = defer with rationale (cosmetic/
 | Impact     | `LoadingIndicator` is a shared/generic component but its cancel-button label is hard-wired to `orchestrator.cancel.button` — reusing it in another context (author/journal loading) would show the wrong label |
 | Suggestion | Generic i18n key, or pass the label in via props                                                                                                                                                               |
 | Files      | `src/components/LoadingIndicator.tsx`                                                                                                                                                                          |
+| Status     | **Open** after #290 — not in the façade/a11y PR. `NOW-P1-SOURCERY-RESIDUAL`.                                                                                                                                   |
 
 ### BACKLOG-P2-005 — Possible duplicate cancel-button UI (OrchestratorView vs LoadingIndicator)
 
@@ -78,6 +82,7 @@ Severity: P2 = worth doing, not blocking · P3 = defer with rationale (cosmetic/
 | Impact     | `OrchestratorView` renders its own cancel button while `LoadingIndicator` now also wires in a cancel affordance for other contexts — worth confirming these don't both render simultaneously in the orchestrator flow |
 | Suggestion | Reuse the shared control, or extract a `CancelButton` component                                                                                                                                                       |
 | Files      | `src/components/OrchestratorView.tsx`, `src/components/LoadingIndicator.tsx`                                                                                                                                          |
+| Status     | **Open** after #290 — not in the façade/a11y PR. `NOW-P1-SOURCERY-RESIDUAL`.                                                                                                                                          |
 
 ### BACKLOG-P2-006 — `ScientometricHub` a11y table reuses `dashboard.a11y.*` keys
 
