@@ -62,10 +62,7 @@ const CustomTooltip: React.FC<{ active?: boolean; payload?: Array<{ payload: Aut
   const { t, lang } = useTranslation();
   if (!active || !payload?.length) return null;
   const node = payload[0].payload;
-  const avgRelevance = Number(node.avgRelevance).toLocaleString(lang === 'de' ? 'de-DE' : 'en-US', {
-    maximumFractionDigits: 1,
-    minimumFractionDigits: 1,
-  });
+  const avgRelevance = formatAvgRelevance(node.avgRelevance, lang);
   return (
     <div
       className="glass-panel rounded-xl p-3 text-xs max-w-[220px]"
@@ -86,6 +83,12 @@ const CustomTooltip: React.FC<{ active?: boolean; payload?: Array<{ payload: Aut
     </div>
   );
 };
+
+const formatAvgRelevance = (value: number, lang: string): string =>
+  Number(value).toLocaleString(lang === 'de' ? 'de-DE' : 'en-US', {
+    maximumFractionDigits: 1,
+    minimumFractionDigits: 1,
+  });
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const parseAuthors = (articles: AggregatedArticle[]): AuthorNode[] => {
@@ -165,7 +168,7 @@ const TABS: { id: Tab; labelKey: TranslationKey; icon: string }[] = [
 
 // ── Main Component ────────────────────────────────────────────────────────────
 const ScientometricHub: React.FC<Props> = ({ articles, keywords = [], title }) => {
-  const { t } = useTranslation();
+  const { t, lang } = useTranslation();
   const [activeTab, setActiveTab] = useState<Tab>('authors');
   const unknownLabel = t('scientometrics.unknown');
   const activeTabIndex = TABS.findIndex((tab) => tab.id === activeTab);
@@ -319,7 +322,7 @@ const ScientometricHub: React.FC<Props> = ({ articles, keywords = [], title }) =
                     {
                       key: 'avgRelevance',
                       label: t('scientometrics.a11y.avg_relevance'),
-                      render: (r) => Math.round(r.avgRelevance),
+                      render: (r) => formatAvgRelevance(r.avgRelevance, lang),
                     },
                   ]}
                   rows={authorNodes}

@@ -43,6 +43,6 @@ describe('Header developer-mode gating', () => {
 
   it('shows the Agent Debugger toggle when developerMode is on', () => {
     renderHeader(true);
-    expect(screen.getByRole('button', { name: 'Toggle Agent Debugger' })).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'Toggle Agent Debugger' })).toHaveLength(2);
   });
 });

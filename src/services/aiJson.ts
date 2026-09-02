@@ -43,6 +43,9 @@ export async function generateJson<T>(
   }
 
   const schemaRootIsArray = schema?.type === 'array';
+  // json_object mode cannot emit a root array (OpenAI/Ollama/Anthropic). Keep
+  // json:false for array schemas; the schema is already in the prompt above and
+  // parseGeminiResponseJson extracts JSON from surrounding chatter (ADR 0014).
   const useJsonObjectMode = caps.jsonObjectMode && !schemaRootIsArray;
   const useStructuredJson = useJsonObjectMode || caps.nativeJsonSchema;
 
