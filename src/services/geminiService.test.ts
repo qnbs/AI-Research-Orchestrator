@@ -799,6 +799,62 @@ describe('geminiService with mocked SDK', () => {
     expect(mockPubMed.searchPubMedForIds).not.toHaveBeenCalled();
   });
 
+  it('generateResearchReportStream throws VALIDATION when the model returns no queries', async () => {
+    hoisted.generateContent.mockResolvedValueOnce({
+      text: JSON.stringify({ generatedQueries: [] }),
+    });
+    const gen = generateResearchReportStream(mockInput, mockAi);
+    await expect(gen.next()).resolves.toMatchObject({
+      value: { phase: EXECUTION_PROVENANCE_PHASE, phaseId: 'execution-provenance' },
+    });
+    await expect(gen.next()).resolves.toBeDefined();
+    await expect(gen.next()).rejects.toMatchObject({
+      code: 'VALIDATION',
+      context: 'query_generation',
+    });
+    expect(mockPubMed.searchPubMedForIds).not.toHaveBeenCalled();
+  });
+
+  it('generateResearchReportStream throws VALIDATION when PubMed returns no ids', async () => {
+    hoisted.generateContent.mockResolvedValueOnce({
+      text: JSON.stringify({
+        generatedQueries: [{ query: 'cancer[Title]', explanation: 'e' }],
+      }),
+    });
+    mockPubMed.searchPubMedForIds.mockResolvedValueOnce([]);
+    const gen = generateResearchReportStream(mockInput, mockAi);
+    await expect(gen.next()).resolves.toMatchObject({
+      value: { phase: EXECUTION_PROVENANCE_PHASE, phaseId: 'execution-provenance' },
+    });
+    await expect(gen.next()).resolves.toBeDefined();
+    await expect(gen.next()).resolves.toBeDefined();
+    await expect(gen.next()).rejects.toMatchObject({
+      code: 'VALIDATION',
+      context: 'pubmed',
+    });
+  });
+
+  it('generateResearchReportStream throws NCBI_NETWORK when article fetch is empty', async () => {
+    hoisted.generateContent.mockResolvedValueOnce({
+      text: JSON.stringify({
+        generatedQueries: [{ query: 'cancer[Title]', explanation: 'e' }],
+      }),
+    });
+    mockPubMed.searchPubMedForIds.mockResolvedValueOnce(['123']);
+    mockPubMed.fetchArticleDetails.mockResolvedValueOnce([]);
+    const gen = generateResearchReportStream(mockInput, mockAi);
+    await expect(gen.next()).resolves.toMatchObject({
+      value: { phase: EXECUTION_PROVENANCE_PHASE, phaseId: 'execution-provenance' },
+    });
+    await expect(gen.next()).resolves.toBeDefined();
+    await expect(gen.next()).resolves.toBeDefined();
+    await expect(gen.next()).resolves.toBeDefined();
+    await expect(gen.next()).rejects.toMatchObject({
+      code: 'NCBI_NETWORK',
+      context: 'pubmed',
+    });
+  });
+
   it('uses heuristic TL;DR when API key is missing (no NO_API_KEY throw)', async () => {
     const { hasProviderApiKey } = await import('./apiKeyService');
     vi.mocked(hasProviderApiKey).mockResolvedValueOnce(false);
@@ -900,6 +956,20 @@ describe('geminiService with mocked SDK', () => {
     });
     const out = await disambiguateAuthor('Name', [{ pmid: '1', title: 'T' }], mockAi);
     expect(out[0].nameVariant).toBe('N');
+  });
+
+  it('disambiguateAuthor rethrows STREAM_ABORTED without remapping', async () => {
+    const ac = new AbortController();
+    const logSpy = vi.spyOn(safeLog, 'safeLogError').mockImplementation(() => {});
+    hoisted.generateContent.mockImplementationOnce(async () => {
+      ac.abort();
+      throw new DOMException('Aborted', 'AbortError');
+    });
+    await expect(
+      disambiguateAuthor('Name', [{ pmid: '1', title: 'T' }], mockAi, ac.signal),
+    ).rejects.toMatchObject({ code: 'STREAM_ABORTED' });
+    expect(logSpy).not.toHaveBeenCalled();
+    logSpy.mockRestore();
   });
 
   it('suggestAuthors parses suggestions', async () => {

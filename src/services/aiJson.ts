@@ -5,7 +5,7 @@
  */
 import type { Settings } from '../types';
 import { getProviderForSettings } from './providers/factory';
-import type { AIContentRequest } from './providers/types';
+import type { AIContentRequest, AIJsonSchema } from './providers/types';
 import { resolveApprovedBaseUrl } from '../lib/endpointPolicy';
 import {
   UNTRUSTED_DATA_SYSTEM_RULE,
@@ -15,9 +15,51 @@ import {
   parseGeminiResponseJson as parseGeminiJsonCore,
   GeminiJsonParseError,
 } from '../lib/parseGeminiJson';
-import { AppError, throwIfAborted } from '../lib/errors';
+import { AppError, isAbortError, throwIfAborted } from '../lib/errors';
 import { PromptId, promptTag, type PromptIdValue } from '../lib/promptRegistry';
 import { safeLogError } from '../lib/safeLog';
+
+const ARRAY_WRAP_KEY = 'items';
+
+function isRootArraySchema(schema: AIJsonSchema | undefined): boolean {
+  return schema?.type === 'array';
+}
+
+/** json_object mode cannot emit a root array — wrap as `{ items: [...] }` for those providers. */
+function wrapRootArraySchema(schema: AIJsonSchema): AIJsonSchema {
+  return {
+    type: 'object',
+    properties: { [ARRAY_WRAP_KEY]: schema },
+    required: [ARRAY_WRAP_KEY],
+  };
+}
+
+function unwrapRootArrayJson<T>(parsed: unknown): T {
+  if (Array.isArray(parsed)) return parsed as T;
+  if (
+    parsed !== null &&
+    typeof parsed === 'object' &&
+    ARRAY_WRAP_KEY in parsed &&
+    Array.isArray((parsed as { items: unknown }).items)
+  ) {
+    return (parsed as { items: T }).items;
+  }
+  throw new AppError({
+    code: 'GEMINI_PARSE_FAILURE',
+    message: 'Expected a JSON array (or {items: [...]}) from the model.',
+    retryable: true,
+  });
+}
+
+function abortAsStreamAborted(error: unknown): never {
+  if (error instanceof AppError && error.code === 'STREAM_ABORTED') throw error;
+  throw new AppError({
+    code: 'STREAM_ABORTED',
+    message: 'Aborted',
+    retryable: false,
+    cause: error,
+  });
+}
 
 /** Helper to call a single-shot provider generation with JSON parsing. */
 export async function generateJson<T>(
@@ -38,16 +80,16 @@ export async function generateJson<T>(
     ? withUntrustedDataSystemRule(request.system)
     : UNTRUSTED_DATA_SYSTEM_RULE;
 
-  if (schema && !caps.nativeJsonSchema && caps.jsonObjectMode) {
-    prompt = `${prompt}\n\nRespond with valid JSON matching this schema:\n${JSON.stringify(schema)}`;
+  // OpenAI/Ollama/Anthropic json_object mode cannot emit a root array. Wrap
+  // internally so JSON mode stays on; callers still pass/receive arrays.
+  const wrapRootArray = isRootArraySchema(schema) && caps.jsonObjectMode && !caps.nativeJsonSchema;
+  const effectiveSchema = wrapRootArray && schema ? wrapRootArraySchema(schema) : schema;
+
+  if (effectiveSchema && !caps.nativeJsonSchema && caps.jsonObjectMode) {
+    prompt = `${prompt}\n\nRespond with valid JSON matching this schema:\n${JSON.stringify(effectiveSchema)}`;
   }
 
-  const schemaRootIsArray = schema?.type === 'array';
-  // json_object mode cannot emit a root array (OpenAI/Ollama/Anthropic). Keep
-  // json:false for array schemas; the schema is already in the prompt above and
-  // parseGeminiResponseJson extracts JSON from surrounding chatter (ADR 0014).
-  const useJsonObjectMode = caps.jsonObjectMode && !schemaRootIsArray;
-  const useStructuredJson = useJsonObjectMode || caps.nativeJsonSchema;
+  const useStructuredJson = caps.jsonObjectMode || caps.nativeJsonSchema;
 
   if (schema && !caps.nativeJsonSchema && !caps.jsonObjectMode) {
     throw new AppError({
@@ -57,6 +99,7 @@ export async function generateJson<T>(
     });
   }
 
+  let responseText: string;
   try {
     const response = await provider.generateContent({
       ...request,
@@ -67,11 +110,17 @@ export async function generateJson<T>(
       baseURL,
       signal,
     });
-    return parseGeminiResponseJson<T>(response.text);
+    responseText = response.text;
   } catch (error) {
+    if (isAbortError(error) || signal?.aborted) abortAsStreamAborted(error);
     safeLogError('Error generating content:', error);
     throw provider.mapError(error);
   }
+
+  // Parse outside the provider catch so GEMINI_PARSE_FAILURE is never remapped
+  // through mapError (which classifies AbortError as PROVIDER_UNAVAILABLE).
+  const parsed = parseGeminiResponseJson<unknown>(responseText);
+  return wrapRootArray ? unwrapRootArrayJson<T>(parsed) : (parsed as T);
 }
 
 /**

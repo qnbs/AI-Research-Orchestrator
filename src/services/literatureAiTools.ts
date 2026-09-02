@@ -9,12 +9,11 @@ import type {
   JournalProfile,
   JournalCandidate,
 } from '../types';
-import { getProviderForSettings } from './providers/factory';
-import type { AIJsonSchema } from './providers/types';
+import type { AIContentRequest, AIJsonSchema } from './providers/types';
 import { sanitizePromptFragment } from '../lib/promptSanitize';
 import { intersectClustersWithCorpus } from '../lib/authorIdentity';
 import { wrapUntrustedJsonBlock, wrapUntrustedTextBlock } from '../lib/untrustedDataFraming';
-import { throwIfAborted } from '../lib/errors';
+import { isAbortError, throwIfAborted } from '../lib/errors';
 import { PromptId } from '../lib/promptRegistry';
 import {
   disambiguateAuthorHeuristic,
@@ -54,6 +53,25 @@ export const generateAuthorQuery = (fullName: string): string => {
 
   return `(${Array.from(queryVariations).join(' OR ')})`;
 };
+
+/** Shared live-path: generateJson already maps provider errors; do not mapError again. */
+async function runAiTool<T>(
+  aiSettings: Settings['ai'],
+  request: Omit<AIContentRequest, 'json'>,
+  signal: AbortSignal | undefined,
+  logLabel: string,
+): Promise<T> {
+  throwIfAborted(signal);
+  try {
+    return await generateJson<T>(aiSettings, request, signal);
+  } catch (error) {
+    if (!isAbortError(error)) {
+      safeLogError(logLabel, error);
+    }
+    throw error;
+  }
+}
+
 export async function disambiguateAuthor(
   authorName: string,
   articles: Partial<RankedArticle>[],
@@ -63,40 +81,37 @@ export async function disambiguateAuthor(
   if (await shouldUseHeuristic(aiSettings)) {
     return disambiguateAuthorHeuristic(authorName, articles, signal);
   }
-  const provider = await getProviderForSettings(aiSettings);
-  throwIfAborted(signal);
   const nameSafe = sanitizePromptFragment(authorName, 500);
-  try {
-    const authorSchema: AIJsonSchema = {
-      type: 'array',
-      items: {
-        type: 'object',
-        properties: {
-          nameVariant: { type: 'string' },
-          primaryAffiliation: { type: 'string' },
-          topCoAuthors: { type: 'array', items: { type: 'string' } },
-          coreTopics: { type: 'array', items: { type: 'string' } },
-          publicationCount: { type: 'integer' },
-          pmids: { type: 'array', items: { type: 'string' } },
-        },
-        required: [
-          'nameVariant',
-          'primaryAffiliation',
-          'topCoAuthors',
-          'coreTopics',
-          'publicationCount',
-          'pmids',
-        ],
+  const authorSchema: AIJsonSchema = {
+    type: 'array',
+    items: {
+      type: 'object',
+      properties: {
+        nameVariant: { type: 'string' },
+        primaryAffiliation: { type: 'string' },
+        topCoAuthors: { type: 'array', items: { type: 'string' } },
+        coreTopics: { type: 'array', items: { type: 'string' } },
+        publicationCount: { type: 'integer' },
+        pmids: { type: 'array', items: { type: 'string' } },
       },
-    };
-    const clusters = await generateJson<AuthorCluster[]>(
-      aiSettings,
-      {
-        model: aiSettings.model,
-        system: getPreamble(aiSettings, PromptId.AUTHOR_DISAMBIGUATE),
-        temperature: 0.1,
-        jsonSchema: authorSchema,
-        prompt: `Given the author name ${wrapUntrustedTextBlock('author_name', nameSafe)} and this list of their potential publications, disambiguate them into distinct author profiles. For each profile, provide a likely name variant, their most common primary affiliation, top 3 co-authors, core research topics, total publication count, and a list of their PMIDs.
+      required: [
+        'nameVariant',
+        'primaryAffiliation',
+        'topCoAuthors',
+        'coreTopics',
+        'publicationCount',
+        'pmids',
+      ],
+    },
+  };
+  const clusters = await runAiTool<AuthorCluster[]>(
+    aiSettings,
+    {
+      model: aiSettings.model,
+      system: getPreamble(aiSettings, PromptId.AUTHOR_DISAMBIGUATE),
+      temperature: 0.1,
+      jsonSchema: authorSchema,
+      prompt: `Given the author name ${wrapUntrustedTextBlock('author_name', nameSafe)} and this list of their potential publications, disambiguate them into distinct author profiles. For each profile, provide a likely name variant, their most common primary affiliation, top 3 co-authors, core research topics, total publication count, and a list of their PMIDs.
             ${wrapUntrustedJsonBlock(
               'articles',
               articles.map((a) => ({
@@ -106,14 +121,11 @@ export async function disambiguateAuthor(
                 journal: a.journal,
               })),
             )}`,
-      },
-      signal,
-    );
-    return intersectClustersWithCorpus(clusters, articles);
-  } catch (error) {
-    safeLogError('Error disambiguating author:', error);
-    throw provider.mapError(error);
-  }
+    },
+    signal,
+    'Error disambiguating author:',
+  );
+  return intersectClustersWithCorpus(clusters, articles);
 }
 
 export async function generateAuthorProfileAnalysis(
@@ -128,49 +140,40 @@ export async function generateAuthorProfileAnalysis(
   if (await shouldUseHeuristic(aiSettings)) {
     return generateAuthorProfileHeuristic(authorName, articles, signal);
   }
-  const provider = await getProviderForSettings(aiSettings);
-  throwIfAborted(signal);
   const nameSafe = sanitizePromptFragment(authorName, 500);
-  try {
-    const profileSchema: AIJsonSchema = {
-      type: 'object',
-      properties: {
-        careerSummary: { type: 'string' },
-        coreConcepts: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: { concept: { type: 'string' }, frequency: { type: 'integer' } },
-            required: ['concept', 'frequency'],
-          },
+  const profileSchema: AIJsonSchema = {
+    type: 'object',
+    properties: {
+      careerSummary: { type: 'string' },
+      coreConcepts: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: { concept: { type: 'string' }, frequency: { type: 'integer' } },
+          required: ['concept', 'frequency'],
         },
       },
-      required: ['careerSummary', 'coreConcepts'],
-    };
-    return await generateJson<{
-      careerSummary: string;
-      coreConcepts: { concept: string; frequency: number }[];
-    }>(
-      aiSettings,
-      {
-        model: aiSettings.model,
-        system: getPreamble(aiSettings, PromptId.AUTHOR_PROFILE),
-        temperature: 0.3,
-        jsonSchema: profileSchema,
-        prompt: `Analyze the following publication list for author ${wrapUntrustedTextBlock('author_name', nameSafe)}. Based strictly on this list, provide:
+    },
+    required: ['careerSummary', 'coreConcepts'],
+  };
+  return runAiTool(
+    aiSettings,
+    {
+      model: aiSettings.model,
+      system: getPreamble(aiSettings, PromptId.AUTHOR_PROFILE),
+      temperature: 0.3,
+      jsonSchema: profileSchema,
+      prompt: `Analyze the following publication list for author ${wrapUntrustedTextBlock('author_name', nameSafe)}. Based strictly on this list, provide:
             1. A narrative career summary (in markdown format) scoped to these retrieved records only — do not state global bibliometric facts (h-index, total citations) without an authoritative citation source.
             2. A list of core research concepts with frequency counts from these titles/abstracts.
             ${wrapUntrustedJsonBlock(
               'publications',
               articles.map((a) => ({ title: a.title, pubYear: a.pubYear, journal: a.journal })),
             )}`,
-      },
-      signal,
-    );
-  } catch (error) {
-    safeLogError('Error generating author profile:', error);
-    throw provider.mapError(error);
-  }
+    },
+    signal,
+    'Error generating author profile:',
+  );
 }
 
 export async function suggestAuthors(
@@ -181,37 +184,32 @@ export async function suggestAuthors(
   if (await shouldUseHeuristic(aiSettings)) {
     return suggestAuthorsHeuristic(fieldOfStudy, signal);
   }
-  const provider = await getProviderForSettings(aiSettings);
-  throwIfAborted(signal);
   const fieldSafe = sanitizePromptFragment(fieldOfStudy, 2000);
-  try {
-    const suggestSchema: AIJsonSchema = {
-      type: 'array',
-      items: {
-        type: 'object',
-        properties: {
-          name: { type: 'string' },
-          description: { type: 'string' },
-        },
-        required: ['name', 'description'],
+  const suggestSchema: AIJsonSchema = {
+    type: 'array',
+    items: {
+      type: 'object',
+      properties: {
+        name: { type: 'string' },
+        description: { type: 'string' },
       },
-    };
-    return await generateJson<{ name: string; description: string }[]>(
-      aiSettings,
-      {
-        model: aiSettings.model,
-        system: getPreamble(aiSettings, PromptId.AUTHOR_SUGGEST),
-        temperature: 0.5,
-        jsonSchema: suggestSchema,
-        prompt: `Suggest 5-10 prominent researchers in the field of ${wrapUntrustedTextBlock('field', fieldSafe)}. For each, provide their name and a brief (1-sentence) description of their key contribution.`,
-      },
-      signal,
-    );
-  } catch (error) {
-    safeLogError('Error suggesting authors:', error);
-    throw provider.mapError(error);
-  }
+      required: ['name', 'description'],
+    },
+  };
+  return runAiTool<{ name: string; description: string }[]>(
+    aiSettings,
+    {
+      model: aiSettings.model,
+      system: getPreamble(aiSettings, PromptId.AUTHOR_SUGGEST),
+      temperature: 0.5,
+      jsonSchema: suggestSchema,
+      prompt: `Suggest 5-10 prominent researchers in the field of ${wrapUntrustedTextBlock('field', fieldSafe)}. For each, provide their name and a brief (1-sentence) description of their key contribution.`,
+    },
+    signal,
+    'Error suggesting authors:',
+  );
 }
+
 export async function generateJournalProfileAnalysis(
   journalName: string,
   aiSettings: Settings['ai'],
@@ -221,53 +219,47 @@ export async function generateJournalProfileAnalysis(
   if (await shouldUseHeuristic(aiSettings)) {
     return generateJournalProfileHeuristic(journalName, articles, signal);
   }
-  const provider = await getProviderForSettings(aiSettings);
-  throwIfAborted(signal);
   const journalSafe = sanitizePromptFragment(journalName, 500);
   const articleContext =
     articles.length > 0
       ? `\n${wrapUntrustedJsonBlock('recent_titles', articles.map((a) => a.title).slice(0, 20))}`
       : '';
-  try {
-    const journalSchema: AIJsonSchema = {
-      type: 'object',
-      properties: {
-        name: { type: 'string' },
-        issn: { type: 'string' },
-        description: { type: 'string' },
-        oaPolicy: { type: 'string' },
-        focusAreas: { type: 'array', items: { type: 'string' } },
-        publisher: { type: 'string' },
-      },
-      required: ['name', 'issn', 'description', 'oaPolicy', 'focusAreas'],
-    };
-    const profile = await generateJson<JournalProfile>(
-      aiSettings,
-      {
-        model: aiSettings.model,
-        system: getPreamble(aiSettings, PromptId.JOURNAL_PROFILE),
-        temperature: 0.2,
-        jsonSchema: journalSchema,
-        prompt: `Act as an expert academic librarian. Analyze the journal ${wrapUntrustedTextBlock('journal_name', journalSafe)}. Provide a JSON object with: name, issn, description, oaPolicy, focusAreas, publisher. Find the correct ISSN when possible. For oaPolicy, use one of: "Full Open Access", "Hybrid", "Subscription". Do not estimate Journal Impact Factor — external citation indexes are unavailable in this app.${articleContext}`,
-      },
-      signal,
-    );
-    return {
-      ...profile,
-      metrics: {
-        impactFactor: null,
-        analyzedArticleCount: articles.length > 0 ? articles.length : null,
-        openAccessRate:
-          articles.length > 0
-            ? Math.round((articles.filter((a) => a.isOpenAccess).length / articles.length) * 100)
-            : null,
-        source: 'computed',
-      },
-    };
-  } catch (error) {
-    safeLogError('Error generating journal profile analysis:', error);
-    throw provider.mapError(error);
-  }
+  const journalSchema: AIJsonSchema = {
+    type: 'object',
+    properties: {
+      name: { type: 'string' },
+      issn: { type: 'string' },
+      description: { type: 'string' },
+      oaPolicy: { type: 'string' },
+      focusAreas: { type: 'array', items: { type: 'string' } },
+      publisher: { type: 'string' },
+    },
+    required: ['name', 'issn', 'description', 'oaPolicy', 'focusAreas'],
+  };
+  const profile = await runAiTool<JournalProfile>(
+    aiSettings,
+    {
+      model: aiSettings.model,
+      system: getPreamble(aiSettings, PromptId.JOURNAL_PROFILE),
+      temperature: 0.2,
+      jsonSchema: journalSchema,
+      prompt: `Act as an expert academic librarian. Analyze the journal ${wrapUntrustedTextBlock('journal_name', journalSafe)}. Provide a JSON object with: name, issn, description, oaPolicy, focusAreas, publisher. Find the correct ISSN when possible. For oaPolicy, use one of: "Full Open Access", "Hybrid", "Subscription". Do not estimate Journal Impact Factor — external citation indexes are unavailable in this app.${articleContext}`,
+    },
+    signal,
+    'Error generating journal profile analysis:',
+  );
+  return {
+    ...profile,
+    metrics: {
+      impactFactor: null,
+      analyzedArticleCount: articles.length > 0 ? articles.length : null,
+      openAccessRate:
+        articles.length > 0
+          ? Math.round((articles.filter((a) => a.isOpenAccess).length / articles.length) * 100)
+          : null,
+      source: 'computed',
+    },
+  };
 }
 
 /**
@@ -282,45 +274,39 @@ export async function disambiguateJournal(
   if (await shouldUseHeuristic(aiSettings)) {
     return disambiguateJournalHeuristic(journalName, signal);
   }
-  const provider = await getProviderForSettings(aiSettings);
-  throwIfAborted(signal);
   const journalSafe = sanitizePromptFragment(journalName, 500);
-  try {
-    const disambiguateSchema: AIJsonSchema = {
-      type: 'array',
-      items: {
-        type: 'object',
-        properties: {
-          name: { type: 'string' },
-          issn: { type: 'string' },
-          description: { type: 'string' },
-          matchType: { type: 'string' },
-          confidence: { type: 'integer' },
-        },
-        required: ['name', 'description', 'matchType', 'confidence'],
+  const disambiguateSchema: AIJsonSchema = {
+    type: 'array',
+    items: {
+      type: 'object',
+      properties: {
+        name: { type: 'string' },
+        issn: { type: 'string' },
+        description: { type: 'string' },
+        matchType: { type: 'string' },
+        confidence: { type: 'integer' },
       },
-    };
-    const parsed = await generateJson<JournalCandidate[]>(
-      aiSettings,
-      {
-        model: aiSettings.model,
-        system: getPreamble(aiSettings, PromptId.JOURNAL_DISAMBIGUATE),
-        temperature: 0.1,
-        jsonSchema: disambiguateSchema,
-        prompt: `Act as an expert academic librarian. The user entered the journal name ${wrapUntrustedTextBlock('journal_query', journalSafe)}. Identify up to 5 distinct journals this could refer to (name variants, abbreviations, or similarly named journals, e.g. "BMJ" vs "BMJ Open"). For each candidate provide: the canonical full name, its ISSN (if known), a brief 1-sentence description, the matchType (one of "exact", "alias", "abbreviation", "partial"), and a confidence score 0-100. Return them sorted by confidence descending.`,
-      },
-      signal,
-    );
-    return parsed.map((c) => ({
-      ...c,
-      matchType: (['exact', 'alias', 'abbreviation', 'partial'].includes(c.matchType)
-        ? c.matchType
-        : 'partial') as JournalCandidate['matchType'],
-    }));
-  } catch (error) {
-    safeLogError('Error disambiguating journal:', error);
-    throw provider.mapError(error);
-  }
+      required: ['name', 'description', 'matchType', 'confidence'],
+    },
+  };
+  const parsed = await runAiTool<JournalCandidate[]>(
+    aiSettings,
+    {
+      model: aiSettings.model,
+      system: getPreamble(aiSettings, PromptId.JOURNAL_DISAMBIGUATE),
+      temperature: 0.1,
+      jsonSchema: disambiguateSchema,
+      prompt: `Act as an expert academic librarian. The user entered the journal name ${wrapUntrustedTextBlock('journal_query', journalSafe)}. Identify up to 5 distinct journals this could refer to (name variants, abbreviations, or similarly named journals, e.g. "BMJ" vs "BMJ Open"). For each candidate provide: the canonical full name, its ISSN (if known), a brief 1-sentence description, the matchType (one of "exact", "alias", "abbreviation", "partial"), and a confidence score 0-100. Return them sorted by confidence descending.`,
+    },
+    signal,
+    'Error disambiguating journal:',
+  );
+  return parsed.map((c) => ({
+    ...c,
+    matchType: (['exact', 'alias', 'abbreviation', 'partial'].includes(c.matchType)
+      ? c.matchType
+      : 'partial') as JournalCandidate['matchType'],
+  }));
 }
 
 /**
@@ -335,34 +321,28 @@ export async function suggestJournals(
   if (await shouldUseHeuristic(aiSettings)) {
     return suggestJournalsHeuristic(fieldOfStudy, signal);
   }
-  const provider = await getProviderForSettings(aiSettings);
-  throwIfAborted(signal);
   const fieldSafe = sanitizePromptFragment(fieldOfStudy, 2000);
-  try {
-    const suggestSchema: AIJsonSchema = {
-      type: 'array',
-      items: {
-        type: 'object',
-        properties: {
-          name: { type: 'string' },
-          description: { type: 'string' },
-        },
-        required: ['name', 'description'],
+  const suggestSchema: AIJsonSchema = {
+    type: 'array',
+    items: {
+      type: 'object',
+      properties: {
+        name: { type: 'string' },
+        description: { type: 'string' },
       },
-    };
-    return await generateJson<{ name: string; description: string }[]>(
-      aiSettings,
-      {
-        model: aiSettings.model,
-        system: getPreamble(aiSettings, PromptId.JOURNAL_SUGGEST),
-        temperature: 0.5,
-        jsonSchema: suggestSchema,
-        prompt: `Act as an expert academic librarian. Suggest 5-10 prominent peer-reviewed journals publishing research in the field of ${wrapUntrustedTextBlock('field', fieldSafe)}. For each, provide the canonical journal name and a brief (1-sentence) description of its scope and reputation.`,
-      },
-      signal,
-    );
-  } catch (error) {
-    safeLogError('Error suggesting journals:', error);
-    throw provider.mapError(error);
-  }
+      required: ['name', 'description'],
+    },
+  };
+  return runAiTool<{ name: string; description: string }[]>(
+    aiSettings,
+    {
+      model: aiSettings.model,
+      system: getPreamble(aiSettings, PromptId.JOURNAL_SUGGEST),
+      temperature: 0.5,
+      jsonSchema: suggestSchema,
+      prompt: `Act as an expert academic librarian. Suggest 5-10 prominent peer-reviewed journals publishing research in the field of ${wrapUntrustedTextBlock('field', fieldSafe)}. For each, provide the canonical journal name and a brief (1-sentence) description of its scope and reputation.`,
+    },
+    signal,
+    'Error suggesting journals:',
+  );
 }

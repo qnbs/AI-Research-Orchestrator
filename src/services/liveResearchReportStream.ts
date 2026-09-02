@@ -98,7 +98,12 @@ Research Topic: ${wrapUntrustedTextBlock('research_topic', topicSafe)}
       signal,
     );
     if (!generatedQueries || generatedQueries.length === 0 || !generatedQueries[0].query) {
-      throw new Error('The AI failed to generate any search queries.');
+      throw new AppError({
+        code: 'VALIDATION',
+        message: 'The AI failed to generate any search queries.',
+        retryable: true,
+        context: 'query_generation',
+      });
     }
     assertValidPubMedQuery(generatedQueries[0].query);
 
@@ -112,9 +117,13 @@ Research Topic: ${wrapUntrustedTextBlock('research_topic', topicSafe)}
       ncbiApiKey,
     );
     if (pmids.length === 0) {
-      throw new Error(
-        'Your search returned no results from PubMed. This can be due to a very specific topic or strict filters. Try broadening your topic, adjusting the date range, or changing article types.',
-      );
+      throw new AppError({
+        code: 'VALIDATION',
+        message:
+          'Your search returned no results from PubMed. This can be due to a very specific topic or strict filters. Try broadening your topic, adjusting the date range, or changing article types.',
+        retryable: false,
+        context: 'pubmed',
+      });
     }
 
     throwIfAborted(signal);
@@ -122,7 +131,12 @@ Research Topic: ${wrapUntrustedTextBlock('research_topic', topicSafe)}
     yield makePipelineEvent('pubmed-fetch');
     const articleDetails = await fetchArticleDetails(pmids, signal, ncbiApiKey);
     if (articleDetails.length === 0) {
-      throw new Error('Could not fetch details for the articles found on PubMed.');
+      throw new AppError({
+        code: 'NCBI_NETWORK',
+        message: 'Could not fetch details for the articles found on PubMed.',
+        retryable: true,
+        context: 'pubmed',
+      });
     }
 
     throwIfAborted(signal);
@@ -347,11 +361,13 @@ Research Topic: ${wrapUntrustedTextBlock('research_topic', topicSafe)}
     }
     yield makePipelineEvent('finalizing');
   } catch (error) {
-    safeLogError('Error generating research report:', error);
     // mapError turns AbortError into PROVIDER_UNAVAILABLE. Cancelled runs must
     // stay STREAM_ABORTED so the session stamps `'partial'` (ADR 0021), not an
     // "AI unavailable" error. Honor the caller signal even after that remap.
+    // AppError from generateJson / empty PubMed / query validation must not be
+    // remapped as a provider failure.
     if (isAbortError(error) || signal?.aborted) {
+      if (error instanceof AppError && error.code === 'STREAM_ABORTED') throw error;
       throw new AppError({
         code: 'STREAM_ABORTED',
         message: 'Aborted',
@@ -359,6 +375,8 @@ Research Topic: ${wrapUntrustedTextBlock('research_topic', topicSafe)}
         cause: error,
       });
     }
+    if (error instanceof AppError) throw error;
+    safeLogError('Error generating research report:', error);
     throw provider.mapError(error);
   }
 }
