@@ -1,5 +1,7 @@
 # AI Research Orchestrator — Cursor Cloud Agent / Grok 4.5 Master Prompt
 
+> **Execution complete (2026-09-02).** Live `main` is `b48c4d3`. PRs **#290 / #291 / #292** merged. Closeout: `docs/audits/2026-09-02-closeout.md`. Do **not** re-run Phases 0–4, re-split the façade/export, implement OpenRouter, or cut `v0.4.3`. Keep this file for history.
+
 **Document type:** Authoritative post-v0.4.2, post-2026-09-01-wave audit, correction, and perfectionization master prompt  
 **Audience:** Cursor Cloud Agent running Grok 4.5 (or equivalent coding agent) inside this repository  
 **Language:** English for new or edited repository prose, comments, commits, and default strings; preserve existing German locale values and add EN+DE keys for new UI strings (rule `010`)  

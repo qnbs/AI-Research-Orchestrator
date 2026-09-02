@@ -1,6 +1,6 @@
 # Sourcery high-level feedback backlog — 2026-08-06 (PR wave #228-233)
 
-> **Status (2026-09-02 post-#290):** BACKLOG-P2-001 / 003 / 006 landed in **#290**. 002 / 004 / 005: sidebar sticky offset shared as `STICKY_BELOW_CHROME_CLASS`; LoadingIndicator cancel is caller-labeled; OrchestratorView uses that cancel during generate and keeps a streaming-only cancel after the indicator unmounts.
+> **Status (2026-09-02 post-#292):** BACKLOG-P2-001 / 003 / 006 landed in **#290**. **002 / 004 / 005 landed in #292** (`STICKY_BELOW_CHROME_CLASS`, caller-labeled LoadingIndicator cancel, generate-phase cancel on the indicator).
 
 **Context:** Sourcery posts two kinds of feedback on a PR — inline review-thread comments
 (tracked and resolved via the normal GraphQL `reviewThreads` correction loop) and **top-level
