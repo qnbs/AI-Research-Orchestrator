@@ -185,16 +185,16 @@ These IDs came from the post-sprint prompt. Evidence: `docs/audits/2026-08-29-ba
 
 Live queue. Evidence: `docs/audits/2026-09-01-baseline.md`.
 
-| ID                           | Sev | Status              | Evidence                                                                                         |
-| ---------------------------- | --- | ------------------- | ------------------------------------------------------------------------------------------------ |
-| `NOW-P0-AUDIT-DRIFT`         | P0  | **This PR**         | August docs listed landed P0/P1s as Open. Closed by the 2026-09-01 baseline + this header.       |
-| `NOW-P0-AUDIT-BROWSERSLIST`  | P0  | **This PR**         | Pin `browserslist@4.28.8` for CVE-2026-73088 / CVE-2026-73089 (floor 4.28.7). Not a GHSA ignore. |
-| `NOW-P0-PARTIAL-E2E`         | P0  | **This PR**         | Playwright cancel-mid-stream: hanging Gemini synthesis SSE → banner, chat gated, CSV watermark.  |
-| `NOW-P1-DEP-WAVE-2`          | P1  | **Resolved** (#286) | Dependabot #275–#283 included; #274 TS 6 deferred to #289; #284 lucide removed unused.           |
-| `NOW-P1-PARTIAL-EXPORT-GAPS` | P1  | **This PR**         | Report CSV + insights CSV prepend the narrative `PARTIAL REPORT` line when `'partial'`.          |
-| `NOW-P1-LIVE-COPY`           | P1  | **Resolved** (#288) | Onboarding/chrome/Help/input-form product-truth pass; GitHub repo description stays P2.          |
-| `NOW-P2-OPENROUTER`          | P2  | **Open**            | ADR 0010 still Proposed (2026-07-21). Accept, reject, or dated deferral.                         |
-| `NOW-P2-LUCIDE`              | P2  | **This PR**         | Unused `lucide-react` removed rather than bumped.                                                |
+| ID                           | Sev | Status                     | Evidence                                                                                         |
+| ---------------------------- | --- | -------------------------- | ------------------------------------------------------------------------------------------------ |
+| `NOW-P0-AUDIT-DRIFT`         | P0  | **This PR**                | August docs listed landed P0/P1s as Open. Closed by the 2026-09-01 baseline + this header.       |
+| `NOW-P0-AUDIT-BROWSERSLIST`  | P0  | **This PR**                | Pin `browserslist@4.28.8` for CVE-2026-73088 / CVE-2026-73089 (floor 4.28.7). Not a GHSA ignore. |
+| `NOW-P0-PARTIAL-E2E`         | P0  | **This PR**                | Playwright cancel-mid-stream: hanging Gemini synthesis SSE → banner, chat gated, CSV watermark.  |
+| `NOW-P1-DEP-WAVE-2`          | P1  | **Resolved** (#286 / #289) | Dependabot #275–#283 included; #274 TS 6 landed as #289; #284 lucide removed unused.             |
+| `NOW-P1-PARTIAL-EXPORT-GAPS` | P1  | **This PR**                | Report CSV + insights CSV prepend the narrative `PARTIAL REPORT` line when `'partial'`.          |
+| `NOW-P1-LIVE-COPY`           | P1  | **Resolved** (#288)        | Onboarding/chrome/Help/input-form product-truth pass; GitHub repo description stays P2.          |
+| `NOW-P2-OPENROUTER`          | P2  | **Open**                   | ADR 0010 still Proposed (2026-07-21). Accept, reject, or dated deferral.                         |
+| `NOW-P2-LUCIDE`              | P2  | **This PR**                | Unused `lucide-react` removed rather than bumped.                                                |
 
 ---
 
