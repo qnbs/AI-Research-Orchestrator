@@ -39,7 +39,7 @@ Main features: Orchestrator pipeline, Knowledge Base (dedup, faceted filtering, 
 
 ## Runtime Architecture
 
-- **Agentic pipeline**: implemented in **`src/services/geminiService.ts`** (AsyncGenerator `generateResearchReportStream`): query generation → PubMed/optional arXiv fetch → ranking → streaming synthesis. `App.tsx` `getAgentForPhase()` maps phases to **conceptual agent roles** for the trace/debug UI (QueryGenerator, PubMedFetcher, ArxivFetcher, Ranker, Synthesizer) — these are prompt/phase roles, not separate SDK processes.
+- **Agentic pipeline**: implemented in **`src/services/geminiService.ts`** (AsyncGenerator `generateResearchReportStream`): query generation → PubMed/optional arXiv fetch → ranking → streaming synthesis. Live stream body lives in `liveResearchReportStream.ts`; JSON helpers in `aiJson.ts`; author/journal tools in `literatureAiTools.ts` — the façade re-exports the public API (ADR 0008). `App.tsx` `getAgentForPhase()` maps phases to **conceptual agent roles** for the trace/debug UI (QueryGenerator, PubMedFetcher, ArxivFetcher, Ranker, Synthesizer) — these are prompt/phase roles, not separate SDK processes.
 - **AI provider layer**: transport adapters live in `src/services/providers/` (`gemini.ts`, `openai.ts`, `anthropic.ts`, `ollama.ts`, `heuristic.ts`) and are loaded lazily via `getProviderForSettings()` so SDKs do not inflate the initial bundle. `geminiService.ts` remains the feature façade and routes AI calls through the selected provider.
 - **InferenceMode** `live | heuristic`: derived from API-key presence, `navigator.onLine`, and an optional Force-Heuristic toggle (`src/services/inferenceMode.ts`, `resolveActiveInferenceMode.ts`, hook `useInferenceMode`). Without a key or offline, the app **never** throws `NO_API_KEY` into an empty UI — the consolidated deterministic engine (`src/services/nonAi/`: query formulation, lexical ranking, template synthesis, extractive TL;DR, report-grounded chat, author/journal tools, demo corpus) keeps every feature usable (ADR 0007, consolidated in ADR 0009).
 - **State**: Redux is the single source of truth (slices: settings, ui, knowledgeBase, collections, theme, agentDebug + RTK Query slices). Contexts only hydrate/compose: `SettingsProvider` hydrates IndexedDB → Redux once; `KnowledgeBaseContext`/`PresetContext` compose Dexie + Redux actions; `UIContext` is a barrel. **Never duplicate** the same flags in Context and Redux.
@@ -62,7 +62,7 @@ src/
   i18n/translations.ts   # EN + DE strings (both locales required for new UI text)
   lib/                   # errors, circuitBreaker, resilience, promptRegistry, promptSanitize,
                          # parseGeminiJson, researchCheckpoint, agentEval, heuristicEval, …
-  services/              # geminiService (feature façade), apiKeyService, databaseService, pubmedUtils,
+  services/              # geminiService (feature façade over aiJson / liveResearchReportStream / literatureAiTools), apiKeyService, databaseService, pubmedUtils,
                          # arxivUtils, exportService, journalService, inferenceMode,
                          # researchOrchestratorAdapter, providers/ (transport adapters),
                          # nonAi/ (deterministic offline inference engine)

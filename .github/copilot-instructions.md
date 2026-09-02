@@ -30,7 +30,7 @@ You are an expert React 19 + TypeScript engineer working on **AI Research Orches
 ## Architecture (always follow)
 
 - **Local-first**: User data (reports, history, settings, KB, collections) in IndexedDB via Dexie — **no application backend**. Live mode still sends prompts/metadata to the selected AI provider and PubMed/arXiv (see `SECURITY.md` / README).
-- **Multi-provider**: Transports in `src/services/providers/`; feature façade `geminiService.ts` never imports a vendor SDK directly (ADR 0008).
+- **Multi-provider**: Transports in `src/services/providers/`; feature façade `geminiService.ts` (`aiJson` / `liveResearchReportStream` / `literatureAiTools` behind it) never imports a vendor SDK directly (ADR 0008).
 - **InferenceMode** `live | heuristic`: never dead-end on missing key/offline — use `src/services/nonAi/` (ADR 0007/0009). Explicit educational demo is quarantined (ADR 0016).
 - **Grounding**: corpus-validated where implemented; synthesis trust is `claim-supported` / `corpus-supported` vs unverified narrative draft (ADR 0012, 0015, **0018** — do not reintroduce overclaiming `verified` wire values). Cancelled or restored reports are `'partial'`, never `'done'` (ADR **0021**).
 - **Keys**: AES-GCM encrypted IndexedDB via `apiKeyService.ts` — never `VITE_*` secrets.
