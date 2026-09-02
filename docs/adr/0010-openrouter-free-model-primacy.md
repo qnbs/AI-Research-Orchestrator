@@ -2,9 +2,11 @@
 
 ## Status
 
-Proposed — 2026-07-21
+Deferred — 2026-09-02
 
-> Ratify to `Accepted — <date>` during implementation. Adding a provider follows the established pattern (ADR-0008) and is not a blocking architectural fork; this ADR records intent and the free-model design so the work is reviewable.
+> Dated deferral, not a reject. Heuristic (ADR 0009) and first-class Ollama (ADR 0019) remain the documented zero-cost paths. OpenRouter stays reachable as `openai` + `customBaseUrl` (ADR 0008 §3). Revisit when free-model UX is an explicit product goal. Do not implement a first-class OpenRouter adapter in a hygiene PR.
+
+> Original proposal date: 2026-07-21. Ratify to `Accepted — <date>` only during implementation.
 
 ## Context
 
@@ -41,8 +43,18 @@ The CSP in `index.html` already permits `https://openrouter.ai`. The product is 
 - No CSP change is required (`https://openrouter.ai` already permitted).
 - Existing Gemini / OpenAI / Anthropic / Ollama / heuristic paths are unaffected.
 
-## Deferred work
+## Deferred work (unchanged)
 
 - Dynamic fetch of the live OpenRouter model catalogue.
 - Credit-balance / spend tracking beyond `CostEstimateCard`.
 - Multi-key rotation and in-request multi-provider fallback chains.
+
+## Why deferred (2026-09-02)
+
+Zero-cost research already ships without a first-class OpenRouter adapter:
+
+1. **Heuristic / programmatic engine** (ADR 0009) — offline, no API key.
+2. **Ollama** (ADR 0019) — local models, loopback CSP.
+3. **OpenAI-compatible base URL** (ADR 0008 §3) — users who already have an OpenRouter key can set `customBaseUrl` to `https://openrouter.ai/api/v1`.
+
+A first-class `'openrouter'` provider remains a product-goal decision (Settings picker, `:free` catalogue, `$0` cost card, free-tier circuit breaker). Leaving this ADR **Proposed** indefinitely was the debt; this dated deferral closes that process gap without pretending the adapter exists.

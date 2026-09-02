@@ -41,6 +41,7 @@ Severity: P2 = worth doing, not blocking · P3 = defer with rationale (cosmetic/
 | Impact     | `settings.developerMode` is checked ad hoc in both `Header.tsx` and `AppLayout.tsx`; a third gate site would be easy to add inconsistently |
 | Suggestion | Extract a `selectIsDeveloperToolsEnabled` selector or `isDeveloperToolsEnabled(settings)` helper                                           |
 | Files      | `src/components/Header.tsx`, `src/app/AppLayout.tsx`                                                                                       |
+| Status     | **Resolved** (2026-09-02) — `isDeveloperToolsEnabled()` in `settingsSlice.ts`; Header + AppLayout both call it.                            |
 
 ### BACKLOG-P2-002 — Sticky offset constants duplicated/misaligned
 
@@ -58,6 +59,7 @@ Severity: P2 = worth doing, not blocking · P3 = defer with rationale (cosmetic/
 | Impact     | `useUrlSync`'s `validViews` array is a manually maintained string list separate from the `View` union type — adding/renaming a view won't get a compile error here |
 | Suggestion | Derive `validViews` from `View` (e.g. `Object.values`/`as const` tuple shared with the type)                                                                       |
 | Files      | `src/hooks/useUrlSync.ts`                                                                                                                                          |
+| Status     | **Resolved** (2026-09-02) — `VIEWS` const tuple in `src/types/ui.ts`; `View` is `typeof VIEWS[number]`; `isView()` is the hash guard.                              |
 
 ### BACKLOG-P2-004 — `LoadingIndicator` cancel-button i18n key is orchestrator-specific
 
@@ -85,6 +87,7 @@ Severity: P2 = worth doing, not blocking · P3 = defer with rationale (cosmetic/
 | Impact     | Implicit coupling between the dashboard and scientometrics feature areas via shared i18n keys — a dashboard-only wording change would silently affect ScientometricHub's table too |
 | Suggestion | Introduce scientometrics-specific `a11y.*` keys                                                                                                                                    |
 | Files      | `src/components/ScientometricHub.tsx`, `src/i18n/dashboardTranslations.ts`                                                                                                         |
+| Status     | **Resolved** (2026-09-02) — `scientometrics.a11y.*` keys for scatter, timeline, and journal pie tables.                                                                            |
 
 ---
 

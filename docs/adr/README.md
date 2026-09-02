@@ -11,9 +11,9 @@ Index of ADRs for AI-Research-Orchestrator. Each record captures one significant
 | [0005](0005-chart-library-recharts.md)                  | Consolidate charting on Recharts                        | Accepted | 2026-07-16 |                                                                                               |
 | [0006](0006-prompt-versioning.md)                       | Prompt versioning registry                              | Accepted | 2026-07-16 |                                                                                               |
 | [0007](0007-heuristic-inference-layer.md)               | Heuristic Inference Layer (Offline / No-API-Key)        | Accepted | 2026-07-17 | Superseded in part by 0009; silent demo fallback superseded by 0016                           |
-| [0008](0008-multi-provider-architecture.md)             | Multi-Provider AI Architecture                          | Accepted | 2026-07-19 | OpenRouter-via-`openai`-baseURL path (§3) superseded by 0010                                  |
+| [0008](0008-multi-provider-architecture.md)             | Multi-Provider AI Architecture                          | Accepted | 2026-07-19 | OpenRouter remains `openai` + `customBaseUrl` (§3) while 0010 is Deferred                     |
 | [0009](0009-non-ai-programmatic-research-engine.md)     | Consolidated Non-AI Programmatic Research Engine        | Accepted | 2026-07-22 | Consolidates the three deterministic layers into one; silent demo fallback superseded by 0016 |
-| [0010](0010-openrouter-free-model-primacy.md)           | First-Class OpenRouter Provider with Free-Model Primacy | Proposed | 2026-07-21 | Promotes OpenRouter to a first-class provider; supersedes 0008 §3                             |
+| [0010](0010-openrouter-free-model-primacy.md)           | First-Class OpenRouter Provider with Free-Model Primacy | Deferred | 2026-09-02 | Dated deferral; heuristic + Ollama stay the zero-cost paths. Not Rejected.                    |
 | [0011](0011-remove-cdn-import-map.md)                   | Remove the CDN Import Map                               | Accepted | 2026-07-22 | All JS dependencies bundled by Vite; `aistudiocdn.com` dropped from CSP, guarded by a CI gate |
 | [0012](0012-corpus-citation-grounding.md)               | Corpus-Bound Citation Grounding                         | Accepted | 2026-08-02 | Post-ranking PMID validation; derived `aiSummary` labelling                                   |
 | [0013](0013-custom-endpoint-trust-policy.md)            | Custom Endpoint Trust Policy                            | Accepted | 2026-08-02 | Origin approval + CSP coherence; no `connect-src *`                                           |
@@ -29,5 +29,5 @@ Index of ADRs for AI-Research-Orchestrator. Each record captures one significant
 ## Conventions
 
 - Filenames: `NNNN-kebab-case-title.md`, numbered contiguously (no gaps).
-- Status lifecycle: `Proposed → Accepted` (or `Rejected` / `Superseded`). A `Proposed` ADR is a decision awaiting sign-off; flip it to `Accepted — <date>` once approved.
+- Status lifecycle: `Proposed → Accepted` (or `Rejected` / `Superseded` / **`Deferred`**). A `Proposed` ADR is a decision awaiting sign-off; flip it to `Accepted — <date>` once approved. `Deferred — <date>` records an explicit, dated decision _not_ to implement yet, with a trigger to revisit — it is not an indefinite Proposed.
 - When a decision replaces an earlier one, mark the older ADR's relevant scope as superseded in the Notes column above and reference the superseding ADR in-file.
