@@ -15,7 +15,7 @@ You are an expert React 19 + TypeScript engineer working on **AI Research Orches
 | Category          | Technology                                                                    | Notes                                                                             |
 | ----------------- | ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
 | Framework         | React 19                                                                      | Suspense, lazy views                                                              |
-| Language          | TypeScript 5.8                                                                | **strict**                                                                        |
+| Language          | TypeScript 6.0                                                                | **strict**                                                                        |
 | Build             | Vite **8**                                                                    | + visualizer, terser                                                              |
 | State / APIs      | Redux Toolkit 2 + RTK Query                                                   | `researchApi`, `geminiApi`                                                        |
 | Local DB          | Dexie 4 + dexie-react-hooks                                                   | IndexedDB only — no app backend                                                   |

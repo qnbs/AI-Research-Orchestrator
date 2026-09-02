@@ -25,7 +25,7 @@ Main features: Orchestrator pipeline, Knowledge Base (dedup, faceted filtering, 
 
 | Area                 | Technology                                                                                                                                                  |
 | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Framework / Language | React 19 (Suspense, lazy views), TypeScript 5.8 **strict**                                                                                                  |
+| Framework / Language | React 19 (Suspense, lazy views), TypeScript 6.0 **strict**                                                                                                  |
 | Build                | Vite 8 (+ `rollup-plugin-visualizer`, terser)                                                                                                               |
 | State                | Redux Toolkit 2 + RTK Query (`apiSlice` = researchApi, `geminiApiSlice` = geminiApi)                                                                        |
 | Local DB             | Dexie 4 + dexie-react-hooks (IndexedDB), single entry `src/services/databaseService.ts`                                                                     |

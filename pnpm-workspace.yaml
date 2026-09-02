@@ -39,7 +39,7 @@ onlyBuiltDependencies:
   - sharp
 peerDependencyRules:
   allowedVersions:
-    typescript: '5.8.3'
+    typescript: '6.0.3'
   ignoreMissing:
     - '@types/node'
 strictPeerDependencies: true
