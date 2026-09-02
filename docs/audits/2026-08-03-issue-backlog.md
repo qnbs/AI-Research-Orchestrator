@@ -168,7 +168,7 @@ Severity: P0 = stop-the-line · P1 = pre-release hardening · P2 = architecture/
 
 ## New items (2026-08-29) — historical, statuses as of 2026-09-02
 
-These IDs came from the post-sprint prompt. Evidence: `docs/audits/2026-08-29-baseline.md` and `docs/audits/2026-09-01-baseline.md` (historical) and `docs/audits/2026-09-02-baseline.md` (live).
+These IDs came from the post-sprint prompt. Evidence: `docs/audits/2026-08-29-baseline.md`, `docs/audits/2026-09-01-baseline.md`, and `docs/audits/2026-09-02-baseline.md` (historical Phase 0). **Live statuses:** `docs/audits/2026-09-02-closeout.md`.
 
 | ID                   | Sev | Status                         | Evidence                                                                                                                     |
 | -------------------- | --- | ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
@@ -184,7 +184,7 @@ These IDs came from the post-sprint prompt. Evidence: `docs/audits/2026-08-29-ba
 
 ## New items (2026-09-01)
 
-Live queue. Evidence: `docs/audits/2026-09-02-baseline.md`. The 2026-09-01 baseline is historical.
+Post-#290 statuses. Evidence: `docs/audits/2026-09-02-closeout.md`. The 2026-09-02 baseline is a historical Phase 0 snapshot (addendum points here).
 
 | ID                           | Sev | Status                     | Evidence                                                                                                                      |
 | ---------------------------- | --- | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
