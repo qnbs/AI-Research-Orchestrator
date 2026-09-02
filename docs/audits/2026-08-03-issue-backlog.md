@@ -4,7 +4,7 @@
 
 **Landed since the 2026-08-29 refresh (do not re-open):** `NOW-P0-PARTIAL` / ADR 0021 (#260), `NOW-P1-MOTION` (#261), `NOW-P1-DOCS-WAVE` (#262), `NOW-P1-DEP-STALL` (#263), `NOW-P1-RELEASE` (#264), `NOW-P1-CODEOWNERS` (#265), Ollama bounds (#266), Dexie upgrade tests (#267), heuristic ops (#268), eval adversarial (#269), provider harness (#270), BM25+ (#271), CSV/export hardening (#272), browserslist pin (#285), Dependabot wave 2 (#286), onboarding product-truth (#288), TypeScript 6 (#289), partial-report E2E + CSV watermark (#287).
 
-**Still real / in flight:** GitHub repo description (`ISSUE-P2-AGENT-001` / `NOW-P1-REPO-DESCRIPTION`) still says “swarm…” (cloud agent PATCH 403). Residual Sourcery P2: BACKLOG-P2-002/004/005. `exportService.ts` 686 (`NOW-P1-FILE-CAP`). `NOW-P0-PR-290-MERGE` / façade / chart a11y / ADR 0010 dated deferral **landed in #290**. `NOW-P2-LUCIDE` landed in #286; `NOW-P1-LIVE-COPY` in #288; `NOW-P1-DEP-WAVE-2` in #286 / #289; `NOW-P0-PARTIAL-E2E` / `NOW-P1-PARTIAL-EXPORT-GAPS` in #287.
+**Still real / in flight:** Residual Sourcery P2: BACKLOG-P2-002/004/005. `exportService.ts` 686 (`NOW-P1-FILE-CAP`). `ISSUE-P2-AGENT-001` / `NOW-P1-REPO-DESCRIPTION` **Resolved** (GitHub description no longer claims a swarm; homepage still empty). `NOW-P0-PR-290-MERGE` / façade / chart a11y / ADR 0010 dated deferral **landed in #290**. `NOW-P2-LUCIDE` landed in #286; `NOW-P1-LIVE-COPY` in #288; `NOW-P1-DEP-WAVE-2` in #286 / #289; `NOW-P0-PARTIAL-E2E` / `NOW-P1-PARTIAL-EXPORT-GAPS` in #287.
 
 **New P0 this baseline (closed):** `NOW-P0-AUDIT-BROWSERSLIST` — CVE-2026-73088 / CVE-2026-73089 on `browserslist@4.28.6`. Pin latest patched `4.28.8` (security floor 4.28.7). Same pattern as #259 nanoid. Not a GHSA ignore. Landed #285.
 
@@ -224,7 +224,7 @@ Live queue. Evidence: `docs/audits/2026-09-02-baseline.md`. The 2026-09-01 basel
 | Field | Value |
 | Severity | P2 |
 | Acceptance | No “swarm” language unless experimental graph ships behind flag |
-| Status | **Open** — product copy and `metadata.json` no longer claim a swarm (#288). GitHub repository description still says “swarm of specialized agents” (`NOW-P1-REPO-DESCRIPTION`). Cloud agent cannot PATCH the description (403). Maintainer paste text is in `docs/audits/2026-09-02-closeout.md`. |
+| Status | **Resolved (2026-09-02)** — GitHub repository description no longer says “swarm”. Product copy and `metadata.json` were already clean (#288). Homepage URL still empty. |
 
 ---
 
