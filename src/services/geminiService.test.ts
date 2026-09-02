@@ -745,20 +745,27 @@ describe('geminiService with mocked SDK', () => {
         }),
       });
     const ac = new AbortController();
-    hoisted.generateContentStream.mockImplementation(async () =>
-      (async function* () {
-        yield { text: 'syn ' };
-        await new Promise<void>((_resolve, reject) => {
-          const fail = (): void => {
-            reject(new DOMException('Aborted', 'AbortError'));
-          };
-          if (ac.signal.aborted) {
-            fail();
-            return;
-          }
-          ac.signal.addEventListener('abort', fail, { once: true });
-        });
-      })(),
+    hoisted.generateContentStream.mockImplementation(
+      async (req?: { config?: { abortSignal?: AbortSignal } }) => {
+        const signal = req?.config?.abortSignal;
+        return (async function* () {
+          yield { text: 'syn ' };
+          await new Promise<void>((_resolve, reject) => {
+            const fail = (): void => {
+              reject(new DOMException('Aborted', 'AbortError'));
+            };
+            if (!signal) {
+              reject(new Error('generateContentStream called without abortSignal'));
+              return;
+            }
+            if (signal.aborted) {
+              fail();
+              return;
+            }
+            signal.addEventListener('abort', fail, { once: true });
+          });
+        })();
+      },
     );
     const gen = generateResearchReportStream(mockInput, mockAi, ac.signal);
     let sawSynthesisChunk = false;
