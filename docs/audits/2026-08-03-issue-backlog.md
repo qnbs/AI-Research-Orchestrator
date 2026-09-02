@@ -1,17 +1,17 @@
 # Issue Backlog — 2026-08-03 (Master Remediation)
 
-> **Status refresh:** 2026-09-02 post-#290. Live `main` is `01165e8` (`docs+P2: façade split, chart a11y, ADR 0010 deferral (#290)`). **Authoritative closeout is `docs/audits/2026-09-02-closeout.md`.** The 2026-09-02 baseline stays as Phase 0 evidence (with a post-merge addendum). The 2026-09-01 baseline stays historical. This file keeps original IDs; do not treat August “Open” rows as a live work order. GitHub Issues remain at zero — markdown IDs are the tracker.
+> **Status refresh:** 2026-09-02 post-#292. Live `main` is `b48c4d3` (`fix: export façade split, Sourcery residuals, honest index.html meta (#292)`). **Authoritative closeout is `docs/audits/2026-09-02-closeout.md`.** The 2026-09-02 baseline stays as Phase 0 evidence (addenda). The 2026-09-01 baseline stays historical. This file keeps original IDs; do not treat August “Open” rows as a live work order. GitHub Issues remain at zero — markdown IDs are the tracker.
 
 **Landed since the 2026-08-29 refresh (do not re-open):** `NOW-P0-PARTIAL` / ADR 0021 (#260), `NOW-P1-MOTION` (#261), `NOW-P1-DOCS-WAVE` (#262), `NOW-P1-DEP-STALL` (#263), `NOW-P1-RELEASE` (#264), `NOW-P1-CODEOWNERS` (#265), Ollama bounds (#266), Dexie upgrade tests (#267), heuristic ops (#268), eval adversarial (#269), provider harness (#270), BM25+ (#271), CSV/export hardening (#272), browserslist pin (#285), Dependabot wave 2 (#286), onboarding product-truth (#288), TypeScript 6 (#289), partial-report E2E + CSV watermark (#287).
 
-**Still real / in flight:** Residual Sourcery P2: BACKLOG-P2-002/004/005 and `NOW-P1-FILE-CAP` (`exportService.ts` 686 on `main`) — follow-up **#292**. `ISSUE-P2-AGENT-001` / `NOW-P1-REPO-DESCRIPTION` **Resolved** (GitHub description no longer claims a swarm; homepage still empty). `NOW-P0-PR-290-MERGE` / `NOW-P1-CHANGELOG-TRUTH` / façade / chart a11y / ADR 0010 dated deferral **landed in #290**. `NOW-P2-LUCIDE` landed in #286; `NOW-P1-LIVE-COPY` in #288; `NOW-P1-DEP-WAVE-2` in #286 / #289; `NOW-P0-PARTIAL-E2E` / `NOW-P1-PARTIAL-EXPORT-GAPS` in #287.
+**Still real / in flight:** None from the 2026-09-02 wave. ADR 0010 remains **Deferred** — do **not** implement OpenRouter. `NOW-P2-E2E-DEPTH` is later (only for an untested user-visible integrity path). `NOW-P1-FILE-CAP` / Sourcery 002/004/005 **landed in #292**. `ISSUE-P2-AGENT-001` / `NOW-P1-REPO-DESCRIPTION` **Resolved** (description + homepage URL). `NOW-P0-PR-290-MERGE` / façade / chart a11y / ADR 0010 dated deferral **landed in #290**. `NOW-P2-LUCIDE` landed in #286; `NOW-P1-LIVE-COPY` in #288; `NOW-P1-DEP-WAVE-2` in #286 / #289; `NOW-P0-PARTIAL-E2E` / `NOW-P1-PARTIAL-EXPORT-GAPS` in #287.
 
 **New P0 this baseline (closed):** `NOW-P0-AUDIT-BROWSERSLIST` — CVE-2026-73088 / CVE-2026-73089 on `browserslist@4.28.6`. Pin latest patched `4.28.8` (security floor 4.28.7). Same pattern as #259 nanoid. Not a GHSA ignore. Landed #285.
 
 **Baseline SHA (original):** `84fbcdf1f29b93416d2574d78ef988c83399fdad`  
 **Revalidated SHA (2026-08-29):** `b02af1bebb97f44eda6450ba980d5ceed5a1abb0`  
 **Revalidated SHA (2026-09-01):** `8a76bda7bbe221d21cb9d5924d8d81cee162fa48`  
-**Revalidated SHA (2026-09-02):** `01165e8176c7d97a2246ab53f757609dae498566` (`docs+P2: façade split, chart a11y, ADR 0010 deferral (#290)`; earlier same-day pin was `660cf8c` before that merge)  
+**Revalidated SHA (2026-09-02):** `b48c4d3686fc164decaff7383fe2db9467f91b41` (`fix: export façade split, Sourcery residuals, honest index.html meta (#292)`; earlier same-day pins were `660cf8c` then `01165e8` then `5c539ec`)  
 **Tracker:** Markdown IDs (GitHub Issues still empty as of 2026-09-02)
 
 Severity: P0 = stop-the-line · P1 = pre-release hardening · P2 = architecture/docs · P3 = defer with rationale
@@ -196,8 +196,10 @@ Post-#290 statuses. Evidence: `docs/audits/2026-09-02-closeout.md`. The 2026-09-
 | `NOW-P1-LIVE-COPY`           | P1  | **Resolved** (#288)        | Onboarding/chrome/Help/input-form product-truth pass. GitHub description resolved 2026-09-02 (`NOW-P1-REPO-DESCRIPTION`).     |
 | `NOW-P1-BASELINE-DOC`        | P1  | **Resolved** (#285)        | `docs/audits/2026-09-01-baseline.md`.                                                                                         |
 | `NOW-P1-PR-273`              | P1  | **Resolved** (#285)        | Folded into the 2026-09-01 docs PR.                                                                                           |
-| `NOW-P0-PR-290-MERGE`        | P0  | **Resolved** (#290)        | Squash-merged 2026-09-02T17:37:09Z. Live `main` is `01165e8`. See `docs/audits/2026-09-02-closeout.md`.                       |
+| `NOW-P0-PR-290-MERGE`        | P0  | **Resolved** (#290)        | Squash-merged 2026-09-02T17:37:09Z. Follow-ups #291/#292. Live `main` is `b48c4d3`. See `docs/audits/2026-09-02-closeout.md`. |
 | `NOW-P1-CHANGELOG-TRUTH`     | P1  | **Resolved** (#290)        | CHANGELOG Unreleased on `main` matches the façade split, chart a11y, and ADR 0010 dated deferral.                             |
+| `NOW-P1-FILE-CAP`            | P1  | **Resolved** (#292)        | `exportService.ts` **136**; PDF/CSV/text writers extracted. No product file inside ~20 lines of the 700 cap.                  |
+| `NOW-P1-SOURCERY-RESIDUAL`   | P1  | **Resolved** (#292)        | BACKLOG-P2-002 / 004 / 005. 001 / 003 / 006 were in #290.                                                                     |
 | `NOW-P2-OPENROUTER`          | P2  | **Deferred** (ADR 0010)    | Dated deferral **on `main`** (`docs/adr/0010-openrouter-free-model-primacy.md`, 2026-09-02). Do **not** implement OpenRouter. |
 | `NOW-P2-CHART-A11Y`          | P2  | **Resolved** (#290)        | `ChartAccessibleTable` twins for remaining bar/scatter surfaces are on `main`.                                                |
 | `NOW-P2-LUCIDE`              | P2  | **Resolved** (#286)        | Unused `lucide-react` removed rather than bumped.                                                                             |
@@ -226,7 +228,7 @@ Post-#290 statuses. Evidence: `docs/audits/2026-09-02-closeout.md`. The 2026-09-
 | Field | Value |
 | Severity | P2 |
 | Acceptance | No “swarm” language unless experimental graph ships behind flag |
-| Status | **Resolved (2026-09-02)** — GitHub repository description no longer says “swarm”. Product copy and `metadata.json` were already clean (#288). Homepage URL still empty. |
+| Status | **Resolved (2026-09-02)** — GitHub repository description no longer says “swarm”. Product copy and `metadata.json` were already clean (#288). Homepage URL is `https://qnbs.github.io/AI-Research-Orchestrator/`. |
 
 ---
 
@@ -238,7 +240,7 @@ Post-#290 statuses. Evidence: `docs/audits/2026-09-02-closeout.md`. The 2026-09-
 | Severity | P3 |
 | Evidence | `README.md` L72 — ensure wording matches Author Hub null metrics |
 | Acceptance | EN/DE parity; no fabricated bibliometrics implication |
-| Status | **Open** — confirm README estimated-H-index wording still matches Author Hub null metrics after #229 brand pass. |
+| Status | **Resolved** — README: estimated H-index-style signals from the retrieved corpus, not official bibliometric values. Author Hub tooltip: not available without an external citation index; the app counts retrieved PubMed records only. Heuristic `hIndex` stays `null` (`authorIdentity`). |
 
 ---
 
