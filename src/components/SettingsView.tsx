@@ -16,6 +16,7 @@ import { DatabaseIcon } from './icons/DatabaseIcon';
 import { ExportIcon } from './icons/ExportIcon';
 import { ShieldCheckIcon } from './icons/ShieldCheckIcon';
 import { InfoIcon } from './icons/InfoIcon';
+import { STICKY_BELOW_CHROME_CLASS } from '../lib/layoutChrome';
 
 interface SettingsViewProps {
   onClearKnowledgeBase: () => void;
@@ -138,7 +139,7 @@ const SettingsViewLayout: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
         <aside className="md:col-span-1">
-          <div className="space-y-1 sticky top-24">
+          <div className={`space-y-1 ${STICKY_BELOW_CHROME_CLASS}`}>
             <div className="relative" role="tablist" aria-label={t('settings.aria.categories')}>
               {tabs.map((tab, index) => (
                 <button

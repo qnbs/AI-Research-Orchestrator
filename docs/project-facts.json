@@ -133,7 +133,8 @@
     "src/i18n/chromeTranslations.ts",
     "src/i18n/inputFormTranslations.ts",
     "src/i18n/helpTranslations.ts",
-    "metadata.json"
+    "metadata.json",
+    "index.html"
   ],
   "forbiddenProductCopyPhrases": [
     "Future of Research",
@@ -143,6 +144,7 @@
     "Define the scope for the AI agents",
     "This helps the AI agents focus",
     "swarm of specialized",
+    "Gemini agents",
     "Zukunft der Recherche",
     "KI-Agenten führen",
     "Legen Sie den Umfang für die KI-Agenten fest",

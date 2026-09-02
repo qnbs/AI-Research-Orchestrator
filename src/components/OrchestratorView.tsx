@@ -179,10 +179,9 @@ const OrchestratorViewComponent: React.FC<OrchestratorViewProps> = ({
         />
       )}
 
-      {isProcessing && (
-        // Persists across both 'generating' and 'streaming' - LoadingIndicator (and
-        // its own cancel button) unmounts once the first partial report arrives and
-        // ReportDisplay takes over, but the stream itself is still active until 'done'.
+      {isProcessing && !showLoadingIndicator && (
+        // After the first partial report, LoadingIndicator unmounts and ReportDisplay
+        // takes over, but the stream is still active until 'done'. Keep cancel here.
         <div className="flex justify-end">
           <button
             type="button"
@@ -204,6 +203,7 @@ const OrchestratorViewComponent: React.FC<OrchestratorViewProps> = ({
           phaseDetails={phaseDetailsById}
           timelineIndex={timelineIndex}
           footerText="This may take up to a minute. The AI is performing multiple complex steps, including live database searches and synthesis."
+          cancel={{ label: t('orchestrator.cancel.button'), onClick: handleCancelResearch }}
         />
       )}
 
