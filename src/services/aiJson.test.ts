@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { AppError } from '../lib/errors';
 import * as safeLog from '../lib/safeLog';
 import { generateJson } from './aiJson';
@@ -67,6 +67,10 @@ describe('generateJson', () => {
     hoisted.caps.nativeJsonSchema = false;
   });
 
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('maps AbortError to STREAM_ABORTED without logging or mapError', async () => {
     const logSpy = vi.spyOn(safeLog, 'safeLogError').mockImplementation(() => {});
     hoisted.generateContent.mockRejectedValueOnce(new DOMException('Aborted', 'AbortError'));
@@ -75,7 +79,6 @@ describe('generateJson', () => {
     ).rejects.toMatchObject({ code: 'STREAM_ABORTED', retryable: false });
     expect(logSpy).not.toHaveBeenCalled();
     expect(hoisted.mapError).not.toHaveBeenCalled();
-    logSpy.mockRestore();
   });
 
   it('keeps GEMINI_PARSE_FAILURE outside provider mapError', async () => {
@@ -94,7 +97,6 @@ describe('generateJson', () => {
     ).rejects.toMatchObject({ code: 'PROVIDER_UNAVAILABLE', retryable: true });
     expect(hoisted.mapError).toHaveBeenCalledTimes(1);
     expect(logSpy).toHaveBeenCalled();
-    logSpy.mockRestore();
   });
 
   it('wraps root array schemas so json_object mode stays on', async () => {

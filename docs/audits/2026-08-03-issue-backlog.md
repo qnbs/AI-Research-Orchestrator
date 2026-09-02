@@ -166,7 +166,7 @@ Severity: P0 = stop-the-line · P1 = pre-release hardening · P2 = architecture/
 
 ---
 
-## New items (2026-08-29) — historical, statuses as of 2026-09-01
+## New items (2026-08-29) — historical, statuses as of 2026-09-02
 
 These IDs came from the post-sprint prompt. Evidence: `docs/audits/2026-08-29-baseline.md` and `docs/audits/2026-09-01-baseline.md` (historical) and `docs/audits/2026-09-02-baseline.md` (live).
 

@@ -1,6 +1,6 @@
 # Sourcery high-level feedback backlog — 2026-08-06 (PR wave #228-233)
 
-> **Status (2026-09-02):** Live remaining IDs after #290 are BACKLOG-P2-002 / 004 / 005 (`NOW-P1-SOURCERY-RESIDUAL`). 001 / 003 / 006 are in PR #290. See `docs/audits/2026-09-02-baseline.md`.
+> **Status (2026-09-02):** BACKLOG-P2-001 / 003 / 006 are **in flight on PR #290** (not on `main` until merge). Remaining after that merge: 002 / 004 / 005 (`NOW-P1-SOURCERY-RESIDUAL`). See `docs/audits/2026-09-02-baseline.md`.
 
 **Context:** Sourcery posts two kinds of feedback on a PR — inline review-thread comments
 (tracked and resolved via the normal GraphQL `reviewThreads` correction loop) and **top-level
@@ -37,13 +37,13 @@ Severity: P2 = worth doing, not blocking · P3 = defer with rationale (cosmetic/
 
 ### BACKLOG-P2-001 — Centralize `developerMode` gating condition
 
-| Field      | Value                                                                                                                                      |
-| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| Source     | Sourcery, PR #230 (both reviews)                                                                                                           |
-| Impact     | `settings.developerMode` is checked ad hoc in both `Header.tsx` and `AppLayout.tsx`; a third gate site would be easy to add inconsistently |
-| Suggestion | Extract a `selectIsDeveloperToolsEnabled` selector or `isDeveloperToolsEnabled(settings)` helper                                           |
-| Files      | `src/components/Header.tsx`, `src/app/AppLayout.tsx`                                                                                       |
-| Status     | **Resolved** (2026-09-02) — `isDeveloperToolsEnabled()` in `settingsSlice.ts`; Header + AppLayout both call it.                            |
+| Field      | Value                                                                                                                                          |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Source     | Sourcery, PR #230 (both reviews)                                                                                                               |
+| Impact     | `settings.developerMode` is checked ad hoc in both `Header.tsx` and `AppLayout.tsx`; a third gate site would be easy to add inconsistently     |
+| Suggestion | Extract a `selectIsDeveloperToolsEnabled` selector or `isDeveloperToolsEnabled(settings)` helper                                               |
+| Files      | `src/components/Header.tsx`, `src/app/AppLayout.tsx`                                                                                           |
+| Status     | **In flight (#290)** — `isDeveloperToolsEnabled()` in `settingsSlice.ts`; Header + AppLayout both call it. Not on `main` until this PR merges. |
 
 ### BACKLOG-P2-002 — Sticky offset constants duplicated/misaligned
 
@@ -56,13 +56,13 @@ Severity: P2 = worth doing, not blocking · P3 = defer with rationale (cosmetic/
 
 ### BACKLOG-P2-003 — `validViews` hardcoded, can drift from `View` type
 
-| Field      | Value                                                                                                                                                              |
-| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Source     | Sourcery, PR #229 (both reviews)                                                                                                                                   |
-| Impact     | `useUrlSync`'s `validViews` array is a manually maintained string list separate from the `View` union type — adding/renaming a view won't get a compile error here |
-| Suggestion | Derive `validViews` from `View` (e.g. `Object.values`/`as const` tuple shared with the type)                                                                       |
-| Files      | `src/hooks/useUrlSync.ts`                                                                                                                                          |
-| Status     | **Resolved** (2026-09-02) — `VIEWS` const tuple in `src/types/ui.ts`; `View` is `typeof VIEWS[number]`; `isView()` is the hash guard.                              |
+| Field      | Value                                                                                                                                                                |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Source     | Sourcery, PR #229 (both reviews)                                                                                                                                     |
+| Impact     | `useUrlSync`'s `validViews` array is a manually maintained string list separate from the `View` union type — adding/renaming a view won't get a compile error here   |
+| Suggestion | Derive `validViews` from `View` (e.g. `Object.values`/`as const` tuple shared with the type)                                                                         |
+| Files      | `src/hooks/useUrlSync.ts`                                                                                                                                            |
+| Status     | **In flight (#290)** — `VIEWS` const tuple in `src/types/ui.ts`; `View` is `typeof VIEWS[number]`; `isView()` is the hash guard. Not on `main` until this PR merges. |
 
 ### BACKLOG-P2-004 — `LoadingIndicator` cancel-button i18n key is orchestrator-specific
 
@@ -92,7 +92,7 @@ Severity: P2 = worth doing, not blocking · P3 = defer with rationale (cosmetic/
 | Impact     | Implicit coupling between the dashboard and scientometrics feature areas via shared i18n keys — a dashboard-only wording change would silently affect ScientometricHub's table too |
 | Suggestion | Introduce scientometrics-specific `a11y.*` keys                                                                                                                                    |
 | Files      | `src/components/ScientometricHub.tsx`, `src/i18n/dashboardTranslations.ts`                                                                                                         |
-| Status     | **Resolved** (2026-09-02) — `scientometrics.a11y.*` keys for scatter, timeline, and journal pie tables.                                                                            |
+| Status     | **In flight (#290)** — `scientometrics.a11y.*` keys for scatter, timeline, and journal pie tables. Not on `main` until this PR merges.                                             |
 
 ---
 

@@ -2,7 +2,7 @@
 
 **Document type:** Authoritative post-v0.4.2, post-2026-09-01-wave audit, correction, and perfectionization master prompt  
 **Audience:** Cursor Cloud Agent running Grok 4.5 (or equivalent coding agent) inside this repository  
-**Language:** English only for every repository artifact this engagement produces (rule `010`)  
+**Language:** English for new or edited repository prose, comments, commits, and default strings; preserve existing German locale values and add EN+DE keys for new UI strings (rule `010`)  
 **Created:** 2026-09-02  
 **Observed clock:** 2026-09-02 ~18:04 CEST  
 **Supersedes for execution planning:**
@@ -34,24 +34,24 @@ If any of those documents contradict this prompt, **live `main` + tests + CI win
 
 ## 0. Status block (authoritative as of 2026-09-02 18:04 CEST)
 
-| Field                        | Value                                                                                                                                                                   |
-| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Repository                   | https://github.com/qnbs/AI-Research-Orchestrator                                                                                                                        |
-| Live demo                    | https://qnbs.github.io/AI-Research-Orchestrator/                                                                                                                        |
-| Package / product version    | **0.4.2** (named release 2026-08-30, GitHub Release exists; do **not** cut `v0.4.3` unless a user-facing integrity or security fix actually ships)                      |
-| Default branch HEAD observed | `660cf8c5f186fcd041000248aa2b85c55449d384` — `test(partial): cancel-mid-stream E2E and CSV/insights watermark (#287)` (2026-09-02T01:01:13Z)                            |
-| Live Pages                   | Onboarding already shows the honest product-truth copy from #288. Confirm deployed SHA vs `660cf8c` in Help → About / `formatReleaseLabel()` before claiming Pages lag. |
-| Last merge wave on `main`    | 2026-09-01 → 2026-09-02: #285, #286, #288, #289, #287                                                                                                                   |
-| Open pull requests           | **#290** `docs+P2: façade split, chart a11y, ADR 0010 deferral` (`size:XXL`, branch `cursor/docs-housekeeping-2026-09-02-7093`, head observed `871eafc` during audit)   |
-| Open GitHub Issues           | Effectively **0 product issues**. `#290` is the only open issue-like object. Work is tracked in `docs/audits/*`, CHANGELOG, ADRs.                                       |
-| ADR floor on `main`          | **21** accepted numbered records. **ADR 0010 is still Proposed on `main`**; #290 documents a dated deferral — verify after merge.                                       |
-| Dexie schema                 | **v7**                                                                                                                                                                  |
-| Claim matcher                | `CLAIM_EVIDENCE_MATCHER_VERSION = 2.3.0`                                                                                                                                |
-| Providers on `main`          | `gemini`, `openai`, `anthropic`, `ollama`, `heuristic`. OpenRouter is **not** a first-class adapter. Zero-cost paths: heuristic, Ollama, OpenAI + `customBaseUrl`.      |
-| TypeScript                   | Dev compiler **~6.0.3** landed in #289. Do not treat TS 6 as open work.                                                                                                 |
-| Solo maintainer              | `@qnbs`. CODEOWNERS routes critical paths. **Do not enable require-code-owner reviews.**                                                                                |
-| Popularity signal            | 2 stars, 0 forks. Treat this as a high-integrity personal research instrument, not a crowded multi-contributor product.                                                 |
-| Agent authorship pattern     | Nearly every recent merge is `qnbs` + `cursoragent`. Process must prevent agent amnesia, stale-backlog rework, and XXL mixed PRs.                                       |
+| Field                        | Value                                                                                                                                                                                                    |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Repository                   | https://github.com/qnbs/AI-Research-Orchestrator                                                                                                                                                         |
+| Live demo                    | https://qnbs.github.io/AI-Research-Orchestrator/                                                                                                                                                         |
+| Package / product version    | **0.4.2** (named release 2026-08-30, GitHub Release exists; do **not** cut `v0.4.3` unless a user-facing integrity or security fix actually ships)                                                       |
+| Default branch HEAD observed | `660cf8c5f186fcd041000248aa2b85c55449d384` — `test(partial): cancel-mid-stream E2E and CSV/insights watermark (#287)` (2026-09-02T01:01:13Z)                                                             |
+| Live Pages                   | Onboarding already shows the honest product-truth copy from #288. Confirm deployed SHA vs `660cf8c` in Help → About / `formatReleaseLabel()` before claiming Pages lag.                                  |
+| Last merge wave on `main`    | 2026-09-01 → 2026-09-02: #285, #286, #288, #289, #287                                                                                                                                                    |
+| Open pull requests           | **#290** `docs+P2: façade split, chart a11y, ADR 0010 deferral` (`size:XXL`, branch `cursor/docs-housekeeping-2026-09-02-7093`, head observed `871eafc` during audit)                                    |
+| Open GitHub Issues           | Effectively **0 product issues**. `#290` is the only open issue-like object. Work is tracked in `docs/audits/*`, CHANGELOG, ADRs.                                                                        |
+| ADR floor on `main`          | **21** accepted numbered records. **ADR 0010 is still Proposed on `main`**; #290 documents a dated deferral — verify after merge.                                                                        |
+| Dexie schema                 | **v7**                                                                                                                                                                                                   |
+| Claim matcher                | `CLAIM_EVIDENCE_MATCHER_VERSION = 2.3.0`                                                                                                                                                                 |
+| Providers on `main`          | `gemini`, `openai`, `anthropic`, `ollama`, `heuristic`. OpenRouter is **not** a first-class adapter. Zero-cost paths: heuristic and Ollama; OpenRouter remains reachable via `openai` + `customBaseUrl`. |
+| TypeScript                   | Dev compiler **~6.0.3** landed in #289. Do not treat TS 6 as open work.                                                                                                                                  |
+| Solo maintainer              | `@qnbs`. CODEOWNERS routes critical paths. **Do not enable require-code-owner reviews.**                                                                                                                 |
+| Popularity signal            | 2 stars, 0 forks. Treat this as a high-integrity personal research instrument, not a crowded multi-contributor product.                                                                                  |
+| Agent authorship pattern     | Nearly every recent merge is `qnbs` + `cursoragent`. Process must prevent agent amnesia, stale-backlog rework, and XXL mixed PRs.                                                                        |
 
 ### 0.1 Hard truth this prompt exists to prevent
 
@@ -256,13 +256,13 @@ If you discover a real integrity regression (cancelled run stamped `done`, silen
 
 ### NOW-P2 — scheduled, still real, not this PR unless tiny
 
-| ID                           | Work                                                                                                                                                                                                                                                                                                                                                               |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `NOW-P2-OPENROUTER-DECISION` | ADR 0010 has been Proposed since 2026-07-21. #290 intends a **dated deferral**, not an implementation. After merge, the ADR must not look like an accepted-but-missing feature. Either keep Proposed with an explicit next-review date, or write a short Accepted-deferred / Superseded record. Do **not** implement OpenRouter in the same breath as file splits. |
-| `NOW-P2-HINDEX-COPY`         | Keep estimated H-index / author clustering labeled assistive, corpus-derived, not official (`ISSUE-P3-README-001` if still sloppy anywhere).                                                                                                                                                                                                                       |
-| `NOW-P2-I18N-GAPS`           | New strings from #290 (`scientometrics.a11y.*`, error taxonomy, debugger gating) need EN+DE and `i18n:ratchet`. Fix only real missing keys.                                                                                                                                                                                                                        |
-| `NOW-P2-EXPORT-SPLIT`        | If `exportService.ts` still near 700 after #290, extract format writers (CSV / RIS / BibTeX / PDF) behind the existing public API. Preserve sanitizer + size cap + partial watermark behavior.                                                                                                                                                                     |
-| `NOW-P2-E2E-DEPTH`           | Seven Chromium specs plus cross-browser matrix exist. Do not explode the suite. Add a spec only when a user-visible integrity path is untested (example: heuristic-mode first-run demo quarantine banner; partial report History badge).                                                                                                                           |
+| ID                           | Work                                                                                                                                                                                                                                                                                                                                                                   |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `NOW-P2-OPENROUTER-DECISION` | ADR 0010 has been Proposed since 2026-07-21. #290 intends a **dated deferral**, not an implementation. After merge, the ADR must not look like an accepted-but-missing feature. Keep it `Deferred — <date>` with an explicit revisit trigger, or keep Proposed only if the deferral has not landed. Do **not** implement OpenRouter in the same breath as file splits. |
+| `NOW-P2-HINDEX-COPY`         | Keep estimated H-index / author clustering labeled assistive, corpus-derived, not official (`ISSUE-P3-README-001` if still sloppy anywhere).                                                                                                                                                                                                                           |
+| `NOW-P2-I18N-GAPS`           | New strings from #290 (`scientometrics.a11y.*`, error taxonomy, debugger gating) need EN+DE and `i18n:ratchet`. Fix only real missing keys.                                                                                                                                                                                                                            |
+| `NOW-P2-EXPORT-SPLIT`        | If `exportService.ts` still near 700 after #290, extract format writers (CSV / RIS / BibTeX / PDF) behind the existing public API. Preserve sanitizer + size cap + partial watermark behavior.                                                                                                                                                                         |
+| `NOW-P2-E2E-DEPTH`           | Seven Chromium specs plus cross-browser matrix exist. Do not explode the suite. Add a spec only when a user-visible integrity path is untested (example: heuristic-mode first-run demo quarantine banner; partial report History badge).                                                                                                                               |
 
 ### NOW-P3 — later / product strategy, out of scope unless asked
 
@@ -469,7 +469,7 @@ Required GitHub checks before merge (names as in `docs/ci-branch-governance.md`)
 - Playwright E2E (Chromium)
 - Cross-browser E2E
 - Axe critical/serious smoke
-- PWA E2E
+- PWA service-worker registration (workflow-level blocking; not currently in `mainrules` required-status checks)
 - CodeQL / Dependency Review / pnpm audit / gitleaks as configured
 
 Scoped extra verification for this engagement:
