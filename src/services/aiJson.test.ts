@@ -86,6 +86,17 @@ describe('generateJson', () => {
     expect(hoisted.mapError).not.toHaveBeenCalled();
   });
 
+  it('maps non-abort provider failures through mapError', async () => {
+    const logSpy = vi.spyOn(safeLog, 'safeLogError').mockImplementation(() => {});
+    hoisted.generateContent.mockRejectedValueOnce(new Error('502 upstream'));
+    await expect(
+      generateJson(aiSettings, { model: aiSettings.model, prompt: 'p' }),
+    ).rejects.toMatchObject({ code: 'PROVIDER_UNAVAILABLE', retryable: true });
+    expect(hoisted.mapError).toHaveBeenCalledTimes(1);
+    expect(logSpy).toHaveBeenCalled();
+    logSpy.mockRestore();
+  });
+
   it('wraps root array schemas so json_object mode stays on', async () => {
     hoisted.generateContent.mockResolvedValueOnce({
       text: JSON.stringify({ items: [{ name: 'Ada' }] }),
