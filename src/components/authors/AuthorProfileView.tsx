@@ -279,6 +279,7 @@ export const AuthorProfileView: React.FC = () => {
                           height={50}
                         />
                         <YAxis
+                          allowDecimals={false}
                           tick={{ fill: textColor, fontSize: 12 }}
                           label={{
                             value: t('charts.publications'),

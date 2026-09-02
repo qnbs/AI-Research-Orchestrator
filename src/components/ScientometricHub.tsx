@@ -345,7 +345,10 @@ const ScientometricHub: React.FC<Props> = ({ articles, keywords = [], title }) =
                     textAnchor="end"
                     height={40}
                   />
-                  <YAxis tick={{ fill: 'var(--color-text-secondary)', fontSize: 11 }} />
+                  <YAxis
+                    allowDecimals={false}
+                    tick={{ fill: 'var(--color-text-secondary)', fontSize: 11 }}
+                  />
                   <Tooltip
                     contentStyle={{
                       background: 'var(--color-surface)',
