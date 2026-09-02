@@ -46,6 +46,7 @@ const MIGRATED_FILES = [
   'src/components/ResearchView.tsx',
   'src/components/ResearchResultsPanel.tsx',
   'src/components/ReportDisplay.tsx',
+  'src/components/ReportPublicationChart.tsx',
   'src/components/ReportArticleCard.tsx',
   'src/components/ChatInterface.tsx',
   'src/components/RelevanceScoreDisplay.tsx',

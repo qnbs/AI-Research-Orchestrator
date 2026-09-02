@@ -477,23 +477,44 @@ export const AnalysisCharts: React.FC = () => {
         </h3>
         <div className="h-32">
           {analyticsData.timelineData.length > 0 ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={analyticsData.timelineData}
-                margin={{ top: 4, right: 4, left: 0, bottom: 0 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
-                <XAxis dataKey="year" tick={{ fill: tickColor, fontSize: 11 }} axisLine={false} />
-                <YAxis allowDecimals={false} tick={{ fill: tickColor, fontSize: 11 }} width={28} />
-                <RechartsTooltip />
-                <Bar
-                  dataKey="count"
-                  name={t('journals.charts.articles')}
-                  fill="rgba(31, 111, 235, 0.5)"
-                  radius={[4, 4, 0, 0]}
+            <>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={analyticsData.timelineData}
+                  margin={{ top: 4, right: 4, left: 0, bottom: 0 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
+                  <XAxis dataKey="year" tick={{ fill: tickColor, fontSize: 11 }} axisLine={false} />
+                  <YAxis
+                    allowDecimals={false}
+                    tick={{ fill: tickColor, fontSize: 11 }}
+                    width={28}
+                  />
+                  <RechartsTooltip />
+                  <Bar
+                    dataKey="count"
+                    name={t('journals.charts.articles')}
+                    fill="rgba(31, 111, 235, 0.5)"
+                    radius={[4, 4, 0, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+              <div className="sr-only" aria-label={t('journals.a11y.tables')}>
+                <ChartAccessibleTable
+                  caption={t('journals.a11y.timeline_caption')}
+                  columns={[
+                    { key: 'year', label: t('journals.a11y.year'), render: (r) => r.year },
+                    {
+                      key: 'count',
+                      label: t('journals.charts.articles'),
+                      render: (r) => r.count,
+                    },
+                  ]}
+                  rows={analyticsData.timelineData}
+                  rowKey={(r) => r.year}
                 />
-              </BarChart>
-            </ResponsiveContainer>
+              </div>
+            </>
           ) : (
             <p className="h-full flex items-center justify-center text-sm text-text-secondary">
               {t('charts.no_publication_years')}

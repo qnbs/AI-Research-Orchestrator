@@ -1,3 +1,9 @@
+# 2026-09-02 — Docs housekeeping, façade split, chart a11y, ADR 0010 deferral
+
+- **Why:** After #285–#289 and #287 landed on `main` (`660cf8c`), audit docs still described live queue rows as “This PR” and ADR 0010 as Proposed-indefinite. Remaining P2 from the 2026-09-01 prompt: façade file-cap, chart a11y, OpenRouter decision.
+- **What:** Split `geminiService.ts` into `aiJson` / `liveResearchReportStream` / `literatureAiTools` with façade re-exports. Accessible tables on remaining bar/scatter charts. ADR 0010 dated deferral (heuristic + Ollama stay zero-cost). `VIEWS` tuple derives `View`; `isDeveloperToolsEnabled` centralizes debugger gating. Docs addendum on the 2026-09-01 baseline; backlog header SHA `660cf8c`.
+- **Not done:** OpenRouter adapter (deferred, not rejected). `exportService.ts` still near the 700-line cap. Sourcery BACKLOG-P2-002/004/005. GitHub repo description still `ISSUE-P2-AGENT-001`. No v0.4.3 tag.
+
 # 2026-08-01 — Autonomous continuation (post v0.4.0)
 
 ## Landed

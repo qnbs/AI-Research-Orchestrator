@@ -22,7 +22,9 @@ const MODULE_FLOORS = [
   },
   {
     id: 'geminiService',
-    pathPattern: /\/src\/services\/geminiService\.ts$/,
+    pathPattern:
+      /\/src\/services\/(geminiService|aiJson|liveResearchReportStream|literatureAiTools)\.ts$/,
+    aggregate: true,
     min: { lines: 68, statements: 68, branches: 50, functions: 70 },
   },
   {

@@ -24,6 +24,7 @@ import { AgentDebuggerToggle } from './agentDebugger/AgentDebuggerToggle';
 import { InferenceModeBadge } from './InferenceModeBadge';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { cycleTheme, selectCurrentTheme } from '../store/slices/themeSlice';
+import { isDeveloperToolsEnabled } from '../store/slices/settingsSlice';
 
 interface HeaderProps {
   onViewChange: (view: View) => void;
@@ -307,7 +308,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
               >
                 {themeIcon}
               </button>
-              {settings.developerMode && <AgentDebuggerToggle />}
+              {isDeveloperToolsEnabled(settings) && <AgentDebuggerToggle />}
             </div>
           </div>
         </div>
@@ -326,6 +327,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
           </button>
           <div className="flex items-center gap-1">
             <InferenceModeBadge className="max-w-[7.5rem] truncate text-[10px] px-1.5 py-0.5" />
+            {isDeveloperToolsEnabled(settings) && <AgentDebuggerToggle />}
             <button
               onClick={toggleLanguage}
               className="p-2.5 text-text-secondary font-bold text-xs focus-ring-aa touch-target-aa rounded-full"

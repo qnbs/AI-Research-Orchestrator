@@ -18,6 +18,7 @@ import { useTranslation } from '../../hooks/useTranslation';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import { computePublicationsPerYear, isSameAuthorIdentity } from '../../lib/authorIdentity';
+import { ChartAccessibleTable } from '../charts/ChartAccessibleTable';
 
 const secureMarkdownToHtml = (text: string): string => {
   if (!text) return '';
@@ -263,36 +264,54 @@ export const AuthorProfileView: React.FC = () => {
               </h3>
               <div className="h-64 bg-background p-4 rounded-lg border border-border">
                 {publicationTimeline.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={publicationTimeline}
-                      margin={{ top: 8, right: 8, left: 0, bottom: 24 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
-                      <XAxis
-                        dataKey="year"
-                        tick={{ fill: textColor, fontSize: 11 }}
-                        angle={-45}
-                        textAnchor="end"
-                        height={50}
+                  <>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={publicationTimeline}
+                        margin={{ top: 8, right: 8, left: 0, bottom: 24 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
+                        <XAxis
+                          dataKey="year"
+                          tick={{ fill: textColor, fontSize: 11 }}
+                          angle={-45}
+                          textAnchor="end"
+                          height={50}
+                        />
+                        <YAxis
+                          allowDecimals={false}
+                          tick={{ fill: textColor, fontSize: 12 }}
+                          label={{
+                            value: t('charts.publications'),
+                            angle: -90,
+                            position: 'insideLeft',
+                            fill: textColor,
+                          }}
+                        />
+                        <RechartsTooltip />
+                        <Bar
+                          dataKey="publications"
+                          name={t('charts.publications')}
+                          fill="rgba(31, 111, 235, 0.75)"
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                    <div className="sr-only" aria-label={t('authors.a11y.tables')}>
+                      <ChartAccessibleTable
+                        caption={t('authors.a11y.timeline_caption')}
+                        columns={[
+                          { key: 'year', label: t('authors.a11y.year'), render: (r) => r.year },
+                          {
+                            key: 'publications',
+                            label: t('authors.a11y.publications'),
+                            render: (r) => r.publications,
+                          },
+                        ]}
+                        rows={publicationTimeline}
+                        rowKey={(r) => r.year}
                       />
-                      <YAxis
-                        tick={{ fill: textColor, fontSize: 12 }}
-                        label={{
-                          value: t('charts.publications'),
-                          angle: -90,
-                          position: 'insideLeft',
-                          fill: textColor,
-                        }}
-                      />
-                      <RechartsTooltip />
-                      <Bar
-                        dataKey="publications"
-                        name={t('charts.publications')}
-                        fill="rgba(31, 111, 235, 0.75)"
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
+                    </div>
+                  </>
                 ) : (
                   <p className="h-full flex items-center justify-center text-sm text-text-secondary">
                     {t('charts.no_publication_years')}

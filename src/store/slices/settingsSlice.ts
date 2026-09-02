@@ -80,6 +80,13 @@ export const defaultSettings: Settings = {
   developerMode: false,
 };
 
+/** True when Agent Debugger chrome should mount (Header toggle + AppLayout panel). */
+export function isDeveloperToolsEnabled(
+  settings: Pick<Settings, 'developerMode'> | null | undefined,
+): boolean {
+  return settings?.developerMode === true;
+}
+
 interface SettingsState {
   data: Settings;
   isLoading: boolean;
