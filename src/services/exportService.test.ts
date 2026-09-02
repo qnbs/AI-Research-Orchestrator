@@ -4,13 +4,40 @@ const pdfTextSpy = vi.hoisted(() => vi.fn());
 const pdfOutputSpy = vi.hoisted(() => vi.fn(() => new ArrayBuffer(64)));
 const pdfSaveSpy = vi.hoisted(() => vi.fn());
 const pdfSetPageSpy = vi.hoisted(() => vi.fn());
+const pdfCallLog = vi.hoisted(() => [] as string[]);
 const pdfDocMock = vi.hoisted(() => {
   const chain = new Proxy({} as Record<string, unknown>, {
     get(_target, prop: string) {
       if (prop === 'internal') return { pageSize: { getHeight: () => 842, getWidth: () => 595 } };
-      if (prop === 'splitTextToSize') return vi.fn((s: string) => [String(s)]);
+      if (prop === 'splitTextToSize') {
+        return (s: string) => {
+          const str = String(s);
+          if (str.includes('NEEDWRAP')) {
+            return Array.from({ length: 80 }, (_, i) => `NEEDWRAP line ${i}`);
+          }
+          return [str];
+        };
+      }
       if (prop === 'save') return pdfSaveSpy;
       if (prop === 'output') return pdfOutputSpy;
+      if (prop === 'addPage') {
+        return (..._args: unknown[]) => {
+          pdfCallLog.push('addPage');
+          return chain;
+        };
+      }
+      if (prop === 'setFont') {
+        return (...args: unknown[]) => {
+          pdfCallLog.push(`setFont:${String(args[0])},${String(args[1])}`);
+          return chain;
+        };
+      }
+      if (prop === 'textWithLink') {
+        return (..._args: unknown[]) => {
+          pdfCallLog.push('textWithLink');
+          return chain;
+        };
+      }
       if (prop === 'setPage') {
         return (...args: unknown[]) => {
           pdfSetPageSpy(...args);
@@ -88,6 +115,7 @@ describe('export helpers', () => {
     pdfTextSpy.mockClear();
     pdfSaveSpy.mockClear();
     pdfSetPageSpy.mockClear();
+    pdfCallLog.length = 0;
     pdfOutputSpy.mockReset();
     pdfOutputSpy.mockReturnValue(new ArrayBuffer(64));
     vi.spyOn(document, 'createElement').mockImplementation((tag: string) => {
@@ -791,6 +819,74 @@ describe('export helpers', () => {
     };
     exportCitations(articles, cite, 'ris');
     expect(anchorMocks[0].click).toHaveBeenCalled();
+  });
+
+  it('exportKnowledgeBaseToPdf header reserves space so the first section title sits below the rule', () => {
+    const pdfSettings: Settings['export']['pdf'] = {
+      includeCoverPage: false,
+      preparedFor: '',
+      includeSynthesis: false,
+      includeInsights: false,
+      includeQueries: false,
+      includeToc: false,
+      includeHeader: true,
+      includeFooter: false,
+    };
+    const agg: AggregatedArticle = {
+      pmid: '9',
+      title: 'Short title',
+      authors: 'A',
+      journal: 'J',
+      pubYear: '2021',
+      summary: 'S',
+      relevanceScore: 1,
+      relevanceExplanation: '',
+      keywords: [],
+      isOpenAccess: false,
+      sourceTitle: 'src',
+      sourceId: 'id',
+    };
+    exportKnowledgeBaseToPdf([agg], 'KB Title', () => [], pdfSettings);
+    const sectionCall = pdfTextSpy.mock.calls.find((call) => call[0] === 'Exported Articles');
+    expect(sectionCall).toBeDefined();
+    expect(sectionCall?.[2]).toBeGreaterThanOrEqual(24);
+  });
+
+  it('exportKnowledgeBaseToPdf restores H2 bold after a header page-break in a wrapped title', () => {
+    const pdfSettings: Settings['export']['pdf'] = {
+      includeCoverPage: false,
+      preparedFor: '',
+      includeSynthesis: false,
+      includeInsights: false,
+      includeQueries: false,
+      includeToc: false,
+      includeHeader: true,
+      includeFooter: false,
+    };
+    const agg: AggregatedArticle = {
+      pmid: '9',
+      title: 'NEEDWRAP very long article title that must wrap across a page boundary',
+      authors: 'A',
+      journal: 'J',
+      pubYear: '2021',
+      summary: 'S',
+      relevanceScore: 1,
+      relevanceExplanation: '',
+      keywords: [],
+      isOpenAccess: false,
+      sourceTitle: 'src',
+      sourceId: 'id',
+    };
+    exportKnowledgeBaseToPdf([agg], 'KB Title', () => [], pdfSettings);
+    const addPageIdx = pdfCallLog.lastIndexOf('addPage');
+    expect(addPageIdx).toBeGreaterThan(-1);
+    const after = pdfCallLog.slice(addPageIdx);
+    const italicIdx = after.findIndex((c) => c === 'setFont:helvetica,italic');
+    const boldIdx = after.findIndex((c) => c === 'setFont:helvetica,bold');
+    const linkIdx = after.findIndex((c) => c === 'textWithLink');
+    expect(italicIdx).toBeGreaterThan(-1);
+    expect(boldIdx).toBeGreaterThan(italicIdx);
+    expect(linkIdx).toBeGreaterThan(boldIdx);
   });
 
   it('exportKnowledgeBaseToPdf with cover page', () => {

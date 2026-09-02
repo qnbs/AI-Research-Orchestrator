@@ -20,6 +20,8 @@ import { APP_NAME, cleanText } from './exportText';
 
 const PDF_CONSTANTS = {
   MARGIN: 15,
+  /** First content Y after the running header (text at y=10, rule at y=12). */
+  HEADER_CONTENT_Y: 24,
   FONT_SIZES: {
     TITLE: 22,
     H1: 14,
@@ -96,6 +98,9 @@ class PdfExporter {
     this.doc
       .setDrawColor(PDF_CONSTANTS.COLORS.LINE)
       .line(PDF_CONSTANTS.MARGIN, 12, this.pageWidth - PDF_CONSTANTS.MARGIN, 12);
+    if (this.currentY < PDF_CONSTANTS.HEADER_CONTENT_Y) {
+      this.currentY = PDF_CONSTANTS.HEADER_CONTENT_Y;
+    }
   }
 
   /** Adds a footer labeled with `page`, not the exporter's high-water `pageNumber`. */
@@ -179,10 +184,13 @@ class PdfExporter {
         ? ` / PMCID: PMC${normalizePmcidValue(article.pmcId)}`
         : '';
     this.checkPageBreak(80);
-    this.doc
-      .setFontSize(PDF_CONSTANTS.FONT_SIZES.H2)
-      .setFont('helvetica', 'bold')
-      .setTextColor(PDF_CONSTANTS.COLORS.LINK);
+    const applyArticleTitleStyle = (): void => {
+      this.doc
+        .setFontSize(PDF_CONSTANTS.FONT_SIZES.H2)
+        .setFont('helvetica', 'bold')
+        .setTextColor(PDF_CONSTANTS.COLORS.LINK);
+    };
+    applyArticleTitleStyle();
     const title = `${index + 1}. ${cleanText(article.title)}`;
     const titleLines = this.doc.splitTextToSize(
       title,
@@ -190,6 +198,8 @@ class PdfExporter {
     ) as string[];
     for (const line of titleLines) {
       this.checkPageBreak(PDF_CONSTANTS.FONT_SIZES.H2);
+      // addPage → addHeader mutates font/color; restore H2 before drawing.
+      applyArticleTitleStyle();
       this.doc.textWithLink(line, PDF_CONSTANTS.MARGIN, this.currentY, { url: articleLink });
       this.currentY += PDF_CONSTANTS.FONT_SIZES.H2 * 1.2;
     }
@@ -312,7 +322,9 @@ class PdfExporter {
 
     if (tocPage !== null) {
       this.doc.setPage(tocPage);
-      this.currentY = PDF_CONSTANTS.MARGIN;
+      this.currentY = this.settings.includeHeader
+        ? PDF_CONSTANTS.HEADER_CONTENT_Y
+        : PDF_CONSTANTS.MARGIN;
       this.addTableOfContents();
     }
 
