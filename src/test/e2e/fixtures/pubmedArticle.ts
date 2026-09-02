@@ -38,6 +38,22 @@ export function buildEsearchJson(pmid: string): string {
   return JSON.stringify({ esearchresult: { idlist: [pmid] } });
 }
 
+/** NCBI ESummary JSON used by `fetchArticleDetails` (POST esummary.fcgi). */
+export function buildEsummaryJson(article: PubMedMockArticle): string {
+  return JSON.stringify({
+    result: {
+      uids: [article.pmid],
+      [article.pmid]: {
+        title: article.title,
+        authors: [{ name: `${article.lastName} ${article.foreName}` }],
+        fulljournalname: article.journal,
+        pubdate: article.year,
+        articleids: [],
+      },
+    },
+  });
+}
+
 export function buildPubmedArticleXml(article: PubMedMockArticle): string {
   return `<?xml version="1.0"?><PubmedArticleSet><PubmedArticle>
           <MedlineCitation Status="MEDLINE"><PMID Version="1">${article.pmid}</PMID>

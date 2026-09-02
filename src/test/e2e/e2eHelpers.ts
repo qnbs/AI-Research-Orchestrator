@@ -253,6 +253,30 @@ async function waitForDemoKbSeed(page: Page, timeout = 60_000) {
   );
 }
 
+/** Valid-format Gemini fixture key: AIza + 35 alphanumerics (39 chars). Not a real secret. */
+export const E2E_FAKE_GEMINI_KEY = 'AIza1234567890123456789012345678901234a';
+
+/**
+ * Persist a fake Gemini key through Settings so live-mode inference is active.
+ * localStorage `gemini_api_key` is not the vault; the encrypted IndexedDB slot is.
+ */
+export async function seedFakeGeminiApiKey(page: Page, key = E2E_FAKE_GEMINI_KEY) {
+  await navigateToView(page, '#settings');
+  const aiTab = page.getByRole('tab', { name: /AI Configuration|KI-Konfiguration/i });
+  await aiTab.waitFor({ state: 'visible', timeout: 10_000 });
+  await aiTab.click();
+  await page.locator('#api-key-input').waitFor({ state: 'visible', timeout: 10_000 });
+  await page.locator('#api-key-input').fill(key);
+  await page
+    .getByRole('tabpanel')
+    .getByRole('button', { name: /^(save|speichern)$/i })
+    .first()
+    .click();
+  await page
+    .getByText(/API key saved securely|API-Schlüssel.*gespeichert/i)
+    .waitFor({ state: 'visible', timeout: 15_000 });
+}
+
 /** Open Settings from header chrome (desktop icons or mobile overflow menu). */
 export async function openSettingsFromChrome(page: Page) {
   const viewport = page.viewportSize();

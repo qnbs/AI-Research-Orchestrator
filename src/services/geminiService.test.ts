@@ -721,6 +721,67 @@ describe('geminiService with mocked SDK', () => {
     await expect(gen.next()).rejects.toMatchObject({ code: 'STREAM_ABORTED' });
   });
 
+  it('generateResearchReportStream maps a mid-synthesis AbortError to STREAM_ABORTED', async () => {
+    hoisted.generateContent
+      .mockResolvedValueOnce({
+        text: JSON.stringify({
+          generatedQueries: [{ query: 'cancer[Title]', explanation: 'e' }],
+        }),
+      })
+      .mockResolvedValueOnce({
+        text: JSON.stringify({
+          rankedArticles: [
+            {
+              pmid: '123',
+              relevanceScore: 95,
+              relevanceExplanation: 'r',
+              keywords: ['k'],
+              articleType: 'Study',
+              aiSummary: 'sum',
+            },
+          ],
+          aiGeneratedInsights: [],
+          overallKeywords: [],
+        }),
+      });
+    const ac = new AbortController();
+    hoisted.generateContentStream.mockImplementation(
+      async (req?: { config?: { abortSignal?: AbortSignal } }) => {
+        const signal = req?.config?.abortSignal;
+        return (async function* () {
+          yield { text: 'syn ' };
+          await new Promise<void>((_resolve, reject) => {
+            const fail = (): void => {
+              reject(new DOMException('Aborted', 'AbortError'));
+            };
+            if (!signal) {
+              reject(new Error('generateContentStream called without abortSignal'));
+              return;
+            }
+            if (signal.aborted) {
+              fail();
+              return;
+            }
+            signal.addEventListener('abort', fail, { once: true });
+          });
+        })();
+      },
+    );
+    const gen = generateResearchReportStream(mockInput, mockAi, ac.signal);
+    let sawSynthesisChunk = false;
+    await expect(
+      (async () => {
+        for await (const event of gen) {
+          if (event.phaseId === 'synthesis-stream') {
+            sawSynthesisChunk = true;
+            ac.abort();
+          }
+        }
+      })(),
+    ).rejects.toMatchObject({ code: 'STREAM_ABORTED', retryable: false });
+    expect(sawSynthesisChunk).toBe(true);
+  });
+
   it('generateResearchReportStream rejects invalid PubMed queries before search', async () => {
     hoisted.generateContent.mockResolvedValueOnce({
       text: JSON.stringify({

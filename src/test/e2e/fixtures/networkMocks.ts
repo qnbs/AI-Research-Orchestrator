@@ -9,6 +9,7 @@ import {
   PIPELINE_PUBMED_ARTICLE,
   type PubMedMockArticle,
   buildEsearchJson,
+  buildEsummaryJson,
   buildPubmedArticleXml,
 } from './pubmedArticle';
 
@@ -25,6 +26,14 @@ export async function mockPubMedRoutes(
           status: 200,
           contentType: 'application/json',
           body: buildEsearchJson(article.pmid),
+        });
+        return;
+      }
+      if (url.includes('esummary')) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: buildEsummaryJson(article),
         });
         return;
       }
@@ -73,6 +82,82 @@ export async function mockArxivRoutes(page: Page): Promise<void> {
         <summary>Neurological findings.</summary><author><name>Author A</name></author>
         <published>2024-04-01T00:00:00Z</published><updated>2024-04-01T00:00:00Z</updated>
         <category term="q-bio.NC"/></entry></feed>`,
+      });
+    },
+  );
+}
+
+function geminiGenerateContentBody(text: string): string {
+  return JSON.stringify({
+    candidates: [{ content: { parts: [{ text }], role: 'model' } }],
+  });
+}
+
+const QUERY_GEN_JSON = JSON.stringify({
+  generatedQueries: [
+    {
+      query: `${PIPELINE_PUBMED_ARTICLE.title.split(' ')[0]}[Title/Abstract]`,
+      explanation: 'e2e hanging-synthesis fixture',
+    },
+  ],
+});
+
+const RANKING_JSON = JSON.stringify({
+  rankedArticles: [
+    {
+      pmid: PIPELINE_PUBMED_ARTICLE.pmid,
+      relevanceScore: 92,
+      relevanceExplanation: 'e2e fixture rank',
+      keywords: ['cognition'],
+      articleType: 'Journal Article',
+      aiSummary: PIPELINE_PUBMED_ARTICLE.abstract,
+    },
+  ],
+  aiGeneratedInsights: [
+    {
+      question: 'What did the fixture study report?',
+      answer: PIPELINE_PUBMED_ARTICLE.abstract,
+      supportingArticles: [PIPELINE_PUBMED_ARTICLE.pmid],
+    },
+  ],
+  overallKeywords: [{ keyword: 'cognition', frequency: 1 }],
+});
+
+/**
+ * Live Gemini path: query+ranking JSON complete immediately; synthesis SSE hangs
+ * until the page aborts so Playwright can click Cancel mid-stream.
+ */
+export async function mockGeminiHangingSynthesis(page: Page): Promise<void> {
+  await page.route(
+    (url) => url.hostname === 'generativelanguage.googleapis.com',
+    async (route: Route) => {
+      const url = route.request().url();
+      if (url.includes('streamGenerateContent')) {
+        await new Promise<void>((resolve) => {
+          const finish = () => {
+            clearTimeout(timer);
+            page.off('requestfailed', onFailed);
+            resolve();
+          };
+          const timer = setTimeout(finish, 90_000);
+          const onFailed = (req: { url: () => string }) => {
+            if (req.url().includes('streamGenerateContent')) finish();
+          };
+          page.on('requestfailed', onFailed);
+        });
+        try {
+          await route.abort('timedout');
+        } catch {
+          /* client already aborted the hanging stream */
+        }
+        return;
+      }
+      const post = route.request().postData() ?? '';
+      const isQueryGen = /PubMed search query|generatedQueries/i.test(post);
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: geminiGenerateContentBody(isQueryGen ? QUERY_GEN_JSON : RANKING_JSON),
       });
     },
   );

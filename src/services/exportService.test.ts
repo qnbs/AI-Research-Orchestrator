@@ -38,6 +38,7 @@ import type {
 } from '../types';
 import { AppError } from '../lib/errors';
 import { MAX_EXPORT_BYTES } from '../lib/exportSafety';
+import { csvPartialProvenanceRow } from '../lib/reportExportProvenance';
 import {
   sanitizeCsvFormulaInjection,
   exportHistoryToJson,
@@ -103,6 +104,69 @@ describe('export helpers', () => {
     exportInsightsToCsv([{ question: 'Q', answer: 'A', supportingArticles: ['1'] }], 'topic');
     expect(anchorMocks.length).toBe(1);
     expect(anchorMocks[0].click).toHaveBeenCalled();
+  });
+
+  it('exportInsightsToCsv watermarks a partial report', async () => {
+    exportInsightsToCsv([{ question: 'Q', answer: 'A', supportingArticles: ['1'] }], 'topic', {
+      partial: true,
+    });
+    const blob = vi.mocked(URL.createObjectURL).mock.calls[0][0] as Blob;
+    const csv = await blob.text();
+    expect(csv.startsWith('ReportTopic,Question,Answer,Supporting PMIDs\n')).toBe(true);
+    expect(csv.split('\n')[1]).toBe(csvPartialProvenanceRow(true, 4, ','));
+  });
+
+  it('exportToCsv watermarks a partial report as the first data row after headers', async () => {
+    const articles: AggregatedArticle[] = [
+      {
+        pmid: '1',
+        title: 'T',
+        authors: 'A',
+        journal: 'J',
+        pubYear: '2020',
+        summary: 'S',
+        relevanceScore: 1,
+        relevanceExplanation: '',
+        keywords: ['k'],
+        isOpenAccess: true,
+        sourceTitle: 'src',
+        sourceId: 'sid',
+      },
+    ];
+    exportToCsv(
+      articles,
+      'topic',
+      { columns: ['pmid', 'title'], delimiter: ',' },
+      { partial: true },
+    );
+    const blob = vi.mocked(URL.createObjectURL).mock.calls[0][0] as Blob;
+    const csv = await blob.text();
+    expect(csv.startsWith('pmid,title\n')).toBe(true);
+    expect(csv.split('\n')[1]).toBe(csvPartialProvenanceRow(true, 2, ','));
+  });
+
+  it('exportToCsv omits the watermark for a finished report', async () => {
+    const articles: AggregatedArticle[] = [
+      {
+        pmid: '1',
+        title: 'T',
+        authors: 'A',
+        journal: 'J',
+        pubYear: '2020',
+        summary: 'S',
+        relevanceScore: 1,
+        relevanceExplanation: '',
+        keywords: ['k'],
+        isOpenAccess: true,
+        sourceTitle: 'src',
+        sourceId: 'sid',
+      },
+    ];
+    exportToCsv(articles, 'topic', { columns: ['pmid', 'title'], delimiter: ',' });
+    const blob = vi.mocked(URL.createObjectURL).mock.calls[0][0] as Blob;
+    const csv = await blob.text();
+    expect(csv.startsWith('pmid,title')).toBe(true);
+    expect(csv).not.toContain('PARTIAL REPORT');
   });
 
   it('exportHistoryToJson includes build release meta in wrapper', async () => {
