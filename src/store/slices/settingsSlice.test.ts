@@ -4,6 +4,7 @@ import settingsReducer, {
   updateSettings,
   resetSettings,
   defaultSettings,
+  isDeveloperToolsEnabled,
 } from './settingsSlice';
 
 describe('settingsSlice', () => {
@@ -32,5 +33,12 @@ describe('settingsSlice', () => {
 
   it('developerMode defaults to false', () => {
     expect(defaultSettings.developerMode).toBe(false);
+  });
+
+  it('isDeveloperToolsEnabled is true only when developerMode is set', () => {
+    expect(isDeveloperToolsEnabled(undefined)).toBe(false);
+    expect(isDeveloperToolsEnabled(null)).toBe(false);
+    expect(isDeveloperToolsEnabled(defaultSettings)).toBe(false);
+    expect(isDeveloperToolsEnabled({ ...defaultSettings, developerMode: true })).toBe(true);
   });
 });

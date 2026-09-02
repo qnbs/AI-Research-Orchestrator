@@ -51,4 +51,11 @@ describe('useUrlSync', () => {
 
     expect(pushStateSpy).not.toHaveBeenCalledWith(null, '', '#home');
   });
+
+  it('does not treat unknown hashes as views', () => {
+    const setCurrentView = vi.fn();
+    window.location.hash = '#not-a-view';
+    renderHook(() => useUrlSync('home', setCurrentView));
+    expect(setCurrentView).not.toHaveBeenCalled();
+  });
 });

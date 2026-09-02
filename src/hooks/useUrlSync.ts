@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { View } from '../contexts/UIContext';
+import { isView, type View } from '../types/ui';
 
 export const useUrlSync = (currentView: View, setCurrentView: (view: View) => void) => {
   const isInitialMount = useRef(true);
@@ -9,24 +9,9 @@ export const useUrlSync = (currentView: View, setCurrentView: (view: View) => vo
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#', '');
-      // Basic validation to ensure hash is a valid View
-      const validViews: View[] = [
-        'home',
-        'orchestrator',
-        'research',
-        'authors',
-        'journals',
-        'knowledgeBase',
-        'settings',
-        'help',
-        'dashboard',
-        'history',
-        'collections',
-      ];
-
-      if (hash && validViews.includes(hash as View)) {
+      if (hash && isView(hash)) {
         // Only update if different to prevent loops
-        setCurrentView(hash as View);
+        setCurrentView(hash);
       } else if (!hash) {
         setCurrentView('home');
       }

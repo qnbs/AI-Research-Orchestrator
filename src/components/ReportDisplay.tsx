@@ -22,6 +22,7 @@ import { ExportIcon } from './icons/ExportIcon';
 import { ChatInterface } from './ChatInterface';
 import { ChatBubbleLeftRightIcon } from './icons/ChatBubbleLeftRightIcon';
 import { ReportArticleCard } from './ReportArticleCard';
+import { ReportPublicationChart } from './ReportPublicationChart';
 import { stableInsightKey } from '../lib/stableReactKeys';
 import { isDemoSyntheticArticle } from '../lib/articleSourceClass';
 import { normalizeSynthesisTrustLevel } from '../lib/synthesisTrustTerminology';
@@ -31,15 +32,6 @@ import {
   sourceIdentifierLabelKey,
   formatSourceIdentifierValue,
 } from '../lib/sourceIdentifier';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip as RechartsTooltip,
-  ResponsiveContainer,
-} from 'recharts';
 import { safeLogError } from '../lib/safeLog';
 
 interface ReportDisplayProps {
@@ -466,47 +458,7 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(function R
 
           <AccordionSection title={t('report.accordion.visualization')} defaultOpen={false}>
             <div className="p-2">
-              {chartData ? (
-                <div className="h-64 bg-background border border-border rounded-md p-4">
-                  <p className="text-sm font-medium text-text-secondary mb-2">
-                    {t('report.chart.timelineTitle')}
-                  </p>
-                  <ResponsiveContainer width="100%" height="90%">
-                    <BarChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                      <CartesianGrid
-                        strokeDasharray="3 3"
-                        stroke={
-                          settings.theme === 'dark'
-                            ? 'rgba(125, 133, 144, 0.1)'
-                            : 'rgba(87, 96, 106, 0.1)'
-                        }
-                      />
-                      <XAxis
-                        dataKey="year"
-                        tick={{
-                          fill: settings.theme === 'dark' ? '#7d8590' : '#57606a',
-                          fontSize: 12,
-                        }}
-                      />
-                      <YAxis
-                        allowDecimals={false}
-                        tick={{
-                          fill: settings.theme === 'dark' ? '#7d8590' : '#57606a',
-                          fontSize: 12,
-                        }}
-                      />
-                      <RechartsTooltip />
-                      <Bar
-                        dataKey="count"
-                        name={t('report.chart.publications')}
-                        fill="rgba(31, 111, 235, 0.75)"
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              ) : (
-                <p className="text-text-secondary italic">{t('report.chart.empty')}</p>
-              )}
+              <ReportPublicationChart data={chartData} />
             </div>
           </AccordionSection>
 

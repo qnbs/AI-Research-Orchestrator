@@ -306,47 +306,84 @@ const ScientometricHub: React.FC<Props> = ({ articles, keywords = [], title }) =
                   </span>
                 ))}
               </div>
+              <div className="sr-only" aria-label={t('scientometrics.a11y.tables')}>
+                <ChartAccessibleTable
+                  caption={t('scientometrics.a11y.authors_caption')}
+                  columns={[
+                    { key: 'name', label: t('scientometrics.a11y.author'), render: (r) => r.name },
+                    {
+                      key: 'articleCount',
+                      label: t('scientometrics.a11y.articles'),
+                      render: (r) => r.articleCount,
+                    },
+                    {
+                      key: 'avgRelevance',
+                      label: t('scientometrics.a11y.avg_relevance'),
+                      render: (r) => Math.round(r.avgRelevance),
+                    },
+                  ]}
+                  rows={authorNodes}
+                  rowKey={(r) => r.name}
+                />
+              </div>
             </div>
           )}
 
           {/* Publication Timeline */}
           {activeTab === 'years' && (
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={yearData} margin={{ top: 5, right: 10, bottom: 20, left: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border-subtle)" />
-                <XAxis
-                  dataKey="year"
-                  tick={{ fill: 'var(--color-text-secondary)', fontSize: 11 }}
-                  angle={-45}
-                  textAnchor="end"
-                  height={40}
+            <>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={yearData} margin={{ top: 5, right: 10, bottom: 20, left: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border-subtle)" />
+                  <XAxis
+                    dataKey="year"
+                    tick={{ fill: 'var(--color-text-secondary)', fontSize: 11 }}
+                    angle={-45}
+                    textAnchor="end"
+                    height={40}
+                  />
+                  <YAxis tick={{ fill: 'var(--color-text-secondary)', fontSize: 11 }} />
+                  <Tooltip
+                    contentStyle={{
+                      background: 'var(--color-surface)',
+                      border: '1px solid var(--color-border)',
+                      borderRadius: 8,
+                      backdropFilter: 'blur(16px)',
+                    }}
+                    labelStyle={{ color: 'var(--color-text-primary)' }}
+                    itemStyle={{ color: 'var(--color-brand-accent)' }}
+                  />
+                  <Bar
+                    dataKey="count"
+                    name={t('scientometrics.series.articles')}
+                    radius={[4, 4, 0, 0]}
+                  >
+                    {yearData.map((entry, index) => (
+                      <Cell
+                        key={entry.year}
+                        fill={`hsl(${190 + index * 5}, 80%, 60%)`}
+                        fillOpacity={0.85}
+                      />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+              <div className="sr-only" aria-label={t('scientometrics.a11y.tables')}>
+                <ChartAccessibleTable
+                  caption={t('scientometrics.a11y.timeline_caption')}
+                  columns={[
+                    { key: 'year', label: t('scientometrics.a11y.year'), render: (r) => r.year },
+                    {
+                      key: 'count',
+                      label: t('scientometrics.a11y.articles'),
+                      render: (r) => r.count,
+                    },
+                  ]}
+                  rows={yearData}
+                  rowKey={(r) => r.year}
                 />
-                <YAxis tick={{ fill: 'var(--color-text-secondary)', fontSize: 11 }} />
-                <Tooltip
-                  contentStyle={{
-                    background: 'var(--color-surface)',
-                    border: '1px solid var(--color-border)',
-                    borderRadius: 8,
-                    backdropFilter: 'blur(16px)',
-                  }}
-                  labelStyle={{ color: 'var(--color-text-primary)' }}
-                  itemStyle={{ color: 'var(--color-brand-accent)' }}
-                />
-                <Bar
-                  dataKey="count"
-                  name={t('scientometrics.series.articles')}
-                  radius={[4, 4, 0, 0]}
-                >
-                  {yearData.map((entry, index) => (
-                    <Cell
-                      key={entry.year}
-                      fill={`hsl(${190 + index * 5}, 80%, 60%)`}
-                      fillOpacity={0.85}
-                    />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+              </div>
+            </>
           )}
 
           {/* Journal Distribution Pie */}
@@ -394,12 +431,12 @@ const ScientometricHub: React.FC<Props> = ({ articles, keywords = [], title }) =
               </ResponsiveContainer>
               <div className="sr-only">
                 <ChartAccessibleTable
-                  caption={t('scientometrics.journals')}
+                  caption={t('scientometrics.a11y.journals_caption')}
                   columns={[
-                    { key: 'name', label: t('dashboard.a11y.journal'), render: (r) => r.name },
+                    { key: 'name', label: t('scientometrics.a11y.journal'), render: (r) => r.name },
                     {
                       key: 'value',
-                      label: t('dashboard.a11y.articles'),
+                      label: t('scientometrics.a11y.articles'),
                       render: (r) => r.value,
                     },
                   ]}

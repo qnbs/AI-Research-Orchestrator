@@ -13,6 +13,7 @@ import { useAppLogic } from './useAppLogic';
 import { AppViewRouter } from './AppViewRouter';
 import { OnboardingView, CommandPalette, QuickAddModal, AgentDebugger } from './lazyViews';
 import { useElementHeight } from '../hooks/useElementHeight';
+import { isDeveloperToolsEnabled } from '../store/slices/settingsSlice';
 
 /**
  * App shell: banners, chrome, and view routing.
@@ -157,7 +158,7 @@ const AppLayout: React.FC = () => {
             starting (useResearchSession dispatches setDebuggerVisible(true)
             unconditionally), independent of developerMode. Gating here covers
             every path, not just "close it if it was already open". */}
-        {settings.developerMode && <AgentDebugger />}
+        {isDeveloperToolsEnabled(settings) && <AgentDebugger />}
       </Suspense>
     </>
   );
