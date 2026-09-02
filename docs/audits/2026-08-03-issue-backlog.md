@@ -4,7 +4,7 @@
 
 **Landed since the 2026-08-29 refresh (do not re-open):** `NOW-P0-PARTIAL` / ADR 0021 (#260), `NOW-P1-MOTION` (#261), `NOW-P1-DOCS-WAVE` (#262), `NOW-P1-DEP-STALL` (#263), `NOW-P1-RELEASE` (#264), `NOW-P1-CODEOWNERS` (#265), Ollama bounds (#266), Dexie upgrade tests (#267), heuristic ops (#268), eval adversarial (#269), provider harness (#270), BM25+ (#271), CSV/export hardening (#272), browserslist pin (#285), Dependabot wave 2 (#286), onboarding product-truth (#288), TypeScript 6 (#289), partial-report E2E + CSV watermark (#287).
 
-**Still real / in flight:** Residual Sourcery P2: BACKLOG-P2-002/004/005. `exportService.ts` 686 (`NOW-P1-FILE-CAP`). `ISSUE-P2-AGENT-001` / `NOW-P1-REPO-DESCRIPTION` **Resolved** (GitHub description no longer claims a swarm; homepage still empty). `NOW-P0-PR-290-MERGE` / façade / chart a11y / ADR 0010 dated deferral **landed in #290**. `NOW-P2-LUCIDE` landed in #286; `NOW-P1-LIVE-COPY` in #288; `NOW-P1-DEP-WAVE-2` in #286 / #289; `NOW-P0-PARTIAL-E2E` / `NOW-P1-PARTIAL-EXPORT-GAPS` in #287.
+**Still real / in flight:** Residual Sourcery P2: BACKLOG-P2-002/004/005 and `NOW-P1-FILE-CAP` (`exportService.ts` 686 on `main`) — follow-up **#292**. `ISSUE-P2-AGENT-001` / `NOW-P1-REPO-DESCRIPTION` **Resolved** (GitHub description no longer claims a swarm; homepage still empty). `NOW-P0-PR-290-MERGE` / `NOW-P1-CHANGELOG-TRUTH` / façade / chart a11y / ADR 0010 dated deferral **landed in #290**. `NOW-P2-LUCIDE` landed in #286; `NOW-P1-LIVE-COPY` in #288; `NOW-P1-DEP-WAVE-2` in #286 / #289; `NOW-P0-PARTIAL-E2E` / `NOW-P1-PARTIAL-EXPORT-GAPS` in #287.
 
 **New P0 this baseline (closed):** `NOW-P0-AUDIT-BROWSERSLIST` — CVE-2026-73088 / CVE-2026-73089 on `browserslist@4.28.6`. Pin latest patched `4.28.8` (security floor 4.28.7). Same pattern as #259 nanoid. Not a GHSA ignore. Landed #285.
 
@@ -170,35 +170,37 @@ Severity: P0 = stop-the-line · P1 = pre-release hardening · P2 = architecture/
 
 These IDs came from the post-sprint prompt. Evidence: `docs/audits/2026-08-29-baseline.md` and `docs/audits/2026-09-01-baseline.md` (historical) and `docs/audits/2026-09-02-baseline.md` (live).
 
-| ID                   | Sev | Status                         | Evidence                                                                                                |
-| -------------------- | --- | ------------------------------ | ------------------------------------------------------------------------------------------------------- |
-| `NOW-P0-PARTIAL`     | P0  | **Resolved** (#260 / ADR 0021) | Cancel/restore stamps `reportStatus: 'partial'`, never `'done'`. Residual E2E: `NOW-P0-PARTIAL-E2E`.    |
-| `NOW-P0-AUDIT`       | P0  | **Resolved** (#259)            | `nanoid@3.3.18` pin + LHCI-only `extract-zip` ignore + `check:audit-ignore-paths` on `main`.            |
-| `NOW-P1-MOTION`      | P1  | **Resolved** (#261)            | `useMotionSafeLoop` + SMIL gating. `ParticleBackground.tsx` stays deleted.                              |
-| `NOW-P1-DOCS-WAVE`   | P1  | **Resolved** (#262)            | ADR 0021 + CHANGELOG + agent docs on `main`.                                                            |
-| `NOW-P1-DEP-STALL`   | P1  | **Resolved** (#263)            | Mid-August Dependabot wave consolidated. New wave: `NOW-P1-DEP-WAVE-2` (#274–#284).                     |
-| `NOW-P1-RELEASE`     | P1  | **Resolved** (#264)            | GitHub Releases `v0.4.1` (historical) and `v0.4.2` (Latest). Package version `0.4.2`.                   |
-| `NOW-P1-SW-NCBI-KEY` | P1  | **Resolved** on `main`         | `public/sw.js` `NetworkOnly` for credentialed NCBI + activate purge; `sw-integrity.test.ts`             |
-| `NOW-P1-CODEOWNERS`  | P1  | **Resolved** (#265)            | `.github/CODEOWNERS` routing only; ruleset Code Owner reviews stay Off. Folded docs from unmerged #273. |
-| `NOW-P2-FACADE`      | P2  | **In flight (#290)**           | On `main` `geminiService.ts` is still 1227 lines. Split exists only on the open PR.                     |
+| ID                   | Sev | Status                         | Evidence                                                                                                                     |
+| -------------------- | --- | ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| `NOW-P0-PARTIAL`     | P0  | **Resolved** (#260 / ADR 0021) | Cancel/restore stamps `reportStatus: 'partial'`, never `'done'`. Residual E2E: `NOW-P0-PARTIAL-E2E`.                         |
+| `NOW-P0-AUDIT`       | P0  | **Resolved** (#259)            | `nanoid@3.3.18` pin + LHCI-only `extract-zip` ignore + `check:audit-ignore-paths` on `main`.                                 |
+| `NOW-P1-MOTION`      | P1  | **Resolved** (#261)            | `useMotionSafeLoop` + SMIL gating. `ParticleBackground.tsx` stays deleted.                                                   |
+| `NOW-P1-DOCS-WAVE`   | P1  | **Resolved** (#262)            | ADR 0021 + CHANGELOG + agent docs on `main`.                                                                                 |
+| `NOW-P1-DEP-STALL`   | P1  | **Resolved** (#263)            | Mid-August Dependabot wave consolidated. New wave: `NOW-P1-DEP-WAVE-2` (#274–#284).                                          |
+| `NOW-P1-RELEASE`     | P1  | **Resolved** (#264)            | GitHub Releases `v0.4.1` (historical) and `v0.4.2` (Latest). Package version `0.4.2`.                                        |
+| `NOW-P1-SW-NCBI-KEY` | P1  | **Resolved** on `main`         | `public/sw.js` `NetworkOnly` for credentialed NCBI + activate purge; `sw-integrity.test.ts`                                  |
+| `NOW-P1-CODEOWNERS`  | P1  | **Resolved** (#265)            | `.github/CODEOWNERS` routing only; ruleset Code Owner reviews stay Off. Folded docs from unmerged #273.                      |
+| `NOW-P2-FACADE`      | P2  | **Resolved** (#290)            | `geminiService.ts` is **448** lines on `main`. Extracts: `aiJson.ts`, `liveResearchReportStream.ts`, `literatureAiTools.ts`. |
 
 ## New items (2026-09-01)
 
 Live queue. Evidence: `docs/audits/2026-09-02-baseline.md`. The 2026-09-01 baseline is historical.
 
-| ID                           | Sev | Status                     | Evidence                                                                                         |
-| ---------------------------- | --- | -------------------------- | ------------------------------------------------------------------------------------------------ |
-| `NOW-P0-AUDIT-DRIFT`         | P0  | **Resolved** (#285)        | August docs listed landed P0/P1s as Open. Closed by the 2026-09-01 baseline.                     |
-| `NOW-P0-AUDIT-BROWSERSLIST`  | P0  | **Resolved** (#285)        | Pin `browserslist@4.28.8` for CVE-2026-73088 / CVE-2026-73089 (floor 4.28.7). Not a GHSA ignore. |
-| `NOW-P0-PARTIAL-E2E`         | P0  | **Resolved** (#287)        | Playwright cancel-mid-stream: hanging Gemini synthesis SSE → banner, chat gated, CSV watermark.  |
-| `NOW-P1-DEP-WAVE-2`          | P1  | **Resolved** (#286 / #289) | Dependabot #275–#283 included; #274 TS 6 landed as #289; #284 lucide removed unused.             |
-| `NOW-P1-PARTIAL-EXPORT-GAPS` | P1  | **Resolved** (#287)        | Report CSV + insights CSV prepend the narrative `PARTIAL REPORT` line when `'partial'`.          |
-| `NOW-P1-LIVE-COPY`           | P1  | **Resolved** (#288)        | Onboarding/chrome/Help/input-form product-truth pass; GitHub repo description stays P2.          |
-| `NOW-P1-BASELINE-DOC`        | P1  | **Resolved** (#285)        | `docs/audits/2026-09-01-baseline.md`.                                                            |
-| `NOW-P1-PR-273`              | P1  | **Resolved** (#285)        | Folded into the 2026-09-01 docs PR.                                                              |
-| `NOW-P2-OPENROUTER`          | P2  | **In flight (#290)**       | Dated deferral is on the PR branch. On `main` ADR 0010 is still **Proposed — 2026-07-21**.       |
-| `NOW-P2-CHART-A11Y`          | P2  | **In flight (#290)**       | Accessible-table twins for remaining bar/scatter surfaces are on the open PR, not `main`.        |
-| `NOW-P2-LUCIDE`              | P2  | **Resolved** (#286)        | Unused `lucide-react` removed rather than bumped.                                                |
+| ID                           | Sev | Status                     | Evidence                                                                                                                      |
+| ---------------------------- | --- | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `NOW-P0-AUDIT-DRIFT`         | P0  | **Resolved** (#285)        | August docs listed landed P0/P1s as Open. Closed by the 2026-09-01 baseline.                                                  |
+| `NOW-P0-AUDIT-BROWSERSLIST`  | P0  | **Resolved** (#285)        | Pin `browserslist@4.28.8` for CVE-2026-73088 / CVE-2026-73089 (floor 4.28.7). Not a GHSA ignore.                              |
+| `NOW-P0-PARTIAL-E2E`         | P0  | **Resolved** (#287)        | Playwright cancel-mid-stream: hanging Gemini synthesis SSE → banner, chat gated, CSV watermark.                               |
+| `NOW-P1-DEP-WAVE-2`          | P1  | **Resolved** (#286 / #289) | Dependabot #275–#283 included; #274 TS 6 landed as #289; #284 lucide removed unused.                                          |
+| `NOW-P1-PARTIAL-EXPORT-GAPS` | P1  | **Resolved** (#287)        | Report CSV + insights CSV prepend the narrative `PARTIAL REPORT` line when `'partial'`.                                       |
+| `NOW-P1-LIVE-COPY`           | P1  | **Resolved** (#288)        | Onboarding/chrome/Help/input-form product-truth pass. GitHub description resolved 2026-09-02 (`NOW-P1-REPO-DESCRIPTION`).     |
+| `NOW-P1-BASELINE-DOC`        | P1  | **Resolved** (#285)        | `docs/audits/2026-09-01-baseline.md`.                                                                                         |
+| `NOW-P1-PR-273`              | P1  | **Resolved** (#285)        | Folded into the 2026-09-01 docs PR.                                                                                           |
+| `NOW-P0-PR-290-MERGE`        | P0  | **Resolved** (#290)        | Squash-merged 2026-09-02T17:37:09Z. Live `main` is `01165e8`. See `docs/audits/2026-09-02-closeout.md`.                       |
+| `NOW-P1-CHANGELOG-TRUTH`     | P1  | **Resolved** (#290)        | CHANGELOG Unreleased on `main` matches the façade split, chart a11y, and ADR 0010 dated deferral.                             |
+| `NOW-P2-OPENROUTER`          | P2  | **Deferred** (ADR 0010)    | Dated deferral **on `main`** (`docs/adr/0010-openrouter-free-model-primacy.md`, 2026-09-02). Do **not** implement OpenRouter. |
+| `NOW-P2-CHART-A11Y`          | P2  | **Resolved** (#290)        | `ChartAccessibleTable` twins for remaining bar/scatter surfaces are on `main`.                                                |
+| `NOW-P2-LUCIDE`              | P2  | **Resolved** (#286)        | Unused `lucide-react` removed rather than bumped.                                                                             |
 
 ---
 
@@ -210,7 +212,7 @@ Live queue. Evidence: `docs/audits/2026-09-02-baseline.md`. The 2026-09-01 basel
 | Severity | P2 |
 | Files | `geminiService.ts`, `researchOrchestratorAdapter.ts` |
 | Acceptance | Single mode resolution; smaller facade; phase unit tests |
-| Status | **In flight (#290)** — façade split (`aiJson.ts`, `liveResearchReportStream.ts`, `literatureAiTools.ts`) is on the open PR. On `main` `geminiService.ts` is still 1227 lines. |
+| Status | **Resolved (#290)** — façade split (`aiJson.ts`, `liveResearchReportStream.ts`, `literatureAiTools.ts`) is on `main`. `geminiService.ts` is **448** lines. |
 
 ### ISSUE-P2-DOCS-001 — Product-truth matrix automation
 
