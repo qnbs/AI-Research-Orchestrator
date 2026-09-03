@@ -56,15 +56,25 @@ async function waitForIndexedDbEntryCount(page: Page, minCount: number, timeout 
 /** EN sample topic from `onboarding.sampleTopic` — keep in sync with that key. */
 export const ONBOARDING_SAMPLE_TOPIC_EN = onboardingTranslations.en['onboarding.sampleTopic'];
 
-async function suppressDemoSeed(page: Page) {
-  // Keep KB empty for empty-state assertions (demo seed is for real first-run UX).
-  await page.evaluate(() => {
+/**
+ * Mark demo seed handled before the app script runs. Writing these flags after
+ * `goto` races the first-launch seed effect and can leave unexpected KB rows.
+ */
+async function suppressDemoSeedBeforeNavigation(page: Page) {
+  await page.addInitScript(() => {
     try {
       localStorage.setItem('aro.demoDataDismissed', '1');
       localStorage.setItem('aro.demoDataSeeded', '1');
     } catch {
       /* ignore */
     }
+  });
+}
+
+/** Topic field: labeled textarea (`inputForm.topic.label`, EN+DE). */
+export function researchTopicField(page: Page) {
+  return page.getByRole('textbox', {
+    name: /primary research topic|primäres forschungsthema/i,
   });
 }
 
@@ -104,9 +114,9 @@ async function completeOnboardingViaButton(page: Page, buttonName: RegExp) {
  * Navigate to the app and skip the onboarding screen if it is shown.
  */
 export async function skipOnboarding(page: Page) {
+  await suppressDemoSeedBeforeNavigation(page);
   await page.goto('/');
   await page.waitForLoadState('domcontentloaded');
-  await suppressDemoSeed(page);
   await completeOnboardingViaButton(page, /start researching/i);
 }
 
@@ -115,9 +125,9 @@ export async function skipOnboarding(page: Page) {
  * via the secondary CTA so Orchestrator opens with the educational topic.
  */
 export async function completeOnboardingWithSampleTopic(page: Page) {
+  await suppressDemoSeedBeforeNavigation(page);
   await page.goto('/');
   await page.waitForLoadState('domcontentloaded');
-  await suppressDemoSeed(page);
   await completeOnboardingViaButton(page, /start with a sample topic/i);
 }
 
