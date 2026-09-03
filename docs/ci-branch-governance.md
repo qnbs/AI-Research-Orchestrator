@@ -68,18 +68,19 @@ Required check contexts currently configured:
 `Axe critical/serious smoke`, `CodeQL`, `Dependency Review`, `pnpm audit (high+)`,
 `Secret scan (gitleaks)`.
 
-Enable `dismiss_stale_reviews_on_push` with a token that has **Administration:
-write** (classic PAT with `admin:repo` / fine-grained “Administration”, or a
-GitHub App **installation** token whose app has that permission). The
-installation and Actions tokens used on this repo returned **403** on both
-ruleset PUT and PR-review dismiss (PR #301) — that is this installation, not
-a blanket API restriction. `GET` the live ruleset, flip only that
-pull-request parameter, then `PUT` the writable fields including the **full**
-`rules` array. A partial `rules` array wipes every other rule. Do **not**
-send `id` / `_links` / timestamps.
+Enable `dismiss_stale_reviews_on_push` with a **fine-grained PAT** or a
+GitHub App **installation** token that has repository **Administration:
+write**. There is no classic `admin:repo` scope. The installation and Actions
+tokens used on this repo returned **403** on both ruleset PUT and PR-review
+dismiss (PR #301) — that is this installation, not a blanket API restriction.
+`GET` the live ruleset, flip only that pull-request parameter, then `PUT` the
+writable fields including the **full** `rules` array. A partial `rules` array
+wipes every other rule. Do **not** send `id` / `_links` / timestamps.
 
 ```bash
-# Administration token required. App tokens 403.
+# Administration: write required (fine-grained PAT or App installation).
+# This repo's App/Actions installation returned 403; use a PAT or an
+# installation that has Administration: write.
 RULESET_ID=20291814
 REPO=qnbs/AI-Research-Orchestrator
 RAW=$(mktemp)

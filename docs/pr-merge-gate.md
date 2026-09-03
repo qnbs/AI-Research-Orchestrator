@@ -105,8 +105,10 @@ Quiescence holds **if and only if all** of the following are true:
 
 A `CHANGES_REQUESTED` review (bot or human) that targets the **latest** head
 **never** satisfies quiescence and is **never** waived by (b), (c), or (d).
-After fixing its findings, wait for a non-requesting review on a **later**
-head. Thread resolution alone does not moot `CHANGES_REQUESTED`.
+After fixing, push a **later** head and re-evaluate **(a)/(b)/(c)/(d)** on
+that SHA. Thread resolution alone does not moot a latest-head
+`CHANGES_REQUESTED`. A non-requesting current-head review is sufficient
+(**(a)**) but not required.
 A `CHANGES_REQUESTED` review whose `commit_id` is a **superseded** SHA is not a
 policy block once its findings are disposed **and** the current-head
 CodeRabbit condition **(a)/(b)/(c)/(d)** holds. A newer real current-head

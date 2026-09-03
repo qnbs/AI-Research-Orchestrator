@@ -55,7 +55,7 @@ Standing policy (maintainer-approved 2026-09-03): a green CodeRabbit check that 
    - **No other in-scope bot has an unresolved item or active `CHANGES_REQUESTED`.**
    - **All actionable GraphQL threads are resolved**, and **every body-only finding** (outside-diff comments, human top-level review bodies, or any finding with no thread ID) **has a recorded `fixed`, `replied`, or `deferred` disposition** in the disposition ledger or a PR comment, with a documented English rationale for every `deferred` finding.
 
-   A `CHANGES_REQUESTED` review (bot or human) that targets the **latest** head **never** satisfies quiescence and is **never** waived by (b), (c), or (d). After fixing, wait for a non-requesting review on a **later** head — thread resolution alone does not moot it.
+   A `CHANGES_REQUESTED` review (bot or human) that targets the **latest** head **never** satisfies quiescence and is **never** waived by (b), (c), or (d). After fixing, push a **later** head and re-evaluate **(a)/(b)/(c)/(d)** on that SHA — thread resolution alone does not moot a latest-head `CHANGES_REQUESTED`. A non-requesting current-head review is sufficient (**(a)**) but not required.
 
    A `CHANGES_REQUESTED` review whose `commit_id` is a **superseded** SHA is not a policy block once its findings are disposed **and** the current-head CodeRabbit condition **(a)/(b)/(c)/(d)** holds. A newer real current-head review is sufficient (that is **(a)**) but not required: **(d)** covers the case where CodeRabbit has produced no real review on **this** head. **(d)** never waives an **active latest-head** `CHANGES_REQUESTED`.
 
