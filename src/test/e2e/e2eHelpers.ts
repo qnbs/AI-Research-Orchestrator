@@ -3,6 +3,7 @@
  * Prefer getByRole; keep waits justified and short.
  */
 import type { Page } from '@playwright/test';
+import { onboardingTranslations } from '../../i18n/onboardingTranslations';
 import { DEMO_KB_ENTRY_COUNT, DEMO_KB_UNIQUE_ARTICLE_COUNT } from '../../services/nonAi/sampleData';
 
 export { DEMO_KB_UNIQUE_ARTICLE_COUNT, DEMO_KB_ENTRY_COUNT };
@@ -52,14 +53,29 @@ async function waitForIndexedDbEntryCount(page: Page, minCount: number, timeout 
   );
 }
 
+/** EN sample topic from `onboarding.sampleTopic` — keep in sync with that key. */
+export const ONBOARDING_SAMPLE_TOPIC_EN = onboardingTranslations.en['onboarding.sampleTopic'];
+
+async function suppressDemoSeed(page: Page) {
+  // Keep KB empty for empty-state assertions (demo seed is for real first-run UX).
+  await page.evaluate(() => {
+    try {
+      localStorage.setItem('aro.demoDataDismissed', '1');
+      localStorage.setItem('aro.demoDataSeeded', '1');
+    } catch {
+      /* ignore */
+    }
+  });
+}
+
 /**
- * Dismiss onboarding if present and wait for a stable app `<header>`.
+ * Dismiss onboarding via the named CTA and wait for a stable app `<header>`.
  *
  * Firefox can lose a fast onboarding click while Redux/settings hydrate, so we
  * always wait for the shell (with a longer timeout) and retry the click once.
  */
-async function ensureAppShellReady(page: Page) {
-  const startBtn = page.getByRole('button', { name: /start researching/i });
+async function completeOnboardingViaButton(page: Page, buttonName: RegExp) {
+  const startBtn = page.getByRole('button', { name: buttonName });
   const header = page.locator('header');
 
   if (await header.isVisible().catch(() => false)) {
@@ -90,18 +106,19 @@ async function ensureAppShellReady(page: Page) {
 export async function skipOnboarding(page: Page) {
   await page.goto('/');
   await page.waitForLoadState('domcontentloaded');
+  await suppressDemoSeed(page);
+  await completeOnboardingViaButton(page, /start researching/i);
+}
 
-  // Keep KB empty for empty-state assertions (demo seed is for real first-run UX).
-  await page.evaluate(() => {
-    try {
-      localStorage.setItem('aro.demoDataDismissed', '1');
-      localStorage.setItem('aro.demoDataSeeded', '1');
-    } catch {
-      /* ignore */
-    }
-  });
-
-  await ensureAppShellReady(page);
+/**
+ * First-run sample-topic path (`NOW-P0-JOURNEY-01` / J1): complete onboarding
+ * via the secondary CTA so Orchestrator opens with the educational topic.
+ */
+export async function completeOnboardingWithSampleTopic(page: Page) {
+  await page.goto('/');
+  await page.waitForLoadState('domcontentloaded');
+  await suppressDemoSeed(page);
+  await completeOnboardingViaButton(page, /start with a sample topic/i);
 }
 
 /**
@@ -197,7 +214,7 @@ export async function prepareFirstLaunchDemoKb(page: Page) {
   });
 
   await page.reload({ waitUntil: 'domcontentloaded' });
-  await ensureAppShellReady(page);
+  await completeOnboardingViaButton(page, /start researching/i);
 
   await waitForDemoKbSeed(page);
 
