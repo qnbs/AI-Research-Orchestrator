@@ -90,10 +90,9 @@ function extractE2eSpecPathsFromWorkflow(workflowYaml) {
 }
 
 function workflowJobHasContinueOnError(workflowYaml, jobName) {
-  const jobBlock = new RegExp(
-    `${escapeRegExp(jobName)}:[\\s\\S]*?(?=^\\S|\\z)`,
-    'm',
-  ).exec(workflowYaml);
+  const jobBlock = new RegExp(`${escapeRegExp(jobName)}:[\\s\\S]*?(?=^\\S|\\z)`, 'm').exec(
+    workflowYaml,
+  );
   if (!jobBlock) return false;
   return /continue-on-error:\s*true/.test(jobBlock[0]);
 }
@@ -206,7 +205,9 @@ async function checkProjectFacts(errors, facts) {
     const blocking = facts.e2e.mainJobBlocking === true;
     const hasContinue = workflowJobHasContinueOnError(e2eYaml, 'e2e:');
     if (blocking && hasContinue) {
-      errors.push(`${facts.e2e.mainWorkflowPath} job must not use continue-on-error (blocking E2E)`);
+      errors.push(
+        `${facts.e2e.mainWorkflowPath} job must not use continue-on-error (blocking E2E)`,
+      );
     }
     if (!blocking && !hasContinue) {
       errors.push(`${facts.e2e.mainWorkflowPath} expected continue-on-error for advisory E2E`);
@@ -232,7 +233,9 @@ async function checkProjectFacts(errors, facts) {
     const advisory = facts.e2e.crossBrowserAdvisory === true;
     const hasContinue = /continue-on-error:\s*true/.test(crossYaml);
     if (advisory && !hasContinue) {
-      errors.push(`${facts.e2e.crossBrowserWorkflowPath} should be advisory (continue-on-error: true)`);
+      errors.push(
+        `${facts.e2e.crossBrowserWorkflowPath} should be advisory (continue-on-error: true)`,
+      );
     }
     if (!advisory && hasContinue) {
       errors.push(
@@ -261,6 +264,39 @@ async function checkProjectFacts(errors, facts) {
     }
   }
 
+  if (!facts.ci?.mergeGatePath) {
+    errors.push('docs/project-facts.json ci.mergeGatePath is required');
+  } else {
+    const mergeGate = await readOptional(facts.ci.mergeGatePath);
+    if (!mergeGate) {
+      errors.push(`Missing merge-gate doc: ${facts.ci.mergeGatePath}`);
+    } else {
+      assertMatch(
+        mergeGate,
+        /dual gate/i,
+        `${facts.ci.mergeGatePath} must document the dual merge gate`,
+        errors,
+      );
+    }
+    const contributing = await read('CONTRIBUTING.md');
+    const indexMdc = await read('.cursor/index.mdc');
+    const claude = await read('CLAUDE.md');
+    const rule011 = await read('.cursor/rules/011-coderabbit-pr-gate.mdc');
+    const rule013 = await read('.cursor/rules/013-pr-review-correction-loop.mdc');
+    const copilot = await read('.github/copilot-instructions.md');
+    for (const [label, text] of [
+      ['AGENTS.md', agents],
+      ['CONTRIBUTING.md', contributing],
+      ['.cursor/index.mdc', indexMdc],
+      ['CLAUDE.md', claude],
+      ['011-coderabbit-pr-gate.mdc', rule011],
+      ['013-pr-review-correction-loop.mdc', rule013],
+      ['copilot-instructions.md', copilot],
+    ]) {
+      assertMatch(text, /pr-merge-gate/, `${label} should reference docs/pr-merge-gate.md`, errors);
+    }
+  }
+
   if (facts.ci?.cancelInProgressOnPullRequestOnly === true) {
     const guarded = facts.ci.concurrencyGuardedWorkflows;
     if (!Array.isArray(guarded) || guarded.length === 0) {
@@ -281,7 +317,9 @@ async function checkProjectFacts(errors, facts) {
           );
         }
         if (isUnconditionalCancelTrue(cancelValue)) {
-          errors.push(`${wf} must not use unconditional cancel-in-progress: true (would cancel main runs)`);
+          errors.push(
+            `${wf} must not use unconditional cancel-in-progress: true (would cancel main runs)`,
+          );
         }
       }
     }
@@ -482,7 +520,9 @@ async function main() {
   }
 
   if (facts.appVersion && facts.appVersion !== appVersion) {
-    errors.push(`docs/project-facts.json appVersion ${facts.appVersion} != package.json ${appVersion}`);
+    errors.push(
+      `docs/project-facts.json appVersion ${facts.appVersion} != package.json ${appVersion}`,
+    );
   }
 
   await checkProjectFacts(errors, facts);
@@ -542,7 +582,9 @@ function runConcurrencyParserSelfTest() {
   for (const fixture of fixtures) {
     const got = extractTopLevelCancelInProgress(fixture.yaml);
     if (got !== fixture.expect) {
-      throw new Error(`concurrency self-test "${fixture.name}": expected ${fixture.expect}, got ${got}`);
+      throw new Error(
+        `concurrency self-test "${fixture.name}": expected ${fixture.expect}, got ${got}`,
+      );
     }
     if (fixture.prOnly && !isPullRequestOnlyCancelExpression(got)) {
       throw new Error(`concurrency self-test "${fixture.name}": expected PR-only`);

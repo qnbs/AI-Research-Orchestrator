@@ -27,6 +27,8 @@ security gates so future PRs do not re-litigate the same trade-offs.
 
 **Concurrency:** Deploy, E2E, cross-browser, a11y, and security cancel in-progress runs on `pull_request` only — never cancel an in-flight `main` validation/deploy. Details: `docs/ci-branch-governance.md`.
 
+**Merge to `main`:** dual gate in `docs/pr-merge-gate.md` — required CI green **and** review quiescence on the same head, including the arrival wait. Green CI alone is not enough.
+
 ### Known false positives / external failures
 
 - **DeepSource JavaScript:** analyzer **off in the DeepSource dashboard** (Settings → Code Review → Analyzers); `.deepsource.toml` has no `javascript` block (2026-08-02). Persistent ESM false positives, `scripts/lib` parse errors, and quality-gate churn — see `docs/deepsource-javascript-ci.md` and `docs/deepsource-dashboard-off.md`. Docker/Shell remain advisory; ESLint + `deploy.yml` are authoritative for TS/TSX.

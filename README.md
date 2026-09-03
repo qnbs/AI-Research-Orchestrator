@@ -136,11 +136,11 @@ On every **push** to `main` and every **PR** targeting `main`, GitHub Actions ru
 | PWA service-worker registration (real production build + `vite preview`)        | `pwa-e2e.yml` (**blocking**)           |
 | CodeQL, Dependency Review, `pnpm audit` (high+), gitleaks                       | `security.yml`                         |
 
-GitHub Pages upload/deploy runs only on `refs/heads/main` (not on pull requests). Required checks, PR-only `cancel-in-progress`, and ruleset expectations: [`docs/ci-branch-governance.md`](./docs/ci-branch-governance.md). Contributor review loop: [`CONTRIBUTING.md`](./CONTRIBUTING.md).
+GitHub Pages upload/deploy runs only on `refs/heads/main` (not on pull requests). Required checks, PR-only `cancel-in-progress`, and ruleset expectations: [`docs/ci-branch-governance.md`](./docs/ci-branch-governance.md). Dual merge gate (CI + review quiescence, arrival wait): [`docs/pr-merge-gate.md`](./docs/pr-merge-gate.md). Contributor review loop: [`CONTRIBUTING.md`](./CONTRIBUTING.md).
 
 #### Cursor / IDE
 
-[`AGENTS.md`](./AGENTS.md), [`.cursor/index.mdc`](./.cursor/index.mdc), `.cursor/rules/*.mdc`, and [`CONTRIBUTING.md`](./CONTRIBUTING.md).
+[`AGENTS.md`](./AGENTS.md), [`.cursor/index.mdc`](./.cursor/index.mdc), `.cursor/rules/*.mdc`, [`docs/pr-merge-gate.md`](./docs/pr-merge-gate.md), and [`CONTRIBUTING.md`](./CONTRIBUTING.md).
 
 ### Multi-provider setup
 
@@ -222,6 +222,7 @@ MIT — see [`LICENSE`](./LICENSE).
 
 - [CHANGELOG.md](./CHANGELOG.md) — what shipped
 - [docs/ci-branch-governance.md](./docs/ci-branch-governance.md) — CI / ruleset
+- [docs/pr-merge-gate.md](./docs/pr-merge-gate.md) — dual merge gate (CI + review quiescence)
 - [docs/adr/README.md](./docs/adr/README.md) — architecture decisions
 - [docs/release-policy.md](./docs/release-policy.md) — version / deploy identity
 
@@ -316,11 +317,11 @@ pnpm run test:e2e    # lokal eher scoped; volle Suite in CI
 pnpm run build
 ```
 
-Push/PR gegen `main`: `deploy.yml`, blockierendes Chromium-E2E, blockierendes Cross-Browser-E2E (Firefox/WebKit/mobile Chrome), Axe-A11y, blockierendes PWA-Service-Worker-Registrierungs-Gate (`pwa-e2e.yml`), Security. Pages-Deploy nur auf `main`. Details: [`docs/ci-branch-governance.md`](./docs/ci-branch-governance.md).
+Push/PR gegen `main`: `deploy.yml`, blockierendes Chromium-E2E, blockierendes Cross-Browser-E2E (Firefox/WebKit/mobile Chrome), Axe-A11y, blockierendes PWA-Service-Worker-Registrierungs-Gate (`pwa-e2e.yml`), Security. Pages-Deploy nur auf `main`. Details: [`docs/ci-branch-governance.md`](./docs/ci-branch-governance.md). Dual-Merge-Gate (CI + Review-Quieszenz): [`docs/pr-merge-gate.md`](./docs/pr-merge-gate.md).
 
 #### Cursor / IDE
 
-[`AGENTS.md`](./AGENTS.md), [`.cursor/index.mdc`](./.cursor/index.mdc), `.cursor/rules/*.mdc`, [`CONTRIBUTING.md`](./CONTRIBUTING.md).
+[`AGENTS.md`](./AGENTS.md), [`.cursor/index.mdc`](./.cursor/index.mdc), `.cursor/rules/*.mdc`, [`docs/pr-merge-gate.md`](./docs/pr-merge-gate.md), [`CONTRIBUTING.md`](./CONTRIBUTING.md).
 
 ### Multi-Provider
 

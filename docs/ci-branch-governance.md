@@ -1,12 +1,13 @@
 # CI and branch governance (P1-7 / PR11)
 
 Authoritative inventory of blocking gates, concurrency, artifacts, and maintainer
-branch-protection expectations. Complements `docs/audit-governance.md`,
-`docs/release-policy.md`, and `docs/e2e-ci-backlog.md`.
+branch-protection expectations. Complements `docs/pr-merge-gate.md` (dual merge
+gate / review quiescence), `docs/audit-governance.md`, `docs/release-policy.md`,
+and `docs/e2e-ci-backlog.md`.
 
 Machine-readable flags live in `docs/project-facts.json` (`ci.branchGovernancePath`,
-`ci.cancelInProgressOnPullRequestOnly`, `e2e.crossBrowserAdvisory`) and are
-enforced by `pnpm run check:docs-drift`.
+`ci.mergeGatePath`, `ci.cancelInProgressOnPullRequestOnly`,
+`e2e.crossBrowserAdvisory`) and are enforced by `pnpm run check:docs-drift`.
 
 ## Blocking checks (must be green on latest head before merge)
 
@@ -26,7 +27,10 @@ should require these (or their workflow job equivalents) for `main`:
 | Secret scan (gitleaks)                           | `security.yml`                |                                                                                                                                                                                                               |
 | PWA service-worker registration                  | `pwa-e2e.yml`                 | Blocking from creation (2026-08-05) — regression guard for the 531885f base-href defect (ADR 0004); real production build + `vite preview`, service workers enabled, unlike `e2e.yml`/`e2e-cross-browser.yml` |
 
-Review bots are **not** substitutes for the deterministic gates above.
+Review bots are **not** substitutes for the deterministic gates above. Green
+required CI is also **not** a substitute for review quiescence — merge needs
+the **dual gate** in `docs/pr-merge-gate.md` / `.cursor/rules/011-coderabbit-pr-gate.mdc`
+step 7.
 
 `pwa-e2e.yml`'s job (`PWA service-worker registration`) is not yet in the GitHub
 ruleset's required-status-checks list below — workflow-level blocking (no
@@ -66,12 +70,56 @@ Required check contexts currently configured:
 
 ### Process gates (not GitHub-required checks)
 
-| Gate                              | Enforcement                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Automated review correction loop  | Rules `011` / `013` — CodeRabbit + Sourcery + DeepSource AI Review (`@deepsourcebot review`) + resolve threads                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| **Latest-head review quiescence** | Exact predicate (authoritative source: `.cursor/rules/011-coderabbit-pr-gate.mdc` step 7 — this row restates it, does not vary it; **"latest head" / "current head" here is the same commit `011`/`013` mean — the PR's current head SHA, not a separately-computed merge-tree hash**). Holds **if and only if all of the following are true**:<br><br>**1. Primary CodeRabbit/Sourcery condition** — either:<br>&nbsp;&nbsp;**(a)** a real, non-`CHANGES_REQUESTED` CodeRabbit review (`APPROVED` or `COMMENTED`, with a review body that proves it is not a rate-limit placeholder) targets the **latest head**; **or**<br>&nbsp;&nbsp;**(b)** both of the following:<br>&nbsp;&nbsp;&nbsp;&nbsp;- CodeRabbit has produced no real review after **either** 3 failed wait/re-trigger cycles **or** a single wait exceeding 90 minutes; **and**<br>&nbsp;&nbsp;&nbsp;&nbsp;- Sourcery has a real, non-rate-limited review on that head with everything resolved.<br><br>**2. `@deepsourcebot review` has been attempted on the latest head** — a recorded attempt; static analysis alone does not satisfy this.<br><br>**3. No active human `CHANGES_REQUESTED` review targets the latest head** (moot once superseded by a later non-requesting human review or explicit approval, same as CodeRabbit).<br><br>**4. No other in-scope bot has an unresolved item or active `CHANGES_REQUESTED`.**<br><br>**5. Every GraphQL thread is resolved.**<br><br>**6. Every body-only finding** (including "outside diff range" comments and human top-level review bodies, none of which have a thread ID) **has a recorded disposition** of `fixed`, `replied`, or `deferred` in the disposition ledger or a PR comment — **every `deferred` disposition carries a documented English rationale**; a bare `deferred` with no reason does not satisfy this gate. Thread resolution alone does not cover body-only findings.<br><br>Rate-limit placeholders never count as approvals on their own; see `docs/audits/2026-08-03-post-merge-scientific-integrity-review.md` (PR #213) |
-| Dismiss stale bot/human approvals | Enable ruleset **Dismiss stale pull request approvals when new commits are pushed** so post-approval commits cannot merge on superseded review SHAs                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| Human/agent rebase before merge   | Prefer enabling ruleset “Require branches to be up to date”; until then rebase onto latest `main`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+Human modus operandi: `docs/pr-merge-gate.md`. Authoritative predicate:
+`.cursor/rules/011-coderabbit-pr-gate.mdc` step 7 — this section restates it,
+it does not vary it. **“Latest head” / “current head”** is the PR’s current
+head SHA, not a separately computed merge-tree hash.
+
+| Gate                              | Enforcement                                                                                                                                                                                                                            |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Dual merge gate                   | Required CI **and** review quiescence on the same head. Neither half suffices.                                                                                                                                                         |
+| Automated review correction loop  | Rules `011` / `013` — CodeRabbit + CodeAnt + Sourcery (budget permitting) + DeepSource AI Review (`@deepsourcebot review`) + Copilot / CodeScene / Greptile when present + resolve threads                                             |
+| Arrival wait                      | Do not merge while an in-scope bot is still in-progress on the current head (CodeAnt “🔄 Reviewing…”, pending Greptile / Copilot / CodeScene / CodeRabbit). Thread count 0 is not enough if a bot has not finished arriving (PR #299). |
+| Dismiss stale bot/human approvals | Enable ruleset **Dismiss stale pull request approvals when new commits are pushed** so post-approval commits cannot merge on superseded review SHAs                                                                                    |
+| Human/agent rebase before merge   | Prefer enabling ruleset “Require branches to be up to date”; until then rebase onto latest `main`                                                                                                                                      |
+
+### Latest-head review quiescence (restated from `011` step 7)
+
+Holds **if and only if all** of the following are true:
+
+1. **Dual gate — CI half:** required blocking CI is green on the latest head.
+2. **Primary CodeRabbit condition** — one of:
+   - **(a)** a real, non-`CHANGES_REQUESTED` CodeRabbit review (`APPROVED` or
+     `COMMENTED`, with a review body that proves it is not a rate-limit
+     placeholder) targets the **latest head**; **or**
+   - **(b)** CodeRabbit has produced no real review after **either** 3 failed
+     wait/re-trigger cycles **or** a single wait exceeding 90 minutes, **and**
+     Sourcery has a real, non-rate-limited review on that head with everything
+     resolved; **or**
+   - **(c)** the 2026-09-03 CodeRabbit-skip: the wait loop has been run **or**
+     a CodeRabbit UI hang on this head is documented, **and** Sourcery cannot
+     stand in (budget exhausted, or no real Sourcery review is available),
+     **and** at least one other in-scope bot has a real review on the current
+     head with everything resolved, **and** no in-progress late-bot wave remains.
+     A `CHANGES_REQUESTED` CodeRabbit review on the **latest** head is never
+     waived by (b) or (c).
+3. **`@deepsourcebot review` has been attempted** on the latest head — a
+   recorded attempt; static analysis alone does not satisfy this.
+4. **No active human `CHANGES_REQUESTED`** targets the latest head (moot once
+   superseded by a later non-requesting human review or explicit approval).
+5. **Arrival wait is complete** — no in-scope bot is still in-progress on the
+   current head.
+6. **No other in-scope bot** has an unresolved item or active `CHANGES_REQUESTED`.
+7. **Every GraphQL thread is resolved.**
+8. **Every body-only finding** (including “outside diff range” comments and
+   human top-level review bodies) has a recorded disposition of `fixed`,
+   `replied`, or `deferred` with a documented English rationale for every
+   `deferred` finding.
+
+Rate-limit placeholders never count as approvals on their own; see
+`docs/audits/2026-08-03-post-merge-scientific-integrity-review.md` (PR #213).
+Do **not** comment `@sourcery-ai review` while the 250k / 7-day budget is
+exhausted. Auto “Reviewer’s Guide” is not a real review.
 
 ## Advisory / non-blocking
 
@@ -126,6 +174,7 @@ agents rebase onto latest `main` before merge (as in the #209 → #210 → #211 
 
 ## Related
 
+- `docs/pr-merge-gate.md` — dual-gate modus operandi (human)
 - `docs/project-facts.json` — machine-readable e2e/CI flags for `check:docs-drift`
 - `.cursor/rules/011-coderabbit-pr-gate.mdc` / `013-pr-review-correction-loop.mdc`
 - `CONTRIBUTING.md` — contributor merge checklist

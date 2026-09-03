@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **PR merge gate (dual gate):** Canonical modus operandi is `docs/pr-merge-gate.md`. Merge to `main` requires required CI green **and** review quiescence on the same head, including the **arrival wait** (PR #299: do not merge while CodeAnt/Greptile/Copilot are still “Reviewing”). CodeRabbit optional-blocker fallbacks are Sourcery stand-in **or** the 2026-09-03 skip when Sourcery’s 250k / 7-day budget is exhausted. Agent guides (`011`/`013`, `AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md`) and `check:docs-drift` (`ci.mergeGatePath`) point at that doc.
+
 ### Added
 
 - **Sample-topic onboarding E2E:** `agent-flow` covers the secondary first-run CTA → Orchestrator with the EN `onboarding.sampleTopic` prefill (J1). Shared helper `completeOnboardingWithSampleTopic` retries the click the same way as `skipOnboarding`.

@@ -70,6 +70,7 @@
     "claudeCodeReviewWorkflow": false,
     "claudeOnDemandWorkflow": true,
     "branchGovernancePath": "docs/ci-branch-governance.md",
+    "mergeGatePath": "docs/pr-merge-gate.md",
     "cancelInProgressOnPullRequestOnly": true,
     "concurrencyGuardedWorkflows": [
       ".github/workflows/deploy.yml",

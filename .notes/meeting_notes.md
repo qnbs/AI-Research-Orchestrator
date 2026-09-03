@@ -1,3 +1,10 @@
+# 2026-09-03 — Dual merge gate curated into repo policy
+
+- **Why:** PR #299 was squash-merged on green required CI while CodeAnt was still “🔄 Reviewing…” and Greptile had not arrived. A P2 (missing **Impact** on a meeting-note entry) landed after merge. Agents also had two standing instructions (CodeRabbit not a blocker when rate-limited; Sourcery budget exhausted) that lived only in session memory.
+- **What:** Canonical human doc `docs/pr-merge-gate.md`. `011` step 7 is still the authoritative predicate and now includes the dual gate, arrival wait, and CodeRabbit skip **(c)** when Sourcery cannot stand in. `013`, `docs/ci-branch-governance.md`, `AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md`, copilot instructions, `.cursor/index.mdc`, PR template, `850`, and `check:docs-drift` (`ci.mergeGatePath`) all point at it.
+- **Impact:** Future agents cannot treat green CI or a thread-only sweep as mergeable. Late-arriving review bots are an explicit wait. Sourcery must not be re-triggered while the 250k / 7-day budget is exhausted.
+- **Not done:** OpenRouter. Live GitHub topic PUT (admin). `v0.4.3`. PR #300 (notes Impact) stays open until its own dual gate holds.
+
 # 2026-09-03 — Desktop header density (post-#298)
 
 - **Why:** Closeout residual: two-row laptop header stole vertical space from the form.
