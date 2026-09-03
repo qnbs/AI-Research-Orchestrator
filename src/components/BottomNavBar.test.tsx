@@ -59,4 +59,20 @@ describe('BottomNavBar More disclosure', () => {
     );
     expect(screen.queryByRole('button', { name: 'nav.home' })).not.toBeInTheDocument();
   });
+
+  it('does not reopen More after leaving a view and returning', () => {
+    const props = {
+      onViewChange: vi.fn(),
+      knowledgeBaseArticleCount: 0,
+      hasReports: false,
+      isResearching: false,
+    };
+    const { rerender } = render(<BottomNavBar currentView="orchestrator" {...props} />);
+    fireEvent.click(screen.getByRole('button', { name: 'nav.more' }));
+    expect(screen.getByRole('button', { name: 'nav.home' })).toBeInTheDocument();
+    rerender(<BottomNavBar currentView="research" {...props} />);
+    expect(screen.queryByRole('button', { name: 'nav.home' })).not.toBeInTheDocument();
+    rerender(<BottomNavBar currentView="orchestrator" {...props} />);
+    expect(screen.queryByRole('button', { name: 'nav.home' })).not.toBeInTheDocument();
+  });
 });

@@ -111,6 +111,9 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
   const moreTriggerRef = useRef<HTMLButtonElement>(null);
   const reportHint = t('nav.requires_report');
   const reportHintId = 'bottom-nav-report-hint';
+  if (openedFor !== null && openedFor !== currentView) {
+    setOpenedFor(null);
+  }
   const moreOpen = openedFor === currentView;
   const closeMore = () => setOpenedFor(null);
   const selectView = (view: View) => {
