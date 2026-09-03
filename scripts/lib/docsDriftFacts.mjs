@@ -34,8 +34,14 @@ function lineIndent(line) {
   return line.match(/^ */)?.[0].length ?? 0;
 }
 
+function isJobHeaderLine(line, indent, key) {
+  if (indent === 0) return false;
+  return line.trim().startsWith(`${key}:`);
+}
+
 function enterJobIfHeader(line, indent, key, state) {
-  if (state.inJob || indent === 0 || !line.trim().startsWith(`${key}:`)) return false;
+  if (state.inJob) return false;
+  if (!isJobHeaderLine(line, indent, key)) return false;
   state.inJob = true;
   state.jobIndent = indent;
   return true;
