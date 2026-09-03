@@ -1,13 +1,20 @@
-import React, { useState, useEffect, memo } from 'react';
+import React, { useState, useEffect, useRef, memo } from 'react';
 import type { ResearchInput, Settings } from '../types';
 import { ARTICLE_TYPES } from '../types';
 import { usePresets } from '../contexts/PresetContext';
 import { SearchIcon } from './icons/SearchIcon';
 import { useFocusTrap } from '../hooks/useFocusTrap';
-import { CheckIcon } from './icons/CheckIcon';
 import { InputFormHeader } from './InputFormHeader';
+import {
+  InputFormOptions,
+  MAX_ARTICLES_SCAN_MAX,
+  MAX_ARTICLES_SCAN_MIN,
+  TOP_N_SYNTHESIZE_MAX,
+  TOP_N_SYNTHESIZE_MIN,
+} from './InputFormOptions';
+import { ProviderStatusLine } from './ProviderStatusLine';
 import { useTranslation } from '../hooks/useTranslation';
-import type { TranslationKey } from '../i18n/translations';
+import { useUI } from '../contexts/UIContext';
 import { safeLogError } from '../lib/safeLog';
 
 interface InputFormProps {
@@ -19,82 +26,20 @@ interface InputFormProps {
 }
 
 const FORM_STATE_KEY = 'aiResearchFormState';
+const OPTIONS_OPEN_KEY = 'aiResearchFormOptionsOpen';
+const TOPN_ERROR_ID = 'input-form-topn-error';
 
-const ARTICLE_TYPE_LABEL_KEYS: Record<(typeof ARTICLE_TYPES)[number], TranslationKey> = {
-  'Randomized Controlled Trial': 'inputForm.articleType.rct',
-  'Meta-Analysis': 'inputForm.articleType.meta',
-  'Systematic Review': 'inputForm.articleType.systematic',
-  'Observational Study': 'inputForm.articleType.observational',
-};
+const SAMPLE_CHIP_KEYS = [
+  'inputForm.chip.covid',
+  'inputForm.chip.glp1',
+  'inputForm.chip.sleep',
+] as const;
 
-const SliderInput: React.FC<{
-  label: string;
-  id: string;
-  value: number;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  min: number;
-  max: number;
-  step?: number;
-}> = ({ label, id, value, onChange, min, max, step = 1 }) => (
-  <div>
-    <div className="flex justify-between mb-2">
-      <label htmlFor={id} className="block text-sm font-medium text-text-secondary">
-        {label}
-      </label>
-      <span className="font-mono text-xs font-bold text-brand-accent bg-brand-accent/10 border border-brand-accent/20 rounded-md px-2 py-0.5 shadow-glow">
-        {value}
-      </span>
-    </div>
-    <input
-      type="range"
-      id={id}
-      name={id}
-      value={value}
-      onChange={onChange}
-      min={min}
-      max={max}
-      step={step}
-      className="w-full h-2 bg-input-bg border border-border/50 rounded-lg appearance-none cursor-pointer accent-brand-accent hover:accent-brand-secondary focus:outline-none focus:ring-2 focus:ring-brand-accent/50"
-      aria-labelledby={id}
-      aria-valuetext={String(value)}
-    />
-  </div>
-);
-
-const CustomCheckbox: React.FC<{
-  id: string;
-  value: string;
-  checked: boolean;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  label: string;
-}> = ({ id, value, checked, onChange, label }) => (
-  <label
-    htmlFor={id}
-    className={`flex items-center cursor-pointer group p-2 rounded-lg border transition-all duration-200 focus-within:ring-2 focus-within:ring-brand-accent focus-within:ring-offset-2 focus-within:ring-offset-surface ${checked ? 'bg-brand-accent/10 border-brand-accent/40 shadow-glow' : 'bg-transparent border-transparent hover:bg-surface-hover hover:border-border'}`}
-  >
-    <div className="relative flex-shrink-0">
-      <input
-        id={id}
-        value={value}
-        type="checkbox"
-        checked={checked}
-        onChange={onChange}
-        className="sr-only"
-      />
-      <div
-        aria-hidden="true"
-        className={`w-5 h-5 rounded-md border transition-all duration-200 flex items-center justify-center ${checked ? 'bg-brand-accent border-brand-accent shadow-glow' : 'bg-input-bg border-border group-hover:border-brand-accent/50'}`}
-      >
-        {checked && <CheckIcon className="w-3.5 h-3.5 text-white" />}
-      </div>
-    </div>
-    <span
-      className={`ml-3 text-sm font-medium transition-colors ${checked ? 'text-text-primary' : 'text-text-secondary group-hover:text-text-primary'}`}
-    >
-      {label}
-    </span>
-  </label>
-);
+function restoreBoundedNumber(value: unknown, fallback: number, min: number, max: number): number {
+  return typeof value === 'number' && Number.isFinite(value) && value >= min && value <= max
+    ? value
+    : fallback;
+}
 
 const InputFormComponent: React.FC<InputFormProps> = ({
   onSubmit,
@@ -107,7 +52,31 @@ const InputFormComponent: React.FC<InputFormProps> = ({
     try {
       const savedState = sessionStorage.getItem(FORM_STATE_KEY);
       if (savedState) {
-        return { includeArxiv: false, educationalDemoMode: false, ...JSON.parse(savedState) };
+        const parsed = JSON.parse(savedState) as Partial<ResearchInput>;
+        return {
+          researchTopic: typeof parsed.researchTopic === 'string' ? parsed.researchTopic : '',
+          dateRange: parsed.dateRange ?? defaultSettings.defaultDateRange,
+          articleTypes:
+            Array.isArray(parsed.articleTypes) &&
+            parsed.articleTypes.every((type) => typeof type === 'string')
+              ? parsed.articleTypes
+              : [...defaultSettings.defaultArticleTypes],
+          synthesisFocus: parsed.synthesisFocus ?? defaultSettings.defaultSynthesisFocus,
+          maxArticlesToScan: restoreBoundedNumber(
+            parsed.maxArticlesToScan,
+            defaultSettings.maxArticlesToScan,
+            MAX_ARTICLES_SCAN_MIN,
+            MAX_ARTICLES_SCAN_MAX,
+          ),
+          topNToSynthesize: restoreBoundedNumber(
+            parsed.topNToSynthesize,
+            defaultSettings.topNToSynthesize,
+            TOP_N_SYNTHESIZE_MIN,
+            TOP_N_SYNTHESIZE_MAX,
+          ),
+          includeArxiv: Boolean(parsed.includeArxiv),
+          educationalDemoMode: Boolean(parsed.educationalDemoMode),
+        };
       }
     } catch (e) {
       safeLogError('Could not parse form state from sessionStorage', e);
@@ -123,11 +92,37 @@ const InputFormComponent: React.FC<InputFormProps> = ({
       educationalDemoMode: false,
     };
   });
+  const [optionsOpen, setOptionsOpen] = useState(() => {
+    try {
+      if (sessionStorage.getItem(OPTIONS_OPEN_KEY) === '1') return true;
+    } catch {
+      return false;
+    }
+    try {
+      const savedState = sessionStorage.getItem(FORM_STATE_KEY);
+      if (!savedState) return false;
+      const parsed = JSON.parse(savedState) as Partial<ResearchInput>;
+      return (
+        typeof parsed.topNToSynthesize === 'number' &&
+        typeof parsed.maxArticlesToScan === 'number' &&
+        parsed.topNToSynthesize > parsed.maxArticlesToScan
+      );
+    } catch {
+      return false;
+    }
+  });
   const { t } = useTranslation();
-  const errors: { topN?: string } =
-    formData.topNToSynthesize > formData.maxArticlesToScan
+  const { requestViewChange } = useUI();
+  const topicRef = useRef<HTMLTextAreaElement>(null);
+  const topicBlank = !formData.researchTopic.trim();
+  const errors: { topN?: string; topic?: string } = {
+    ...(formData.topNToSynthesize > formData.maxArticlesToScan
       ? { topN: t('orchestrator.error.topn_exceeds_max') }
-      : {};
+      : {}),
+    ...(formData.researchTopic.length > 0 && topicBlank
+      ? { topic: t('inputForm.error.topic_required') }
+      : {}),
+  };
   const { presets, addPreset } = usePresets();
   const [isPresetModalOpen, setIsPresetModalOpen] = useState(false);
   const [newPresetName, setNewPresetName] = useState('');
@@ -144,6 +139,18 @@ const InputFormComponent: React.FC<InputFormProps> = ({
       safeLogError('Could not save form state to sessionStorage', e);
     }
   }, [formData]);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(OPTIONS_OPEN_KEY, optionsOpen ? '1' : '0');
+    } catch {
+      /* ignore quota */
+    }
+  }, [optionsOpen]);
+
+  useEffect(() => {
+    topicRef.current?.setCustomValidity(topicBlank ? t('inputForm.error.topic_required') : '');
+  }, [topicBlank, t]);
 
   useEffect(() => {
     if (prefilledTopic) {
@@ -166,7 +173,7 @@ const InputFormComponent: React.FC<InputFormProps> = ({
   const handleArticleTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { value, checked } = e.target;
     setFormData((prev) => {
-      const currentTypes = prev.articleTypes;
+      const currentTypes = prev.articleTypes ?? [];
       if (checked) {
         return { ...prev, articleTypes: [...currentTypes, value] };
       }
@@ -174,19 +181,21 @@ const InputFormComponent: React.FC<InputFormProps> = ({
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (Object.keys(errors).length === 0 && !isLoading) {
+  const submitIfValid = () => {
+    if (Object.keys(errors).length === 0 && !isLoading && formData.researchTopic.trim()) {
       onSubmit(formData);
     }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    submitIfValid();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
       e.preventDefault();
-      if (Object.keys(errors).length === 0 && !isLoading) {
-        onSubmit(formData);
-      }
+      e.currentTarget.requestSubmit();
     }
   };
 
@@ -209,13 +218,6 @@ const InputFormComponent: React.FC<InputFormProps> = ({
   const hasErrors = Object.keys(errors).length > 0;
   const allArticleTypesSelected = formData.articleTypes.length === ARTICLE_TYPES.length;
 
-  const handleToggleAllArticleTypes = () => {
-    setFormData((prev) => ({
-      ...prev,
-      articleTypes: allArticleTypesSelected ? [] : [...ARTICLE_TYPES],
-    }));
-  };
-
   return (
     <>
       <div className="glass-panel rounded-xl p-6 sm:p-8 transition-all duration-300 hover:shadow-lg">
@@ -224,8 +226,14 @@ const InputFormComponent: React.FC<InputFormProps> = ({
           onLoadPreset={handleLoadPreset}
           onOpenPresetModal={() => setIsPresetModalOpen(true)}
         />
+        <ProviderStatusLine onConfigure={requestViewChange} />
         {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- Ctrl/Cmd+Enter form-wide submit shortcut; the form already contains real interactive child controls (inputs, buttons). */}
-        <form onSubmit={handleSubmit} onKeyDown={handleKeyDown} className="space-y-8" role="search">
+        <form
+          onSubmit={handleSubmit}
+          onKeyDown={handleKeyDown}
+          className="space-y-6 mt-4"
+          role="search"
+        >
           <div className="group">
             <label
               htmlFor="researchTopic"
@@ -234,6 +242,7 @@ const InputFormComponent: React.FC<InputFormProps> = ({
               {t('inputForm.topic.label')}
             </label>
             <textarea
+              ref={topicRef}
               id="researchTopic"
               name="researchTopic"
               rows={3}
@@ -241,219 +250,85 @@ const InputFormComponent: React.FC<InputFormProps> = ({
               onChange={handleChange}
               className="glass-input block w-full rounded-lg shadow-inner py-3 px-4 text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-brand-accent transition-all text-base"
               required
+              aria-invalid={Boolean(errors.topic) || undefined}
+              aria-describedby={errors.topic ? 'input-form-topic-error' : undefined}
               placeholder={t('inputForm.topic.placeholder')}
             />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="group">
-              <label
-                htmlFor="dateRange"
-                className="block text-sm font-semibold text-text-primary mb-2"
+            {errors.topic && (
+              <p
+                id="input-form-topic-error"
+                role="alert"
+                className="mt-2 text-xs text-red-400 font-medium bg-red-500/10 border border-red-500/20 p-2 rounded-md"
               >
-                {t('inputForm.date.label')}
-              </label>
-              <div className="relative">
-                <select
-                  id="dateRange"
-                  name="dateRange"
-                  value={formData.dateRange}
-                  onChange={handleChange}
-                  className="glass-input block w-full rounded-lg shadow-sm py-2.5 px-4 text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-accent appearance-none transition-colors"
+                {errors.topic}
+              </p>
+            )}
+            <div className="flex flex-wrap gap-2 mt-3">
+              {SAMPLE_CHIP_KEYS.map((key) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setFormData((prev) => ({ ...prev, researchTopic: t(key) }))}
+                  className="px-3 py-1.5 text-xs font-medium rounded-full border border-border bg-surface/60 text-text-secondary hover:text-text-primary hover:border-brand-accent/50 focus-ring-aa"
                 >
-                  <option value="any">{t('inputForm.date.any')}</option>
-                  <option value="1">{t('inputForm.date.year1')}</option>
-                  <option value="5">{t('inputForm.date.year5')}</option>
-                  <option value="10">{t('inputForm.date.year10')}</option>
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-text-secondary">
-                  <svg
-                    className="h-4 w-4 fill-current"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 20 20"
-                    aria-hidden
-                  >
-                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-            <div className="group">
-              <label
-                htmlFor="synthesisFocus"
-                className="block text-sm font-semibold text-text-primary mb-2"
-              >
-                {t('inputForm.focus.label')}
-              </label>
-              <div className="relative">
-                <select
-                  id="synthesisFocus"
-                  name="synthesisFocus"
-                  value={formData.synthesisFocus}
-                  onChange={handleChange}
-                  className="glass-input block w-full rounded-lg shadow-sm py-2.5 px-4 text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-accent appearance-none transition-colors"
-                >
-                  <option value="overview">{t('orchestrator.focus.overview')}</option>
-                  <option value="clinical">{t('orchestrator.focus.clinical')}</option>
-                  <option value="future">{t('orchestrator.focus.future')}</option>
-                  <option value="gaps">{t('orchestrator.focus.gaps')}</option>
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-text-secondary">
-                  <svg
-                    className="h-4 w-4 fill-current"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 20 20"
-                    aria-hidden
-                  >
-                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-surface/30 border border-border rounded-xl p-5 backdrop-blur-sm">
-            <div className="flex justify-between items-center mb-3">
-              <legend className="block text-sm font-semibold text-text-primary">
-                {t('inputForm.articleTypes.legend')}
-              </legend>
-              <button
-                type="button"
-                onClick={handleToggleAllArticleTypes}
-                className="text-xs font-semibold text-brand-accent hover:text-brand-secondary transition-colors focus-ring-aa rounded-sm"
-              >
-                {t(
-                  allArticleTypesSelected
-                    ? 'inputForm.articleTypes.deselectAll'
-                    : 'inputForm.articleTypes.selectAll',
-                )}
-              </button>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              {ARTICLE_TYPES.map((type) => (
-                <CustomCheckbox
-                  key={type}
-                  id={type}
-                  value={type}
-                  checked={formData.articleTypes.includes(type)}
-                  onChange={handleArticleTypeChange}
-                  label={t(ARTICLE_TYPE_LABEL_KEYS[type])}
-                />
+                  {t(key)}
+                </button>
               ))}
             </div>
           </div>
 
-          <div className="bg-surface/30 border border-border rounded-xl p-5 backdrop-blur-sm">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="h-1.5 w-1.5 rounded-full bg-accent-cyan shadow-[0_0_8px_var(--color-accent-cyan)]" />
-              <legend className="text-sm font-semibold text-text-primary">
-                {t('inputForm.sources.legend')}
-              </legend>
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center p-2 rounded-lg bg-brand-accent/5 border border-brand-accent/20 gap-2.5">
-                <div className="w-5 h-5 rounded-md bg-brand-accent border border-brand-accent flex items-center justify-center flex-shrink-0">
-                  <CheckIcon className="w-3.5 h-3.5 text-white" />
-                </div>
-                <span className="text-sm font-medium text-text-primary">
-                  {t('inputForm.sources.pubmed')}
-                </span>
-                <span className="text-xs text-text-secondary ml-auto">
-                  {t('inputForm.sources.pubmed_hint')}
-                </span>
-              </div>
-              <CustomCheckbox
-                id="includeArxiv"
-                value="arxiv"
-                checked={formData.includeArxiv ?? false}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, includeArxiv: e.target.checked }))
+          <details
+            className="rounded-xl border border-border bg-surface/20"
+            open={optionsOpen}
+            onToggle={(e) => setOptionsOpen(e.currentTarget.open)}
+          >
+            <summary className="cursor-pointer list-none px-4 py-3 text-sm font-semibold text-text-primary focus-ring-aa rounded-xl">
+              {t('inputForm.options')}
+              <span className="ml-2 font-normal text-text-secondary">
+                {t('inputForm.options.hint')}
+              </span>
+            </summary>
+            <div className="px-4 pb-5">
+              <InputFormOptions
+                formData={formData}
+                errors={errors}
+                topNErrorId={TOPN_ERROR_ID}
+                allArticleTypesSelected={allArticleTypesSelected}
+                onChange={handleChange}
+                onArticleTypeChange={handleArticleTypeChange}
+                onToggleAllArticleTypes={() =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    articleTypes: allArticleTypesSelected ? [] : [...ARTICLE_TYPES],
+                  }))
                 }
-                label={t('inputForm.sources.arxiv')}
-              />
-              {formData.includeArxiv && (
-                <p className="text-[11px] text-text-secondary pl-2 leading-relaxed">
-                  {t('inputForm.sources.arxiv_hint')}
-                </p>
-              )}
-              <CustomCheckbox
-                id="educationalDemoMode"
-                value="educationalDemo"
-                checked={formData.educationalDemoMode ?? false}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, educationalDemoMode: e.target.checked }))
+                onToggleArxiv={(checked) =>
+                  setFormData((prev) => ({ ...prev, includeArxiv: checked }))
                 }
-                label={t('inputForm.sources.educationalDemo')}
+                onToggleDemo={(checked) =>
+                  setFormData((prev) => ({ ...prev, educationalDemoMode: checked }))
+                }
               />
-              {formData.educationalDemoMode && (
-                <p className="text-[11px] text-amber-700 dark:text-amber-300 pl-2 leading-relaxed">
-                  {t('inputForm.sources.educationalDemo_hint')}
-                </p>
-              )}
             </div>
-          </div>
+          </details>
 
-          <div className="bg-surface/30 border border-border rounded-xl p-5 space-y-6 backdrop-blur-sm">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="h-1.5 w-1.5 rounded-full bg-accent-cyan shadow-[0_0_8px_var(--color-accent-cyan)]" />
-              <legend className="text-sm font-semibold text-text-primary">
-                {t('inputForm.workload.legend')}
-              </legend>
-            </div>
-            <SliderInput
-              label={t('inputForm.workload.max_scan')}
-              id="maxArticlesToScan"
-              value={formData.maxArticlesToScan}
-              onChange={handleChange}
-              min={10}
-              max={200}
-              step={10}
-            />
-            <SliderInput
-              label={t('inputForm.workload.top_n')}
-              id="topNToSynthesize"
-              value={formData.topNToSynthesize}
-              onChange={handleChange}
-              min={1}
-              max={20}
-            />
-            {errors.topN && (
-              <p className="text-xs text-red-400 font-medium bg-red-500/10 border border-red-500/20 p-2 rounded-md text-center">
-                {errors.topN}
-              </p>
-            )}
-          </div>
+          {errors.topN && (
+            <p
+              id={TOPN_ERROR_ID}
+              role="alert"
+              className="text-xs text-red-400 font-medium bg-red-500/10 border border-red-500/20 p-2 rounded-md text-center"
+            >
+              {errors.topN}
+            </p>
+          )}
 
           <button
             type="submit"
-            disabled={isLoading || hasErrors}
-            className="w-full inline-flex justify-center items-center py-3.5 px-4 border border-transparent shadow-lg shadow-brand-accent/20 text-base font-bold rounded-lg text-brand-text-on-accent bg-gradient-to-r from-brand-primary to-accent-cyan hover:shadow-glow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface focus:ring-brand-accent disabled:from-border disabled:to-border disabled:text-text-secondary disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-[1.01] active:scale-[0.99]"
+            disabled={isLoading || hasErrors || topicBlank}
+            className="w-full inline-flex justify-center items-center py-3.5 px-4 border border-transparent shadow-lg shadow-brand-accent/20 text-base font-bold rounded-lg text-brand-text-on-accent bg-gradient-to-r from-brand-primary to-accent-cyan hover:shadow-glow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface focus:ring-brand-accent disabled:from-border disabled:to-border disabled:text-text-secondary disabled:cursor-not-allowed transition-all duration-300 motion-reduce:hover:scale-100 hover:scale-[1.01] active:scale-[0.99]"
           >
             {isLoading ? (
-              <>
-                <svg
-                  className="animate-spin -ml-1 mr-3 h-5 w-5"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  aria-hidden
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  />
-                </svg>
-                <span className="tracking-wide">{t('inputForm.submit.loading')}</span>
-              </>
+              <span className="tracking-wide">{t('inputForm.submit.loading')}</span>
             ) : (
               <>
                 <SearchIcon className="h-5 w-5 mr-2" />

@@ -17,7 +17,7 @@ interface HistoryViewProps {
 const HistoryView: React.FC<HistoryViewProps> = ({ onViewEntry }) => {
   const { t } = useTranslation();
   const { knowledgeBase, updateEntryTitle } = useKnowledgeBase();
-  const { setCurrentView } = useUI();
+  const { requestViewChange } = useUI();
   const [quickViewEntry, setQuickViewEntry] = useState<KnowledgeBaseEntry | null>(null);
   const [editingEntry, setEditingEntry] = useState<{ id: string; title: string } | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -52,7 +52,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onViewEntry }) => {
           message={t('history.empty.message')}
           action={{
             text: t('history.empty.action'),
-            onClick: () => setCurrentView('orchestrator'),
+            onClick: () => requestViewChange('orchestrator'),
             icon: <DocumentPlusIcon className="h-5 w-5" />,
           }}
         />

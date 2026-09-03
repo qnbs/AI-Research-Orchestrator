@@ -13,13 +13,15 @@ import { collectionTranslations } from './collectionTranslations';
 import { kbChromeTranslations } from './kbChromeTranslations';
 import { dashboardTranslations } from './dashboardTranslations';
 import { orchestratorTranslations } from './orchestratorTranslations';
+import { onboardingTranslations } from './onboardingTranslations';
+import { journeyTranslations } from './journeyTranslations';
 
 export const translations = {
   en: {
     'app.name': 'AI Research Orchestrator',
     'nav.home': 'Home',
-    'nav.research': 'Research',
-    'nav.orchestrator': 'Orchestrator',
+    'nav.research': 'Quick research',
+    'nav.orchestrator': 'Literature review',
     'nav.authors': 'Author Hub',
     'nav.journals': 'Journal Hub',
     'nav.knowledgeBase': 'Knowledge Base',
@@ -29,16 +31,7 @@ export const translations = {
     'nav.help': 'Help & Docs',
     'nav.search_placeholder': 'Search...',
     'nav.quick_add': 'Quick Add',
-    'home.welcome': 'What would you like to do today?',
-    'home.card.research.title': 'Research',
-    'home.card.research.desc':
-      'Perform a quick, focused analysis on a specific question or abstract.',
-    'home.card.orchestrator.title': 'Orchestrator',
-    'home.card.orchestrator.desc': 'Conduct a comprehensive literature review on a broad topic.',
-    'home.card.authors.title': 'Author Hub',
-    'home.card.authors.desc': "Analyze a researcher's body of work, impact, and collaborations.",
-    'home.card.journals.title': 'Journal Hub',
-    'home.card.journals.desc': 'Discover and analyze scientific journals in your field of study.',
+    ...journeyTranslations.en,
     'settings.title': 'Settings',
     'settings.subtitle': 'Customize your research environment.',
     'settings.general': 'General',
@@ -248,21 +241,7 @@ export const translations = {
       'Model “{model}” was not found on the Ollama server. Pull it or pick a discovered model.',
     'settings.ai.ollama.model_small_warn':
       '“{model}” looks small for structured ranking/synthesis (prompt budget ≈ {budget} tokens). Prefer a larger local model when possible.',
-    'onboarding.welcome_prefix': 'Welcome to',
-    'onboarding.welcome_highlight': 'AI Research Orchestrator',
-    'onboarding.subtitle': 'A client-only PWA for biomedical literature reviews.',
-    'onboarding.step1.title': 'Define Your Topic',
-    'onboarding.step1.desc':
-      'Enter a research query. The pipeline searches PubMed (and optionally arXiv), ranks the hits, and streams a cited synthesis.',
-    'onboarding.step2.title': 'Receive a cited synthesis',
-    'onboarding.step2.desc':
-      'Live mode uses your chosen AI provider. Offline or without a key, the built-in heuristic engine still runs the same phases.',
-    'onboarding.step3.title': 'Leverage Your Knowledge',
-    'onboarding.step3.desc':
-      'Build a personal, de-duplicated knowledge base and export your findings for any workflow.',
-    'onboarding.start': 'Start Researching',
-    'onboarding.privacy':
-      'Stored research data stays in your browser. Live mode still sends prompts and article metadata to your chosen AI provider and queries to PubMed/arXiv.',
+    ...onboardingTranslations.en,
     'settings.ai.enable_tldr': 'Enable AI “TL;DR” Summaries',
     ...journalTranslations.en,
     'kb.analyze_journal': 'Analyze journal in Journal Hub',
@@ -329,8 +308,8 @@ export const translations = {
   de: {
     'app.name': 'AI Research Orchestrator',
     'nav.home': 'Startseite',
-    'nav.research': 'Recherche',
-    'nav.orchestrator': 'Orchestrator',
+    'nav.research': 'Schnellrecherche',
+    'nav.orchestrator': 'Literaturrecherche',
     'nav.authors': 'Autoren-Hub',
     'nav.journals': 'Journal-Hub',
     'nav.knowledgeBase': 'Wissensdatenbank',
@@ -340,19 +319,7 @@ export const translations = {
     'nav.help': 'Hilfe',
     'nav.search_placeholder': 'Suchen...',
     'nav.quick_add': 'Schnell-Hinzufügen',
-    'home.welcome': 'Was möchten Sie heute tun?',
-    'home.card.research.title': 'Recherche',
-    'home.card.research.desc':
-      'Führen Sie eine schnelle, gezielte Analyse zu einer Frage oder einem Abstract durch.',
-    'home.card.orchestrator.title': 'Orchestrator',
-    'home.card.orchestrator.desc':
-      'Erstellen Sie eine umfassende Literaturübersicht zu einem breiten Thema.',
-    'home.card.authors.title': 'Autoren-Hub',
-    'home.card.authors.desc':
-      'Analysieren Sie das Gesamtwerk, den Einfluss und die Kollaborationen eines Forschers.',
-    'home.card.journals.title': 'Journal-Hub',
-    'home.card.journals.desc':
-      'Entdecken und analysieren Sie wissenschaftliche Fachzeitschriften in Ihrem Feld.',
+    ...journeyTranslations.de,
     'settings.title': 'Einstellungen',
     'settings.subtitle': 'Passen Sie Ihre Forschungsumgebung an.',
     'settings.general': 'Allgemein',
@@ -571,21 +538,7 @@ export const translations = {
       'Modell „{model}“ wurde auf dem Ollama-Server nicht gefunden. Laden Sie es oder wählen Sie ein gefundenes Modell.',
     'settings.ai.ollama.model_small_warn':
       '„{model}“ wirkt klein für strukturiertes Ranking/Synthese (Prompt-Budget ≈ {budget} Tokens). Bevorzugen Sie nach Möglichkeit ein größeres lokales Modell.',
-    'onboarding.welcome_prefix': 'Willkommen beim',
-    'onboarding.welcome_highlight': 'AI Research Orchestrator',
-    'onboarding.subtitle': 'Eine clientseitige PWA für biomedizinische Literaturrecherchen.',
-    'onboarding.step1.title': 'Thema definieren',
-    'onboarding.step1.desc':
-      'Geben Sie eine Forschungsfrage ein. Die Pipeline durchsucht PubMed (optional arXiv), bewertet die Treffer und streamt eine zitierte Synthese.',
-    'onboarding.step2.title': 'Zitierte Synthese erhalten',
-    'onboarding.step2.desc':
-      'Im Live-Modus nutzt die App Ihren gewählten KI-Anbieter. Offline oder ohne Schlüssel übernimmt die eingebaute heuristische Engine dieselben Phasen.',
-    'onboarding.step3.title': 'Wissen nutzen',
-    'onboarding.step3.desc':
-      'Bauen Sie eine persönliche, deduplizierte Wissensdatenbank auf und exportieren Sie Ihre Ergebnisse für jeden Workflow.',
-    'onboarding.start': 'Recherche starten',
-    'onboarding.privacy':
-      'Gespeicherte Recherche-Daten bleiben im Browser. Im Live-Modus gehen Prompts und Artikelmetadaten an Ihren KI-Anbieter und Suchanfragen an PubMed/arXiv.',
+    ...onboardingTranslations.de,
     'settings.ai.enable_tldr': 'KI-„TL;DR“-Zusammenfassungen aktivieren',
     ...journalTranslations.de,
     'kb.analyze_journal': 'Journal im Journal-Hub analysieren',

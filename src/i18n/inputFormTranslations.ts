@@ -32,6 +32,7 @@ export const inputFormTranslations = {
     'inputForm.workload.top_n': 'Top Articles to Synthesize',
     'inputForm.submit': 'Start Research',
     'inputForm.submit.loading': 'Initializing Agents…',
+    'inputForm.error.topic_required': 'Enter a research topic.',
   },
   de: {
     'inputForm.header.title': 'Rechercheparameter',
@@ -66,5 +67,6 @@ export const inputFormTranslations = {
     'inputForm.workload.top_n': 'Top-Artikel für die Synthese',
     'inputForm.submit': 'Recherche starten',
     'inputForm.submit.loading': 'Agenten werden initialisiert…',
+    'inputForm.error.topic_required': 'Geben Sie ein Forschungsthema ein.',
   },
 } as const;

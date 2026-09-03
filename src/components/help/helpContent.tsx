@@ -376,6 +376,14 @@ export const getGlossaryItems = (t: Translator): HelpTopic[] => [
     content: <p>{t('help.glossary.relevance.desc')}</p>,
   },
   {
+    title: t('help.glossary.literature_review.title'),
+    content: <p>{t('help.glossary.literature_review.desc')}</p>,
+  },
+  {
+    title: t('help.glossary.quick_research.title'),
+    content: <p>{t('help.glossary.quick_research.desc')}</p>,
+  },
+  {
     title: t('help.glossary.synthesis.title'),
     content: <p>{t('help.glossary.synthesis.desc')}</p>,
   },

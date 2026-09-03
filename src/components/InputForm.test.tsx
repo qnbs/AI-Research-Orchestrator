@@ -20,6 +20,14 @@ vi.mock('../hooks/useFocusTrap', () => ({
   useFocusTrap: () => undefined,
 }));
 
+vi.mock('../contexts/UIContext', () => ({
+  useUI: () => ({ requestViewChange: vi.fn() }),
+}));
+
+vi.mock('./ProviderStatusLine', () => ({
+  ProviderStatusLine: () => null,
+}));
+
 const defaults = {
   maxArticlesToScan: 20,
   topNToSynthesize: 5,
@@ -57,6 +65,7 @@ describe('InputForm educationalDemoMode', () => {
       />,
     );
 
+    fireEvent.click(screen.getByText('inputForm.options'));
     expect(screen.getByLabelText('inputForm.sources.educationalDemo')).not.toBeChecked();
     expect(screen.queryByText('inputForm.sources.educationalDemo_hint')).toBeNull();
   });
@@ -73,6 +82,7 @@ describe('InputForm educationalDemoMode', () => {
       />,
     );
 
+    fireEvent.click(screen.getByText('inputForm.options'));
     const checkbox = screen.getByLabelText('inputForm.sources.educationalDemo');
     fireEvent.click(checkbox);
     expect(checkbox).toBeChecked();
@@ -93,5 +103,183 @@ describe('InputForm educationalDemoMode', () => {
       educationalDemoMode?: boolean;
     };
     expect(saved.educationalDemoMode).toBe(true);
+  });
+
+  it('sample chips fill the topic and Cmd+Enter submits defaults', () => {
+    const onSubmit = vi.fn();
+    render(
+      <InputForm
+        onSubmit={onSubmit}
+        isLoading={false}
+        defaultSettings={defaults}
+        prefilledTopic={null}
+        onPrefillConsumed={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'inputForm.chip.covid' }));
+    const form = screen.getByRole('search');
+    fireEvent.keyDown(form, { key: 'Enter', metaKey: true });
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        researchTopic: 'inputForm.chip.covid',
+        dateRange: '5',
+        educationalDemoMode: false,
+      }),
+    );
+  });
+
+  it('does not start a run on Cmd+Enter when the topic is only whitespace', () => {
+    const onSubmit = vi.fn();
+    render(
+      <InputForm
+        onSubmit={onSubmit}
+        isLoading={false}
+        defaultSettings={defaults}
+        prefilledTopic={null}
+        onPrefillConsumed={vi.fn()}
+      />,
+    );
+    fireEvent.change(screen.getByLabelText('inputForm.topic.label'), {
+      target: { value: '   ' },
+    });
+    expect(screen.getByRole('alert')).toHaveTextContent('inputForm.error.topic_required');
+    expect(screen.getByRole('button', { name: 'inputForm.submit' })).toBeDisabled();
+    fireEvent.keyDown(screen.getByRole('search'), { key: 'Enter', metaKey: true });
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it('does not start a run on Cmd+Enter when the topic is empty', () => {
+    const onSubmit = vi.fn();
+    render(
+      <InputForm
+        onSubmit={onSubmit}
+        isLoading={false}
+        defaultSettings={defaults}
+        prefilledTopic={null}
+        onPrefillConsumed={vi.fn()}
+      />,
+    );
+    fireEvent.keyDown(screen.getByRole('search'), { key: 'Enter', metaKey: true });
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it('exposes a restored topN error while submit stays disabled', () => {
+    sessionStorage.setItem(
+      'aiResearchFormState',
+      JSON.stringify({
+        researchTopic: 'topic',
+        dateRange: '5',
+        articleTypes: [],
+        synthesisFocus: 'overview',
+        maxArticlesToScan: 10,
+        topNToSynthesize: 15,
+      }),
+    );
+
+    render(
+      <InputForm
+        onSubmit={vi.fn()}
+        isLoading={false}
+        defaultSettings={defaults}
+        prefilledTopic={null}
+        onPrefillConsumed={vi.fn()}
+      />,
+    );
+
+    const alert = screen.getByRole('alert');
+    expect(alert).toHaveTextContent('orchestrator.error.topn_exceeds_max');
+    expect(screen.getByRole('button', { name: 'inputForm.submit' })).toBeDisabled();
+    expect(screen.getByLabelText('inputForm.workload.top_n')).toHaveAttribute(
+      'aria-describedby',
+      'input-form-topn-error',
+    );
+  });
+
+  it('restores malformed state without an articleTypes array', () => {
+    sessionStorage.setItem(
+      'aiResearchFormState',
+      JSON.stringify({
+        researchTopic: 'topic',
+        dateRange: '5',
+        synthesisFocus: 'overview',
+        maxArticlesToScan: 20,
+        topNToSynthesize: 5,
+      }),
+    );
+
+    render(
+      <InputForm
+        onSubmit={vi.fn()}
+        isLoading={false}
+        defaultSettings={defaults}
+        prefilledTopic={null}
+        onPrefillConsumed={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByText('inputForm.options'));
+    expect(screen.getByLabelText('inputForm.sources.educationalDemo')).toBeInTheDocument();
+    expect(document.getElementById('article-type-randomized-controlled-trial')).toBeTruthy();
+    expect(document.getElementById('Randomized Controlled Trial')).toBeNull();
+  });
+
+  it('clamps restored workload values that are outside slider bounds', () => {
+    const onSubmit = vi.fn();
+    sessionStorage.setItem(
+      'aiResearchFormState',
+      JSON.stringify({
+        researchTopic: 'topic',
+        dateRange: '5',
+        articleTypes: [],
+        synthesisFocus: 'overview',
+        maxArticlesToScan: 300,
+        topNToSynthesize: 100,
+      }),
+    );
+
+    render(
+      <InputForm
+        onSubmit={onSubmit}
+        isLoading={false}
+        defaultSettings={defaults}
+        prefilledTopic={null}
+        onPrefillConsumed={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'inputForm.submit' }));
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        maxArticlesToScan: defaults.maxArticlesToScan,
+        topNToSynthesize: defaults.topNToSynthesize,
+      }),
+    );
+  });
+
+  it('falls back when restored articleTypes contains non-string elements', () => {
+    sessionStorage.setItem(
+      'aiResearchFormState',
+      JSON.stringify({
+        researchTopic: 'topic',
+        dateRange: '5',
+        articleTypes: [1, { label: 'RCT' }],
+        synthesisFocus: 'overview',
+        maxArticlesToScan: 20,
+        topNToSynthesize: 5,
+      }),
+    );
+
+    render(
+      <InputForm
+        onSubmit={vi.fn()}
+        isLoading={false}
+        defaultSettings={defaults}
+        prefilledTopic={null}
+        onPrefillConsumed={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByText('inputForm.options'));
+    expect(document.getElementById('article-type-randomized-controlled-trial')).toBeTruthy();
   });
 });

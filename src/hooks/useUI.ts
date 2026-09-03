@@ -25,6 +25,8 @@ interface NotificationState {
 export interface UseUIValue {
   currentView: View;
   setCurrentView: (view: View) => void;
+  /** Navigate with the unsaved-settings confirmation used by chrome. */
+  requestViewChange: (view: View) => void;
   notification: NotificationState | null;
   setNotification: (notification: NotificationState | null) => void;
   isSettingsDirty: boolean;
@@ -39,6 +41,7 @@ export interface UseUIValue {
   setIsPwaInstalled: (installed: boolean) => void;
 }
 
+/** Chrome UI store: current view, notifications, dirty-settings navigation, and PWA install. */
 export function useUI(): UseUIValue {
   const dispatch = useAppDispatch();
   const { currentView, notification, isSettingsDirty, pendingNavigation, isCommandPaletteOpen } =
@@ -54,6 +57,13 @@ export function useUI(): UseUIValue {
     () => ({
       currentView,
       setCurrentView: (view: View) => dispatch(setCurrentView(view)),
+      requestViewChange: (view: View) => {
+        if (isSettingsDirty && view !== currentView) {
+          dispatch(setPendingNavigation(view));
+        } else {
+          dispatch(setCurrentView(view));
+        }
+      },
       notification,
       setNotification: (n: NotificationState | null) => dispatch(setNotification(n)),
       isSettingsDirty,

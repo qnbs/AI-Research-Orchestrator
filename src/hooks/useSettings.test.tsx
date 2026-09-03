@@ -35,6 +35,39 @@ describe('useSettings', () => {
     vi.clearAllMocks();
   });
 
+  it('function-form updates read from the Provider store, not the module singleton', () => {
+    const store = configureStore({
+      reducer: { settings: settingsReducer },
+      preloadedState: {
+        settings: { data: { ...defaultSettings, appLanguage: 'de' as const }, isLoading: false },
+      },
+    });
+    const Wrapper = ({ children }: { children: ReactNode }) => (
+      <Provider store={store}>{children}</Provider>
+    );
+    const { result } = renderHook(() => useSettings(), { wrapper: Wrapper });
+    expect(result.current.settings.appLanguage).toBe('de');
+    act(() => {
+      result.current.updateSettings((prev) => ({
+        ...prev,
+        appLanguage: prev.appLanguage === 'de' ? 'en' : 'de',
+      }));
+    });
+    expect(result.current.settings.appLanguage).toBe('en');
+    expect(store.getState().settings.data.appLanguage).toBe('en');
+  });
+
+  it('applies sequential function-form updates against the latest Provider store', () => {
+    const { Wrapper } = makeWrapper();
+    const { result } = renderHook(() => useSettings(), { wrapper: Wrapper });
+    act(() => {
+      result.current.updateSettings((prev) => ({ ...prev, appLanguage: 'de' }));
+      result.current.updateSettings((prev) => ({ ...prev, developerMode: true }));
+    });
+    expect(result.current.settings.appLanguage).toBe('de');
+    expect(result.current.settings.developerMode).toBe(true);
+  });
+
   it('exposes defaults and updateSettings', () => {
     const { Wrapper } = makeWrapper();
     const { result } = renderHook(() => useSettings(), { wrapper: Wrapper });

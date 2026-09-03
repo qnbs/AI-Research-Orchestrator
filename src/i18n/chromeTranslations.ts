@@ -32,6 +32,7 @@ export const chromeTranslations = {
     'chrome.kb_item.relevance.low': 'Low Relevance',
     'chrome.kb_item.open': 'Open →',
     'chrome.kb_item.open_aria': 'Open article: {title}',
+    'chrome.brand.wordmark': 'AI Research Orchestrator',
 
     'welcome.title': 'Start a New Literature Review',
     'welcome.body': 'Set your topic and sources above to run a literature search and synthesis.',
@@ -93,6 +94,7 @@ export const chromeTranslations = {
     'chrome.kb_item.relevance.low': 'Geringe Relevanz',
     'chrome.kb_item.open': 'Öffnen →',
     'chrome.kb_item.open_aria': 'Artikel öffnen: {title}',
+    'chrome.brand.wordmark': 'AI Research Orchestrator',
 
     'welcome.title': 'Neue Literaturübersicht starten',
     'welcome.body':

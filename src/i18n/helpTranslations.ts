@@ -19,19 +19,19 @@ export const helpTranslations = {
     'help.guide.workflows.title': 'Understanding the Core Workflows',
     'help.guide.workflows.intro':
       'This app offers three distinct but interconnected paths for conducting research:',
-    'help.guide.workflows.research.label': 'Research Tab:',
+    'help.guide.workflows.research.label': 'Quick research:',
     'help.guide.workflows.research.desc':
       'For quick, focused analysis of a specific question, abstract, or piece of text. It is perfect for exploring a single idea before committing to a full review.',
-    'help.guide.workflows.orchestrator.label': 'The Orchestrator:',
+    'help.guide.workflows.orchestrator.label': 'Literature review:',
     'help.guide.workflows.orchestrator.desc':
       'For comprehensive literature reviews on a broad topic. This is your starting point for building out a new area of your knowledge base by analyzing many articles at once.',
     'help.guide.workflows.author.label': 'The Author Hub:',
     'help.guide.workflows.author.desc':
       'For deep dives into the work of a specific researcher. It helps you understand their impact, collaborations, and the evolution of their research focus over time.',
     'help.guide.workflows.keywords': 'workflow orchestrator research author hub core concept',
-    'help.guide.orchestrator.title': 'Using the Orchestrator',
+    'help.guide.orchestrator.title': 'Using Literature review',
     'help.guide.orchestrator.intro.start': 'The',
-    'help.guide.orchestrator.intro.strong': 'Orchestrator',
+    'help.guide.orchestrator.intro.strong': 'Literature review',
     'help.guide.orchestrator.intro.end':
       'tab is where you conduct large-scale literature reviews. Here is how to fill out the form effectively:',
     'help.guide.orchestrator.topic.label': 'Primary Research Topic:',
@@ -65,12 +65,12 @@ export const helpTranslations = {
       '(intermittent fasting OR time-restricted eating) AND cognitive function NOT Alzheimer',
     'help.guide.orchestrator.tip.end': '.',
     'help.guide.orchestrator.after':
-      'After you click "Start Research", a detailed report will appear. If you like the results, click "Save" to permanently store the articles in your Knowledge Base. You can also edit the report title before saving.',
+      'After you click "Start Research" in Literature review, a detailed report will appear. If you like the results, click "Save" to permanently store the articles in your Knowledge Base. You can also edit the report title before saving.',
     'help.guide.orchestrator.keywords':
       'research parameters topic date type synthesis focus start new report save',
-    'help.guide.research.title': 'Using the Research Tab',
+    'help.guide.research.title': 'Using Quick research',
     'help.guide.research.intro.start': 'The',
-    'help.guide.research.intro.strong': 'Research',
+    'help.guide.research.intro.strong': 'Quick research',
     'help.guide.research.intro.end': 'tab is for quick analysis. This tool is ideal for:',
     'help.guide.research.use.summary':
       "Getting a quick summary of a paper's abstract before you read it.",
@@ -80,7 +80,7 @@ export const helpTranslations = {
     'help.guide.research.analyze':
       'Simply paste your text or question into the box and click "Analyze". The AI provides a summary, extracts key findings, and, based on your settings, can automatically search for related PubMed articles and online news/discussions.',
     'help.guide.research.full_review':
-      'If the results are promising, use the "Start Full Review on This Topic" button to seamlessly transfer the AI-synthesized topic to the Orchestrator for a deeper dive.',
+      'If the results are promising, use the "Start Full Review on This Topic" button to seamlessly transfer the AI-synthesized topic to Literature review for a deeper dive.',
     'help.guide.research.keywords': 'assistant analyze summary key findings similar online',
     'help.guide.authors.title': 'Using the Author Hub',
     'help.guide.authors.intro.start': 'The',
@@ -216,8 +216,14 @@ export const helpTranslations = {
     'help.glossary.relevance.desc':
       'A 0–100 display score used to order articles. In live mode it is the provider’s estimated relevance. In heuristic mode it is a relative rank within the current result set (BM25+ and feature mix), not a calibrated probability.',
     'help.glossary.synthesis.title': 'Synthesis Focus',
+    'help.glossary.literature_review.title': 'Literature review',
+    'help.glossary.literature_review.desc':
+      'The full pipeline: topic → PubMed and optional arXiv → relevance ranking → cited synthesis. This is the primary job of the app.',
+    'help.glossary.quick_research.title': 'Quick research',
+    'help.glossary.quick_research.desc':
+      'The rapid assistant: TL;DR, similar articles, and a focused look at one question or abstract. It is not the full literature-review pipeline.',
     'help.glossary.synthesis.desc':
-      'A setting in the Orchestrator form that directs the AI on what aspect of the research to focus on when writing its summary. For example, focusing on "Clinical Implications" will yield a different synthesis than "Gaps in Research".',
+      'A setting in the Literature review form that directs the synthesis on what aspect of the research to focus on when writing its summary. For example, focusing on "Clinical Implications" will yield a different synthesis than "Gaps in Research".',
     'help.about.title': 'About AI Research Orchestrator',
     'help.about.description':
       'This application is a tool designed to accelerate the process of scientific literature review. It leverages generative AI to automate the tedious tasks of searching, filtering, and synthesizing information from the PubMed database.',
@@ -256,19 +262,19 @@ export const helpTranslations = {
     'help.guide.workflows.title': 'Die zentralen Workflows verstehen',
     'help.guide.workflows.intro':
       'Diese App bietet drei unterschiedliche, aber miteinander verbundene Wege für die Recherche:',
-    'help.guide.workflows.research.label': 'Recherche-Tab:',
+    'help.guide.workflows.research.label': 'Schnellrecherche:',
     'help.guide.workflows.research.desc':
       'Für schnelle, fokussierte Analysen einer konkreten Frage, eines Abstracts oder eines Textabschnitts. Ideal, um eine einzelne Idee zu erkunden, bevor Sie eine vollständige Übersicht starten.',
-    'help.guide.workflows.orchestrator.label': 'Der Orchestrator:',
+    'help.guide.workflows.orchestrator.label': 'Literaturrecherche:',
     'help.guide.workflows.orchestrator.desc':
       'Für umfassende Literaturübersichten zu einem breiten Thema. Dies ist Ihr Ausgangspunkt, um einen neuen Bereich Ihrer Wissensdatenbank aufzubauen, indem viele Artikel auf einmal analysiert werden.',
     'help.guide.workflows.author.label': 'Der Autoren-Hub:',
     'help.guide.workflows.author.desc':
       'Für vertiefte Analysen der Arbeit eines bestimmten Forschers. Er hilft Ihnen, Wirkung, Kollaborationen und die Entwicklung des Forschungsschwerpunkts im Zeitverlauf zu verstehen.',
     'help.guide.workflows.keywords': 'workflow orchestrator recherche autoren hub konzept',
-    'help.guide.orchestrator.title': 'Den Orchestrator verwenden',
-    'help.guide.orchestrator.intro.start': 'Der',
-    'help.guide.orchestrator.intro.strong': 'Orchestrator',
+    'help.guide.orchestrator.title': 'Literaturrecherche verwenden',
+    'help.guide.orchestrator.intro.start': 'Die',
+    'help.guide.orchestrator.intro.strong': 'Literaturrecherche',
     'help.guide.orchestrator.intro.end':
       'Tab ist der Ort für groß angelegte Literaturübersichten. So füllen Sie das Formular wirkungsvoll aus:',
     'help.guide.orchestrator.topic.label': 'Primäres Forschungsthema:',
@@ -303,12 +309,12 @@ export const helpTranslations = {
       '(intermittierendes Fasten OR zeitbeschränktes Essen) AND kognitive Funktion NOT Alzheimer',
     'help.guide.orchestrator.tip.end': '.',
     'help.guide.orchestrator.after':
-      'Nachdem Sie auf "Recherche starten" klicken, erscheint ein detaillierter Bericht. Wenn Ihnen die Ergebnisse gefallen, klicken Sie auf "Speichern", um die Artikel dauerhaft in Ihrer Wissensdatenbank abzulegen. Sie können den Berichtstitel vor dem Speichern auch bearbeiten.',
+      'Nachdem Sie in der Literaturrecherche auf "Recherche starten" klicken, erscheint ein detaillierter Bericht. Wenn Ihnen die Ergebnisse gefallen, klicken Sie auf "Speichern", um die Artikel dauerhaft in Ihrer Wissensdatenbank abzulegen. Sie können den Berichtstitel vor dem Speichern auch bearbeiten.',
     'help.guide.orchestrator.keywords':
       'recherche parameter thema datum typ synthese fokus starten neuer bericht speichern',
-    'help.guide.research.title': 'Den Recherche-Tab verwenden',
-    'help.guide.research.intro.start': 'Der',
-    'help.guide.research.intro.strong': 'Recherche',
+    'help.guide.research.title': 'Schnellrecherche verwenden',
+    'help.guide.research.intro.start': 'Die',
+    'help.guide.research.intro.strong': 'Schnellrecherche',
     'help.guide.research.intro.end':
       'Tab ist für schnelle Analysen gedacht. Dieses Werkzeug eignet sich ideal für:',
     'help.guide.research.use.summary':
@@ -319,7 +325,7 @@ export const helpTranslations = {
     'help.guide.research.analyze':
       'Fügen Sie einfach Ihren Text oder Ihre Frage in das Feld ein und klicken Sie auf "Analysieren". Die KI liefert eine Zusammenfassung, extrahiert Kernergebnisse und kann je nach Einstellungen automatisch nach verwandten PubMed-Artikeln sowie Online-Nachrichten oder Diskussionen suchen.',
     'help.guide.research.full_review':
-      'Wenn die Ergebnisse vielversprechend sind, nutzen Sie die Schaltfläche "Vollständige Übersicht zu diesem Thema starten", um das KI-synthetisierte Thema nahtlos für eine tiefere Analyse an den Orchestrator zu übergeben.',
+      'Wenn die Ergebnisse vielversprechend sind, nutzen Sie die Schaltfläche "Vollständige Übersicht zu diesem Thema starten", um das KI-synthetisierte Thema nahtlos für eine tiefere Analyse an die Literaturrecherche zu übergeben.',
     'help.guide.research.keywords':
       'assistent analysieren zusammenfassung kernergebnisse ähnlich online',
     'help.guide.authors.title': 'Den Autoren-Hub verwenden',
@@ -459,8 +465,14 @@ export const helpTranslations = {
     'help.glossary.relevance.desc':
       'Ein Anzeigewert von 0–100 zur Sortierung der Artikel. Im Live-Modus ist er die geschätzte Relevanz des Anbieters. Im Heuristik-Modus ist er ein relativer Rang innerhalb der aktuellen Treffermenge (BM25+ und Feature-Mix), keine kalibrierte Wahrscheinlichkeit.',
     'help.glossary.synthesis.title': 'Synthesefokus',
+    'help.glossary.literature_review.title': 'Literaturrecherche',
+    'help.glossary.literature_review.desc':
+      'Die volle Pipeline: Thema → PubMed und optional arXiv → Relevanzranking → zitierte Synthese. Das ist die primäre Aufgabe der App.',
+    'help.glossary.quick_research.title': 'Schnellrecherche',
+    'help.glossary.quick_research.desc':
+      'Der schnelle Assistent: TL;DR, ähnliche Artikel und ein gezielter Blick auf eine Frage oder ein Abstract. Das ist nicht die volle Literaturrecherche-Pipeline.',
     'help.glossary.synthesis.desc':
-      'Eine Einstellung im Orchestrator-Formular, die der KI vorgibt, auf welchen Aspekt der Forschung sie sich beim Schreiben der Zusammenfassung konzentrieren soll. Ein Fokus auf "Klinische Implikationen" erzeugt beispielsweise eine andere Synthese als "Forschungslücken".',
+      'Eine Einstellung im Formular Literaturrecherche, die vorgibt, auf welchen Aspekt sich die Synthese beim Schreiben der Zusammenfassung konzentrieren soll. Ein Fokus auf "Klinische Implikationen" erzeugt beispielsweise eine andere Synthese als "Forschungslücken".',
     'help.about.title': 'Über AI Research Orchestrator',
     'help.about.description':
       'Diese Anwendung ist ein Werkzeug, das den Prozess wissenschaftlicher Literaturrecherche beschleunigen soll. Sie nutzt generative KI, um aufwendige Aufgaben wie Suchen, Filtern und Synthetisieren von Informationen aus der PubMed-Datenbank zu automatisieren.',

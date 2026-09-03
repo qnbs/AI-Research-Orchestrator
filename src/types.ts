@@ -7,7 +7,7 @@ export const ARTICLE_TYPES = [
   'Meta-Analysis',
   'Systematic Review',
   'Observational Study',
-];
+] as const;
 
 export interface ResearchInput {
   researchTopic: string;

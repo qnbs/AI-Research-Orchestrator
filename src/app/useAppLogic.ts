@@ -51,11 +51,11 @@ export function useAppLogic() {
     currentView,
     notification,
     setNotification,
-    isSettingsDirty,
     setIsSettingsDirty,
     pendingNavigation,
     setPendingNavigation,
     setCurrentView,
+    requestViewChange,
     isCommandPaletteOpen,
     setIsCommandPaletteOpen,
     setInstallPromptEvent,
@@ -128,16 +128,7 @@ export function useAppLogic() {
     setSettingsResetToken(Date.now());
   }, [clearKnowledgeBase]);
 
-  const handleViewChange = useCallback(
-    (view: View) => {
-      if (isSettingsDirty) {
-        setPendingNavigation(view);
-      } else {
-        setCurrentView(view);
-      }
-    },
-    [isSettingsDirty, setCurrentView, setPendingNavigation],
-  );
+  const handleViewChange = requestViewChange;
 
   const handleConfirmNavigation = useCallback(() => {
     if (pendingNavigation) {
@@ -147,9 +138,16 @@ export function useAppLogic() {
     }
   }, [pendingNavigation, setCurrentView, setPendingNavigation, setIsSettingsDirty]);
 
-  const handleCompleteOnboarding = useCallback(() => {
-    updateSettings((s) => ({ ...s, hasCompletedOnboarding: true }));
-  }, [updateSettings]);
+  const handleCompleteOnboarding = useCallback(
+    (options?: { nextView?: View; prefillTopic?: string }) => {
+      updateSettings((s) => ({ ...s, hasCompletedOnboarding: true }));
+      if (options?.prefillTopic) {
+        setPrefilledTopic(options.prefillTopic);
+      }
+      setCurrentView(options?.nextView ?? 'orchestrator');
+    },
+    [updateSettings, setCurrentView],
+  );
 
   const handleFilterChange = useCallback((newFilter: Partial<KnowledgeBaseFilter>) => {
     setKbFilter((prev) => ({ ...prev, ...newFilter }));

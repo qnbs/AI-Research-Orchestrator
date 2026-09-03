@@ -20,8 +20,8 @@ export const commandPaletteTranslations = {
     'cmd.action.export_ris': 'Export {count} selected as RIS',
     'cmd.action.export_ris_one': 'Export {count} selected as RIS',
 
-    'cmd.nav.orchestrator': 'Go to Orchestrator',
-    'cmd.nav.research': 'Go to Research',
+    'cmd.nav.orchestrator': 'Go to Literature review',
+    'cmd.nav.research': 'Go to Quick research',
     'cmd.nav.authors': 'Go to Author Hub',
     'cmd.nav.journals': 'Go to Journal Hub',
     'cmd.nav.knowledge_base': 'Go to Knowledge Base',
@@ -68,8 +68,8 @@ export const commandPaletteTranslations = {
     'cmd.action.export_ris': '{count} Ausgewählte als RIS exportieren',
     'cmd.action.export_ris_one': '{count} Ausgewählten als RIS exportieren',
 
-    'cmd.nav.orchestrator': 'Zum Orchestrator',
-    'cmd.nav.research': 'Zur Recherche',
+    'cmd.nav.orchestrator': 'Zur Literaturrecherche',
+    'cmd.nav.research': 'Zur Schnellrecherche',
     'cmd.nav.authors': 'Zum Autoren-Hub',
     'cmd.nav.journals': 'Zum Journal-Hub',
     'cmd.nav.knowledge_base': 'Zur Wissensdatenbank',

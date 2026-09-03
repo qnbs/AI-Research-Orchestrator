@@ -11,7 +11,7 @@ export const researchViewTranslations = {
     'research.cancel.button': 'Cancel research',
     'research.empty.title': 'Ask a question or analyze a paper.',
     'research.empty.body':
-      'Paste in a research question, topic, abstract, or even a PMID/DOI. The AI will provide a concise summary, extract key findings, and find related articles for you.',
+      'Paste a question, abstract, or PMID/DOI for a quick look. For a full pipeline review, start a literature review.',
     'research.phase.analyzing': 'Analyzing input and generating summary…',
     'research.phase.detail.processing': 'Processing text…',
     'research.phase.detail.concepts': 'Identifying key concepts…',
@@ -43,7 +43,7 @@ export const researchViewTranslations = {
     'research.cancel.button': 'Recherche abbrechen',
     'research.empty.title': 'Stellen Sie eine Frage oder analysieren Sie ein Paper.',
     'research.empty.body':
-      'Fügen Sie eine Forschungsfrage, ein Thema, ein Abstract oder eine PMID/DOI ein. Die KI liefert eine kurze Zusammenfassung, extrahiert Kernergebnisse und findet verwandte Artikel.',
+      'Fügen Sie eine Frage, ein Abstract oder eine PMID/DOI für einen schnellen Blick ein. Für die volle Pipeline starten Sie eine Literaturrecherche.',
     'research.phase.analyzing': 'Eingabe wird analysiert und Zusammenfassung erstellt…',
     'research.phase.detail.processing': 'Text wird verarbeitet…',
     'research.phase.detail.concepts': 'Schlüsselkonzepte werden identifiziert…',

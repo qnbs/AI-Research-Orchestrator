@@ -33,7 +33,7 @@ export function resolveTranslation(
   }
 
   return Object.entries(values).reduce((acc, [k, v]) => {
-    return acc.replace(new RegExp(`\\{${k}\\}`, 'g'), String(v));
+    return acc.replace(new RegExp(`\\{${k}\\}`, 'g'), () => String(v));
   }, text);
 }
 

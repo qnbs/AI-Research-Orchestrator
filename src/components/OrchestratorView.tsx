@@ -238,7 +238,7 @@ const OrchestratorViewComponent: React.FC<OrchestratorViewProps> = ({
             onStartNewReview={handleStartNewReview}
           />
         ) : (
-          <Welcome />
+          <Welcome onFocusTopic={() => document.getElementById('researchTopic')?.focus()} />
         ))}
     </div>
   );
