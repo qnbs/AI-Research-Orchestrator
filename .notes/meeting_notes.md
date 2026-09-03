@@ -1,3 +1,9 @@
+# 2026-09-03 — UI/UX journey wave on main; topics + sample-topic E2E
+
+- **Why:** Finish the 2026-09-03 master prompt leftovers after #294/#296/#297: `NOW-P2-TOPICS`, J1 sample-topic E2E, stale closeout SHAs.
+- **What:** Canonical `githubTopics` in `docs/project-facts.json` (no `multi-agent-systems`). Live GitHub PUT 403 for the App token — maintainer command in the closeout. Playwright covers sample-topic CTA → prefilled `#researchTopic`. Closeout/baseline/backlog refreshed to `0b9c599`.
+- **Not done:** OpenRouter. Live topic PUT. Header two-row density. `v0.4.3`.
+
 # 2026-09-02 — Docs housekeeping, façade split, chart a11y, ADR 0010 deferral
 
 - **Why:** After #285–#289 and #287 landed on `main` (`660cf8c`), audit docs still described live queue rows as “This PR” and ADR 0010 as Proposed-indefinite. Remaining P2 from the 2026-09-01 prompt: façade file-cap, chart a11y, OpenRouter decision.

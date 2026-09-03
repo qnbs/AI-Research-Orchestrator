@@ -1,6 +1,6 @@
 # Issue Backlog — 2026-08-03 (Master Remediation)
 
-> **Status refresh:** 2026-09-03 UI/UX journey wave. Live `main` at Phase 0 was `a7e6840` (docs closeout #293; product SHA `b48c4d3`). **Integrity closeout remains `docs/audits/2026-09-02-closeout.md`.** New open set is `docs/audits/2026-09-03-baseline.md`. Execution prompt: `docs/prompts/2026-09-03-cursor-grok-uiux-perfection-master-prompt.md`. August “Open” rows are historical. GitHub Issues remain at zero.
+> **Status refresh:** 2026-09-03 UI/UX journey wave. Phase 0 `main` was `a7e6840`. **Live `main` after #294/#296/#297 is `0b9c599`.** Closeout: `docs/audits/2026-09-03-closeout.md`. **Integrity closeout remains `docs/audits/2026-09-02-closeout.md`.** Open set: `docs/audits/2026-09-03-baseline.md` (addendum). Execution prompt: `docs/prompts/2026-09-03-cursor-grok-uiux-perfection-master-prompt.md`. August “Open” rows are historical. GitHub Issues remain at zero.
 
 **Landed since the 2026-08-29 refresh (do not re-open):** `NOW-P0-PARTIAL` / ADR 0021 (#260), `NOW-P1-MOTION` (#261), `NOW-P1-DOCS-WAVE` (#262), `NOW-P1-DEP-STALL` (#263), `NOW-P1-RELEASE` (#264), `NOW-P1-CODEOWNERS` (#265), Ollama bounds (#266), Dexie upgrade tests (#267), heuristic ops (#268), eval adversarial (#269), provider harness (#270), BM25+ (#271), CSV/export hardening (#272), browserslist pin (#285), Dependabot wave 2 (#286), onboarding product-truth (#288), TypeScript 6 (#289), partial-report E2E + CSV watermark (#287).
 
