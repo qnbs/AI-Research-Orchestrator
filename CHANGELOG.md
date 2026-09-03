@@ -7,8 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Sample-topic onboarding E2E:** `agent-flow` covers the secondary first-run CTA → Orchestrator with the EN `onboarding.sampleTopic` prefill (J1). Shared helper `completeOnboardingWithSampleTopic` retries the click the same way as `skipOnboarding`.
+
 ### Changed
 
+- **GitHub topics (`NOW-P2-TOPICS`):** Intended topic set drops `multi-agent-systems` (no real multi-agent graph; sequential pipeline). Canonical names live in `docs/project-facts.json` `githubTopics`. Applying the PUT requires a token with Administration (the GitHub App integration returns 403). Until a maintainer applies the payload, the live repo may still list that topic.
+- **Audit docs (2026-09-03 closeout):** Live `main` after #294/#296/#297 is `0b9c599`. Ticket table marks the journey wave Done; `NOW-P2-OPENROUTER` stays deferred.
 - **DOMPurify 3.4.13 (Dependabot #295):** Patch `^3.4.12` → `^3.4.13`. Upstream fixes hook removal during `IN_PLACE` sanitization, a hook clone-guard bypass, and `ownerDocument` clobbering during `IN_PLACE`. App call sites stay `sanitize` / `RETURN_DOM_FRAGMENT` (no `IN_PLACE`, no custom hooks).
 - **First-run journey (`NOW-P0-JOURNEY-01` / `02` / `03`):** Onboarding keeps “Start Researching”, adds a heuristic sample-topic path, language/theme controls, and an honest no-key preview. Completing onboarding lands on Literature review (`orchestrator`). Visible labels: **Literature review** vs **Quick research**. Home is a two-column launchpad (hero review + quick look + status strip), not a four-card lobby.
 - **Orchestrator form (`NOW-P0-FORM-01`):** Topic, sample chips, and submit stay above the fold. Date range, article types, sources, scan caps, and demo sit in a collapsed “Review options” `<details>`; preset controls remain in the form header (open state in `sessionStorage` only).

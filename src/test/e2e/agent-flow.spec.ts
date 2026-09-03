@@ -14,6 +14,9 @@ import {
   prepareFirstLaunchDemoKb,
   seedFakeGeminiApiKey,
   skipOnboarding,
+  completeOnboardingWithSampleTopic,
+  ONBOARDING_SAMPLE_TOPIC_EN,
+  researchTopicField,
   waitForKbArticleCount,
   DEMO_KB_UNIQUE_ARTICLE_COUNT,
 } from './e2eHelpers';
@@ -71,6 +74,13 @@ test.describe('1. Application Bootstrap', () => {
     await skipOnboarding(page);
     await expect(page.locator('header')).toBeVisible({ timeout: 5_000 });
     await expect(page.locator('#researchTopic')).toBeVisible({ timeout: 10_000 });
+  });
+
+  test('sample topic CTA lands on orchestrator with prefilled topic', async ({ page }) => {
+    await completeOnboardingWithSampleTopic(page);
+    const topic = researchTopicField(page);
+    await expect(topic).toBeVisible({ timeout: 10_000 });
+    await expect(topic).toHaveValue(ONBOARDING_SAMPLE_TOPIC_EN);
   });
 });
 

@@ -264,7 +264,7 @@ Observed and code-backed findings:
 
 ## 5. What to do now — prioritized ticket list
 
-**Historical (2026-09-03):** Journey-wave tickets below were executed on `cursor/uiux-first-run-52dc` (PR #294). See `docs/audits/2026-09-03-closeout.md`. Remaining open work is `NOW-P2-TOPICS` (not started) and `NOW-P2-OPENROUTER` (deferred). Do not re-implement Done tickets.
+**Historical (2026-09-03):** Journey-wave tickets below were executed on `cursor/uiux-first-run-52dc` (PR #294) and merged to `main` (`0b2330a` / #296 / #297). See `docs/audits/2026-09-03-closeout.md`. Remaining: `NOW-P2-TOPICS` (canonical list recorded; live PUT needs Administration) and `NOW-P2-OPENROUTER` (deferred). Do not re-implement Done tickets.
 
 Use these IDs in PR titles, CHANGELOG `[Unreleased]`, and the new audit baseline. Do not invent parallel taxonomies.
 
