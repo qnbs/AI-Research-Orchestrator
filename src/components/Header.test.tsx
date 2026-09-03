@@ -9,6 +9,7 @@ import uiReducer from '../store/slices/uiSlice';
 import themeReducer from '../store/slices/themeSlice';
 import agentDebugReducer from '../store/slices/agentDebugSlice';
 
+/** Mount Header with a scoped store so chrome tests can vary developerMode and view. */
 function renderHeader(developerMode: boolean, currentView: 'home' | 'collections' = 'home') {
   const store = configureStore({
     reducer: {

@@ -14,6 +14,7 @@ vi.mock('../hooks/useTranslation', () => ({
   }),
 }));
 
+/** Mount OnboardingView and return the store so language-toggle tests can assert state. */
 function renderOnboarding(onComplete = vi.fn()) {
   const store = configureStore({
     reducer: {

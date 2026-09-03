@@ -41,6 +41,7 @@ export interface UseUIValue {
   setIsPwaInstalled: (installed: boolean) => void;
 }
 
+/** Chrome UI store: current view, notifications, dirty-settings navigation, and PWA install. */
 export function useUI(): UseUIValue {
   const dispatch = useAppDispatch();
   const { currentView, notification, isSettingsDirty, pendingNavigation, isCommandPaletteOpen } =
