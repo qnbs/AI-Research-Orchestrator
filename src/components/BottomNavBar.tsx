@@ -1,14 +1,21 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { View } from '../contexts/UIContext';
 import { useHaptic } from '../hooks/useHaptic';
 import { useTranslation } from '../hooks/useTranslation';
-import { HomeIcon } from './icons/HomeIcon';
+import { useUI } from '../contexts/UIContext';
 import { DocumentIcon } from './icons/DocumentIcon';
 import { DatabaseIcon } from './icons/DatabaseIcon';
 import { BeakerIcon } from './icons/BeakerIcon';
 import { AuthorIcon } from './icons/AuthorIcon';
 import { BookOpenIcon } from './icons/BookOpenIcon';
 import { CollectionIcon } from './icons/CollectionIcon';
+import { ChartBarIcon } from './icons/ChartBarIcon';
+import { HistoryIcon } from './icons/HistoryIcon';
+import { CogIcon } from './icons/CogIcon';
+import { QuestionMarkCircleIcon } from './icons/QuestionMarkCircleIcon';
+import { HomeIcon } from './icons/HomeIcon';
+import { SearchIcon } from './icons/SearchIcon';
+import { EllipsisHorizontalIcon } from './icons/EllipsisHorizontalIcon';
 
 interface BottomNavBarProps {
   currentView: View;
@@ -19,49 +26,47 @@ interface BottomNavBarProps {
 }
 
 const NavItem: React.FC<{
-  view: View;
   label: string;
   icon: React.ReactNode;
   isActive: boolean;
-  isDisabled?: boolean;
-  onClick: (view: View) => void;
+  muted?: boolean;
+  title?: string;
+  onClick: () => void;
   badge?: number;
   isSpecial?: boolean;
-}> = ({ view, label, icon, isActive, isDisabled, onClick, badge, isSpecial }) => {
+}> = ({ label, icon, isActive, muted, title, onClick, badge, isSpecial }) => {
   const haptic = useHaptic();
-  const handleClick = () => {
-    haptic('light');
-    onClick(view);
-  };
   return (
     <button
-      onClick={handleClick}
-      disabled={isDisabled}
+      type="button"
+      onClick={() => {
+        haptic('light');
+        onClick();
+      }}
+      title={title ?? label}
       className={`flex flex-shrink-0 flex-col items-center justify-center min-w-[44px] min-h-[44px] touch-target-aa px-2 pt-3 pb-2 text-[10px] font-medium transition-all duration-200 focus-ring-aa rounded-lg relative ${
         isActive ? 'text-brand-accent' : 'text-text-secondary hover:text-text-primary'
-      } ${isDisabled ? 'opacity-30 cursor-not-allowed grayscale' : ''}`}
+      } ${muted ? 'opacity-60' : ''}`}
       aria-current={isActive ? 'page' : undefined}
     >
       <div
-        className={`p-1.5 rounded-xl transition-all duration-200 ${
-          isActive ? 'bg-brand-accent/10 -translate-y-0.5 shadow-glow' : ''
-        }`}
+        className={`p-1.5 rounded-xl transition-all duration-200 ${isActive ? 'bg-brand-accent/10 shadow-glow' : ''}`}
       >
         {isSpecial && (
           <span className="absolute top-2 right-1/2 translate-x-3 flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-cyan opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-accent-cyan"></span>
+            <span className="motion-safe:animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-cyan opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-accent-cyan" />
           </span>
         )}
         {badge !== undefined && badge > 0 && (
-          <span className="absolute top-1 right-1/2 translate-x-4 bg-brand-accent text-brand-text-on-accent text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-sm border border-background/50 backdrop-blur-md">
+          <span className="absolute top-1 right-1/2 translate-x-4 bg-brand-accent text-brand-text-on-accent text-[9px] font-bold px-1.5 py-0.5 rounded-full">
             {badge > 99 ? '99+' : badge}
           </span>
         )}
         {icon}
       </div>
       <span
-        className={`mt-1 whitespace-nowrap transition-opacity ${isActive ? 'opacity-100 font-bold text-brand-accent drop-shadow-sm' : 'opacity-80'}`}
+        className={`mt-1 max-w-[4.5rem] truncate ${isActive ? 'opacity-100 font-bold text-brand-accent' : 'opacity-80'}`}
       >
         {label}
       </span>
@@ -77,27 +82,27 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
   isResearching,
 }) => {
   const { t } = useTranslation();
-  const navItems: {
-    view: View;
+  const { setIsCommandPaletteOpen } = useUI();
+  const [moreOpen, setMoreOpen] = useState(false);
+  const reportHint = t('nav.requires_report');
+  const moreActive = [
+    'home',
+    'journals',
+    'collections',
+    'dashboard',
+    'history',
+    'settings',
+    'help',
+  ].includes(currentView);
+
+  const moreItems: {
+    view?: View;
     label: string;
     icon: React.ReactNode;
-    isDisabled?: boolean;
-    isSpecial?: boolean;
-    badge?: number;
+    muted?: boolean;
+    command?: boolean;
   }[] = [
     { view: 'home', label: t('nav.home'), icon: <HomeIcon className="h-5 w-5" /> },
-    {
-      view: 'research',
-      label: t('nav.research'),
-      icon: <BeakerIcon className="h-5 w-5" />,
-      isSpecial: isResearching,
-    },
-    {
-      view: 'orchestrator',
-      label: t('nav.orchestrator'),
-      icon: <DocumentIcon className="h-5 w-5" />,
-    },
-    { view: 'authors', label: t('nav.authors'), icon: <AuthorIcon className="h-5 w-5" /> },
     { view: 'journals', label: t('nav.journals'), icon: <BookOpenIcon className="h-5 w-5" /> },
     {
       view: 'collections',
@@ -105,31 +110,83 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
       icon: <CollectionIcon className="h-5 w-5" />,
     },
     {
-      view: 'knowledgeBase',
-      label: t('nav.knowledgeBase'),
-      icon: <DatabaseIcon className="h-5 w-5" />,
-      isDisabled: !hasReports,
-      badge: knowledgeBaseArticleCount,
+      view: 'dashboard',
+      label: t('nav.dashboard'),
+      icon: <ChartBarIcon className="h-5 w-5" />,
+      muted: !hasReports,
     },
+    {
+      view: 'history',
+      label: t('nav.history'),
+      icon: <HistoryIcon className="h-5 w-5" />,
+      muted: !hasReports,
+    },
+    { view: 'settings', label: t('nav.settings'), icon: <CogIcon className="h-5 w-5" /> },
+    { view: 'help', label: t('nav.help'), icon: <QuestionMarkCircleIcon className="h-5 w-5" /> },
+    { command: true, label: t('nav.search_commands'), icon: <SearchIcon className="h-5 w-5" /> },
   ];
 
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-surface/80 backdrop-blur-xl border-t border-border z-30 shadow-[0_-5px_20px_rgba(0,0,0,0.2)] pb-safe">
-      {/* justify-around still evenly distributes items when there's slack space;
-          overflow-x-auto is the fallback for when there isn't - 7 items at the
-          44px WCAG touch-target floor already total 308px, leaving ~12px of
-          slack on a 320px viewport, not enough room for longer labels (e.g.
-          "Collections") to render on one line without scrolling. */}
-      <div className="flex justify-around items-center h-16 max-w-lg mx-auto overflow-x-auto px-1">
-        {navItems.map((item) => (
-          <NavItem
-            key={item.view}
-            {...item}
-            isActive={currentView === item.view}
-            onClick={onViewChange}
-          />
-        ))}
+      <div className="flex justify-around items-center h-16 max-w-lg mx-auto px-1">
+        <NavItem
+          label={t('nav.orchestrator')}
+          icon={<DocumentIcon className="h-5 w-5" />}
+          isActive={currentView === 'orchestrator'}
+          isSpecial={isResearching}
+          onClick={() => onViewChange('orchestrator')}
+        />
+        <NavItem
+          label={t('nav.research')}
+          icon={<BeakerIcon className="h-5 w-5" />}
+          isActive={currentView === 'research'}
+          onClick={() => onViewChange('research')}
+        />
+        <NavItem
+          label={t('nav.library')}
+          icon={<DatabaseIcon className="h-5 w-5" />}
+          isActive={currentView === 'knowledgeBase'}
+          muted={!hasReports}
+          title={!hasReports ? reportHint : t('nav.knowledgeBase')}
+          badge={knowledgeBaseArticleCount}
+          onClick={() => onViewChange('knowledgeBase')}
+        />
+        <NavItem
+          label={t('nav.explore')}
+          icon={<AuthorIcon className="h-5 w-5" />}
+          isActive={currentView === 'authors'}
+          onClick={() => onViewChange('authors')}
+        />
+        <NavItem
+          label={t('nav.more')}
+          icon={<EllipsisHorizontalIcon className="h-5 w-5" />}
+          isActive={moreActive || moreOpen}
+          onClick={() => setMoreOpen((open) => !open)}
+        />
       </div>
+      {moreOpen && (
+        <div className="absolute bottom-16 left-0 right-0 border-t border-border bg-surface/95 backdrop-blur-xl max-h-[50vh] overflow-y-auto">
+          {moreItems.map((item) => (
+            <button
+              key={item.label}
+              type="button"
+              title={item.muted ? reportHint : undefined}
+              onClick={() => {
+                if (item.command) {
+                  setIsCommandPaletteOpen(true);
+                } else if (item.view) {
+                  onViewChange(item.view);
+                }
+                setMoreOpen(false);
+              }}
+              className={`w-full text-left flex items-center gap-3 px-4 py-3 min-h-11 text-sm hover:bg-surface-hover focus-ring-aa border-b border-border/40 ${item.muted ? 'opacity-60' : ''}`}
+            >
+              {item.icon}
+              {item.label}
+            </button>
+          ))}
+        </div>
+      )}
     </nav>
   );
 };

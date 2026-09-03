@@ -5,8 +5,8 @@ export const dashboardTranslations = {
     'dashboard.subtitle': '{count} articles · interactive charts with zoom & SVG export',
     'dashboard.empty.title': 'Dashboard is Empty',
     'dashboard.empty.message':
-      'Save reports from the Orchestrator tab to start building your knowledge base and visualizing your data.',
-    'dashboard.empty.action': 'Start Research',
+      'Save a literature review to start building your knowledge base and visualizing your data.',
+    'dashboard.empty.action': 'Start a literature review',
     'dashboard.export_svg': 'Export chart as SVG',
     'dashboard.export_svg_short': '↓ SVG',
     'dashboard.chart.years': 'Publications per Year',
@@ -79,8 +79,8 @@ export const dashboardTranslations = {
     'dashboard.subtitle': '{count} Artikel · interaktive Diagramme mit Zoom & SVG-Export',
     'dashboard.empty.title': 'Dashboard ist leer',
     'dashboard.empty.message':
-      'Speichern Sie Berichte aus dem Orchestrator-Tab, um Ihre Wissensdatenbank aufzubauen und Daten zu visualisieren.',
-    'dashboard.empty.action': 'Recherche starten',
+      'Speichern Sie eine Literaturrecherche, um Ihre Wissensdatenbank aufzubauen und Daten zu visualisieren.',
+    'dashboard.empty.action': 'Literaturrecherche starten',
     'dashboard.export_svg': 'Diagramm als SVG exportieren',
     'dashboard.export_svg_short': '↓ SVG',
     'dashboard.chart.years': 'Publikationen pro Jahr',

@@ -3,8 +3,8 @@ export const kbChromeTranslations = {
   en: {
     'kb.empty.title': 'Your Knowledge Base is Empty',
     'kb.empty.message':
-      'Save reports from the Orchestrator tab to start building your personal research library.',
-    'kb.empty.action': 'Start Research',
+      'Save a literature review to start building your personal research library.',
+    'kb.empty.action': 'Start a literature review',
     'kb.delete.title': 'Delete Articles?',
     'kb.delete.message':
       'Are you sure you want to permanently delete {count} article(s) from your knowledge base?',
@@ -76,8 +76,8 @@ export const kbChromeTranslations = {
   de: {
     'kb.empty.title': 'Ihre Wissensdatenbank ist leer',
     'kb.empty.message':
-      'Speichern Sie Berichte aus dem Orchestrator-Tab, um Ihre persönliche Forschungssammlung aufzubauen.',
-    'kb.empty.action': 'Recherche starten',
+      'Speichern Sie eine Literaturrecherche, um Ihre persönliche Forschungssammlung aufzubauen.',
+    'kb.empty.action': 'Literaturrecherche starten',
     'kb.delete.title': 'Artikel löschen?',
     'kb.delete.message':
       'Möchten Sie {count} Artikel wirklich dauerhaft aus Ihrer Wissensdatenbank löschen?',

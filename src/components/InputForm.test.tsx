@@ -20,6 +20,14 @@ vi.mock('../hooks/useFocusTrap', () => ({
   useFocusTrap: () => undefined,
 }));
 
+vi.mock('../contexts/UIContext', () => ({
+  useUI: () => ({ setCurrentView: vi.fn() }),
+}));
+
+vi.mock('./ProviderStatusLine', () => ({
+  ProviderStatusLine: () => null,
+}));
+
 const defaults = {
   maxArticlesToScan: 20,
   topNToSynthesize: 5,
@@ -57,6 +65,7 @@ describe('InputForm educationalDemoMode', () => {
       />,
     );
 
+    fireEvent.click(screen.getByText('inputForm.options'));
     expect(screen.getByLabelText('inputForm.sources.educationalDemo')).not.toBeChecked();
     expect(screen.queryByText('inputForm.sources.educationalDemo_hint')).toBeNull();
   });
@@ -73,6 +82,7 @@ describe('InputForm educationalDemoMode', () => {
       />,
     );
 
+    fireEvent.click(screen.getByText('inputForm.options'));
     const checkbox = screen.getByLabelText('inputForm.sources.educationalDemo');
     fireEvent.click(checkbox);
     expect(checkbox).toBeChecked();
@@ -93,5 +103,28 @@ describe('InputForm educationalDemoMode', () => {
       educationalDemoMode?: boolean;
     };
     expect(saved.educationalDemoMode).toBe(true);
+  });
+
+  it('sample chips fill the topic and Cmd+Enter submits defaults', () => {
+    const onSubmit = vi.fn();
+    render(
+      <InputForm
+        onSubmit={onSubmit}
+        isLoading={false}
+        defaultSettings={defaults}
+        prefilledTopic={null}
+        onPrefillConsumed={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'inputForm.chip.covid' }));
+    const form = screen.getByRole('search');
+    fireEvent.keyDown(form, { key: 'Enter', metaKey: true });
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        researchTopic: 'inputForm.chip.covid',
+        dateRange: '5',
+        educationalDemoMode: false,
+      }),
+    );
   });
 });

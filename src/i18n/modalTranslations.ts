@@ -50,8 +50,8 @@ export const modalTranslations = {
       'PARTIAL REPORT — this research run did not finish. Results are incomplete.',
     'history.empty.title': 'No History Yet',
     'history.empty.message':
-      'Your saved reports will appear here. Start a new search on the Orchestrator tab to begin building your research history.',
-    'history.empty.action': 'Start Research',
+      'Your saved reports will appear here. Start a literature review to begin building your research history.',
+    'history.empty.action': 'Start a literature review',
     'history.page.title': 'History',
     'history.page.subtitle':
       'Review, manage, and revisit your past research reports and author profiles.',
@@ -112,8 +112,8 @@ export const modalTranslations = {
       'TEILBERICHT — dieser Forschungslauf wurde nicht abgeschlossen. Die Ergebnisse sind unvollständig.',
     'history.empty.title': 'Noch kein Verlauf',
     'history.empty.message':
-      'Ihre gespeicherten Berichte erscheinen hier. Starten Sie eine neue Suche im Orchestrator-Tab, um Ihren Forschungsverlauf aufzubauen.',
-    'history.empty.action': 'Recherche starten',
+      'Ihre gespeicherten Berichte erscheinen hier. Starten Sie eine Literaturrecherche, um Ihren Forschungsverlauf aufzubauen.',
+    'history.empty.action': 'Literaturrecherche starten',
     'history.page.title': 'Verlauf',
     'history.page.subtitle':
       'Prüfen, verwalten und erneut öffnen Sie frühere Forschungsberichte und Autorenprofile.',

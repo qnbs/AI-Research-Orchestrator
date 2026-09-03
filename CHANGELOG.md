@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **First-run journey (`NOW-P0-JOURNEY-01` / `02` / `03`):** Onboarding keeps “Start Researching”, adds a heuristic sample-topic path, language/theme controls, and an honest no-key preview. Completing onboarding lands on Literature review (`orchestrator`). Visible labels: **Literature review** vs **Quick research**. Home is a two-column launchpad (hero review + quick look + status strip), not a four-card lobby.
+- **Orchestrator form (`NOW-P0-FORM-01`):** Topic, sample chips, and submit stay above the fold. Date range, article types, sources, scan caps, demo, and presets sit in a collapsed “Review options” `<details>` (open state in `sessionStorage` only).
+- **Empty states and chrome (`NOW-P0-EMPTY-01`, `NOW-P1-CHROME-01` / `02`):** KB / Dashboard / History remain reachable when empty and teach the next step. Header primary nav is Literature review, Quick research, Knowledge Base, Authors, Journals; overflow holds Collections / Dashboard / History. Mobile bottom nav is five items (Review, Assistant/Quick research, Library, Explore, More). Brand lockup uses `t('app.name')`.
+- **Provider status (`NOW-P1-SETTINGS-01`):** Orchestrator and Quick research show a compact heuristic/live line with a Settings link. Heuristic is labeled as active, not broken.
 - **Export façade (`NOW-P1-FILE-CAP` / `NOW-P2-EXPORT-SPLIT`):** `exportService.ts` stays the public import. PDF writers live in `exportPdf.ts`, CSV in `exportCsv.ts`, HTML-strip helpers in `exportText.ts`. Coverage floors aggregate those files with `reportExportProvenance`.
 - **Sourcery residuals (`NOW-P1-SOURCERY-RESIDUAL`):** Settings/KB sidebars share `STICKY_BELOW_CHROME_CLASS` (`md:sticky`, chrome-height-aware `top`). Orchestrator generate-phase cancel uses `LoadingIndicator`’s caller-labeled control; the standalone cancel stays for streaming after the indicator unmounts.
 - **index.html product truth:** Meta/OG descriptions no longer say “Gemini agents”. `check:docs-drift` gates `index.html`.

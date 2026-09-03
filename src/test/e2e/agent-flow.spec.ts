@@ -70,6 +70,7 @@ test.describe('1. Application Bootstrap', () => {
   test('completing onboarding shows main header', async ({ page }) => {
     await skipOnboarding(page);
     await expect(page.locator('header')).toBeVisible({ timeout: 5_000 });
+    await expect(page.locator('#researchTopic')).toBeVisible({ timeout: 10_000 });
   });
 });
 
@@ -93,7 +94,11 @@ test.describe('2. Navigation', () => {
     await page.setViewportSize({ width: 390, height: 844 });
     // BottomNavBar has buttons for Home, Research, Agent, etc.
     const bottomNav = page.locator('nav').last();
-    await expect(bottomNav.getByRole('button', { name: /home/i })).toBeVisible({ timeout: 5_000 });
+    await expect(
+      bottomNav.getByRole('button', { name: /literature review|literaturrecherche/i }),
+    ).toBeVisible({
+      timeout: 5_000,
+    });
   });
 
   test('settings button is in header', async ({ page }) => {
@@ -134,7 +139,9 @@ test.describe('3. Orchestrator Form', () => {
       .then(() => true)
       .catch(() => false);
     if (!visible) {
-      const orchBtn = page.getByRole('button', { name: /orchestrator|agent/i }).first();
+      const orchBtn = page
+        .getByRole('button', { name: /literature review|literaturrecherche|orchestrator/i })
+        .first();
       await orchBtn.click();
       await topic.waitFor({ state: 'visible', timeout: 10_000 });
     }
@@ -397,7 +404,9 @@ test.describe('8. Mobile UX — Bottom Nav & Pipeline', () => {
   test('tapping Orchestrator navigates to orchestrator form', async ({ page }) => {
     await skipOnboarding(page);
     // Bottom nav "Orchestrator" button maps to the orchestrator view
-    const agentBtn = page.getByRole('button', { name: /^orchestrator$/i }).last();
+    const agentBtn = page
+      .getByRole('button', { name: /literature review|literaturrecherche/i })
+      .last();
     await agentBtn.waitFor({ state: 'visible', timeout: 5_000 });
     await agentBtn.click();
     // Wait for OrchestratorView lazy load — the form should appear

@@ -147,9 +147,16 @@ export function useAppLogic() {
     }
   }, [pendingNavigation, setCurrentView, setPendingNavigation, setIsSettingsDirty]);
 
-  const handleCompleteOnboarding = useCallback(() => {
-    updateSettings((s) => ({ ...s, hasCompletedOnboarding: true }));
-  }, [updateSettings]);
+  const handleCompleteOnboarding = useCallback(
+    (options?: { nextView?: View; prefillTopic?: string }) => {
+      updateSettings((s) => ({ ...s, hasCompletedOnboarding: true }));
+      if (options?.prefillTopic) {
+        setPrefilledTopic(options.prefillTopic);
+      }
+      setCurrentView(options?.nextView ?? 'orchestrator');
+    },
+    [updateSettings, setCurrentView],
+  );
 
   const handleFilterChange = useCallback((newFilter: Partial<KnowledgeBaseFilter>) => {
     setKbFilter((prev) => ({ ...prev, ...newFilter }));

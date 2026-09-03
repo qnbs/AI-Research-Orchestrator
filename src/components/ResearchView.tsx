@@ -3,6 +3,9 @@ import type { ResearchAnalysis, SimilarArticle, OnlineFindings } from '../types'
 import { LoadingIndicator } from './LoadingIndicator';
 import { BeakerIcon } from './icons/BeakerIcon';
 import { useTranslation } from '../hooks/useTranslation';
+import { EmptyState } from './EmptyState';
+import { ProviderStatusLine } from './ProviderStatusLine';
+import { useUI } from '../contexts/UIContext';
 import { RESEARCH_PHASE_ANALYZING } from '../i18n/researchViewTranslations';
 import { ResearchResultsPanel } from './ResearchResultsPanel';
 
@@ -24,12 +27,17 @@ interface ResearchViewProps {
 
 const ResearchEmptyState: React.FC = () => {
   const { t } = useTranslation();
+  const { setCurrentView } = useUI();
   return (
-    <div className="text-center text-text-secondary p-8 flex flex-col items-center justify-center h-full mt-10">
-      <BeakerIcon className="h-24 w-24 text-border mb-6" />
-      <h2 className="text-2xl font-bold text-text-primary mb-3">{t('research.empty.title')}</h2>
-      <p className="max-w-xl mx-auto text-base">{t('research.empty.body')}</p>
-    </div>
+    <EmptyState
+      icon={<BeakerIcon className="h-24 w-24" />}
+      title={t('research.empty.title')}
+      message={t('research.empty.body')}
+      action={{
+        text: t('empty.cta.review'),
+        onClick: () => setCurrentView('orchestrator'),
+      }}
+    />
   );
 };
 
@@ -41,11 +49,15 @@ const ResearchQueryForm: React.FC<{
   hasAnalysis: boolean;
 }> = ({ textQuery, setTextQuery, onSubmit, isLoading, hasAnalysis }) => {
   const { t } = useTranslation();
+  const { setCurrentView } = useUI();
   const isSubmitDisabled = isLoading || !textQuery.trim() || hasAnalysis;
 
   return (
     <div className="bg-surface rounded-lg border border-border shadow-2xl shadow-black/20 p-6">
-      <h2 className="text-xl font-bold mb-4 text-brand-accent">{t('research.title')}</h2>
+      <h2 className="text-xl font-bold mb-2 text-brand-accent">{t('research.title')}</h2>
+      <div className="mb-4">
+        <ProviderStatusLine onConfigure={setCurrentView} />
+      </div>
       <form onSubmit={onSubmit}>
         <label htmlFor="research-assistant-query" className="sr-only">
           {t('research.query.label')}

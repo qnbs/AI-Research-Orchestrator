@@ -133,6 +133,8 @@
     "src/i18n/chromeTranslations.ts",
     "src/i18n/inputFormTranslations.ts",
     "src/i18n/helpTranslations.ts",
+    "src/i18n/onboardingTranslations.ts",
+    "src/i18n/journeyTranslations.ts",
     "metadata.json",
     "index.html"
   ],

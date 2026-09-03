@@ -16,12 +16,12 @@ import { DocumentPlusIcon } from './icons/DocumentPlusIcon';
 import { SearchIcon } from './icons/SearchIcon';
 import { EllipsisHorizontalIcon } from './icons/EllipsisHorizontalIcon';
 import { BookOpenIcon } from './icons/BookOpenIcon';
-import { CollectionIcon } from './icons/CollectionIcon';
 import { AppBrandMark } from './AppBrandMark';
 import { useTranslation } from '../hooks/useTranslation';
 import { GlobeAltIcon } from './icons/GlobeAltIcon';
 import { AgentDebuggerToggle } from './agentDebugger/AgentDebuggerToggle';
 import { InferenceModeBadge } from './InferenceModeBadge';
+import { HeaderNavButton } from './HeaderNavButton';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { cycleTheme, selectCurrentTheme } from '../store/slices/themeSlice';
 import { isDeveloperToolsEnabled } from '../store/slices/settingsSlice';
@@ -35,34 +35,6 @@ interface HeaderProps {
   onQuickAdd: () => void;
 }
 
-const NavButton: React.FC<{
-  onClick: () => void;
-  isActive: boolean;
-  disabled?: boolean;
-  children: React.ReactNode;
-  className?: string;
-  ariaLabel?: string;
-}> = ({ onClick, isActive, disabled, children, className = '', ariaLabel }) => (
-  <button
-    onClick={onClick}
-    disabled={disabled}
-    aria-label={ariaLabel}
-    aria-current={isActive ? 'page' : undefined}
-    className={`relative flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 focus-ring-aa overflow-hidden
-        ${
-          isActive
-            ? 'text-brand-accent bg-brand-accent/10 border border-brand-accent/25 shadow-glow'
-            : 'text-text-secondary hover:text-text-primary hover:bg-surface-hover border border-transparent'
-        } 
-        ${disabled ? 'opacity-40 cursor-not-allowed' : ''} ${className}`}
-  >
-    {isActive && (
-      <div className="absolute inset-x-0 bottom-0 h-0.5 bg-brand-accent/80" aria-hidden />
-    )}
-    <div className="relative flex items-center">{children}</div>
-  </button>
-);
-
 const HeaderComponent: React.FC<HeaderProps> = ({
   onViewChange,
   currentView,
@@ -74,14 +46,12 @@ const HeaderComponent: React.FC<HeaderProps> = ({
   const { settings, updateSettings } = useSettings();
   const { isSettingsDirty, setIsCommandPaletteOpen } = useUI();
   const { t, lang } = useTranslation();
-
-  // ── Theme: driven by dedicated Redux themeSlice ──────────────────────────
   const dispatch = useAppDispatch();
   const currentTheme = useAppSelector(selectCurrentTheme);
-
-  // State for mobile "More" menu
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isOverflowOpen, setIsOverflowOpen] = useState(false);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
+  const overflowRef = useRef<HTMLDivElement>(null);
 
   const viewTitles: Record<View, string> = {
     home: t('nav.home'),
@@ -97,11 +67,13 @@ const HeaderComponent: React.FC<HeaderProps> = ({
     collections: t('nav.collections'),
   };
 
-  // Close dropdowns on outside click
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target as Node)) {
         setIsMobileMenuOpen(false);
+      }
+      if (overflowRef.current && !overflowRef.current.contains(event.target as Node)) {
+        setIsOverflowOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -116,9 +88,9 @@ const HeaderComponent: React.FC<HeaderProps> = ({
   const toggleTheme = () => dispatch(cycleTheme());
   const themeIcon =
     currentTheme === 'dark' ? (
-      <SunIcon className="h-5 w-5 text-accent-amber hover:rotate-45 transition-transform" />
+      <SunIcon className="h-5 w-5 text-accent-amber" />
     ) : currentTheme === 'light' ? (
-      <MoonIcon className="h-5 w-5 text-brand-accent hover:-rotate-12 transition-transform" />
+      <MoonIcon className="h-5 w-5 text-brand-accent" />
     ) : (
       <span
         className="text-[10px] font-mono font-semibold text-success tracking-wide"
@@ -138,15 +110,15 @@ const HeaderComponent: React.FC<HeaderProps> = ({
     updateSettings((prev) => ({ ...prev, appLanguage: prev.appLanguage === 'en' ? 'de' : 'en' }));
 
   const displayCount = knowledgeBaseArticleCount > 999 ? '999+' : knowledgeBaseArticleCount;
+  const reportHint = !hasReports ? t('nav.requires_report') : undefined;
 
   return (
     <header className="transition-all duration-300 border-b border-border bg-surface/70 backdrop-blur-xl shadow-sm">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        {/* --- DESKTOP HEADER (TWO-LINE) --- */}
         <div className="hidden md:flex flex-col py-3 gap-3">
-          {/* Top Row: Logo & Navigation */}
           <div className="flex items-center justify-between">
             <button
+              type="button"
               onClick={() => onViewChange('home')}
               className="flex items-center gap-3 focus-ring-aa rounded-md group"
               aria-label={t('chrome.aria.go_home')}
@@ -154,156 +126,162 @@ const HeaderComponent: React.FC<HeaderProps> = ({
               <AppBrandMark
                 size="sm"
                 idPrefix="header-logo"
-                className="drop-shadow-lg group-hover:scale-105 transition-transform duration-300"
+                className="drop-shadow-lg"
                 aria-hidden
               />
               <span className="font-bold text-lg tracking-tight text-text-primary">
-                {t('chrome.brand.research')}{' '}
-                <span className="text-brand-accent drop-shadow-sm">
-                  {t('chrome.brand.orchestrator')}
-                </span>
+                {t('app.name')}
               </span>
             </button>
             <div className="flex items-center gap-3">
               <InferenceModeBadge />
               <nav
-                // Defensive fallback: this many icon+label buttons plus the
-                // logo/badge can outgrow the available width right at the md
-                // breakpoint (before lg gives more room) - scroll rather than
-                // clip/overflow the pill container if that happens.
-                className="flex items-center gap-1 p-1.5 rounded-xl border border-white/5 bg-black/5 backdrop-blur-md shadow-inner overflow-x-auto max-w-full"
+                className="flex items-center gap-1 p-1.5 rounded-xl border border-border bg-surface/40 backdrop-blur-md shadow-inner"
                 aria-label={t('chrome.aria.main_nav')}
               >
-                <NavButton
-                  onClick={() => onViewChange('research')}
-                  isActive={currentView === 'research'}
+                <HeaderNavButton
+                  onClick={() => onViewChange('orchestrator')}
+                  isActive={currentView === 'orchestrator'}
                   className="relative"
                 >
                   {isResearching && (
                     <span className="absolute top-1.5 right-1.5 flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-cyan opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-accent-cyan"></span>
+                      <span className="motion-safe:animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-cyan opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-accent-cyan" />
                     </span>
                   )}
-                  <BeakerIcon className="h-4 w-4 mr-2" />
-                  {t('nav.research')}
-                </NavButton>
-                <NavButton
-                  onClick={() => onViewChange('orchestrator')}
-                  isActive={currentView === 'orchestrator'}
-                >
                   <DocumentIcon className="h-4 w-4 mr-2" />
                   {t('nav.orchestrator')}
-                </NavButton>
-                <NavButton
+                </HeaderNavButton>
+                <HeaderNavButton
+                  onClick={() => onViewChange('research')}
+                  isActive={currentView === 'research'}
+                >
+                  <BeakerIcon className="h-4 w-4 mr-2" />
+                  {t('nav.research')}
+                </HeaderNavButton>
+                <HeaderNavButton
+                  onClick={() => onViewChange('knowledgeBase')}
+                  isActive={currentView === 'knowledgeBase'}
+                  muted={!hasReports}
+                  title={reportHint}
+                >
+                  <DatabaseIcon className="h-4 w-4 mr-2" />
+                  {t('nav.knowledgeBase')}{' '}
+                  <span className="ml-2 bg-background/80 border border-border text-text-primary text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                    {displayCount}
+                  </span>
+                </HeaderNavButton>
+                <HeaderNavButton
                   onClick={() => onViewChange('authors')}
                   isActive={currentView === 'authors'}
                 >
                   <AuthorIcon className="h-4 w-4 mr-2" />
                   {t('nav.authors')}
-                </NavButton>
-                <NavButton
+                </HeaderNavButton>
+                <HeaderNavButton
                   onClick={() => onViewChange('journals')}
                   isActive={currentView === 'journals'}
                 >
                   <BookOpenIcon className="h-4 w-4 mr-2" />
                   {t('nav.journals')}
-                </NavButton>
-                <NavButton
-                  onClick={() => onViewChange('collections')}
-                  isActive={currentView === 'collections'}
-                >
-                  <CollectionIcon className="h-4 w-4 mr-2" />
-                  {t('nav.collections')}
-                </NavButton>
-                <div className="w-px h-5 bg-border mx-1"></div>
-                <NavButton
-                  onClick={() => onViewChange('knowledgeBase')}
-                  isActive={currentView === 'knowledgeBase'}
-                  disabled={!hasReports}
-                >
-                  <DatabaseIcon className="h-4 w-4 mr-2" />
-                  {t('nav.knowledgeBase')}{' '}
-                  <span className="ml-2 bg-background/80 border border-border text-text-primary text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm">
-                    {displayCount}
-                  </span>
-                </NavButton>
-                <NavButton
-                  onClick={() => onViewChange('dashboard')}
-                  isActive={currentView === 'dashboard'}
-                  disabled={!hasReports}
-                >
-                  <ChartBarIcon className="h-4 w-4 mr-2" />
-                  {t('nav.dashboard')}
-                </NavButton>
-                <NavButton
-                  onClick={() => onViewChange('history')}
-                  isActive={currentView === 'history'}
-                  disabled={!hasReports}
-                >
-                  <HistoryIcon className="h-4 w-4 mr-2" />
-                  {t('nav.history')}
-                </NavButton>
+                </HeaderNavButton>
+                <div ref={overflowRef} className="relative">
+                  <HeaderNavButton
+                    onClick={() => setIsOverflowOpen((open) => !open)}
+                    isActive={['collections', 'dashboard', 'history'].includes(currentView)}
+                    ariaLabel={t('nav.overflow')}
+                  >
+                    <EllipsisHorizontalIcon className="h-4 w-4 mr-2" />
+                    {t('nav.more')}
+                  </HeaderNavButton>
+                  {isOverflowOpen && (
+                    <div className="absolute right-0 mt-2 w-56 bg-surface/95 backdrop-blur-xl border border-border rounded-xl shadow-2xl z-50 overflow-hidden">
+                      {(
+                        [
+                          ['collections', t('nav.collections'), false],
+                          ['dashboard', t('nav.dashboard'), !hasReports],
+                          ['history', t('nav.history'), !hasReports],
+                        ] as const
+                      ).map(([view, label, muted]) => (
+                        <button
+                          key={view}
+                          type="button"
+                          title={muted ? reportHint : undefined}
+                          onClick={() => {
+                            onViewChange(view);
+                            setIsOverflowOpen(false);
+                          }}
+                          className={`w-full text-left px-4 py-3 text-sm hover:bg-surface-hover focus-ring-aa border-b border-border/50 ${muted ? 'opacity-60' : ''}`}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </nav>
             </div>
           </div>
 
-          {/* Bottom Row: Title & Actions */}
           <div className="flex justify-between items-center pl-1">
             <h1 className="text-xl font-bold text-text-primary tracking-tight brand-gradient-text">
               {viewTitles[currentView]}
             </h1>
             <div className="flex items-center gap-3">
               <button
+                type="button"
                 onClick={() => setIsCommandPaletteOpen(true)}
-                className="group flex items-center gap-3 px-4 py-2 text-sm text-text-secondary bg-input-bg border border-border rounded-lg hover:border-brand-accent/50 hover:text-text-primary hover:shadow-glow transition-all duration-300 backdrop-blur-sm focus-ring-aa touch-target-aa"
+                className="group flex items-center gap-3 px-4 py-2 text-sm text-text-secondary bg-input-bg border border-border rounded-lg hover:border-brand-accent/50 hover:text-text-primary focus-ring-aa touch-target-aa"
                 aria-label={t('chrome.aria.open_command_palette')}
               >
                 <SearchIcon className="h-4 w-4 group-hover:text-brand-accent transition-colors" />
-                <span>{t('nav.search_placeholder')}</span>
-                <kbd className="hidden lg:inline-block ml-4 px-1.5 py-0.5 text-[10px] font-bold text-text-secondary bg-surface border border-border rounded shadow-sm">
+                <span>{t('chrome.aria.search')}</span>
+                <kbd className="hidden lg:inline-block ml-2 px-1.5 py-0.5 text-[10px] font-bold text-text-secondary bg-surface border border-border rounded">
                   ⌘K
                 </kbd>
               </button>
               <button
+                type="button"
                 onClick={onQuickAdd}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-brand-text-on-accent bg-gradient-to-r from-brand-primary to-brand-accent rounded-lg shadow-md hover:shadow-glow hover:opacity-95 transition-all duration-300 transform hover:-translate-y-0.5 active:scale-95 focus-ring-aa touch-target-aa"
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-brand-text-on-accent bg-gradient-to-r from-brand-primary to-brand-accent rounded-lg focus-ring-aa touch-target-aa"
                 aria-label={t('chrome.aria.quick_add_article')}
               >
-                <DocumentPlusIcon className="h-4 w-4" />{' '}
+                <DocumentPlusIcon className="h-4 w-4" />
                 <span className="hidden lg:inline">{t('nav.quick_add')}</span>
               </button>
-              <div className="w-px h-6 bg-border mx-1"></div>
-
               <button
+                type="button"
                 onClick={toggleLanguage}
-                className="p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-colors font-bold text-xs flex items-center gap-1 border border-transparent hover:border-border focus-ring-aa touch-target-aa"
+                className="p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover font-bold text-xs flex items-center gap-1 focus-ring-aa touch-target-aa"
                 aria-label={t('chrome.aria.toggle_language')}
               >
                 <GlobeAltIcon className="h-4 w-4" />
                 {lang.toUpperCase()}
               </button>
-
               <button
+                type="button"
                 onClick={() => onViewChange('settings')}
-                className={`p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-colors relative focus-ring-aa touch-target-aa ${currentView === 'settings' ? 'bg-surface-hover text-text-primary' : ''}`}
+                className={`p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover relative focus-ring-aa touch-target-aa ${currentView === 'settings' ? 'bg-surface-hover text-text-primary' : ''}`}
                 aria-label={t('chrome.aria.settings')}
               >
                 <CogIcon className={`h-5 w-5 ${isSettingsDirty ? 'text-accent-amber' : ''}`} />
                 {isSettingsDirty && (
-                  <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-accent-amber ring-2 ring-surface animate-pulse"></span>
+                  <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-accent-amber ring-2 ring-surface" />
                 )}
               </button>
               <button
+                type="button"
                 onClick={() => onViewChange('help')}
-                className={`p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-colors focus-ring-aa touch-target-aa ${currentView === 'help' ? 'bg-surface-hover text-text-primary' : ''}`}
+                className={`p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover focus-ring-aa touch-target-aa ${currentView === 'help' ? 'bg-surface-hover text-text-primary' : ''}`}
                 aria-label={t('chrome.aria.help')}
               >
                 <QuestionMarkCircleIcon className="h-5 w-5" />
               </button>
               <button
+                type="button"
                 onClick={toggleTheme}
-                className="p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-colors focus-ring-aa touch-target-aa"
+                className="p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover focus-ring-aa touch-target-aa"
                 aria-label={themeLabel}
               >
                 {themeIcon}
@@ -313,9 +291,9 @@ const HeaderComponent: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* --- MOBILE HEADER (SINGLE LINE) --- */}
         <div className="md:hidden flex items-center justify-between h-16">
           <button
+            type="button"
             onClick={() => onViewChange('home')}
             className="flex items-center gap-3 focus-ring-aa rounded-md touch-target-aa"
             aria-label={t('chrome.aria.go_home')}
@@ -329,12 +307,14 @@ const HeaderComponent: React.FC<HeaderProps> = ({
             <InferenceModeBadge className="max-w-[7.5rem] truncate text-[10px] px-1.5 py-0.5" />
             {isDeveloperToolsEnabled(settings) && <AgentDebuggerToggle />}
             <button
+              type="button"
               onClick={toggleLanguage}
               className="p-2.5 text-text-secondary font-bold text-xs focus-ring-aa touch-target-aa rounded-full"
             >
               {lang.toUpperCase()}
             </button>
             <button
+              type="button"
               onClick={() => setIsCommandPaletteOpen(true)}
               className="p-2.5 text-text-secondary hover:text-text-primary rounded-full hover:bg-surface-hover focus-ring-aa touch-target-aa"
               aria-label={t('chrome.aria.search')}
@@ -342,6 +322,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
               <SearchIcon className="h-5 w-5" />
             </button>
             <button
+              type="button"
               onClick={onQuickAdd}
               className="p-2.5 text-text-secondary hover:text-text-primary rounded-full hover:bg-surface-hover focus-ring-aa touch-target-aa"
               aria-label={t('chrome.aria.quick_add')}
@@ -350,6 +331,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
             </button>
             <div ref={mobileMenuRef} className="relative">
               <button
+                type="button"
                 onClick={() => setIsMobileMenuOpen((prev) => !prev)}
                 className="p-2.5 text-text-secondary hover:text-text-primary rounded-full hover:bg-surface-hover focus-ring-aa touch-target-aa"
                 aria-label={t('chrome.aria.more_options')}
@@ -357,24 +339,32 @@ const HeaderComponent: React.FC<HeaderProps> = ({
                 <EllipsisHorizontalIcon className="h-6 w-6" />
               </button>
               {isMobileMenuOpen && (
-                <div className="absolute right-0 mt-2 w-56 bg-surface/95 backdrop-blur-xl border border-border rounded-xl shadow-2xl z-50 animate-fadeIn overflow-hidden">
+                <div className="absolute right-0 mt-2 w-56 bg-surface/95 backdrop-blur-xl border border-border rounded-xl shadow-2xl z-50 overflow-hidden">
                   <button
                     type="button"
+                    onClick={() => handleMobileMenuSelect(() => setIsCommandPaletteOpen(true))}
+                    className="w-full text-left flex items-center gap-3 px-4 py-3 text-sm hover:bg-surface-hover focus-ring-aa border-b border-border/50"
+                  >
+                    <SearchIcon className="h-5 w-5" /> {t('nav.search_commands')}
+                  </button>
+                  <button
+                    type="button"
+                    title={!hasReports ? reportHint : undefined}
                     onClick={() => handleMobileMenuSelect(() => onViewChange('dashboard'))}
-                    disabled={!hasReports}
-                    className={`w-full text-left flex items-center gap-3 px-4 py-3 text-sm hover:bg-surface-hover focus-ring-aa border-b border-border/50 ${!hasReports ? 'opacity-40 cursor-not-allowed' : ''}`}
+                    className={`w-full text-left flex items-center gap-3 px-4 py-3 text-sm hover:bg-surface-hover focus-ring-aa border-b border-border/50 ${!hasReports ? 'opacity-60' : ''}`}
                   >
                     <ChartBarIcon className="h-5 w-5" /> {t('nav.dashboard')}
                   </button>
                   <button
                     type="button"
+                    title={!hasReports ? reportHint : undefined}
                     onClick={() => handleMobileMenuSelect(() => onViewChange('history'))}
-                    disabled={!hasReports}
-                    className={`w-full text-left flex items-center gap-3 px-4 py-3 text-sm hover:bg-surface-hover focus-ring-aa border-b border-border/50 ${!hasReports ? 'opacity-40 cursor-not-allowed' : ''}`}
+                    className={`w-full text-left flex items-center gap-3 px-4 py-3 text-sm hover:bg-surface-hover focus-ring-aa border-b border-border/50 ${!hasReports ? 'opacity-60' : ''}`}
                   >
                     <HistoryIcon className="h-5 w-5" /> {t('nav.history')}
                   </button>
                   <button
+                    type="button"
                     onClick={() => handleMobileMenuSelect(() => onViewChange('settings'))}
                     className="w-full text-left flex items-center gap-3 px-4 py-3 text-sm hover:bg-surface-hover border-b border-border/50"
                   >
@@ -382,31 +372,25 @@ const HeaderComponent: React.FC<HeaderProps> = ({
                     {t('nav.settings')}
                   </button>
                   <button
+                    type="button"
                     onClick={() => handleMobileMenuSelect(() => onViewChange('help'))}
                     className="w-full text-left flex items-center gap-3 px-4 py-3 text-sm hover:bg-surface-hover border-b border-border/50"
                   >
                     <QuestionMarkCircleIcon className="h-5 w-5" /> {t('nav.help')}
                   </button>
                   <button
+                    type="button"
                     onClick={() => handleMobileMenuSelect(toggleTheme)}
                     className="w-full text-left flex items-center gap-3 px-4 py-3 text-sm hover:bg-surface-hover"
                   >
-                    {currentTheme === 'dark' ? (
-                      <>
-                        <SunIcon className="h-5 w-5 text-accent-amber" />{' '}
-                        {t('chrome.theme.menu_light')}
-                      </>
-                    ) : currentTheme === 'matrix' ? (
-                      <>
-                        <MoonIcon className="h-5 w-5 text-brand-accent" />{' '}
-                        {t('chrome.theme.menu_dark')}
-                      </>
-                    ) : (
-                      <>
-                        <span className="font-mono text-xs text-success">MX</span>{' '}
-                        {t('chrome.theme.menu_matrix')}
-                      </>
-                    )}
+                    {themeIcon}
+                    <span>
+                      {currentTheme === 'dark'
+                        ? t('chrome.theme.menu_light')
+                        : currentTheme === 'matrix'
+                          ? t('chrome.theme.menu_dark')
+                          : t('chrome.theme.menu_matrix')}
+                    </span>
                   </button>
                 </div>
               )}
