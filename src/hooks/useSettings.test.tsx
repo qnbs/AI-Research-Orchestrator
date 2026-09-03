@@ -57,6 +57,17 @@ describe('useSettings', () => {
     expect(store.getState().settings.data.appLanguage).toBe('en');
   });
 
+  it('applies sequential function-form updates against the latest Provider store', () => {
+    const { Wrapper } = makeWrapper();
+    const { result } = renderHook(() => useSettings(), { wrapper: Wrapper });
+    act(() => {
+      result.current.updateSettings((prev) => ({ ...prev, appLanguage: 'de' }));
+      result.current.updateSettings((prev) => ({ ...prev, developerMode: true }));
+    });
+    expect(result.current.settings.appLanguage).toBe('de');
+    expect(result.current.settings.developerMode).toBe(true);
+  });
+
   it('exposes defaults and updateSettings', () => {
     const { Wrapper } = makeWrapper();
     const { result } = renderHook(() => useSettings(), { wrapper: Wrapper });

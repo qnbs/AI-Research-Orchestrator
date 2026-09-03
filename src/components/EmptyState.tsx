@@ -28,9 +28,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
       </div>
       <h2 className="text-2xl font-bold text-text-primary mb-3">{title}</h2>
       <p className="max-w-md mx-auto text-base text-text-secondary">{message}</p>
-      {footnote && (
-        <p className="max-w-md mx-auto mt-2 text-sm text-text-secondary/60">{footnote}</p>
-      )}
+      {footnote && <p className="max-w-md mx-auto mt-2 text-sm text-text-secondary">{footnote}</p>}
       {action && (
         <button
           type="button"

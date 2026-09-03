@@ -14,6 +14,7 @@ import { AI_PROVIDERS, getProviderMeta } from '../../services/providers/provider
 import type { AIProviderSelection } from '../../services/providers/types';
 import { isNonAiAvailable } from '../../services/nonAi';
 import type { TranslationKey } from '../../i18n/translations';
+import { PROVIDER_LABEL_KEYS } from '../../i18n/providerLabelKeys';
 import { validateCustomEndpointUrl, isOriginCspAllowed } from '../../lib/endpointPolicy';
 import { BaseUrlValidationAlerts } from './BaseUrlValidationAlerts';
 import { OllamaHealthPanel } from './OllamaHealthPanel';
@@ -52,14 +53,6 @@ const ARTICLE_TYPE_LABEL_KEYS: Record<(typeof ARTICLE_TYPES)[number], Translatio
   'Meta-Analysis': 'inputForm.articleType.meta',
   'Systematic Review': 'inputForm.articleType.systematic',
   'Observational Study': 'inputForm.articleType.observational',
-};
-
-const PROVIDER_LABEL_KEYS: Record<AIProviderSelection, TranslationKey> = {
-  gemini: 'settings.ai.provider_label.gemini',
-  openai: 'settings.ai.provider_label.openai',
-  anthropic: 'settings.ai.provider_label.anthropic',
-  ollama: 'settings.ai.provider_label.ollama',
-  heuristic: 'settings.ai.provider_label.heuristic',
 };
 
 const ProviderSelect: React.FC = () => {

@@ -37,4 +37,18 @@ describe('useUI', () => {
     expect(store.getState().ui.currentView).toBe('home');
     expect(store.getState().ui.pendingNavigation).toBe('orchestrator');
   });
+
+  it('requestViewChange does not queue the already-active view when settings are dirty', () => {
+    const store = makeStore();
+    store.dispatch(setIsSettingsDirty(true));
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <Provider store={store}>{children}</Provider>
+    );
+    const { result } = renderHook(() => useUI(), { wrapper });
+    act(() => {
+      result.current.requestViewChange('home');
+    });
+    expect(store.getState().ui.currentView).toBe('home');
+    expect(store.getState().ui.pendingNavigation).toBeNull();
+  });
 });

@@ -1,7 +1,9 @@
 import { useEffect, useCallback, useMemo } from 'react';
+import { useStore } from 'react-redux';
 import type { Settings } from '../types';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
 import { store } from '../store/store';
+import type { RootState } from '../store/store';
 import {
   defaultSettings,
   setSettings,
@@ -113,18 +115,19 @@ export function SettingsHydrator(): null {
 
 export function useSettings(): UseSettingsValue {
   const dispatch = useAppDispatch();
+  const providerStore = useStore<RootState>();
   const { data: settings, isLoading } = useAppSelector((state) => state.settings);
 
   const updateSettings = useCallback(
     (newSettings: Partial<Settings> | ((prevState: Settings) => Settings)) => {
       if (typeof newSettings === 'function') {
-        const payload = newSettings(settings);
+        const payload = newSettings(providerStore.getState().settings.data);
         dispatch(setSettings(payload));
       } else {
         dispatch(updateSettingsAction(newSettings));
       }
     },
-    [dispatch, settings],
+    [dispatch, providerStore],
   );
 
   const resetSettings = useCallback(() => {

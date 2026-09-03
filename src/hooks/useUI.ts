@@ -58,7 +58,7 @@ export function useUI(): UseUIValue {
       currentView,
       setCurrentView: (view: View) => dispatch(setCurrentView(view)),
       requestViewChange: (view: View) => {
-        if (isSettingsDirty) {
+        if (isSettingsDirty && view !== currentView) {
           dispatch(setPendingNavigation(view));
         } else {
           dispatch(setCurrentView(view));

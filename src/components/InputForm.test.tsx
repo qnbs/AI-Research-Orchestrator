@@ -222,4 +222,31 @@ describe('InputForm educationalDemoMode', () => {
     expect(document.getElementById('article-type-randomized-controlled-trial')).toBeTruthy();
     expect(document.getElementById('Randomized Controlled Trial')).toBeNull();
   });
+
+  it('falls back when restored articleTypes contains non-string elements', () => {
+    sessionStorage.setItem(
+      'aiResearchFormState',
+      JSON.stringify({
+        researchTopic: 'topic',
+        dateRange: '5',
+        articleTypes: [1, { label: 'RCT' }],
+        synthesisFocus: 'overview',
+        maxArticlesToScan: 20,
+        topNToSynthesize: 5,
+      }),
+    );
+
+    render(
+      <InputForm
+        onSubmit={vi.fn()}
+        isLoading={false}
+        defaultSettings={defaults}
+        prefilledTopic={null}
+        onPrefillConsumed={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByText('inputForm.options'));
+    expect(document.getElementById('article-type-randomized-controlled-trial')).toBeTruthy();
+  });
 });

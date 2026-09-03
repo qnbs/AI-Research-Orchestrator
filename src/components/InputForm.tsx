@@ -44,9 +44,11 @@ const InputFormComponent: React.FC<InputFormProps> = ({
         return {
           researchTopic: typeof parsed.researchTopic === 'string' ? parsed.researchTopic : '',
           dateRange: parsed.dateRange ?? defaultSettings.defaultDateRange,
-          articleTypes: Array.isArray(parsed.articleTypes)
-            ? parsed.articleTypes
-            : [...defaultSettings.defaultArticleTypes],
+          articleTypes:
+            Array.isArray(parsed.articleTypes) &&
+            parsed.articleTypes.every((type) => typeof type === 'string')
+              ? parsed.articleTypes
+              : [...defaultSettings.defaultArticleTypes],
           synthesisFocus: parsed.synthesisFocus ?? defaultSettings.defaultSynthesisFocus,
           maxArticlesToScan: parsed.maxArticlesToScan ?? defaultSettings.maxArticlesToScan,
           topNToSynthesize: parsed.topNToSynthesize ?? defaultSettings.topNToSynthesize,
