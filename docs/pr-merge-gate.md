@@ -77,12 +77,13 @@ Quiescence holds **if and only if all** of the following are true:
      review after **either** 3 failed wait/re-trigger cycles **or** a single
      wait exceeding 90 minutes, **and** Sourcery has a real, non-rate-limited
      review on that head with everything resolved; **or**
-   - **(c)** the 2026-09-03 CodeRabbit-skip (standing policy): the step-6 wait
-     loop has been run **or** a CodeRabbit UI hang on the current head is
-     documented in a PR comment, **and** Sourcery **cannot** stand in (budget
-     exhausted, or no real Sourcery review is available), **and** at least one
-     other in-scope bot has a real review on the current head with all
-     actionable findings resolved, **and** no in-progress late-bot wave remains.
+   - **(c)** the 2026-09-03 CodeRabbit-skip (standing policy): the same 3-cycle /
+     90-minute threshold as (b) has already been met, **and** Sourcery
+     **cannot** stand in (budget exhausted, or no real Sourcery review is
+     available), **and** at least one other in-scope bot has a real review on
+     the current head with all actionable findings resolved, **and** no
+     in-progress late-bot wave remains. A documented CodeRabbit UI hang does
+     **not** skip that threshold.
      A `CHANGES_REQUESTED` CodeRabbit review on the **latest** head is **never**
      waived by (b) or (c).
 3. **`@deepsourcebot review` has been attempted** on the latest head (a recorded

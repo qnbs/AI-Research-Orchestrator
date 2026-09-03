@@ -96,11 +96,12 @@ Holds **if and only if all** of the following are true:
      wait/re-trigger cycles **or** a single wait exceeding 90 minutes, **and**
      Sourcery has a real, non-rate-limited review on that head with everything
      resolved; **or**
-   - **(c)** the 2026-09-03 CodeRabbit-skip: the wait loop has been run **or**
-     a CodeRabbit UI hang on this head is documented, **and** Sourcery cannot
-     stand in (budget exhausted, or no real Sourcery review is available),
-     **and** at least one other in-scope bot has a real review on the current
-     head with everything resolved, **and** no in-progress late-bot wave remains.
+   - **(c)** the 2026-09-03 CodeRabbit-skip: the same 3-cycle / 90-minute
+     threshold as (b) has already been met, **and** Sourcery cannot stand in
+     (budget exhausted, or no real Sourcery review is available), **and** at
+     least one other in-scope bot has a real review on the current head with
+     everything resolved, **and** no in-progress late-bot wave remains. A
+     documented CodeRabbit UI hang does **not** skip that threshold.
      A `CHANGES_REQUESTED` CodeRabbit review on the **latest** head is never
      waived by (b) or (c).
 3. **`@deepsourcebot review` has been attempted** on the latest head — a

@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **PR merge gate (dual gate):** Canonical modus operandi is `docs/pr-merge-gate.md`. Merge to `main` requires required CI green **and** review quiescence on the same head, including the **arrival wait** (PR #299: do not merge while CodeAnt/Greptile/Copilot are still “Reviewing”). CodeRabbit optional-blocker fallbacks are Sourcery stand-in **or** the 2026-09-03 skip when Sourcery’s 250k / 7-day budget is exhausted. Agent guides (`011`/`013`, `AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md`) and `check:docs-drift` (`ci.mergeGatePath`) point at that doc.
+- **Docs-drift merge-gate checks:** `check:docs-drift` now requires arrival wait, latest-head, body-only, and disposition language in `docs/pr-merge-gate.md`. `workflowJobHasContinueOnError` matches the `jobs.e2e` block (no `e2e::`). `--csp-endpoint` is CSP-only and no longer runs the full docs-drift suite.
+
 - **Cursor rules English + stack truth:** Remaining `.mdc` bodies (`000`, `001`, `100`, `101`, `200`, `300`, `800`, `850`) are English. `100` is the multi-provider façade (not Gemini-only / not TanStack Query). `101` pins Dexie v7 + ADR 0016/0018/0021. `300` uses split `*Translations.ts` and forbids `lucide-react` / Chart.js. `000` catalogs the numbered rules. `010` records the 2026-09-03 rule-language migration.
 
 ### Added

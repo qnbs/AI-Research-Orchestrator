@@ -90,11 +90,25 @@ function extractE2eSpecPathsFromWorkflow(workflowYaml) {
 }
 
 function workflowJobHasContinueOnError(workflowYaml, jobName) {
-  const jobBlock = new RegExp(`${escapeRegExp(jobName)}:[\\s\\S]*?(?=^\\S|\\z)`, 'm').exec(
-    workflowYaml,
-  );
-  if (!jobBlock) return false;
-  return /continue-on-error:\s*true/.test(jobBlock[0]);
+  const key = String(jobName).replace(/:$/, '');
+  const lines = workflowYaml.split(/\r?\n/);
+  let inJob = false;
+  let jobIndent = 0;
+  for (const rawLine of lines) {
+    const line = rawLine.replace(/\t/g, '  ');
+    const trimmed = line.trim();
+    const indent = line.match(/^ */)?.[0].length ?? 0;
+    if (!inJob) {
+      if (indent > 0 && trimmed.startsWith(`${key}:`)) {
+        inJob = true;
+        jobIndent = indent;
+      }
+      continue;
+    }
+    if (trimmed && indent <= jobIndent) break;
+    if (/continue-on-error:\s*true/.test(line)) return true;
+  }
+  return false;
 }
 
 /**
@@ -203,7 +217,7 @@ async function checkProjectFacts(errors, facts) {
       }
     }
     const blocking = facts.e2e.mainJobBlocking === true;
-    const hasContinue = workflowJobHasContinueOnError(e2eYaml, 'e2e:');
+    const hasContinue = workflowJobHasContinueOnError(e2eYaml, 'e2e');
     if (blocking && hasContinue) {
       errors.push(
         `${facts.e2e.mainWorkflowPath} job must not use continue-on-error (blocking E2E)`,
@@ -275,6 +289,30 @@ async function checkProjectFacts(errors, facts) {
         mergeGate,
         /dual gate/i,
         `${facts.ci.mergeGatePath} must document the dual merge gate`,
+        errors,
+      );
+      assertMatch(
+        mergeGate,
+        /latest head/i,
+        `${facts.ci.mergeGatePath} must require checks on the latest head`,
+        errors,
+      );
+      assertMatch(
+        mergeGate,
+        /arrival wait/i,
+        `${facts.ci.mergeGatePath} must document the arrival wait`,
+        errors,
+      );
+      assertMatch(
+        mergeGate,
+        /body-only|outside diff/i,
+        `${facts.ci.mergeGatePath} must cover body-only / outside-diff findings`,
+        errors,
+      );
+      assertMatch(
+        mergeGate,
+        /disposition/i,
+        `${facts.ci.mergeGatePath} must require a disposition ledger`,
         errors,
       );
     }
@@ -437,6 +475,19 @@ async function checkProjectFacts(errors, facts) {
 }
 
 async function main() {
+  const errors = [];
+
+  if (process.argv.includes('--csp-endpoint')) {
+    await checkCspEndpointDrift(errors);
+    if (errors.length > 0) {
+      console.error('check-csp-endpoint-drift FAILED:\n');
+      for (const err of errors) console.error(`  - ${err}`);
+      process.exit(1);
+    }
+    console.log('check-csp-endpoint-drift OK (connect-src aligned with endpointPolicy).');
+    return;
+  }
+
   const pkg = JSON.parse(await read('package.json'));
   const agents = await read('AGENTS.md');
   const claude = await read('CLAUDE.md');
@@ -448,8 +499,6 @@ async function main() {
   const viteMajor = majorOf(viteSpec);
   const pnpmVersion = String(pkg.packageManager ?? '').replace(/^pnpm@/, '');
   const appVersion = pkg.version;
-
-  const errors = [];
 
   assertMatch(
     agents,
@@ -527,22 +576,10 @@ async function main() {
 
   await checkProjectFacts(errors, facts);
 
-  if (process.argv.includes('--csp-endpoint')) {
-    await checkCspEndpointDrift(errors);
-  }
-
   if (errors.length > 0) {
-    const label = process.argv.includes('--csp-endpoint')
-      ? 'check-csp-endpoint-drift'
-      : 'check-docs-drift';
-    console.error(`${label} FAILED:\n`);
+    console.error('check-docs-drift FAILED:\n');
     for (const err of errors) console.error(`  - ${err}`);
     process.exit(1);
-  }
-
-  if (process.argv.includes('--csp-endpoint')) {
-    console.log('check-csp-endpoint-drift OK (connect-src aligned with endpointPolicy).');
-    return;
   }
 
   console.log(
@@ -593,6 +630,15 @@ function runConcurrencyParserSelfTest() {
       throw new Error(`concurrency self-test "${fixture.name}": expected unconditional true`);
     }
   }
+  const e2eBlocking = `jobs:\n  e2e:\n    name: Playwright E2E\n    steps:\n      - run: echo ok\n`;
+  const e2eAdvisory = `jobs:\n  e2e:\n    name: Playwright E2E\n    continue-on-error: true\n    steps:\n      - run: echo ok\n`;
+  if (workflowJobHasContinueOnError(e2eBlocking, 'e2e:')) {
+    throw new Error('e2e continue-on-error self-test: blocking job must not match');
+  }
+  if (!workflowJobHasContinueOnError(e2eAdvisory, 'e2e:')) {
+    throw new Error('e2e continue-on-error self-test: advisory job must match');
+  }
+
   console.log('check-docs-drift concurrency parser self-test OK');
 }
 
