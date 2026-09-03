@@ -246,6 +246,10 @@ function runConcurrencyParserSelfTest() {
   if (!workflowJobHasContinueOnError(e2eAdvisory, 'e2e:')) {
     throw new Error('e2e continue-on-error self-test: advisory job must match');
   }
+  const e2eStepContinue = `jobs:\n  e2e:\n    name: Playwright E2E\n    steps:\n      - continue-on-error: true\n      - run: echo ok\n`;
+  if (workflowJobHasContinueOnError(e2eStepContinue, 'e2e:')) {
+    throw new Error('e2e continue-on-error self-test: step-level flag must not match');
+  }
 
   console.log('check-docs-drift concurrency parser self-test OK');
 }

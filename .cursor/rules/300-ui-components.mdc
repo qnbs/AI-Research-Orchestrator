@@ -10,7 +10,7 @@ alwaysApply: false
 - **Props:** Explicit TS types; booleans named (`isOpen`, `disabled`); `children` only for real composition.
 - **Tailwind v4:** Utility-first via `@theme` tokens in `src/index.css` (no `tailwind.config.js`). Cybernetic / glass patterns from the design system; inline styles only for dynamic values. Prefer `border-border` over one-off hex.
 - **A11y:** Focus, `aria-*`, keyboard (including Cmd+K). Honor jsx-a11y — no blanket `eslint-disable`. View titles that leave the visual header stay an `sr-only` `h1` (desktop chrome is one row from `md`).
-- **i18n:** Visible strings only through `t()`. Keys live in the matching `src/i18n/*Translations.ts` module (not only `translations.ts`). EN+DE parity required. `docs/project-facts.json` `productCopyPaths` is the drift-gated set.
+- **i18n:** Visible strings only through `t()`. Keys live in `src/i18n/translations.ts` and the matching `src/i18n/*Translations.ts` domain modules. EN+DE parity required. `docs/project-facts.json` `productCopyPaths` is the drift-gated set.
 - **Icons / charts:** Custom icons; do not reintroduce `lucide-react`. Charts are **Recharts only** (ADR 0005).
 - **Motion:** Framer Motion sparingly; respect `motion-safe` / `motion-reduce`. No raw `hover:scale-105`.
 

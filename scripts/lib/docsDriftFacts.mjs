@@ -51,9 +51,14 @@ function jobBlockEnded(trimmed, indent, state) {
   return Boolean(state.inJob && trimmed && indent <= state.jobIndent);
 }
 
+function isJobLevelContinueOnError(line, indent, state) {
+  if (indent !== state.jobIndent + 2) return false;
+  return /continue-on-error:\s*true/.test(line);
+}
+
 function scanInsideJob(line, trimmed, indent, state) {
   if (jobBlockEnded(trimmed, indent, state)) return 'break';
-  if (/continue-on-error:\s*true/.test(line)) return 'found';
+  if (isJobLevelContinueOnError(line, indent, state)) return 'found';
   return 'continue';
 }
 

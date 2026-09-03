@@ -1,3 +1,10 @@
+# 2026-09-03 — CodeRabbit dual-gate wording pass
+
+- **Why:** CodeRabbit `CHANGES_REQUESTED` on `27f9ea6` (outside-diff + inline) asked for complete inventories, head-SHA review filters, abort-like retries, and matching `011` fallback text in agent guides.
+- **What:** `CONTRIBUTING` lists `pwa-e2e.yml`. `013` paginates `reviewThreads` and filters reviews by `headRefOid`. `workflowJobHasContinueOnError` is job-level only. `AGENTS.md`/`CLAUDE.md` add the README `010` exception plus full `(b)`/`(c)` and body-only dispositions. `102` forbids retry when `isAbortLikeError`. `300` names `translations.ts` and `*Translations.ts`.
+- **Impact:** Agent collection commands cannot treat a stale CodeRabbit review as the latest-head review, and a step-level `continue-on-error` no longer fails docs-drift.
+- **Not done:** Merge of #300/#301 until each dual gate holds.
+
 # 2026-09-03 — CodeScene flatten for docs-drift facts
 
 - **Why:** CodeScene quality gate on #301 failed `checkProjectFacts` (19 logical blocks) and `main` (nested `--csp-endpoint` exit).

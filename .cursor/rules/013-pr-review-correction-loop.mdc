@@ -60,14 +60,16 @@ Do **not** merge on stale bot approval from an older commit while newer commits 
 ## Collection commands (agents / maintainers)
 
 ```bash
-# Unresolved threads with author
-gh api graphql -f query='query { repository(owner:"qnbs", name:"AI-Research-Orchestrator") { pullRequest(number:N) { reviewThreads(first:100) { nodes { id isResolved comments(last:1) { nodes { databaseId author { login } body } } } } } } }'
+# Unresolved threads (paginate until pageInfo.hasNextPage is false)
+# After the first page, pass -f after:"$END_CURSOR"
+gh api graphql -f query='query($after:String) { repository(owner:"qnbs", name:"AI-Research-Orchestrator") { pullRequest(number:N) { headRefOid reviewThreads(first:100, after:$after) { pageInfo { hasNextPage endCursor } nodes { id isResolved comments(last:1) { nodes { databaseId author { login } body } } } } } } }'
 
-# Every review body (grep outside-diff / CHANGES_REQUESTED / Reviewing)
-gh api repos/qnbs/AI-Research-Orchestrator/pulls/N/reviews --paginate
+# Every review body on the current head (grep outside-diff / CHANGES_REQUESTED / Reviewing)
+HEAD=$(gh api repos/qnbs/AI-Research-Orchestrator/pulls/N --jq .head.sha)
+gh api repos/qnbs/AI-Research-Orchestrator/pulls/N/reviews --paginate --jq --arg h "$HEAD" '[.[]|select(.commit_id==$h)]'
 
-# Latest CodeRabbit review commit
-gh api repos/qnbs/AI-Research-Orchestrator/pulls/N/reviews --jq '[.[]|select(.user.login=="coderabbitai[bot]")]|sort_by(.submitted_at)|.[-1]'
+# Latest CodeRabbit review on the current head
+gh api repos/qnbs/AI-Research-Orchestrator/pulls/N/reviews --paginate --jq --arg h "$HEAD" '[.[]|select(.user.login=="coderabbitai[bot]" and .commit_id==$h)]|sort_by(.submitted_at)|.[-1]'
 ```
 
 Replace `N` with the PR number. After fixes, resolve threads via GraphQL `resolveReviewThread` or the GitHub UI.

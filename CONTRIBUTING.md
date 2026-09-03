@@ -63,7 +63,7 @@ pnpm run test:e2e
 
 Full modus operandi: [`docs/pr-merge-gate.md`](docs/pr-merge-gate.md). Neither half is enough: **required CI green** on the latest head **and** **review quiescence** on that same SHA (including the arrival wait).
 
-1. Push fixes; wait for **all required blocking checks** green on the latest commit (`deploy.yml`, `e2e.yml`, `e2e-cross-browser.yml`, `a11y.yml`, `security.yml` — inventory in `docs/ci-branch-governance.md`). Do **not** use `--no-verify` to skip Husky.
+1. Push fixes; wait for **all required blocking checks** green on the latest commit (`deploy.yml`, `e2e.yml`, `e2e-cross-browser.yml`, `a11y.yml`, `pwa-e2e.yml`, `security.yml` — inventory in `docs/ci-branch-governance.md`). Do **not** use `--no-verify` to skip Husky.
 2. **Always** comment `@deepsourcebot review` on the PR after open and after **every** fix push (DeepSource AI Review is on-demand — static analysis alone is not enough; see `docs/deepsource-setup.md`).
 3. **Always** ensure CodeRabbit reviewed the latest head: if the check says **Review rate limited**, parse **Next review available in: N minutes**, wait `N` (+ a few minutes buffer), then comment `@coderabbitai review` and repeat (max **3** wait/re-trigger cycles per head; escalate after that or if a single wait exceeds **90 minutes**). After that threshold, optional-CodeRabbit is Sourcery stand-in **or** the 2026-09-03 skip when Sourcery cannot stand in — see `docs/pr-merge-gate.md`. Do **not** comment `@sourcery-ai review` while the 250k / 7-day budget is exhausted.
 4. **Arrival wait:** do not merge while CodeAnt / Greptile / Copilot / CodeScene / CodeRabbit still show “Reviewing” on the current head. GraphQL `reviewThreads` = 0 is not enough if a bot has not finished arriving (PR #299).
@@ -85,7 +85,8 @@ Blocking gates on pushes and PRs to `main` (see `docs/ci-branch-governance.md` f
 2. `e2e.yml` — Chromium Playwright suite (blocking)
 3. `e2e-cross-browser.yml` — Firefox / WebKit / mobile Chrome (blocking)
 4. `a11y.yml` — axe critical/serious smoke
-5. `security.yml` — CodeQL, Dependency Review, audit, gitleaks
+5. `pwa-e2e.yml` — PWA service-worker registration (blocking)
+6. `security.yml` — CodeQL, Dependency Review, audit, gitleaks
 
 Concurrency cancels superseded **PR** runs only; in-flight `main` validation/deploy is never cancelled mid-run.
 
