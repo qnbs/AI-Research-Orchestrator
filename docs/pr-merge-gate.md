@@ -106,6 +106,33 @@ Quiescence holds **if and only if all** of the following are true:
 A `CHANGES_REQUESTED` review (bot or human) **never** satisfies quiescence by
 itself. After fixing its findings, wait for a non-requesting review on a
 **later** head. Thread resolution alone does not moot `CHANGES_REQUESTED`.
+A `CHANGES_REQUESTED` review on a **superseded** SHA is not a policy block once
+a later non-requesting review exists for the current head **or** clause **(d)**
+applies and that review’s findings are already disposed.
+
+## GitHub `mergeStateStatus` vs policy
+
+Policy quiescence is **latest-head**. GitHub’s `reviewDecision` /
+`mergeStateStatus` are **PR-global**. While ruleset
+`dismiss_stale_reviews_on_push` is **off** (`mainrules` id `20291814`), a
+superseded CodeRabbit `CHANGES_REQUESTED` keeps `reviewDecision:
+CHANGES_REQUESTED` and `mergeStateStatus: BLOCKED` even when that review’s
+`commit_id` is not the current head (confirmed on PR #301: review `5107396133`
+on `27f9ea6` while head was `fabb725`).
+
+That GitHub block is **not** a policy block. Resolve it in this order:
+
+1. Confirm the `CHANGES_REQUESTED` `commit_id` is **not** the current head and
+   its findings are disposed.
+2. `PUT .../pulls/N/reviews/REVIEW_ID/dismissals` (or GraphQL
+   `dismissPullRequestReview`). App/integration tokens often return **403**.
+3. If dismiss is 403 and the dual gate otherwise holds: squash-merge with
+   `gh pr merge N --squash --admin` and write a disposition comment (this is
+   the documented exception — not a casual bypass).
+4. Standing maintainer fix: enable **Dismiss stale pull request approvals when
+   new commits are pushed** on `mainrules` — see
+   `docs/ci-branch-governance.md`. Until then, expect this GitHub/policy split
+   on every CodeRabbit `CHANGES_REQUESTED` that is later fixed.
 
 ## CodeRabbit rate-limit (best-effort)
 

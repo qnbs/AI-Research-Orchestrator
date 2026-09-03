@@ -71,7 +71,7 @@ Full modus operandi: [`docs/pr-merge-gate.md`](docs/pr-merge-gate.md). Neither h
 6. Read **every** bot **and human** review body on the current head — CodeRabbit out-of-diff items and human top-level findings often appear only there. Track body-only findings in a disposition ledger.
 7. Reply on each thread (cite fix commit) and **resolve** the conversation. An active human `CHANGES_REQUESTED` on this head blocks merge until superseded.
 8. Re-poll after bots finish on the new commit; re-trigger DeepSource/CodeRabbit as above after every fix push.
-9. Merge only when the complete `011` step 7 predicate holds: all required CI checks green **and** quiescence (arrival wait complete, no new actionable bot or human comments, every body-only finding disposed).
+9. Merge only when the complete `011` step 7 predicate holds: all required CI checks green **and** quiescence (arrival wait complete, no new actionable bot or human comments, every body-only finding disposed). GitHub `mergeStateStatus: BLOCKED` from a **superseded** `CHANGES_REQUESTED` (while `dismiss_stale_reviews_on_push` is off) is not a policy block — see `docs/pr-merge-gate.md`.
 
 DeepSource dashboard JavaScript analyzer remains off / advisory (`docs/project-facts.json`). Chromium and cross-browser Playwright E2E are **blocking**. Post a short disposition comment when closing a large review batch.
 
