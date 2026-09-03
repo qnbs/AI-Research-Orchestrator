@@ -75,4 +75,28 @@ describe('BottomNavBar More disclosure', () => {
     rerender(<BottomNavBar currentView="orchestrator" {...props} />);
     expect(screen.queryByRole('button', { name: 'nav.home' })).not.toBeInTheDocument();
   });
+
+  it('moves focus to More when an external view change closes the sheet', () => {
+    const { rerender } = render(
+      <BottomNavBar
+        currentView="orchestrator"
+        onViewChange={vi.fn()}
+        knowledgeBaseArticleCount={0}
+        hasReports={false}
+        isResearching={false}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'nav.more' }));
+    screen.getByRole('button', { name: 'nav.home' }).focus();
+    rerender(
+      <BottomNavBar
+        currentView="research"
+        onViewChange={vi.fn()}
+        knowledgeBaseArticleCount={0}
+        hasReports={false}
+        isResearching={false}
+      />,
+    );
+    expect(screen.getByRole('button', { name: 'nav.more' })).toHaveFocus();
+  });
 });

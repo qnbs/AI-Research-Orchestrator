@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { View } from '../contexts/UIContext';
 import { useHaptic } from '../hooks/useHaptic';
 import { useTranslation } from '../hooks/useTranslation';
@@ -115,11 +115,27 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
     setOpenedFor(null);
   }
   const moreOpen = openedFor === currentView;
+  const moreWasOpen = useRef(false);
   const closeMore = () => setOpenedFor(null);
   const selectView = (view: View) => {
     closeMore();
     onViewChange(view);
   };
+
+  useLayoutEffect(() => {
+    if (moreWasOpen.current && !moreOpen) {
+      const active = document.activeElement;
+      if (
+        !active ||
+        !active.isConnected ||
+        active === document.body ||
+        active === document.documentElement
+      ) {
+        moreTriggerRef.current?.focus();
+      }
+    }
+    moreWasOpen.current = moreOpen;
+  }, [moreOpen]);
 
   useEffect(() => {
     if (!moreOpen) return;

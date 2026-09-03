@@ -29,24 +29,24 @@ vi.mock('../hooks/useTranslation', () => ({
   }),
 }));
 
+function renderOllamaStatus(model: string) {
+  settingsState.model = model;
+  inference.mode = 'live';
+  inference.reason = 'key';
+  inference.provider = 'ollama';
+  return render(<ProviderStatusLine />);
+}
+
 describe('ProviderStatusLine', () => {
   it('uses the Ollama provider default model when settings.model is empty', () => {
-    settingsState.model = '';
-    inference.mode = 'live';
-    inference.reason = 'key';
-    inference.provider = 'ollama';
-    render(<ProviderStatusLine />);
+    renderOllamaStatus('');
     expect(
       screen.getByText(`provider.status.ollama:${getProviderMeta('ollama').defaultModel}`),
     ).toBeInTheDocument();
   });
 
   it('ignores a leftover Gemini default model when the live provider is Ollama', () => {
-    settingsState.model = getProviderMeta('gemini').defaultModel;
-    inference.mode = 'live';
-    inference.reason = 'key';
-    inference.provider = 'ollama';
-    render(<ProviderStatusLine />);
+    renderOllamaStatus(getProviderMeta('gemini').defaultModel);
     expect(
       screen.getByText(`provider.status.ollama:${getProviderMeta('ollama').defaultModel}`),
     ).toBeInTheDocument();
