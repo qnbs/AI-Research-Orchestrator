@@ -119,8 +119,8 @@ jobs:
 
       - name: Upload test results to Codecov
         if: ${{ !cancelled() }}
-        # codecov/test-results-action@v1.2.1
-        uses: codecov/test-results-action@09d1c06c1c296f73924156ae27fef9b32c92a911
+        # codecov/test-results-action@v1.2.1 (commit behind annotated tag v1.2.1)
+        uses: codecov/test-results-action@0fa95f0e1eeaafde2c782583b36b28ad0d8c77d3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: junit.xml
