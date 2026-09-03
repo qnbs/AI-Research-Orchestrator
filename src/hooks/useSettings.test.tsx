@@ -39,7 +39,7 @@ describe('useSettings', () => {
     const store = configureStore({
       reducer: { settings: settingsReducer },
       preloadedState: {
-        settings: { data: { ...defaultSettings, appLanguage: 'de' }, isLoading: false },
+        settings: { data: { ...defaultSettings, appLanguage: 'de' as const }, isLoading: false },
       },
     });
     const Wrapper = ({ children }: { children: ReactNode }) => (
