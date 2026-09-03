@@ -67,11 +67,11 @@ Full modus operandi: [`docs/pr-merge-gate.md`](docs/pr-merge-gate.md). Neither h
 2. **Always** comment `@deepsourcebot review` on the PR after open and after **every** fix push (DeepSource AI Review is on-demand — static analysis alone is not enough; see `docs/deepsource-setup.md`).
 3. **Always** ensure CodeRabbit reviewed the latest head: if the check says **Review rate limited**, parse **Next review available in: N minutes**, wait `N` (+ a few minutes buffer), then comment `@coderabbitai review` and repeat (max **3** wait/re-trigger cycles per head; escalate after that or if a single wait exceeds **90 minutes**). After that threshold, optional-CodeRabbit is Sourcery stand-in **or** the 2026-09-03 skip when Sourcery cannot stand in — see `docs/pr-merge-gate.md`. Do **not** comment `@sourcery-ai review` while the 250k / 7-day budget is exhausted.
 4. **Arrival wait:** do not merge while CodeAnt / Greptile / Copilot / CodeScene / CodeRabbit still show “Reviewing” on the current head. GraphQL `reviewThreads` = 0 is not enough if a bot has not finished arriving (PR #299).
-5. Address **every** open inline thread from CodeRabbit, CodeAnt, Copilot, DeepSource AI Review (and any other bot reviewers listed in `.cursor/rules/013-pr-review-correction-loop.mdc`).
-6. Read **every** bot **review body** on the current head — CodeRabbit out-of-diff items often appear only there. Track body-only findings in a disposition ledger.
-7. Reply on each thread (cite fix commit) and **resolve** the conversation.
+5. Address **every** open inline thread from bots **and humans** (CodeRabbit, CodeAnt, Copilot, DeepSource AI Review, and any other reviewer listed in `.cursor/rules/013-pr-review-correction-loop.mdc`).
+6. Read **every** bot **and human** review body on the current head — CodeRabbit out-of-diff items and human top-level findings often appear only there. Track body-only findings in a disposition ledger.
+7. Reply on each thread (cite fix commit) and **resolve** the conversation. An active human `CHANGES_REQUESTED` on this head blocks merge until superseded.
 8. Re-poll after bots finish on the new commit; re-trigger DeepSource/CodeRabbit as above after every fix push.
-9. Merge only when CI is green **and** quiescence holds (arrival wait complete, no new actionable bot comments, every body-only finding disposed).
+9. Merge only when the complete `011` step 7 predicate holds: all required CI checks green **and** quiescence (arrival wait complete, no new actionable bot or human comments, every body-only finding disposed).
 
 DeepSource dashboard JavaScript analyzer remains off / advisory (`docs/project-facts.json`). Chromium and cross-browser Playwright E2E are **blocking**. Post a short disposition comment when closing a large review batch.
 

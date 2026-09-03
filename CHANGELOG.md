@@ -7,19 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
-
-- **PR merge gate (dual gate):** Canonical modus operandi is `docs/pr-merge-gate.md`. Merge to `main` requires required CI green **and** review quiescence on the same head, including the **arrival wait** (PR #299: do not merge while CodeAnt/Greptile/Copilot are still “Reviewing”). CodeRabbit optional-blocker fallbacks are Sourcery stand-in **or** the 2026-09-03 skip when Sourcery’s 250k / 7-day budget is exhausted. Agent guides (`011`/`013`, `AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md`) and `check:docs-drift` (`ci.mergeGatePath`) point at that doc.
-- **Docs-drift merge-gate checks:** `check:docs-drift` now requires arrival wait, latest-head, body-only, and disposition language in `docs/pr-merge-gate.md`. `workflowJobHasContinueOnError` matches the `jobs.e2e` block (no `e2e::`). `--csp-endpoint` is CSP-only and no longer runs the full docs-drift suite.
-
-- **Cursor rules English + stack truth:** Remaining `.mdc` bodies (`000`, `001`, `100`, `101`, `200`, `300`, `800`, `850`) are English. `100` is the multi-provider façade (not Gemini-only / not TanStack Query). `101` pins Dexie v7 + ADR 0016/0018/0021. `300` uses split `*Translations.ts` and forbids `lucide-react` / Chart.js. `000` catalogs the numbered rules. `010` records the 2026-09-03 rule-language migration.
-
 ### Added
 
 - **Sample-topic onboarding E2E:** `agent-flow` covers the secondary first-run CTA → Orchestrator with the EN `onboarding.sampleTopic` prefill (J1). Shared helper `completeOnboardingWithSampleTopic` retries the click the same way as `skipOnboarding`.
 
 ### Changed
 
+- **PR merge gate (dual gate):** Canonical modus operandi is `docs/pr-merge-gate.md`. Merge to `main` requires all required CI checks to be green **and** review quiescence on the same head, including the **arrival wait** (PR #299: do not merge while CodeAnt/Greptile/Copilot are still “Reviewing”). CodeRabbit optional-blocker fallbacks are Sourcery stand-in **or** the 2026-09-03 skip when Sourcery cannot stand in (budget exhausted, or no real review is available). Agent guides (`011`/`013`, `AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md`) and `check:docs-drift` (`ci.mergeGatePath`) point at that doc.
+- **Docs-drift merge-gate checks:** `check:docs-drift` now requires arrival wait, latest-head, body-only, and disposition language in `docs/pr-merge-gate.md`. `workflowJobHasContinueOnError` matches the `jobs.e2e` block (no `e2e::`). `--csp-endpoint` is CSP-only and no longer runs the full docs-drift suite.
+- **Cursor rules English + stack truth:** Remaining `.mdc` bodies (`000`, `001`, `100`, `101`, `200`, `300`, `800`, `850`) are English. `100` is the multi-provider façade (not Gemini-only / not TanStack Query). `101` pins Dexie v7 + ADR 0016/0018/0021. `300` uses split `*Translations.ts` and forbids `lucide-react` / Chart.js. `000` catalogs the numbered rules. `010` records the 2026-09-03 rule-language migration.
 - **Desktop header density:** Literature review chrome is a single row from `md` up (brand + inference + primary nav + tools). The view title stays an `sr-only` `h1`. Search/Quick Add labels appear from `xl`. Mobile header is unchanged.
 - **GitHub topics (`NOW-P2-TOPICS`):** Intended topic set drops `multi-agent-systems` (no real multi-agent graph; sequential pipeline). Canonical names live in `docs/project-facts.json` `githubTopics`. Applying the PUT requires a token with Administration (the GitHub App integration returns 403). Until a maintainer applies the payload, the live repo may still list that topic.
 - **Audit docs (2026-09-03 closeout):** Live `main` after #294/#296/#297 is `0b9c599`. Ticket table marks the journey wave Done; `NOW-P2-OPENROUTER` stays deferred.

@@ -89,6 +89,27 @@ function extractE2eSpecPathsFromWorkflow(workflowYaml) {
   return [...new Set(specs)];
 }
 
+function assertMergeGateDocument(mergeGate, path, errors) {
+  const required = [
+    [/dual gate/i, `${path} must document the dual merge gate`],
+    [/latest head/i, `${path} must require checks on the latest head`],
+    [/arrival wait/i, `${path} must document the arrival wait`],
+    [/body-only|outside diff/i, `${path} must cover body-only / outside-diff findings`],
+    [/disposition/i, `${path} must require a disposition ledger`],
+  ];
+  for (const [pattern, message] of required) {
+    assertMatch(mergeGate, pattern, message, errors);
+  }
+}
+
+/** @param {{ label: string, text: string }[]} files */
+function assertMergeGatePointers(files, configuredPath, errors) {
+  const re = new RegExp(escapeRegExp(configuredPath));
+  for (const { label, text } of files) {
+    assertMatch(text, re, `${label} should reference ${configuredPath}`, errors);
+  }
+}
+
 function workflowJobHasContinueOnError(workflowYaml, jobName) {
   const key = String(jobName).replace(/:$/, '');
   const lines = workflowYaml.split(/\r?\n/);
@@ -281,58 +302,29 @@ async function checkProjectFacts(errors, facts) {
   if (!facts.ci?.mergeGatePath) {
     errors.push('docs/project-facts.json ci.mergeGatePath is required');
   } else {
-    const mergeGate = await readOptional(facts.ci.mergeGatePath);
+    const configuredPath = facts.ci.mergeGatePath;
+    const mergeGate = await readOptional(configuredPath);
     if (!mergeGate) {
-      errors.push(`Missing merge-gate doc: ${facts.ci.mergeGatePath}`);
+      errors.push(`Missing merge-gate doc: ${configuredPath}`);
     } else {
-      assertMatch(
-        mergeGate,
-        /dual gate/i,
-        `${facts.ci.mergeGatePath} must document the dual merge gate`,
-        errors,
-      );
-      assertMatch(
-        mergeGate,
-        /latest head/i,
-        `${facts.ci.mergeGatePath} must require checks on the latest head`,
-        errors,
-      );
-      assertMatch(
-        mergeGate,
-        /arrival wait/i,
-        `${facts.ci.mergeGatePath} must document the arrival wait`,
-        errors,
-      );
-      assertMatch(
-        mergeGate,
-        /body-only|outside diff/i,
-        `${facts.ci.mergeGatePath} must cover body-only / outside-diff findings`,
-        errors,
-      );
-      assertMatch(
-        mergeGate,
-        /disposition/i,
-        `${facts.ci.mergeGatePath} must require a disposition ledger`,
-        errors,
-      );
+      assertMergeGateDocument(mergeGate, configuredPath, errors);
     }
-    const contributing = await read('CONTRIBUTING.md');
-    const indexMdc = await read('.cursor/index.mdc');
-    const claude = await read('CLAUDE.md');
-    const rule011 = await read('.cursor/rules/011-coderabbit-pr-gate.mdc');
-    const rule013 = await read('.cursor/rules/013-pr-review-correction-loop.mdc');
-    const copilot = await read('.github/copilot-instructions.md');
-    for (const [label, text] of [
-      ['AGENTS.md', agents],
-      ['CONTRIBUTING.md', contributing],
-      ['.cursor/index.mdc', indexMdc],
-      ['CLAUDE.md', claude],
-      ['011-coderabbit-pr-gate.mdc', rule011],
-      ['013-pr-review-correction-loop.mdc', rule013],
-      ['copilot-instructions.md', copilot],
-    ]) {
-      assertMatch(text, /pr-merge-gate/, `${label} should reference docs/pr-merge-gate.md`, errors);
-    }
+    assertMergeGatePointers(
+      [
+        { label: 'AGENTS.md', text: agents },
+        { label: 'CONTRIBUTING.md', text: await read('CONTRIBUTING.md') },
+        { label: '.cursor/index.mdc', text: await read('.cursor/index.mdc') },
+        { label: 'CLAUDE.md', text: await read('CLAUDE.md') },
+        { label: '011-coderabbit-pr-gate.mdc', text: await read('.cursor/rules/011-coderabbit-pr-gate.mdc') },
+        {
+          label: '013-pr-review-correction-loop.mdc',
+          text: await read('.cursor/rules/013-pr-review-correction-loop.mdc'),
+        },
+        { label: 'copilot-instructions.md', text: await read('.github/copilot-instructions.md') },
+      ],
+      configuredPath,
+      errors,
+    );
   }
 
   if (facts.ci?.cancelInProgressOnPullRequestOnly === true) {

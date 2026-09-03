@@ -9,7 +9,9 @@
 ## Checklist
 
 - [ ] `CHANGELOG.md` updated if this PR changes user-facing behavior or adds/removes a feature
-- [ ] Dual merge gate understood (`docs/pr-merge-gate.md`): required CI green **and** review quiescence on this head
+- [ ] Dual merge gate (`docs/pr-merge-gate.md`): all required CI checks are green on this head
+- [ ] Dual merge gate: real latest-head CodeRabbit review (`APPROVED`/`COMMENTED`) **or** a valid `011` step 6 fallback
 - [ ] `@deepsourcebot review` posted (first line exact) after open / every fix push
 - [ ] Arrival wait complete — no in-scope bot still “Reviewing” on this head
-- [ ] GraphQL threads resolved **and** body-only / outside-diff findings disposed (`fixed` / `replied` / `deferred` with rationale)
+- [ ] GraphQL threads resolved **and** body-only / outside-diff / human review-body findings disposed (`fixed` / `replied` / `deferred` with rationale)
+- [ ] No active human `CHANGES_REQUESTED` on this head

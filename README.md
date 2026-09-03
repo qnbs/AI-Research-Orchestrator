@@ -136,7 +136,7 @@ On every **push** to `main` and every **PR** targeting `main`, GitHub Actions ru
 | PWA service-worker registration (real production build + `vite preview`)        | `pwa-e2e.yml` (**blocking**)           |
 | CodeQL, Dependency Review, `pnpm audit` (high+), gitleaks                       | `security.yml`                         |
 
-GitHub Pages upload/deploy runs only on `refs/heads/main` (not on pull requests). Required checks, PR-only `cancel-in-progress`, and ruleset expectations: [`docs/ci-branch-governance.md`](./docs/ci-branch-governance.md). Dual merge gate (CI + review quiescence, arrival wait): [`docs/pr-merge-gate.md`](./docs/pr-merge-gate.md). Contributor review loop: [`CONTRIBUTING.md`](./CONTRIBUTING.md).
+GitHub Pages upload/deploy runs only on `refs/heads/main` (not on pull requests). Required checks, PR-only `cancel-in-progress`, and ruleset expectations: [`docs/ci-branch-governance.md`](./docs/ci-branch-governance.md). Dual merge gate (all required CI checks green **and** review quiescence, including the arrival wait): [`docs/pr-merge-gate.md`](./docs/pr-merge-gate.md). Contributor review loop: [`CONTRIBUTING.md`](./CONTRIBUTING.md).
 
 #### Cursor / IDE
 
