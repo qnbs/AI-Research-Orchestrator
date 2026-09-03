@@ -161,12 +161,12 @@ test.describe('3. Orchestrator Form', () => {
     await expect(input).toHaveValue('Long COVID cognitive impairment');
   });
 
-  test('empty submit stays on form (HTML5 required)', async ({ page }) => {
-    // Clear field then click submit — HTML5 required should block submission
+  test('empty submit stays on form (required topic)', async ({ page }) => {
     const input = page.locator('#researchTopic');
     await input.fill('');
-    await page.locator('button[type="submit"]').first().click();
-    // Form is still visible (not navigated away)
+    const submit = page.locator('button[type="submit"]').first();
+    await expect(submit).toBeDisabled();
+    await expect(page.getByRole('alert')).toBeVisible();
     await expect(input).toBeVisible();
   });
 
