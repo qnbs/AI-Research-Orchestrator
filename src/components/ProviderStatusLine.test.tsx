@@ -24,8 +24,7 @@ vi.mock('../contexts/SettingsContext', () => ({
 
 vi.mock('../hooks/useTranslation', () => ({
   useTranslation: () => ({
-    t: (key: string, vars?: Record<string, string>) =>
-      vars?.model ? `${key}:${vars.model}` : key,
+    t: (key: string, vars?: Record<string, string>) => (vars?.model ? `${key}:${vars.model}` : key),
     lang: 'en',
   }),
 }));
