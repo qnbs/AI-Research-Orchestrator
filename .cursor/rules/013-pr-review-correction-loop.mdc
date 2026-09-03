@@ -53,7 +53,7 @@ Do **not** merge on stale bot approval from an older commit while newer commits 
 
 ## CI vs advisory checks
 
-- **Blocking:** `deploy.yml` quality gates, Chromium E2E (`e2e.yml`), cross-browser E2E (`e2e-cross-browser.yml` — Firefox/WebKit/mobile Chrome), required branch protections, Socket when flagged blocking.
+- **Blocking:** `deploy.yml` quality gates (Typecheck/Lint/Tests, Production Build, audit), Chromium E2E (`e2e.yml`), cross-browser E2E (`e2e-cross-browser.yml` — Firefox/WebKit/mobile Chrome), axe smoke (`a11y.yml`), PWA service-worker registration (`pwa-e2e.yml`), `security.yml` (CodeQL, Dependency Review, audit, gitleaks), required branch protections, Socket when flagged blocking.
 - **Advisory (default):** DeepSource JavaScript (`deepsourceJavaScriptAdvisory: true`), Claude Code skipped jobs on PRs without `@claude`.
 - **Claude Code `action_required`:** Workflow triggered by `pull_request_review_comment` may show **Approve and run workflows** with zero jobs — GitHub workflow-approval gate, not a failed test. Job `if` still requires `@claude` in the comment body.
 
