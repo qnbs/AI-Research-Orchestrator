@@ -97,7 +97,13 @@ const NavItem: React.FC<{
   );
 };
 
-export const BottomNavBar: React.FC<BottomNavBarProps> = ({
+export const BottomNavBar: React.FC<BottomNavBarProps> = (props) => (
+  // Remount when the destination changes so More starts closed without
+  // setState-during-render or setState-in-effect (eslint react-hooks).
+  <BottomNavBarInner key={props.currentView} {...props} />
+);
+
+const BottomNavBarInner: React.FC<BottomNavBarProps> = ({
   currentView,
   onViewChange,
   knowledgeBaseArticleCount,
@@ -115,10 +121,6 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
     setMoreOpen(false);
     onViewChange(view);
   };
-
-  useEffect(() => {
-    setMoreOpen(false);
-  }, [currentView]);
 
   useEffect(() => {
     if (!moreOpen) return;
