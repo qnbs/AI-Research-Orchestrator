@@ -163,11 +163,13 @@ test.describe('3. Orchestrator Form', () => {
 
   test('empty submit stays on form (required topic)', async ({ page }) => {
     const input = page.locator('#researchTopic');
-    await input.fill('');
     const submit = page.locator('button[type="submit"]').first();
+    await input.fill('');
+    await expect(submit).toBeDisabled();
+    await expect(input).toBeVisible();
+    await input.fill('   ');
     await expect(submit).toBeDisabled();
     await expect(page.getByRole('alert')).toBeVisible();
-    await expect(input).toBeVisible();
   });
 
   test('arXiv checkbox exists in form', async ({ page }) => {
