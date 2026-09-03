@@ -1,4 +1,4 @@
-import React, { useState, useEffect, memo } from 'react';
+import React, { useState, useEffect, useRef, memo } from 'react';
 import type { ResearchInput, Settings } from '../types';
 import { ARTICLE_TYPES } from '../types';
 import { usePresets } from '../contexts/PresetContext';
@@ -89,10 +89,16 @@ const InputFormComponent: React.FC<InputFormProps> = ({
   });
   const { t } = useTranslation();
   const { requestViewChange } = useUI();
-  const errors: { topN?: string } =
-    formData.topNToSynthesize > formData.maxArticlesToScan
+  const topicRef = useRef<HTMLTextAreaElement>(null);
+  const topicBlank = !formData.researchTopic.trim();
+  const errors: { topN?: string; topic?: string } = {
+    ...(formData.topNToSynthesize > formData.maxArticlesToScan
       ? { topN: t('orchestrator.error.topn_exceeds_max') }
-      : {};
+      : {}),
+    ...(formData.researchTopic.length > 0 && topicBlank
+      ? { topic: t('inputForm.error.topic_required') }
+      : {}),
+  };
   const { presets, addPreset } = usePresets();
   const [isPresetModalOpen, setIsPresetModalOpen] = useState(false);
   const [newPresetName, setNewPresetName] = useState('');
@@ -117,6 +123,10 @@ const InputFormComponent: React.FC<InputFormProps> = ({
       /* ignore quota */
     }
   }, [optionsOpen]);
+
+  useEffect(() => {
+    topicRef.current?.setCustomValidity(topicBlank ? t('inputForm.error.topic_required') : '');
+  }, [topicBlank, t]);
 
   useEffect(() => {
     if (prefilledTopic) {
@@ -208,6 +218,7 @@ const InputFormComponent: React.FC<InputFormProps> = ({
               {t('inputForm.topic.label')}
             </label>
             <textarea
+              ref={topicRef}
               id="researchTopic"
               name="researchTopic"
               rows={3}
@@ -215,8 +226,19 @@ const InputFormComponent: React.FC<InputFormProps> = ({
               onChange={handleChange}
               className="glass-input block w-full rounded-lg shadow-inner py-3 px-4 text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-brand-accent transition-all text-base"
               required
+              aria-invalid={Boolean(errors.topic) || undefined}
+              aria-describedby={errors.topic ? 'input-form-topic-error' : undefined}
               placeholder={t('inputForm.topic.placeholder')}
             />
+            {errors.topic && (
+              <p
+                id="input-form-topic-error"
+                role="alert"
+                className="mt-2 text-xs text-red-400 font-medium bg-red-500/10 border border-red-500/20 p-2 rounded-md"
+              >
+                {errors.topic}
+              </p>
+            )}
             <div className="flex flex-wrap gap-2 mt-3">
               {SAMPLE_CHIP_KEYS.map((key) => (
                 <button
@@ -278,7 +300,7 @@ const InputFormComponent: React.FC<InputFormProps> = ({
 
           <button
             type="submit"
-            disabled={isLoading || hasErrors}
+            disabled={isLoading || hasErrors || topicBlank}
             className="w-full inline-flex justify-center items-center py-3.5 px-4 border border-transparent shadow-lg shadow-brand-accent/20 text-base font-bold rounded-lg text-brand-text-on-accent bg-gradient-to-r from-brand-primary to-accent-cyan hover:shadow-glow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface focus:ring-brand-accent disabled:from-border disabled:to-border disabled:text-text-secondary disabled:cursor-not-allowed transition-all duration-300 motion-reduce:hover:scale-100 hover:scale-[1.01] active:scale-[0.99]"
           >
             {isLoading ? (

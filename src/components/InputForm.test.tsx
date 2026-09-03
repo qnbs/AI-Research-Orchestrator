@@ -128,6 +128,26 @@ describe('InputForm educationalDemoMode', () => {
     );
   });
 
+  it('does not start a run on Cmd+Enter when the topic is only whitespace', () => {
+    const onSubmit = vi.fn();
+    render(
+      <InputForm
+        onSubmit={onSubmit}
+        isLoading={false}
+        defaultSettings={defaults}
+        prefilledTopic={null}
+        onPrefillConsumed={vi.fn()}
+      />,
+    );
+    fireEvent.change(screen.getByLabelText('inputForm.topic.label'), {
+      target: { value: '   ' },
+    });
+    expect(screen.getByRole('alert')).toHaveTextContent('inputForm.error.topic_required');
+    expect(screen.getByRole('button', { name: 'inputForm.submit' })).toBeDisabled();
+    fireEvent.keyDown(screen.getByRole('search'), { key: 'Enter', metaKey: true });
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
   it('does not start a run on Cmd+Enter when the topic is empty', () => {
     const onSubmit = vi.fn();
     render(

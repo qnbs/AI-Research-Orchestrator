@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { View } from '../contexts/UIContext';
 import { useHaptic } from '../hooks/useHaptic';
 import { useTranslation } from '../hooks/useTranslation';
@@ -39,6 +39,7 @@ const NavItem: React.FC<{
   ariaExpanded?: boolean;
   ariaControls?: string;
   ariaDescribedBy?: string;
+  buttonRef?: React.Ref<HTMLButtonElement>;
 }> = ({
   label,
   icon,
@@ -51,10 +52,12 @@ const NavItem: React.FC<{
   ariaExpanded,
   ariaControls,
   ariaDescribedBy,
+  buttonRef,
 }) => {
   const haptic = useHaptic();
   return (
     <button
+      ref={buttonRef}
       type="button"
       onClick={() => {
         haptic('light');
@@ -104,12 +107,39 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
   const { t } = useTranslation();
   const { setIsCommandPaletteOpen } = useUI();
   const [moreOpen, setMoreOpen] = useState(false);
+  const [moreView, setMoreView] = useState(currentView);
+  const navRef = useRef<HTMLElement>(null);
+  const moreTriggerRef = useRef<HTMLButtonElement>(null);
   const reportHint = t('nav.requires_report');
   const reportHintId = 'bottom-nav-report-hint';
+  if (moreView !== currentView) {
+    setMoreView(currentView);
+    setMoreOpen(false);
+  }
   const selectView = (view: View) => {
     setMoreOpen(false);
     onViewChange(view);
   };
+
+  useEffect(() => {
+    if (!moreOpen) return;
+    const onPointerDown = (event: MouseEvent) => {
+      if (navRef.current && !navRef.current.contains(event.target as Node)) {
+        setMoreOpen(false);
+      }
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      setMoreOpen(false);
+      moreTriggerRef.current?.focus();
+    };
+    document.addEventListener('mousedown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [moreOpen]);
   const moreActive = [
     'home',
     'journals',
@@ -152,7 +182,10 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
   ];
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-surface/80 backdrop-blur-xl border-t border-border z-30 shadow-[0_-5px_20px_rgba(0,0,0,0.2)] pb-safe">
+    <nav
+      ref={navRef}
+      className="md:hidden fixed bottom-0 left-0 right-0 bg-surface/80 backdrop-blur-xl border-t border-border z-30 shadow-[0_-5px_20px_rgba(0,0,0,0.2)] pb-safe"
+    >
       {!hasReports && (
         <span id={reportHintId} className="sr-only">
           {reportHint}
@@ -194,6 +227,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
           isActive={moreActive || moreOpen}
           ariaExpanded={moreOpen}
           ariaControls={MORE_MENU_ID}
+          buttonRef={moreTriggerRef}
           onClick={() => setMoreOpen((open) => !open)}
         />
       </div>
