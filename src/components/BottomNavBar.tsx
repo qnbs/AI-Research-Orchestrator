@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { View } from '../contexts/UIContext';
 import { useHaptic } from '../hooks/useHaptic';
 import { useTranslation } from '../hooks/useTranslation';
@@ -106,31 +106,47 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
 }) => {
   const { t } = useTranslation();
   const { setIsCommandPaletteOpen } = useUI();
-  const [moreOpen, setMoreOpen] = useState(false);
-  const [moreView, setMoreView] = useState(currentView);
+  const [openedFor, setOpenedFor] = useState<View | null>(null);
   const navRef = useRef<HTMLElement>(null);
   const moreTriggerRef = useRef<HTMLButtonElement>(null);
   const reportHint = t('nav.requires_report');
   const reportHintId = 'bottom-nav-report-hint';
-  if (moreView !== currentView) {
-    setMoreView(currentView);
-    setMoreOpen(false);
+  if (openedFor !== null && openedFor !== currentView) {
+    setOpenedFor(null);
   }
+  const moreOpen = openedFor === currentView;
+  const moreWasOpen = useRef(false);
+  const closeMore = () => setOpenedFor(null);
   const selectView = (view: View) => {
-    setMoreOpen(false);
+    closeMore();
     onViewChange(view);
   };
+
+  useLayoutEffect(() => {
+    if (moreWasOpen.current && !moreOpen) {
+      const active = document.activeElement;
+      if (
+        !active ||
+        !active.isConnected ||
+        active === document.body ||
+        active === document.documentElement
+      ) {
+        moreTriggerRef.current?.focus();
+      }
+    }
+    moreWasOpen.current = moreOpen;
+  }, [moreOpen]);
 
   useEffect(() => {
     if (!moreOpen) return;
     const onPointerDown = (event: MouseEvent) => {
       if (navRef.current && !navRef.current.contains(event.target as Node)) {
-        setMoreOpen(false);
+        setOpenedFor(null);
       }
     };
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return;
-      setMoreOpen(false);
+      setOpenedFor(null);
       moreTriggerRef.current?.focus();
     };
     document.addEventListener('mousedown', onPointerDown);
@@ -228,7 +244,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
           ariaExpanded={moreOpen}
           ariaControls={MORE_MENU_ID}
           buttonRef={moreTriggerRef}
-          onClick={() => setMoreOpen((open) => !open)}
+          onClick={() => setOpenedFor((view) => (view === currentView ? null : currentView))}
         />
       </div>
       {moreOpen && (
@@ -248,7 +264,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
                 } else if (item.view) {
                   onViewChange(item.view);
                 }
-                setMoreOpen(false);
+                closeMore();
               }}
               className={`w-full text-left flex items-center gap-3 px-4 py-3 min-h-11 text-sm hover:bg-surface-hover focus-ring-aa border-b border-border/40 ${item.muted ? 'opacity-60' : ''}`}
             >

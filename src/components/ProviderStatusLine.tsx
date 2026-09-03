@@ -4,9 +4,22 @@ import { useTranslation } from '../hooks/useTranslation';
 import { useSettings } from '../contexts/SettingsContext';
 import type { View } from '../types/ui';
 import { PROVIDER_LABEL_KEYS } from '../i18n/providerLabelKeys';
+import { getProviderMeta } from '../services/providers/provider';
 
 interface ProviderStatusLineProps {
   onConfigure?: (view: View) => void;
+}
+
+const CLOUD_PROVIDER_IDS = ['gemini', 'openai', 'anthropic', 'heuristic'] as const;
+
+/** Prefer a configured Ollama tag; ignore leftover cloud-provider defaults. */
+export function ollamaStatusModel(configured: string | undefined): string {
+  const ollama = getProviderMeta('ollama');
+  const raw = configured?.trim();
+  if (!raw) return ollama.defaultModel;
+  const foreignDefaults = CLOUD_PROVIDER_IDS.map((id) => getProviderMeta(id).defaultModel);
+  if (foreignDefaults.includes(raw)) return ollama.defaultModel;
+  return raw;
 }
 
 /**
@@ -24,7 +37,9 @@ export const ProviderStatusLine: React.FC<ProviderStatusLineProps> = ({ onConfig
         ? t('provider.status.offline')
         : mode === 'live'
           ? provider === 'ollama'
-            ? t('provider.status.ollama', { model: settings.ai.model || 'local' })
+            ? t('provider.status.ollama', {
+                model: ollamaStatusModel(settings.ai.model),
+              })
             : t('provider.status.live', {
                 provider: t(PROVIDER_LABEL_KEYS[provider] ?? 'settings.ai.provider_label.gemini'),
               })

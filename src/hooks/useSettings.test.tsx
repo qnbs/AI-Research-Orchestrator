@@ -5,6 +5,7 @@ import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import settingsReducer, { defaultSettings } from '../store/slices/settingsSlice';
 import { SettingsHydrator, useSettings } from './useSettings';
+import { getProviderMeta } from '../services/providers/provider';
 import {
   getSettings as getSettingsFromDb,
   saveSettings as saveSettingsToDb,
@@ -135,5 +136,23 @@ describe('useSettings', () => {
         ai: expect.objectContaining({ ncbiApiKey: '' }),
       }),
     );
+  });
+
+  it('SettingsHydrator uses the provider default model when the stored model is foreign', async () => {
+    vi.mocked(getSettingsFromDb).mockResolvedValueOnce({
+      ...defaultSettings,
+      ai: {
+        ...defaultSettings.ai,
+        provider: 'ollama',
+        model: getProviderMeta('gemini').defaultModel,
+      },
+    });
+
+    const { store, Wrapper } = makeWrapper();
+    renderHook(() => SettingsHydrator(), { wrapper: Wrapper });
+
+    await waitFor(() => expect(store.getState().settings.isLoading).toBe(false));
+    expect(store.getState().settings.data.ai.provider).toBe('ollama');
+    expect(store.getState().settings.data.ai.model).toBe(getProviderMeta('ollama').defaultModel);
   });
 });
