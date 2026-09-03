@@ -1,3 +1,52 @@
+# 2026-09-03 — CodeRabbit rate-limit is not a hard merge blocker
+
+- **Why:** Org-wide CodeRabbit fair-use leaves latest-head checks as “Review rate limited” for hours. Waiting 3 cycles / 90 minutes was blocking merges that already had green required CI and arrived bot reviews.
+- **What:** `011` clause **(d)** — rate-limit or no real CodeRabbit review on this head is documented, not a merge block. Best-effort `@coderabbitai review` only. Arrival wait no longer treats rate-limit as “Reviewing”. Restated in `013`, `docs/pr-merge-gate.md`, governance, agent guides, PR template.
+- **Impact:** PRs can land on (d) while CodeRabbit is rate-limited. A latest-head `CHANGES_REQUESTED` still blocks.
+- **Not done:** Merge of #300/#301 until remaining dual-gate halves hold.
+
+# 2026-09-03 — Codecov coverage, tests, and bundles
+
+- **Why:** Use the org `CODECOV_TOKEN` for Coverage, Test Analytics, and Bundle Analysis instead of artifacts-only `coverage/`.
+- **What:** `codecov.yml` + `docs/codecov.md`. Quality job uploads `coverage/lcov.info` (`codecov-action@v5`) and `junit.xml` (`test-results-action@v1`). Vite plugin last in `plugins`; Production Build passes `CODECOV_TOKEN` (never `VITE_*`).
+- **Impact:** Codecov dashboard and PR comments after the first successful `main`/PR upload. Checks stay informational / advisory.
+- **Not done:** Do not add Codecov to `mainrules` required checks until a `main` baseline exists.
+
+# 2026-09-03 — Drop duplicate deploy.yml pnpm audit
+
+- **Why:** On #301 head `c77355c`, `Typecheck, Lint & Tests` failed because the `deploy.yml` `pnpm audit` step timed out 3× against `registry.npmjs.org` (error 23) and exhausted the 20-minute quality-job budget. The required `security.yml` `pnpm audit (high+)` job on the same SHA succeeded.
+- **What:** Removed the blocking audit step from `deploy.yml`. Required high+ audit stays on `security.yml`. `check:audit-ignore-paths` still runs in the quality job. Docs (`ci-branch-governance`, `audit-governance`, `CONTRIBUTING`, `AGENTS`, `013`) match that ownership.
+- **Impact:** Quality can finish typecheck/lint/`test:coverage` without a second registry-bulk call. Ruleset required check `pnpm audit (high+)` is unchanged.
+- **Not done:** Merge of #300/#301 until each dual gate holds.
+
+# 2026-09-03 — CodeRabbit dual-gate wording pass
+
+- **Why:** CodeRabbit `CHANGES_REQUESTED` on `27f9ea6` (outside-diff + inline) asked for complete inventories, head-SHA review filters, abort-like retries, and matching `011` fallback text in agent guides.
+- **What:** `CONTRIBUTING` lists `pwa-e2e.yml`. `013` paginates `reviewThreads` and filters reviews by `headRefOid`. `workflowJobHasContinueOnError` is job-level only. `AGENTS.md`/`CLAUDE.md` add the README `010` exception plus full `(b)`/`(c)` and body-only dispositions. `102` forbids retry when `isAbortLikeError`. `300` names `translations.ts` and `*Translations.ts`.
+- **Impact:** Agent collection commands cannot treat a stale CodeRabbit review as the latest-head review, and a step-level `continue-on-error` no longer fails docs-drift.
+- **Not done:** Merge of #300/#301 until each dual gate holds.
+
+# 2026-09-03 — CodeScene flatten for docs-drift facts
+
+- **Why:** CodeScene quality gate on #301 failed `checkProjectFacts` (19 logical blocks) and `main` (nested `--csp-endpoint` exit).
+- **What:** Moved project-facts checks into `scripts/lib/docsDriftFacts.mjs`. `main` only dispatches CSP-only vs full docs-drift. YAML scanners (`extractTopLevelCancelInProgress`, `workflowJobHasContinueOnError`) are split into ≤2-block helpers; 5-arg asserts take a context object.
+- **Impact:** Same drift assertions; new helpers stay under Bare Minimum “Bumpy Road” and argument-count limits.
+- **Not done:** Merge of #300/#301 until each dual gate holds.
+
+# 2026-09-03 — Cursor rules and agent docs English + stack truth
+
+- **Why:** Domain `.mdc` files were still German and described a Gemini-only / TanStack Query / single-`translations.ts` world after the dual-gate pass.
+- **What:** Migrated remaining rules to English. `100` matches ADR 0008 providers + heuristic. `101` pins Dexie v7 and partial/trust/demo ADRs. `300`/`800`/`001`/`200`/`000`/`850`/`010` aligned. Manifest lists standing deferrals.
+- **Impact:** New agents load current stack and merge policy from every numbered rule, not only `011`/`013`.
+- **Not done:** OpenRouter. Live GitHub topic PUT (admin). `v0.4.3`. Merge of #300/#301 until each dual gate holds.
+
+# 2026-09-03 — Dual merge gate curated into repo policy
+
+- **Why:** PR #299 was squash-merged on green required CI while CodeAnt was still “🔄 Reviewing…” and Greptile had not arrived. A P2 (missing **Impact** on a meeting-note entry) landed after merge. Agents also had two standing instructions (CodeRabbit not a blocker when rate-limited; Sourcery budget exhausted) that lived only in session memory.
+- **What:** Canonical human doc `docs/pr-merge-gate.md`. `011` step 7 is still the authoritative predicate and now includes the dual gate, arrival wait, and CodeRabbit skip **(c)** when Sourcery cannot stand in. `013`, `docs/ci-branch-governance.md`, `AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md`, copilot instructions, `.cursor/index.mdc`, PR template, `850`, and `check:docs-drift` (`ci.mergeGatePath`) all point at it.
+- **Impact:** Future agents cannot treat green CI or a thread-only sweep as mergeable. Late-arriving review bots are an explicit wait. Sourcery must not be re-triggered while the 250k / 7-day budget is exhausted.
+- **Not done:** OpenRouter. Live GitHub topic PUT (admin). `v0.4.3`. PR #300 (notes Impact) stays open until its own dual gate holds.
+
 # 2026-09-03 — Desktop header density (post-#298)
 
 - **Why:** Closeout residual: two-row laptop header stole vertical space from the form.

@@ -70,6 +70,10 @@
     "claudeCodeReviewWorkflow": false,
     "claudeOnDemandWorkflow": true,
     "branchGovernancePath": "docs/ci-branch-governance.md",
+    "mergeGatePath": "docs/pr-merge-gate.md",
+    "codecovAdvisory": true,
+    "codecovConfigPath": "codecov.yml",
+    "codecovDocsPath": "docs/codecov.md",
     "cancelInProgressOnPullRequestOnly": true,
     "concurrencyGuardedWorkflows": [
       ".github/workflows/deploy.yml",

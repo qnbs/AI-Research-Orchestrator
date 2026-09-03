@@ -14,7 +14,7 @@
 
 > **Client-only PWA for biomedical literature review:** PubMed/arXiv retrieval, multi-provider AI (or heuristic fallback), a local knowledge base, and scientometric exploration.
 
-**[Live Demo](https://qnbs.github.io/AI-Research-Orchestrator/)** · [SECURITY.md](./SECURITY.md) · [CONTRIBUTING.md](./CONTRIBUTING.md) · [CHANGELOG.md](./CHANGELOG.md) · [AGENTS.md](./AGENTS.md)
+**[Live Demo](https://qnbs.github.io/AI-Research-Orchestrator/)** · [SECURITY.md](./SECURITY.md) · [CONTRIBUTING.md](./CONTRIBUTING.md) · [CHANGELOG.md](./CHANGELOG.md) · [AGENTS.md](./AGENTS.md) · [PR merge gate](./docs/pr-merge-gate.md)
 
 Provider keys (optional): [Gemini](https://aistudio.google.com/) · OpenAI · Anthropic · or run **Ollama / Heuristic** with no cloud key.
 
@@ -127,20 +127,21 @@ pnpm run build
 
 On every **push** to `main` and every **PR** targeting `main`, GitHub Actions runs:
 
-| Gate                                                                            | Workflow                               |
-| ------------------------------------------------------------------------------- | -------------------------------------- |
-| Typecheck, lint, format, coverage, docs-drift, build, bundle budget, Lighthouse | `deploy.yml`                           |
-| Playwright E2E (Chromium, seven specs)                                          | `e2e.yml` (**blocking**)               |
-| Cross-browser E2E (Firefox, WebKit, mobile Chrome — same seven specs)           | `e2e-cross-browser.yml` (**blocking**) |
-| Axe critical/serious smoke                                                      | `a11y.yml` (**blocking**)              |
-| PWA service-worker registration (real production build + `vite preview`)        | `pwa-e2e.yml` (**blocking**)           |
-| CodeQL, Dependency Review, `pnpm audit` (high+), gitleaks                       | `security.yml`                         |
+| Gate                                                                            | Workflow                                              |
+| ------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| Typecheck, lint, format, coverage, docs-drift, build, bundle budget, Lighthouse | `deploy.yml`                                          |
+| Playwright E2E (Chromium, seven specs)                                          | `e2e.yml` (**blocking**)                              |
+| Cross-browser E2E (Firefox, WebKit, mobile Chrome — same seven specs)           | `e2e-cross-browser.yml` (**blocking**)                |
+| Axe critical/serious smoke                                                      | `a11y.yml` (**blocking**)                             |
+| PWA service-worker registration (real production build + `vite preview`)        | `pwa-e2e.yml` (**blocking**)                          |
+| CodeQL, Dependency Review, `pnpm audit` (high+), gitleaks                       | `security.yml`                                        |
+| Codecov (coverage, Test Analytics, Bundle Analysis) — advisory                  | `deploy.yml` + [`docs/codecov.md`](./docs/codecov.md) |
 
-GitHub Pages upload/deploy runs only on `refs/heads/main` (not on pull requests). Required checks, PR-only `cancel-in-progress`, and ruleset expectations: [`docs/ci-branch-governance.md`](./docs/ci-branch-governance.md). Contributor review loop: [`CONTRIBUTING.md`](./CONTRIBUTING.md).
+GitHub Pages upload/deploy runs only on `refs/heads/main` (not on pull requests). Required checks, PR-only `cancel-in-progress`, and ruleset expectations: [`docs/ci-branch-governance.md`](./docs/ci-branch-governance.md). Dual merge gate (all required CI checks green **and** review quiescence, including the arrival wait): [`docs/pr-merge-gate.md`](./docs/pr-merge-gate.md). Contributor review loop: [`CONTRIBUTING.md`](./CONTRIBUTING.md).
 
 #### Cursor / IDE
 
-[`AGENTS.md`](./AGENTS.md), [`.cursor/index.mdc`](./.cursor/index.mdc), `.cursor/rules/*.mdc`, and [`CONTRIBUTING.md`](./CONTRIBUTING.md).
+[`AGENTS.md`](./AGENTS.md), [`.cursor/index.mdc`](./.cursor/index.mdc), `.cursor/rules/*.mdc`, [`docs/pr-merge-gate.md`](./docs/pr-merge-gate.md), and [`CONTRIBUTING.md`](./CONTRIBUTING.md).
 
 ### Multi-provider setup
 
@@ -222,6 +223,7 @@ MIT — see [`LICENSE`](./LICENSE).
 
 - [CHANGELOG.md](./CHANGELOG.md) — what shipped
 - [docs/ci-branch-governance.md](./docs/ci-branch-governance.md) — CI / ruleset
+- [docs/pr-merge-gate.md](./docs/pr-merge-gate.md) — dual merge gate (CI + review quiescence)
 - [docs/adr/README.md](./docs/adr/README.md) — architecture decisions
 - [docs/release-policy.md](./docs/release-policy.md) — version / deploy identity
 
@@ -316,11 +318,11 @@ pnpm run test:e2e    # lokal eher scoped; volle Suite in CI
 pnpm run build
 ```
 
-Push/PR gegen `main`: `deploy.yml`, blockierendes Chromium-E2E, blockierendes Cross-Browser-E2E (Firefox/WebKit/mobile Chrome), Axe-A11y, blockierendes PWA-Service-Worker-Registrierungs-Gate (`pwa-e2e.yml`), Security. Pages-Deploy nur auf `main`. Details: [`docs/ci-branch-governance.md`](./docs/ci-branch-governance.md).
+Push/PR gegen `main`: `deploy.yml`, blockierendes Chromium-E2E, blockierendes Cross-Browser-E2E (Firefox/WebKit/mobile Chrome), Axe-A11y, blockierendes PWA-Service-Worker-Registrierungs-Gate (`pwa-e2e.yml`), Security. Pages-Deploy nur auf `main`. Details: [`docs/ci-branch-governance.md`](./docs/ci-branch-governance.md). Dual-Merge-Gate (CI + Review-Quieszenz): [`docs/pr-merge-gate.md`](./docs/pr-merge-gate.md).
 
 #### Cursor / IDE
 
-[`AGENTS.md`](./AGENTS.md), [`.cursor/index.mdc`](./.cursor/index.mdc), `.cursor/rules/*.mdc`, [`CONTRIBUTING.md`](./CONTRIBUTING.md).
+[`AGENTS.md`](./AGENTS.md), [`.cursor/index.mdc`](./.cursor/index.mdc), `.cursor/rules/*.mdc`, [`docs/pr-merge-gate.md`](./docs/pr-merge-gate.md), [`CONTRIBUTING.md`](./CONTRIBUTING.md).
 
 ### Multi-Provider
 

@@ -4,11 +4,20 @@ globs: src/services/databaseService.ts,src/services/databaseService.test.ts
 alwaysApply: false
 ---
 
-# Dexie / IndexedDB (Local-First)
+# Dexie / IndexedDB (local-first)
 
-- **Single entry:** Persistenz und Schema über `@src/services/databaseService.ts` bündeln; keine zweite parallele Dexie-Instanz ohne Review.
-- **Migrationen:** Version bumps und Upgrade-Transaktionen explizit; Defaults für neue Felder dokumentieren; Breaking Changes in CHANGELOG erwähnen.
-- **Tests:** `fake-indexeddb` / Setup aus `@src/test/setup.ts` nutzen; keine Live-Netzwerk/IndexedDB-Abhängigkeit in Unit-Tests.
-- **Performance:** Indizes nur wo nötig; große Writes batchen wo das Schema es erlaubt.
+- **Single entry:** Persistence and schema live in `@src/services/databaseService.ts`. Do not open a second Dexie instance without review.
+- **Current schema:** version **7** (`docs/project-facts.json` → `release.dexieSchemaVersion`). Bumps need an explicit upgrade transaction + defaults for new fields + a `CHANGELOG.md` entry if breaking.
+- **Integrity:** Hydrate identifiers (`ensureArticleIdentifiers` / `ensureGroundedClaim`) before validation. Cancelled or restored reports stay `'partial'`, never `'done'` (ADR 0021). Trust labels are `claim-supported` / `corpus-supported` (ADR 0018) — do not persist overclaiming `verified`. Demo rows stay quarantined (ADR 0016).
+- **Tests:** Use `fake-indexeddb` and `@src/test/setup.ts`. No live network or real IndexedDB in unit tests. Upgrade-transaction coverage exists for v2/v4/v6 → v7.
+- **Performance:** Indexes only where queried; batch large writes when the schema allows.
 
-Siehe `@src/services/databaseService.ts`, `@vitest.config.ts` (Coverage-Scope).
+See `@src/services/databaseService.ts`, `@vitest.config.ts` (coverage scope).
+
+<example>
+Bump `db.version(8).stores({...}).upgrade(tx => { /* default new fields */ })` and document the bump.
+</example>
+
+<example type="invalid">
+`new Dexie('extra-cache')` in a feature file, or rewriting `completionStatus: 'done'` on a cancelled run.
+</example>

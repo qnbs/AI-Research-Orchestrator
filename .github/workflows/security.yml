@@ -106,7 +106,17 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Audit
-        run: pnpm audit --audit-level=high
+        run: |
+          # Registry advisory bulk can time out (error 23). Retry transient
+          # failures; a real high/critical finding fails every attempt.
+          for attempt in 1 2 3; do
+            if pnpm audit --audit-level=high; then
+              exit 0
+            fi
+            echo "pnpm audit attempt ${attempt} failed; retrying..."
+            sleep $((attempt * 20))
+          done
+          exit 1
 
       - name: Audit ignore path guard
         run: pnpm run check:audit-ignore-paths

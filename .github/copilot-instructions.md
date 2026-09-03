@@ -8,7 +8,7 @@ You are an expert React 19 + TypeScript engineer working on **AI Research Orches
 2. [`.cursor/index.mdc`](../.cursor/index.mdc) (always-on manifest)
 3. [`.cursor/rules/`](../.cursor/rules/) (modular `.mdc` rules — see `000-cursor-rules.mdc`)
 4. [`docs/adr/README.md`](../docs/adr/README.md) (ADRs 0001–0021)
-5. [`docs/ci-branch-governance.md`](../docs/ci-branch-governance.md) + [`docs/project-facts.json`](../docs/project-facts.json)
+5. [`docs/ci-branch-governance.md`](../docs/ci-branch-governance.md) + [`docs/pr-merge-gate.md`](../docs/pr-merge-gate.md) + [`docs/project-facts.json`](../docs/project-facts.json)
 
 ## Tech stack (current)
 
@@ -40,7 +40,7 @@ You are an expert React 19 + TypeScript engineer working on **AI Research Orches
 ## Code style
 
 - TypeScript strict — no `any` unless unavoidable; functional components + hooks only
-- English-only new repo content (rule `010`); UI strings EN+DE via `t()`
+- English-only new repo content (rule `010`); UI strings EN+DE via `t()` and `src/i18n/*Translations.ts`
 - File size target 200–400 lines, hard max 700 — split large views (`FeatureView` + Context + `useFeatureLogic`)
 - Sanitize HTML/Markdown with DOMPurify; prompt fragments via `lib/promptSanitize.ts`
 
@@ -50,7 +50,7 @@ You are an expert React 19 + TypeScript engineer working on **AI Research Orches
 - E2E (blocking): seven Chromium specs in `e2e.yml`; same seven on Firefox/WebKit/mobile Chrome in `e2e-cross-browser.yml`; separate `a11y.yml`
 - **Core flows** (orchestration, Knowledge Base, `src/services`): run `typecheck`, `lint`, and `test:coverage` before push (or confirm the blocking CI coverage job on the PR)
 - For unrelated UI edits, scoped Playwright/`vitest` locally is fine; still read full coverage/E2E from CI logs before merge
-- **PR process gates:** always `@deepsourcebot review` after open/fix push; resolve CodeRabbit/CodeAnt/Copilot/DeepSource threads (rules `011`/`013`); PR-only workflow `cancel-in-progress` (never cancel in-flight `main`)
+- **PR process gates (dual gate):** `docs/pr-merge-gate.md` — required CI green **and** review quiescence on the same head, including the arrival wait. Always `@deepsourcebot review` after open/fix push; resolve CodeRabbit/CodeAnt/Copilot/DeepSource/CodeScene/Greptile threads (rules `011`/`013`). Do not merge while a bot is still “Reviewing”. Do not `@sourcery-ai review` while the 250k / 7-day budget is exhausted. PR-only workflow `cancel-in-progress` (never cancel in-flight `main`)
 - Required checks inventory: `docs/ci-branch-governance.md` (live ruleset `mainrules`)
 
 ## Safety
@@ -75,6 +75,6 @@ You are an expert React 19 + TypeScript engineer working on **AI Research Orches
 src/
   App.tsx, services/geminiService.ts, services/providers/, services/nonAi/
   store/slices/, components/, hooks/, contexts/, i18n/, lib/, test/e2e/
-docs/adr/, docs/ci-branch-governance.md, docs/project-facts.json
-.github/workflows/{deploy,e2e,e2e-cross-browser,a11y,security}.yml
+docs/adr/, docs/pr-merge-gate.md, docs/ci-branch-governance.md, docs/project-facts.json
+.github/workflows/{deploy,e2e,e2e-cross-browser,a11y,security,pwa-e2e}.yml
 ```

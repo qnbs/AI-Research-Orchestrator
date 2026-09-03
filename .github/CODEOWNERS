@@ -21,5 +21,6 @@
 /SECURITY.md @qnbs
 /docs/adr/ @qnbs
 /docs/ci-branch-governance.md @qnbs
+/docs/pr-merge-gate.md @qnbs
 /docs/release-policy.md @qnbs
 /docs/project-facts.json @qnbs

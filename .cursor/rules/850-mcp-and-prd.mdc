@@ -3,8 +3,22 @@ description: Gate major changes by PRD and notes; macro workflow; MCP readiness 
 alwaysApply: false
 ---
 
-# PRD, Consciousness Stream & MCP
+# PRD, decision log, and MCP
 
-- **PRD:** Vor größeren Architektur-/Produktentscheidungen Anforderungen lesen — `instructions.md` / `PRD.md` sobald vorhanden; bis dahin `AGENTS.md`, `README.md`, `CHANGELOG.md`.
-- **`.notes/meeting_notes.md`:** Kurze datierte Entscheidungen (Warum/Was/Impact) für spätere Sessions.
-- **MCP:** Nur mit Nutzerfreigabe aktivieren (GitHub-Issues/PRs, Docs-Suche). Keine Tokens oder Repo-URLs mit Credentials in Regeln committen.
+- **PRD:** Before larger architecture or product decisions, read requirements — `instructions.md` / `PRD.md` when present; until then `AGENTS.md`, `README.md`, `CHANGELOG.md`, `docs/pr-merge-gate.md`.
+- **`.notes/meeting_notes.md`:** Short dated decisions using **Why / What / Impact / Not done** so later sessions and review bots (Greptile P2 on missing Impact) can see the effect.
+- **Merge:** Do not land work on `main` outside the dual gate in `docs/pr-merge-gate.md` (required CI green **and** review quiescence, including the arrival wait).
+- **MCP:** Enable only with user approval (GitHub issues/PRs, docs search). Do not commit tokens or repo URLs that embed credentials.
+
+<example>
+`# 2026-09-03 — Dual merge gate`
+
+`- **Why:** …`
+`- **What:** …`
+`- **Impact:** …`
+`- **Not done:** OpenRouter. Live topic PUT. v0.4.3.`
+</example>
+
+<example type="invalid">
+A meeting-note bullet with only **Why** / **What** and no **Impact** — Greptile flagged this as P2 after #299.
+</example>

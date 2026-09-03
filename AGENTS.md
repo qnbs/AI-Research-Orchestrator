@@ -19,7 +19,7 @@ Main features: Orchestrator pipeline, Knowledge Base (dedup, faceted filtering, 
 2. **`.cursor/index.mdc`** — always-on project manifest.
 3. **`.cursor/rules/*.mdc`** — contextual rules (Security, APIs, Architecture, UI, QA — numbering scheme in `000-cursor-rules.mdc`).
 4. **`docs/adr/`** — architecture decisions; see `docs/adr/README.md` for the full, current index (0001 state management … **0021** partial-report completion state).
-5. **`docs/ci-branch-governance.md`** + **`docs/project-facts.json`** — required CI checks, concurrency, ruleset expectations, drift-gated facts.
+5. **`docs/ci-branch-governance.md`** + **`docs/pr-merge-gate.md`** + **`docs/project-facts.json`** — required CI checks, dual merge gate (CI + review quiescence including arrival wait), concurrency, ruleset expectations, drift-gated facts.
 
 ## Technology Stack
 
@@ -97,7 +97,7 @@ pnpm run format                  # Prettier write (src + root md/json)
 
 ## CI / CD
 
-- **`.github/workflows/deploy.yml`** (push + PR to `main`): `pnpm install --frozen-lockfile` → `pnpm audit --audit-level=high` → typecheck → lint → `test:coverage` → build → `bundle:budget` → Lighthouse CI (assertions: a11y/best-practices/SEO ≥ 0.95, performance ≥ 0.85 warn). **GitHub Pages upload/deploy only on `refs/heads/main` (non-PR).** Actions are pinned by SHA.
+- **`.github/workflows/deploy.yml`** (push + PR to `main`): `pnpm install --frozen-lockfile` → `check:audit-ignore-paths` → typecheck → lint → `test:coverage` → Codecov coverage + Test Analytics upload → build (Codecov Vite bundle plugin when `CODECOV_TOKEN` is set) → `bundle:budget` → Lighthouse CI (assertions: a11y/best-practices/SEO ≥ 0.95, performance ≥ 0.85 warn). **GitHub Pages upload/deploy only on `refs/heads/main` (non-PR).** Actions are pinned by SHA. Required `pnpm audit --audit-level=high` is the `security.yml` job only (not duplicated in this quality job). Codecov is advisory (`docs/codecov.md`).
 - **`.github/workflows/security.yml`**: CodeQL, Dependency Review, `pnpm audit --audit-level=high`, gitleaks secret scan.
 - **E2E / a11y**: blocking Chromium (`e2e.yml`), blocking cross-browser (`e2e-cross-browser.yml`), blocking axe smoke (`a11y.yml`).
 - **Concurrency**: `cancel-in-progress` is PR-only on deploy/e2e/cross-browser/a11y/security — never cancel an in-flight `main` gate/deploy (drift-gated via `docs/project-facts.json`).
@@ -106,14 +106,14 @@ pnpm run format                  # Prettier write (src + root md/json)
 
 ## Conventions & Code Style
 
-- **English-only repository content** (rule `010`, since 2026-07-16): all new/edited docs, comments, JSDoc, commit messages, CI text, and default/fallback strings must be English. **Exception**: existing German locale values in `src/i18n/translations.ts` stay; new UI strings need **EN + DE keys** and must render via `t()`.
+- **English-only repository content** (rule `010`, since 2026-07-16): all new/edited docs, comments, JSDoc, commit messages, CI text, Cursor rules, and default/fallback strings must be English. **Exceptions**: existing German locale values in `src/i18n/*Translations.ts` stay; new UI strings need **EN + DE keys** and must render via `t()`; the bilingual **README.md product section** stays German in parallel with English (English remains authoritative for agent/CI facts). Cursor `.mdc` rule bodies are English (migrated 2026-09-03).
 - TypeScript strict — no `any` unless unavoidable; functional components + hooks only.
 - **File size**: target 200–400 lines, hard max 700 (rule `200`). Split large views into `FeatureView.tsx` + `FeatureViewContext.tsx` + `useFeatureLogic.ts` (see Authors/Journals/Knowledge-Base patterns).
 - New persistent data → explicit Dexie schema version bump + migration in `databaseService.ts`; defaults documented; breaking changes in `CHANGELOG.md`.
 - All HTML/Markdown sanitized with DOMPurify; no `dangerouslySetInnerHTML` outside reviewed patterns; prompt fragments sanitized (`lib/promptSanitize.ts`); CSV export is formula-injection-safe.
 - Accessibility: WCAG 2.2 AA — ARIA roles, keyboard navigation, focus management, `⌘+K` palette; honor jsx-a11y (no blanket eslint-disables).
 - **New feature checklist**: Redux slice or RTK Query endpoint → Dexie schema (if persisted) → i18n EN+DE → Framer Motion transition → ARIA/keyboard → unit test stub.
-- **PR gates**: resolve **all** automated review-bot comments (CodeRabbit, CodeAnt, Copilot, DeepSource, …) including nitpicks and out-of-diff items — **CI green on latest commit** + correction loop until quiescent before merge (rules `011`, `013`). **Always** comment `@deepsourcebot review` on open PRs and after every fix push. For CodeRabbit: never merge on a **Review rate limited** placeholder — wait the stated cooldown, then `@coderabbitai review` (bounded: max 3 cycles / escalate after >90m waits) until a real review targets the latest head. Reply and resolve review threads. PRs target `main`, focused changes, English description.
+- **PR gates (dual gate):** merge only when **required CI is green** on the latest head **and** review quiescence holds on that same SHA — including the **arrival wait** (do not merge while CodeAnt/Greptile/Copilot/CodeRabbit are still “Reviewing”). GraphQL `reviewThreads` = 0 is not enough if a bot has not finished arriving (`docs/pr-merge-gate.md`, rules `011`/`013`). Resolve **all** automated review-bot comments (CodeRabbit, CodeAnt, Copilot, DeepSource, CodeScene, Greptile, …) including nitpicks and out-of-diff items. **Always** comment `@deepsourcebot review` on open PRs and after every fix push. For CodeRabbit: a **Review rate limited** placeholder is not a completed review **and is not a hard merge blocker** (`011` clause **(d)**). Best-effort `@coderabbitai review`; do not wait 3 cycles / 90 minutes solely for rate-limit. Optional stand-ins are **(b)** a real, non-rate-limited Sourcery review on the same head with everything resolved, or **(c)** another in-scope bot when Sourcery cannot stand in — never waive a `CHANGES_REQUESTED` on the latest head. Every body-only finding (including human top-level review bodies) needs a `fixed` / `replied` / `deferred` disposition. Do **not** `@sourcery-ai review` while the 250k / 7-day budget is exhausted. PRs target `main`, focused changes, English description.
 - Optional on-demand `@claude` assistant via `.github/workflows/claude.yml` (not part of blocking CI). Automated Claude Code Review was removed from the pipeline — CodeRabbit + deploy gates are authoritative.
 
 ## Testing Strategy
@@ -139,4 +139,4 @@ pnpm run format                  # Prettier write (src + root md/json)
 
 ## Human Documentation Map
 
-- `README.md` — overview & setup (EN/DE) · `CONTRIBUTING.md` — workflow & PR expectations · `CHANGELOG.md` (dated history of what actually shipped — prefer this and `git log`/open GitHub issues over a standalone self-audit doc for "what's left to do"), `SECURITY.md` (threat model) · `docs/` — ADRs, i18n reviews · `.notes/meeting_notes.md` — dated decision log for later sessions.
+- `README.md` — overview & setup (EN/DE) · `CONTRIBUTING.md` — workflow & PR expectations · `docs/pr-merge-gate.md` — dual merge gate (CI + review quiescence, arrival wait) · `CHANGELOG.md` (dated history of what actually shipped — prefer this and `git log`/open GitHub issues over a standalone self-audit doc for "what's left to do"), `SECURITY.md` (threat model) · `docs/` — ADRs, i18n reviews · `.notes/meeting_notes.md` — dated decision log for later sessions.

@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 AI Research Orchestrator — a client-only React 19 PWA for agentic biomedical literature research. It couples PubMed (NCBI E-utilities) and arXiv retrieval with a pluggable AI provider layer (Gemini, OpenAI, Anthropic, local Ollama, or a deterministic heuristic fallback) to run: query formulation → live fetch → relevance ranking → streaming, cited synthesis. All user data (reports, history, settings, knowledge base, collections) lives in the browser via Dexie/IndexedDB — there is no backend. Live at `https://qnbs.github.io/AI-Research-Orchestrator/`.
 
-**Canonical docs** — read before non-trivial changes: `AGENTS.md` (full agent guide with required-reading order), `docs/adr/0001`–`0021` (architecture decisions — see `docs/adr/README.md`), `docs/ci-branch-governance.md` + `docs/project-facts.json` (CI/ruleset), `.cursor/rules/*.mdc` (numbered: `000` meta, `001` security, `010`/`011`/`012`/`013` content & PR-bot gates, `100`s APIs, `200`s architecture limits, `300`s UI, `800`s testing). Prefer `AGENTS.md` if anything conflicts with older notes.
+**Canonical docs** — read before non-trivial changes: `AGENTS.md` (full agent guide with required-reading order), `docs/adr/0001`–`0021` (architecture decisions — see `docs/adr/README.md`), `docs/ci-branch-governance.md` + `docs/pr-merge-gate.md` + `docs/project-facts.json` (CI/ruleset / dual merge gate), `.cursor/rules/*.mdc` (numbered: `000` meta, `001` security, `010`/`011`/`012`/`013` content & PR-bot gates, `100`s APIs, `200`s architecture limits, `300`s UI, `800`s testing). Prefer `AGENTS.md` if anything conflicts with older notes. Merge policy: `docs/pr-merge-gate.md`.
 
 ## Commands
 
@@ -69,14 +69,14 @@ Service worker at `public/sw.js`; `404.html` handles SPA routing on GitHub Pages
 
 ## Conventions
 
-- **English-only repository content** (since 2026-07-16): all new docs, comments, commit messages, and default/fallback strings are English. Existing German locale _values_ in `src/i18n/translations.ts` stay as-is; new UI strings need both EN and DE keys, rendered via `t()`.
+- **English-only repository content** (since 2026-07-16): all new docs, comments, commit messages, Cursor rules, and default/fallback strings are English. Existing German locale _values_ in `src/i18n/*Translations.ts` stay as-is; new UI strings need both EN and DE keys, rendered via `t()`. The bilingual **README.md product section** stays German in parallel with English (rule `010`; English remains authoritative for agent/CI facts).
 - File size target 200–400 lines, hard max 700. Split large views into `FeatureView.tsx` + `FeatureViewContext.tsx` + `useFeatureLogic.ts` (see the Authors/Journals/Knowledge-Base views for the pattern).
 - New persistent data requires an explicit Dexie schema version bump + migration in `databaseService.ts`, plus a `CHANGELOG.md` entry if breaking.
 - All HTML/Markdown is sanitized with DOMPurify; no bare `dangerouslySetInnerHTML`; prompt fragments go through `lib/promptSanitize.ts`; CSV export must stay formula-injection-safe.
 - New feature checklist: Redux slice/RTK Query endpoint → Dexie schema (if persisted) → i18n EN+DE → Framer Motion transition → ARIA/keyboard support → unit test stub.
 - Chart library is Recharts only (ADR 0005) — do not reintroduce Chart.js.
-- Resolve _all_ automated review-bot comments (CodeRabbit, CodeAnt, Copilot, DeepSource AI Review, etc.) on a PR, including nitpicks and out-of-diff items, before considering it mergeable (rules `011`/`013`).
-- **Always** comment `@deepsourcebot review` on PR open and after every fix push. For CodeRabbit rate limits: wait the stated cooldown, then `@coderabbitai review` (max 3 cycles / escalate after >90m). Optional on-demand `@claude` via `.github/workflows/claude.yml`; automated Claude Code Review is **not** in CI.
+- **Dual merge gate** (`docs/pr-merge-gate.md`, rules `011`/`013`): required CI green **and** review quiescence on the same latest head, including the **arrival wait**. Do not merge while CodeAnt/Greptile/Copilot/CodeRabbit are still “Reviewing”. GraphQL `reviewThreads` = 0 is not enough if a bot has not finished arriving. Resolve _all_ automated review-bot comments (CodeRabbit, CodeAnt, Copilot, DeepSource AI Review, CodeScene, Greptile, etc.), including nitpicks and out-of-diff items.
+- **Always** comment `@deepsourcebot review` on PR open and after every fix push. For CodeRabbit rate limits: a **Review rate limited** placeholder is **not** a hard merge blocker (`011` clause **(d)**). Best-effort `@coderabbitai review`; do not wait 3 cycles / 90 minutes solely for rate-limit. Stand-ins remain **(b)** Sourcery or **(c)** another in-scope bot when Sourcery cannot stand in. Never waive a `CHANGES_REQUESTED` on the latest head. Every body-only finding (including human top-level review bodies) needs a `fixed` / `replied` / `deferred` disposition. Do **not** `@sourcery-ai review` while the 250k / 7-day budget is exhausted. Optional on-demand `@claude` via `.github/workflows/claude.yml`; automated Claude Code Review is **not** in CI.
 - Concurrency: workflows cancel in-progress runs on `pull_request` only — never cancel an in-flight `main` validation/deploy (`docs/ci-branch-governance.md`).
 
 ## Code intelligence (local, not committed)

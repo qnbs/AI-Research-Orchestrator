@@ -72,10 +72,11 @@ There is no server-side rollback — all state is local IndexedDB.
 
 ## CI
 
-Blocking gates: `deploy.yml` plus E2E / cross-browser / a11y / security (see `docs/ci-branch-governance.md`). DeepSource JavaScript analyzer is **off** (`docs/project-facts.json` → `staticAnalysis.deepsourceJavaScriptEnabled: false`); ESLint + `deploy.yml` are authoritative for TS/TSX — see `docs/deepsource-setup.md`. After high-risk scientific or security merges, prefer one green `main` deploy before stacking unrelated large features.
+Blocking gates: `deploy.yml` plus E2E / cross-browser / PWA E2E (`pwa-e2e.yml`) / a11y / security (see `docs/ci-branch-governance.md`). Merge to `main` also requires review quiescence on the same head (`docs/pr-merge-gate.md`). DeepSource JavaScript analyzer is **off** (`docs/project-facts.json` → `staticAnalysis.deepsourceJavaScriptEnabled: false`); ESLint + `deploy.yml` are authoritative for TS/TSX — see `docs/deepsource-setup.md`. After high-risk scientific or security merges, prefer one green `main` deploy before stacking unrelated large features.
 
 ## Related
 
+- `docs/pr-merge-gate.md` — dual merge gate (CI + review quiescence)
 - `CONTRIBUTING.md` — PR correction loop before merge
 - `.cursor/rules/013-pr-review-correction-loop.mdc`
 - `docs/ci-branch-governance.md` — required checks, concurrency, artifacts

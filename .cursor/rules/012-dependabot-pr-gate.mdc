@@ -15,12 +15,12 @@ When Dependabot (or similar) PRs are open, **do not leave them idle**. Process e
 4. Run quality gates impacted by the change (`typecheck`, `lint`, `test:run` / `test:coverage`, `build` as needed).
 5. Fix breakages in the same change set (types, eslint config, lockfile, workflows).
 6. Prefer a **tested consolidation PR** when many Dependabot PRs overlap/conflict; then comment on each original PR with disposition (merged into #N / superseded / deferred with reason).
-7. Trigger/address CodeRabbit on the resulting PR before merge (see `011-coderabbit-pr-gate.mdc`).
+7. Land the resulting PR only under the **dual merge gate** in `docs/pr-merge-gate.md` / `011-coderabbit-pr-gate.mdc` (required CI green **and** review quiescence, including arrival wait).
 
 ## Do not
 
 - Bulk-close Dependabot PRs without testing or a written disposition.
-- Merge majors (e.g. lucide-react 0→1, vitest 3→4) without gates green.
+- Merge majors (e.g. a Vitest major, a new chart library) without gates green. `lucide-react` was removed — do not re-add it as a bump.
 - Leave Actions bumps only on `deploy.yml` while `security.yml` stays stale.
 
 English for PR comments/docs (`010-english-content.mdc`).

@@ -4,17 +4,18 @@ globs: src/**/*.ts,src/**/*.tsx
 alwaysApply: false
 ---
 
-# Architektur: KISS, DRY, Dateigröße
+# Architecture: KISS, DRY, file size
 
-- **KISS / DRY:** Duplikate in `src/hooks/`, `src/services/`, `src/lib/` oder Subkomponenten konsolidieren.
-- **Größe:** Ziel **200–400 Zeilen** pro Datei; **harte Obergrenze 700**. Darüber: View + Context + `use*Logic` splitten (vgl. Authors/Journals/KB).
-- **Redux:** Neue Domain-Zustände in passende Slices; bei Slice-Wachstum Selektoren/Hilfsfunktionen auslagern.
-- **Komplexität:** Tiefe Verschachtelung vermeiden; große JSX-Blöcke extrahieren.
+- **KISS / DRY:** Consolidate duplicates in `src/hooks/`, `src/services/`, `src/lib/`, or extracted subcomponents.
+- **Size:** Target **200–400 lines** per file; **hard cap 700**. Above that: split `FeatureView.tsx` + `FeatureViewContext.tsx` + `use*Logic.ts` (Authors / Journals / Knowledge Base).
+- **Façades:** Do not casually re-split `geminiService.ts` or `exportService.ts` — they are public import surfaces (ADR 0008). Helpers already live beside them.
+- **Redux:** New domain state goes in the matching slice. When a slice grows, extract selectors/helpers. Never duplicate the same flag in Context and Redux (ADR 0001).
+- **Complexity:** Avoid deep nesting; extract large JSX blocks.
 
 <example>
-Feature wird groß → `FeatureView.tsx` + `FeatureViewContext.tsx` + `useFeatureLogic.ts`.
+A growing hub becomes `FeatureView.tsx` + `FeatureViewContext.tsx` + `useFeatureLogic.ts`.
 </example>
 
 <example type="invalid">
-Eine Datei mit Orchestrator-Logik, drei Modalen und Export — alles inline >900 Zeilen.
+One file with orchestrator logic, three modals, and export — all inline, over 900 lines — or a second settings store beside Redux.
 </example>
