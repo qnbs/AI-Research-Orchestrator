@@ -4,6 +4,7 @@ import { useTranslation } from '../hooks/useTranslation';
 import { useSettings } from '../contexts/SettingsContext';
 import type { View } from '../types/ui';
 import { PROVIDER_LABEL_KEYS } from '../i18n/providerLabelKeys';
+import { getProviderMeta } from '../services/providers/provider';
 
 interface ProviderStatusLineProps {
   onConfigure?: (view: View) => void;
@@ -24,7 +25,9 @@ export const ProviderStatusLine: React.FC<ProviderStatusLineProps> = ({ onConfig
         ? t('provider.status.offline')
         : mode === 'live'
           ? provider === 'ollama'
-            ? t('provider.status.ollama', { model: settings.ai.model || 'local' })
+            ? t('provider.status.ollama', {
+                model: settings.ai.model || getProviderMeta('ollama').defaultModel,
+              })
             : t('provider.status.live', {
                 provider: t(PROVIDER_LABEL_KEYS[provider] ?? 'settings.ai.provider_label.gemini'),
               })

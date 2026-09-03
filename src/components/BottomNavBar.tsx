@@ -107,19 +107,18 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
   const { t } = useTranslation();
   const { setIsCommandPaletteOpen } = useUI();
   const [moreOpen, setMoreOpen] = useState(false);
-  const [moreView, setMoreView] = useState(currentView);
   const navRef = useRef<HTMLElement>(null);
   const moreTriggerRef = useRef<HTMLButtonElement>(null);
   const reportHint = t('nav.requires_report');
   const reportHintId = 'bottom-nav-report-hint';
-  if (moreView !== currentView) {
-    setMoreView(currentView);
-    setMoreOpen(false);
-  }
   const selectView = (view: View) => {
     setMoreOpen(false);
     onViewChange(view);
   };
+
+  useEffect(() => {
+    setMoreOpen(false);
+  }, [currentView]);
 
   useEffect(() => {
     if (!moreOpen) return;
