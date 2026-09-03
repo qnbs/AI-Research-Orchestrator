@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **DOMPurify 3.4.13 (Dependabot #295):** Patch `^3.4.12` → `^3.4.13`. Upstream fixes hook removal during `IN_PLACE` sanitization, a hook clone-guard bypass, and `ownerDocument` clobbering during `IN_PLACE`. App call sites stay `sanitize` / `RETURN_DOM_FRAGMENT` (no `IN_PLACE`, no custom hooks).
 - **First-run journey (`NOW-P0-JOURNEY-01` / `02` / `03`):** Onboarding keeps “Start Researching”, adds a heuristic sample-topic path, language/theme controls, and an honest no-key preview. Completing onboarding lands on Literature review (`orchestrator`). Visible labels: **Literature review** vs **Quick research**. Home is a two-column launchpad (hero review + quick look + status strip), not a four-card lobby.
 - **Orchestrator form (`NOW-P0-FORM-01`):** Topic, sample chips, and submit stay above the fold. Date range, article types, sources, scan caps, and demo sit in a collapsed “Review options” `<details>`; preset controls remain in the form header (open state in `sessionStorage` only).
 - **Empty states and chrome (`NOW-P0-EMPTY-01`, `NOW-P1-CHROME-01` / `02`):** KB / Dashboard / History remain reachable when empty and teach the next step. Header primary nav is Literature review, Quick research, Knowledge Base, Authors, Journals; overflow holds Collections / Dashboard / History. Mobile bottom nav is five items (Review, Assistant/Quick research, Library, Explore, More). Brand lockup uses `t('app.name')`.
