@@ -140,12 +140,12 @@ const HeaderComponent: React.FC<HeaderProps> = ({
         </span>
       )}
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="hidden md:flex flex-col py-3 gap-3">
-          <div className="flex items-center justify-between">
+        <div className="hidden md:flex items-center justify-between gap-2 py-2">
+          <div className="flex items-center gap-2 min-w-0">
             <button
               type="button"
               onClick={() => onViewChange('home')}
-              className="flex items-center gap-3 focus-ring-aa rounded-md group"
+              className="flex items-center gap-2 focus-ring-aa rounded-md group shrink-0"
               aria-label={t('chrome.aria.go_home')}
             >
               <AppBrandMark
@@ -154,173 +154,166 @@ const HeaderComponent: React.FC<HeaderProps> = ({
                 className="drop-shadow-lg"
                 aria-hidden
               />
-              <span className="font-bold text-lg tracking-tight text-text-primary">
+              <span className="hidden lg:inline font-bold text-base tracking-tight text-text-primary">
                 {t('app.name')}
               </span>
             </button>
-            <div className="flex items-center gap-3">
-              <InferenceModeBadge />
-              <nav
-                className="flex items-center gap-1 p-1.5 rounded-xl border border-border bg-surface/40 backdrop-blur-md shadow-inner overflow-x-auto max-w-full"
-                aria-label={t('chrome.aria.main_nav')}
-              >
-                <HeaderNavButton
-                  onClick={() => onViewChange('orchestrator')}
-                  isActive={currentView === 'orchestrator'}
-                  className="relative"
-                >
-                  {isResearching && (
-                    <span className="absolute top-1.5 right-1.5 flex h-2 w-2">
-                      <span className="motion-safe:animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-cyan opacity-75" />
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-accent-cyan" />
-                    </span>
-                  )}
-                  <DocumentIcon className="h-4 w-4 mr-2" />
-                  {t('nav.orchestrator')}
-                </HeaderNavButton>
-                <HeaderNavButton
-                  onClick={() => onViewChange('research')}
-                  isActive={currentView === 'research'}
-                >
-                  <BeakerIcon className="h-4 w-4 mr-2" />
-                  {t('nav.research')}
-                </HeaderNavButton>
-                <HeaderNavButton
-                  onClick={() => onViewChange('knowledgeBase')}
-                  isActive={currentView === 'knowledgeBase'}
-                  muted={!hasReports}
-                  title={reportHint}
-                  ariaDescribedBy={reportHint ? reportHintId : undefined}
-                >
-                  <DatabaseIcon className="h-4 w-4 mr-2" />
-                  {t('nav.knowledgeBase')}{' '}
-                  <span className="ml-2 bg-background/80 border border-border text-text-primary text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-                    {displayCount}
-                  </span>
-                </HeaderNavButton>
-                <HeaderNavButton
-                  onClick={() => onViewChange('authors')}
-                  isActive={currentView === 'authors'}
-                >
-                  <AuthorIcon className="h-4 w-4 mr-2" />
-                  {t('nav.authors')}
-                </HeaderNavButton>
-                <HeaderNavButton
-                  onClick={() => onViewChange('journals')}
-                  isActive={currentView === 'journals'}
-                >
-                  <BookOpenIcon className="h-4 w-4 mr-2" />
-                  {t('nav.journals')}
-                </HeaderNavButton>
-                <div ref={overflowRef} className="relative">
-                  <HeaderNavButton
-                    onClick={() => setIsOverflowOpen((open) => !open)}
-                    isActive={['collections', 'dashboard', 'history'].includes(currentView)}
-                    ariaLabel={t('nav.overflow')}
-                    ariaExpanded={isOverflowOpen}
-                    ariaControls={overflowMenuId}
-                    buttonRef={overflowTriggerRef}
-                  >
-                    <EllipsisHorizontalIcon className="h-4 w-4 mr-2" />
-                    {t('nav.more')}
-                  </HeaderNavButton>
-                  {isOverflowOpen && (
-                    <div
-                      id={overflowMenuId}
-                      className="absolute right-0 mt-2 w-56 bg-surface/95 backdrop-blur-xl border border-border rounded-xl shadow-2xl z-50 overflow-hidden"
-                    >
-                      {(
-                        [
-                          ['collections', t('nav.collections'), false],
-                          ['dashboard', t('nav.dashboard'), !hasReports],
-                          ['history', t('nav.history'), !hasReports],
-                        ] as const
-                      ).map(([view, label, muted]) => (
-                        <button
-                          key={view}
-                          type="button"
-                          title={muted ? reportHint : undefined}
-                          aria-describedby={muted ? reportHintId : undefined}
-                          onClick={() => {
-                            onViewChange(view);
-                            setIsOverflowOpen(false);
-                          }}
-                          className={`w-full text-left px-4 py-3 text-sm hover:bg-surface-hover focus-ring-aa border-b border-border/50 ${muted ? 'opacity-60' : ''}`}
-                        >
-                          {label}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </nav>
-            </div>
+            <InferenceModeBadge />
           </div>
-
-          <div className="flex justify-between items-center pl-1">
-            <h1 className="text-xl font-bold text-text-primary tracking-tight brand-gradient-text">
-              {viewTitles[currentView]}
-            </h1>
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => setIsCommandPaletteOpen(true)}
-                className="group flex items-center gap-3 px-4 py-2 text-sm text-text-secondary bg-input-bg border border-border rounded-lg hover:border-brand-accent/50 hover:text-text-primary focus-ring-aa touch-target-aa"
-                aria-label={t('chrome.aria.open_command_palette')}
+          <nav
+            className="flex items-center gap-0.5 p-1 rounded-xl border border-border bg-surface/40 backdrop-blur-md shadow-inner overflow-x-auto min-w-0"
+            aria-label={t('chrome.aria.main_nav')}
+          >
+            <HeaderNavButton
+              onClick={() => onViewChange('orchestrator')}
+              isActive={currentView === 'orchestrator'}
+              className="relative"
+            >
+              {isResearching && (
+                <span className="absolute top-1.5 right-1.5 flex h-2 w-2">
+                  <span className="motion-safe:animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-cyan opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-accent-cyan" />
+                </span>
+              )}
+              <DocumentIcon className="h-4 w-4 mr-2" />
+              {t('nav.orchestrator')}
+            </HeaderNavButton>
+            <HeaderNavButton
+              onClick={() => onViewChange('research')}
+              isActive={currentView === 'research'}
+            >
+              <BeakerIcon className="h-4 w-4 mr-2" />
+              {t('nav.research')}
+            </HeaderNavButton>
+            <HeaderNavButton
+              onClick={() => onViewChange('knowledgeBase')}
+              isActive={currentView === 'knowledgeBase'}
+              muted={!hasReports}
+              title={reportHint}
+              ariaDescribedBy={reportHint ? reportHintId : undefined}
+            >
+              <DatabaseIcon className="h-4 w-4 mr-2" />
+              {t('nav.knowledgeBase')}{' '}
+              <span className="ml-2 bg-background/80 border border-border text-text-primary text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                {displayCount}
+              </span>
+            </HeaderNavButton>
+            <HeaderNavButton
+              onClick={() => onViewChange('authors')}
+              isActive={currentView === 'authors'}
+            >
+              <AuthorIcon className="h-4 w-4 mr-2" />
+              {t('nav.authors')}
+            </HeaderNavButton>
+            <HeaderNavButton
+              onClick={() => onViewChange('journals')}
+              isActive={currentView === 'journals'}
+            >
+              <BookOpenIcon className="h-4 w-4 mr-2" />
+              {t('nav.journals')}
+            </HeaderNavButton>
+            <div ref={overflowRef} className="relative">
+              <HeaderNavButton
+                onClick={() => setIsOverflowOpen((open) => !open)}
+                isActive={['collections', 'dashboard', 'history'].includes(currentView)}
+                ariaLabel={t('nav.overflow')}
+                ariaExpanded={isOverflowOpen}
+                ariaControls={overflowMenuId}
+                buttonRef={overflowTriggerRef}
               >
-                <SearchIcon className="h-4 w-4 group-hover:text-brand-accent transition-colors" />
-                <span>{t('chrome.aria.search')}</span>
-                <kbd className="hidden lg:inline-block ml-2 px-1.5 py-0.5 text-[10px] font-bold text-text-secondary bg-surface border border-border rounded">
-                  ⌘K
-                </kbd>
-              </button>
-              <button
-                type="button"
-                onClick={onQuickAdd}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-brand-text-on-accent bg-gradient-to-r from-brand-primary to-brand-accent rounded-lg focus-ring-aa touch-target-aa"
-                aria-label={t('chrome.aria.quick_add_article')}
-              >
-                <DocumentPlusIcon className="h-4 w-4" />
-                <span className="hidden lg:inline">{t('nav.quick_add')}</span>
-              </button>
-              <button
-                type="button"
-                onClick={toggleLanguage}
-                className="p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover font-bold text-xs flex items-center gap-1 focus-ring-aa touch-target-aa"
-                aria-label={t('chrome.aria.toggle_language')}
-              >
-                <GlobeAltIcon className="h-4 w-4" />
-                {lang.toUpperCase()}
-              </button>
-              <button
-                type="button"
-                onClick={() => onViewChange('settings')}
-                className={`p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover relative focus-ring-aa touch-target-aa ${currentView === 'settings' ? 'bg-surface-hover text-text-primary' : ''}`}
-                aria-label={t('chrome.aria.settings')}
-              >
-                <CogIcon className={`h-5 w-5 ${isSettingsDirty ? 'text-accent-amber' : ''}`} />
-                {isSettingsDirty && (
-                  <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-accent-amber ring-2 ring-surface" />
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={() => onViewChange('help')}
-                className={`p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover focus-ring-aa touch-target-aa ${currentView === 'help' ? 'bg-surface-hover text-text-primary' : ''}`}
-                aria-label={t('chrome.aria.help')}
-              >
-                <QuestionMarkCircleIcon className="h-5 w-5" />
-              </button>
-              <button
-                type="button"
-                onClick={toggleTheme}
-                className="p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover focus-ring-aa touch-target-aa"
-                aria-label={themeLabel}
-              >
-                {themeIcon}
-              </button>
-              {isDeveloperToolsEnabled(settings) && <AgentDebuggerToggle />}
+                <EllipsisHorizontalIcon className="h-4 w-4 mr-2" />
+                {t('nav.more')}
+              </HeaderNavButton>
+              {isOverflowOpen && (
+                <div
+                  id={overflowMenuId}
+                  className="absolute right-0 mt-2 w-56 bg-surface/95 backdrop-blur-xl border border-border rounded-xl shadow-2xl z-50 overflow-hidden"
+                >
+                  {(
+                    [
+                      ['collections', t('nav.collections'), false],
+                      ['dashboard', t('nav.dashboard'), !hasReports],
+                      ['history', t('nav.history'), !hasReports],
+                    ] as const
+                  ).map(([view, label, muted]) => (
+                    <button
+                      key={view}
+                      type="button"
+                      title={muted ? reportHint : undefined}
+                      aria-describedby={muted ? reportHintId : undefined}
+                      onClick={() => {
+                        onViewChange(view);
+                        setIsOverflowOpen(false);
+                      }}
+                      className={`w-full text-left px-4 py-3 text-sm hover:bg-surface-hover focus-ring-aa border-b border-border/50 ${muted ? 'opacity-60' : ''}`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
+          </nav>
+          <h1 className="sr-only">{viewTitles[currentView]}</h1>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              type="button"
+              onClick={() => setIsCommandPaletteOpen(true)}
+              className="group flex items-center gap-2 px-3 py-2 text-sm text-text-secondary bg-input-bg border border-border rounded-lg hover:border-brand-accent/50 hover:text-text-primary focus-ring-aa touch-target-aa"
+              aria-label={t('chrome.aria.open_command_palette')}
+            >
+              <SearchIcon className="h-4 w-4 group-hover:text-brand-accent transition-colors" />
+              <span className="hidden xl:inline">{t('chrome.aria.search')}</span>
+              <kbd className="hidden lg:inline-block px-1.5 py-0.5 text-[10px] font-bold text-text-secondary bg-surface border border-border rounded">
+                ⌘K
+              </kbd>
+            </button>
+            <button
+              type="button"
+              onClick={onQuickAdd}
+              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-brand-text-on-accent bg-gradient-to-r from-brand-primary to-brand-accent rounded-lg focus-ring-aa touch-target-aa"
+              aria-label={t('chrome.aria.quick_add_article')}
+            >
+              <DocumentPlusIcon className="h-4 w-4" />
+              <span className="hidden xl:inline">{t('nav.quick_add')}</span>
+            </button>
+            <button
+              type="button"
+              onClick={toggleLanguage}
+              className="p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover font-bold text-xs flex items-center gap-1 focus-ring-aa touch-target-aa"
+              aria-label={t('chrome.aria.toggle_language')}
+            >
+              <GlobeAltIcon className="h-4 w-4" />
+              {lang.toUpperCase()}
+            </button>
+            <button
+              type="button"
+              onClick={() => onViewChange('settings')}
+              className={`p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover relative focus-ring-aa touch-target-aa ${currentView === 'settings' ? 'bg-surface-hover text-text-primary' : ''}`}
+              aria-label={t('chrome.aria.settings')}
+            >
+              <CogIcon className={`h-5 w-5 ${isSettingsDirty ? 'text-accent-amber' : ''}`} />
+              {isSettingsDirty && (
+                <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-accent-amber ring-2 ring-surface" />
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => onViewChange('help')}
+              className={`p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover focus-ring-aa touch-target-aa ${currentView === 'help' ? 'bg-surface-hover text-text-primary' : ''}`}
+              aria-label={t('chrome.aria.help')}
+            >
+              <QuestionMarkCircleIcon className="h-5 w-5" />
+            </button>
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover focus-ring-aa touch-target-aa"
+              aria-label={themeLabel}
+            >
+              {themeIcon}
+            </button>
+            {isDeveloperToolsEnabled(settings) && <AgentDebuggerToggle />}
           </div>
         </div>
 

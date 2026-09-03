@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Desktop header density:** Literature review chrome is a single row from `md` up (brand + inference + primary nav + tools). The view title stays an `sr-only` `h1`. Search/Quick Add labels appear from `xl`. Mobile header is unchanged.
 - **GitHub topics (`NOW-P2-TOPICS`):** Intended topic set drops `multi-agent-systems` (no real multi-agent graph; sequential pipeline). Canonical names live in `docs/project-facts.json` `githubTopics`. Applying the PUT requires a token with Administration (the GitHub App integration returns 403). Until a maintainer applies the payload, the live repo may still list that topic.
 - **Audit docs (2026-09-03 closeout):** Live `main` after #294/#296/#297 is `0b9c599`. Ticket table marks the journey wave Done; `NOW-P2-OPENROUTER` stays deferred.
 - **DOMPurify 3.4.13 (Dependabot #295):** Patch `^3.4.12` → `^3.4.13`. Upstream fixes hook removal during `IN_PLACE` sanitization, a hook clone-guard bypass, and `ownerDocument` clobbering during `IN_PLACE`. App call sites stay `sanitize` / `RETURN_DOM_FRAGMENT` (no `IN_PLACE`, no custom hooks).

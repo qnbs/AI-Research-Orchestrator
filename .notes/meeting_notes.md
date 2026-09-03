@@ -1,3 +1,9 @@
+# 2026-09-03 — Desktop header density (post-#298)
+
+- **Why:** Closeout residual: two-row laptop header stole vertical space from the form.
+- **What:** Single-row `md+` chrome; view title `sr-only`; Search/Quick Add text from `xl`.
+- **Not done:** OpenRouter. Live GitHub topic PUT (admin). `v0.4.3`.
+
 # 2026-09-03 — UI/UX journey wave on main; topics + sample-topic E2E
 
 - **Why:** Finish the 2026-09-03 master prompt leftovers after #294/#296/#297: `NOW-P2-TOPICS`, J1 sample-topic E2E, stale closeout SHAs.
