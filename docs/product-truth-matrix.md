@@ -1,6 +1,6 @@
 # Product truth matrix
 
-Living map of user-visible claims vs runtime behavior. Update when onboarding, Help, chrome, or `index.html` copy changes. Gate: `pnpm run check:docs-drift` (`forbiddenProductCopyPhrases`).
+Living map of user-visible claims vs runtime behavior. Update when onboarding, Help, chrome, or `index.html` copy changes. Gate: `pnpm run check:docs-drift` (`forbiddenProductCopyPhrases`). Agent merge policy is separate: `docs/pr-merge-gate.md`.
 
 | Surface                                    | Claim the UI may make                                                                                                                                                                                   | Runtime truth                                                                                                                                                               | Must not claim                                                    |
 | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |

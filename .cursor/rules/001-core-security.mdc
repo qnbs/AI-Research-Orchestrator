@@ -4,13 +4,21 @@ globs: src/**/*.ts,src/**/*.tsx,*.{md,mdc,json},.github/workflows/**/*.yml
 alwaysApply: false
 ---
 
-# Core Security & Secrets
+# Core security and secrets
 
-- **Secrets:** Keine API-Keys/Tokens/Passwörter in Quelltext oder Git. Gemini nur über `apiKeyService` / Einstellungen; AES-GCM wie implementiert. Lokale Hilfsvariablen nur über `.env`/`.env.example`-Muster — nie Keys committen.
-- **Frontend-Env:** In Vite/SPA sind `VITE_*` Werte clientseitig sichtbar; dort niemals echte Secrets hinterlegen.
-- **IndexedDB/Dexie:** Nutzerdaten nur clientseitig; keine Secrets außerhalb der vorgesehenen Key-Verwaltung persistieren.
-- **Externe Aufrufe:** Über bestehende Services (`geminiService`, `pubmedUtils`, `arxivUtils`, RTK-Slices); keine Fetch-URLs mit eingebetteten Credentials.
-- **Fehler:** Nutzer Meldungen per i18n; keine Stacktraces/IDs in UI leaken; kein sensibles Logging in Produktion.
-- **HTML/Markdown:** Sanitisierung wie im Projekt etabliert (DOMPurify); kein `dangerouslySetInnerHTML` ohne bestehendes Review-Muster.
+- **Secrets:** Never commit API keys, tokens, or passwords. Provider keys (Gemini `AIza…`, OpenAI `sk-…`, Anthropic `sk-ant-…`, optional NCBI) live only in the AES-GCM vault via `@src/services/apiKeyService.ts`. Local env files follow `.env.example` — documentation only.
+- **Frontend env:** Vite `VITE_*` values are client-visible. Never put real secrets there.
+- **IndexedDB / Dexie:** User research stays in the browser. Do not persist secrets outside the vault.
+- **External calls:** Route through existing services (`geminiService` façade, `providers/`, `pubmedUtils`, `arxivUtils`, RTK slices). No fetch URLs with embedded credentials.
+- **Errors / logs:** User-facing copy via i18n. No stack traces or raw IDs in the UI. Production logging uses `safeLogError` / `safeLogWarn` (`@src/lib/safeLog.ts`); CI `check:log-redaction` blocks raw `console.*` in `src/`.
+- **HTML / Markdown / prompts:** DOMPurify for rendered HTML. No `dangerouslySetInnerHTML` outside a reviewed pattern. Untrusted prompt fragments go through `@src/lib/promptSanitize.ts` / delimiter framing.
 
-Siehe `@src/services/apiKeyService.ts`, `@AGENTS.md`, `@.env.example`.
+See `@src/services/apiKeyService.ts`, `@SECURITY.md`, `@AGENTS.md`, `@.env.example`.
+
+<example>
+`await saveApiKey(providerId, key)` into the AES-GCM vault; render errors with `t('errors.noApiKey')`.
+</example>
+
+<example type="invalid">
+`const KEY = import.meta.env.VITE_GEMINI_KEY` committed in source, or `dangerouslySetInnerHTML={{ __html: abstract }}` without DOMPurify.
+</example>

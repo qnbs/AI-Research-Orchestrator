@@ -1,3 +1,10 @@
+# 2026-09-03 — Cursor rules and agent docs English + stack truth
+
+- **Why:** Domain `.mdc` files were still German and described a Gemini-only / TanStack Query / single-`translations.ts` world after the dual-gate pass.
+- **What:** Migrated remaining rules to English. `100` matches ADR 0008 providers + heuristic. `101` pins Dexie v7 and partial/trust/demo ADRs. `300`/`800`/`001`/`200`/`000`/`850`/`010` aligned. Manifest lists standing deferrals.
+- **Impact:** New agents load current stack and merge policy from every numbered rule, not only `011`/`013`.
+- **Not done:** OpenRouter. Live GitHub topic PUT (admin). `v0.4.3`. Merge of #300/#301 until each dual gate holds.
+
 # 2026-09-03 — Dual merge gate curated into repo policy
 
 - **Why:** PR #299 was squash-merged on green required CI while CodeAnt was still “🔄 Reviewing…” and Greptile had not arrived. A P2 (missing **Impact** on a meeting-note entry) landed after merge. Agents also had two standing instructions (CodeRabbit not a blocker when rate-limited; Sourcery budget exhausted) that lived only in session memory.

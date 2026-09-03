@@ -4,21 +4,22 @@ globs: src/components/**/*.tsx,src/components/**/*.ts
 alwaysApply: false
 ---
 
-# UI-Komponenten (React + Tailwind v4)
+# UI components (React + Tailwind v4)
 
-- **Paradigma:** Funktionale Komponenten + Hooks. Vite-SPA — Lazy-Loading wie in `App.tsx`; kein Next.js RSC-Split.
-- **Props:** Klare TS-Typen; booleans benannt (`isOpen`, `disabled`); `children` nur bei echter Komposition.
-- **Tailwind v4:** Utility-First via `@theme` tokens in `src/index.css` (no `tailwind.config.js`); Cybernetic/Glass patterns from the design system; inline styles only for dynamic values.
-- **A11y:** Fokus, `aria-*`, Tastatur (inkl. Cmd+K); jsx-a11y ernst nehmen — keine blinden `eslint-disable`.
-- **i18n:** Sichtbare Strings nur über `t()` / `translations.ts`, EN+DE-Paarität.
-- **Motion:** Framer Motion sparsam; Layout-Thrashing vermeiden.
+- **Paradigm:** Function components + hooks. Vite SPA — lazy views as in `App.tsx`; no Next.js RSC split.
+- **Props:** Explicit TS types; booleans named (`isOpen`, `disabled`); `children` only for real composition.
+- **Tailwind v4:** Utility-first via `@theme` tokens in `src/index.css` (no `tailwind.config.js`). Cybernetic / glass patterns from the design system; inline styles only for dynamic values. Prefer `border-border` over one-off hex.
+- **A11y:** Focus, `aria-*`, keyboard (including Cmd+K). Honor jsx-a11y — no blanket `eslint-disable`. View titles that leave the visual header stay an `sr-only` `h1` (desktop chrome is one row from `md`).
+- **i18n:** Visible strings only through `t()`. Keys live in the matching `src/i18n/*Translations.ts` module (not only `translations.ts`). EN+DE parity required. `docs/project-facts.json` `productCopyPaths` is the drift-gated set.
+- **Icons / charts:** Custom icons; do not reintroduce `lucide-react`. Charts are **Recharts only** (ADR 0005).
+- **Motion:** Framer Motion sparingly; respect `motion-safe` / `motion-reduce`. No raw `hover:scale-105`.
 
 <example>
-Use `bg-surface text-text-primary border-border` backed by `@theme` tokens in `src/index.css`; render user-facing copy via `t()`; keep focus rings and keyboard access on interactive controls.
+Use `bg-surface text-text-primary border-border` from `@theme`; render copy via `t()`; keep focus rings and keyboard access on interactive controls.
 </example>
 
 <example type="invalid">
-Add reusable tokens to a revived `tailwind.config.js`, hardcode repeated hex colors in a component, or ship a new button label as a raw English string without an EN+DE `translations.ts` key.
+Revive `tailwind.config.js`, hardcode repeated hex colors, ship a raw English button label, or add Chart.js.
 </example>
 
-See `@src/App.tsx`, `@src/i18n/translations.ts`, `@src/components/ui/`, `@src/index.css`.
+See `@src/App.tsx`, `@src/i18n/`, `@src/components/ui/`, `@src/index.css`.

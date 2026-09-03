@@ -1,15 +1,25 @@
 ---
-description: Unify Gemini and literature APIs; edits in services or gemini/api slices
+description: Unify AI providers and literature APIs; edits in services or gemini/api slices
 globs: src/services/**/*.ts,src/store/slices/geminiApiSlice.ts,src/store/slices/apiSlice.ts
 alwaysApply: false
 ---
 
-# Gemini, PubMed & verwandte APIs
+# AI providers, PubMed, and related APIs
 
-- **Gemini:** `@google/genai` nur über `geminiService` / RTK-Patterns (Streams, AbortSignal). Model-/Routing-Änderungen zentral; keine Keys in diesen Dateien.
-- **PubMed/NCBI:** Rate-Limits und Backoff aus `pubmedUtils`; keine Scraping-Umgehungen gegenüber NCBI-ToS.
-- **arXiv:** Nur über `arxivUtils` anbinden.
-- **TanStack Query / RTK Query:** Keys/Tags/Invalidierung konsistent zu bestehenden Endpoints.
-- **Netzwerk:** Fehler abfangen; Feedback über Redux/UI statt stiller `alert`-Only-Pfade.
+- **Façade (ADR 0008):** `@src/services/geminiService.ts` is the public feature API. Live stream / JSON / literature tools live in `liveResearchReportStream.ts`, `aiJson.ts`, `literatureAiTools.ts`. Never import a vendor SDK from a view or from the façade — load transports via `getProviderForSettings()` in `src/services/providers/`.
+- **Providers:** Gemini (`@google/genai`), OpenAI, Anthropic, Ollama `fetch`, or the deterministic heuristic adapter. Default live model: `gemini-2.5-flash`. OpenRouter stays `openai` + custom base URL (ADR 0010 deferred — do not add a first-class adapter).
+- **InferenceMode** `live | heuristic`: never dead-end on a missing key or offline. Use `@src/services/nonAi/` (ADR 0007/0009). Explicit Educational Demo is quarantined (ADR 0016) — never a silent substitute for failed live retrieval.
+- **PubMed / NCBI:** Rate limits and backoff from `@src/services/pubmedUtils.ts`. No scraping workarounds against NCBI ToS.
+- **arXiv:** Only through `@src/services/arxivUtils.ts`.
+- **RTK Query:** Cache keys/tags/invalidation stay consistent with existing `researchApi` / `geminiApi` endpoints. This repo does **not** use TanStack Query.
+- **Network:** Catch failures; surface them through Redux/UI. Every new external path needs happy-path + failure + abort tests (rule `102`).
 
-Siehe `@src/services/geminiService.ts`, `@src/services/pubmedUtils.ts`, `@src/store/slices/geminiApiSlice.ts`.
+See `@src/services/geminiService.ts`, `@src/services/providers/`, `@src/services/pubmedUtils.ts`.
+
+<example>
+`const provider = await getProviderForSettings(settings); yield* generateResearchReportStream(...)`
+</example>
+
+<example type="invalid">
+`import { GoogleGenAI } from '@google/genai'` inside a React view, or a raw `fetch('https://eutils.ncbi.nlm.nih.gov/...')` that ignores `pubmedUtils` backoff.
+</example>

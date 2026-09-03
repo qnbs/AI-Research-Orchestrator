@@ -14,7 +14,7 @@
 
 > **Client-only PWA for biomedical literature review:** PubMed/arXiv retrieval, multi-provider AI (or heuristic fallback), a local knowledge base, and scientometric exploration.
 
-**[Live Demo](https://qnbs.github.io/AI-Research-Orchestrator/)** · [SECURITY.md](./SECURITY.md) · [CONTRIBUTING.md](./CONTRIBUTING.md) · [CHANGELOG.md](./CHANGELOG.md) · [AGENTS.md](./AGENTS.md)
+**[Live Demo](https://qnbs.github.io/AI-Research-Orchestrator/)** · [SECURITY.md](./SECURITY.md) · [CONTRIBUTING.md](./CONTRIBUTING.md) · [CHANGELOG.md](./CHANGELOG.md) · [AGENTS.md](./AGENTS.md) · [PR merge gate](./docs/pr-merge-gate.md)
 
 Provider keys (optional): [Gemini](https://aistudio.google.com/) · OpenAI · Anthropic · or run **Ollama / Heuristic** with no cloud key.
 

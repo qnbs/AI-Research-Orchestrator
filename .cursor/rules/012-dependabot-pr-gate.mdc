@@ -20,7 +20,7 @@ When Dependabot (or similar) PRs are open, **do not leave them idle**. Process e
 ## Do not
 
 - Bulk-close Dependabot PRs without testing or a written disposition.
-- Merge majors (e.g. lucide-react 0→1, vitest 3→4) without gates green.
+- Merge majors (e.g. a Vitest major, a new chart library) without gates green. `lucide-react` was removed — do not re-add it as a bump.
 - Leave Actions bumps only on `deploy.yml` while `security.yml` stays stale.
 
 English for PR comments/docs (`010-english-content.mdc`).

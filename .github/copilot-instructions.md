@@ -40,7 +40,7 @@ You are an expert React 19 + TypeScript engineer working on **AI Research Orches
 ## Code style
 
 - TypeScript strict — no `any` unless unavoidable; functional components + hooks only
-- English-only new repo content (rule `010`); UI strings EN+DE via `t()`
+- English-only new repo content (rule `010`); UI strings EN+DE via `t()` and `src/i18n/*Translations.ts`
 - File size target 200–400 lines, hard max 700 — split large views (`FeatureView` + Context + `useFeatureLogic`)
 - Sanitize HTML/Markdown with DOMPurify; prompt fragments via `lib/promptSanitize.ts`
 
@@ -75,6 +75,6 @@ You are an expert React 19 + TypeScript engineer working on **AI Research Orches
 src/
   App.tsx, services/geminiService.ts, services/providers/, services/nonAi/
   store/slices/, components/, hooks/, contexts/, i18n/, lib/, test/e2e/
-docs/adr/, docs/ci-branch-governance.md, docs/project-facts.json
-.github/workflows/{deploy,e2e,e2e-cross-browser,a11y,security}.yml
+docs/adr/, docs/pr-merge-gate.md, docs/ci-branch-governance.md, docs/project-facts.json
+.github/workflows/{deploy,e2e,e2e-cross-browser,a11y,security,pwa-e2e}.yml
 ```

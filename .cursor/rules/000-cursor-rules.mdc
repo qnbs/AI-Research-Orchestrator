@@ -4,17 +4,33 @@ globs: .cursor/rules/*.mdc,.cursor/index.mdc,AGENTS.md
 alwaysApply: false
 ---
 
-# Meta: Regeln für Regeln
+# Meta: rules for rules
 
-- Nutzer weist an, eine Regel zu erstellen/zu ändern **oder** ich soll eine Korrektur dauerhaft festhalten → **immer** `.mdc` unter `.cursor/rules/` anlegen oder ändern.
-- **Nummernkreis** (Kebab-Case): `001–099` Core/Security, `100–199` Integrationen/APIs, `200–299` Architektur/Patterns, `300–399` UI/Styling, `800–899` Workflows/Testing.
+- When the user asks to create or change a rule, **or** a correction must stick for later sessions → always add or edit a `.mdc` under `.cursor/rules/`.
+- **Numbering** (kebab-case): `001–099` Core/Security/PR gates, `100–199` Integrations/APIs, `200–299` Architecture, `300–399` UI, `800–899` Workflows/Testing.
 - **`description`:** ATO (Action, Trigger, Outcome), **≤120 characters**, **English** (see `010-english-content.mdc`).
-- **`globs`:** Keine Leerzeichen nach Kommas, keine Anführungszeichen — z. B. `globs: *.ts,src/**/*.tsx`.
-- **Länge:** Regeln **≤200 Zeilen**; Code nicht duplizieren — verweisen auf `@PFAD` (z. B. `@src/services/apiKeyService.ts`).
-- **Merge policy:** Dual gate lives in `docs/pr-merge-gate.md` (human) and `.cursor/rules/011-coderabbit-pr-gate.mdc` step 7 (authoritative predicate). `013` restates; do not invent a second predicate.
-- **Beispiele:** `<example>` und `<example type="invalid">` für gültige vs. verbotene Muster.
-- **Editor:** Bevorzugt Standard-Editor zum Schreiben (MDC-Editor-Glitches vermeiden).
-- **Rule-Lint:** Vor Abschluss prüfen: Scope passt zum Regeltext, rekursive Globs wo nötig, keine leeren/ambigen `globs`.
+- **`globs`:** No spaces after commas, no quotes — e.g. `globs: *.ts,src/**/*.tsx`.
+- **Length:** Rules **≤200 lines**. Do not duplicate code — point at `@PATH` (e.g. `@src/services/apiKeyService.ts`).
+- **Merge policy:** Dual gate lives in `docs/pr-merge-gate.md` (human) and `.cursor/rules/011-coderabbit-pr-gate.mdc` step 7 (authoritative predicate). `013` restates; **do not invent a second predicate**.
+- **Examples:** `<example>` and `<example type="invalid">` for allowed vs forbidden patterns.
+- **Rule lint:** Scope matches the body; recursive globs where needed; no empty or ambiguous `globs`.
+
+## Catalog (do not fork these)
+
+| Rule | Role |
+| ---- | ---- |
+| `001` | Secrets, vault, sanitization |
+| `010` | English-only repo content |
+| `011` | Authoritative merge-quiescence predicate |
+| `012` | Dependabot processing |
+| `013` | Correction-loop procedure (restates `011`) |
+| `100` | Providers + PubMed/arXiv (ADR 0008 façade) |
+| `101` | Dexie schema / migrations |
+| `102` | External-call resilience |
+| `200` | File size, KISS/DRY, Redux |
+| `300` | UI, a11y, i18n, Tailwind v4 |
+| `800` | Deterministic tests; CI-first full suites |
+| `850` | PRD / meeting notes / MCP |
 
 <example>
 
@@ -34,6 +50,6 @@ alwaysApply: false
 globs: "*.tsx", src/**/*.ts
 ```
 
-Leerzeichen nach Kommas und Quotes sind verboten.
+Spaces after commas and quoted glob lists are forbidden.
 
 </example>

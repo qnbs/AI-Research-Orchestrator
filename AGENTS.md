@@ -106,7 +106,7 @@ pnpm run format                  # Prettier write (src + root md/json)
 
 ## Conventions & Code Style
 
-- **English-only repository content** (rule `010`, since 2026-07-16): all new/edited docs, comments, JSDoc, commit messages, CI text, and default/fallback strings must be English. **Exception**: existing German locale values in `src/i18n/translations.ts` stay; new UI strings need **EN + DE keys** and must render via `t()`.
+- **English-only repository content** (rule `010`, since 2026-07-16): all new/edited docs, comments, JSDoc, commit messages, CI text, Cursor rules, and default/fallback strings must be English. **Exception**: existing German locale values in `src/i18n/*Translations.ts` stay; new UI strings need **EN + DE keys** and must render via `t()`. Cursor `.mdc` rule bodies are English (migrated 2026-09-03).
 - TypeScript strict — no `any` unless unavoidable; functional components + hooks only.
 - **File size**: target 200–400 lines, hard max 700 (rule `200`). Split large views into `FeatureView.tsx` + `FeatureViewContext.tsx` + `useFeatureLogic.ts` (see Authors/Journals/Knowledge-Base patterns).
 - New persistent data → explicit Dexie schema version bump + migration in `databaseService.ts`; defaults documented; breaking changes in `CHANGELOG.md`.

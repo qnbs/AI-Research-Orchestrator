@@ -69,7 +69,7 @@ Service worker at `public/sw.js`; `404.html` handles SPA routing on GitHub Pages
 
 ## Conventions
 
-- **English-only repository content** (since 2026-07-16): all new docs, comments, commit messages, and default/fallback strings are English. Existing German locale _values_ in `src/i18n/translations.ts` stay as-is; new UI strings need both EN and DE keys, rendered via `t()`.
+- **English-only repository content** (since 2026-07-16): all new docs, comments, commit messages, Cursor rules, and default/fallback strings are English. Existing German locale _values_ in `src/i18n/*Translations.ts` stay as-is; new UI strings need both EN and DE keys, rendered via `t()`.
 - File size target 200–400 lines, hard max 700. Split large views into `FeatureView.tsx` + `FeatureViewContext.tsx` + `useFeatureLogic.ts` (see the Authors/Journals/Knowledge-Base views for the pattern).
 - New persistent data requires an explicit Dexie schema version bump + migration in `databaseService.ts`, plus a `CHANGELOG.md` entry if breaking.
 - All HTML/Markdown is sanitized with DOMPurify; no bare `dangerouslySetInnerHTML`; prompt fragments go through `lib/promptSanitize.ts`; CSV export must stay formula-injection-safe.

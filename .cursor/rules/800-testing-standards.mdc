@@ -6,12 +6,20 @@ alwaysApply: false
 
 # Testing (Vitest / Playwright)
 
-- **Determinismus:** Keine Abhängigkeit von Uhrzeit, Netzwerk-Randomness oder nicht-deterministischer Reihenfolge. Gemini/PubMed/arXiv/IndexedDB/Crypto **mocken** (`@src/test/setup.ts`, bestehende Specs als Vorlage).
-- **Verboten:** Tests auskommentieren/löschen, um CI grün zu tricksen — Ursachen beheben oder Assertions präzisieren.
-- **Isolation:** Specs unabhängig lauffähig; kein geteilter mutable Global-State zwischen Files.
-- **E2E:** `src/test/e2e/` — stabile Selektoren (`getByRole` bevorzugt); `sleep` nur mit Begründung.
-- **Full local `pnpm run test:e2e` (eight specs under `testDir`, including `a11y.spec.ts`) belongs in CI only**, not on the local dev machine (~3.7 GB RAM) — it reliably gets OOM-killed there regardless of whether the code under test is correct. Locally, only run a single spec file or a `-g "<pattern>"` scoped subset. Blocking CI scopes: Chromium + cross-browser workflows each run the seven-spec list from `docs/project-facts.json` `ciSpecPaths`; `a11y.spec.ts` runs separately in `.github/workflows/a11y.yml`.
+- **Determinism:** No dependence on wall-clock, network randomness, or file order. Mock Gemini / PubMed / arXiv / IndexedDB / crypto (`@src/test/setup.ts`).
+- **Forbidden:** Commenting out or deleting tests to make CI green. Fix the cause or tighten the assertion.
+- **Isolation:** Specs run independently; no shared mutable globals across files.
+- **E2E:** `src/test/e2e/` — prefer `getByRole`; `sleep` only with a written reason. Shared onboarding helpers live in `e2eHelpers.ts` (`skipOnboarding`, `completeOnboardingWithSampleTopic`).
+- **Full local `pnpm run test:e2e` belongs in CI only** (~3.7 GB RAM local box — OOM risk). Locally run one spec or `-g "<pattern>"`. Blocking CI: Chromium + cross-browser use `docs/project-facts.json` `ciSpecPaths` (seven specs); `a11y.spec.ts` runs in `a11y.yml`.
+- **Coverage:** Logic-layer floors in `@vitest.config.ts` (80/80/55/55 on `store` / `services` / `hooks` / `lib`). Prefer scoped `pnpm exec vitest run <file>` locally; read the full `test:coverage` gate from the blocking `deploy.yml` job.
+- **Merge:** Tests green on the latest head are the CI half of the dual gate — not sufficient alone. Review quiescence: `docs/pr-merge-gate.md`.
 
-Coverage-Schwellen für Logik-Layer: `@vitest.config.ts`. CI nutzt `pnpm run test:coverage`.
+See `@src/test/setup.ts`, `@vitest.config.ts`, `@docs/pr-merge-gate.md`.
 
-Siehe `@src/test/setup.ts`, `@vitest.config.ts`.
+<example>
+`pnpm exec vitest run src/services/pubmedUtils.test.ts` while editing; confirm the deploy.yml coverage job on the PR before merge.
+</example>
+
+<example type="invalid">
+`it.skip('retries on 429')` to silence a red CI job, or `pnpm run test:e2e` on the constrained local box.
+</example>
