@@ -68,19 +68,45 @@ Required check contexts currently configured:
 `Axe critical/serious smoke`, `CodeQL`, `Dependency Review`, `pnpm audit (high+)`,
 `Secret scan (gitleaks)`.
 
-Enable `dismiss_stale_reviews_on_push` (Administration token — GitHub App
-integrations return **403**, same as PR #301 dismiss). Fetch the live ruleset,
-set the pull-request parameter, PUT the **full** `rules` array back (partial
-PUTs wipe other rules):
+Enable `dismiss_stale_reviews_on_push` with an **Administration** token
+(GitHub App / default Actions tokens return **403**, same as PR #301 dismiss).
+`GET` the live ruleset, flip only that pull-request parameter, then `PUT` the
+writable fields including the **full** `rules` array. A partial `rules` array
+wipes every other rule. Do **not** send `id` / `_links` / timestamps.
 
 ```bash
-gh api repos/qnbs/AI-Research-Orchestrator/rulesets/20291814 \
-  --jq '.rules[]|select(.type=="pull_request").parameters.dismiss_stale_reviews_on_push'
+# Administration token required. App tokens 403.
+RULESET_ID=20291814
+REPO=qnbs/AI-Research-Orchestrator
+RAW=$(mktemp)
+PUT=$(mktemp)
+trap 'rm -f "$RAW" "$PUT"' EXIT
+
+gh api "repos/${REPO}/rulesets/${RULESET_ID}" > "$RAW"
+jq -r '.rules[]|select(.type=="pull_request").parameters.dismiss_stale_reviews_on_push' "$RAW"
 # live 2026-09-03: false. Expected after enable: true.
+
+jq '
+  {
+    name, target, enforcement, conditions,
+    rules: [
+      .rules[]
+      | if .type == "pull_request" then
+          .parameters.dismiss_stale_reviews_on_push = true
+        else .
+        end
+    ]
+  } + (if .bypass_actors then {bypass_actors} else {} end)
+' "$RAW" > "$PUT"
+
+# Dry-run: dismiss_stale true, require_code_owner_review still false
+jq '.rules[]|select(.type=="pull_request").parameters' "$PUT"
+
+gh api --method PUT "repos/${REPO}/rulesets/${RULESET_ID}" --input "$PUT"
 ```
 
-After enable, update `docs/project-facts.json` `ci.dismissStaleReviewsOnPushLive`
-to `true` in the same PR. Do **not** enable `require_code_owner_review`.
+After enable, set `docs/project-facts.json` `ci.dismissStaleReviewsOnPushLive`
+to `true` in the same follow-up PR. Do **not** enable `require_code_owner_review`.
 
 ### Process gates (not GitHub-required checks)
 

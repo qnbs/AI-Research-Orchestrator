@@ -1,7 +1,7 @@
 # 2026-09-03 — GitHub BLOCKED vs latest-head policy (PR #301)
 
 - **Why:** #301 dual gate held on `fabb725` (required CI green, threads 0, clause **(d)**). GitHub stayed `BLOCKED` / `CHANGES_REQUESTED` because review `5107396133` targeted superseded `27f9ea6` and `dismiss_stale_reviews_on_push` is off. Dismiss API returned 403.
-- **What:** Squash-merged with `--admin` (documented exception). Follow-up docs: GitHub vs policy split, maintainer enable command for `mainrules` 20291814, drift assert, facts `dismissStaleReviewsOnPushExpected: true` / `Live: false`.
+- **What:** Squash-merged with `--admin` (documented exception). Follow-up docs: GitHub vs policy split, full-ruleset `PUT` enable recipe for `mainrules` 20291814 (Administration token; partial PUTs wipe other rules), drift assert requires both `mergeStateStatus` and `dismiss_stale`, facts `dismissStaleReviewsOnPushExpected: true` / `Live: false`. `011`/`013` restated the same superseded-`CHANGES_REQUESTED` predicate (**(d)** never waives a latest-head `CHANGES_REQUESTED`).
 - **Impact:** Agents treat superseded `CHANGES_REQUESTED` as a ruleset UI block, not a policy block, and do not invent extra diffs to “clear” it.
 - **Not done:** Live ruleset PUT (Administration token). App integrations 403. Do not enable CODEOWNERS reviews.
 

@@ -103,12 +103,16 @@ Quiescence holds **if and only if all** of the following are true:
    rationale. A body-only finding with no tracked disposition blocks quiescence
    exactly like an unresolved thread.
 
-A `CHANGES_REQUESTED` review (bot or human) **never** satisfies quiescence by
-itself. After fixing its findings, wait for a non-requesting review on a
-**later** head. Thread resolution alone does not moot `CHANGES_REQUESTED`.
-A `CHANGES_REQUESTED` review on a **superseded** SHA is not a policy block once
-a later non-requesting review exists for the current head **or** clause **(d)**
-applies and that review’s findings are already disposed.
+A `CHANGES_REQUESTED` review (bot or human) that targets the **latest** head
+**never** satisfies quiescence and is **never** waived by (b), (c), or (d).
+After fixing its findings, wait for a non-requesting review on a **later**
+head. Thread resolution alone does not moot `CHANGES_REQUESTED`.
+A `CHANGES_REQUESTED` review whose `commit_id` is a **superseded** SHA is not a
+policy block once its findings are disposed **and** the current-head
+CodeRabbit condition **(a)/(b)/(c)/(d)** holds. A newer real current-head
+review is sufficient (**(a)**) but not required — **(d)** covers no real
+CodeRabbit review on this head. **(d)** never waives an **active latest-head**
+`CHANGES_REQUESTED`.
 
 ## GitHub `mergeStateStatus` vs policy
 

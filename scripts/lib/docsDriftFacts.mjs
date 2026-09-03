@@ -169,7 +169,8 @@ export function assertMergeGateDocument(mergeGate, path, errors) {
     [/arrival wait/i, `${path} must document the arrival wait`],
     [/body-only|outside diff/i, `${path} must cover body-only / outside-diff findings`],
     [/disposition/i, `${path} must require a disposition ledger`],
-    [/mergeStateStatus|dismiss_stale/i, `${path} must distinguish GitHub mergeStateStatus from policy quiescence`],
+    [/mergeStateStatus/, `${path} must name GitHub mergeStateStatus (ruleset block vs policy)`],
+    [/dismiss_stale/, `${path} must name dismiss_stale (ruleset setting that leaves BLOCKED)`],
   ];
   for (const [pattern, message] of required) {
     assertMatch(mergeGate, pattern, message, errors);

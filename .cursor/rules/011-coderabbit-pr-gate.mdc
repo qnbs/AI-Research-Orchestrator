@@ -55,7 +55,9 @@ Standing policy (maintainer-approved 2026-09-03): a green CodeRabbit check that 
    - **No other in-scope bot has an unresolved item or active `CHANGES_REQUESTED`.**
    - **All actionable GraphQL threads are resolved**, and **every body-only finding** (outside-diff comments, human top-level review bodies, or any finding with no thread ID) **has a recorded `fixed`, `replied`, or `deferred` disposition** in the disposition ledger or a PR comment, with a documented English rationale for every `deferred` finding.
 
-   A `CHANGES_REQUESTED` review (bot or human) **never** satisfies quiescence by itself. After fixing, wait for a non-requesting review on a **later** head — thread resolution alone does not moot it. A `CHANGES_REQUESTED` review on a **superseded** commit is not a merge block once a newer real review exists for the current head, or when clause **(d)** applies and those findings are already disposed.
+   A `CHANGES_REQUESTED` review (bot or human) that targets the **latest** head **never** satisfies quiescence and is **never** waived by (b), (c), or (d). After fixing, wait for a non-requesting review on a **later** head — thread resolution alone does not moot it.
+
+   A `CHANGES_REQUESTED` review whose `commit_id` is a **superseded** SHA is not a policy block once its findings are disposed **and** the current-head CodeRabbit condition **(a)/(b)/(c)/(d)** holds. A newer real current-head review is sufficient (that is **(a)**) but not required: **(d)** covers the case where CodeRabbit has produced no real review on **this** head. **(d)** never waives an **active latest-head** `CHANGES_REQUESTED`.
 
    GitHub `reviewDecision` / `mergeStateStatus: BLOCKED` can still show that superseded review while `dismiss_stale_reviews_on_push` is off. That is a **ruleset block**, not a policy block. Dismiss if the token allows; if dismiss returns 403 and the dual gate holds, squash-merge with `--admin` and document it (`docs/pr-merge-gate.md`). Enabling dismiss-stale on `mainrules` is the standing maintainer fix.
 
