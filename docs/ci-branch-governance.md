@@ -68,11 +68,15 @@ Required check contexts currently configured:
 `Axe critical/serious smoke`, `CodeQL`, `Dependency Review`, `pnpm audit (high+)`,
 `Secret scan (gitleaks)`.
 
-Enable `dismiss_stale_reviews_on_push` with an **Administration** token
-(GitHub App / default Actions tokens return **403**, same as PR #301 dismiss).
-`GET` the live ruleset, flip only that pull-request parameter, then `PUT` the
-writable fields including the **full** `rules` array. A partial `rules` array
-wipes every other rule. Do **not** send `id` / `_links` / timestamps.
+Enable `dismiss_stale_reviews_on_push` with a token that has **Administration:
+write** (classic PAT with `admin:repo` / fine-grained “Administration”, or a
+GitHub App **installation** token whose app has that permission). The
+installation and Actions tokens used on this repo returned **403** on both
+ruleset PUT and PR-review dismiss (PR #301) — that is this installation, not
+a blanket API restriction. `GET` the live ruleset, flip only that
+pull-request parameter, then `PUT` the writable fields including the **full**
+`rules` array. A partial `rules` array wipes every other rule. Do **not**
+send `id` / `_links` / timestamps.
 
 ```bash
 # Administration token required. App tokens 403.
@@ -103,10 +107,16 @@ jq '
 jq '.rules[]|select(.type=="pull_request").parameters' "$PUT"
 
 gh api --method PUT "repos/${REPO}/rulesets/${RULESET_ID}" --input "$PUT"
+
+# Read back before flipping the live fact
+gh api "repos/${REPO}/rulesets/${RULESET_ID}" \
+  --jq '.rules[]|select(.type=="pull_request").parameters.dismiss_stale_reviews_on_push'
+# must print: true
 ```
 
-After enable, set `docs/project-facts.json` `ci.dismissStaleReviewsOnPushLive`
-to `true` in the same follow-up PR. Do **not** enable `require_code_owner_review`.
+After the readback is `true`, set `docs/project-facts.json`
+`ci.dismissStaleReviewsOnPushLive` to `true` in the same follow-up PR. Do
+**not** enable `require_code_owner_review`.
 
 ### Process gates (not GitHub-required checks)
 
