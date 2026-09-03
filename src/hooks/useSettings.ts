@@ -56,9 +56,7 @@ function mergeSettingsWithDefaults(
     typeof storedModel === 'string' &&
     (providerMeta.modelSuggestions.includes(storedModel) ||
       storedModel === providerMeta.defaultModel);
-  const model = isModelValidForProvider
-    ? storedModel
-    : (baseline.ai.model ?? providerMeta.defaultModel);
+  const model = isModelValidForProvider ? storedModel : providerMeta.defaultModel;
 
   const mergedAi: Settings['ai'] = {
     ...baseline.ai,

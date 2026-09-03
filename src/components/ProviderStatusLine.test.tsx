@@ -40,4 +40,15 @@ describe('ProviderStatusLine', () => {
       screen.getByText(`provider.status.ollama:${getProviderMeta('ollama').defaultModel}`),
     ).toBeInTheDocument();
   });
+
+  it('ignores a leftover Gemini default model when the live provider is Ollama', () => {
+    settingsState.model = getProviderMeta('gemini').defaultModel;
+    inference.mode = 'live';
+    inference.reason = 'key';
+    inference.provider = 'ollama';
+    render(<ProviderStatusLine />);
+    expect(
+      screen.getByText(`provider.status.ollama:${getProviderMeta('ollama').defaultModel}`),
+    ).toBeInTheDocument();
+  });
 });

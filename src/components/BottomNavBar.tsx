@@ -97,13 +97,7 @@ const NavItem: React.FC<{
   );
 };
 
-export const BottomNavBar: React.FC<BottomNavBarProps> = (props) => (
-  // Remount when the destination changes so More starts closed without
-  // setState-during-render or setState-in-effect (eslint react-hooks).
-  <BottomNavBarInner key={props.currentView} {...props} />
-);
-
-const BottomNavBarInner: React.FC<BottomNavBarProps> = ({
+export const BottomNavBar: React.FC<BottomNavBarProps> = ({
   currentView,
   onViewChange,
   knowledgeBaseArticleCount,
@@ -112,13 +106,15 @@ const BottomNavBarInner: React.FC<BottomNavBarProps> = ({
 }) => {
   const { t } = useTranslation();
   const { setIsCommandPaletteOpen } = useUI();
-  const [moreOpen, setMoreOpen] = useState(false);
+  const [openedFor, setOpenedFor] = useState<View | null>(null);
   const navRef = useRef<HTMLElement>(null);
   const moreTriggerRef = useRef<HTMLButtonElement>(null);
   const reportHint = t('nav.requires_report');
   const reportHintId = 'bottom-nav-report-hint';
+  const moreOpen = openedFor === currentView;
+  const closeMore = () => setOpenedFor(null);
   const selectView = (view: View) => {
-    setMoreOpen(false);
+    closeMore();
     onViewChange(view);
   };
 
@@ -126,12 +122,12 @@ const BottomNavBarInner: React.FC<BottomNavBarProps> = ({
     if (!moreOpen) return;
     const onPointerDown = (event: MouseEvent) => {
       if (navRef.current && !navRef.current.contains(event.target as Node)) {
-        setMoreOpen(false);
+        setOpenedFor(null);
       }
     };
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return;
-      setMoreOpen(false);
+      setOpenedFor(null);
       moreTriggerRef.current?.focus();
     };
     document.addEventListener('mousedown', onPointerDown);
@@ -229,7 +225,7 @@ const BottomNavBarInner: React.FC<BottomNavBarProps> = ({
           ariaExpanded={moreOpen}
           ariaControls={MORE_MENU_ID}
           buttonRef={moreTriggerRef}
-          onClick={() => setMoreOpen((open) => !open)}
+          onClick={() => setOpenedFor((view) => (view === currentView ? null : currentView))}
         />
       </div>
       {moreOpen && (
@@ -249,7 +245,7 @@ const BottomNavBarInner: React.FC<BottomNavBarProps> = ({
                 } else if (item.view) {
                   onViewChange(item.view);
                 }
-                setMoreOpen(false);
+                closeMore();
               }}
               className={`w-full text-left flex items-center gap-3 px-4 py-3 min-h-11 text-sm hover:bg-surface-hover focus-ring-aa border-b border-border/40 ${item.muted ? 'opacity-60' : ''}`}
             >
