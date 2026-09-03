@@ -20,7 +20,9 @@ export const SliderInput: React.FC<{
   min: number;
   max: number;
   step?: number;
-}> = ({ label, id, value, onChange, min, max, step = 1 }) => (
+  describedBy?: string;
+  invalid?: boolean;
+}> = ({ label, id, value, onChange, min, max, step = 1, describedBy, invalid }) => (
   <div>
     <div className="flex justify-between mb-2">
       <label htmlFor={id} className="block text-sm font-medium text-text-secondary">
@@ -40,8 +42,9 @@ export const SliderInput: React.FC<{
       max={max}
       step={step}
       className="w-full h-2 bg-input-bg border border-border/50 rounded-lg appearance-none cursor-pointer accent-brand-accent hover:accent-brand-secondary focus:outline-none focus:ring-2 focus:ring-brand-accent/50"
-      aria-labelledby={id}
       aria-valuetext={String(value)}
+      aria-describedby={describedBy}
+      aria-invalid={invalid || undefined}
     />
   </div>
 );
@@ -97,6 +100,7 @@ const SelectChevron: React.FC = () => (
 export interface InputFormOptionsProps {
   formData: ResearchInput;
   errors: { topN?: string };
+  topNErrorId: string;
   allArticleTypesSelected: boolean;
   onChange: (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
@@ -110,6 +114,7 @@ export interface InputFormOptionsProps {
 export const InputFormOptions: React.FC<InputFormOptionsProps> = ({
   formData,
   errors,
+  topNErrorId,
   allArticleTypesSelected,
   onChange,
   onArticleTypeChange,
@@ -167,23 +172,25 @@ export const InputFormOptions: React.FC<InputFormOptionsProps> = ({
         </div>
       </div>
 
-      <div className="bg-surface/30 border border-border rounded-xl p-5 backdrop-blur-sm">
-        <div className="flex justify-between items-center mb-3">
-          <legend className="block text-sm font-semibold text-text-primary">
-            {t('inputForm.articleTypes.legend')}
-          </legend>
-          <button
-            type="button"
-            onClick={onToggleAllArticleTypes}
-            className="text-xs font-semibold text-brand-accent hover:text-brand-secondary transition-colors focus-ring-aa rounded-sm"
-          >
-            {t(
-              allArticleTypesSelected
-                ? 'inputForm.articleTypes.deselectAll'
-                : 'inputForm.articleTypes.selectAll',
-            )}
-          </button>
-        </div>
+      <fieldset className="m-0 min-w-0 bg-surface/30 border border-border rounded-xl p-5 backdrop-blur-sm">
+        <legend className="float-none w-full p-0 mb-3">
+          <span className="flex justify-between items-center w-full gap-3">
+            <span className="block text-sm font-semibold text-text-primary">
+              {t('inputForm.articleTypes.legend')}
+            </span>
+            <button
+              type="button"
+              onClick={onToggleAllArticleTypes}
+              className="text-xs font-semibold text-brand-accent hover:text-brand-secondary transition-colors focus-ring-aa rounded-sm"
+            >
+              {t(
+                allArticleTypesSelected
+                  ? 'inputForm.articleTypes.deselectAll'
+                  : 'inputForm.articleTypes.selectAll',
+              )}
+            </button>
+          </span>
+        </legend>
         <div className="grid grid-cols-2 gap-3">
           {ARTICLE_TYPES.map((type) => (
             <CustomCheckbox
@@ -196,15 +203,20 @@ export const InputFormOptions: React.FC<InputFormOptionsProps> = ({
             />
           ))}
         </div>
-      </div>
+      </fieldset>
 
-      <div className="bg-surface/30 border border-border rounded-xl p-5 backdrop-blur-sm">
-        <div className="flex items-center gap-2 mb-3">
-          <div className="h-1.5 w-1.5 rounded-full bg-accent-cyan shadow-[0_0_8px_var(--color-accent-cyan)]" />
-          <legend className="text-sm font-semibold text-text-primary">
-            {t('inputForm.sources.legend')}
-          </legend>
-        </div>
+      <fieldset className="m-0 min-w-0 bg-surface/30 border border-border rounded-xl p-5 backdrop-blur-sm">
+        <legend className="float-none w-full p-0 mb-3">
+          <span className="flex items-center gap-2">
+            <span
+              className="h-1.5 w-1.5 rounded-full bg-accent-cyan shadow-[0_0_8px_var(--color-accent-cyan)]"
+              aria-hidden
+            />
+            <span className="text-sm font-semibold text-text-primary">
+              {t('inputForm.sources.legend')}
+            </span>
+          </span>
+        </legend>
         <div className="space-y-2">
           <div className="flex items-center p-2 rounded-lg bg-brand-accent/5 border border-brand-accent/20 gap-2.5">
             <div className="w-5 h-5 rounded-md bg-brand-accent border border-brand-accent flex items-center justify-center flex-shrink-0">
@@ -242,15 +254,20 @@ export const InputFormOptions: React.FC<InputFormOptionsProps> = ({
             </p>
           )}
         </div>
-      </div>
+      </fieldset>
 
-      <div className="bg-surface/30 border border-border rounded-xl p-5 space-y-6 backdrop-blur-sm">
-        <div className="flex items-center gap-2 mb-2">
-          <div className="h-1.5 w-1.5 rounded-full bg-accent-cyan shadow-[0_0_8px_var(--color-accent-cyan)]" />
-          <legend className="text-sm font-semibold text-text-primary">
-            {t('inputForm.workload.legend')}
-          </legend>
-        </div>
+      <fieldset className="m-0 min-w-0 bg-surface/30 border border-border rounded-xl p-5 space-y-6 backdrop-blur-sm">
+        <legend className="float-none w-full p-0 mb-2">
+          <span className="flex items-center gap-2">
+            <span
+              className="h-1.5 w-1.5 rounded-full bg-accent-cyan shadow-[0_0_8px_var(--color-accent-cyan)]"
+              aria-hidden
+            />
+            <span className="text-sm font-semibold text-text-primary">
+              {t('inputForm.workload.legend')}
+            </span>
+          </span>
+        </legend>
         <SliderInput
           label={t('inputForm.workload.max_scan')}
           id="maxArticlesToScan"
@@ -267,13 +284,10 @@ export const InputFormOptions: React.FC<InputFormOptionsProps> = ({
           onChange={onChange}
           min={1}
           max={20}
+          describedBy={errors.topN ? topNErrorId : undefined}
+          invalid={Boolean(errors.topN)}
         />
-        {errors.topN && (
-          <p className="text-xs text-red-400 font-medium bg-red-500/10 border border-red-500/20 p-2 rounded-md text-center">
-            {errors.topN}
-          </p>
-        )}
-      </div>
+      </fieldset>
     </div>
   );
 };

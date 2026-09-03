@@ -26,6 +26,7 @@ function renderOnboarding(onComplete = vi.fn()) {
   });
   return {
     onComplete,
+    store,
     ...render(
       <Provider store={store}>
         <OnboardingView onComplete={onComplete} />
@@ -53,8 +54,8 @@ describe('OnboardingView', () => {
   });
 
   it('toggles language from the first screen', () => {
-    renderOnboarding();
+    const { store } = renderOnboarding();
     fireEvent.click(screen.getByRole('button', { name: 'chrome.aria.toggle_language' }));
-    expect(screen.getByRole('button', { name: 'chrome.aria.toggle_language' })).toBeInTheDocument();
+    expect(store.getState().settings.data.appLanguage).toBe('de');
   });
 });

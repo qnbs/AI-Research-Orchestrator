@@ -52,6 +52,8 @@ const HeaderComponent: React.FC<HeaderProps> = ({
   const [isOverflowOpen, setIsOverflowOpen] = useState(false);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const overflowRef = useRef<HTMLDivElement>(null);
+  const overflowTriggerRef = useRef<HTMLButtonElement>(null);
+  const mobileMenuTriggerRef = useRef<HTMLButtonElement>(null);
 
   const viewTitles: Record<View, string> = {
     home: t('nav.home'),
@@ -76,9 +78,24 @@ const HeaderComponent: React.FC<HeaderProps> = ({
         setIsOverflowOpen(false);
       }
     };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      if (isOverflowOpen) {
+        setIsOverflowOpen(false);
+        overflowTriggerRef.current?.focus();
+      }
+      if (isMobileMenuOpen) {
+        setIsMobileMenuOpen(false);
+        mobileMenuTriggerRef.current?.focus();
+      }
+    };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOverflowOpen, isMobileMenuOpen]);
 
   const handleMobileMenuSelect = (action: () => void) => {
     action();
@@ -111,9 +128,17 @@ const HeaderComponent: React.FC<HeaderProps> = ({
 
   const displayCount = knowledgeBaseArticleCount > 999 ? '999+' : knowledgeBaseArticleCount;
   const reportHint = !hasReports ? t('nav.requires_report') : undefined;
+  const reportHintId = 'header-report-hint';
+  const overflowMenuId = 'header-overflow-menu';
+  const mobileMoreMenuId = 'header-mobile-more-menu';
 
   return (
     <header className="transition-all duration-300 border-b border-border bg-surface/70 backdrop-blur-xl shadow-sm">
+      {reportHint && (
+        <span id={reportHintId} className="sr-only">
+          {reportHint}
+        </span>
+      )}
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="hidden md:flex flex-col py-3 gap-3">
           <div className="flex items-center justify-between">
@@ -165,6 +190,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
                   isActive={currentView === 'knowledgeBase'}
                   muted={!hasReports}
                   title={reportHint}
+                  ariaDescribedBy={reportHint ? reportHintId : undefined}
                 >
                   <DatabaseIcon className="h-4 w-4 mr-2" />
                   {t('nav.knowledgeBase')}{' '}
@@ -189,14 +215,20 @@ const HeaderComponent: React.FC<HeaderProps> = ({
                 <div ref={overflowRef} className="relative">
                   <HeaderNavButton
                     onClick={() => setIsOverflowOpen((open) => !open)}
-                    isActive={['collections', 'dashboard', 'history'].includes(currentView)}
+                    isActive={false}
                     ariaLabel={t('nav.overflow')}
+                    ariaExpanded={isOverflowOpen}
+                    ariaControls={overflowMenuId}
+                    buttonRef={overflowTriggerRef}
                   >
                     <EllipsisHorizontalIcon className="h-4 w-4 mr-2" />
                     {t('nav.more')}
                   </HeaderNavButton>
                   {isOverflowOpen && (
-                    <div className="absolute right-0 mt-2 w-56 bg-surface/95 backdrop-blur-xl border border-border rounded-xl shadow-2xl z-50 overflow-hidden">
+                    <div
+                      id={overflowMenuId}
+                      className="absolute right-0 mt-2 w-56 bg-surface/95 backdrop-blur-xl border border-border rounded-xl shadow-2xl z-50 overflow-hidden"
+                    >
                       {(
                         [
                           ['collections', t('nav.collections'), false],
@@ -208,6 +240,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
                           key={view}
                           type="button"
                           title={muted ? reportHint : undefined}
+                          aria-describedby={muted ? reportHintId : undefined}
                           onClick={() => {
                             onViewChange(view);
                             setIsOverflowOpen(false);
@@ -310,6 +343,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
               type="button"
               onClick={toggleLanguage}
               className="p-2.5 text-text-secondary font-bold text-xs focus-ring-aa touch-target-aa rounded-full"
+              aria-label={t('chrome.aria.toggle_language')}
             >
               {lang.toUpperCase()}
             </button>
@@ -331,15 +365,21 @@ const HeaderComponent: React.FC<HeaderProps> = ({
             </button>
             <div ref={mobileMenuRef} className="relative">
               <button
+                ref={mobileMenuTriggerRef}
                 type="button"
                 onClick={() => setIsMobileMenuOpen((prev) => !prev)}
                 className="p-2.5 text-text-secondary hover:text-text-primary rounded-full hover:bg-surface-hover focus-ring-aa touch-target-aa"
                 aria-label={t('chrome.aria.more_options')}
+                aria-expanded={isMobileMenuOpen}
+                aria-controls={mobileMoreMenuId}
               >
                 <EllipsisHorizontalIcon className="h-6 w-6" />
               </button>
               {isMobileMenuOpen && (
-                <div className="absolute right-0 mt-2 w-56 bg-surface/95 backdrop-blur-xl border border-border rounded-xl shadow-2xl z-50 overflow-hidden">
+                <div
+                  id={mobileMoreMenuId}
+                  className="absolute right-0 mt-2 w-56 bg-surface/95 backdrop-blur-xl border border-border rounded-xl shadow-2xl z-50 overflow-hidden"
+                >
                   <button
                     type="button"
                     onClick={() => handleMobileMenuSelect(() => setIsCommandPaletteOpen(true))}
@@ -350,6 +390,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
                   <button
                     type="button"
                     title={!hasReports ? reportHint : undefined}
+                    aria-describedby={!hasReports ? reportHintId : undefined}
                     onClick={() => handleMobileMenuSelect(() => onViewChange('dashboard'))}
                     className={`w-full text-left flex items-center gap-3 px-4 py-3 text-sm hover:bg-surface-hover focus-ring-aa border-b border-border/50 ${!hasReports ? 'opacity-60' : ''}`}
                   >
@@ -358,6 +399,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
                   <button
                     type="button"
                     title={!hasReports ? reportHint : undefined}
+                    aria-describedby={!hasReports ? reportHintId : undefined}
                     onClick={() => handleMobileMenuSelect(() => onViewChange('history'))}
                     className={`w-full text-left flex items-center gap-3 px-4 py-3 text-sm hover:bg-surface-hover focus-ring-aa border-b border-border/50 ${!hasReports ? 'opacity-60' : ''}`}
                   >

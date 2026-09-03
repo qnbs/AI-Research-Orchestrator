@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import { Header } from './Header';
@@ -44,5 +44,30 @@ describe('Header developer-mode gating', () => {
   it('shows the Agent Debugger toggle when developerMode is on', () => {
     renderHeader(true);
     expect(screen.getAllByRole('button', { name: 'Toggle Agent Debugger' })).toHaveLength(2);
+  });
+});
+
+describe('Header overflow disclosures', () => {
+  it('exposes More as a disclosure, describes muted destinations, and closes on Escape', () => {
+    renderHeader(false);
+    const overflow = screen.getByRole('button', { name: 'More destinations' });
+    expect(overflow).toHaveAttribute('aria-expanded', 'false');
+    expect(overflow).not.toHaveAttribute('aria-current');
+
+    fireEvent.click(overflow);
+    expect(overflow).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('button', { name: 'Dashboard' })).toHaveAttribute(
+      'aria-describedby',
+      'header-report-hint',
+    );
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(overflow).toHaveAttribute('aria-expanded', 'false');
+    expect(overflow).toHaveFocus();
+  });
+
+  it('labels both language toggles', () => {
+    renderHeader(false);
+    expect(screen.getAllByRole('button', { name: 'Toggle Language' })).toHaveLength(2);
   });
 });

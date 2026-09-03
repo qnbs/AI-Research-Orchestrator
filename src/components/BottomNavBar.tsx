@@ -25,6 +25,8 @@ interface BottomNavBarProps {
   isResearching: boolean;
 }
 
+const MORE_MENU_ID = 'bottom-nav-more-menu';
+
 const NavItem: React.FC<{
   label: string;
   icon: React.ReactNode;
@@ -34,7 +36,20 @@ const NavItem: React.FC<{
   onClick: () => void;
   badge?: number;
   isSpecial?: boolean;
-}> = ({ label, icon, isActive, muted, title, onClick, badge, isSpecial }) => {
+  ariaExpanded?: boolean;
+  ariaControls?: string;
+}> = ({
+  label,
+  icon,
+  isActive,
+  muted,
+  title,
+  onClick,
+  badge,
+  isSpecial,
+  ariaExpanded,
+  ariaControls,
+}) => {
   const haptic = useHaptic();
   return (
     <button
@@ -47,7 +62,9 @@ const NavItem: React.FC<{
       className={`flex flex-shrink-0 flex-col items-center justify-center min-w-[44px] min-h-[44px] touch-target-aa px-2 pt-3 pb-2 text-[10px] font-medium transition-all duration-200 focus-ring-aa rounded-lg relative ${
         isActive ? 'text-brand-accent' : 'text-text-secondary hover:text-text-primary'
       } ${muted ? 'opacity-60' : ''}`}
-      aria-current={isActive ? 'page' : undefined}
+      aria-current={ariaExpanded === undefined && isActive ? 'page' : undefined}
+      aria-expanded={ariaExpanded}
+      aria-controls={ariaControls}
     >
       <div
         className={`p-1.5 rounded-xl transition-all duration-200 ${isActive ? 'bg-brand-accent/10 shadow-glow' : ''}`}
@@ -161,11 +178,16 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
           label={t('nav.more')}
           icon={<EllipsisHorizontalIcon className="h-5 w-5" />}
           isActive={moreActive || moreOpen}
+          ariaExpanded={moreOpen}
+          ariaControls={MORE_MENU_ID}
           onClick={() => setMoreOpen((open) => !open)}
         />
       </div>
       {moreOpen && (
-        <div className="absolute bottom-16 left-0 right-0 border-t border-border bg-surface/95 backdrop-blur-xl max-h-[50vh] overflow-y-auto">
+        <div
+          id={MORE_MENU_ID}
+          className="absolute bottom-16 left-0 right-0 border-t border-border bg-surface/95 backdrop-blur-xl max-h-[50vh] overflow-y-auto"
+        >
           {moreItems.map((item) => (
             <button
               key={item.label}

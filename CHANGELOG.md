@@ -35,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **PR #294 review a11y:** Overflow/More disclosures expose `aria-expanded` / `aria-controls` and close on Escape. Muted KB/Dashboard/History controls keep `title` and add a visually hidden `aria-describedby` hint. Cmd/Ctrl+Enter submits through the form so an empty topic cannot start a run. Workload `topN` errors stay visible (and `role="alert"`) when Review options are collapsed.
 - **PDF without TOC still exports the report body:** Synthesis, insights, ranked articles, and queries render even when “Include Table of Contents” is off. Footers use the page index; the first content page gets a header when cover/TOC are off; long article titles wrap before `textWithLink`.
 - **CSV quotes carriage returns:** Fields containing a carriage return (`\r`) are quoted so a sanitized `=…` cell that also includes CR cannot split the record and expose a formula.
 - **Façade JSON abort/parse (`#290`):** `generateJson` maps caller abort to `STREAM_ABORTED` (no `safeLogError`) and parses outside the provider `mapError` catch so `GEMINI_PARSE_FAILURE` is not remapped. Array-root schemas wrap as `{items:[…]}` for json_object-mode providers (CodeAnt). Empty PubMed / empty query generation throw `AppError` instead of bare `Error`. Literature tools rethrow the original error (no second `mapError`).

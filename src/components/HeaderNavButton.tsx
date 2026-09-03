@@ -9,6 +9,9 @@ export const HeaderNavButton: React.FC<{
   className?: string;
   ariaLabel?: string;
   ariaDescribedBy?: string;
+  ariaExpanded?: boolean;
+  ariaControls?: string;
+  buttonRef?: React.Ref<HTMLButtonElement>;
 }> = ({
   onClick,
   isActive,
@@ -18,14 +21,20 @@ export const HeaderNavButton: React.FC<{
   className = '',
   ariaLabel,
   ariaDescribedBy,
+  ariaExpanded,
+  ariaControls,
+  buttonRef,
 }) => (
   <button
+    ref={buttonRef}
     type="button"
     onClick={onClick}
     title={title}
     aria-label={ariaLabel}
     aria-describedby={ariaDescribedBy}
-    aria-current={isActive ? 'page' : undefined}
+    aria-expanded={ariaExpanded}
+    aria-controls={ariaControls}
+    aria-current={ariaExpanded === undefined && isActive ? 'page' : undefined}
     className={`relative flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 focus-ring-aa overflow-hidden
         ${
           isActive

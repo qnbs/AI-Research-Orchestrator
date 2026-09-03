@@ -21,6 +21,7 @@ interface InputFormProps {
 
 const FORM_STATE_KEY = 'aiResearchFormState';
 const OPTIONS_OPEN_KEY = 'aiResearchFormOptionsOpen';
+const TOPN_ERROR_ID = 'input-form-topn-error';
 
 const SAMPLE_CHIP_KEYS = [
   'inputForm.chip.covid',
@@ -57,7 +58,19 @@ const InputFormComponent: React.FC<InputFormProps> = ({
   });
   const [optionsOpen, setOptionsOpen] = useState(() => {
     try {
-      return sessionStorage.getItem(OPTIONS_OPEN_KEY) === '1';
+      if (sessionStorage.getItem(OPTIONS_OPEN_KEY) === '1') return true;
+    } catch {
+      return false;
+    }
+    try {
+      const savedState = sessionStorage.getItem(FORM_STATE_KEY);
+      if (!savedState) return false;
+      const parsed = JSON.parse(savedState) as Partial<ResearchInput>;
+      return (
+        typeof parsed.topNToSynthesize === 'number' &&
+        typeof parsed.maxArticlesToScan === 'number' &&
+        parsed.topNToSynthesize > parsed.maxArticlesToScan
+      );
     } catch {
       return false;
     }
@@ -123,7 +136,7 @@ const InputFormComponent: React.FC<InputFormProps> = ({
   };
 
   const submitIfValid = () => {
-    if (Object.keys(errors).length === 0 && !isLoading) {
+    if (Object.keys(errors).length === 0 && !isLoading && formData.researchTopic.trim()) {
       onSubmit(formData);
     }
   };
@@ -136,7 +149,7 @@ const InputFormComponent: React.FC<InputFormProps> = ({
   const handleKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
       e.preventDefault();
-      submitIfValid();
+      e.currentTarget.requestSubmit();
     }
   };
 
@@ -221,6 +234,7 @@ const InputFormComponent: React.FC<InputFormProps> = ({
               <InputFormOptions
                 formData={formData}
                 errors={errors}
+                topNErrorId={TOPN_ERROR_ID}
                 allArticleTypesSelected={allArticleTypesSelected}
                 onChange={handleChange}
                 onArticleTypeChange={handleArticleTypeChange}
@@ -239,6 +253,16 @@ const InputFormComponent: React.FC<InputFormProps> = ({
               />
             </div>
           </details>
+
+          {errors.topN && (
+            <p
+              id={TOPN_ERROR_ID}
+              role="alert"
+              className="text-xs text-red-400 font-medium bg-red-500/10 border border-red-500/20 p-2 rounded-md text-center"
+            >
+              {errors.topN}
+            </p>
+          )}
 
           <button
             type="submit"

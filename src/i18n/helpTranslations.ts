@@ -65,7 +65,7 @@ export const helpTranslations = {
       '(intermittent fasting OR time-restricted eating) AND cognitive function NOT Alzheimer',
     'help.guide.orchestrator.tip.end': '.',
     'help.guide.orchestrator.after':
-      'After you click "Start Research", a detailed report will appear. If you like the results, click "Save" to permanently store the articles in your Knowledge Base. You can also edit the report title before saving.',
+      'After you click "Start Research" in Literature review, a detailed report will appear. If you like the results, click "Save" to permanently store the articles in your Knowledge Base. You can also edit the report title before saving.',
     'help.guide.orchestrator.keywords':
       'research parameters topic date type synthesis focus start new report save',
     'help.guide.research.title': 'Using Quick research',
@@ -80,7 +80,7 @@ export const helpTranslations = {
     'help.guide.research.analyze':
       'Simply paste your text or question into the box and click "Analyze". The AI provides a summary, extracts key findings, and, based on your settings, can automatically search for related PubMed articles and online news/discussions.',
     'help.guide.research.full_review':
-      'If the results are promising, use the "Start Full Review on This Topic" button to seamlessly transfer the AI-synthesized topic to the Orchestrator for a deeper dive.',
+      'If the results are promising, use the "Start Full Review on This Topic" button to seamlessly transfer the AI-synthesized topic to Literature review for a deeper dive.',
     'help.guide.research.keywords': 'assistant analyze summary key findings similar online',
     'help.guide.authors.title': 'Using the Author Hub',
     'help.guide.authors.intro.start': 'The',
@@ -309,7 +309,7 @@ export const helpTranslations = {
       '(intermittierendes Fasten OR zeitbeschränktes Essen) AND kognitive Funktion NOT Alzheimer',
     'help.guide.orchestrator.tip.end': '.',
     'help.guide.orchestrator.after':
-      'Nachdem Sie auf "Recherche starten" klicken, erscheint ein detaillierter Bericht. Wenn Ihnen die Ergebnisse gefallen, klicken Sie auf "Speichern", um die Artikel dauerhaft in Ihrer Wissensdatenbank abzulegen. Sie können den Berichtstitel vor dem Speichern auch bearbeiten.',
+      'Nachdem Sie in der Literaturrecherche auf "Recherche starten" klicken, erscheint ein detaillierter Bericht. Wenn Ihnen die Ergebnisse gefallen, klicken Sie auf "Speichern", um die Artikel dauerhaft in Ihrer Wissensdatenbank abzulegen. Sie können den Berichtstitel vor dem Speichern auch bearbeiten.',
     'help.guide.orchestrator.keywords':
       'recherche parameter thema datum typ synthese fokus starten neuer bericht speichern',
     'help.guide.research.title': 'Schnellrecherche verwenden',
@@ -325,7 +325,7 @@ export const helpTranslations = {
     'help.guide.research.analyze':
       'Fügen Sie einfach Ihren Text oder Ihre Frage in das Feld ein und klicken Sie auf "Analysieren". Die KI liefert eine Zusammenfassung, extrahiert Kernergebnisse und kann je nach Einstellungen automatisch nach verwandten PubMed-Artikeln sowie Online-Nachrichten oder Diskussionen suchen.',
     'help.guide.research.full_review':
-      'Wenn die Ergebnisse vielversprechend sind, nutzen Sie die Schaltfläche "Vollständige Übersicht zu diesem Thema starten", um das KI-synthetisierte Thema nahtlos für eine tiefere Analyse an den Orchestrator zu übergeben.',
+      'Wenn die Ergebnisse vielversprechend sind, nutzen Sie die Schaltfläche "Vollständige Übersicht zu diesem Thema starten", um das KI-synthetisierte Thema nahtlos für eine tiefere Analyse an die Literaturrecherche zu übergeben.',
     'help.guide.research.keywords':
       'assistent analysieren zusammenfassung kernergebnisse ähnlich online',
     'help.guide.authors.title': 'Den Autoren-Hub verwenden',

@@ -72,7 +72,13 @@ const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete }) => {
             type="button"
             onClick={() => dispatch(cycleTheme())}
             className="inline-flex items-center min-h-11 px-3 py-2 text-xs font-bold text-text-secondary hover:text-text-primary border border-border rounded-lg hover:bg-surface-hover focus-ring-aa"
-            aria-label={t('onboarding.theme')}
+            aria-label={
+              currentTheme === 'dark'
+                ? t('chrome.theme.switch_light')
+                : currentTheme === 'light'
+                  ? t('chrome.theme.switch_matrix')
+                  : t('chrome.theme.switch_dark')
+            }
           >
             {currentTheme === 'dark'
               ? t('settings.theme.light')

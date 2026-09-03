@@ -127,4 +127,51 @@ describe('InputForm educationalDemoMode', () => {
       }),
     );
   });
+
+  it('does not start a run on Cmd+Enter when the topic is empty', () => {
+    const onSubmit = vi.fn();
+    render(
+      <InputForm
+        onSubmit={onSubmit}
+        isLoading={false}
+        defaultSettings={defaults}
+        prefilledTopic={null}
+        onPrefillConsumed={vi.fn()}
+      />,
+    );
+    fireEvent.keyDown(screen.getByRole('search'), { key: 'Enter', metaKey: true });
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it('exposes a restored topN error while submit stays disabled', () => {
+    sessionStorage.setItem(
+      'aiResearchFormState',
+      JSON.stringify({
+        researchTopic: 'topic',
+        dateRange: '5',
+        articleTypes: [],
+        synthesisFocus: 'overview',
+        maxArticlesToScan: 20,
+        topNToSynthesize: 25,
+      }),
+    );
+
+    render(
+      <InputForm
+        onSubmit={vi.fn()}
+        isLoading={false}
+        defaultSettings={defaults}
+        prefilledTopic={null}
+        onPrefillConsumed={vi.fn()}
+      />,
+    );
+
+    const alert = screen.getByRole('alert');
+    expect(alert).toHaveTextContent('orchestrator.error.topn_exceeds_max');
+    expect(screen.getByRole('button', { name: 'inputForm.submit' })).toBeDisabled();
+    expect(screen.getByLabelText('inputForm.workload.top_n')).toHaveAttribute(
+      'aria-describedby',
+      'input-form-topn-error',
+    );
+  });
 });
