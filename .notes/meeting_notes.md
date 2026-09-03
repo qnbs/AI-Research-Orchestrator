@@ -1,3 +1,10 @@
+# 2026-09-03 — Drop duplicate deploy.yml pnpm audit
+
+- **Why:** On #301 head `c77355c`, `Typecheck, Lint & Tests` failed because the `deploy.yml` `pnpm audit` step timed out 3× against `registry.npmjs.org` (error 23) and exhausted the 20-minute quality-job budget. The required `security.yml` `pnpm audit (high+)` job on the same SHA succeeded.
+- **What:** Removed the blocking audit step from `deploy.yml`. Required high+ audit stays on `security.yml`. `check:audit-ignore-paths` still runs in the quality job. Docs (`ci-branch-governance`, `audit-governance`, `CONTRIBUTING`, `AGENTS`, `013`) match that ownership.
+- **Impact:** Quality can finish typecheck/lint/`test:coverage` without a second registry-bulk call. Ruleset required check `pnpm audit (high+)` is unchanged.
+- **Not done:** Merge of #300/#301 until each dual gate holds.
+
 # 2026-09-03 — CodeRabbit dual-gate wording pass
 
 - **Why:** CodeRabbit `CHANGES_REQUESTED` on `27f9ea6` (outside-diff + inline) asked for complete inventories, head-SHA review filters, abort-like retries, and matching `011` fallback text in agent guides.

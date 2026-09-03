@@ -81,7 +81,7 @@ See `.cursor/rules/011-coderabbit-pr-gate.mdc` and `.cursor/rules/013-pr-review-
 
 Blocking gates on pushes and PRs to `main` (see `docs/ci-branch-governance.md` for the full inventory and branch-protection expectations):
 
-1. `deploy.yml` — `pnpm install --frozen-lockfile` → `pnpm audit --audit-level=high` → typecheck → lint → `format:check` → `test:coverage` → coverage floors → build → `bundle:budget` → Lighthouse CI
+1. `deploy.yml` — `pnpm install --frozen-lockfile` → `check:audit-ignore-paths` → typecheck → lint → `format:check` → `test:coverage` → coverage floors → build → `bundle:budget` → Lighthouse CI. Required `pnpm audit --audit-level=high` lives in `security.yml` (do not duplicate it here).
 2. `e2e.yml` — Chromium Playwright suite (blocking)
 3. `e2e-cross-browser.yml` — Firefox / WebKit / mobile Chrome (blocking)
 4. `a11y.yml` — axe critical/serious smoke

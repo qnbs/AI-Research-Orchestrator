@@ -39,11 +39,11 @@ security gates so future PRs do not re-litigate the same trade-offs.
 
 ### Current posture
 
-| Context                           | Command                         | Threshold     | Blocking?                         |
-| --------------------------------- | ------------------------------- | ------------- | --------------------------------- |
-| CI (`deploy.yml`, `security.yml`) | `pnpm audit --audit-level=high` | high+         | **Yes**                           |
-| Weekly schedule (`security.yml`)  | same                            | high+         | Alert only (workflow still fails) |
-| Maintainer local                  | `pnpm audit` (no flag)          | informational | No                                |
+| Context                                      | Command                         | Threshold     | Blocking?                                                                   |
+| -------------------------------------------- | ------------------------------- | ------------- | --------------------------------------------------------------------------- |
+| CI (`security.yml` job `pnpm audit (high+)`) | `pnpm audit --audit-level=high` | high+         | **Yes** (required check). `deploy.yml` only runs `check:audit-ignore-paths` |
+| Weekly schedule (`security.yml`)             | same                            | high+         | Alert only (workflow still fails)                                           |
+| Maintainer local                             | `pnpm audit` (no flag)          | informational | No                                                                          |
 
 ### Moderate-severity advisories
 
