@@ -30,26 +30,101 @@ export function extractE2eSpecPathsFromWorkflow(workflowYaml) {
   return [...new Set(specs)];
 }
 
-export function workflowJobHasContinueOnError(workflowYaml, jobName) {
-  const key = String(jobName).replace(/:$/, '');
-  const lines = workflowYaml.split(/\r?\n/);
-  let inJob = false;
-  let jobIndent = 0;
+function lineIndent(line) {
+  return line.match(/^ */)?.[0].length ?? 0;
+}
+
+function enterJobIfHeader(line, indent, key, state) {
+  if (state.inJob || indent === 0 || !line.trim().startsWith(`${key}:`)) return false;
+  state.inJob = true;
+  state.jobIndent = indent;
+  return true;
+}
+
+function jobBlockEnded(trimmed, indent, state) {
+  return Boolean(state.inJob && trimmed && indent <= state.jobIndent);
+}
+
+function scanInsideJob(line, trimmed, indent, state) {
+  if (jobBlockEnded(trimmed, indent, state)) return 'break';
+  if (/continue-on-error:\s*true/.test(line)) return 'found';
+  return 'continue';
+}
+
+function scanJobContinueOnError(line, key, state) {
+  const trimmed = line.trim();
+  const indent = lineIndent(line);
+  if (enterJobIfHeader(line, indent, key, state)) return 'continue';
+  if (!state.inJob) return 'continue';
+  return scanInsideJob(line, trimmed, indent, state);
+}
+
+function applyContinueScanAction(action) {
+  if (action === 'found') return true;
+  if (action === 'break') return false;
+  return null;
+}
+
+function scanWorkflowLinesForContinueOnError(lines, key, state) {
   for (const rawLine of lines) {
-    const line = rawLine.replace(/\t/g, '  ');
-    const trimmed = line.trim();
-    const indent = line.match(/^ */)?.[0].length ?? 0;
-    if (!inJob) {
-      if (indent > 0 && trimmed.startsWith(`${key}:`)) {
-        inJob = true;
-        jobIndent = indent;
-      }
-      continue;
-    }
-    if (trimmed && indent <= jobIndent) break;
-    if (/continue-on-error:\s*true/.test(line)) return true;
+    const result = applyContinueScanAction(
+      scanJobContinueOnError(rawLine.replace(/\t/g, '  '), key, state),
+    );
+    if (result !== null) return result;
   }
   return false;
+}
+
+export function workflowJobHasContinueOnError(workflowYaml, jobName) {
+  const key = String(jobName).replace(/:$/, '');
+  return scanWorkflowLinesForContinueOnError(workflowYaml.split(/\r?\n/), key, {
+    inJob: false,
+    jobIndent: 0,
+  });
+}
+
+function isBlankOrComment(trimmed) {
+  return !trimmed || trimmed.startsWith('#');
+}
+
+function startConcurrencyBlock(trimmed, indent, state) {
+  if (!/^concurrency:\s*(#.*)?$/.test(trimmed)) return;
+  state.inConcurrency = true;
+  state.concurrencyIndent = indent;
+}
+
+function applyBeforeConcurrency(trimmed, indent, state) {
+  if (state.inConcurrency) return false;
+  startConcurrencyBlock(trimmed, indent, state);
+  return true;
+}
+
+function readCancelAssignment(trimmed) {
+  const withoutComment = trimmed.replace(/\s+#.*$/, '');
+  const match = /^cancel-in-progress:\s*(.+)$/.exec(withoutComment);
+  return match ? match[1].trim() : null;
+}
+
+function applyInsideConcurrency(trimmed, indent, state) {
+  if (indent <= state.concurrencyIndent) return 'break';
+  const value = readCancelAssignment(trimmed);
+  if (value !== null) state.cancelValue = value;
+  return 'continue';
+}
+
+function applyConcurrencyLine(line, state) {
+  const trimmed = line.trim();
+  if (isBlankOrComment(trimmed)) return 'continue';
+  const indent = lineIndent(line);
+  if (applyBeforeConcurrency(trimmed, indent, state)) return 'continue';
+  return applyInsideConcurrency(trimmed, indent, state);
+}
+
+function scanCancelInProgressLines(lines, state) {
+  for (const rawLine of lines) {
+    const action = applyConcurrencyLine(rawLine.replace(/\t/g, '  '), state);
+    if (action === 'break') return;
+  }
 }
 
 /**
@@ -58,39 +133,9 @@ export function workflowJobHasContinueOnError(workflowYaml, jobName) {
  * @param {string} workflowYaml
  */
 export function extractTopLevelCancelInProgress(workflowYaml) {
-  const lines = workflowYaml.split(/\r?\n/);
-  let inConcurrency = false;
-  let concurrencyIndent = 0;
-  /** @type {string | null} */
-  let cancelValue = null;
-
-  for (const rawLine of lines) {
-    const line = rawLine.replace(/\t/g, '  ');
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('#')) continue;
-
-    const indent = line.match(/^ */)?.[0].length ?? 0;
-
-    if (!inConcurrency) {
-      if (/^concurrency:\s*(#.*)?$/.test(trimmed)) {
-        inConcurrency = true;
-        concurrencyIndent = indent;
-      }
-      continue;
-    }
-
-    if (indent <= concurrencyIndent) {
-      break;
-    }
-
-    const withoutComment = trimmed.replace(/\s+#.*$/, '');
-    const match = /^cancel-in-progress:\s*(.+)$/.exec(withoutComment);
-    if (match) {
-      cancelValue = match[1].trim();
-    }
-  }
-
-  return cancelValue;
+  const state = { inConcurrency: false, concurrencyIndent: 0, cancelValue: null };
+  scanCancelInProgressLines(workflowYaml.split(/\r?\n/), state);
+  return state.cancelValue;
 }
 
 /** @param {string | null} value */
@@ -260,19 +305,19 @@ async function collectMergeGatePointerFiles(agents, read) {
   ];
 }
 
-async function assertMergeGateFacts(facts, agents, errors, read, readOptional) {
+async function assertMergeGateFacts(facts, agents, errors, io) {
   if (!facts.ci?.mergeGatePath) {
     errors.push('docs/project-facts.json ci.mergeGatePath is required');
     return;
   }
   const configuredPath = facts.ci.mergeGatePath;
-  const mergeGate = await readOptional(configuredPath);
+  const mergeGate = await io.readOptional(configuredPath);
   if (!mergeGate) {
     errors.push(`Missing merge-gate doc: ${configuredPath}`);
     return;
   }
   assertMergeGateDocument(mergeGate, configuredPath, errors);
-  const files = await collectMergeGatePointerFiles(agents, read);
+  const files = await collectMergeGatePointerFiles(agents, io.read);
   assertMergeGatePointers(files, configuredPath, errors);
 }
 
@@ -365,33 +410,36 @@ function assertDeepsourceAnalyzer(deepsource, facts, errors) {
   }
 }
 
-function assertOneCoverageThreshold(metric, value, vitestConfig, agents, errors) {
+function assertOneCoverageThreshold(ctx, metric, value) {
   const re = new RegExp(`${metric}:\\s*${value}`);
-  if (!re.test(vitestConfig)) {
-    errors.push(`vitest.config.ts thresholds.${metric} must be ${value} (project-facts.json)`);
+  if (!re.test(ctx.vitestConfig)) {
+    ctx.errors.push(`vitest.config.ts thresholds.${metric} must be ${value} (project-facts.json)`);
   }
   const proseRe = new RegExp(`${value}%\\s*${metric}|${metric}[^\\n]*${value}%`, 'i');
-  if (!proseRe.test(agents)) {
-    errors.push(`AGENTS.md must document coverage threshold ${metric} ${value}%`);
+  if (!proseRe.test(ctx.agents)) {
+    ctx.errors.push(`AGENTS.md must document coverage threshold ${metric} ${value}%`);
   }
 }
 
 function assertCoverageThresholds(vitestConfig, agents, facts, errors) {
+  const ctx = { vitestConfig, agents, errors };
   for (const [metric, value] of Object.entries(facts.coverageThresholds ?? {})) {
-    assertOneCoverageThreshold(metric, value, vitestConfig, agents, errors);
+    assertOneCoverageThreshold(ctx, metric, value);
   }
 }
 
-function assertOneCoverageFloor(moduleId, metric, value, coverageFloors, errors) {
+function assertOneCoverageFloor(ctx, moduleId, pair) {
+  const [metric, value] = pair;
   const re = new RegExp(`id:\\s*'${moduleId}'[\\s\\S]*?${metric}:\\s*${value}`);
-  if (!re.test(coverageFloors)) {
-    errors.push(`check-coverage-floors.mjs floor ${moduleId}.${metric} must be ${value}`);
+  if (!re.test(ctx.coverageFloors)) {
+    ctx.errors.push(`check-coverage-floors.mjs floor ${moduleId}.${metric} must be ${value}`);
   }
 }
 
 function assertModuleFloors(moduleId, min, coverageFloors, errors) {
-  for (const [metric, value] of Object.entries(min)) {
-    assertOneCoverageFloor(moduleId, metric, value, coverageFloors, errors);
+  const ctx = { coverageFloors, errors };
+  for (const pair of Object.entries(min)) {
+    assertOneCoverageFloor(ctx, moduleId, pair);
   }
 }
 
@@ -496,7 +544,7 @@ export async function runProjectFactsChecks(errors, facts, io) {
   assertE2eSpecsInAgents(agents, facts, errors);
   await assertClaudeReviewRemoved(facts, errors, readOptional);
   await assertBranchGovernanceDoc(facts, errors, readOptional);
-  await assertMergeGateFacts(facts, agents, errors, read, readOptional);
+  await assertMergeGateFacts(facts, agents, errors, { read, readOptional });
   await assertConcurrencyGuards(facts, errors, readOptional, ROOT);
   assertDeepsourceAnalyzer(deepsource, facts, errors);
   assertCoverageThresholds(vitestConfig, agents, facts, errors);

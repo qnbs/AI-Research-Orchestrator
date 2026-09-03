@@ -1,8 +1,8 @@
 # 2026-09-03 — CodeScene flatten for docs-drift facts
 
 - **Why:** CodeScene quality gate on #301 failed `checkProjectFacts` (19 logical blocks) and `main` (nested `--csp-endpoint` exit).
-- **What:** Moved project-facts checks into `scripts/lib/docsDriftFacts.mjs`. `main` only dispatches CSP-only vs full docs-drift.
-- **Impact:** Same drift assertions; functions stay under the Bare Minimum “Bumpy Road” threshold.
+- **What:** Moved project-facts checks into `scripts/lib/docsDriftFacts.mjs`. `main` only dispatches CSP-only vs full docs-drift. YAML scanners (`extractTopLevelCancelInProgress`, `workflowJobHasContinueOnError`) are split into ≤2-block helpers; 5-arg asserts take a context object.
+- **Impact:** Same drift assertions; new helpers stay under Bare Minimum “Bumpy Road” and argument-count limits.
 - **Not done:** Merge of #300/#301 until each dual gate holds.
 
 # 2026-09-03 — Cursor rules and agent docs English + stack truth
