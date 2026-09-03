@@ -72,6 +72,11 @@ describe('Header overflow disclosures', () => {
     expect(screen.getAllByRole('button', { name: 'Toggle Language' })).toHaveLength(2);
   });
 
+  it('keeps the current-view heading for assistive tech', () => {
+    renderHeader(false);
+    expect(screen.getByRole('heading', { name: 'Home' })).toBeInTheDocument();
+  });
+
   it('highlights More on overflow destinations without aria-current', () => {
     renderHeader(false, 'collections');
     const overflow = screen.getByRole('button', { name: 'More destinations' });
