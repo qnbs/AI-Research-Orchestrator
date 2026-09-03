@@ -5,6 +5,11 @@ import { CheckIcon } from './icons/CheckIcon';
 import { useTranslation } from '../hooks/useTranslation';
 import type { TranslationKey } from '../i18n/translations';
 
+export const MAX_ARTICLES_SCAN_MIN = 10;
+export const MAX_ARTICLES_SCAN_MAX = 200;
+export const TOP_N_SYNTHESIZE_MIN = 1;
+export const TOP_N_SYNTHESIZE_MAX = 20;
+
 const ARTICLE_TYPE_LABEL_KEYS: Record<(typeof ARTICLE_TYPES)[number], TranslationKey> = {
   'Randomized Controlled Trial': 'inputForm.articleType.rct',
   'Meta-Analysis': 'inputForm.articleType.meta',
@@ -273,8 +278,8 @@ export const InputFormOptions: React.FC<InputFormOptionsProps> = ({
           id="maxArticlesToScan"
           value={formData.maxArticlesToScan}
           onChange={onChange}
-          min={10}
-          max={200}
+          min={MAX_ARTICLES_SCAN_MIN}
+          max={MAX_ARTICLES_SCAN_MAX}
           step={10}
         />
         <SliderInput
@@ -282,8 +287,8 @@ export const InputFormOptions: React.FC<InputFormOptionsProps> = ({
           id="topNToSynthesize"
           value={formData.topNToSynthesize}
           onChange={onChange}
-          min={1}
-          max={20}
+          min={TOP_N_SYNTHESIZE_MIN}
+          max={TOP_N_SYNTHESIZE_MAX}
           describedBy={errors.topN ? topNErrorId : undefined}
           invalid={Boolean(errors.topN)}
         />

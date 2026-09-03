@@ -171,8 +171,8 @@ describe('InputForm educationalDemoMode', () => {
         dateRange: '5',
         articleTypes: [],
         synthesisFocus: 'overview',
-        maxArticlesToScan: 20,
-        topNToSynthesize: 25,
+        maxArticlesToScan: 10,
+        topNToSynthesize: 15,
       }),
     );
 
@@ -221,6 +221,39 @@ describe('InputForm educationalDemoMode', () => {
     expect(screen.getByLabelText('inputForm.sources.educationalDemo')).toBeInTheDocument();
     expect(document.getElementById('article-type-randomized-controlled-trial')).toBeTruthy();
     expect(document.getElementById('Randomized Controlled Trial')).toBeNull();
+  });
+
+  it('clamps restored workload values that are outside slider bounds', () => {
+    const onSubmit = vi.fn();
+    sessionStorage.setItem(
+      'aiResearchFormState',
+      JSON.stringify({
+        researchTopic: 'topic',
+        dateRange: '5',
+        articleTypes: [],
+        synthesisFocus: 'overview',
+        maxArticlesToScan: 300,
+        topNToSynthesize: 100,
+      }),
+    );
+
+    render(
+      <InputForm
+        onSubmit={onSubmit}
+        isLoading={false}
+        defaultSettings={defaults}
+        prefilledTopic={null}
+        onPrefillConsumed={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'inputForm.submit' }));
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        maxArticlesToScan: defaults.maxArticlesToScan,
+        topNToSynthesize: defaults.topNToSynthesize,
+      }),
+    );
   });
 
   it('falls back when restored articleTypes contains non-string elements', () => {

@@ -5,7 +5,13 @@ import { usePresets } from '../contexts/PresetContext';
 import { SearchIcon } from './icons/SearchIcon';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 import { InputFormHeader } from './InputFormHeader';
-import { InputFormOptions } from './InputFormOptions';
+import {
+  InputFormOptions,
+  MAX_ARTICLES_SCAN_MAX,
+  MAX_ARTICLES_SCAN_MIN,
+  TOP_N_SYNTHESIZE_MAX,
+  TOP_N_SYNTHESIZE_MIN,
+} from './InputFormOptions';
 import { ProviderStatusLine } from './ProviderStatusLine';
 import { useTranslation } from '../hooks/useTranslation';
 import { useUI } from '../contexts/UIContext';
@@ -29,6 +35,12 @@ const SAMPLE_CHIP_KEYS = [
   'inputForm.chip.sleep',
 ] as const;
 
+function restoreBoundedNumber(value: unknown, fallback: number, min: number, max: number): number {
+  return typeof value === 'number' && Number.isFinite(value) && value >= min && value <= max
+    ? value
+    : fallback;
+}
+
 const InputFormComponent: React.FC<InputFormProps> = ({
   onSubmit,
   isLoading,
@@ -50,8 +62,18 @@ const InputFormComponent: React.FC<InputFormProps> = ({
               ? parsed.articleTypes
               : [...defaultSettings.defaultArticleTypes],
           synthesisFocus: parsed.synthesisFocus ?? defaultSettings.defaultSynthesisFocus,
-          maxArticlesToScan: parsed.maxArticlesToScan ?? defaultSettings.maxArticlesToScan,
-          topNToSynthesize: parsed.topNToSynthesize ?? defaultSettings.topNToSynthesize,
+          maxArticlesToScan: restoreBoundedNumber(
+            parsed.maxArticlesToScan,
+            defaultSettings.maxArticlesToScan,
+            MAX_ARTICLES_SCAN_MIN,
+            MAX_ARTICLES_SCAN_MAX,
+          ),
+          topNToSynthesize: restoreBoundedNumber(
+            parsed.topNToSynthesize,
+            defaultSettings.topNToSynthesize,
+            TOP_N_SYNTHESIZE_MIN,
+            TOP_N_SYNTHESIZE_MAX,
+          ),
           includeArxiv: Boolean(parsed.includeArxiv),
           educationalDemoMode: Boolean(parsed.educationalDemoMode),
         };
