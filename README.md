@@ -127,14 +127,15 @@ pnpm run build
 
 On every **push** to `main` and every **PR** targeting `main`, GitHub Actions runs:
 
-| Gate                                                                            | Workflow                               |
-| ------------------------------------------------------------------------------- | -------------------------------------- |
-| Typecheck, lint, format, coverage, docs-drift, build, bundle budget, Lighthouse | `deploy.yml`                           |
-| Playwright E2E (Chromium, seven specs)                                          | `e2e.yml` (**blocking**)               |
-| Cross-browser E2E (Firefox, WebKit, mobile Chrome — same seven specs)           | `e2e-cross-browser.yml` (**blocking**) |
-| Axe critical/serious smoke                                                      | `a11y.yml` (**blocking**)              |
-| PWA service-worker registration (real production build + `vite preview`)        | `pwa-e2e.yml` (**blocking**)           |
-| CodeQL, Dependency Review, `pnpm audit` (high+), gitleaks                       | `security.yml`                         |
+| Gate                                                                            | Workflow                                              |
+| ------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| Typecheck, lint, format, coverage, docs-drift, build, bundle budget, Lighthouse | `deploy.yml`                                          |
+| Playwright E2E (Chromium, seven specs)                                          | `e2e.yml` (**blocking**)                              |
+| Cross-browser E2E (Firefox, WebKit, mobile Chrome — same seven specs)           | `e2e-cross-browser.yml` (**blocking**)                |
+| Axe critical/serious smoke                                                      | `a11y.yml` (**blocking**)                             |
+| PWA service-worker registration (real production build + `vite preview`)        | `pwa-e2e.yml` (**blocking**)                          |
+| CodeQL, Dependency Review, `pnpm audit` (high+), gitleaks                       | `security.yml`                                        |
+| Codecov (coverage, Test Analytics, Bundle Analysis) — advisory                  | `deploy.yml` + [`docs/codecov.md`](./docs/codecov.md) |
 
 GitHub Pages upload/deploy runs only on `refs/heads/main` (not on pull requests). Required checks, PR-only `cancel-in-progress`, and ruleset expectations: [`docs/ci-branch-governance.md`](./docs/ci-branch-governance.md). Dual merge gate (all required CI checks green **and** review quiescence, including the arrival wait): [`docs/pr-merge-gate.md`](./docs/pr-merge-gate.md). Contributor review loop: [`CONTRIBUTING.md`](./CONTRIBUTING.md).
 

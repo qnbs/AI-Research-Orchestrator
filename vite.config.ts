@@ -2,6 +2,7 @@ import path from 'path';
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import { visualizer } from 'rollup-plugin-visualizer';
+import { codecovVitePlugin } from '@codecov/vite-plugin';
 import {
   buildBaseHrefTag,
   DEFAULT_GH_PAGES_BASE,
@@ -80,6 +81,14 @@ export default defineConfig(({ mode }) => {
             }),
           ]
         : []),
+      // Last plugin: Codecov Bundle Analysis. Uploads only when CODECOV_TOKEN
+      // is set (CI Production Build). Never use VITE_* for this token.
+      // codecovVitePlugin returns a plugin array — spread it into Vite's list.
+      ...codecovVitePlugin({
+        enableBundleAnalysis: process.env.CODECOV_TOKEN !== undefined,
+        bundleName: 'ai-research-orchestrator',
+        uploadToken: process.env.CODECOV_TOKEN,
+      }),
     ],
 
     // Remove API key from build - it's now handled securely via user input

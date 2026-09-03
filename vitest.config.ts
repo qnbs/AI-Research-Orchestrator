@@ -17,9 +17,10 @@ export default defineConfig({
      * this only adds headroom for loaded dev machines and shared CI runners.
      */
     testTimeout: 20000,
+    reporters: ['default', ['junit', { outputFile: './junit.xml' }]],
     coverage: {
       provider: 'v8',
-      // lcov reporter for optional external coverage dashboards (e.g. CodeAnt).
+      // lcov + JUnit: Codecov Coverage and Test Analytics (`docs/codecov.md`).
       reporter: ['text', 'json', 'html', 'json-summary', 'lcov'],
       /** Focus coverage on logic layers (store, services, hooks, lib). UI views are mostly covered by E2E. */
       include: [

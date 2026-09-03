@@ -104,6 +104,29 @@ jobs:
           path: coverage/
           retention-days: 14
 
+      - name: Upload coverage reports to Codecov
+        if: ${{ !cancelled() }}
+        # codecov/codecov-action@v5.5.5
+        uses: codecov/codecov-action@0fb7174895f61a3b6b78fc075e0cd60383518dac
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage/lcov.info
+          flags: unit
+          name: vitest-unit
+          slug: qnbs/AI-Research-Orchestrator
+          fail_ci_if_error: true
+          disable_search: true
+
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        # codecov/test-results-action@v1.2.1
+        uses: codecov/test-results-action@09d1c06c1c296f73924156ae27fef9b32c92a911
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: junit.xml
+          flags: unit
+          fail_ci_if_error: false
+
   build:
     name: Production Build
     needs: quality
@@ -140,6 +163,8 @@ jobs:
           NODE_ENV: production
           VITE_BASE_PATH: /AI-Research-Orchestrator/
           VITE_SITE_ORIGIN: https://qnbs.github.io
+          # Org secret — Node-only for @codecov/vite-plugin. Never VITE_*.
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Bundle budget
         run: pnpm run bundle:budget

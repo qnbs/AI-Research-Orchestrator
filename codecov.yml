@@ -1,0 +1,96 @@
+# Codecov: coverage, test analytics, and bundle analysis.
+# Dashboard: https://app.codecov.io/gh/qnbs/AI-Research-Orchestrator
+# Setup notes: docs/codecov.md
+# Do not add Codecov GitHub checks to the mainrules required list until a
+# main baseline exists — statuses stay informational so a first upload cannot
+# brick merges.
+
+codecov:
+  require_ci_to_pass: false
+  notify:
+    wait_for_ci: true
+  branch: main
+
+coverage:
+  precision: 2
+  round: down
+  range: 70..90
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 1%
+        informational: true
+    patch:
+      default:
+        target: 80%
+        informational: true
+
+comment:
+  layout: "header, reach, diff, flags, components, files, bundle_analysis, footer"
+  behavior: default
+  require_changes: false
+  require_base: false
+  require_head: true
+  hide_project_coverage: false
+
+github_checks:
+  annotations: true
+
+flag_management:
+  default_rules:
+    carryforward: true
+    statuses:
+      - type: project
+        target: auto
+        informational: true
+      - type: patch
+        target: 80%
+        informational: true
+  individual_flags:
+    - name: unit
+      paths:
+        - src/store/
+        - src/services/
+        - src/hooks/
+        - src/lib/
+      carryforward: true
+
+component_management:
+  default_rules:
+    statuses:
+      - type: project
+        target: auto
+        informational: true
+  individual_components:
+    - component_id: store
+      name: store
+      paths:
+        - src/store/**
+    - component_id: services
+      name: services
+      paths:
+        - src/services/**
+    - component_id: hooks
+      name: hooks
+      paths:
+        - src/hooks/**
+    - component_id: lib
+      name: lib
+      paths:
+        - src/lib/**
+
+ignore:
+  - src/test/**
+  - "**/*.{test,spec}.{ts,tsx}"
+  - dist/**
+  - scripts/**
+  - src/components/**
+
+parsers:
+  javascript:
+    enable_partials: yes
+
+bundle_analysis:
+  warning_threshold: "5%"
+  status: informational
