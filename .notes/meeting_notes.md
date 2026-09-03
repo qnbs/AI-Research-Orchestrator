@@ -1,3 +1,17 @@
+# 2026-09-03 — CodeRabbit rate-limit is not a hard merge blocker
+
+- **Why:** Org-wide CodeRabbit fair-use leaves latest-head checks as “Review rate limited” for hours. Waiting 3 cycles / 90 minutes was blocking merges that already had green required CI and arrived bot reviews.
+- **What:** `011` clause **(d)** — rate-limit or no real CodeRabbit review on this head is documented, not a merge block. Best-effort `@coderabbitai review` only. Arrival wait no longer treats rate-limit as “Reviewing”. Restated in `013`, `docs/pr-merge-gate.md`, governance, agent guides, PR template.
+- **Impact:** PRs can land on (d) while CodeRabbit is rate-limited. A latest-head `CHANGES_REQUESTED` still blocks.
+- **Not done:** Merge of #300/#301 until remaining dual-gate halves hold.
+
+# 2026-09-03 — Codecov coverage, tests, and bundles
+
+- **Why:** Use the org `CODECOV_TOKEN` for Coverage, Test Analytics, and Bundle Analysis instead of artifacts-only `coverage/`.
+- **What:** `codecov.yml` + `docs/codecov.md`. Quality job uploads `coverage/lcov.info` (`codecov-action@v5`) and `junit.xml` (`test-results-action@v1`). Vite plugin last in `plugins`; Production Build passes `CODECOV_TOKEN` (never `VITE_*`).
+- **Impact:** Codecov dashboard and PR comments after the first successful `main`/PR upload. Checks stay informational / advisory.
+- **Not done:** Do not add Codecov to `mainrules` required checks until a `main` baseline exists.
+
 # 2026-09-03 — Drop duplicate deploy.yml pnpm audit
 
 - **Why:** On #301 head `c77355c`, `Typecheck, Lint & Tests` failed because the `deploy.yml` `pnpm audit` step timed out 3× against `registry.npmjs.org` (error 23) and exhausted the 20-minute quality-job budget. The required `security.yml` `pnpm audit (high+)` job on the same SHA succeeded.

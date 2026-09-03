@@ -92,18 +92,18 @@ Holds **if and only if all** of the following are true:
    - **(a)** a real, non-`CHANGES_REQUESTED` CodeRabbit review (`APPROVED` or
      `COMMENTED`, with a review body that proves it is not a rate-limit
      placeholder) targets the **latest head**; **or**
-   - **(b)** CodeRabbit has produced no real review after **either** 3 failed
-     wait/re-trigger cycles **or** a single wait exceeding 90 minutes, **and**
-     Sourcery has a real, non-rate-limited review on that head with everything
-     resolved; **or**
-   - **(c)** the 2026-09-03 CodeRabbit-skip: the same 3-cycle / 90-minute
-     threshold as (b) has already been met, **and** Sourcery cannot stand in
-     (budget exhausted, or no real Sourcery review is available), **and** at
-     least one other in-scope bot has a real review on the current head with
-     everything resolved, **and** no in-progress late-bot wave remains. A
-     documented CodeRabbit UI hang does **not** skip that threshold.
+   - **(b)** Sourcery stand-in: CodeRabbit has produced no real review on this
+     head, **and** Sourcery has a real, non-rate-limited review on that head
+     with everything resolved; **or**
+   - **(c)** other-bot stand-in: Sourcery cannot stand in (budget exhausted, or
+     no real Sourcery review is available), **and** at least one other
+     in-scope bot has a real review on the current head with everything
+     resolved, **and** no in-progress late-bot wave remains; **or**
+   - **(d)** CodeRabbit is rate-limited **or** has produced no real review on
+     this head — documented in the disposition comment. Rate-limit is **not**
+     a hard merge blocker (standing policy 2026-09-03).
      A `CHANGES_REQUESTED` CodeRabbit review on the **latest** head is never
-     waived by (b) or (c).
+     waived by (b), (c), or (d).
 3. **`@deepsourcebot review` has been attempted** on the latest head — a
    recorded attempt; static analysis alone does not satisfy this.
 4. **No active human `CHANGES_REQUESTED`** targets the latest head (moot once
@@ -117,19 +117,21 @@ Holds **if and only if all** of the following are true:
    `replied`, or `deferred` with a documented English rationale for every
    `deferred` finding.
 
-Rate-limit placeholders never count as approvals on their own; see
+Rate-limit placeholders never count as approvals on their own **and are not
+merge blockers** (clause **(d)**); see
 `docs/audits/2026-08-03-post-merge-scientific-integrity-review.md` (PR #213).
 Do **not** comment `@sourcery-ai review` while the 250k / 7-day budget is
 exhausted. Auto “Reviewer’s Guide” is not a real review.
 
 ## Advisory / non-blocking
 
-| Check                                 | Notes                                                         |
-| ------------------------------------- | ------------------------------------------------------------- |
-| DeepSource: Docker / Shell            | Advisory                                                      |
-| DeepSource JavaScript                 | Off in dashboard; no `javascript` block in `.deepsource.toml` |
-| Claude Code                           | On-demand `@claude` only (`claude.yml`)                       |
-| Socket / Semgrep / CodeAnt / Greptile | Address when actionable; do not substitute for unit/E2E gates |
+| Check                                 | Notes                                                                                                                                                                                              |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| DeepSource: Docker / Shell            | Advisory                                                                                                                                                                                           |
+| DeepSource JavaScript                 | Off in dashboard; no `javascript` block in `.deepsource.toml`                                                                                                                                      |
+| Claude Code                           | On-demand `@claude` only (`claude.yml`)                                                                                                                                                            |
+| Socket / Semgrep / CodeAnt / Greptile | Address when actionable; do not substitute for unit/E2E gates                                                                                                                                      |
+| Codecov (coverage / tests / bundles)  | Advisory — `docs/codecov.md`. Do not add to `mainrules` required checks until a `main` baseline exists. Blocking coverage remains `test:coverage` + floors; blocking size remains `bundle:budget`. |
 
 ## Concurrency
 

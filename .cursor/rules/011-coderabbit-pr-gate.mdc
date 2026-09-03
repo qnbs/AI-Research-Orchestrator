@@ -15,7 +15,7 @@ Neither half is enough. Human modus operandi: `docs/pr-merge-gate.md`.
 
 Address findings from **all** of these when present:
 
-- **CodeRabbit** (`coderabbitai`) — real `APPROVED` / `COMMENTED` review on the latest head (not a rate-limit placeholder), except the bounded fallbacks in step 6.
+- **CodeRabbit** (`coderabbitai`) — prefer a real `APPROVED` / `COMMENTED` review on the latest head. A **“Review rate limited”** placeholder is **not** a completed review **and is not a hard merge blocker** (clause **(d)**). A `CHANGES_REQUESTED` review on the **latest** head is never waived.
 - **CodeAnt** (`codeant-ai`) — inline suggestions + quality gates. “🔄 Reviewing your PR…” is in-progress, not quiescence.
 - **Sourcery** (`sourcery-ai`) — inline `suggestion` / `nitpick` / `suggestion (bug_risk)`. `bug_risk` is a correctness bug. Do **not** `@sourcery-ai review` while the 250k / 7-day budget is exhausted. Auto “Reviewer’s Guide” is not a real review.
 - **GitHub Copilot** (`copilot-pull-request-reviewer`)
@@ -31,31 +31,27 @@ Address **every** item: critical / high / medium, **nitpicks**, **outside-of-dif
 
 ## Workflow (loop until clear)
 
-1. After pushing, trigger: **always** `@deepsourcebot review`; `@coderabbitai review` when a full review is missing/stale/rate-limited; `@sourcery-ai review` only when Sourcery has not reviewed the latest head **and** the 250k / 7-day budget is not exhausted.
-2. Collect all review threads **and** every review body on the current head (outside-diff items live only in the body). Wait for in-progress bots to **arrive** (arrival wait — PR #299).
+1. After pushing, trigger: **always** `@deepsourcebot review`; `@coderabbitai review` when a full review is missing/stale/rate-limited (best-effort — do not spam while the org quota is exhausted); `@sourcery-ai review` only when Sourcery has not reviewed the latest head **and** the 250k / 7-day budget is not exhausted.
+2. Collect all review threads **and** every review body on the current head (outside-diff items live only in the body). Wait for in-progress bots to **arrive** (arrival wait — PR #299). A rate-limit placeholder is **not** “Reviewing”.
 3. Fix or reply with a documented English rationale (rare — prefer fixing).
 4. Push follow-ups; re-trigger DeepSource and CodeRabbit; **repeat until no new actionable comments remain**.
 5. Do **not** merge while unresolved comments remain, a bot is still “Reviewing”, or required CI is red.
 
-## CodeRabbit rate-limit loop (mandatory — never skip)
+## CodeRabbit rate-limit (best-effort — not a merge blocker)
 
-A green CodeRabbit check that only says **“Review rate limited”** is **not** a completed review.
+Standing policy (maintainer-approved 2026-09-03): a green CodeRabbit check that only says **“Review rate limited”** is **not** a completed review **and is not a hard merge blocker**. Do **not** wait 3 cycles / 90 minutes solely because CodeRabbit is rate-limited.
 
-1. Parse **`Next review available in: N minutes`**.
-2. **Wait** at least `N` minutes (+ 2–5 minutes buffer). Typical windows: 14–60+ minutes.
-3. Re-poll issue comments + `pulls/N/reviews` for `coderabbitai[bot]` on the **current** head SHA.
-4. Post a clean top-level `@coderabbitai review`.
-5. If still rate-limited, repeat up to **3** wait/re-trigger cycles on the same head (document each attempt).
-6. **After 3 failed wait/re-trigger cycles, or a single wait exceeding 90 minutes, with no real CodeRabbit review yet posted for the current head** — this exact threshold, repeated verbatim in `013`, `docs/pr-merge-gate.md`, and `docs/ci-branch-governance.md` — CodeRabbit becomes **optional as a blocker**, via **one** of:
-   - **(b) Sourcery stand-in** (maintainer-approved 2026-08-05): Sourcery has a real, non-rate-limited review on the current head with all actionable findings resolved, and no other in-scope bot has an unresolved item or active `CHANGES_REQUESTED`.
-   - **(c) 2026-09-03 skip** (standing policy): the same 3-cycle / 90-minute threshold in this step has already been met, **and** Sourcery **cannot** stand in (budget exhausted, or no real Sourcery review is available), **and** at least one other in-scope bot has a real review on the current head with everything resolved, **and** no in-progress late-bot wave remains. A documented CodeRabbit UI hang does **not** skip that threshold.
-   Post a disposition comment (timestamps, cycles, who is standing in). These fallbacks apply **only** while CodeRabbit has produced no real review of the current head. A `CHANGES_REQUESTED` CodeRabbit review on the **latest** head is **never** waived.
-7. **Single exact quiescence predicate** (this is the one authoritative rule — `013`, `docs/pr-merge-gate.md`, and `docs/ci-branch-governance.md` restate it, they do not vary it). **“Latest head” / “current head”** is the PR’s current head SHA. Quiescence requires **all** of the following:
+1. Best-effort: parse **`Next review available in: N minutes`** if present.
+2. Post a clean top-level `@coderabbitai review` when the window has elapsed **if** you still want a real review. Do not spam while the org quota is exhausted (often 1 included review/hour).
+3. If a real review arrives, treat it like any other review — fix findings and dispose body-only items. A `CHANGES_REQUESTED` review on the **latest** head **never** satisfies quiescence and is **never** waived.
+4. If CodeRabbit stays rate-limited or never posts a real review on this head: document clause **(d)** in the disposition comment and proceed when the rest of the dual gate holds. Rate-limited is a **terminal placeholder**, not an in-progress “Reviewing” state.
+5. **(b) Sourcery stand-in** and **(c) other-bot stand-in** remain valid when a real CodeRabbit review is absent; they are **not** gated on 3/90.
+6. **Single exact quiescence predicate** (this is the one authoritative rule — `013`, `docs/pr-merge-gate.md`, and `docs/ci-branch-governance.md` restate it, they do not vary it). **“Latest head” / “current head”** is the PR’s current head SHA. Quiescence requires **all** of the following:
    - **Dual gate — CI half:** required blocking CI is green on the latest head (`docs/ci-branch-governance.md`).
-   - **Primary CodeRabbit condition:** **(a)** a real, **non-`CHANGES_REQUESTED`** CodeRabbit review (`APPROVED` or `COMMENTED`, body proves it isn’t a rate-limit placeholder) targeting the latest head; **or (b)** the Sourcery stand-in in step 6; **or (c)** the 2026-09-03 skip in step 6.
+   - **Primary CodeRabbit condition:** **(a)** a real, **non-`CHANGES_REQUESTED`** CodeRabbit review (`APPROVED` or `COMMENTED`, body proves it isn’t a rate-limit placeholder) targeting the latest head; **or (b)** Sourcery stand-in — Sourcery has a real, non-rate-limited review on the current head with all actionable findings resolved, and no other in-scope bot has an unresolved item or active `CHANGES_REQUESTED`; **or (c)** other-bot stand-in — Sourcery **cannot** stand in (budget exhausted, or no real Sourcery review is available), **and** at least one other in-scope bot has a real review on the current head with everything resolved, **and** no in-progress late-bot wave remains; **or (d)** CodeRabbit is rate-limited **or** has produced no real review on this head — documented in the disposition comment. A `CHANGES_REQUESTED` CodeRabbit review on the **latest** head is **never** waived by (b), (c), or (d).
    - **`@deepsourcebot review` has been attempted on the current head** (recorded attempt — static analysis alone does not satisfy this).
    - **No active human `CHANGES_REQUESTED` review targets the current head** (moot once superseded by a later non-requesting human review or explicit approval).
-   - **Arrival wait is complete:** no in-scope bot is still in-progress on the current head (CodeAnt “🔄 Reviewing…”, pending Greptile / Copilot / CodeScene / CodeRabbit). GraphQL `reviewThreads` = 0 is necessary but not sufficient if a bot has not finished arriving.
+   - **Arrival wait is complete:** no in-scope bot is still in-progress on the current head (CodeAnt “🔄 Reviewing…”, pending Greptile / Copilot / CodeScene / CodeRabbit). A CodeRabbit **“Review rate limited”** check is **not** in-progress. GraphQL `reviewThreads` = 0 is necessary but not sufficient if a bot has not finished arriving.
    - **No other in-scope bot has an unresolved item or active `CHANGES_REQUESTED`.**
    - **All actionable GraphQL threads are resolved**, and **every body-only finding** (outside-diff comments, human top-level review bodies, or any finding with no thread ID) **has a recorded `fixed`, `replied`, or `deferred` disposition** in the disposition ledger or a PR comment, with a documented English rationale for every `deferred` finding.
 
@@ -70,7 +66,7 @@ See `docs/pr-merge-gate.md` and English content policy `@.cursor/rules/010-engli
 
 <example>
 
-CodeRabbit shows "Review rate limited" on the current head. Parse the wait time, wait it out (+buffer), re-trigger `@coderabbitai review`, and repeat up to 3 cycles / 90 minutes. A real `APPROVED`/`COMMENTED` review lands on cycle 2 — all inline threads it raised are fixed and resolved, and its one body-only "outside diff range" finding is fixed and recorded as `fixed` in the PR disposition comment. Arrival wait is complete and required CI is green — then merge.
+Required CI is green, arrival wait is complete, DeepSource was attempted, threads and body-only findings are disposed. CodeRabbit shows “Review rate limited” on this head and no real review exists. Disposition comment records clause **(d)**. Merge.
 
 </example>
 
