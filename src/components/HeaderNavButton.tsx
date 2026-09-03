@@ -44,8 +44,8 @@ export const HeaderNavButton: React.FC<{
         ${muted ? 'opacity-60' : ''} ${className}`}
   >
     {isActive && (
-      <div className="absolute inset-x-0 bottom-0 h-0.5 bg-brand-accent/80" aria-hidden />
+      <span className="absolute inset-x-0 bottom-0 h-0.5 bg-brand-accent/80" aria-hidden />
     )}
-    <div className="relative flex items-center">{children}</div>
+    <span className="relative flex items-center">{children}</span>
   </button>
 );

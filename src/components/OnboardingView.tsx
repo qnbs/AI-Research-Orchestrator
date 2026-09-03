@@ -58,7 +58,7 @@ const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete }) => {
         }}
       />
       <div className="w-full max-w-4xl mx-auto text-center relative z-10 bg-surface/50 backdrop-blur-xl border border-border rounded-2xl shadow-2xl p-8 sm:p-12">
-        <div className="absolute top-4 right-4 flex items-center gap-2">
+        <div className="relative mb-6 flex items-center justify-end gap-2 sm:absolute sm:top-4 sm:right-4 sm:mb-0">
           <button
             type="button"
             onClick={toggleLanguage}

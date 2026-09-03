@@ -18,6 +18,11 @@ describe('resolveTranslation', () => {
     expect(text).not.toContain('{provider}');
   });
 
+  it('inserts replacement tokens such as $& literally', () => {
+    const text = resolveTranslation('en', 'home.status.last_report', { title: 'Study of $& mice' });
+    expect(text).toBe('Last review: Study of $& mice');
+  });
+
   it('does not treat prototype properties as translation keys', () => {
     expect(resolveTranslation('en', 'toString')).toBe('toString');
   });

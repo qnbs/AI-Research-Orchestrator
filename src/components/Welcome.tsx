@@ -9,7 +9,8 @@ export const Welcome: React.FC<{ onFocusTopic?: () => void }> = ({ onFocusTopic 
     <EmptyState
       icon={<DocumentPlusIcon className="h-24 w-24" />}
       title={t('welcome.title')}
-      message={`${t('welcome.body')} ${t('welcome.footnote')}`}
+      message={t('welcome.body')}
+      footnote={t('welcome.footnote')}
       action={
         onFocusTopic
           ? {

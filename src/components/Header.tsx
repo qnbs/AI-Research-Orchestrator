@@ -161,7 +161,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
             <div className="flex items-center gap-3">
               <InferenceModeBadge />
               <nav
-                className="flex items-center gap-1 p-1.5 rounded-xl border border-border bg-surface/40 backdrop-blur-md shadow-inner"
+                className="flex items-center gap-1 p-1.5 rounded-xl border border-border bg-surface/40 backdrop-blur-md shadow-inner overflow-x-auto max-w-full"
                 aria-label={t('chrome.aria.main_nav')}
               >
                 <HeaderNavButton

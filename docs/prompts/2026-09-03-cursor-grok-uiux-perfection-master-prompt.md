@@ -150,7 +150,7 @@ Honesty rules that UI must visualize, not contradict:
 - Keys live in an AES-GCM IndexedDB vault. Encryption-at-rest is **not** XSS protection (ADR 0003, SECURITY.md).
 - No application server stores research. Live mode still sends prompts + article metadata to the chosen provider and queries PubMed/arXiv.
 
-### Forbidden product phrases (already gated by `check:docs-drift`)
+### Forbidden product phrases (gated by `check:docs-drift` only in configured product-copy paths)
 
 Do not reintroduce, including in UI copy, comments, commits, OG tags, or GitHub text:
 
@@ -263,6 +263,8 @@ Observed and code-backed findings:
 ---
 
 ## 5. What to do now — prioritized ticket list
+
+**Historical (2026-09-03):** Journey-wave tickets below were executed on `cursor/uiux-first-run-52dc` (PR #294). See `docs/audits/2026-09-03-closeout.md`. Remaining open work is `NOW-P2-TOPICS` (not started) and `NOW-P2-OPENROUTER` (deferred). Do not re-implement Done tickets.
 
 Use these IDs in PR titles, CHANGELOG `[Unreleased]`, and the new audit baseline. Do not invent parallel taxonomies.
 
@@ -559,7 +561,7 @@ Do **not** run the full `pnpm run test:e2e` locally on small machines. Add or ex
 - Custom icons only; do not reinstall `lucide-react`.
 - Framer Motion sparingly.
 - File target 200–400 lines, hard max 700. Split using existing FeatureView + context + hook patterns.
-- New persisted flags (e.g. “dismissed sample hint”) require a Dexie schema bump **or** must live in already-versioned settings. Prefer settings flags already on the settings object. Do not bump Dexie casually.
+- New persisted flags (e.g. “dismissed sample hint”) require an explicit Dexie schema version bump and migration in `databaseService.ts`; document defaults and update `CHANGELOG.md` when breaking. Do not persist flags without that migration. Already-versioned settings fields may still be preferred when a new column is unnecessary.
 - Keep `hasCompletedOnboarding` semantics. If you add `hasSeenSampleHint`, default false, persist via settings if it must survive reload.
 
 ### 8.6 Accessibility bar

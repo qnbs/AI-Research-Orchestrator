@@ -195,7 +195,7 @@ export const InputFormOptions: React.FC<InputFormOptionsProps> = ({
           {ARTICLE_TYPES.map((type) => (
             <CustomCheckbox
               key={type}
-              id={type}
+              id={`article-type-${type.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
               value={type}
               checked={(formData.articleTypes ?? []).includes(type)}
               onChange={onArticleTypeChange}

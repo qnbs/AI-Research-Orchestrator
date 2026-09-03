@@ -118,13 +118,13 @@ export function useSettings(): UseSettingsValue {
   const updateSettings = useCallback(
     (newSettings: Partial<Settings> | ((prevState: Settings) => Settings)) => {
       if (typeof newSettings === 'function') {
-        const payload = newSettings(store.getState().settings.data);
+        const payload = newSettings(settings);
         dispatch(setSettings(payload));
       } else {
         dispatch(updateSettingsAction(newSettings));
       }
     },
-    [dispatch],
+    [dispatch, settings],
   );
 
   const resetSettings = useCallback(() => {

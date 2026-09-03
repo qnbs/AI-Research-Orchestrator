@@ -219,5 +219,7 @@ describe('InputForm educationalDemoMode', () => {
 
     fireEvent.click(screen.getByText('inputForm.options'));
     expect(screen.getByLabelText('inputForm.sources.educationalDemo')).toBeInTheDocument();
+    expect(document.getElementById('article-type-randomized-controlled-trial')).toBeTruthy();
+    expect(document.getElementById('Randomized Controlled Trial')).toBeNull();
   });
 });

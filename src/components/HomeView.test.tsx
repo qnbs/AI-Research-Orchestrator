@@ -1,5 +1,5 @@
 import React from 'react';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import HomeView from './HomeView';
 
@@ -10,9 +10,13 @@ vi.mock('../hooks/useTranslation', () => ({
   }),
 }));
 
+const kbState = vi.hoisted(() => ({
+  uniqueArticles: [] as unknown[],
+}));
+
 vi.mock('../contexts/KnowledgeBaseContext', () => ({
   useKnowledgeBase: () => ({
-    uniqueArticles: [],
+    uniqueArticles: kbState.uniqueArticles,
     getRecentResearchEntries: () => [],
   }),
 }));
@@ -22,6 +26,16 @@ vi.mock('./InferenceModeBadge', () => ({
 }));
 
 describe('HomeView launchpad', () => {
+  beforeEach(() => {
+    kbState.uniqueArticles = [];
+  });
+
+  it('uses the singular library status when one article is present', () => {
+    kbState.uniqueArticles = [{}];
+    render(<HomeView onNavigate={vi.fn()} />);
+    expect(screen.getByText('home.status.library_one')).toBeInTheDocument();
+  });
+
   it('navigates to orchestrator and research', () => {
     const onNavigate = vi.fn();
     render(<HomeView onNavigate={onNavigate} />);

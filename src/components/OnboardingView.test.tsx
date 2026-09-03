@@ -15,14 +15,17 @@ vi.mock('../hooks/useTranslation', () => ({
 }));
 
 /** Mount OnboardingView and return the store so language-toggle tests can assert state. */
-function renderOnboarding(onComplete = vi.fn()) {
+function renderOnboarding(onComplete = vi.fn(), appLanguage: 'en' | 'de' = 'en') {
   const store = configureStore({
     reducer: {
       settings: settingsReducer,
       theme: themeReducer,
     },
     preloadedState: {
-      settings: { data: { ...defaultSettings, hasCompletedOnboarding: false }, isLoading: false },
+      settings: {
+        data: { ...defaultSettings, hasCompletedOnboarding: false, appLanguage },
+        isLoading: false,
+      },
     },
   });
   return {
@@ -58,5 +61,11 @@ describe('OnboardingView', () => {
     const { store } = renderOnboarding();
     fireEvent.click(screen.getByRole('button', { name: 'chrome.aria.toggle_language' }));
     expect(store.getState().settings.data.appLanguage).toBe('de');
+  });
+
+  it('toggles language from a German preloaded test store', () => {
+    const { store } = renderOnboarding(vi.fn(), 'de');
+    fireEvent.click(screen.getByRole('button', { name: 'chrome.aria.toggle_language' }));
+    expect(store.getState().settings.data.appLanguage).toBe('en');
   });
 });

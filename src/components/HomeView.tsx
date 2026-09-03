@@ -63,13 +63,15 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
 
       <div
         className="flex flex-wrap items-center justify-center gap-3 mb-10 text-sm text-text-secondary"
-        role="status"
+        role="group"
       >
         <InferenceModeBadge />
         <span className="px-3 py-1 rounded-full border border-border bg-surface/60">
-          {articleCount > 0
-            ? t('home.status.library', { count: articleCount })
-            : t('home.status.library_empty')}
+          {articleCount === 1
+            ? t('home.status.library_one', { count: 1 })
+            : articleCount > 0
+              ? t('home.status.library', { count: articleCount })
+              : t('home.status.library_empty')}
         </span>
         <span className="px-3 py-1 rounded-full border border-border bg-surface/60 max-w-xs truncate">
           {lastReport

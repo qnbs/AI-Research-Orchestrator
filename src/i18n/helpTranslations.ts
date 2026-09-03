@@ -218,10 +218,10 @@ export const helpTranslations = {
     'help.glossary.synthesis.title': 'Synthesis Focus',
     'help.glossary.literature_review.title': 'Literature review',
     'help.glossary.literature_review.desc':
-      'The full pipeline (view id orchestrator): topic → PubMed and optional arXiv → relevance ranking → cited synthesis. This is the primary job of the app.',
+      'The full pipeline: topic → PubMed and optional arXiv → relevance ranking → cited synthesis. This is the primary job of the app.',
     'help.glossary.quick_research.title': 'Quick research',
     'help.glossary.quick_research.desc':
-      'The rapid assistant (view id research): TL;DR, similar articles, and a focused look at one question or abstract. It is not the full literature-review pipeline.',
+      'The rapid assistant: TL;DR, similar articles, and a focused look at one question or abstract. It is not the full literature-review pipeline.',
     'help.glossary.synthesis.desc':
       'A setting in the Literature review form that directs the synthesis on what aspect of the research to focus on when writing its summary. For example, focusing on "Clinical Implications" will yield a different synthesis than "Gaps in Research".',
     'help.about.title': 'About AI Research Orchestrator',
@@ -467,10 +467,10 @@ export const helpTranslations = {
     'help.glossary.synthesis.title': 'Synthesefokus',
     'help.glossary.literature_review.title': 'Literaturrecherche',
     'help.glossary.literature_review.desc':
-      'Die volle Pipeline (View-ID orchestrator): Thema → PubMed und optional arXiv → Relevanzranking → zitierte Synthese. Das ist die primäre Aufgabe der App.',
+      'Die volle Pipeline: Thema → PubMed und optional arXiv → Relevanzranking → zitierte Synthese. Das ist die primäre Aufgabe der App.',
     'help.glossary.quick_research.title': 'Schnellrecherche',
     'help.glossary.quick_research.desc':
-      'Der schnelle Assistent (View-ID research): TL;DR, ähnliche Artikel und ein gezielter Blick auf eine Frage oder ein Abstract. Das ist nicht die volle Literaturrecherche-Pipeline.',
+      'Der schnelle Assistent: TL;DR, ähnliche Artikel und ein gezielter Blick auf eine Frage oder ein Abstract. Das ist nicht die volle Literaturrecherche-Pipeline.',
     'help.glossary.synthesis.desc':
       'Eine Einstellung im Formular Literaturrecherche, die vorgibt, auf welchen Aspekt sich die Synthese beim Schreiben der Zusammenfassung konzentrieren soll. Ein Fokus auf "Klinische Implikationen" erzeugt beispielsweise eine andere Synthese als "Forschungslücken".',
     'help.about.title': 'Über AI Research Orchestrator',
