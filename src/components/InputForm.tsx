@@ -40,7 +40,19 @@ const InputFormComponent: React.FC<InputFormProps> = ({
     try {
       const savedState = sessionStorage.getItem(FORM_STATE_KEY);
       if (savedState) {
-        return { includeArxiv: false, educationalDemoMode: false, ...JSON.parse(savedState) };
+        const parsed = JSON.parse(savedState) as Partial<ResearchInput>;
+        return {
+          researchTopic: typeof parsed.researchTopic === 'string' ? parsed.researchTopic : '',
+          dateRange: parsed.dateRange ?? defaultSettings.defaultDateRange,
+          articleTypes: Array.isArray(parsed.articleTypes)
+            ? parsed.articleTypes
+            : [...defaultSettings.defaultArticleTypes],
+          synthesisFocus: parsed.synthesisFocus ?? defaultSettings.defaultSynthesisFocus,
+          maxArticlesToScan: parsed.maxArticlesToScan ?? defaultSettings.maxArticlesToScan,
+          topNToSynthesize: parsed.topNToSynthesize ?? defaultSettings.topNToSynthesize,
+          includeArxiv: Boolean(parsed.includeArxiv),
+          educationalDemoMode: Boolean(parsed.educationalDemoMode),
+        };
       }
     } catch (e) {
       safeLogError('Could not parse form state from sessionStorage', e);
@@ -76,7 +88,7 @@ const InputFormComponent: React.FC<InputFormProps> = ({
     }
   });
   const { t } = useTranslation();
-  const { setCurrentView } = useUI();
+  const { requestViewChange } = useUI();
   const errors: { topN?: string } =
     formData.topNToSynthesize > formData.maxArticlesToScan
       ? { topN: t('orchestrator.error.topn_exceeds_max') }
@@ -127,7 +139,7 @@ const InputFormComponent: React.FC<InputFormProps> = ({
   const handleArticleTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { value, checked } = e.target;
     setFormData((prev) => {
-      const currentTypes = prev.articleTypes;
+      const currentTypes = prev.articleTypes ?? [];
       if (checked) {
         return { ...prev, articleTypes: [...currentTypes, value] };
       }
@@ -180,7 +192,7 @@ const InputFormComponent: React.FC<InputFormProps> = ({
           onLoadPreset={handleLoadPreset}
           onOpenPresetModal={() => setIsPresetModalOpen(true)}
         />
-        <ProviderStatusLine onConfigure={setCurrentView} />
+        <ProviderStatusLine onConfigure={requestViewChange} />
         {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- Ctrl/Cmd+Enter form-wide submit shortcut; the form already contains real interactive child controls (inputs, buttons). */}
         <form
           onSubmit={handleSubmit}

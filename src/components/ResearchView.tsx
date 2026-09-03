@@ -27,7 +27,7 @@ interface ResearchViewProps {
 
 const ResearchEmptyState: React.FC = () => {
   const { t } = useTranslation();
-  const { setCurrentView } = useUI();
+  const { requestViewChange } = useUI();
   return (
     <EmptyState
       icon={<BeakerIcon className="h-24 w-24" />}
@@ -35,7 +35,7 @@ const ResearchEmptyState: React.FC = () => {
       message={t('research.empty.body')}
       action={{
         text: t('empty.cta.review'),
-        onClick: () => setCurrentView('orchestrator'),
+        onClick: () => requestViewChange('orchestrator'),
       }}
     />
   );
@@ -49,14 +49,14 @@ const ResearchQueryForm: React.FC<{
   hasAnalysis: boolean;
 }> = ({ textQuery, setTextQuery, onSubmit, isLoading, hasAnalysis }) => {
   const { t } = useTranslation();
-  const { setCurrentView } = useUI();
+  const { requestViewChange } = useUI();
   const isSubmitDisabled = isLoading || !textQuery.trim() || hasAnalysis;
 
   return (
     <div className="bg-surface rounded-lg border border-border shadow-2xl shadow-black/20 p-6">
       <h2 className="text-xl font-bold mb-2 text-brand-accent">{t('research.title')}</h2>
       <div className="mb-4">
-        <ProviderStatusLine onConfigure={setCurrentView} />
+        <ProviderStatusLine onConfigure={requestViewChange} />
       </div>
       <form onSubmit={onSubmit}>
         <label htmlFor="research-assistant-query" className="sr-only">

@@ -430,7 +430,7 @@ const CollectionModal: React.FC<{
 // ── Main View ─────────────────────────────────────────────────────────────────
 const CollectionsView: React.FC = () => {
   const { t } = useTranslation();
-  const { setNotification, setCurrentView } = useUI();
+  const { setNotification, requestViewChange } = useUI();
   const dispatch = useAppDispatch();
   const collections = useAppSelector((s) => s.collections.items);
   const isLoading = useAppSelector((s) => s.collections.isLoading);
@@ -551,7 +551,7 @@ const CollectionsView: React.FC = () => {
           </button>
           <button
             type="button"
-            onClick={() => setCurrentView('orchestrator')}
+            onClick={() => requestViewChange('orchestrator')}
             className="mt-2 px-4 py-2 text-sm font-medium text-brand-accent hover:underline focus-ring-aa rounded-md"
           >
             {t('empty.cta.review')}

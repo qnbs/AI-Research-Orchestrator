@@ -197,7 +197,7 @@ export const InputFormOptions: React.FC<InputFormOptionsProps> = ({
               key={type}
               id={type}
               value={type}
-              checked={formData.articleTypes.includes(type)}
+              checked={(formData.articleTypes ?? []).includes(type)}
               onChange={onArticleTypeChange}
               label={t(ARTICLE_TYPE_LABEL_KEYS[type])}
             />

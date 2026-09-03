@@ -21,7 +21,7 @@ vi.mock('../hooks/useFocusTrap', () => ({
 }));
 
 vi.mock('../contexts/UIContext', () => ({
-  useUI: () => ({ setCurrentView: vi.fn() }),
+  useUI: () => ({ requestViewChange: vi.fn() }),
 }));
 
 vi.mock('./ProviderStatusLine', () => ({
@@ -173,5 +173,31 @@ describe('InputForm educationalDemoMode', () => {
       'aria-describedby',
       'input-form-topn-error',
     );
+  });
+
+  it('restores malformed state without an articleTypes array', () => {
+    sessionStorage.setItem(
+      'aiResearchFormState',
+      JSON.stringify({
+        researchTopic: 'topic',
+        dateRange: '5',
+        synthesisFocus: 'overview',
+        maxArticlesToScan: 20,
+        topNToSynthesize: 5,
+      }),
+    );
+
+    render(
+      <InputForm
+        onSubmit={vi.fn()}
+        isLoading={false}
+        defaultSettings={defaults}
+        prefilledTopic={null}
+        onPrefillConsumed={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByText('inputForm.options'));
+    expect(screen.getByLabelText('inputForm.sources.educationalDemo')).toBeInTheDocument();
   });
 });

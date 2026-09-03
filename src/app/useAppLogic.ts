@@ -51,11 +51,11 @@ export function useAppLogic() {
     currentView,
     notification,
     setNotification,
-    isSettingsDirty,
     setIsSettingsDirty,
     pendingNavigation,
     setPendingNavigation,
     setCurrentView,
+    requestViewChange,
     isCommandPaletteOpen,
     setIsCommandPaletteOpen,
     setInstallPromptEvent,
@@ -128,16 +128,7 @@ export function useAppLogic() {
     setSettingsResetToken(Date.now());
   }, [clearKnowledgeBase]);
 
-  const handleViewChange = useCallback(
-    (view: View) => {
-      if (isSettingsDirty) {
-        setPendingNavigation(view);
-      } else {
-        setCurrentView(view);
-      }
-    },
-    [isSettingsDirty, setCurrentView, setPendingNavigation],
-  );
+  const handleViewChange = requestViewChange;
 
   const handleConfirmNavigation = useCallback(() => {
     if (pendingNavigation) {

@@ -38,6 +38,7 @@ const NavItem: React.FC<{
   isSpecial?: boolean;
   ariaExpanded?: boolean;
   ariaControls?: string;
+  ariaDescribedBy?: string;
 }> = ({
   label,
   icon,
@@ -49,6 +50,7 @@ const NavItem: React.FC<{
   isSpecial,
   ariaExpanded,
   ariaControls,
+  ariaDescribedBy,
 }) => {
   const haptic = useHaptic();
   return (
@@ -65,6 +67,7 @@ const NavItem: React.FC<{
       aria-current={ariaExpanded === undefined && isActive ? 'page' : undefined}
       aria-expanded={ariaExpanded}
       aria-controls={ariaControls}
+      aria-describedby={ariaDescribedBy}
     >
       <div
         className={`p-1.5 rounded-xl transition-all duration-200 ${isActive ? 'bg-brand-accent/10 shadow-glow' : ''}`}
@@ -102,6 +105,11 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
   const { setIsCommandPaletteOpen } = useUI();
   const [moreOpen, setMoreOpen] = useState(false);
   const reportHint = t('nav.requires_report');
+  const reportHintId = 'bottom-nav-report-hint';
+  const selectView = (view: View) => {
+    setMoreOpen(false);
+    onViewChange(view);
+  };
   const moreActive = [
     'home',
     'journals',
@@ -145,19 +153,24 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
 
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-surface/80 backdrop-blur-xl border-t border-border z-30 shadow-[0_-5px_20px_rgba(0,0,0,0.2)] pb-safe">
+      {!hasReports && (
+        <span id={reportHintId} className="sr-only">
+          {reportHint}
+        </span>
+      )}
       <div className="flex justify-around items-center h-16 max-w-lg mx-auto px-1">
         <NavItem
           label={t('nav.orchestrator')}
           icon={<DocumentIcon className="h-5 w-5" />}
           isActive={currentView === 'orchestrator'}
           isSpecial={isResearching}
-          onClick={() => onViewChange('orchestrator')}
+          onClick={() => selectView('orchestrator')}
         />
         <NavItem
           label={t('nav.research')}
           icon={<BeakerIcon className="h-5 w-5" />}
           isActive={currentView === 'research'}
-          onClick={() => onViewChange('research')}
+          onClick={() => selectView('research')}
         />
         <NavItem
           label={t('nav.library')}
@@ -165,14 +178,15 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
           isActive={currentView === 'knowledgeBase'}
           muted={!hasReports}
           title={!hasReports ? reportHint : t('nav.knowledgeBase')}
+          ariaDescribedBy={!hasReports ? reportHintId : undefined}
           badge={knowledgeBaseArticleCount}
-          onClick={() => onViewChange('knowledgeBase')}
+          onClick={() => selectView('knowledgeBase')}
         />
         <NavItem
           label={t('nav.explore')}
           icon={<AuthorIcon className="h-5 w-5" />}
           isActive={currentView === 'authors'}
-          onClick={() => onViewChange('authors')}
+          onClick={() => selectView('authors')}
         />
         <NavItem
           label={t('nav.more')}
@@ -193,6 +207,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
               key={item.label}
               type="button"
               title={item.muted ? reportHint : undefined}
+              aria-describedby={item.muted ? reportHintId : undefined}
               onClick={() => {
                 if (item.command) {
                   setIsCommandPaletteOpen(true);

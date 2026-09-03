@@ -215,7 +215,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
                 <div ref={overflowRef} className="relative">
                   <HeaderNavButton
                     onClick={() => setIsOverflowOpen((open) => !open)}
-                    isActive={false}
+                    isActive={['collections', 'dashboard', 'history'].includes(currentView)}
                     ariaLabel={t('nav.overflow')}
                     ariaExpanded={isOverflowOpen}
                     ariaControls={overflowMenuId}

@@ -9,7 +9,7 @@ import uiReducer from '../store/slices/uiSlice';
 import themeReducer from '../store/slices/themeSlice';
 import agentDebugReducer from '../store/slices/agentDebugSlice';
 
-function renderHeader(developerMode: boolean) {
+function renderHeader(developerMode: boolean, currentView: 'home' | 'collections' = 'home') {
   const store = configureStore({
     reducer: {
       settings: settingsReducer,
@@ -25,7 +25,7 @@ function renderHeader(developerMode: boolean) {
     <Provider store={store}>
       <Header
         onViewChange={vi.fn()}
-        currentView="home"
+        currentView={currentView}
         knowledgeBaseArticleCount={0}
         hasReports={false}
         isResearching={false}
@@ -69,5 +69,12 @@ describe('Header overflow disclosures', () => {
   it('labels both language toggles', () => {
     renderHeader(false);
     expect(screen.getAllByRole('button', { name: 'Toggle Language' })).toHaveLength(2);
+  });
+
+  it('highlights More on overflow destinations without aria-current', () => {
+    renderHeader(false, 'collections');
+    const overflow = screen.getByRole('button', { name: 'More destinations' });
+    expect(overflow).not.toHaveAttribute('aria-current');
+    expect(overflow.className).toMatch(/text-brand-accent/);
   });
 });
