@@ -36,4 +36,17 @@ describe('i18n translations parity', () => {
       expect(translations.de[key]).not.toEqual(translations.en[key]);
     }
   });
+
+  it('uses distinct German short labels for mobile chrome', () => {
+    expect(translations.en['nav.orchestrator.short']).toBe('Review');
+    expect(translations.de['nav.orchestrator.short']).toBe('Recherche');
+    expect(translations.en['nav.research.short']).toBe('Assistant');
+    expect(translations.de['nav.research.short']).toBe('Assistent');
+    expect(translations.de['nav.orchestrator.short']).not.toEqual(
+      translations.en['nav.orchestrator.short'],
+    );
+    expect(translations.de['nav.research.short']).not.toEqual(
+      translations.en['nav.research.short'],
+    );
+  });
 });

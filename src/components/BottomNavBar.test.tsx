@@ -99,4 +99,42 @@ describe('BottomNavBar More disclosure', () => {
     );
     expect(screen.getByRole('button', { name: 'nav.more' })).toHaveFocus();
   });
+
+  it('renders five primary items with full accessible names and short visible labels', () => {
+    render(
+      <BottomNavBar
+        currentView="orchestrator"
+        onViewChange={vi.fn()}
+        knowledgeBaseArticleCount={0}
+        hasReports={false}
+        isResearching={false}
+      />,
+    );
+    expect(screen.getByRole('button', { name: 'nav.orchestrator' })).toHaveTextContent(
+      'nav.orchestrator.short',
+    );
+    expect(screen.getByRole('button', { name: 'nav.research' })).toHaveTextContent(
+      'nav.research.short',
+    );
+    expect(screen.getByRole('button', { name: 'nav.knowledgeBase' })).toHaveTextContent(
+      'nav.library',
+    );
+    expect(screen.getByRole('button', { name: 'nav.authors' })).toHaveTextContent('nav.explore');
+    expect(screen.getByRole('button', { name: 'nav.more' })).toHaveTextContent('nav.more');
+  });
+
+  it('keeps the library accessible name when muted without a saved report', () => {
+    render(
+      <BottomNavBar
+        currentView="orchestrator"
+        onViewChange={vi.fn()}
+        knowledgeBaseArticleCount={0}
+        hasReports={false}
+        isResearching={false}
+      />,
+    );
+    const library = screen.getByRole('button', { name: 'nav.knowledgeBase' });
+    expect(library).toHaveAttribute('title', 'nav.requires_report');
+    expect(library).toHaveAttribute('aria-describedby', 'bottom-nav-report-hint');
+  });
 });

@@ -111,6 +111,35 @@ test.describe('2. Navigation', () => {
     });
   });
 
+  test('mobile bottom nav fits five items at 360px without horizontal scroll', async ({ page }) => {
+    await page.setViewportSize({ width: 360, height: 800 });
+    const bottomNav = page.locator('nav').last();
+    await expect(
+      bottomNav.getByRole('button', { name: /literature review|literaturrecherche/i }),
+    ).toBeVisible({ timeout: 5_000 });
+    await expect(
+      bottomNav.getByRole('button', { name: /quick research|schnellrecherche/i }),
+    ).toBeVisible();
+    await expect(
+      bottomNav.getByRole('button', { name: /knowledge base|wissensdatenbank/i }),
+    ).toBeVisible();
+    await expect(bottomNav.getByRole('button', { name: /author hub|autoren-hub/i })).toBeVisible();
+    await expect(bottomNav.getByRole('button', { name: /^(more|mehr)$/i })).toBeVisible();
+    const navRow = bottomNav.locator('.bottom-nav-primary');
+    const overflowed = await navRow.evaluate((el) => el.scrollWidth > el.clientWidth + 1);
+    expect(overflowed).toBe(false);
+
+    await bottomNav.getByRole('button', { name: /^(more|mehr)$/i }).click();
+    const homeItem = bottomNav.getByRole('button', { name: /^(home|startseite)$/i });
+    await expect(homeItem).toBeVisible();
+    const homeBox = await homeItem.boundingBox();
+    expect(homeBox).not.toBeNull();
+    expect(homeBox!.y + homeBox!.height).toBeGreaterThan(0);
+    expect(homeBox!.y).toBeLessThan(736);
+    await page.keyboard.press('Escape');
+    await expect(homeItem).toHaveCount(0);
+  });
+
   test('settings button is in header', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
     const settingsBtn = page.getByRole('button', { name: /settings/i }).first();
@@ -410,7 +439,7 @@ test.describe('8. Mobile UX — Bottom Nav & Pipeline', () => {
     await skipOnboarding(page);
     const bottomNav = page.locator('nav').last();
     const count = await bottomNav.getByRole('button').count();
-    expect(count).toBeGreaterThanOrEqual(4);
+    expect(count).toBe(5);
   });
 
   test('tapping Orchestrator navigates to orchestrator form', async ({ page }) => {

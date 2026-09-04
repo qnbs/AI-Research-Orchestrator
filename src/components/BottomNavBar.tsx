@@ -29,6 +29,7 @@ const MORE_MENU_ID = 'bottom-nav-more-menu';
 
 const NavItem: React.FC<{
   label: string;
+  accessibleName: string;
   icon: React.ReactNode;
   isActive: boolean;
   muted?: boolean;
@@ -42,6 +43,7 @@ const NavItem: React.FC<{
   buttonRef?: React.Ref<HTMLButtonElement>;
 }> = ({
   label,
+  accessibleName,
   icon,
   isActive,
   muted,
@@ -63,8 +65,9 @@ const NavItem: React.FC<{
         haptic('light');
         onClick();
       }}
-      title={title ?? label}
-      className={`flex flex-shrink-0 flex-col items-center justify-center min-w-[44px] min-h-[44px] touch-target-aa px-2 pt-3 pb-2 text-[10px] font-medium transition-all duration-200 focus-ring-aa rounded-lg relative ${
+      aria-label={accessibleName}
+      title={title ?? accessibleName}
+      className={`flex min-w-[44px] flex-1 flex-col items-center justify-center min-h-[44px] touch-target-aa px-1 pt-3 pb-2 text-xs font-medium transition-all duration-200 focus-ring-aa rounded-lg relative ${
         isActive ? 'text-brand-accent' : 'text-text-secondary hover:text-text-primary'
       } ${muted ? 'opacity-60' : ''}`}
       aria-current={ariaExpanded === undefined && isActive ? 'page' : undefined}
@@ -89,7 +92,7 @@ const NavItem: React.FC<{
         {icon}
       </div>
       <span
-        className={`mt-1 max-w-[4.5rem] truncate ${isActive ? 'opacity-100 font-bold text-brand-accent' : 'opacity-80'}`}
+        className={`mt-1 w-full text-center leading-tight ${isActive ? 'opacity-100 font-bold text-brand-accent' : 'opacity-80'}`}
       >
         {label}
       </span>
@@ -207,22 +210,25 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
           {reportHint}
         </span>
       )}
-      <div className="flex justify-around items-center h-16 max-w-lg mx-auto px-1">
+      <div className="bottom-nav-primary flex h-16 w-full min-w-0 max-w-lg mx-auto items-center justify-around overflow-x-hidden px-1">
         <NavItem
-          label={t('nav.orchestrator')}
+          label={t('nav.orchestrator.short')}
+          accessibleName={t('nav.orchestrator')}
           icon={<DocumentIcon className="h-5 w-5" />}
           isActive={currentView === 'orchestrator'}
           isSpecial={isResearching}
           onClick={() => selectView('orchestrator')}
         />
         <NavItem
-          label={t('nav.research')}
+          label={t('nav.research.short')}
+          accessibleName={t('nav.research')}
           icon={<BeakerIcon className="h-5 w-5" />}
           isActive={currentView === 'research'}
           onClick={() => selectView('research')}
         />
         <NavItem
           label={t('nav.library')}
+          accessibleName={t('nav.knowledgeBase')}
           icon={<DatabaseIcon className="h-5 w-5" />}
           isActive={currentView === 'knowledgeBase'}
           muted={!hasReports}
@@ -233,12 +239,14 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
         />
         <NavItem
           label={t('nav.explore')}
+          accessibleName={t('nav.authors')}
           icon={<AuthorIcon className="h-5 w-5" />}
           isActive={currentView === 'authors'}
           onClick={() => selectView('authors')}
         />
         <NavItem
           label={t('nav.more')}
+          accessibleName={t('nav.more')}
           icon={<EllipsisHorizontalIcon className="h-5 w-5" />}
           isActive={moreActive || moreOpen}
           ariaExpanded={moreOpen}
