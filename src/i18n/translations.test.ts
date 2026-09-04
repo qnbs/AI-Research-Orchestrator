@@ -88,6 +88,9 @@ describe('i18n translations parity', () => {
     expect(translations.en['help.glossary.web_grounding.desc']).toMatch(/Gemini/i);
     expect(translations.en['help.glossary.web_grounding.desc']).toMatch(/Google Search/i);
     expect(translations.en['inference.badge.live']).toContain('{provider}');
+    expect(translations.de['inference.badge.live']).toContain('{provider}');
+    expect(translations.en['inference.tooltip.live']).toContain('{provider}');
+    expect(translations.de['inference.tooltip.live']).toContain('{provider}');
     expect(translations.en['offline.banner']).not.toMatch(/Gemini/);
     expect(translations.de['offline.banner']).not.toMatch(/Gemini/);
     expect(translations.en['home.how.4']).toMatch(/Search commands/i);
@@ -96,6 +99,9 @@ describe('i18n translations parity', () => {
     expect(translations.de['home.how.4']).toMatch(/Befehle suchen/);
     expect(translations.de['home.how.4']).toMatch(/Befehlspaletten-Tour/);
     expect(translations.en['authors.profile.metrics.h_index_hint']).toMatch(/not an official/i);
+    expect(translations.de['authors.profile.metrics.h_index_hint']).toMatch(
+      /ohne einen externen Zitationsindex/,
+    );
     expect(translations.en['journals.profile.metrics.oa_rate_hint']).toMatch(/free full text/i);
   });
 

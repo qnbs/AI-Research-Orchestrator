@@ -136,7 +136,7 @@ export const authorTranslations = {
     'authors.profile.metrics.publications': 'Publikationen',
     'authors.profile.metrics.h_index': 'H-Index',
     'authors.profile.metrics.h_index_hint':
-      'Kein offizieller H-Index. Diese App berechnet keinen aus dem Korpus; der Wert bleibt k. A. ohne externes Zitationsindex. Die Publikationszahlen darunter sind nur aus abgerufenen PubMed-Datensätzen geschätzt.',
+      'Kein offizieller H-Index. Diese App berechnet keinen aus dem Korpus; der Wert bleibt k. A. ohne einen externen Zitationsindex. Die Publikationszahlen darunter sind nur aus abgerufenen PubMed-Datensätzen geschätzt.',
     'authors.profile.metrics.first_author': 'Erstautor',
     'authors.profile.metrics.last_author': 'Letztautor',
     'authors.profile.core_concepts': 'Kernkonzepte',
