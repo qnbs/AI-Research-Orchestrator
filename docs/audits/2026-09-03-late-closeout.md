@@ -4,13 +4,13 @@
 **Named release:** **v0.4.2**. Do **not** cut `v0.4.3`.  
 **Package:** `0.4.2` · **Dexie:** v7 · **SW cache:** `v1` · **ADR floor:** 21  
 **Phase 0 measured `main`:** `0df1b71ec562f78534694f3b48ffab9d7e0b345e` (#302) — `docs/audits/2026-09-03-late-baseline.md`  
-**Live `main` at this closeout:** `cee4f9c35a35e0671ea473c12774f5605781d24e` — `docs(policy): CodeRabbit GitHub-block SOP — do not stall on quota (#310)`  
+**Live `main` at this closeout:** `61fda02952de1169456d692694ebbc68b3b45f36` — `fix(i18n): honest live-badge, offline, scientometric, and command-palette copy (#311)`  
 **Integrity closeout still valid:** `docs/audits/2026-09-02-closeout.md` (`b48c4d3`)  
 **Journey closeout still valid:** `docs/audits/2026-09-03-closeout.md` (`0b9c599`, labels/launchpad/form/five-item nav; later PRs refined chrome)
 
 This wave did **not** reopen façade splits, OpenRouter, matcher 2.3.0 semantics, Dexie, ParticleBackground, lucide-react, Chart.js, or a `v0.4.3` cut.
 
-**Provisional:** #311 (capability / scientometric / offline / CMDK copy) is **open**. Merge on required CI + `011` **(d)** — do **not** stall on CodeRabbit quota. SOP: `docs/audits/2026-09-04-coderabbit-github-block.md` (landed in #310). A latest-head CodeRabbit `CHANGES_REQUESTED` is never waived; #311 had one on `3349d0f` and must land a later head with those three findings fixed.
+**Product tickets for this wave are on `main`.** Merge-gate SOP: `docs/audits/2026-09-04-coderabbit-github-block.md` (#310). Do **not** stall later PRs on CodeRabbit quota (`011` **(d)**). A latest-head `CHANGES_REQUESTED` is never waived.
 
 ---
 
@@ -31,7 +31,8 @@ This wave did **not** reopen façade splits, OpenRouter, matcher 2.3.0 semantics
 | #307 | `07e6854` | `NOW-P1-I18N-TRUTH` + `NOW-P1-HELP-GLOSSARY`                                                                                                                                   |
 | #308 | `598f860` | `NOW-P2-OLLAMA-DIAG` / `PRIVACY` / `BUDGET`                                                                                                                                    |
 | #309 | `7be11a0` | `NOW-P2-HEURISTIC-UX` / `RANK` / `QUERY` / `SYNTH` — BM25+ copy, DE MeSH, extractive Background, PDF ATX strip. Merged `--admin` under **(d)** (stale CR `CHANGES_REQUESTED`). |
-| #310 | `cee4f9c` | CodeRabbit GitHub-block SOP + PWA wait list + `--admin` only when every latest-head CR is gone. Merged while `CLEAN` + **(d)**. |
+| #310 | `cee4f9c` | CodeRabbit GitHub-block SOP + PWA wait list + `--admin` only when every latest-head CR is gone. Merged while `CLEAN` + **(d)**.                                                |
+| #311 | `61fda02` | `NOW-P2-CAPABILITY-COPY` / `SCIENTOMETRIC-COPY` / `PWA-OFFLINE` / `CMDK-TEACH`. CR latest-head findings fixed; merged `--admin` under **(d)** (`codecov/patch` advisory).      |
 
 ---
 
@@ -52,10 +53,10 @@ This wave did **not** reopen façade splits, OpenRouter, matcher 2.3.0 semantics
 | `NOW-P2-HEURISTIC-RANK`     | Shipped                     | #309 — BM25+ lexical / relative 0–100; no “semantic ranking”                                  |
 | `NOW-P2-HEURISTIC-QUERY`    | Shipped                     | #309 — phrase MeSH + DE lay synonyms                                                          |
 | `NOW-P2-HEURISTIC-SYNTH`    | Shipped                     | #309 — extractive Background; source-honest PubMed/arXiv labels                               |
-| `NOW-P2-CAPABILITY-COPY`    | In flight                   | #311 — live badge `{provider}` / `providerChromeLabel`                                        |
-| `NOW-P2-SCIENTOMETRIC-COPY` | In flight                   | #311 — H-index not official; OA rate ≠ DOAJ                                                   |
-| `NOW-P2-PWA-OFFLINE`        | In flight                   | #311 — already-fetched vs new fetch; Help `offline` + `web_grounding`                         |
-| `NOW-P2-CMDK-TEACH`         | In flight                   | #311 — More → Search commands; not “no first-run onboarding”                                  |
+| `NOW-P2-CAPABILITY-COPY`    | Shipped                     | #311 — live badge `{provider}` / `providerChromeLabel`                                        |
+| `NOW-P2-SCIENTOMETRIC-COPY` | Shipped                     | #311 — H-index not official; OA rate ≠ DOAJ                                                   |
+| `NOW-P2-PWA-OFFLINE`        | Shipped                     | #311 — already-fetched vs new fetch; Help `offline` + `web_grounding`                         |
+| `NOW-P2-CMDK-TEACH`         | Shipped                     | #311 — More → Search commands; not “no first-run onboarding”                                  |
 | `NOW-P2-ABORT`              | Already held — verified     | Provider abort → `STREAM_ABORTED`; E2E cancel-mid-stream stamps `'partial'`                   |
 | `NOW-P2-CUSTOM-ENDPOINT`    | Already held — verified     | ADR 0013: `endpointPolicy.ts` + origin approval UI (`BaseUrlValidationAlerts`)                |
 | `NOW-P2-KB-EMPTY-DEPTH`     | Already held — verified     | KB / Dashboard / History empty states have Literature-review CTAs                             |
@@ -66,7 +67,7 @@ This wave did **not** reopen façade splits, OpenRouter, matcher 2.3.0 semantics
 
 ---
 
-## File sizes on live `main` `cee4f9c` (`src/**/*.{ts,tsx}` ≥500)
+## File sizes on live `main` `61fda02` (`src/**/*.{ts,tsx}` ≥500)
 
 | File                                                           | Lines | Note                                |
 | -------------------------------------------------------------- | ----: | ----------------------------------- |
@@ -118,7 +119,6 @@ All **product** files stay under the 700-line cap. Do not cosmetic-split for Sou
 - Maintainer: raise CodeRabbit included-review allowance **or** accept **(d)** as steady state.
 - Maintainer: add `PWA service-worker registration` as a GitHub-enforced required-status context (already workflow-blocking).
 - Sourcery budget reset — then it can stand in again as `011` **(b)**.
-- #311: finish required CI after the CodeRabbit latest-head fix (`5f31368` / `b5c0e17`); `--admin` if GitHub stays `BLOCKED` under **(d)** once that `CHANGES_REQUESTED` is superseded.
 - Unreleased CHANGELOG is long; do **not** cut `v0.4.3` to “clean” it.
 
 ---
