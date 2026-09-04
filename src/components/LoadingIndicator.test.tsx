@@ -33,7 +33,7 @@ afterEach(() => {
 });
 
 const baseProps = {
-  title: 'Orchestrator AI',
+  title: 'Literature review',
   phase: 'Phase 1: Generating queries...',
   phases: ['Phase 1: Generating queries...', 'Phase 2: Searching...'],
   phaseDetails: {},

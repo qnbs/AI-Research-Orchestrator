@@ -27,6 +27,15 @@ describe('filterHelpTopics', () => {
     expect(filterHelpTopics(topics, 'indexeddb')).toEqual([topics[1]]);
   });
 
+  it('matches German glossary aliases via localized keywords', () => {
+    const heuristic: HelpTopic = {
+      title: 'Heuristikmodus',
+      keywords: 'heuristik heuristikmodus offline kein schlüssel bm25',
+      content: 'Lokale Engine.',
+    };
+    expect(filterHelpTopics([heuristic], 'kein schlüssel')).toEqual([heuristic]);
+  });
+
   it('returns all topics for an empty or whitespace-only search term', () => {
     expect(filterHelpTopics(topics, '   ')).toBe(topics);
   });

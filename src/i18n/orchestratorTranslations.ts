@@ -2,7 +2,7 @@
 export const orchestratorTranslations = {
   en: {
     'orchestrator.error.topn_exceeds_max': 'Cannot synthesize more articles than are scanned.',
-    'orchestrator.title': 'Orchestrator AI',
+    'orchestrator.title': 'Literature review',
     'orchestrator.start': 'Start Research',
     'orchestrator.initializing': 'Initializing Agents...',
     'orchestrator.save_report': 'Save Report',
@@ -43,8 +43,8 @@ export const orchestratorTranslations = {
   de: {
     'orchestrator.error.topn_exceeds_max':
       'Es können nicht mehr Artikel synthetisiert werden, als gescannt wurden.',
-    'orchestrator.title': 'Orchestrator KI',
-    'orchestrator.start': 'Suche starten',
+    'orchestrator.title': 'Literaturrecherche',
+    'orchestrator.start': 'Recherche starten',
     'orchestrator.initializing': 'Initialisiere Agenten...',
     'orchestrator.save_report': 'Bericht speichern',
     'orchestrator.new_search': 'Neue Suche',

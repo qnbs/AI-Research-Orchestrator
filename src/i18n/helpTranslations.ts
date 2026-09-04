@@ -222,6 +222,23 @@ export const helpTranslations = {
     'help.glossary.quick_research.title': 'Quick research',
     'help.glossary.quick_research.desc':
       'The rapid assistant: TL;DR, similar articles, and a focused look at one question or abstract. It is not the full literature-review pipeline.',
+    'help.glossary.quick_research.keywords': 'quick research assistant tldr similar',
+    'help.glossary.heuristic.title': 'Heuristic mode',
+    'help.glossary.heuristic.desc':
+      'A deterministic local engine (ranking, templates, extractive tools). It stays usable with no API key. It is not a live model and not a broken AI.',
+    'help.glossary.heuristic.keywords': 'heuristic heuristics offline no key bm25',
+    'help.glossary.live.title': 'Live mode',
+    'help.glossary.live.desc':
+      'Inference through the provider you configure. Prompts and article metadata leave the browser to that provider; PubMed and arXiv queries still go to NCBI/arXiv.',
+    'help.glossary.live.keywords': 'live provider gemini openai anthropic ollama',
+    'help.glossary.partial.title': 'Partial report',
+    'help.glossary.partial.desc':
+      'A cancelled or restored run. Completion stays partial, never done. Exports are watermarked, and report chat stays off until a complete run.',
+    'help.glossary.partial.keywords': 'partial cancelled restored watermark chat',
+    'help.glossary.demo.title': 'Educational demo',
+    'help.glossary.demo.desc':
+      'A synthetic practice corpus. The app never silently substitutes it for a failed live PubMed or arXiv retrieval.',
+    'help.glossary.demo.keywords': 'demo educational corpus synthetic practice',
     'help.glossary.synthesis.desc':
       'A setting in the Literature review form that directs the synthesis on what aspect of the research to focus on when writing its summary. For example, focusing on "Clinical Implications" will yield a different synthesis than "Gaps in Research".',
     'help.about.title': 'About AI Research Orchestrator',
@@ -471,6 +488,24 @@ export const helpTranslations = {
     'help.glossary.quick_research.title': 'Schnellrecherche',
     'help.glossary.quick_research.desc':
       'Der schnelle Assistent: TL;DR, ähnliche Artikel und ein gezielter Blick auf eine Frage oder ein Abstract. Das ist nicht die volle Literaturrecherche-Pipeline.',
+    'help.glossary.quick_research.keywords': 'schnellrecherche assistent tldr ähnlich',
+    'help.glossary.heuristic.title': 'Heuristikmodus',
+    'help.glossary.heuristic.desc':
+      'Eine deterministische lokale Engine (Ranking, Vorlagen, extraktive Werkzeuge). Sie bleibt ohne API-Schlüssel nutzbar. Sie ist kein Live-Modell und keine kaputte KI.',
+    'help.glossary.heuristic.keywords': 'heuristik heuristikmodus offline kein schlüssel bm25',
+    'help.glossary.live.title': 'Live-Modus',
+    'help.glossary.live.desc':
+      'Inferenz über den konfigurierten Anbieter. Prompts und Artikelmetadaten verlassen den Browser zu diesem Anbieter; PubMed- und arXiv-Anfragen gehen weiterhin an NCBI/arXiv.',
+    'help.glossary.live.keywords': 'live-modus anbieter gemini openai anthropic ollama',
+    'help.glossary.partial.title': 'Teilbericht',
+    'help.glossary.partial.desc':
+      'Ein abgebrochener oder wiederhergestellter Lauf. Der Status bleibt unvollständig, niemals fertig. Exporte sind gekennzeichnet, und der Bericht-Chat bleibt aus, bis ein vollständiger Lauf vorliegt.',
+    'help.glossary.partial.keywords':
+      'teilbericht abgebrochen wiederhergestellt kennzeichnung chat',
+    'help.glossary.demo.title': 'Bildungs-Demo',
+    'help.glossary.demo.desc':
+      'Ein synthetischer Übungskorpus. Die App ersetzt einen fehlgeschlagenen Live-Abruf von PubMed oder arXiv niemals stillschweigend durch diese Demo.',
+    'help.glossary.demo.keywords': 'bildungs-demo übung korpus synthetisch praxis',
     'help.glossary.synthesis.desc':
       'Eine Einstellung im Formular Literaturrecherche, die vorgibt, auf welchen Aspekt sich die Synthese beim Schreiben der Zusammenfassung konzentrieren soll. Ein Fokus auf "Klinische Implikationen" erzeugt beispielsweise eine andere Synthese als "Forschungslücken".',
     'help.about.title': 'Über AI Research Orchestrator',
