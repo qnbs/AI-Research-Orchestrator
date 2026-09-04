@@ -153,6 +153,8 @@ because CodeRabbit is rate-limited.
    **latest** head still blocks.
 4. If CodeRabbit stays rate-limited or never reviews this head: record **(d)**
    in the disposition comment and continue the rest of the dual gate.
+   **Do not stall the remaining workstream** waiting for a real CodeRabbit
+   review. See `docs/audits/2026-09-04-coderabbit-github-block.md`.
 
 Org-wide fair-use limits can rate-limit **other** open PRs. Do not assume a
 second PR’s cooldown is independent.
@@ -200,6 +202,7 @@ threads.
 
 ## Related
 
+- `docs/audits/2026-09-04-coderabbit-github-block.md` — quota + stale `CHANGES_REQUESTED` GitHub block; maintainer enable + agent `--admin` SOP
 - `.cursor/rules/011-coderabbit-pr-gate.mdc` — authoritative predicate
 - `.cursor/rules/013-pr-review-correction-loop.mdc` — correction loop
 - `.cursor/rules/012-dependabot-pr-gate.mdc` — Dependabot (same dual gate)
