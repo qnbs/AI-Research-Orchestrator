@@ -405,6 +405,16 @@ export const getGlossaryItems = (t: Translator): HelpTopic[] => [
     keywords: t('help.glossary.demo.keywords'),
   },
   {
+    title: t('help.glossary.offline.title'),
+    content: <p>{t('help.glossary.offline.desc')}</p>,
+    keywords: t('help.glossary.offline.keywords'),
+  },
+  {
+    title: t('help.glossary.web_grounding.title'),
+    content: <p>{t('help.glossary.web_grounding.desc')}</p>,
+    keywords: t('help.glossary.web_grounding.keywords'),
+  },
+  {
     title: t('help.glossary.synthesis.title'),
     content: <p>{t('help.glossary.synthesis.desc')}</p>,
   },

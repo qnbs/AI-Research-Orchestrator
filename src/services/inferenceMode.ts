@@ -78,14 +78,28 @@ export function resolveInferenceMode(input: ResolveInferenceModeInput): Inferenc
   };
 }
 
+/** Compact chrome name (`Gemini`, `Ollama`) — not the settings `ProviderMeta.label`. */
+export function providerChromeLabel(
+  provider: import('./providers/types').AIProviderSelection,
+): string {
+  switch (provider) {
+    case 'gemini':
+      return 'Gemini';
+    case 'openai':
+      return 'OpenAI';
+    case 'anthropic':
+      return 'Anthropic';
+    case 'ollama':
+      return 'Ollama';
+    case 'heuristic':
+      return 'Heuristic';
+  }
+}
+
 /** Human-readable short English label for badges (prefer i18n keys in UI). */
 export function inferenceModeBadgeLabel(snapshot: InferenceModeSnapshot): string {
   if (snapshot.mode === 'live') {
-    const label = snapshot.provider === 'gemini' ? 'Gemini' : snapshot.provider;
-    // Proper capitalization for known providers
-    const displayLabel =
-      label === 'openai' ? 'OpenAI' : label.charAt(0).toUpperCase() + label.slice(1);
-    return `Live · ${displayLabel}`;
+    return `Live · ${providerChromeLabel(snapshot.provider)}`;
   }
   switch (snapshot.reason) {
     case 'force':

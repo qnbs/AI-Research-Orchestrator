@@ -61,8 +61,11 @@ export function useInferenceMode(): InferenceModeSnapshot & {
 
   return {
     ...snapshot,
-    badgeLabel: inferenceModeBadgeLabel(snapshot),
-    isZeroCost: isZeroCostMode(snapshot),
+    // Settings provider wins over the last async snapshot so Live · {provider}
+    // cannot show Gemini while the selected provider is already Ollama.
+    provider,
+    badgeLabel: inferenceModeBadgeLabel({ ...snapshot, provider }),
+    isZeroCost: isZeroCostMode({ ...snapshot, provider }),
     refresh,
   };
 }

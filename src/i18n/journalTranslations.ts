@@ -45,6 +45,8 @@ export const journalTranslations = {
     'journals.profile.metrics.impact_factor': 'Impact Factor (approx.)',
     'journals.profile.metrics.analyzed': 'Analyzed Articles',
     'journals.profile.metrics.oa_rate': 'Open Access Rate',
+    'journals.profile.metrics.oa_rate_hint':
+      'Share of articles in this fetched set marked free full text in PubMed. That is not the same as a journal-level OA policy or a DOAJ listing.',
     'journals.profile.metrics.source.curated': 'Curated reference data',
     'journals.profile.metrics.source.ai': 'AI-estimated — verify before citing',
     'journals.profile.metrics.source.computed': 'Computed from fetched articles',
@@ -126,6 +128,8 @@ export const journalTranslations = {
     'journals.profile.metrics.impact_factor': 'Impact-Faktor (ca.)',
     'journals.profile.metrics.analyzed': 'Analysierte Artikel',
     'journals.profile.metrics.oa_rate': 'Open-Access-Anteil',
+    'journals.profile.metrics.oa_rate_hint':
+      'Anteil der Artikel in dieser abgerufenen Menge, die in PubMed als kostenloser Volltext markiert sind. Das ist nicht dasselbe wie eine Zeitschriften-OA-Policy oder ein DOAJ-Eintrag.',
     'journals.profile.metrics.source.curated': 'Kuratierte Referenzdaten',
     'journals.profile.metrics.source.ai': 'KI-geschätzt — vor Zitierung prüfen',
     'journals.profile.metrics.source.computed': 'Aus abgerufenen Artikeln berechnet',

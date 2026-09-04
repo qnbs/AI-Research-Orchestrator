@@ -78,7 +78,7 @@ export const helpTranslations = {
     'help.guide.research.use.exploration':
       'Exploring a new topic to see if it is worth a full literature review.',
     'help.guide.research.analyze':
-      'Simply paste your text or question into the box and click "Analyze". The AI provides a summary, extracts key findings, and, based on your settings, can automatically search for related PubMed articles and online news/discussions.',
+      'Simply paste your text or question into the box and click "Analyze". The pipeline can search related PubMed articles. Live web / news grounding is Gemini-only (Google Search tool); other providers and heuristic mode fall back to an honest local stub.',
     'help.guide.research.full_review':
       'If the results are promising, use the "Start Full Review on This Topic" button to seamlessly transfer the AI-synthesized topic to Literature review for a deeper dive.',
     'help.guide.research.keywords': 'assistant analyze summary key findings similar online',
@@ -147,7 +147,7 @@ export const helpTranslations = {
     'help.guide.navigation.command.start': 'Press',
     'help.guide.navigation.command.middle': '(or',
     'help.guide.navigation.command.end':
-      'on Windows) to open a powerful search bar. From here, you can instantly navigate to any section, change the theme, or perform context-aware actions like saving a report.',
+      'on Windows) to open a powerful search bar. From here, you can instantly navigate to any section, change the theme, or perform context-aware actions like saving a report. On a phone, open More and choose Search commands — there is no extra command-palette walkthrough (first-run onboarding is separate).',
     'help.guide.navigation.quick_add.label': 'Quick Add:',
     'help.guide.navigation.quick_add.desc':
       'Use the "Quick Add" button in the header to add a single article to your Knowledge Base using its PMID, DOI, or PubMed URL. The AI will analyze it and create a single-article report.',
@@ -239,6 +239,14 @@ export const helpTranslations = {
     'help.glossary.demo.desc':
       'A synthetic practice corpus. The app never silently substitutes it for a failed live PubMed or arXiv retrieval.',
     'help.glossary.demo.keywords': 'demo educational corpus synthetic practice',
+    'help.glossary.offline.title': 'Offline',
+    'help.glossary.offline.desc':
+      'Saved Knowledge Base articles and heuristic tools on already fetched reports stay usable. New PubMed or arXiv retrieval and live-provider calls need a network. A failed service-worker registration does not take live features down.',
+    'help.glossary.offline.keywords': 'offline pwa service worker pubmed fetch already fetched',
+    'help.glossary.web_grounding.title': 'Web grounding',
+    'help.glossary.web_grounding.desc':
+      'Native Google Search grounding is a Gemini capability. OpenAI, Anthropic, Ollama, and heuristic mode do not run that tool; they fall back to a local stub that says live web search is unavailable.',
+    'help.glossary.web_grounding.keywords': 'web grounding google search gemini only news',
     'help.glossary.synthesis.desc':
       'A setting in the Literature review form that directs the synthesis on what aspect of the research to focus on when writing its summary. For example, focusing on "Clinical Implications" will yield a different synthesis than "Gaps in Research".',
     'help.about.title': 'About AI Research Orchestrator',
@@ -340,7 +348,7 @@ export const helpTranslations = {
     'help.guide.research.use.exploration':
       'Ein neues Thema erkunden, um zu sehen, ob sich eine vollständige Literaturübersicht lohnt.',
     'help.guide.research.analyze':
-      'Fügen Sie einfach Ihren Text oder Ihre Frage in das Feld ein und klicken Sie auf "Analysieren". Die KI liefert eine Zusammenfassung, extrahiert Kernergebnisse und kann je nach Einstellungen automatisch nach verwandten PubMed-Artikeln sowie Online-Nachrichten oder Diskussionen suchen.',
+      'Fügen Sie einfach Ihren Text oder Ihre Frage in das Feld ein und klicken Sie auf "Analysieren". Die Pipeline kann verwandte PubMed-Artikel suchen. Live-Web-/Nachrichten-Grounding ist nur bei Gemini (Google-Search-Tool); andere Anbieter und der Heuristikmodus fallen auf einen ehrlichen lokalen Stub zurück.',
     'help.guide.research.full_review':
       'Wenn die Ergebnisse vielversprechend sind, nutzen Sie die Schaltfläche "Vollständige Übersicht zu diesem Thema starten", um das KI-synthetisierte Thema nahtlos für eine tiefere Analyse an die Literaturrecherche zu übergeben.',
     'help.guide.research.keywords':
@@ -412,7 +420,7 @@ export const helpTranslations = {
     'help.guide.navigation.command.start': 'Drücken Sie',
     'help.guide.navigation.command.middle': '(oder',
     'help.guide.navigation.command.end':
-      'unter Windows), um eine leistungsfähige Suchleiste zu öffnen. Von dort können Sie sofort zu jedem Bereich navigieren, das Design wechseln oder kontextbezogene Aktionen wie das Speichern eines Berichts ausführen.',
+      'unter Windows), um eine leistungsfähige Suchleiste zu öffnen. Von dort können Sie sofort zu jedem Bereich navigieren, das Design wechseln oder kontextbezogene Aktionen wie das Speichern eines Berichts ausführen. Am Telefon: Mehr → Befehle suchen — es gibt keine extra Befehlspaletten-Tour (das Erststart-Onboarding ist getrennt).',
     'help.guide.navigation.quick_add.label': 'Schnell-Hinzufügen:',
     'help.guide.navigation.quick_add.desc':
       'Nutzen Sie die Schaltfläche "Schnell-Hinzufügen" im Header, um einen einzelnen Artikel per PMID, DOI oder PubMed-URL zu Ihrer Wissensdatenbank hinzuzufügen. Die KI analysiert ihn und erstellt einen Einzelartikel-Bericht.',
@@ -506,6 +514,14 @@ export const helpTranslations = {
     'help.glossary.demo.desc':
       'Ein synthetischer Übungskorpus. Die App ersetzt einen fehlgeschlagenen Live-Abruf von PubMed oder arXiv niemals stillschweigend durch diese Demo.',
     'help.glossary.demo.keywords': 'bildungs-demo übung korpus synthetisch praxis',
+    'help.glossary.offline.title': 'Offline-Betrieb',
+    'help.glossary.offline.desc':
+      'Gespeicherte Wissensdatenbank-Artikel und Heuristik-Werkzeuge auf bereits abgerufenen Berichten bleiben nutzbar. Neue PubMed- oder arXiv-Abfragen und Live-Anbieter brauchen ein Netzwerk. Eine fehlgeschlagene Service-Worker-Registrierung nimmt Live-Funktionen nicht vom Netz.',
+    'help.glossary.offline.keywords': 'offline pwa service worker pubmed abruf bereits abgerufen',
+    'help.glossary.web_grounding.title': 'Web-Grounding',
+    'help.glossary.web_grounding.desc':
+      'Natives Google-Search-Grounding ist eine Gemini-Fähigkeit. OpenAI, Anthropic, Ollama und der Heuristikmodus führen dieses Werkzeug nicht aus; sie fallen auf einen lokalen Stub zurück, der sagt, dass Live-Websuche nicht verfügbar ist.',
+    'help.glossary.web_grounding.keywords': 'web-grounding google suche nur gemini nachrichten',
     'help.glossary.synthesis.desc':
       'Eine Einstellung im Formular Literaturrecherche, die vorgibt, auf welchen Aspekt sich die Synthese beim Schreiben der Zusammenfassung konzentrieren soll. Ein Fokus auf "Klinische Implikationen" erzeugt beispielsweise eine andere Synthese als "Forschungslücken".',
     'help.about.title': 'Über AI Research Orchestrator',
