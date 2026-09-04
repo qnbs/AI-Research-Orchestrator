@@ -17,7 +17,7 @@
 
 Live `main` + tests + CI win over any earlier prompt SHA, including the authoring snapshot `0b9c599`. The 2026-09-02 integrity closeout and the 2026-09-03 journey closeout remain stop-the-line / executed.
 
-**Merge-gate note (prompt §0.2 vs live law):** `011` clause **(d)** on this SHA (CodeRabbit rate-limit is not a hard merge blocker) supersedes the late prompt’s “wait 3 cycles / 90 minutes” text. Dual gate: `docs/pr-merge-gate.md`. Sourcery 250k / 7-day budget was exhausted as of 2026-09-03; do not `@sourcery-ai review` until it resets.
+**Merge-gate note (prompt §0.2 vs live law):** At Phase 0 capture, `011` clause **(d)** superseded the late prompt’s “wait 3 cycles / 90 minutes” text. Follow-up after CodeAnt on #303 aligned that snapshot’s §0.2 and Appendix C with `docs/pr-merge-gate.md`. Sourcery 250k / 7-day budget was exhausted as of 2026-09-03; do not `@sourcery-ai review` until it resets.
 
 ---
 
