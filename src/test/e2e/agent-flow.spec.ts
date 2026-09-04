@@ -125,13 +125,19 @@ test.describe('2. Navigation', () => {
     ).toBeVisible();
     await expect(bottomNav.getByRole('button', { name: /author hub|autoren-hub/i })).toBeVisible();
     await expect(bottomNav.getByRole('button', { name: /^(more|mehr)$/i })).toBeVisible();
-    const overflowed = await bottomNav.evaluate((el) => el.scrollWidth > el.clientWidth + 1);
+    const navRow = bottomNav.locator('.bottom-nav-primary');
+    const overflowed = await navRow.evaluate((el) => el.scrollWidth > el.clientWidth + 1);
     expect(overflowed).toBe(false);
 
     await bottomNav.getByRole('button', { name: /^(more|mehr)$/i }).click();
-    await expect(bottomNav.getByRole('button', { name: /^(home|startseite)$/i })).toBeVisible();
+    const homeItem = bottomNav.getByRole('button', { name: /^(home|startseite)$/i });
+    await expect(homeItem).toBeVisible();
+    const homeBox = await homeItem.boundingBox();
+    expect(homeBox).not.toBeNull();
+    expect(homeBox!.y + homeBox!.height).toBeGreaterThan(0);
+    expect(homeBox!.y).toBeLessThan(736);
     await page.keyboard.press('Escape');
-    await expect(bottomNav.getByRole('button', { name: /^(home|startseite)$/i })).toHaveCount(0);
+    await expect(homeItem).toHaveCount(0);
   });
 
   test('settings button is in header', async ({ page }) => {

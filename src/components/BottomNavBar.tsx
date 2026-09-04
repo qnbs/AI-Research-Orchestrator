@@ -203,14 +203,14 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
   return (
     <nav
       ref={navRef}
-      className="md:hidden fixed bottom-0 left-0 right-0 overflow-x-hidden bg-surface/80 backdrop-blur-xl border-t border-border z-30 shadow-[0_-5px_20px_rgba(0,0,0,0.2)] pb-safe"
+      className="md:hidden fixed bottom-0 left-0 right-0 bg-surface/80 backdrop-blur-xl border-t border-border z-30 shadow-[0_-5px_20px_rgba(0,0,0,0.2)] pb-safe"
     >
       {!hasReports && (
         <span id={reportHintId} className="sr-only">
           {reportHint}
         </span>
       )}
-      <div className="flex h-16 w-full min-w-0 max-w-lg mx-auto items-center justify-around overflow-x-hidden px-1">
+      <div className="bottom-nav-primary flex h-16 w-full min-w-0 max-w-lg mx-auto items-center justify-around overflow-x-hidden px-1">
         <NavItem
           label={t('nav.orchestrator.short')}
           accessibleName={t('nav.orchestrator')}
