@@ -31,7 +31,9 @@ export interface QueryBuildOptions {
  */
 export function buildQuery(topic: string, options: QueryBuildOptions = {}): BuiltQuery {
   const normalizedTopic = normalizeText(topic);
-  const tokens = tokenize(normalizedTopic, 'en');
+  // EN+DE stopwords so German lay topics ("Behandlung von Bluthochdruck") drop
+  // function words before MeSH lookup. Not a librarian — Boolean/MeSH-ish only.
+  const tokens = tokenize(normalizedTopic, 'all');
 
   const meshTerms: string[] = [];
   const expandedTerms: string[] = [];

@@ -52,6 +52,9 @@ describe('createHeuristicProvider', () => {
       }
       if (operation === 'synthesis') {
         expect(response.text).toContain('Heuristic synthesis');
+        expect(response.text).toMatch(/BM25\+/);
+        expect(response.text).toMatch(/relative 0–100/);
+        expect(response.text).not.toMatch(/semantic rank/i);
         expect(() => JSON.parse(response.text)).toThrow();
         return;
       }
@@ -77,7 +80,9 @@ describe('createHeuristicProvider', () => {
     })) {
       if (chunk.text) chunks.push(chunk.text);
     }
-    expect(chunks.join('')).toContain('Heuristic synthesis');
+    const markdown = chunks.join('');
+    expect(markdown).toContain('Heuristic synthesis');
+    expect(markdown).not.toMatch(/semantic rank/i);
   });
 
   it('creates a grounded chat session', async () => {

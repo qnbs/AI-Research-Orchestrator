@@ -32,6 +32,25 @@ describe('buildQuery', () => {
     expect(validation.valid).toBe(true);
     expect(query.query).not.toMatch(/\bOR\s+OR\b/i);
   });
+
+  it('maps German lay topics to MeSH after dropping DE stopwords', () => {
+    const query = buildQuery('Behandlung von Bluthochdruck');
+    expect(query.meshTerms).toContain('Hypertension');
+    expect(query.query).toContain('Hypertension');
+    expect(query.query.toLowerCase()).not.toMatch(/\bvon\b/);
+    expect(validatePubMedQuery(query.query).valid).toBe(true);
+  });
+
+  it('maps Krebs and Immuntherapie to MeSH headings', () => {
+    const query = buildQuery('Krebs Immuntherapie');
+    expect(query.meshTerms).toEqual(expect.arrayContaining(['Neoplasms', 'Immunotherapy']));
+    expect(validatePubMedQuery(query.query).valid).toBe(true);
+  });
+
+  it('maps Schlaganfall and Herzinfarkt to Stroke and Myocardial Infarction', () => {
+    expect(buildQuery('Schlaganfall').meshTerms).toContain('Stroke');
+    expect(buildQuery('Herzinfarkt').meshTerms).toContain('Myocardial Infarction');
+  });
 });
 
 describe('MeSH dictionary query property', () => {

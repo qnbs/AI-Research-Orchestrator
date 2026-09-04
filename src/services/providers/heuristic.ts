@@ -55,7 +55,12 @@ function inferTopicFromPrompt(prompt: string): string {
 }
 
 function heuristicSynthesisMarkdown(topic: string): string {
-  return `# Heuristic synthesis: ${topic}\n\nThis is a deterministic local fallback. Connect a live provider for full semantic ranking and cited synthesis.`;
+  return (
+    `# Heuristic synthesis: ${topic}\n\n` +
+    `This is a deterministic local fallback. Ranking uses BM25+ lexical overlap ` +
+    `with a relative 0–100 display scale, not live-provider embeddings or a calibrated probability. ` +
+    `Connect a live provider for model-based ranking and cited synthesis.`
+  );
 }
 
 /** Resolve a typed operation; unknown or omitted values become `fallback`. */

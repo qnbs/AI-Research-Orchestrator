@@ -54,6 +54,14 @@ describe('generateNarrativeSections', () => {
     expect(sections[0].title).toBe('Background');
     expect(sections[1].title).toBe('Key Findings');
   });
+
+  it('labels non-demo background as extractive template, not a live-model draft', () => {
+    const [background] = generateNarrativeSections(mockArticles, 'diabetes');
+    expect(background.content).toMatch(/extractive template/i);
+    expect(background.content).toMatch(/not a live-model draft/i);
+    expect(background.content).not.toMatch(/semantic/i);
+    expect(background.pmids).toEqual(['12345', '67890']);
+  });
 });
 
 describe('generateResearchReport', () => {
@@ -64,6 +72,17 @@ describe('generateResearchReport', () => {
     expect(report.synthesis).toBeTruthy();
     expect(report.aiGeneratedInsights.length).toBeGreaterThan(0);
     expect(report.overallKeywords.length).toBeGreaterThan(0);
+  });
+
+  it('keeps section headings in the extractive markdown outline', () => {
+    const report = generateResearchReport(mockArticles, 'diabetes treatment');
+    expect(report.synthesis).toContain('## TL;DR');
+    expect(report.synthesis).toContain('## Background');
+    expect(report.synthesis).toContain('## Key Findings');
+    expect(report.synthesis).toContain('## Methods Overview');
+    expect(report.synthesis).toContain('## Conclusion');
+    expect(report.synthesis).toContain('[PMID: 12345]');
+    expect(report.groundedSynthesis?.mode).toBe('extractive-template');
   });
 });
 
