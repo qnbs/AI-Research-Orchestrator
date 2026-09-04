@@ -86,6 +86,10 @@ describe('i18n translations parity', () => {
     expect(translations.en['provider.status.ollama_privacy_remote']).not.toMatch(
       /stays on this machine/i,
     );
+    expect(translations.de['provider.status.ollama_privacy_remote']).toMatch(/Ollama-Endpunkt/);
+    expect(translations.de['provider.status.ollama_privacy_remote']).not.toMatch(
+      /bleibt auf diesem Rechner/,
+    );
     expect(translations.de['provider.status.ollama_privacy_remote']).not.toEqual(
       translations.en['provider.status.ollama_privacy_remote'],
     );

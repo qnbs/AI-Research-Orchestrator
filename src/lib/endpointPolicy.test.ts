@@ -80,8 +80,13 @@ describe('isOllamaLoopbackBaseUrl', () => {
   it('treats empty and localhost URLs as loopback', () => {
     expect(isOllamaLoopbackBaseUrl(undefined)).toBe(true);
     expect(isOllamaLoopbackBaseUrl('')).toBe(true);
+    expect(isOllamaLoopbackBaseUrl('   ')).toBe(true);
     expect(isOllamaLoopbackBaseUrl('http://localhost:11434')).toBe(true);
     expect(isOllamaLoopbackBaseUrl('http://127.0.0.1:11434')).toBe(true);
+  });
+
+  it('returns false for malformed URLs', () => {
+    expect(isOllamaLoopbackBaseUrl('not a URL')).toBe(false);
   });
 
   it('treats a remote HTTPS host as not loopback', () => {

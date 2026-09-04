@@ -62,7 +62,7 @@ export function validateCustomEndpointUrl(raw: string): EndpointValidationResult
   return { ok: true, origin, normalizedUrl };
 }
 
-/** Loopback hostnames first-class Local AI may use without a tailored CSP. */
+/** Recognized loopback hostnames for local endpoint validation. CSP still controls allowed origins. */
 export function isLoopbackHostname(hostname: string): boolean {
   return (
     hostname === 'localhost' ||
