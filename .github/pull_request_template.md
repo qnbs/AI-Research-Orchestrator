@@ -15,3 +15,13 @@
 - [ ] Arrival wait complete — no in-scope bot still “Reviewing” on this head
 - [ ] GraphQL threads resolved **and** body-only / outside-diff / human review-body findings disposed (`fixed` / `replied` / `deferred` with rationale)
 - [ ] No active human `CHANGES_REQUESTED` on this head
+
+## Theme visual QA (`NOW-P1-THEME-QA`)
+
+Required when this PR touches UI chrome, overlays, charts, or theme tokens. Mark **N/A** otherwise. Do **not** add a screenshot suite to CI.
+
+- [ ] N/A — no user-visible surfaces or tokens in this PR
+- [ ] `pnpm run check:contrast` (when tokens or chrome colors change)
+- [ ] Default (`dark`): primary CTA, header, bottom nav / More sheet, dialogs, empty states — text and `border-border` readable
+- [ ] Light: same surfaces; no leftover `border-white/*` on glass; overlays still WCAG 2.2 AA
+- [ ] Matrix: same surfaces; status is not color-only; focus rings visible
