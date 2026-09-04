@@ -61,7 +61,7 @@ pnpm run test:e2e
 
 ### Theme visual QA (manual)
 
-When a PR changes UI chrome, glass overlays, charts, or `@theme` tokens, run `pnpm run check:contrast` (including overlay-only color changes) and walk **dark**, **light**, and **matrix** on the touched surfaces (header, bottom nav, dialogs, empty states, primary CTA, charts and their accessible tables). Use existing tokens (`border-border`); do not introduce raw hex outside the token file. Do **not** add a screenshot suite to CI — record the pass in the PR template (`NOW-P1-THEME-QA`). Check N/A only when none of those surfaces changed.
+When a PR changes UI chrome, glass overlays, charts, or `@theme` tokens, run `pnpm run check:contrast` (including overlay-only color changes) and walk **dark**, **light**, and **matrix** on the touched surfaces (header, bottom nav, dialogs, empty states, primary CTA, charts and their accessible tables). For chart changes, also check labels, axes, legends, tooltip/focus, and that status is not color-only. Use existing tokens (`border-border`); do not introduce raw hex outside the token file. Do **not** add a screenshot suite to CI — record the pass in the PR template (`NOW-P1-THEME-QA`). Check N/A only when none of those surfaces changed.
 
 ### Dual merge gate (required before merge)
 

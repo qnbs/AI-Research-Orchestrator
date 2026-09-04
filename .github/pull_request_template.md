@@ -25,3 +25,4 @@ Check **exactly one** path: **N/A**, or the contrast + theme items that apply. D
 - [ ] Default (`dark`): primary CTA, header, bottom nav / More sheet, dialogs, empty states, charts and their accessible table twins — text and `border-border` readable
 - [ ] Light: same surfaces; no leftover `border-white/*` on glass; overlays still WCAG 2.2 AA
 - [ ] Matrix: same surfaces; status is not color-only; focus rings visible
+- [ ] Charts (when Recharts surfaces change): labels, axes, legends, tooltip/focus, accessible table twin; status is not color-only
