@@ -35,8 +35,8 @@ Dismissing the stale review via `PUT .../reviews/ID/dismissals` returns **403** 
 
 1. **Fix** every actionable finding on the review that landed (threads + body-only / outside-diff). Reply and resolve threads. Record dispositions.
 2. **Push** the fix commit. Re-post `@deepsourcebot review` (first line exact). Best-effort `@coderabbitai review` once — do not loop on rate-limit.
-3. **Wait only for required blocking CI** on the latest head (`deploy.yml` Typecheck/Lint/Tests + Production Build, Chromium E2E, cross-browser, axe, CodeQL, Dependency Review, `pnpm audit (high+)`, gitleaks) **and** the arrival wait for bots still **Reviewing** (not rate-limited).
-4. If CodeRabbit is rate-limited **or** has no real review on this head, and any `CHANGES_REQUESTED` `commit_id` is **superseded**: GitHub `BLOCKED` is a **ruleset artifact**. Try dismiss; on **403**, squash-merge with `gh pr merge N --squash --admin --delete-branch` and write **(d)** in the disposition comment. This is the documented exception in `docs/pr-merge-gate.md`, not a casual bypass.
+3. **Wait only for required blocking CI** on the latest head (`deploy.yml` Typecheck/Lint/Tests + Production Build, Chromium E2E, cross-browser, axe, PWA service-worker registration (`pwa-e2e.yml`), CodeQL, Dependency Review, `pnpm audit (high+)`, gitleaks) **and** the arrival wait for bots still **Reviewing** (not rate-limited). `pwa-e2e.yml` is a blocking workflow even when it is not yet a `mainrules` required-status context — do not `--admin` before it is green.
+4. If CodeRabbit is rate-limited **or** has no real review on this head, **and every** `CHANGES_REQUESTED` (bot or human) `commit_id` is **superseded** — **no** active latest-head change request remains: GitHub `BLOCKED` is a **ruleset artifact**. Try dismiss; on **403**, squash-merge with `gh pr merge N --squash --admin --delete-branch` and write **(d)** in the disposition comment. This is the documented exception in `docs/pr-merge-gate.md`, not a casual bypass. **(d) never waives a `CHANGES_REQUESTED` whose `commit_id` is the current head.**
 5. **Do not stall the remaining audit wave** on CodeRabbit. Continue the next concern PR. Dual-gate CI still applies.
 
 ---
@@ -63,11 +63,11 @@ Not solvable in-repo. Options for the human maintainer:
 
 ## Observed pattern (2026-09)
 
-| PR   | Head after fixes  | CodeRabbit on latest head                                                      | GitHub `mergeStateStatus` | Merge path                          |
-| ---- | ----------------- | ------------------------------------------------------------------------------ | ------------------------- | ----------------------------------- |
-| #301 | later than CR SHA | rate-limited placeholder                                                       | `BLOCKED`                 | `--admin` squash; 403 dismiss       |
-| #308 | `0cdd284`         | rate-limited; CR `CHANGES_REQUESTED` on superseded SHAs                        | `BLOCKED`                 | `--admin` squash                    |
-| #309 | `c5bcc3f`         | `CHANGES_REQUESTED` on superseded `5926a4c`; findings fixed; re-trigger posted | `BLOCKED` expected        | same path once required CI is green |
+| PR   | Head after fixes      | CodeRabbit on latest head                                                                        | GitHub `mergeStateStatus` | Merge path                    |
+| ---- | --------------------- | ------------------------------------------------------------------------------------------------ | ------------------------- | ----------------------------- |
+| #301 | later than CR SHA     | rate-limited placeholder                                                                         | `BLOCKED`                 | `--admin` squash; 403 dismiss |
+| #308 | `0cdd284`             | rate-limited; CR `CHANGES_REQUESTED` on superseded SHAs                                          | `BLOCKED`                 | `--admin` squash              |
+| #309 | `c5bcc3f` → `7be11a0` | `CHANGES_REQUESTED` on superseded `5926a4c`; latest-head **Review rate limited**; findings fixed | `BLOCKED`                 | `--admin` squash 2026-09-04   |
 
 ---
 

@@ -20,7 +20,9 @@ Merge to `main` only when **both** are true on the **same** latest head SHA
 
 1. **Required blocking CI is green** — inventory and live ruleset contexts in
    `docs/ci-branch-governance.md`. Read job logs for advisory jobs; a green
-   badge alone is not proof.
+   badge alone is not proof. Wait for **workflow-blocking** jobs on that list
+   even when they are not yet a `mainrules` required-status context
+   (`PWA service-worker registration` / `pwa-e2e.yml` is the standing example).
 2. **Latest-head review quiescence** — the predicate in `011` step 7, including
    the **arrival wait**. GraphQL `reviewThreads` returning 0 unresolved is
    **necessary but not sufficient**.
