@@ -40,7 +40,11 @@ describe('useInferenceMode', () => {
     expect(result.current.provider).toBe('gemini');
 
     act(() => {
-      store.dispatch(updateSettings({ ai: { provider: 'ollama' } }));
+      store.dispatch(
+        updateSettings({
+          ai: { ...store.getState().settings.data.ai, provider: 'ollama' },
+        }),
+      );
     });
 
     expect(result.current.provider).toBe('ollama');
