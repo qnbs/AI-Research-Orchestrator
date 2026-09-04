@@ -9,7 +9,7 @@ import {
   buildGroundedSynthesisFromExtractive,
   buildAssessedGroundedSynthesis,
 } from '../../lib/groundedSynthesis';
-import { corpusContainsDemo } from '../../lib/articleSourceClass';
+import { corpusContainsDemo, inferArticleSourceClass } from '../../lib/articleSourceClass';
 import { formatLegacyArticleKeyLabel } from '../../lib/sourceIdentifier';
 import { tokenize, jaccardSimilarity, splitSentences, stemmedTokens, cosineBag } from './utils';
 
@@ -110,7 +110,7 @@ export function generateExtractiveTldr(
   query: string,
   maxSentences = 5,
 ): ExtractiveSynthesis {
-  const queryTokens = tokenize(query, 'en');
+  const queryTokens = tokenize(query, 'all');
   const sentences: Array<{
     pmid: string;
     sentence: string;
@@ -127,7 +127,7 @@ export function generateExtractiveTldr(
       .filter((s) => s.length > 20 && s.length < 300);
 
     for (const sentence of articleSentences) {
-      const sentenceTokens = tokenize(sentence, 'en');
+      const sentenceTokens = tokenize(sentence, 'all');
       const overlap = jaccardSimilarity(queryTokens, sentenceTokens);
       const positionScore = sentence.length > 50 ? 1 : 0.5; // Prefer longer sentences
 
@@ -171,8 +171,9 @@ export function generateNarrativeSections(
         `It uses locally curated demo fixtures — NOT retrieved PubMed or arXiv literature. ` +
         `The demo corpus contributed ${articles.length} synthetic articles dated ` +
         `${getYearRange(articles)}.`
-      : `This report synthesizes literature on "${query}" using PubMed and arXiv sources. ` +
-        `The search identified ${articles.length} relevant articles published between ` +
+      : `This report is an extractive template assembled from retrieved titles and abstracts, not a live-model draft. ` +
+        `It covers literature on "${query}" from ${describeRetrievedSourceLabels(articles)}. ` +
+        `The search retrieved ${articles.length} articles published between ` +
         `${getYearRange(articles)}.`,
     pmids: backgroundPmids,
   });
@@ -227,6 +228,18 @@ export function generateNarrativeSections(
 }
 
 /**
+ * Honest source list from corpus stamps — never claim arXiv when none was retrieved.
+ */
+export function describeRetrievedSourceLabels(articles: RankedArticle[]): string {
+  const classes = new Set(articles.map(inferArticleSourceClass));
+  const labels: string[] = [];
+  if (classes.has('pubmed-retrieved')) labels.push('PubMed');
+  if (classes.has('arxiv-retrieved')) labels.push('arXiv');
+  if (labels.length === 0) return 'retrieved sources';
+  return labels.join(' and ');
+}
+
+/**
  * Get year range from articles.
  */
 function getYearRange(articles: RankedArticle[]): string {
@@ -247,13 +260,14 @@ export function generateResearchReport(articles: RankedArticle[], query: string)
   const synthesis = generateExtractiveTldr(articles, query);
   const sections = generateNarrativeSections(articles, query);
 
-  // Build synthesis markdown
+  // Structured outline: each template section keeps its heading so the
+  // markdown is not a heading-less blob of extractive paragraphs.
   const synthesisMarkdown = [
     `## TL;DR`,
     ``,
     synthesis.tldr,
     ``,
-    ...sections.map((s) => s.content),
+    ...sections.flatMap((s) => [`## ${s.title}`, ``, s.content, ``]),
   ].join('\n');
 
   // Generate overall keywords

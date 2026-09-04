@@ -20,6 +20,7 @@ export const stripHtmlTags = (text: string): string => {
 export const cleanText = (text: string) =>
   text
     ? stripHtmlTags(text)
+        .replace(/^#{1,6}\s+/gm, '')
         .replace(/[\u2018\u2019]/g, "'")
         .replace(/[\u201C\u201D]/g, '"')
     : '';

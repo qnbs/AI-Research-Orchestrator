@@ -8,6 +8,16 @@ import type { BuiltQuery } from './types';
 import { formatMeshClause, getMeshEntry } from './meshDictionary';
 import { tokenize, normalizeText } from './utils';
 
+/** Unigrams, adjacent bigrams, and the full topic so keys like `public health` resolve. */
+function meshLookupCandidates(normalizedTopic: string, tokens: string[]): string[] {
+  const words = normalizedTopic.split(/\s+/).filter((w) => w.length > 0);
+  const bigrams: string[] = [];
+  for (let i = 0; i < words.length - 1; i++) {
+    bigrams.push(`${words[i]} ${words[i + 1]}`);
+  }
+  return [...tokens, ...bigrams, normalizedTopic];
+}
+
 /** PubMed filter for articles with free full text (PMC or publisher). Not identical to all OA definitions. */
 export const FREE_FULL_TEXT_FILTER = 'free full text[filter]';
 
@@ -31,16 +41,18 @@ export interface QueryBuildOptions {
  */
 export function buildQuery(topic: string, options: QueryBuildOptions = {}): BuiltQuery {
   const normalizedTopic = normalizeText(topic);
-  const tokens = tokenize(normalizedTopic, 'en');
+  // EN+DE stopwords so German lay topics ("Behandlung von Bluthochdruck") drop
+  // function words before MeSH lookup. Not a librarian — Boolean/MeSH-ish only.
+  const tokens = tokenize(normalizedTopic, 'all');
 
   const meshTerms: string[] = [];
   const expandedTerms: string[] = [];
   const queryParts: string[] = [];
 
-  // Find MeSH terms in the topic
+  // Find MeSH terms in the topic (tokens + adjacent phrases)
   const seenMeshHeadings = new Set<string>();
-  for (const token of tokens) {
-    const entry = getMeshEntry(token);
+  for (const candidate of meshLookupCandidates(normalizedTopic, tokens)) {
+    const entry = getMeshEntry(candidate);
     if (entry && !seenMeshHeadings.has(entry.heading)) {
       seenMeshHeadings.add(entry.heading);
       meshTerms.push(entry.heading);

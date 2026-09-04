@@ -22,25 +22,49 @@ export const MESH_DICTIONARY: Record<string, MeshEntry> = {
   'diabetes mellitus': {
     heading: 'Diabetes Mellitus',
     ui: 'D003920',
-    synonyms: ['diabetes', 'dm', 'type 1 diabetes', 'type 2 diabetes', 't1d', 't2d'],
+    synonyms: [
+      'diabetes',
+      'dm',
+      'type 1 diabetes',
+      'type 2 diabetes',
+      't1d',
+      't2d',
+      'zuckerkrankheit',
+    ],
     publicationTypes: ['review', 'systematic review'],
   },
   cancer: {
     heading: 'Neoplasms',
     ui: 'D009369',
-    synonyms: ['cancer', 'tumor', 'tumour', 'carcinoma', 'oncology', 'neoplasm'],
+    synonyms: [
+      'cancer',
+      'tumor',
+      'tumour',
+      'carcinoma',
+      'oncology',
+      'neoplasm',
+      'krebs',
+      'karzinom',
+    ],
     publicationTypes: ['review', 'systematic review'],
   },
   'cardiovascular disease': {
     heading: 'Cardiovascular Diseases',
     ui: 'D002318',
-    synonyms: ['cv disease', 'heart disease', 'cardiac disease', 'cardiovascular'],
+    synonyms: [
+      'cv disease',
+      'heart disease',
+      'cardiac disease',
+      'cardiovascular',
+      'herzkrankheit',
+      'herzkreislauf',
+    ],
     publicationTypes: ['review', 'systematic review'],
   },
   'alzheimers disease': {
     heading: 'Alzheimer Disease',
     ui: 'D000544',
-    synonyms: ['alzheimer', 'ad', 'dementia', 'neurodegeneration'],
+    synonyms: ['alzheimer', 'ad', 'dementia', 'neurodegeneration', 'demenz'],
     publicationTypes: ['review', 'clinical trial'],
   },
   'covid-19': {
@@ -52,44 +76,58 @@ export const MESH_DICTIONARY: Record<string, MeshEntry> = {
   hypertension: {
     heading: 'Hypertension',
     ui: 'D006979',
-    synonyms: ['high blood pressure', 'htn', 'arterial hypertension'],
+    synonyms: [
+      'high blood pressure',
+      'htn',
+      'arterial hypertension',
+      'bluthochdruck',
+      'hypertonie',
+      'blutdruck',
+    ],
     publicationTypes: ['review', 'meta-analysis'],
   },
   depression: {
     heading: 'Depressive Disorder',
     ui: 'D003866',
-    synonyms: ['depression', 'major depression', 'mdd', 'depressive'],
+    synonyms: ['depression', 'major depression', 'mdd', 'depressive', 'depressionen'],
     publicationTypes: ['review', 'systematic review'],
   },
   stroke: {
     heading: 'Stroke',
     ui: 'D016582',
-    synonyms: ['cerebrovascular accident', 'cva', 'brain attack'],
+    synonyms: ['cerebrovascular accident', 'cva', 'brain attack', 'schlaganfall', 'hirnschlag'],
     publicationTypes: ['review', 'meta-analysis'],
   },
   fracture: {
     heading: 'Fracture Healing',
     ui: 'D005452',
-    synonyms: ['fracture', 'broken bone', 'bone fracture'],
+    synonyms: ['fracture', 'broken bone', 'bone fracture', 'knochenbruch', 'fraktur'],
     publicationTypes: ['review', 'clinical trial'],
   },
   // Therapeutics & Interventions
   immunotherapy: {
     heading: 'Immunotherapy',
     ui: 'D000089375',
-    synonyms: ['immunotherapy', 'immune therapy', 'checkpoint inhibitor', 'car-t', 'cell therapy'],
+    synonyms: [
+      'immunotherapy',
+      'immune therapy',
+      'checkpoint inhibitor',
+      'car-t',
+      'cell therapy',
+      'immuntherapie',
+    ],
     publicationTypes: ['review', 'clinical trial'],
   },
   chemotherapy: {
     heading: 'Drug Therapy',
     ui: 'D004342',
-    synonyms: ['chemotherapy', 'chemo', 'drug treatment', 'pharmacological'],
+    synonyms: ['chemotherapy', 'chemo', 'drug treatment', 'pharmacological', 'chemotherapie'],
     publicationTypes: ['review', 'clinical trial'],
   },
   surgery: {
     heading: 'Surgical Procedures, Operative',
     ui: 'D013604',
-    synonyms: ['surgery', 'operation', 'surgical', 'operative'],
+    synonyms: ['surgery', 'operation', 'surgical', 'operative', 'chirurgie'],
     publicationTypes: ['review', 'clinical trial'],
   },
   // Methods & Study Types
@@ -115,19 +153,19 @@ export const MESH_DICTIONARY: Record<string, MeshEntry> = {
   liver: {
     heading: 'Liver',
     ui: 'D008099',
-    synonyms: ['liver', 'hepatic', 'hepato'],
+    synonyms: ['liver', 'hepatic', 'hepato', 'leber'],
     publicationTypes: ['review'],
   },
   kidney: {
     heading: 'Kidney',
     ui: 'D007673',
-    synonyms: ['kidney', 'renal', 'nephro'],
+    synonyms: ['kidney', 'renal', 'nephro', 'niere', 'nieren'],
     publicationTypes: ['review'],
   },
   lung: {
     heading: 'Lung',
     ui: 'D008132',
-    synonyms: ['lung', 'pulmonary', 'respiratory'],
+    synonyms: ['lung', 'pulmonary', 'respiratory', 'lunge', 'lungen'],
     publicationTypes: ['review'],
   },
   // Public Health
@@ -140,7 +178,14 @@ export const MESH_DICTIONARY: Record<string, MeshEntry> = {
   prevention: {
     heading: 'Primary Prevention',
     ui: 'D012407',
-    synonyms: ['prevention', 'preventive', 'primary prevention', 'secondary prevention'],
+    synonyms: [
+      'prevention',
+      'preventive',
+      'primary prevention',
+      'secondary prevention',
+      'praevention',
+      'prävention',
+    ],
     publicationTypes: ['review'],
   },
   // Merged from services/heuristics/queryFormulation.ts during the nonAi/heuristics
@@ -154,13 +199,13 @@ export const MESH_DICTIONARY: Record<string, MeshEntry> = {
   vaccine: {
     heading: 'Vaccines',
     ui: 'D014612',
-    synonyms: ['vaccine', 'vaccination', 'vaccines', 'immunization'],
+    synonyms: ['vaccine', 'vaccination', 'vaccines', 'immunization', 'impfstoff', 'impfung'],
     publicationTypes: ['review', 'clinical trial'],
   },
   antibiotic: {
     heading: 'Anti-Bacterial Agents',
     ui: 'D000900',
-    synonyms: ['antibiotic', 'antibiotics', 'antibacterial'],
+    synonyms: ['antibiotic', 'antibiotics', 'antibacterial', 'antibiotikum', 'antibiotika'],
     publicationTypes: ['review', 'randomized controlled trial'],
   },
   asthma: {
@@ -172,13 +217,13 @@ export const MESH_DICTIONARY: Record<string, MeshEntry> = {
   obesity: {
     heading: 'Obesity',
     ui: 'D009765',
-    synonyms: ['obesity', 'obese', 'overweight'],
+    synonyms: ['obesity', 'obese', 'overweight', 'adipositas', 'fettleibigkeit'],
     publicationTypes: ['review', 'systematic review'],
   },
   inflammation: {
     heading: 'Inflammation',
     ui: 'D007249',
-    synonyms: ['inflammation', 'inflammatory'],
+    synonyms: ['inflammation', 'inflammatory', 'entzuendung', 'entzündung'],
     publicationTypes: ['review'],
   },
   immunity: {
@@ -190,13 +235,13 @@ export const MESH_DICTIONARY: Record<string, MeshEntry> = {
   heart: {
     heading: 'Heart',
     ui: 'D006321',
-    synonyms: ['heart', 'cardiac'],
+    synonyms: ['heart', 'cardiac', 'herz'],
     publicationTypes: ['review'],
   },
   'myocardial infarction': {
     heading: 'Myocardial Infarction',
     ui: 'D009203',
-    synonyms: ['myocardial infarction', 'heart attack', 'mi'],
+    synonyms: ['myocardial infarction', 'heart attack', 'mi', 'herzinfarkt'],
     publicationTypes: ['review', 'clinical trial'],
   },
   'parkinson disease': {
@@ -208,7 +253,7 @@ export const MESH_DICTIONARY: Record<string, MeshEntry> = {
   epilepsy: {
     heading: 'Epilepsy',
     ui: 'D004827',
-    synonyms: ['epilepsy', 'seizure', 'seizures'],
+    synonyms: ['epilepsy', 'seizure', 'seizures', 'epilepsie'],
     publicationTypes: ['review', 'clinical trial'],
   },
   microbiome: {

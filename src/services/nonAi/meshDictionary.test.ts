@@ -15,6 +15,19 @@ describe('getMeshEntry', () => {
     expect(getMeshEntry('t2d')?.heading).toBe('Diabetes Mellitus');
   });
 
+  it.each([
+    ['krebs', 'Neoplasms'],
+    ['bluthochdruck', 'Hypertension'],
+    ['hypertonie', 'Hypertension'],
+    ['schlaganfall', 'Stroke'],
+    ['herzinfarkt', 'Myocardial Infarction'],
+    ['zuckerkrankheit', 'Diabetes Mellitus'],
+    ['immuntherapie', 'Immunotherapy'],
+    ['chemotherapie', 'Drug Therapy'],
+  ])('resolves German lay synonym "%s" to heading "%s"', (term, heading) => {
+    expect(getMeshEntry(term)?.heading).toBe(heading);
+  });
+
   it('returns undefined for an unknown term', () => {
     expect(getMeshEntry('underwater basket weaving')).toBeUndefined();
   });
