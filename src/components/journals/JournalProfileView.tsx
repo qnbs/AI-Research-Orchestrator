@@ -53,8 +53,12 @@ const ProfileAccordion: React.FC<{
   );
 };
 
-const MetricTile: React.FC<{ label: string; value: string }> = ({ label, value }) => (
-  <div className="bg-background/40 border border-border rounded-lg p-4 text-center">
+const MetricTile: React.FC<{ label: string; value: string; hint?: string }> = ({
+  label,
+  value,
+  hint,
+}) => (
+  <div className="bg-background/40 border border-border rounded-lg p-4 text-center" title={hint}>
     <p className="text-2xl font-bold text-text-primary tabular-nums">{value}</p>
     <p className="text-xs text-text-secondary mt-1 uppercase tracking-wide">{label}</p>
   </div>
@@ -83,6 +87,7 @@ const MetricsDashboard: React.FC<{ metrics: JournalMetrics }> = ({ metrics }) =>
         <MetricTile
           label={t('journals.profile.metrics.oa_rate')}
           value={metrics.openAccessRate !== null ? `${metrics.openAccessRate}%` : '—'}
+          hint={t('journals.profile.metrics.oa_rate_hint')}
         />
       </div>
       <p className="mt-3 text-xs text-text-secondary flex items-center gap-1.5">

@@ -45,7 +45,7 @@ export const authorTranslations = {
     'authors.profile.metrics.publications': 'Publications',
     'authors.profile.metrics.h_index': 'H-Index',
     'authors.profile.metrics.h_index_hint':
-      'Not available without an external citation index. This app counts publications from retrieved PubMed records only.',
+      'Not an official H-index. This app does not compute one from the corpus; the value stays N/A without an external citation index. Publication counts below are estimated from retrieved PubMed records only.',
     'authors.profile.metrics.first_author': 'First Author',
     'authors.profile.metrics.last_author': 'Last Author',
     'authors.profile.core_concepts': 'Core Concepts',
@@ -136,7 +136,7 @@ export const authorTranslations = {
     'authors.profile.metrics.publications': 'Publikationen',
     'authors.profile.metrics.h_index': 'H-Index',
     'authors.profile.metrics.h_index_hint':
-      'Ohne externes Zitationsindex nicht verfügbar. Diese App zählt Publikationen nur aus abgerufenen PubMed-Datensätzen.',
+      'Kein offizieller H-Index. Diese App berechnet keinen aus dem Korpus; der Wert bleibt k. A. ohne externes Zitationsindex. Die Publikationszahlen darunter sind nur aus abgerufenen PubMed-Datensätzen geschätzt.',
     'authors.profile.metrics.first_author': 'Erstautor',
     'authors.profile.metrics.last_author': 'Letztautor',
     'authors.profile.core_concepts': 'Kernkonzepte',

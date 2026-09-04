@@ -2,18 +2,20 @@ import React from 'react';
 import { useInferenceMode } from '../hooks/useInferenceMode';
 import { useTranslation } from '../hooks/useTranslation';
 import type { TranslationKey } from '../i18n/translations';
+import { getProviderMeta } from '../services/providers/provider';
 
 /**
  * Persistent, non-intrusive inference-mode indicator for the header / orchestrator.
  */
 export const InferenceModeBadge: React.FC<{ className?: string }> = ({ className = '' }) => {
-  const { mode, reason } = useInferenceMode();
+  const { mode, reason, provider } = useInferenceMode();
   const { t } = useTranslation();
+  const providerLabel = getProviderMeta(provider).label;
 
   const isLive = mode === 'live';
   const title =
     reason === 'live'
-      ? t('inference.tooltip.live')
+      ? t('inference.tooltip.live', { provider: providerLabel })
       : reason === 'force'
         ? t('inference.tooltip.force')
         : reason === 'offline'
@@ -42,7 +44,7 @@ export const InferenceModeBadge: React.FC<{ className?: string }> = ({ className
         className={`h-1.5 w-1.5 rounded-full ${isLive ? 'bg-success' : 'bg-warning'}`}
         aria-hidden
       />
-      {t(badgeKey)}
+      {reason === 'live' ? t(badgeKey, { provider: providerLabel }) : t(badgeKey)}
     </span>
   );
 };

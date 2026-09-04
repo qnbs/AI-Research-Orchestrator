@@ -27,6 +27,8 @@ export const journeyTranslations = {
     'home.how.1': 'Describe a biomedical topic. Defaults are already set for a literature review.',
     'home.how.2': 'The pipeline retrieves PubMed (and optional arXiv), then ranks and synthesizes.',
     'home.how.3': 'Heuristic mode needs no key. Add a provider in Settings when you want live AI.',
+    'home.how.4':
+      'Keyboard: Ctrl+K or ⌘K opens commands. On a phone, More → Search commands. There is no first-run tour.',
 
     'empty.cta.review': 'Start a literature review',
     'empty.cta.sample': 'Open sample topic',
@@ -82,6 +84,8 @@ export const journeyTranslations = {
     'home.how.2': 'Die Pipeline holt PubMed (optional arXiv), bewertet und synthetisiert.',
     'home.how.3':
       'Der Heuristikmodus braucht keinen Schlüssel. Einen Anbieter später in den Einstellungen hinzufügen.',
+    'home.how.4':
+      'Tastatur: Strg+K oder ⌘K öffnet Befehle. Am Telefon: Mehr → Befehle suchen. Es gibt keine Erststart-Tour.',
 
     'empty.cta.review': 'Literaturrecherche starten',
     'empty.cta.sample': 'Beispielthema öffnen',

@@ -109,18 +109,18 @@ export const translations = {
     'charts.no_topic_data': 'No topic data available.',
     'charts.no_publication_years': 'No publication years available.',
     'offline.banner':
-      'You are offline. Heuristic mode keeps research, summaries, and Knowledge Base fully usable with local algorithms; reconnect for live PubMed fetch and Gemini.',
+      'You are offline. The Knowledge Base and heuristic tools on already fetched reports stay usable. New PubMed/arXiv retrieval and live-provider calls need a network.',
     'sw.update.available': 'A new version of this app is available.',
     'sw.update.reload': 'Reload',
     'sw.registration.failed':
       'Offline support could not be enabled for this session (reason: {reason}). Live features are unaffected.',
     'sw.registration.dismiss': 'Dismiss',
-    'inference.tooltip.live': 'Live Gemini inference — API key present and online.',
+    'inference.tooltip.live': 'Live {provider} inference — API key present and online.',
     'inference.tooltip.force': 'Heuristic mode forced in Settings — local algorithms only.',
     'inference.tooltip.offline':
       'Heuristic mode — offline; local algorithms keep features working.',
     'inference.tooltip.no_key':
-      'Heuristic mode — no Gemini API key; local algorithms provide full functionality.',
+      'Heuristic mode — no API key for the selected provider; local algorithms provide full functionality.',
     'inference.demo.banner':
       'Demo data · Heuristic mode — sample reports seed the Knowledge Base on first launch.',
     'inference.demo.dismiss': 'Clear demo data',
@@ -131,8 +131,8 @@ export const translations = {
     'settings.inference.forced_preview': 'Heuristic · Forced (preview)',
     'settings.inference.derived': 'Derived from API key + network (Live when both available)',
     'settings.inference.force_desc':
-      'Run all AI features with local deterministic algorithms — private, free, and fully offline-capable. Live Gemini remains the high-fidelity path when a key and network are available and this toggle is off.',
-    'inference.badge.live': 'Live · Gemini',
+      'Run all AI features with local deterministic algorithms — private, free, and fully offline-capable for already fetched data. A live provider remains the high-fidelity path when a key and network are available and this toggle is off.',
+    'inference.badge.live': 'Live · {provider}',
     'inference.badge.force': 'Heuristic · Forced',
     'inference.badge.offline': 'Heuristic · Offline',
     'inference.badge.no_key': 'Heuristic · No API key',
@@ -398,19 +398,19 @@ export const translations = {
     'charts.no_topic_data': 'Keine Themendaten verfügbar.',
     'charts.no_publication_years': 'Keine Erscheinungsjahre verfügbar.',
     'offline.banner':
-      'Sie sind offline. Der Heuristik-Modus hält Recherche, Zusammenfassungen und Wissensdatenbank mit lokalen Algorithmen nutzbar; für Live-PubMed und Gemini bitte erneut verbinden.',
+      'Sie sind offline. Die Wissensdatenbank und Heuristik-Werkzeuge auf bereits abgerufenen Berichten bleiben nutzbar. Neue PubMed-/arXiv-Abfragen und Live-Anbieter brauchen ein Netzwerk.',
     'sw.update.available': 'Eine neue Version dieser App ist verfügbar.',
     'sw.update.reload': 'Neu laden',
     'sw.registration.failed':
       'Offline-Unterstützung konnte für diese Sitzung nicht aktiviert werden (Grund: {reason}). Live-Funktionen sind nicht betroffen.',
     'sw.registration.dismiss': 'Verwerfen',
-    'inference.tooltip.live': 'Live-Gemini-Inferenz — API-Schlüssel vorhanden und online.',
+    'inference.tooltip.live': 'Live-{provider}-Inferenz — API-Schlüssel vorhanden und online.',
     'inference.tooltip.force':
       'Heuristik-Modus in den Einstellungen erzwungen — nur lokale Algorithmen.',
     'inference.tooltip.offline':
       'Heuristik-Modus — offline; lokale Algorithmen halten Funktionen verfügbar.',
     'inference.tooltip.no_key':
-      'Heuristik-Modus — kein Gemini-API-Schlüssel; lokale Algorithmen liefern volle Funktionalität.',
+      'Heuristik-Modus — kein API-Schlüssel für den gewählten Anbieter; lokale Algorithmen liefern volle Funktionalität.',
     'inference.demo.banner':
       'Demo-Daten · Heuristik-Modus — Beispielberichte füllen die Wissensdatenbank beim ersten Start.',
     'inference.demo.dismiss': 'Demo-Daten löschen',
@@ -422,8 +422,8 @@ export const translations = {
     'settings.inference.derived':
       'Abgeleitet aus API-Schlüssel + Netzwerk (Live, wenn beides verfügbar)',
     'settings.inference.force_desc':
-      'Alle KI-Funktionen mit lokalen, deterministischen Algorithmen — privat, kostenlos und voll offline-fähig. Live-Gemini bleibt der High-Fidelity-Pfad, wenn Schlüssel und Netzwerk verfügbar sind und dieser Schalter aus ist.',
-    'inference.badge.live': 'Live · Gemini',
+      'Alle KI-Funktionen mit lokalen, deterministischen Algorithmen — privat, kostenlos und offline-fähig für bereits abgerufene Daten. Ein Live-Anbieter bleibt der High-Fidelity-Pfad, wenn Schlüssel und Netzwerk verfügbar sind und dieser Schalter aus ist.',
+    'inference.badge.live': 'Live · {provider}',
     'inference.badge.force': 'Heuristik · Erzwungen',
     'inference.badge.offline': 'Heuristik · Offline',
     'inference.badge.no_key': 'Heuristik · Kein API-Schlüssel',

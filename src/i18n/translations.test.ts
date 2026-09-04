@@ -59,6 +59,8 @@ describe('i18n translations parity', () => {
       'help.glossary.live.title',
       'help.glossary.partial.title',
       'help.glossary.demo.title',
+      'help.glossary.offline.title',
+      'help.glossary.web_grounding.title',
     ] as const satisfies readonly TranslationKey[];
     for (const key of keys) {
       expect(translations.en[key].length).toBeGreaterThan(0);
@@ -80,6 +82,18 @@ describe('i18n translations parity', () => {
     expect(translations.de['help.glossary.heuristic.keywords']).not.toEqual(
       translations.en['help.glossary.heuristic.keywords'],
     );
+    expect(translations.en['help.glossary.offline.desc']).toMatch(/already fetched/i);
+    expect(translations.en['help.glossary.offline.desc']).toMatch(/PubMed/);
+    expect(translations.de['help.glossary.offline.desc']).toMatch(/bereits abgerufen/);
+    expect(translations.en['help.glossary.web_grounding.desc']).toMatch(/Gemini/i);
+    expect(translations.en['help.glossary.web_grounding.desc']).toMatch(/Google Search/i);
+    expect(translations.en['inference.badge.live']).toContain('{provider}');
+    expect(translations.en['offline.banner']).not.toMatch(/Gemini/);
+    expect(translations.de['offline.banner']).not.toMatch(/Gemini/);
+    expect(translations.en['home.how.4']).toMatch(/Search commands/i);
+    expect(translations.de['home.how.4']).toMatch(/Befehle suchen/);
+    expect(translations.en['authors.profile.metrics.h_index_hint']).toMatch(/not an official/i);
+    expect(translations.en['journals.profile.metrics.oa_rate_hint']).toMatch(/free full text/i);
   });
 
   it('teaches Ollama loopback vs CORS/timeout and persistent retrieval privacy', () => {

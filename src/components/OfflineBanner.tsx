@@ -7,8 +7,8 @@ export type OfflineBannerProps = {
 };
 
 /**
- * Compact banner when the browser reports offline. Saved reports remain in Dexie;
- * this only signals that live PubMed/Gemini calls will fail.
+ * Compact banner when the browser reports offline. Saved KB and heuristic tools
+ * on already fetched reports stay usable; new PubMed/arXiv and live-provider calls do not.
  */
 export function OfflineBanner({ getOnline = () => navigator.onLine }: OfflineBannerProps = {}) {
   const { t } = useTranslation();

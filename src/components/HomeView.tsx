@@ -104,6 +104,7 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
           <li>{t('home.how.1')}</li>
           <li>{t('home.how.2')}</li>
           <li>{t('home.how.3')}</li>
+          <li>{t('home.how.4')}</li>
         </ol>
       </section>
     </div>
