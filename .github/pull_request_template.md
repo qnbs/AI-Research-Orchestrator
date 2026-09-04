@@ -21,7 +21,7 @@
 Check **exactly one** path: **N/A**, or the contrast + theme items that apply. Do **not** add a screenshot suite to CI.
 
 - [ ] N/A — this PR does not change UI chrome, overlays, charts, or theme tokens (leave the items below unchecked)
-- [ ] `pnpm run check:contrast` — required when tokens, chrome colors, **or overlay/glass colors** change
+- [ ] `pnpm run check:contrast` — required when tokens, chrome colors, or overlay/glass colors change; not required for chart-only changes
 - [ ] Default (`dark`): primary CTA, header, bottom nav / More sheet, dialogs, empty states, charts and their accessible table twins — text and `border-border` readable
 - [ ] Light: same surfaces; no leftover `border-white/*` on glass; overlays still WCAG 2.2 AA
 - [ ] Matrix: same surfaces; status is not color-only; focus rings visible
