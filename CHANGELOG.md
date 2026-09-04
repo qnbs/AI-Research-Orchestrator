@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Audit docs (2026-09-03 late baseline):** Phase 0 evidence for the residual-audit wave at live `main` `0df1b71` (#302). Execution prompt: `docs/prompts/2026-09-03-late-cursor-grok-audit-perfection-master-prompt.md`. No product behavior change. No P0 regression found; first P1 is `NOW-P1-MOBILE-360` (header density already shipped in #299).
 - **Codecov:** `deploy.yml` uploads Vitest `lcov` (Coverage) and `junit.xml` (Test Analytics). Production Build sets `CODECOV_TOKEN` for `@codecov/vite-plugin` Bundle Analysis (never `VITE_*`). Repo config is `codecov.yml`; notes in `docs/codecov.md`. Codecov GitHub checks stay advisory until a `main` baseline exists.
 - **Sample-topic onboarding E2E:** `agent-flow` covers the secondary first-run CTA → Orchestrator with the EN `onboarding.sampleTopic` prefill (J1). Shared helper `completeOnboardingWithSampleTopic` retries the click the same way as `skipOnboarding`.
 
