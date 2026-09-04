@@ -4,6 +4,7 @@ import {
   inferenceModeBadgeLabel,
   inferenceModeBadgeKey,
   isZeroCostMode,
+  providerChromeLabel,
 } from './inferenceMode';
 
 describe('resolveInferenceMode', () => {
@@ -59,6 +60,21 @@ describe('resolveInferenceMode', () => {
     expect(snap.mode).toBe('live');
     expect(inferenceModeBadgeLabel(snap)).toMatch(/OpenAI/i);
     expect(inferenceModeBadgeKey(snap)).toBe('live');
+  });
+
+  it('uses compact chrome names for Gemini and Ollama live badges', () => {
+    expect(providerChromeLabel('gemini')).toBe('Gemini');
+    expect(providerChromeLabel('ollama')).toBe('Ollama');
+    expect(
+      inferenceModeBadgeLabel(
+        resolveInferenceMode({
+          forceHeuristic: false,
+          hasApiKey: true,
+          isOnline: true,
+          provider: 'ollama',
+        }),
+      ),
+    ).toBe('Live · Ollama');
   });
 
   it('uses heuristic when provider is heuristic even with key', () => {

@@ -2,7 +2,7 @@ import React from 'react';
 import { useInferenceMode } from '../hooks/useInferenceMode';
 import { useTranslation } from '../hooks/useTranslation';
 import type { TranslationKey } from '../i18n/translations';
-import { getProviderMeta } from '../services/providers/provider';
+import { providerChromeLabel } from '../services/inferenceMode';
 
 /**
  * Persistent, non-intrusive inference-mode indicator for the header / orchestrator.
@@ -10,7 +10,7 @@ import { getProviderMeta } from '../services/providers/provider';
 export const InferenceModeBadge: React.FC<{ className?: string }> = ({ className = '' }) => {
   const { mode, reason, provider } = useInferenceMode();
   const { t } = useTranslation();
-  const providerLabel = getProviderMeta(provider).label;
+  const providerLabel = providerChromeLabel(provider);
 
   const isLive = mode === 'live';
   const title =

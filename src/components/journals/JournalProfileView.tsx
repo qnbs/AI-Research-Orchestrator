@@ -6,6 +6,7 @@ import { ChartBarIcon } from '../icons/ChartBarIcon';
 import { ChevronDownIcon } from '../icons/ChevronDownIcon';
 import { ChevronLeftIcon } from '../icons/ChevronLeftIcon';
 import { SparklesIcon } from '../icons/SparklesIcon';
+import { Tooltip } from '../Tooltip';
 import { AnalysisCharts, ArticleListItem } from './JournalsSubComponents';
 
 const oaPolicyTranslationKeys: Partial<Record<string, TranslationKey>> = {
@@ -57,12 +58,21 @@ const MetricTile: React.FC<{ label: string; value: string; hint?: string }> = ({
   label,
   value,
   hint,
-}) => (
-  <div className="bg-background/40 border border-border rounded-lg p-4 text-center" title={hint}>
-    <p className="text-2xl font-bold text-text-primary tabular-nums">{value}</p>
-    <p className="text-xs text-text-secondary mt-1 uppercase tracking-wide">{label}</p>
-  </div>
-);
+}) => {
+  const valueEl = <p className="text-2xl font-bold text-text-primary tabular-nums">{value}</p>;
+  return (
+    <div className="bg-background/40 border border-border rounded-lg p-4 text-center">
+      {hint ? (
+        <div className="flex justify-center">
+          <Tooltip content={hint}>{valueEl}</Tooltip>
+        </div>
+      ) : (
+        valueEl
+      )}
+      <p className="text-xs text-text-secondary mt-1 uppercase tracking-wide">{label}</p>
+    </div>
+  );
+};
 
 const MetricsDashboard: React.FC<{ metrics: JournalMetrics }> = ({ metrics }) => {
   const { t } = useTranslation();

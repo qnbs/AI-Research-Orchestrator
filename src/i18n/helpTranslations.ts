@@ -147,7 +147,7 @@ export const helpTranslations = {
     'help.guide.navigation.command.start': 'Press',
     'help.guide.navigation.command.middle': '(or',
     'help.guide.navigation.command.end':
-      'on Windows) to open a powerful search bar. From here, you can instantly navigate to any section, change the theme, or perform context-aware actions like saving a report. On a phone, open More and choose Search commands — there is no blocking first-run tour.',
+      'on Windows) to open a powerful search bar. From here, you can instantly navigate to any section, change the theme, or perform context-aware actions like saving a report. On a phone, open More and choose Search commands — there is no extra command-palette walkthrough (first-run onboarding is separate).',
     'help.guide.navigation.quick_add.label': 'Quick Add:',
     'help.guide.navigation.quick_add.desc':
       'Use the "Quick Add" button in the header to add a single article to your Knowledge Base using its PMID, DOI, or PubMed URL. The AI will analyze it and create a single-article report.',
@@ -420,7 +420,7 @@ export const helpTranslations = {
     'help.guide.navigation.command.start': 'Drücken Sie',
     'help.guide.navigation.command.middle': '(oder',
     'help.guide.navigation.command.end':
-      'unter Windows), um eine leistungsfähige Suchleiste zu öffnen. Von dort können Sie sofort zu jedem Bereich navigieren, das Design wechseln oder kontextbezogene Aktionen wie das Speichern eines Berichts ausführen. Am Telefon: Mehr → Befehle suchen — es gibt keine blockierende Erststart-Tour.',
+      'unter Windows), um eine leistungsfähige Suchleiste zu öffnen. Von dort können Sie sofort zu jedem Bereich navigieren, das Design wechseln oder kontextbezogene Aktionen wie das Speichern eines Berichts ausführen. Am Telefon: Mehr → Befehle suchen — es gibt keine extra Befehlspaletten-Tour (das Erststart-Onboarding ist getrennt).',
     'help.guide.navigation.quick_add.label': 'Schnell-Hinzufügen:',
     'help.guide.navigation.quick_add.desc':
       'Nutzen Sie die Schaltfläche "Schnell-Hinzufügen" im Header, um einen einzelnen Artikel per PMID, DOI oder PubMed-URL zu Ihrer Wissensdatenbank hinzuzufügen. Die KI analysiert ihn und erstellt einen Einzelartikel-Bericht.',

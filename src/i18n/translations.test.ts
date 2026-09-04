@@ -91,7 +91,10 @@ describe('i18n translations parity', () => {
     expect(translations.en['offline.banner']).not.toMatch(/Gemini/);
     expect(translations.de['offline.banner']).not.toMatch(/Gemini/);
     expect(translations.en['home.how.4']).toMatch(/Search commands/i);
+    expect(translations.en['home.how.4']).toMatch(/command-palette walkthrough/i);
+    expect(translations.en['home.how.4']).not.toMatch(/no first-run tour/);
     expect(translations.de['home.how.4']).toMatch(/Befehle suchen/);
+    expect(translations.de['home.how.4']).toMatch(/Befehlspaletten-Tour/);
     expect(translations.en['authors.profile.metrics.h_index_hint']).toMatch(/not an official/i);
     expect(translations.en['journals.profile.metrics.oa_rate_hint']).toMatch(/free full text/i);
   });
