@@ -41,7 +41,7 @@ f3bbae9 fix(i18n): align onboarding copy with product truth (#288)
 5df69ff chore(deps): consolidate 2026-08-31 Dependabot wave (#286)
 ```
 
-Authoring snapshot `0b9c599` is **three** product/docs merges behind live `main` (#298 header-adjacent E2E/topics, #299 header density, #301 dual-gate + Codecov, #302 GitHub vs policy + `security.yml` `edited` ignore).
+Authoring snapshot `0b9c599` is **four** product/docs merges behind live `main` (#298 header-adjacent E2E/topics, #299 header density, #301 dual-gate + Codecov, #302 GitHub vs policy + `security.yml` `edited` ignore).
 
 ---
 
@@ -144,16 +144,16 @@ Do **not** invent a P0. Skip to P1.
 
 Promote only with evidence. Closed journey IDs are not reused.
 
-| ID                     | Evidence on `0df1b71`                                                                                                                                                               | Disposition                                      |
-| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
-| `NOW-P1-MOBILE-360`    | `BottomNavBar.tsx` still `max-w-[4.5rem] truncate` on labels; 2026-09-03 closeout residual.                                                                                         | **Open — first P1**                              |
-| `NOW-P1-DENSITY-01`    | Header is `hidden md:flex` single row; #299.                                                                                                                                        | **Shipped — do not reimplement**                 |
-| `NOW-P1-THEME-QA`      | No light/matrix visual checklist in `CONTRIBUTING.md` or the PR template.                                                                                                           | **Open** (docs/checklist only; no screenshot CI) |
-| `NOW-P1-I18N-TRUTH`    | Structural DE keys exist (`onboardingTranslations.ts`, `journeyTranslations.ts`, chrome). Quality (clones / Heuristik) **not** proven in this Phase 0 pass — sample in the i18n PR. | **Open — verify then fix**                       |
-| `NOW-P1-HELP-GLOSSARY` | Journey closeout marked Help glossary Done; re-read vs matrix in the Help PR.                                                                                                       | **Open — verify then fix**                       |
-| `NOW-P2-TOPICS`        | Live topics still include `multi-agent-systems`.                                                                                                                                    | **Documented; not a code blocker**               |
-| `NOW-P2-OLLAMA-STATUS` | Foreign-default ignore already in `ProviderStatusLine.tsx`.                                                                                                                         | **Shipped #297 — add tests only if missing**     |
-| `NOW-P2-CMDK-TEACH`    | Closeout: More-menu row only.                                                                                                                                                       | **Open P2 after P1**                             |
+| ID                     | Evidence on `0df1b71`                                                                                                                                                                           | Disposition                                      |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| `NOW-P1-MOBILE-360`    | `BottomNavBar.tsx` still `max-w-[4.5rem] truncate` on labels; 2026-09-03 closeout residual.                                                                                                     | **Open — first P1**                              |
+| `NOW-P1-DENSITY-01`    | Header is `hidden md:flex` single row; #299.                                                                                                                                                    | **Shipped — do not reimplement**                 |
+| `NOW-P1-THEME-QA`      | No light/matrix visual checklist in `CONTRIBUTING.md` or the PR template.                                                                                                                       | **Open** (docs/checklist only; no screenshot CI) |
+| `NOW-P1-I18N-TRUTH`    | Structural DE keys exist (`onboardingTranslations.ts`, `journeyTranslations.ts`, chrome). Quality (clones / heuristic terminology) **not** proven in this Phase 0 pass — sample in the i18n PR. | **Open — verify then fix**                       |
+| `NOW-P1-HELP-GLOSSARY` | Journey closeout marked Help glossary Done; re-read vs matrix in the Help PR.                                                                                                                   | **Open — verify then fix**                       |
+| `NOW-P2-TOPICS`        | Live topics still include `multi-agent-systems`.                                                                                                                                                | **Documented; not a code blocker**               |
+| `NOW-P2-OLLAMA-STATUS` | Foreign-default ignore already in `ProviderStatusLine.tsx`.                                                                                                                                     | **Shipped #297 — add tests only if missing**     |
+| `NOW-P2-CMDK-TEACH`    | Closeout: More-menu row only.                                                                                                                                                                   | **Open P2 after P1**                             |
 
 P2 local-AI / heuristic / capability / PWA tickets stay in the late prompt catalog. Do not start them while P1 user-visible residuals are open.
 

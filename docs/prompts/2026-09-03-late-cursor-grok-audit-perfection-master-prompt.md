@@ -81,7 +81,7 @@ Do **not**:
 16. Lower `pnpm audit --audit-level=high`. Ignore high/critical production advisories. Disable ESLint jsx-a11y with blanket file ignores.
 17. Comment out or delete tests to pass CI. Add `continue-on-error` to blocking workflows.
 18. Bump Dexie schema without an explicit version + migration + CHANGELOG note.
-19. Retry `AbortError`. Log secrets, stack traces, or raw provider payloads in production UI.
+19. Do not retry `AbortError`. Do not log secrets, stack traces, or raw provider payloads in production UI.
 20. Treat this prompt as permission to rewrite Settings, the provider factory, or the matcher “while you are in there”.
 
 ### 0.4 Engineering law (standing)
@@ -191,13 +191,13 @@ These are hypotheses from the 2026-09-03 late external audit. **Promote to ticke
 
 Promote these if still visible:
 
-| ID                  | Finding                                                               | Acceptance sketch                                                                                                                                             |
-| ------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `NOW-P1-DENSITY-01` | Desktop header can still read as two rows; density mode was out of P0 | Single readable header row at 1280px in default density; overflow still works; no loss of Literature review / Quick research / KB / Authors / Journals        |
-| `NOW-P1-MOBILE-360` | Bottom-nav labels truncate on ~360px viewports                        | Five items fit without horizontal scroll; full name in `title` + accessible name; no 10px font hacks                                                          |
-| `NOW-P1-THEME-QA`   | Light + matrix themes need a **manual** PR visual checklist           | Checklist in PR template or `CONTRIBUTING.md`; do **not** add a screenshot suite to CI                                                                        |
-| `NOW-P2-CMDK-TEACH` | Command palette teaching on mobile is only a More-menu row            | One extra honest affordance (e.g. Help row or empty-state hint). **No first-run coachmark modal** unless Phase 0 proves onboarding still fails keyboard users |
-| `NOW-P2-TOPICS`     | GitHub topic `multi-agent-systems` fights product-truth copy          | Remove or replace the topic if the maintainer token allows; otherwise document “left in place” in closeout. Not a code blocker                                |
+| ID                  | Finding                                                                             | Acceptance sketch                                                                                                                                             |
+| ------------------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `NOW-P1-DENSITY-01` | **Shipped in #299** — desktop header is a single row from `md`. Do not reimplement. | Already accepted: primary destinations remain; overflow still works. Next agent starts at `NOW-P1-MOBILE-360`.                                                |
+| `NOW-P1-MOBILE-360` | Bottom-nav labels truncate on ~360px viewports                                      | Five items fit without horizontal scroll; full name in `title` + accessible name; no 10px font hacks                                                          |
+| `NOW-P1-THEME-QA`   | Light + matrix themes need a **manual** PR visual checklist                         | Checklist in PR template or `CONTRIBUTING.md`; do **not** add a screenshot suite to CI                                                                        |
+| `NOW-P2-CMDK-TEACH` | Command palette teaching on mobile is only a More-menu row                          | One extra honest affordance (e.g. Help row or empty-state hint). **No first-run coachmark modal** unless Phase 0 proves onboarding still fails keyboard users |
+| `NOW-P2-TOPICS`     | GitHub topic `multi-agent-systems` fights product-truth copy                        | Remove or replace the topic if the maintainer token allows; otherwise document “left in place” in closeout. Not a code blocker                                |
 
 ### 2.4 Likely quality gaps (verify; do not assume the stale I18N audit)
 
@@ -237,7 +237,7 @@ If Phase 0 finds **no** P0, write that explicitly and skip to P1. Do not invent 
 
 | ID                     | Scope                                                                           | Must / must not                                                                                                                               |
 | ---------------------- | ------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `NOW-P1-DENSITY-01`    | Desktop header density at 1280px                                                | Must keep primary destinations. Must not hide Knowledge Base. Must honor reduced-motion                                                       |
+| `NOW-P1-DENSITY-01`    | Desktop header density at 1280px — **shipped in #299**                          | Do not reimplement. Must keep primary destinations. Must not hide Knowledge Base. Must honor reduced-motion                                   |
 | `NOW-P1-MOBILE-360`    | 360px bottom nav                                                                | Must keep five items + More. Must not drop accessible names. Must restore focus per #297                                                      |
 | `NOW-P1-THEME-QA`      | Light + default + matrix token pass on surfaces touched this wave               | Must use `@theme` tokens (`border-border`, existing surfaces). Must not introduce raw hex except inside the token file. Manual checklist only |
 | `NOW-P1-I18N-TRUTH`    | DE parity **quality** on journey + chrome + provider line + empty states        | Must not add locales. Must not rewrite every DE string. Fix clones, broken interpolations, and glossary drift                                 |
@@ -314,7 +314,7 @@ Heuristic must remain a **separate** backend. Never use heuristic as a silent Ol
 
 ## 4. Architecture map the agent must respect
 
-```
+```text
 src/
   App.tsx                  # thin root
   app/                     # layout, router, session hooks, phase→role mapping
@@ -413,7 +413,7 @@ Full `pnpm run test:e2e` is CI’s job.
 
 ### 5.3 Commit message style
 
-```
+```text
 feat(a11y): add 360px-safe names to bottom nav (NOW-P1-MOBILE-360)
 
 fix(ollama): ignore foreign default model on status line (NOW-P2-OLLAMA-STATUS)
@@ -545,8 +545,8 @@ Execute in this order unless Phase 0 disproves the premise.
 
 1. **Docs:** `docs/audits/2026-09-03-late-baseline.md` (may ride with PR 2 if tiny).
 2. **P0** if any regression exists. Stop the line.
-3. `NOW-P1-MOBILE-360` (smallest user-visible win; easy to screenshot).
-4. `NOW-P1-DENSITY-01` (header).
+3. `NOW-P1-MOBILE-360` (smallest remaining user-visible win; easy to screenshot).
+4. `NOW-P1-DENSITY-01` already shipped in #299 — skip; do not open another header-density PR.
 5. `NOW-P1-I18N-TRUTH` + `NOW-P1-HELP-GLOSSARY` (can combine if the diff stays reviewable).
 6. `NOW-P1-THEME-QA` as you touch surfaces; otherwise a token-only PR plus manual checklist.
 7. `NOW-P2-OLLAMA-STATUS` / `NOW-P2-OLLAMA-DIAG` / `NOW-P2-OLLAMA-PRIVACY` (one PR if they stay in Settings + status line).
