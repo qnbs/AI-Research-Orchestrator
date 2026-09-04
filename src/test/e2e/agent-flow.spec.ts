@@ -127,6 +127,11 @@ test.describe('2. Navigation', () => {
     await expect(bottomNav.getByRole('button', { name: /^(more|mehr)$/i })).toBeVisible();
     const overflowed = await bottomNav.evaluate((el) => el.scrollWidth > el.clientWidth + 1);
     expect(overflowed).toBe(false);
+
+    await bottomNav.getByRole('button', { name: /^(more|mehr)$/i }).click();
+    await expect(bottomNav.getByRole('button', { name: /^(home|startseite)$/i })).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(bottomNav.getByRole('button', { name: /^(home|startseite)$/i })).toHaveCount(0);
   });
 
   test('settings button is in header', async ({ page }) => {
