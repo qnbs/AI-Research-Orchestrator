@@ -65,13 +65,15 @@
 
 - **Why:** Closeout residual: two-row laptop header stole vertical space from the form.
 - **What:** Single-row `md+` chrome; view title `sr-only`; Search/Quick Add text from `xl`.
+- **Impact:** The literature-review form gains more usable vertical space on desktop.
 - **Not done:** OpenRouter. Live GitHub topic PUT (admin). `v0.4.3`.
 
 # 2026-09-03 — UI/UX journey wave on main; topics + sample-topic E2E
 
 - **Why:** Finish the 2026-09-03 master prompt leftovers after #294/#296/#297: `NOW-P2-TOPICS`, J1 sample-topic E2E, stale closeout SHAs.
 - **What:** Canonical `githubTopics` in `docs/project-facts.json` (no `multi-agent-systems`). Live GitHub PUT 403 for the App token — maintainer command in the closeout. Playwright covers sample-topic CTA → prefilled `#researchTopic`. Closeout/baseline/backlog refreshed to `0b9c599`.
-- **Not done:** OpenRouter. Live topic PUT. Header two-row density. `v0.4.3`.
+- **Impact:** First-run sample-topic path is E2E-covered; product-truth docs match live `main`.
+- **Not done:** OpenRouter. Live topic PUT (admin). `v0.4.3`. Header density later landed in #299.
 
 # 2026-09-02 — Docs housekeeping, façade split, chart a11y, ADR 0010 deferral
 
