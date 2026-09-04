@@ -646,7 +646,7 @@ Allowed honest phrases include: client-only PWA, heuristic engine, live provider
 - CodeRabbit: prefer a real `APPROVED` / `COMMENTED` review on the latest head. Rate-limit is **(d)** — not a merge block; do not wait 3 cycles / 90 minutes. Latest-head `CHANGES_REQUESTED` still blocks.
 - Sourcery: skip if budget exhausted; say so.
 - Dependabot: one PR at a time; disposition log.
-- Dual gate: required CI green **and** `011` step 7 quiescence on the same head (`docs/pr-merge-gate.md`).
+- Dual gate: required CI green **and** the `011` quiescence predicate (rate-limit section, item 6) on the same head (`docs/pr-merge-gate.md`).
 
 ## 18. Appendix D — What “perfection” means here
 
