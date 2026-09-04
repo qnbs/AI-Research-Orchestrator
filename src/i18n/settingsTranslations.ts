@@ -107,6 +107,26 @@ export const settingsTranslations = {
     'settings.ai.formDefaults.article_types': 'Default Article Types',
     'settings.ai.formDefaults.auto_save': 'Automatically Save New Reports',
     'settings.cost.tier_heuristic': 'Heuristic',
+    'settings.ai.base_url_desc.ollama':
+      'Loopback Local AI (default http://localhost:11434). Generation stays on this machine. Remote LAN Ollama is not first-class and needs a tailored CSP / self-host build. Approve a non-default origin before requests are sent.',
+    'settings.ai.ollama.fail.cors':
+      'The browser could not reach Ollama (network or CORS). First-class Local AI is loopback (localhost, 127.0.0.1, or [::1] on port 11434). A remote host needs a tailored CSP. Detail: {message}',
+    'settings.ai.ollama.fail.timeout':
+      'Ollama did not answer in time. A slow or overloaded server is not the same as “not installed”. Detail: {message}',
+    'settings.ai.ollama.fail.unavailable':
+      'Ollama is not running or not reachable at this URL. Start the local server, then refresh. Detail: {message}',
+    'settings.ai.ollama.fail.invalid_endpoint':
+      'This base URL is not a permitted Local AI endpoint. Use http://localhost:11434 unless you have approved another origin that the CSP allows. Detail: {message}',
+    'settings.ai.ollama.fail.http':
+      'Ollama returned an HTTP error. Check the server logs and the selected origin. Detail: {message}',
+    'settings.ai.ollama.fail.aborted': 'Health check cancelled. Refresh to try again.',
+    'settings.ai.ollama.fail.model_list':
+      'Connected, but listing models failed. The selected model was not checked against the server. Detail: {message}',
+    'settings.ai.ollama.budget_info':
+      'Estimated prompt-input budget ≈ {budget} tokens ({source}). Ranking and synthesis omit articles that do not fit; if none fit, the run errors instead of truncating silently.',
+    'settings.ai.ollama.budget_source.context_length': 'reported context window',
+    'settings.ai.ollama.budget_source.parameter_heuristic': 'parameter-size hint',
+    'settings.ai.ollama.budget_source.default': 'default estimate',
 
     // ── Knowledge Base tab ──
     'settings.kb.display.title': 'Display Defaults',
@@ -370,6 +390,27 @@ export const settingsTranslations = {
     'settings.ai.formDefaults.article_types': 'Standard: Artikeltypen',
     'settings.ai.formDefaults.auto_save': 'Neue Berichte automatisch speichern',
     'settings.cost.tier_heuristic': 'Heuristik',
+    'settings.ai.base_url_desc.ollama':
+      'Loopback Local AI (Standard http://localhost:11434). Die Generierung bleibt auf diesem Rechner. Remote-LAN-Ollama ist nicht erstklassig und braucht eine angepasste CSP / Self-Host-Build. Genehmigen Sie einen abweichenden Origin, bevor Anfragen gesendet werden.',
+    'settings.ai.ollama.fail.cors':
+      'Der Browser konnte Ollama nicht erreichen (Netzwerk oder CORS). Erstklassige Local AI ist Loopback (localhost, 127.0.0.1 oder [::1] auf Port 11434). Ein Remote-Host braucht eine angepasste CSP. Detail: {message}',
+    'settings.ai.ollama.fail.timeout':
+      'Ollama hat nicht rechtzeitig geantwortet. Ein langsamer oder überlasteter Server ist nicht dasselbe wie „nicht installiert“. Detail: {message}',
+    'settings.ai.ollama.fail.unavailable':
+      'Ollama läuft nicht oder ist unter dieser URL nicht erreichbar. Starten Sie den lokalen Server und aktualisieren Sie. Detail: {message}',
+    'settings.ai.ollama.fail.invalid_endpoint':
+      'Diese Basis-URL ist kein zulässiger Local-AI-Endpunkt. Verwenden Sie http://localhost:11434, sofern Sie keinen anderen, CSP-erlaubten Origin genehmigt haben. Detail: {message}',
+    'settings.ai.ollama.fail.http':
+      'Ollama hat einen HTTP-Fehler zurückgegeben. Prüfen Sie die Server-Logs und den gewählten Origin. Detail: {message}',
+    'settings.ai.ollama.fail.aborted':
+      'Gesundheitsprüfung abgebrochen. Aktualisieren Sie, um es erneut zu versuchen.',
+    'settings.ai.ollama.fail.model_list':
+      'Verbunden, aber die Modellliste konnte nicht geladen werden. Das ausgewählte Modell wurde nicht gegen den Server geprüft. Detail: {message}',
+    'settings.ai.ollama.budget_info':
+      'Geschätztes Prompt-Eingabe-Budget ≈ {budget} Tokens ({source}). Ranking und Synthese lassen Artikel weg, die nicht passen; wenn keiner passt, bricht der Lauf mit Fehler ab statt still zu kürzen.',
+    'settings.ai.ollama.budget_source.context_length': 'gemeldetes Kontextfenster',
+    'settings.ai.ollama.budget_source.parameter_heuristic': 'Parametergrößen-Hinweis',
+    'settings.ai.ollama.budget_source.default': 'Standardschätzung',
 
     'settings.kb.display.title': 'Anzeige-Standards',
     'settings.kb.display.desc':

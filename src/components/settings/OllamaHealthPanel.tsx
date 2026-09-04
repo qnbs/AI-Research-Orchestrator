@@ -1,13 +1,42 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useSettingsView } from './SettingsViewContext';
+import type { TranslationKey } from '../../i18n/translations';
+import type { OllamaBudgetSource } from '../../lib/ollamaContextBudget';
 import {
   estimateOllamaInputTokenBudget,
   isOllamaModelAvailable,
   probeOllamaHealth,
+  type OllamaHealthFailureReason,
   type OllamaHealthResult,
   type OllamaModelInfo,
 } from '../../services/providers/ollamaHealth';
 import { probeOllamaModelMetadata, type OllamaModelMetadata } from '../../lib/ollamaModelMetadata';
+
+const OLLAMA_FAIL_TEACHING_KEYS = {
+  cors: 'settings.ai.ollama.fail.cors',
+  timeout: 'settings.ai.ollama.fail.timeout',
+  unavailable: 'settings.ai.ollama.fail.unavailable',
+  invalid_endpoint: 'settings.ai.ollama.fail.invalid_endpoint',
+  http: 'settings.ai.ollama.fail.http',
+  aborted: 'settings.ai.ollama.fail.aborted',
+  model_list: 'settings.ai.ollama.fail.model_list',
+} as const satisfies Record<OllamaHealthFailureReason, TranslationKey>;
+
+const OLLAMA_BUDGET_SOURCE_KEYS = {
+  'context-length': 'settings.ai.ollama.budget_source.context_length',
+  'parameter-heuristic': 'settings.ai.ollama.budget_source.parameter_heuristic',
+  default: 'settings.ai.ollama.budget_source.default',
+} as const satisfies Record<OllamaBudgetSource, TranslationKey>;
+
+/** Teaching copy key for a failed health probe (CORS vs timeout vs unavailable). */
+export function ollamaHealthFailTeachingKey(reason: OllamaHealthFailureReason): TranslationKey {
+  return OLLAMA_FAIL_TEACHING_KEYS[reason];
+}
+
+/** i18n key for how the prompt-input budget was derived. */
+export function ollamaBudgetSourceKey(source: OllamaBudgetSource): TranslationKey {
+  return OLLAMA_BUDGET_SOURCE_KEYS[source];
+}
 
 function formatCheckedAt(ts: number): string {
   try {
@@ -207,8 +236,7 @@ export const OllamaHealthPanel: React.FC = () => {
 
         {health?.ok === false && (
           <p className="text-xs text-red-600 dark:text-red-400" data-testid="ollama-health-fail">
-            {t('settings.ai.ollama.status_fail', {
-              reason: health.reason,
+            {t(ollamaHealthFailTeachingKey(health.reason), {
               message: health.message,
             })}
           </p>
@@ -221,6 +249,15 @@ export const OllamaHealthPanel: React.FC = () => {
           data-testid="ollama-model-missing"
         >
           {t('settings.ai.ollama.model_missing', { model: selectedModel })}
+        </p>
+      )}
+
+      {selectedModel.trim().length > 0 && (
+        <p className="text-xs text-text-secondary" data-testid="ollama-budget-info">
+          {t('settings.ai.ollama.budget_info', {
+            budget: String(budgetHint.budget),
+            source: t(ollamaBudgetSourceKey(budgetHint.source)),
+          })}
         </p>
       )}
 

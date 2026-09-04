@@ -51,4 +51,20 @@ describe('ProviderStatusLine', () => {
       screen.getByText(`provider.status.ollama:${getProviderMeta('ollama').defaultModel}`),
     ).toBeInTheDocument();
   });
+
+  it('shows a persistent PubMed/arXiv privacy note when live Ollama is selected', () => {
+    renderOllamaStatus('llama3.1:8b');
+    expect(screen.getByTestId('provider-status-ollama-privacy')).toHaveTextContent(
+      'provider.status.ollama_privacy',
+    );
+  });
+
+  it('hides the Ollama privacy note in heuristic mode', () => {
+    settingsState.model = 'llama3.1:8b';
+    inference.mode = 'heuristic';
+    inference.reason = 'no-key';
+    inference.provider = 'heuristic';
+    render(<ProviderStatusLine />);
+    expect(screen.queryByTestId('provider-status-ollama-privacy')).toBeNull();
+  });
 });

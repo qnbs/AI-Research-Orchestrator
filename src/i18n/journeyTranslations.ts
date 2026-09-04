@@ -47,6 +47,8 @@ export const journeyTranslations = {
     'provider.status.forced': 'Heuristic · forced in Settings',
     'provider.status.offline': 'Heuristic · offline',
     'provider.status.ollama': 'Local Ollama · {model}',
+    'provider.status.ollama_privacy':
+      'Generation stays on this machine. PubMed and arXiv retrieval still use the network when you are online.',
   },
   de: {
     'nav.more': 'Mehr',
@@ -98,5 +100,7 @@ export const journeyTranslations = {
     'provider.status.forced': 'Heuristik · in den Einstellungen erzwungen',
     'provider.status.offline': 'Heuristik · offline',
     'provider.status.ollama': 'Lokales Ollama · {model}',
+    'provider.status.ollama_privacy':
+      'Die Generierung bleibt auf diesem Rechner. PubMed- und arXiv-Abfragen nutzen weiterhin das Netzwerk, solange Sie online sind.',
   },
 } as const;

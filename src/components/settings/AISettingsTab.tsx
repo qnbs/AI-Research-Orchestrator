@@ -183,7 +183,13 @@ const BaseUrlField: React.FC = () => {
         placeholder={providerMeta.defaultBaseUrl}
         className="mt-1 block w-full bg-input-bg border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent"
       />
-      <p className="text-xs text-text-secondary mt-1">{t('settings.ai.base_url_desc')}</p>
+      <p className="text-xs text-text-secondary mt-1">
+        {t(
+          providerMeta.id === 'ollama'
+            ? 'settings.ai.base_url_desc.ollama'
+            : 'settings.ai.base_url_desc',
+        )}
+      </p>
       <BaseUrlValidationAlerts
         validation={validation}
         approved={approved}
