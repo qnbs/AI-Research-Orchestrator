@@ -382,27 +382,27 @@ export const getGlossaryItems = (t: Translator): HelpTopic[] => [
   {
     title: t('help.glossary.quick_research.title'),
     content: <p>{t('help.glossary.quick_research.desc')}</p>,
-    keywords: 'quick research assistant tldr similar',
+    keywords: t('help.glossary.quick_research.keywords'),
   },
   {
     title: t('help.glossary.heuristic.title'),
     content: <p>{t('help.glossary.heuristic.desc')}</p>,
-    keywords: 'heuristic heuristics offline no key bm25',
+    keywords: t('help.glossary.heuristic.keywords'),
   },
   {
     title: t('help.glossary.live.title'),
     content: <p>{t('help.glossary.live.desc')}</p>,
-    keywords: 'live provider gemini openai anthropic ollama',
+    keywords: t('help.glossary.live.keywords'),
   },
   {
     title: t('help.glossary.partial.title'),
     content: <p>{t('help.glossary.partial.desc')}</p>,
-    keywords: 'partial cancelled restored watermark chat',
+    keywords: t('help.glossary.partial.keywords'),
   },
   {
     title: t('help.glossary.demo.title'),
     content: <p>{t('help.glossary.demo.desc')}</p>,
-    keywords: 'demo educational corpus synthetic practice',
+    keywords: t('help.glossary.demo.keywords'),
   },
   {
     title: t('help.glossary.synthesis.title'),

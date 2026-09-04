@@ -45,9 +45,11 @@ describe('i18n translations parity', () => {
   it('aligns DE submit and glossary destination names', () => {
     expect(translations.de['orchestrator.start']).toBe('Recherche starten');
     expect(translations.de['orchestrator.start']).toBe(translations.de['inputForm.submit']);
-    expect(translations.en['settings.kb.presets.empty']).not.toMatch(/Orchestrator form/);
+    expect(translations.en['settings.kb.presets.empty']).toContain('Literature review');
+    expect(translations.de['settings.kb.presets.empty']).toContain('Literaturrecherche');
+    expect(translations.en['settings.cost.desc']).toContain('literature-review');
+    expect(translations.de['settings.cost.desc']).toContain('Literaturrecherche');
     expect(translations.de['settings.kb.presets.empty']).not.toMatch(/Orchestrator/);
-    expect(translations.en['settings.cost.desc']).not.toMatch(/orchestrator run/i);
     expect(translations.de['settings.cost.desc']).not.toMatch(/Orchestrator-Lauf/);
   });
 
@@ -65,5 +67,9 @@ describe('i18n translations parity', () => {
     }
     expect(translations.en['help.glossary.heuristic.desc']).toMatch(/not a live model/i);
     expect(translations.de['help.glossary.heuristic.desc']).toMatch(/kein Live-Modell/);
+    expect(translations.de['help.glossary.heuristic.keywords']).toMatch(/kein schlüssel/i);
+    expect(translations.de['help.glossary.heuristic.keywords']).not.toEqual(
+      translations.en['help.glossary.heuristic.keywords'],
+    );
   });
 });
