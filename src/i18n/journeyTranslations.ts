@@ -70,8 +70,8 @@ export const journeyTranslations = {
     'home.status.library': '{count} Artikel in der Bibliothek',
     'home.status.library_one': '{count} Artikel in der Bibliothek',
     'home.status.library_empty': 'Bibliothek ist leer',
-    'home.status.last_report': 'Letzte Übersicht: {title}',
-    'home.status.no_report': 'Noch keine gespeicherte Übersicht',
+    'home.status.last_report': 'Letzte Recherche: {title}',
+    'home.status.no_report': 'Noch keine gespeicherte Recherche',
     'home.how.title': 'So funktioniert diese App',
     'home.how.1':
       'Beschreiben Sie ein biomedizinisches Thema. Die Standardwerte passen für eine Literaturrecherche.',

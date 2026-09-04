@@ -37,16 +37,33 @@ describe('i18n translations parity', () => {
     }
   });
 
-  it('uses distinct German short labels for mobile chrome', () => {
-    expect(translations.en['nav.orchestrator.short']).toBe('Review');
-    expect(translations.de['nav.orchestrator.short']).toBe('Recherche');
-    expect(translations.en['nav.research.short']).toBe('Assistant');
-    expect(translations.de['nav.research.short']).toBe('Assistent');
-    expect(translations.de['nav.orchestrator.short']).not.toEqual(
-      translations.en['nav.orchestrator.short'],
-    );
-    expect(translations.de['nav.research.short']).not.toEqual(
-      translations.en['nav.research.short'],
-    );
+  it('uses Literature review / Literaturrecherche as the orchestrator view title', () => {
+    expect(translations.en['orchestrator.title']).toBe('Literature review');
+    expect(translations.de['orchestrator.title']).toBe('Literaturrecherche');
+  });
+
+  it('aligns DE submit and glossary destination names', () => {
+    expect(translations.de['orchestrator.start']).toBe('Recherche starten');
+    expect(translations.de['orchestrator.start']).toBe(translations.de['inputForm.submit']);
+    expect(translations.en['settings.kb.presets.empty']).not.toMatch(/Orchestrator form/);
+    expect(translations.de['settings.kb.presets.empty']).not.toMatch(/Orchestrator/);
+    expect(translations.en['settings.cost.desc']).not.toMatch(/orchestrator run/i);
+    expect(translations.de['settings.cost.desc']).not.toMatch(/Orchestrator-Lauf/);
+  });
+
+  it('documents heuristic, live, partial, and demo in the Help glossary', () => {
+    const keys = [
+      'help.glossary.heuristic.title',
+      'help.glossary.live.title',
+      'help.glossary.partial.title',
+      'help.glossary.demo.title',
+    ] as const satisfies readonly TranslationKey[];
+    for (const key of keys) {
+      expect(translations.en[key].length).toBeGreaterThan(0);
+      expect(translations.de[key].length).toBeGreaterThan(0);
+      expect(translations.de[key]).not.toEqual(translations.en[key]);
+    }
+    expect(translations.en['help.glossary.heuristic.desc']).toMatch(/not a live model/i);
+    expect(translations.de['help.glossary.heuristic.desc']).toMatch(/kein Live-Modell/);
   });
 });

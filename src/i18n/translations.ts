@@ -85,7 +85,7 @@ export const translations = {
     // ── Cost estimator ──
     'settings.cost.title': 'Estimated run cost',
     'settings.cost.desc':
-      'Approximate vendor API usage for one orchestrator run with your current provider, model, and defaults. Not a billing guarantee.',
+      'Approximate vendor API usage for one literature-review run with your current provider, model, and defaults. Not a billing guarantee.',
     'settings.cost.estimate': 'Est. USD',
     'settings.cost.provider': 'Provider',
     'settings.cost.tier': 'Pricing tier',
@@ -375,7 +375,7 @@ export const translations = {
     // ── Cost estimator ──
     'settings.cost.title': 'Geschätzte Laufkosten',
     'settings.cost.desc':
-      'Ungefährer API-Verbrauch des gewählten Anbieters/Modells für einen Orchestrator-Lauf mit Ihren Defaults. Keine Abrechnungsgarantie.',
+      'Ungefährer API-Verbrauch des gewählten Anbieters/Modells für einen Literaturrecherche-Lauf mit Ihren Defaults. Keine Abrechnungsgarantie.',
     'settings.cost.estimate': 'Geschätzte USD',
     'settings.cost.provider': 'Anbieter',
     'settings.cost.tier': 'Preisstufe',

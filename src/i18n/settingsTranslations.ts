@@ -140,7 +140,8 @@ export const settingsTranslations = {
     'settings.kb.notification.prune_failed': 'Failed to prune articles.',
     'settings.kb.presets.title': 'Research Presets',
     'settings.kb.presets.desc': 'Manage your saved research form settings for quick access.',
-    'settings.kb.presets.empty': 'You have no saved presets. Save one from the Orchestrator form.',
+    'settings.kb.presets.empty':
+      'You have no saved presets. Save one from the Literature review form.',
     'settings.kb.presets.delete_aria': 'Delete preset {name}',
 
     // ── Export tab ──
@@ -404,7 +405,7 @@ export const settingsTranslations = {
     'settings.kb.presets.desc':
       'Gespeicherte Rechercheformular-Einstellungen für schnellen Zugriff verwalten.',
     'settings.kb.presets.empty':
-      'Keine gespeicherten Presets. Speichern Sie eines im Orchestrator-Formular.',
+      'Keine gespeicherten Presets. Speichern Sie eines im Formular der Literaturrecherche.',
     'settings.kb.presets.delete_aria': 'Preset {name} löschen',
 
     'settings.export.pdf.title': 'PDF-Export-Einstellungen',
