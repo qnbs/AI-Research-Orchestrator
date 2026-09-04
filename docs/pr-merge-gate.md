@@ -194,10 +194,9 @@ threads.
 - `gh pr merge --admin` except a documented exception (for example a stale
   CodeRabbit `CHANGES_REQUESTED` dismiss that returns 403)
 - Husky bypass (`--no-verify`)
-- A canceled required check (including `pnpm audit (high+)` aborted by a
-  `pull_request` `edited` event). Do not PATCH the PR title or body while
-  `security.yml` is in flight — that retriggers PR concurrency and cancels
-  the audit (PR #302).
+- A canceled required check. `security.yml` ignores `pull_request` `edited`;
+  other PR-concurrency workflows may still restart if the title or body is
+  patched while they are in flight (PR #302).
 
 ## Related
 
