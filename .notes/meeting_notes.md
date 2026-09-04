@@ -1,3 +1,10 @@
+# 2026-09-04 — PR body edit cancels in-flight security audit
+
+- **Why:** On #302 (`fb0166b`) `security.yml` run `33819179270` was canceled mid-`pnpm audit` retry (registry error 23). Required check stayed incomplete while other gates were green.
+- **What:** `on: pull_request` without `types` also fires on `edited`. Updating the PR body while the workflow is in flight starts a new run; PR concurrency then cancels the in-flight `pnpm audit (high+)`. Documented in `docs/ci-branch-governance.md` / `docs/pr-merge-gate.md`.
+- **Impact:** Agents must not PATCH the PR title or body until `pnpm audit (high+)` is terminal. A canceled required check is incomplete validation, not a suite failure.
+- **Not done:** Restrict `security.yml` `pull_request` types (would skip `edited` but is a workflow change).
+
 # 2026-09-03 — GitHub BLOCKED vs latest-head policy (PR #301)
 
 - **Why:** #301 dual gate held on `fabb725` (required CI green, threads 0, clause **(d)**). GitHub stayed `BLOCKED` / `CHANGES_REQUESTED` because review `5107396133` targeted superseded `27f9ea6` and `dismiss_stale_reviews_on_push` is off. Dismiss API returned 403.
