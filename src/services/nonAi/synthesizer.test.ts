@@ -7,6 +7,7 @@ import {
   generateHeuristicTldr,
   extractKeySentences,
   streamSynthesisChunks,
+  describeRetrievedSourceLabels,
 } from './synthesizer';
 
 const mockArticles: RankedArticle[] = [
@@ -45,6 +46,24 @@ describe('generateExtractiveTldr', () => {
     expect(synthesis.keyFindings.length).toBeGreaterThan(0);
     expect(synthesis.synthesisMode).toBe('extractive-template');
   });
+
+  it('prefers German content tokens over DE stopwords when scoring abstracts', () => {
+    const germanArticles: RankedArticle[] = [
+      {
+        ...mockArticles[0],
+        pmid: '11111',
+        title: 'Bluthochdruck Studie',
+        summary:
+          'Die und von der den das für mit ohne durch gegen um. ' +
+          'Bluthochdruck Behandlung verbessert die Werte signifikant bei Patienten mit Hypertonie.',
+      },
+    ];
+    const synthesis = generateExtractiveTldr(germanArticles, 'Behandlung von Bluthochdruck');
+    expect(synthesis.tldr.toLowerCase()).toMatch(/bluthochdruck|hypertonie|behandlung/);
+    expect(synthesis.tldr.toLowerCase()).not.toMatch(
+      /^die und von der den das für mit ohne durch gegen um/i,
+    );
+  });
 });
 
 describe('generateNarrativeSections', () => {
@@ -60,7 +79,25 @@ describe('generateNarrativeSections', () => {
     expect(background.content).toMatch(/extractive template/i);
     expect(background.content).toMatch(/not a live-model draft/i);
     expect(background.content).not.toMatch(/semantic/i);
+    expect(background.content).toMatch(/PubMed/);
+    expect(background.content).not.toMatch(/arXiv/);
     expect(background.pmids).toEqual(['12345', '67890']);
+  });
+
+  it('names PubMed-only, arXiv-only, and combined sources from the corpus', () => {
+    expect(describeRetrievedSourceLabels(mockArticles)).toBe('PubMed');
+    const arxivOnly: RankedArticle[] = [
+      { ...mockArticles[0], pmid: 'arxiv:2401.12345', sourceClass: 'arxiv-retrieved' },
+    ];
+    expect(describeRetrievedSourceLabels(arxivOnly)).toBe('arXiv');
+    const mixed: RankedArticle[] = [
+      mockArticles[0],
+      { ...mockArticles[1], pmid: 'arxiv:2401.12345', sourceClass: 'arxiv-retrieved' },
+    ];
+    expect(describeRetrievedSourceLabels(mixed)).toBe('PubMed and arXiv');
+    const [arxivBackground] = generateNarrativeSections(arxivOnly, 'preprints');
+    expect(arxivBackground.content).toMatch(/arXiv/);
+    expect(arxivBackground.content).not.toMatch(/PubMed/);
   });
 });
 

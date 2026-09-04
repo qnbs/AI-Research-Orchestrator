@@ -419,7 +419,14 @@ describe('export helpers', () => {
       ),
     ).toBe(true);
     expect(
-      pdfTextSpy.mock.calls.some(([text]) => typeof text === 'string' && text.includes('Synth')),
+      pdfTextSpy.mock.calls.some(
+        ([text]) => typeof text === 'string' && String(text).includes('##'),
+      ),
+    ).toBe(false);
+    expect(
+      pdfTextSpy.mock.calls.some(
+        ([text]) => typeof text === 'string' && String(text).includes('Synth'),
+      ),
     ).toBe(true);
   });
 

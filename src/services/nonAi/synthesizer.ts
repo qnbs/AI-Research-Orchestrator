@@ -9,7 +9,7 @@ import {
   buildGroundedSynthesisFromExtractive,
   buildAssessedGroundedSynthesis,
 } from '../../lib/groundedSynthesis';
-import { corpusContainsDemo } from '../../lib/articleSourceClass';
+import { corpusContainsDemo, inferArticleSourceClass } from '../../lib/articleSourceClass';
 import { formatLegacyArticleKeyLabel } from '../../lib/sourceIdentifier';
 import { tokenize, jaccardSimilarity, splitSentences, stemmedTokens, cosineBag } from './utils';
 
@@ -172,7 +172,7 @@ export function generateNarrativeSections(
         `The demo corpus contributed ${articles.length} synthetic articles dated ` +
         `${getYearRange(articles)}.`
       : `This report is an extractive template assembled from retrieved titles and abstracts, not a live-model draft. ` +
-        `It covers literature on "${query}" from PubMed and arXiv sources. ` +
+        `It covers literature on "${query}" from ${describeRetrievedSourceLabels(articles)}. ` +
         `The search retrieved ${articles.length} articles published between ` +
         `${getYearRange(articles)}.`,
     pmids: backgroundPmids,
@@ -225,6 +225,18 @@ export function generateNarrativeSections(
   });
 
   return sections;
+}
+
+/**
+ * Honest source list from corpus stamps — never claim arXiv when none was retrieved.
+ */
+export function describeRetrievedSourceLabels(articles: RankedArticle[]): string {
+  const classes = new Set(articles.map(inferArticleSourceClass));
+  const labels: string[] = [];
+  if (classes.has('pubmed-retrieved')) labels.push('PubMed');
+  if (classes.has('arxiv-retrieved')) labels.push('arXiv');
+  if (labels.length === 0) return 'retrieved sources';
+  return labels.join(' and ');
 }
 
 /**

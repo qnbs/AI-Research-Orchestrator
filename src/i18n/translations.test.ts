@@ -69,8 +69,12 @@ describe('i18n translations parity', () => {
     expect(translations.en['help.glossary.heuristic.desc']).toMatch(/not a broken AI/i);
     expect(translations.en['inputForm.hint.heuristic']).toMatch(/not a live model/i);
     expect(translations.en['inputForm.hint.heuristic']).not.toMatch(/broken/i);
+    expect(translations.de['inputForm.hint.heuristic']).toMatch(/kein Live-Modell/);
+    expect(translations.de['inputForm.hint.heuristic']).not.toMatch(/kaputt/i);
     expect(translations.en['provider.status.heuristic']).toMatch(/no API key required/i);
+    expect(translations.de['provider.status.heuristic']).toMatch(/kein API-Schlüssel/);
     expect(translations.en['settings.cost.heuristic_zero']).toMatch(/\$0/);
+    expect(translations.de['settings.cost.heuristic_zero']).toMatch(/0 \$/);
     expect(translations.de['help.glossary.heuristic.desc']).toMatch(/kein Live-Modell/);
     expect(translations.de['help.glossary.heuristic.keywords']).toMatch(/kein schlüssel/i);
     expect(translations.de['help.glossary.heuristic.keywords']).not.toEqual(

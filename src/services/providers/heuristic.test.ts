@@ -82,6 +82,8 @@ describe('createHeuristicProvider', () => {
     }
     const markdown = chunks.join('');
     expect(markdown).toContain('Heuristic synthesis');
+    expect(markdown).toMatch(/BM25\+/);
+    expect(markdown).toMatch(/relative 0–100/);
     expect(markdown).not.toMatch(/semantic rank/i);
   });
 
