@@ -53,9 +53,9 @@ A first-time researcher can open the GitHub Pages demo with **no API key**, unde
 - Target `main`. Keep diffs reviewable. Split if a PR exceeds ~400 changed lines of product code without a documented reason.
 - Resolve **all** review-bot comments (CodeRabbit, CodeAnt, Copilot, DeepSource, Greptile, CodeScene) including nitpicks and out-of-diff items. CI green on **latest head**.
 - Always comment `@deepsourcebot review` on open and after every fix push.
-- CodeRabbit: never merge on a **Review rate limited** placeholder. Wait the cooldown, then `@coderabbitai review` (max 3 cycles; escalate after >90 minutes of waits). Do not invent diffs to summon a review.
+- CodeRabbit: a **Review rate limited** placeholder is not a completed review **and is not a hard merge blocker** (`011` clause **(d)**; `docs/pr-merge-gate.md`). Best-effort `@coderabbitai review`; do not wait 3 cycles / 90 minutes solely for rate-limit; do not invent diffs to summon a review. A `CHANGES_REQUESTED` review on the **latest** head is never waived. Record **(d)** in the disposition comment when merging without a real CodeRabbit review on this head.
 - Sourcery: if the 7-day review budget is exhausted, **do not** `@sourcery-ai review`. Note it in the PR.
-- Always reply and resolve threads. Do not use `--admin` / skip-review as default.
+- Always reply and resolve threads. Do not use `--admin` / skip-review as default. GitHub `BLOCKED` from a **superseded** `CHANGES_REQUESTED` (dismiss-stale off) is a ruleset artifact: dismiss if allowed; `--admin` squash is the documented 403 path only.
 - Do **not** enable “require code owner reviews” on the `mainrules` ruleset (solo maintainer).
 - Process Dependabot PRs individually (rule `012`). Never bulk-close. Record disposition in `docs/dependabot-disposition.md`.
 
@@ -643,10 +643,10 @@ Allowed honest phrases include: client-only PWA, heuristic engine, live provider
 ## 17. Appendix C — Review-bot protocol (short)
 
 - DeepSource: `@deepsourcebot review` every push.
-- CodeRabbit: real review on latest head, max 3 cycles.
+- CodeRabbit: prefer a real `APPROVED` / `COMMENTED` review on the latest head. Rate-limit is **(d)** — not a merge block; do not wait 3 cycles / 90 minutes. Latest-head `CHANGES_REQUESTED` still blocks.
 - Sourcery: skip if budget exhausted; say so.
 - Dependabot: one PR at a time; disposition log.
-- Never merge on a placeholder review.
+- Dual gate: required CI green **and** the `011` quiescence predicate (rate-limit section, item 6) on the same head (`docs/pr-merge-gate.md`).
 
 ## 18. Appendix D — What “perfection” means here
 
