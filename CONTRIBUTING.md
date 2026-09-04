@@ -59,6 +59,10 @@ pnpm run test:e2e
 - Keep changes focused; avoid unrelated refactors
 - New user-visible strings: add **English and German** keys in the matching `src/i18n/*Translations.ts` module and render via `t()`
 
+### Theme visual QA (manual)
+
+When a PR changes UI chrome, glass overlays, charts, or `@theme` tokens, walk **dark**, **light**, and **matrix** on the touched surfaces (header, bottom nav, dialogs, empty states, primary CTA, charts and their accessible tables). Run `pnpm run check:contrast` when tokens, chrome colors, or overlay/glass colors change (including overlay-only); chart-only changes do not require it unless those colors also change. For chart changes, also check labels, axes, legends, tooltip/focus, and that status is not color-only. Use existing tokens (`border-border`); do not introduce raw hex outside the token file. Do **not** add a screenshot suite to CI — record the pass in the PR template (`NOW-P1-THEME-QA`). Check N/A only when none of those surfaces changed.
+
 ### Dual merge gate (required before merge)
 
 Full modus operandi: [`docs/pr-merge-gate.md`](docs/pr-merge-gate.md). Neither half is enough: **required CI green** on the latest head **and** **review quiescence** on that same SHA (including the arrival wait).
