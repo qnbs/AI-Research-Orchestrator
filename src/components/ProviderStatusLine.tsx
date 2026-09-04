@@ -5,6 +5,7 @@ import { useSettings } from '../contexts/SettingsContext';
 import type { View } from '../types/ui';
 import { PROVIDER_LABEL_KEYS } from '../i18n/providerLabelKeys';
 import { getProviderMeta } from '../services/providers/provider';
+import { isOllamaLoopbackBaseUrl } from '../lib/endpointPolicy';
 
 interface ProviderStatusLineProps {
   onConfigure?: (view: View) => void;
@@ -30,33 +31,46 @@ export const ProviderStatusLine: React.FC<ProviderStatusLineProps> = ({ onConfig
   const { settings } = useSettings();
   const { t } = useTranslation();
 
+  const liveOllama = mode === 'live' && provider === 'ollama' && reason !== 'force';
+  const ollamaLoopback = liveOllama && isOllamaLoopbackBaseUrl(settings.ai.customBaseUrl);
   const label =
     reason === 'force'
       ? t('provider.status.forced')
       : reason === 'offline'
         ? t('provider.status.offline')
-        : mode === 'live'
-          ? provider === 'ollama'
-            ? t('provider.status.ollama', {
-                model: ollamaStatusModel(settings.ai.model),
-              })
-            : t('provider.status.live', {
+        : liveOllama
+          ? t('provider.status.ollama', {
+              model: ollamaStatusModel(settings.ai.model),
+            })
+          : mode === 'live'
+            ? t('provider.status.live', {
                 provider: t(PROVIDER_LABEL_KEYS[provider] ?? 'settings.ai.provider_label.gemini'),
               })
-          : t('provider.status.heuristic');
+            : t('provider.status.heuristic');
 
   return (
-    <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-text-secondary">
-      <span>{label}</span>
-      {onConfigure && (
-        <button
-          type="button"
-          onClick={() => onConfigure('settings')}
-          className="font-semibold text-brand-accent hover:text-brand-secondary focus-ring-aa rounded-sm"
-        >
-          {t('provider.status.configure')}
-        </button>
+    <div className="space-y-1 text-xs text-text-secondary">
+      <p className="flex flex-wrap items-center gap-x-2 gap-y-1">
+        <span>{label}</span>
+        {onConfigure && (
+          <button
+            type="button"
+            onClick={() => onConfigure('settings')}
+            className="font-semibold text-brand-accent hover:text-brand-secondary focus-ring-aa rounded-sm"
+          >
+            {t('provider.status.configure')}
+          </button>
+        )}
+      </p>
+      {liveOllama && (
+        <p data-testid="provider-status-ollama-privacy">
+          {t(
+            ollamaLoopback
+              ? 'provider.status.ollama_privacy'
+              : 'provider.status.ollama_privacy_remote',
+          )}
+        </p>
       )}
-    </p>
+    </div>
   );
 };

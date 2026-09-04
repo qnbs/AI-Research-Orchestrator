@@ -12,6 +12,7 @@ const inference = vi.hoisted(() => ({
 
 const settingsState = vi.hoisted(() => ({
   model: '' as string,
+  customBaseUrl: '' as string,
 }));
 
 vi.mock('../hooks/useInferenceMode', () => ({
@@ -19,7 +20,9 @@ vi.mock('../hooks/useInferenceMode', () => ({
 }));
 
 vi.mock('../contexts/SettingsContext', () => ({
-  useSettings: () => ({ settings: { ai: { model: settingsState.model } } }),
+  useSettings: () => ({
+    settings: { ai: { model: settingsState.model, customBaseUrl: settingsState.customBaseUrl } },
+  }),
 }));
 
 vi.mock('../hooks/useTranslation', () => ({
@@ -29,8 +32,9 @@ vi.mock('../hooks/useTranslation', () => ({
   }),
 }));
 
-function renderOllamaStatus(model: string) {
+function renderOllamaStatus(model: string, customBaseUrl = '') {
   settingsState.model = model;
+  settingsState.customBaseUrl = customBaseUrl;
   inference.mode = 'live';
   inference.reason = 'key';
   inference.provider = 'ollama';
@@ -50,5 +54,28 @@ describe('ProviderStatusLine', () => {
     expect(
       screen.getByText(`provider.status.ollama:${getProviderMeta('ollama').defaultModel}`),
     ).toBeInTheDocument();
+  });
+
+  it('shows a persistent PubMed/arXiv privacy note when live Ollama is selected', () => {
+    renderOllamaStatus('llama3.1:8b');
+    expect(screen.getByTestId('provider-status-ollama-privacy')).toHaveTextContent(
+      'provider.status.ollama_privacy',
+    );
+  });
+
+  it('does not claim on-device generation when the Ollama base URL is not loopback', () => {
+    renderOllamaStatus('llama3.1:8b', 'https://ollama.example:11434');
+    expect(screen.getByTestId('provider-status-ollama-privacy')).toHaveTextContent(
+      'provider.status.ollama_privacy_remote',
+    );
+  });
+
+  it('hides the Ollama privacy note in heuristic mode', () => {
+    settingsState.model = 'llama3.1:8b';
+    inference.mode = 'heuristic';
+    inference.reason = 'no-key';
+    inference.provider = 'heuristic';
+    render(<ProviderStatusLine />);
+    expect(screen.queryByTestId('provider-status-ollama-privacy')).toBeNull();
   });
 });

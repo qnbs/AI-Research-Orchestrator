@@ -72,4 +72,30 @@ describe('i18n translations parity', () => {
       translations.en['help.glossary.heuristic.keywords'],
     );
   });
+
+  it('teaches Ollama loopback vs CORS/timeout and persistent retrieval privacy', () => {
+    expect(translations.en['settings.ai.base_url_desc']).not.toMatch(/different Ollama host/i);
+    expect(translations.en['settings.ai.base_url_desc.ollama']).toMatch(/localhost:11434/);
+    expect(translations.en['settings.ai.base_url_desc.ollama']).toMatch(/Remote LAN Ollama/i);
+    expect(translations.de['settings.ai.base_url_desc.ollama']).toMatch(/Loopback/);
+    expect(translations.en['provider.status.ollama_privacy']).toMatch(/PubMed/);
+    expect(translations.de['provider.status.ollama_privacy']).toMatch(/PubMed/);
+    expect(translations.en['provider.status.ollama_privacy_remote']).toMatch(
+      /configured Ollama endpoint/i,
+    );
+    expect(translations.en['provider.status.ollama_privacy_remote']).not.toMatch(
+      /stays on this machine/i,
+    );
+    expect(translations.de['provider.status.ollama_privacy_remote']).toMatch(/Ollama-Endpunkt/);
+    expect(translations.de['provider.status.ollama_privacy_remote']).not.toMatch(
+      /bleibt auf diesem Rechner/,
+    );
+    expect(translations.de['provider.status.ollama_privacy_remote']).not.toEqual(
+      translations.en['provider.status.ollama_privacy_remote'],
+    );
+    expect(translations.en['settings.ai.ollama.budget_info']).toMatch(/not fit/i);
+    expect(translations.de['settings.ai.ollama.budget_info']).not.toEqual(
+      translations.en['settings.ai.ollama.budget_info'],
+    );
+  });
 });

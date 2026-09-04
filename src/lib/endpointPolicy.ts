@@ -52,13 +52,7 @@ export function validateCustomEndpointUrl(raw: string): EndpointValidationResult
     return { ok: false, reason: 'Only HTTP(S) endpoints are supported' };
   }
 
-  const isLoopback =
-    parsed.hostname === 'localhost' ||
-    parsed.hostname === '127.0.0.1' ||
-    parsed.hostname === '::1' ||
-    parsed.hostname === '[::1]';
-
-  if (parsed.protocol === 'http:' && !isLoopback) {
+  if (parsed.protocol === 'http:' && !isLoopbackHostname(parsed.hostname)) {
     return { ok: false, reason: 'Insecure HTTP is only allowed for loopback hosts' };
   }
 
@@ -66,6 +60,29 @@ export function validateCustomEndpointUrl(raw: string): EndpointValidationResult
   const normalizedUrl = `${origin}${parsed.pathname.replace(/\/$/, '') || ''}`;
 
   return { ok: true, origin, normalizedUrl };
+}
+
+/** Recognized loopback hostnames for local endpoint validation. CSP still controls allowed origins. */
+export function isLoopbackHostname(hostname: string): boolean {
+  return (
+    hostname === 'localhost' ||
+    hostname === '127.0.0.1' ||
+    hostname === '::1' ||
+    hostname === '[::1]'
+  );
+}
+
+/**
+ * True when Ollama uses the loopback default or an explicit loopback base URL.
+ * Empty / whitespace-only values resolve to `http://localhost:11434`.
+ */
+export function isOllamaLoopbackBaseUrl(raw?: string): boolean {
+  const candidate = raw?.trim() || 'http://localhost:11434';
+  try {
+    return isLoopbackHostname(new URL(candidate).hostname);
+  } catch {
+    return false;
+  }
 }
 
 /** Whether the origin is on the static CSP connect-src allowlist. */

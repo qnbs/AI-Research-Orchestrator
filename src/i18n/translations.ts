@@ -213,7 +213,7 @@ export const translations = {
     'settings.ai.model_desc': 'Enter any model identifier supported by {provider}.',
     'settings.ai.base_url': 'Base URL',
     'settings.ai.base_url_desc':
-      'Optional. Change this to use a proxy, OpenRouter-compatible endpoint, or a different Ollama host. You must approve the destination origin before requests are sent.',
+      'Optional. Use a proxy or an OpenAI-compatible endpoint. You must approve the destination origin before requests are sent.',
     'settings.ai.base_url_invalid': 'Invalid base URL: {reason}',
     'settings.ai.base_url_csp_blocked':
       'Origin {origin} is not permitted by the application CSP. Use a listed preset or self-host with a tailored CSP.',
@@ -229,7 +229,6 @@ export const translations = {
     'settings.ai.ollama.privacy_note':
       'Local AI runs the model on your machine, but literature retrieval still uses the network (PubMed / arXiv) unless you are offline.',
     'settings.ai.ollama.status_ok': 'Connected to {origin} (Ollama {version}).',
-    'settings.ai.ollama.status_fail': 'Ollama unavailable ({reason}): {message}',
     'settings.ai.ollama.last_checked': 'Last successful check: {time}',
     'settings.ai.ollama.discovery_checked': 'Model list probe: {time}',
     'settings.ai.ollama.models_label': 'Discovered models',
@@ -508,7 +507,7 @@ export const translations = {
       'Geben Sie eine beliebige Modellkennung ein, die {provider} unterstützt.',
     'settings.ai.base_url': 'Basis-URL',
     'settings.ai.base_url_desc':
-      'Optional. Ändern Sie dies, um einen Proxy, einen OpenRouter-kompatiblen Endpunkt oder einen anderen Ollama-Host zu verwenden. Sie müssen den Ziel-Origin genehmigen, bevor Anfragen gesendet werden.',
+      'Optional. Nutzen Sie einen Proxy oder einen OpenAI-kompatiblen Endpunkt. Sie müssen den Ziel-Origin genehmigen, bevor Anfragen gesendet werden.',
     'settings.ai.base_url_invalid': 'Ungültige Basis-URL: {reason}',
     'settings.ai.base_url_csp_blocked':
       'Origin {origin} ist durch die Anwendungs-CSP nicht erlaubt. Verwenden Sie ein gelistetes Preset oder hosten Sie selbst mit angepasster CSP.',
@@ -525,7 +524,6 @@ export const translations = {
     'settings.ai.ollama.privacy_note':
       'Local AI führt das Modell lokal aus, aber die Literaturabfrage nutzt weiterhin das Netzwerk (PubMed / arXiv), sofern Sie nicht offline sind.',
     'settings.ai.ollama.status_ok': 'Verbunden mit {origin} (Ollama {version}).',
-    'settings.ai.ollama.status_fail': 'Ollama nicht erreichbar ({reason}): {message}',
     'settings.ai.ollama.last_checked': 'Letzte erfolgreiche Prüfung: {time}',
     'settings.ai.ollama.discovery_checked': 'Modelllisten-Abfrage: {time}',
     'settings.ai.ollama.models_label': 'Gefundene Modelle',
