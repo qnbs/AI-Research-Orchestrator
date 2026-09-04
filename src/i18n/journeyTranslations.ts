@@ -49,6 +49,8 @@ export const journeyTranslations = {
     'provider.status.ollama': 'Local Ollama · {model}',
     'provider.status.ollama_privacy':
       'Generation stays on this machine. PubMed and arXiv retrieval still use the network when you are online.',
+    'provider.status.ollama_privacy_remote':
+      'Generation is sent to the configured Ollama endpoint. PubMed and arXiv retrieval still use the network when you are online.',
   },
   de: {
     'nav.more': 'Mehr',
@@ -102,5 +104,7 @@ export const journeyTranslations = {
     'provider.status.ollama': 'Lokales Ollama · {model}',
     'provider.status.ollama_privacy':
       'Die Generierung bleibt auf diesem Rechner. PubMed- und arXiv-Abfragen nutzen weiterhin das Netzwerk, solange Sie online sind.',
+    'provider.status.ollama_privacy_remote':
+      'Die Generierung geht an den konfigurierten Ollama-Endpunkt. PubMed- und arXiv-Abfragen nutzen weiterhin das Netzwerk, solange Sie online sind.',
   },
 } as const;

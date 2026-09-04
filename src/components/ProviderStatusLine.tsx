@@ -5,6 +5,7 @@ import { useSettings } from '../contexts/SettingsContext';
 import type { View } from '../types/ui';
 import { PROVIDER_LABEL_KEYS } from '../i18n/providerLabelKeys';
 import { getProviderMeta } from '../services/providers/provider';
+import { isOllamaLoopbackBaseUrl } from '../lib/endpointPolicy';
 
 interface ProviderStatusLineProps {
   onConfigure?: (view: View) => void;
@@ -31,6 +32,7 @@ export const ProviderStatusLine: React.FC<ProviderStatusLineProps> = ({ onConfig
   const { t } = useTranslation();
 
   const liveOllama = mode === 'live' && provider === 'ollama' && reason !== 'force';
+  const ollamaLoopback = liveOllama && isOllamaLoopbackBaseUrl(settings.ai.customBaseUrl);
   const label =
     reason === 'force'
       ? t('provider.status.forced')
@@ -61,7 +63,13 @@ export const ProviderStatusLine: React.FC<ProviderStatusLineProps> = ({ onConfig
         )}
       </p>
       {liveOllama && (
-        <p data-testid="provider-status-ollama-privacy">{t('provider.status.ollama_privacy')}</p>
+        <p data-testid="provider-status-ollama-privacy">
+          {t(
+            ollamaLoopback
+              ? 'provider.status.ollama_privacy'
+              : 'provider.status.ollama_privacy_remote',
+          )}
+        </p>
       )}
     </div>
   );

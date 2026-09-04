@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   validateCustomEndpointUrl,
   isOriginCspAllowed,
+  isOllamaLoopbackBaseUrl,
   resolveApprovedBaseUrl,
 } from './endpointPolicy';
 
@@ -72,5 +73,18 @@ describe('isOriginCspAllowed', () => {
     expect(isOriginCspAllowed('http://localhost:11434')).toBe(true);
     expect(isOriginCspAllowed('http://127.0.0.1:11434')).toBe(true);
     expect(isOriginCspAllowed('http://[::1]:11434')).toBe(true);
+  });
+});
+
+describe('isOllamaLoopbackBaseUrl', () => {
+  it('treats empty and localhost URLs as loopback', () => {
+    expect(isOllamaLoopbackBaseUrl(undefined)).toBe(true);
+    expect(isOllamaLoopbackBaseUrl('')).toBe(true);
+    expect(isOllamaLoopbackBaseUrl('http://localhost:11434')).toBe(true);
+    expect(isOllamaLoopbackBaseUrl('http://127.0.0.1:11434')).toBe(true);
+  });
+
+  it('treats a remote HTTPS host as not loopback', () => {
+    expect(isOllamaLoopbackBaseUrl('https://ollama.example:11434')).toBe(false);
   });
 });

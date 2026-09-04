@@ -80,6 +80,15 @@ describe('i18n translations parity', () => {
     expect(translations.de['settings.ai.base_url_desc.ollama']).toMatch(/Loopback/);
     expect(translations.en['provider.status.ollama_privacy']).toMatch(/PubMed/);
     expect(translations.de['provider.status.ollama_privacy']).toMatch(/PubMed/);
+    expect(translations.en['provider.status.ollama_privacy_remote']).toMatch(
+      /configured Ollama endpoint/i,
+    );
+    expect(translations.en['provider.status.ollama_privacy_remote']).not.toMatch(
+      /stays on this machine/i,
+    );
+    expect(translations.de['provider.status.ollama_privacy_remote']).not.toEqual(
+      translations.en['provider.status.ollama_privacy_remote'],
+    );
     expect(translations.en['settings.ai.ollama.budget_info']).toMatch(/not fit/i);
     expect(translations.de['settings.ai.ollama.budget_info']).not.toEqual(
       translations.en['settings.ai.ollama.budget_info'],
