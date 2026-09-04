@@ -203,11 +203,12 @@ GitHub marks jobs **canceled** when concurrency aborts them **or** when
 Treat canceled required checks on tip as **incomplete validation**; re-run the
 workflow (push or `workflow_dispatch`) after hardening, do not blame the suite.
 
-`on: pull_request` without a `types` filter also runs on **`edited`**. Patching
-the PR title or body while `security.yml` (or any PR-concurrency workflow) is
-in flight starts a new run and **cancels** the in-flight `pnpm audit (high+)`.
-Confirmed on PR #302 (`fb0166b`, run `33819179270`). Do not update the PR
-description until that required job is terminal.
+`security.yml` `pull_request` types are `opened` / `synchronize` / `reopened`
+only. A title or body **`edited`** event must not retrigger it — bot and agent
+PR-description updates were canceling the in-flight `pnpm audit (high+)` via
+PR concurrency (PR #302, `fb0166b` run `33819179270`, `7cf694f` run
+`33821109191`). Other PR-concurrency workflows may still restart on `edited`;
+do not PATCH the PR description while those required jobs are in flight.
 
 ## Artifacts
 

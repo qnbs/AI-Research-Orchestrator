@@ -1,9 +1,9 @@
 # 2026-09-04 — PR body edit cancels in-flight security audit
 
 - **Why:** On #302 (`fb0166b`) `security.yml` run `33819179270` was canceled mid-`pnpm audit` retry (registry error 23). Required check stayed incomplete while other gates were green.
-- **What:** `on: pull_request` without `types` also fires on `edited`. Updating the PR body while the workflow is in flight starts a new run; PR concurrency then cancels the in-flight `pnpm audit (high+)`. Documented in `docs/ci-branch-governance.md` / `docs/pr-merge-gate.md`.
-- **Impact:** Agents must not PATCH the PR title or body until `pnpm audit (high+)` is terminal. A canceled required check is incomplete validation, not a suite failure.
-- **Not done:** Restrict `security.yml` `pull_request` types (would skip `edited` but is a workflow change).
+- **What:** `security.yml` `pull_request` types are now `opened` / `synchronize` / `reopened` so `edited` does not retrigger. Documented in `docs/ci-branch-governance.md` / `docs/pr-merge-gate.md`.
+- **Impact:** Bot/agent PR-body updates no longer cancel the required audit. A canceled required check remains incomplete validation, not a suite failure.
+- **Not done:** Other PR-concurrency workflows (`deploy.yml`, E2E) still default-listen to `edited`.
 
 # 2026-09-03 — GitHub BLOCKED vs latest-head policy (PR #301)
 
