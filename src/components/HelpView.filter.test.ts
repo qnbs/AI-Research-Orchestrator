@@ -35,4 +35,8 @@ describe('filterHelpTopics', () => {
     };
     expect(filterHelpTopics([heuristic], 'kein schlüssel')).toEqual([heuristic]);
   });
+
+  it('returns all topics for an empty or whitespace-only search term', () => {
+    expect(filterHelpTopics(topics, '   ')).toBe(topics);
+  });
 });
