@@ -1,3 +1,17 @@
+# 2026-09-04 — PR body edit cancels in-flight security audit
+
+- **Why:** On #302 (`fb0166b`) `security.yml` run `33819179270` was canceled mid-`pnpm audit` retry (registry error 23). Required check stayed incomplete while other gates were green.
+- **What:** `security.yml` `pull_request` types are now `opened` / `synchronize` / `reopened` so `edited` does not retrigger. Documented in `docs/ci-branch-governance.md` / `docs/pr-merge-gate.md`.
+- **Impact:** Bot/agent PR-body updates no longer cancel the required audit. A canceled required check remains incomplete validation, not a suite failure.
+- **Not done:** Other PR-concurrency workflows (`deploy.yml`, E2E) still default-listen to `edited`.
+
+# 2026-09-03 — GitHub BLOCKED vs latest-head policy (PR #301)
+
+- **Why:** #301 dual gate held on `fabb725` (required CI green, threads 0, clause **(d)**). GitHub stayed `BLOCKED` / `CHANGES_REQUESTED` because review `5107396133` targeted superseded `27f9ea6` and `dismiss_stale_reviews_on_push` is off. Dismiss API returned 403.
+- **What:** Squash-merged with `--admin` (documented exception). Follow-up docs: GitHub vs policy split, full-ruleset `PUT` enable recipe for `mainrules` 20291814 (Administration token; partial PUTs wipe other rules), drift assert requires both `mergeStateStatus` and `dismiss_stale`, facts `dismissStaleReviewsOnPushExpected: true` / `Live: false`. `011`/`013` restated the same superseded-`CHANGES_REQUESTED` predicate (**(d)** never waives a latest-head `CHANGES_REQUESTED`).
+- **Impact:** Agents treat superseded `CHANGES_REQUESTED` as a ruleset UI block, not a policy block, and do not invent extra diffs to “clear” it.
+- **Not done:** Live ruleset PUT (Administration token). App integrations 403. Do not enable CODEOWNERS reviews.
+
 # 2026-09-03 — CodeRabbit rate-limit is not a hard merge blocker
 
 - **Why:** Org-wide CodeRabbit fair-use leaves latest-head checks as “Review rate limited” for hours. Waiting 3 cycles / 90 minutes was blocking merges that already had green required CI and arrived bot reviews.

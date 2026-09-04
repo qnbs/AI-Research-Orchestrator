@@ -49,17 +49,17 @@ trusting this doc's prior text — `required_review_thread_resolution` and
 `strict_required_status_checks_policy` were already `true` as of the
 ruleset's `updated_at` (2026-08-03T14:07:58+02:00), predating that prior text:
 
-| Rule                                                                            | Status                                                                                                                                                      |
-| ------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Block deletions / non-fast-forward                                              | On                                                                                                                                                          |
-| Require pull request                                                            | On (`required_approving_review_count: 0` — solo-maintainer friendly)                                                                                        |
-| Required status checks (11 contexts below)                                      | On — names match workflow job titles                                                                                                                        |
-| Code scanning (CodeQL errors / high+)                                           | On                                                                                                                                                          |
-| Code quality (errors)                                                           | On                                                                                                                                                          |
-| Require conversation resolution (`required_review_thread_resolution`)           | **On**                                                                                                                                                      |
-| Require branch up to date before merge (`strict_required_status_checks_policy`) | **On**                                                                                                                                                      |
-| Dismiss stale reviews on push (`dismiss_stale_reviews_on_push`)                 | **Off** — **enable** for latest-head review integrity (PR #213 gap)                                                                                         |
-| Require review from Code Owners                                                 | **Off** — `.github/CODEOWNERS` exists for routing; do not enable without a maintainer decision (solo-maintainer; `required_approving_review_count` stays 0) |
+| Rule                                                                            | Status                                                                                                                                                                                                                                                           |
+| ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Block deletions / non-fast-forward                                              | On                                                                                                                                                                                                                                                               |
+| Require pull request                                                            | On (`required_approving_review_count: 0` — solo-maintainer friendly)                                                                                                                                                                                             |
+| Required status checks (11 contexts below)                                      | On — names match workflow job titles                                                                                                                                                                                                                             |
+| Code scanning (CodeQL errors / high+)                                           | On                                                                                                                                                                                                                                                               |
+| Code quality (errors)                                                           | On                                                                                                                                                                                                                                                               |
+| Require conversation resolution (`required_review_thread_resolution`)           | **On**                                                                                                                                                                                                                                                           |
+| Require branch up to date before merge (`strict_required_status_checks_policy`) | **On**                                                                                                                                                                                                                                                           |
+| Dismiss stale reviews on push (`dismiss_stale_reviews_on_push`)                 | **Off** (live, re-read 2026-09-03). **Expected: On.** Off leaves GitHub `reviewDecision: CHANGES_REQUESTED` / `mergeStateStatus: BLOCKED` after a superseded bot review (PR #213, #301). Enable — command below. Solo `required_approving_review_count` stays 0. |
+| Require review from Code Owners                                                 | **Off** — `.github/CODEOWNERS` exists for routing; do not enable without a maintainer decision (solo-maintainer; `required_approving_review_count` stays 0)                                                                                                      |
 
 Required check contexts currently configured:
 
@@ -67,6 +67,57 @@ Required check contexts currently configured:
 `Cross-browser (firefox)`, `Cross-browser (webkit)`, `Cross-browser (mobile-chrome)`,
 `Axe critical/serious smoke`, `CodeQL`, `Dependency Review`, `pnpm audit (high+)`,
 `Secret scan (gitleaks)`.
+
+Enable `dismiss_stale_reviews_on_push` with a **fine-grained PAT** or a
+GitHub App **installation** token that has repository **Administration:
+write**. There is no classic `admin:repo` scope. The installation and Actions
+tokens used on this repo returned **403** on both ruleset PUT and PR-review
+dismiss (PR #301) — that is this installation, not a blanket API restriction.
+`GET` the live ruleset, flip only that pull-request parameter, then `PUT` the
+writable fields including the **full** `rules` array. A partial `rules` array
+wipes every other rule. Do **not** send `id` / `_links` / timestamps.
+
+```bash
+# Administration: write required (fine-grained PAT or App installation).
+# This repo's App/Actions installation returned 403; use a PAT or an
+# installation that has Administration: write.
+RULESET_ID=20291814
+REPO=qnbs/AI-Research-Orchestrator
+RAW=$(mktemp)
+PUT=$(mktemp)
+trap 'rm -f "$RAW" "$PUT"' EXIT
+
+gh api "repos/${REPO}/rulesets/${RULESET_ID}" > "$RAW"
+jq -r '.rules[]|select(.type=="pull_request").parameters.dismiss_stale_reviews_on_push' "$RAW"
+# live 2026-09-03: false. Expected after enable: true.
+
+jq '
+  {
+    name, target, enforcement, conditions,
+    rules: [
+      .rules[]
+      | if .type == "pull_request" then
+          .parameters.dismiss_stale_reviews_on_push = true
+        else .
+        end
+    ]
+  } + (if .bypass_actors then {bypass_actors} else {} end)
+' "$RAW" > "$PUT"
+
+# Dry-run: dismiss_stale true, require_code_owner_review still false
+jq '.rules[]|select(.type=="pull_request").parameters' "$PUT"
+
+gh api --method PUT "repos/${REPO}/rulesets/${RULESET_ID}" --input "$PUT"
+
+# Read back before flipping the live fact
+gh api "repos/${REPO}/rulesets/${RULESET_ID}" \
+  --jq '.rules[]|select(.type=="pull_request").parameters.dismiss_stale_reviews_on_push'
+# must print: true
+```
+
+After the readback is `true`, set `docs/project-facts.json`
+`ci.dismissStaleReviewsOnPushLive` to `true` in the same follow-up PR. Do
+**not** enable `require_code_owner_review`.
 
 ### Process gates (not GitHub-required checks)
 
@@ -151,6 +202,13 @@ GitHub marks jobs **canceled** when concurrency aborts them **or** when
 (run `30807274942`) — Firefox/mobile-chrome on the same matrix were green.
 Treat canceled required checks on tip as **incomplete validation**; re-run the
 workflow (push or `workflow_dispatch`) after hardening, do not blame the suite.
+
+`security.yml` `pull_request` types are `opened` / `synchronize` / `reopened`
+only. A title or body **`edited`** event must not retrigger it — bot and agent
+PR-description updates were canceling the in-flight `pnpm audit (high+)` via
+PR concurrency (PR #302, `fb0166b` run `33819179270`, `7cf694f` run
+`33821109191`). Other PR-concurrency workflows may still restart on `edited`;
+do not PATCH the PR description while those required jobs are in flight.
 
 ## Artifacts
 

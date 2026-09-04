@@ -9,6 +9,9 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+    # Ignore `edited` — bot/agent PR-body updates were canceling the in-flight
+    # pnpm audit (high+) via PR concurrency (PR #302).
+    types: [opened, synchronize, reopened]
   schedule:
     # Weekly Monday 06:00 UTC
     - cron: "0 6 * * 1"
