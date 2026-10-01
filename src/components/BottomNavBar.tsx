@@ -23,6 +23,8 @@ interface BottomNavBarProps {
   knowledgeBaseArticleCount: number;
   hasReports: boolean;
   isResearching: boolean;
+  'aria-hidden'?: boolean;
+  inert?: boolean;
 }
 
 const MORE_MENU_ID = 'bottom-nav-more-menu';
@@ -106,6 +108,8 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
   knowledgeBaseArticleCount,
   hasReports,
   isResearching,
+  'aria-hidden': ariaHidden,
+  inert,
 }) => {
   const { t } = useTranslation();
   const { setIsCommandPaletteOpen } = useUI();
@@ -204,6 +208,8 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
     <nav
       ref={navRef}
       className="md:hidden fixed bottom-0 left-0 right-0 bg-surface/80 backdrop-blur-xl border-t border-border z-30 shadow-[0_-5px_20px_rgba(0,0,0,0.2)] pb-safe"
+      aria-hidden={ariaHidden}
+      inert={inert}
     >
       {!hasReports && (
         <span id={reportHintId} className="sr-only">

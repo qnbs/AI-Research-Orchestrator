@@ -119,12 +119,12 @@ Capability metadata exists on `AI_PROVIDERS` (streaming, JSON modes, grounding, 
 
 ## 5. Dead dependency / stale config candidates
 
-| ID  | Finding                          | Classification                     | Evidence                                                                                                                                               |
-| --- | -------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| H3  | `cmdk`                           | **CONFIRMED_MAINTAINABILITY_DEBT** | No `cmdk` in `package.json`; no `src` imports; `vite.config.ts` manual chunk key `cmdk`; docs still claim cmdk palette                                 |
-| H4  | `dexie-react-hooks`              | **CONFIRMED_MAINTAINABILITY_DEBT** | Declared `^4.4.0`; **zero** `src` imports / `useLiveQuery`; Dexie via `databaseService.ts` only; disposition doc notes hygiene merge                   |
-| H5  | “Semantic ranking” in agent docs | **CONFIRMED_DRIFT**                | `AGENTS.md` overview still says “semantic ranking (0–100)”; product-truth matrix + #309 shipped BM25+ honesty for heuristic                            |
-| H6  | Settings import model coercion   | **CONFIRMED_DEFECT** (P1)          | `useSettingsViewLogic.ts` resets any `ai.model` not in `{gemini-2.5-flash, gemini-3-pro-preview}` to Gemini default **without checking `ai.provider`** |
+| ID  | Finding                          | Classification                               | Evidence                                                                                                                             |
+| --- | -------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| H3  | `cmdk`                           | **CONFIRMED_MAINTAINABILITY_DEBT**           | No `cmdk` in `package.json`; no `src` imports; `vite.config.ts` manual chunk key `cmdk`; docs still claim cmdk palette               |
+| H4  | `dexie-react-hooks`              | **CONFIRMED_MAINTAINABILITY_DEBT**           | Declared `^4.4.0`; **zero** `src` imports / `useLiveQuery`; Dexie via `databaseService.ts` only; disposition doc notes hygiene merge |
+| H5  | “Semantic ranking” in agent docs | **CONFIRMED_DRIFT**                          | `AGENTS.md` overview still says “semantic ranking (0–100)”; product-truth matrix + #309 shipped BM25+ honesty for heuristic          |
+| H6  | Settings import model coercion   | **CONFIRMED_DEFECT** (P1, **fixed in #344**) | Bootstrap: Gemini-only whitelist; follow-up: partial import must preserve active provider after merge                                |
 
 **Command palette:** custom implementation in `CommandPalette.tsx` (not cmdk).
 

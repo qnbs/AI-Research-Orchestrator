@@ -303,7 +303,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
   return (
     // eslint-disable-next-line jsx-a11y/no-static-element-interactions -- standard modal backdrop click-to-dismiss; keyboard users dismiss via Escape (useFocusTrap), not by activating the backdrop.
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center pt-20"
+      className="fixed inset-0 z-50 flex items-start justify-center pt-20 bg-black/50 backdrop-blur-sm"
       onMouseDown={closePalette}
     >
       {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- only stops the backdrop's dismiss-on-click from firing when clicking inside the panel. */}

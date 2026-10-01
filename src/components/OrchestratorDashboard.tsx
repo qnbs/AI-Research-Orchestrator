@@ -50,7 +50,10 @@ const RecentEntryCard: React.FC<{
       <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-text-secondary border-t border-border pt-3">
         <span>{t(articlesKey, { count: articleCount })}</span>
         <span>
-          <strong>{t('orchestrator.dashboard.focus_label')}</strong> {focusLabel}
+          <span className="font-semibold text-text-primary">
+            {t('orchestrator.dashboard.focus_label')}
+          </span>{' '}
+          {focusLabel}
         </span>
       </p>
       <button

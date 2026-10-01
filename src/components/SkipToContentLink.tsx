@@ -7,7 +7,9 @@ const MAIN_CONTENT_ID = 'main-content';
  * WS-F: first Tab stop — jump past fixed chrome into `#main-content`.
  * Uses preventDefault so hash-based view routing (`#orchestrator`, …) is not overwritten.
  */
-export const SkipToContentLink: React.FC = () => {
+export const SkipToContentLink: React.FC<
+  React.ComponentPropsWithoutRef<'a'> & { inert?: boolean }
+> = ({ inert, ...rest }) => {
   const { t } = useTranslation();
 
   const handleActivate = (event: React.MouseEvent<HTMLAnchorElement>) => {
@@ -22,6 +24,8 @@ export const SkipToContentLink: React.FC = () => {
       href={`#${MAIN_CONTENT_ID}`}
       className="skip-to-content focus-ring-aa"
       onClick={handleActivate}
+      inert={inert}
+      {...rest}
     >
       {t('a11y.skip_to_content')}
     </a>

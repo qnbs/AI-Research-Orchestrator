@@ -64,10 +64,20 @@ const AppLayout: React.FC = () => {
     );
   }
 
+  const commandPaletteLocksBackground = isCommandPaletteOpen;
+
   return (
     <>
-      <SkipToContentLink />
-      <div ref={chromeRef} className="fixed top-0 left-0 right-0 z-20">
+      <SkipToContentLink
+        aria-hidden={commandPaletteLocksBackground ? true : undefined}
+        inert={commandPaletteLocksBackground ? true : undefined}
+      />
+      <div
+        ref={chromeRef}
+        className="fixed top-0 left-0 right-0 z-20"
+        aria-hidden={commandPaletteLocksBackground ? true : undefined}
+        inert={commandPaletteLocksBackground ? true : undefined}
+      >
         <Header
           onViewChange={handleViewChange}
           currentView={currentView}
@@ -92,6 +102,8 @@ const AppLayout: React.FC = () => {
         // a prop/context - see SettingsView.tsx for why an exact-pixel sticky
         // `top` is intentionally avoided.
         className="container mx-auto px-4 sm:px-6 lg:px-8 md:pt-36 pt-20 pb-24 focus-ring-aa rounded-sm"
+        aria-hidden={commandPaletteLocksBackground ? true : undefined}
+        inert={commandPaletteLocksBackground ? true : undefined}
         style={
           chromeHeight != null
             ? ({
@@ -111,6 +123,8 @@ const AppLayout: React.FC = () => {
         knowledgeBaseArticleCount={uniqueArticles.length}
         hasReports={knowledgeBase.length > 0}
         isResearching={isResearching}
+        aria-hidden={commandPaletteLocksBackground ? true : undefined}
+        inert={commandPaletteLocksBackground ? true : undefined}
       />
       {notification && (
         <Notification
