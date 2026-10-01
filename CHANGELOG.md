@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Toolchain (Wave D):** Vite **8.3.2** (from 8.1.5) with `minimumReleaseAgeExclude` for maturity gate; `pnpm.overrides.vite` aligned so frozen CI install matches `package.json`.
+- **CI (Wave D):** GitHub Actions uses **Node 24** LTS (`setup-node`); `package.json` `engines` remain `>=22.12.0`. DevContainer base image and `.nvmrc` use **24**.
 
 ### Added
 

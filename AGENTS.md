@@ -35,7 +35,7 @@ Main features: Orchestrator pipeline, Knowledge Base (dedup, faceted filtering, 
 | Charts               | Recharts (ADR 0005 — Recharts-only; do not re-add Chart.js)                                                                                                 |
 | Export / sanitize    | jsPDF + marked, DOMPurify                                                                                                                                   |
 | Tests                | Vitest + Testing Library (jsdom), Playwright (**blocking** Chromium + Firefox/WebKit/mobile Chrome + axe)                                                   |
-| Toolchain            | Node **≥22**, pnpm **11** (`packageManager: pnpm@11.13.1`), ESLint 9 + Prettier, husky + lint-staged                                                        |
+| Toolchain            | Node **≥22** (CI **24** LTS), pnpm **11** (`packageManager: pnpm@11.13.1`), ESLint 9 + Prettier, husky + lint-staged                                        |
 
 ## Runtime Architecture
 

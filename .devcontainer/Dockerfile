@@ -1,8 +1,8 @@
 # ==============================================================================
 # AI Research Orchestrator — DevContainer
-# Node 22 LTS + Playwright Chromium + GitHub CLI + Security-hardened
+# Node 24 LTS + Playwright Chromium + GitHub CLI + Security-hardened
 # ==============================================================================
-FROM node:22-bookworm-slim
+FROM node:24-bookworm-slim
 
 LABEL org.opencontainers.image.title="AI Research Orchestrator DevContainer"
 LABEL org.opencontainers.image.description="React 19 · TypeScript · Tailwind v4 · Framer Motion · RTK Query · Playwright"
