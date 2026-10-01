@@ -184,7 +184,7 @@ Consolidation PR: **#344** (`cursor/dependabot-d0-consolidation-d4f6`). Supersed
 | #319                              | openai → 7.10.0                      | **Superseded** — consolidated at **7.17.0** (mature)                                                        |
 | #326                              | Vitest 4 → 5                         | **Included** — vitest + `@vitest/coverage-v8` **5.0.3**; `setup.ts` uses `@testing-library/jest-dom/vitest` |
 | #317–#316, #315, #322, #318, #323 | dev patch minors                     | **Included**                                                                                                |
-| #324                              | framer-motion 13.x                   | **Deferred** — `minimumReleaseAge` blocked 13.x at consolidation; stay on 12.42.2                           |
-| Anthropic SDK bump                | 0.112 → 0.131                        | **Deferred** — immature at consolidation; stay ^0.112.3 until retry                                         |
+| #324                              | framer-motion 13.x                   | **Included** — ^13.2.0 (13.4.x) + maturity exclude                                                          |
+| Anthropic SDK bump                | 0.112 → 0.130                        | **Included** — ^0.130.0 + maturity exclude                                                                  |
 
 Also bundles audit baseline (#341), settings import P1 (#342), dead deps (#343).
