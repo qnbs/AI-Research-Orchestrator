@@ -41,7 +41,7 @@ Workflow-level blocking for PWA remains authoritative until the ruleset context 
 
 ## Remaining P2/P3 from baseline (not this closeout)
 
-- Remove `vite@8.3.2` / `@google/genai@2.25.0` maturity excludes when age gate satisfied (retry after **2026-10-02** UTC — `pnpm install` still flags both on 2026-10-01; `@google/genai@2.25.0` published 2026-09-30, `vite@8.3.2` 2026-10-01).
+- Remove `vite@8.3.2` / `@google/genai@2.25.0` maturity excludes when age gate satisfied — **`@google/genai@2.25.0` cleared ~2026-10-01 22:53 UTC** (exclude removed in agent PR). **`vite@8.3.2`** still needs exclude until **~2026-10-02 10:18 UTC** (publish + 1440m).
 - Heuristic eval corpus expansion (Wave F backlog in baseline §11) — partial progress in #353 (`mustMeshTerms`, `rankedScoresDescending`).
 - GitHub repo topics PUT (Administration token).
 - Named **`v0.4.3`** tag after release PR merges (`docs/release-policy.md`) — **tag + [GitHub Release](https://github.com/qnbs/AI-Research-Orchestrator/releases/tag/v0.4.3)** published 2026-10-01.

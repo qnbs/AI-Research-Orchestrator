@@ -8,7 +8,7 @@ import { evaluateCase } from './agentEval';
 
 describe('heuristicEval harness', () => {
   it('exposes golden fixtures', () => {
-    expect(heuristicEvalFixtures().length).toBeGreaterThanOrEqual(3);
+    expect(heuristicEvalFixtures().length).toBeGreaterThanOrEqual(8);
   });
 
   it('passes offline heuristic eval suite', () => {
