@@ -77,11 +77,12 @@ export function heuristicEvalFixtures(): EvalCase[] {
         requiredKeys: ['query', 'explanation'],
         minStringLength: 8,
         stringPath: 'query',
+        mustMeshTerms: ['Neoplasms'],
       },
     },
     {
       id: 'heuristic-rank-order',
-      description: 'Top ranked article has highest relevance score',
+      description: 'Top ranked articles are ordered by descending relevance score',
       actual: (() => {
         const topic = 'diabetes metformin';
         const top = getTopArticles(rankArticles(DEMO_CORPUS, topic), 3);
@@ -90,6 +91,8 @@ export function heuristicEvalFixtures(): EvalCase[] {
       expect: {
         type: 'object',
         requiredKeys: ['rankedArticles'],
+        minRankedArticles: 2,
+        rankedScoresDescending: true,
       },
     },
   ];

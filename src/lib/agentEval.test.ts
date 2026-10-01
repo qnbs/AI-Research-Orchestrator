@@ -346,6 +346,50 @@ describe('agentEval', () => {
     expect(result.passed).toBe(true);
   });
 
+  it('requires mustMeshTerms on buildQuery-shaped actual', () => {
+    const pass = evaluateCase({
+      id: 'mesh-ok',
+      description: 'mesh terms present',
+      actual: { query: 'x', meshTerms: ['Neoplasms'] },
+      expect: { mustMeshTerms: ['Neoplasms'] },
+    });
+    expect(pass.passed).toBe(true);
+    const fail = evaluateCase({
+      id: 'mesh-missing',
+      description: 'mesh terms absent',
+      actual: { query: 'x', meshTerms: [] },
+      expect: { mustMeshTerms: ['Neoplasms'] },
+    });
+    expect(fail.passed).toBe(false);
+  });
+
+  it('requires rankedScoresDescending when requested', () => {
+    const pass = evaluateCase({
+      id: 'rank-order-ok',
+      description: 'scores descending',
+      actual: {
+        rankedArticles: [
+          { pmid: '1', relevanceScore: 90 },
+          { pmid: '2', relevanceScore: 70 },
+        ],
+      },
+      expect: { rankedScoresDescending: true, minRankedArticles: 2 },
+    });
+    expect(pass.passed).toBe(true);
+    const fail = evaluateCase({
+      id: 'rank-order-bad',
+      description: 'scores ascending',
+      actual: {
+        rankedArticles: [
+          { pmid: '1', relevanceScore: 50 },
+          { pmid: '2', relevanceScore: 80 },
+        ],
+      },
+      expect: { rankedScoresDescending: true, minRankedArticles: 2 },
+    });
+    expect(fail.passed).toBe(false);
+  });
+
   it('requires mustRankPmids in rankedArticles', () => {
     const result = evaluateCase({
       id: 'must-rank-missing',

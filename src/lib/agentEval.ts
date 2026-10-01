@@ -50,6 +50,10 @@ export interface EvalCase {
     pubmedQuery?: boolean;
     /** When false, query must fail validation (default true). */
     pubmedQueryValid?: boolean;
+    /** buildQuery-style meshTerms that must all be present on actual. */
+    mustMeshTerms?: string[];
+    /** rankedArticles[].relevanceScore must be non-increasing (best-first). */
+    rankedScoresDescending?: boolean;
     minStringLength?: number;
     maxStringLength?: number;
     stringPath?: string;
@@ -124,7 +128,12 @@ export function evaluateCase(testCase: EvalCase): EvalCaseResult {
     }
   }
 
-  if (exp.rankedCorpusPmids?.length || exp.mustRankPmids?.length || exp.minRankedArticles != null) {
+  if (
+    exp.rankedCorpusPmids?.length ||
+    exp.mustRankPmids?.length ||
+    exp.minRankedArticles != null ||
+    exp.rankedScoresDescending
+  ) {
     const obj =
       actual !== null && typeof actual === 'object' && !Array.isArray(actual)
         ? (actual as Record<string, unknown>)
@@ -171,6 +180,19 @@ export function evaluateCase(testCase: EvalCase): EvalCaseResult {
       const missing = exp.mustRankPmids.filter((pmid) => !present.has(pmid));
       if (missing.length) {
         failures.push(`missing ranked PMIDs: ${missing.join(', ')}`);
+      }
+    }
+
+    if (exp.rankedScoresDescending && ranked.length > 1) {
+      for (let i = 1; i < ranked.length; i += 1) {
+        const prev = ranked[i - 1] as { relevanceScore?: number };
+        const cur = ranked[i] as { relevanceScore?: number };
+        const a = typeof prev.relevanceScore === 'number' ? prev.relevanceScore : -1;
+        const b = typeof cur.relevanceScore === 'number' ? cur.relevanceScore : -1;
+        if (a < b) {
+          failures.push(`rank order broken at index ${i}: ${a} < ${b}`);
+          break;
+        }
       }
     }
 
@@ -369,6 +391,20 @@ export function evaluateCase(testCase: EvalCase): EvalCaseResult {
           : `validity=${citationValidity.toFixed(2)} completeness=${citationCompleteness.toFixed(2)} required=${requiredPresent}`,
       });
     }
+  }
+
+  if (exp.mustMeshTerms?.length) {
+    const obj =
+      actual !== null && typeof actual === 'object' && !Array.isArray(actual)
+        ? (actual as Record<string, unknown>)
+        : null;
+    const terms = obj && Array.isArray(obj.meshTerms) ? (obj.meshTerms as string[]) : [];
+    const missing = exp.mustMeshTerms.filter((term) => !terms.includes(term));
+    dimensions.push({
+      dimension: 'requiredFields',
+      passed: missing.length === 0,
+      detail: missing.length ? `missing meshTerms: ${missing.join(', ')}` : undefined,
+    });
   }
 
   if (exp.stringPath && (exp.minStringLength != null || exp.maxStringLength != null)) {
