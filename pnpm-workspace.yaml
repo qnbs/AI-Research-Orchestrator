@@ -76,6 +76,9 @@ overrides:
   uuid: 11.1.1
   # @lhci/cli pulls tmp@0.0.33 / 0.1.0 (GHSA-ph9p-34f9-6g65); pin patched release
   tmp: 0.2.7
+  # GHSA-c475-qrg2-pj4r (<=6.2.0): DoS in Client.list() RE_LINE backtracking.
+  # Transitive via @lhci/cli → lighthouse/puppeteer → proxy-agent → get-uri → basic-ftp.
+  basic-ftp: 6.2.1
   # GHSA-5p4m-2wfm-xmqj, the same weakness tracked as CVE-2026-59870:
   # quadratic CPU consumption in !!omap resolution. Two independent major
   # lines in the tree need separate pins (js-yaml@3 via @lhci/utils,

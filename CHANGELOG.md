@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **CI (Wave F):** `anthropics/claude-code-action` pinned to **v1.0.236** (`8ce9314…`) in `.github/workflows/claude.yml` (supersedes Dependabot #338).
+- **Security:** `pnpm.overrides.basic-ftp` **6.2.1** (GHSA-c475-qrg2-pj4r; `@lhci/cli` transitive only).
 
 > Post-audit consolidation: Dependabot #344, Waves D–F (#345–#349), agent playbook (#348), Node 24 CI, Vite 8.3.2, GenAI 2.25.0, OpenAI 7.25.0.
 
