@@ -14,6 +14,7 @@ import {
 } from '../../lib/knowledgeBaseImport';
 import { safeLogError } from '../../lib/safeLog';
 import { countResearchPruneCandidates } from '../../lib/knowledgeBaseDedup';
+import { normalizeAiSettingsAfterImport } from '../../lib/settingsImport';
 import { deriveSettingsErrors } from './deriveSettingsErrors';
 
 const isObject = (item: unknown): item is Record<string, unknown> => {
@@ -289,6 +290,13 @@ export const useSettingsViewLogic = (
   const handleConfirmImportSettings = useCallback(
     (importedSettings: Partial<Settings>) => {
       const newSettings = deepMerge(settings, importedSettings);
+      if (importedSettings.ai) {
+        newSettings.ai = normalizeAiSettingsAfterImport(
+          newSettings.ai,
+          importedSettings.ai,
+          settings.ai,
+        );
+      }
       updateSettings(newSettings);
       setTempSettings(newSettings);
       setNotification({
@@ -319,13 +327,6 @@ export const useSettingsViewLogic = (
               type: 'error',
             });
             return;
-          }
-          if (
-            importedSettings.ai &&
-            importedSettings.ai.model !== 'gemini-2.5-flash' &&
-            importedSettings.ai.model !== 'gemini-3-pro-preview'
-          ) {
-            importedSettings.ai.model = 'gemini-2.5-flash';
           }
           handleConfirmImportSettings(importedSettings);
         } catch (error) {

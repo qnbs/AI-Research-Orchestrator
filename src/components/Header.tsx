@@ -24,6 +24,7 @@ import { InferenceModeBadge } from './InferenceModeBadge';
 import { HeaderNavButton } from './HeaderNavButton';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { cycleTheme, selectCurrentTheme } from '../store/slices/themeSlice';
+import { captureModalReturnFocus } from '../lib/modalReturnFocus';
 import { isDeveloperToolsEnabled } from '../store/slices/settingsSlice';
 
 interface HeaderProps {
@@ -54,6 +55,11 @@ const HeaderComponent: React.FC<HeaderProps> = ({
   const overflowRef = useRef<HTMLDivElement>(null);
   const overflowTriggerRef = useRef<HTMLButtonElement>(null);
   const mobileMenuTriggerRef = useRef<HTMLButtonElement>(null);
+
+  const openCommandPalette = (event: React.MouseEvent<HTMLElement>) => {
+    captureModalReturnFocus(event.currentTarget);
+    setIsCommandPaletteOpen(true);
+  };
 
   const viewTitles: Record<View, string> = {
     home: t('nav.home'),
@@ -258,7 +264,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
           <div className="flex items-center gap-1.5 shrink-0">
             <button
               type="button"
-              onClick={() => setIsCommandPaletteOpen(true)}
+              onClick={openCommandPalette}
               className="group flex items-center gap-2 px-3 py-2 text-sm text-text-secondary bg-input-bg border border-border rounded-lg hover:border-brand-accent/50 hover:text-text-primary focus-ring-aa touch-target-aa"
               aria-label={t('chrome.aria.open_command_palette')}
             >
@@ -342,7 +348,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
             </button>
             <button
               type="button"
-              onClick={() => setIsCommandPaletteOpen(true)}
+              onClick={openCommandPalette}
               className="p-2.5 text-text-secondary hover:text-text-primary rounded-full hover:bg-surface-hover focus-ring-aa touch-target-aa"
               aria-label={t('chrome.aria.search')}
             >
@@ -375,7 +381,12 @@ const HeaderComponent: React.FC<HeaderProps> = ({
                 >
                   <button
                     type="button"
-                    onClick={() => handleMobileMenuSelect(() => setIsCommandPaletteOpen(true))}
+                    onClick={(e) =>
+                      handleMobileMenuSelect(() => {
+                        captureModalReturnFocus(e.currentTarget);
+                        setIsCommandPaletteOpen(true);
+                      })
+                    }
                     className="w-full text-left flex items-center gap-3 px-4 py-3 text-sm hover:bg-surface-hover focus-ring-aa border-b border-border/50"
                   >
                     <SearchIcon className="h-5 w-5" /> {t('nav.search_commands')}

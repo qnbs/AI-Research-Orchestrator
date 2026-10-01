@@ -114,10 +114,12 @@ const ResearchEntryMeta: React.FC<{
       )}
       <div>{articlesLabel}</div>
       <div>
-        <strong>{t('history.list.focus')}</strong> {t(focusKey)}
+        <span className="font-semibold text-text-primary">{t('history.list.focus')}</span>{' '}
+        {t(focusKey)}
       </div>
       <div>
-        <strong>{t('history.list.date_range')}</strong> {dateRangeLabel}
+        <span className="font-semibold text-text-primary">{t('history.list.date_range')}</span>{' '}
+        {dateRangeLabel}
       </div>
     </>
   );

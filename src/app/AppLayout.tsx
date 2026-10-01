@@ -1,4 +1,4 @@
-import React, { Suspense, memo } from 'react';
+import React, { Suspense, memo, useEffect } from 'react';
 import { Header } from '../components/Header';
 import { OfflineBanner } from '../components/OfflineBanner';
 import { UpdateAvailableBanner } from '../components/UpdateAvailableBanner';
@@ -11,15 +11,19 @@ import { SkipToContentLink } from '../components/SkipToContentLink';
 import { ContentSpinner, FullScreenSpinner } from './AppSpinners';
 import { useAppLogic } from './useAppLogic';
 import { AppViewRouter } from './AppViewRouter';
-import { OnboardingView, CommandPalette, QuickAddModal, AgentDebugger } from './lazyViews';
+import { OnboardingView, QuickAddModal, AgentDebugger } from './lazyViews';
+import CommandPalette from '../components/CommandPalette';
 import { useElementHeight } from '../hooks/useElementHeight';
 import { isDeveloperToolsEnabled } from '../store/slices/settingsSlice';
+import { useAppDispatch } from '../store/hooks';
+import { setCommandPaletteSuppressed } from '../store/slices/uiSlice';
 
 /**
  * App shell: banners, chrome, and view routing.
  * State/effects/handlers live in useAppLogic (composed domain hooks).
  */
 const AppLayout: React.FC = () => {
+  const dispatch = useAppDispatch();
   const [chromeRef, chromeHeight] = useElementHeight<HTMLDivElement>();
   const logic = useAppLogic();
   const {
@@ -52,6 +56,11 @@ const AppLayout: React.FC = () => {
     t,
   } = logic;
 
+  useEffect(() => {
+    const blocked = Boolean(pendingNavigation || showExportModal);
+    dispatch(setCommandPaletteSuppressed(blocked));
+  }, [dispatch, pendingNavigation, showExportModal]);
+
   if (isSettingsLoading || isLoading || arePresetsLoading) {
     return <FullScreenSpinner label={t('common.loading')} />;
   }
@@ -64,10 +73,20 @@ const AppLayout: React.FC = () => {
     );
   }
 
+  const commandPaletteLocksBackground = isCommandPaletteOpen;
+
   return (
     <>
-      <SkipToContentLink />
-      <div ref={chromeRef} className="fixed top-0 left-0 right-0 z-20">
+      <SkipToContentLink
+        aria-hidden={commandPaletteLocksBackground ? true : undefined}
+        inert={commandPaletteLocksBackground ? true : undefined}
+      />
+      <div
+        ref={chromeRef}
+        className="fixed top-0 left-0 right-0 z-20"
+        aria-hidden={commandPaletteLocksBackground ? true : undefined}
+        inert={commandPaletteLocksBackground ? true : undefined}
+      >
         <Header
           onViewChange={handleViewChange}
           currentView={currentView}
@@ -92,6 +111,8 @@ const AppLayout: React.FC = () => {
         // a prop/context - see SettingsView.tsx for why an exact-pixel sticky
         // `top` is intentionally avoided.
         className="container mx-auto px-4 sm:px-6 lg:px-8 md:pt-36 pt-20 pb-24 focus-ring-aa rounded-sm"
+        aria-hidden={commandPaletteLocksBackground ? true : undefined}
+        inert={commandPaletteLocksBackground ? true : undefined}
         style={
           chromeHeight != null
             ? ({
@@ -111,14 +132,21 @@ const AppLayout: React.FC = () => {
         knowledgeBaseArticleCount={uniqueArticles.length}
         hasReports={knowledgeBase.length > 0}
         isResearching={isResearching}
+        aria-hidden={commandPaletteLocksBackground ? true : undefined}
+        inert={commandPaletteLocksBackground ? true : undefined}
       />
       {notification && (
-        <Notification
-          {...notification}
-          onClose={() => setNotification(null)}
-          position={settings.notifications.position}
-          duration={settings.notifications.duration}
-        />
+        <div
+          aria-hidden={commandPaletteLocksBackground ? true : undefined}
+          inert={commandPaletteLocksBackground ? true : undefined}
+        >
+          <Notification
+            {...notification}
+            onClose={() => setNotification(null)}
+            position={settings.notifications.position}
+            duration={settings.notifications.duration}
+          />
+        </div>
       )}
       {pendingNavigation && (
         <ConfirmationModal

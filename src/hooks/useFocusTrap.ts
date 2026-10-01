@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { consumeModalReturnFocus } from '../lib/modalReturnFocus';
 
 const FOCUSABLE_SELECTOR = [
   'a[href]:not([disabled])',
@@ -64,7 +65,8 @@ export const useFocusTrap = <T extends HTMLElement>(
 
     const firstElement = focusableElements[0];
     const lastElement = focusableElements[focusableElements.length - 1];
-    const previouslyFocusedElement = document.activeElement as HTMLElement | null;
+    const previouslyFocusedElement =
+      consumeModalReturnFocus() ?? (document.activeElement as HTMLElement | null);
 
     firstElement.focus();
 

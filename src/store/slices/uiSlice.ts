@@ -13,6 +13,7 @@ interface UiState {
   isSettingsDirty: boolean;
   pendingNavigation: View | null;
   isCommandPaletteOpen: boolean;
+  commandPaletteSuppressed: boolean;
 }
 
 const initialState: UiState = {
@@ -21,6 +22,7 @@ const initialState: UiState = {
   isSettingsDirty: false,
   pendingNavigation: null,
   isCommandPaletteOpen: false,
+  commandPaletteSuppressed: false,
 };
 
 export const uiSlice = createSlice({
@@ -39,7 +41,16 @@ export const uiSlice = createSlice({
     setPendingNavigation: (state, action: PayloadAction<View | null>) => {
       state.pendingNavigation = action.payload;
     },
+    setCommandPaletteSuppressed: (state, action: PayloadAction<boolean>) => {
+      state.commandPaletteSuppressed = action.payload;
+      if (action.payload) {
+        state.isCommandPaletteOpen = false;
+      }
+    },
     setIsCommandPaletteOpen: (state, action: PayloadAction<boolean>) => {
+      if (action.payload && state.commandPaletteSuppressed) {
+        return;
+      }
       state.isCommandPaletteOpen = action.payload;
     },
   },
@@ -50,6 +61,7 @@ export const {
   setNotification,
   setIsSettingsDirty,
   setPendingNavigation,
+  setCommandPaletteSuppressed,
   setIsCommandPaletteOpen,
 } = uiSlice.actions;
 

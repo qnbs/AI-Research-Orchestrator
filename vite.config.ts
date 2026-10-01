@@ -24,7 +24,6 @@ const VENDOR_CHUNKS: Record<string, string> = {
   '@reduxjs/toolkit': 'vendor-redux',
   recharts: 'vendor-charts',
   'framer-motion': 'vendor-motion',
-  cmdk: 'vendor-ui',
 };
 
 function manualChunks(id: string): string | undefined {

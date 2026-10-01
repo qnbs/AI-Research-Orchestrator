@@ -18,6 +18,7 @@ import {
 import { saveNcbiApiKey } from '../services/apiKeyService';
 import type { AIProviderSelection } from '../services/providers/types';
 import { getProviderMeta } from '../services/providers/provider';
+import { isStoredModelValidForProvider } from '../lib/settingsModelValidation';
 import { safeLogError } from '../lib/safeLog';
 
 const VALID_PROVIDERS: AIProviderSelection[] = [
@@ -52,11 +53,8 @@ function mergeSettingsWithDefaults(
 
   // Validate model against resolved provider; use provider's default if incompatible
   const storedModel = storedAi?.model;
-  const isModelValidForProvider =
-    typeof storedModel === 'string' &&
-    (providerMeta.modelSuggestions.includes(storedModel) ||
-      storedModel === providerMeta.defaultModel);
-  const model = isModelValidForProvider ? storedModel : providerMeta.defaultModel;
+  const isModelValidForProvider = isStoredModelValidForProvider(effectiveProvider, storedModel);
+  const model = isModelValidForProvider ? storedModel!.trim() : providerMeta.defaultModel;
 
   const mergedAi: Settings['ai'] = {
     ...baseline.ai,

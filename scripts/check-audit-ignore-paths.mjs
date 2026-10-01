@@ -28,6 +28,11 @@ const ALLOWED_AUDIT_IGNORES = {
     packageName: 'extract-zip',
     mustPassThrough: '@lhci/cli',
   },
+  // Second extract-zip advisory (GHSA-7pqw-9j4j-h8q3); same abandoned LHCI-only path.
+  'GHSA-7pqw-9j4j-h8q3': {
+    packageName: 'extract-zip',
+    mustPassThrough: '@lhci/cli',
+  },
 };
 
 /**

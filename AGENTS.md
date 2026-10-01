@@ -4,7 +4,7 @@ Guidance for AI coding agents (Kimi, Cursor, Copilot) working in this repository
 
 ## Project Overview
 
-**AI Research Orchestrator** (`ai-research-orchestrator`, v0.4.2, MIT, private package) is a **client-only React 19 PWA** for agentic biomedical literature research. It couples **PubMed (NCBI E-utilities)** and **arXiv** retrieval with a **pluggable AI provider layer** (Google Gemini, OpenAI, Anthropic, local Ollama, or the deterministic heuristic fallback) to autonomously run literature reviews: query formulation → live fetch → semantic ranking (0–100 relevance) → streaming, cited synthesis.
+**AI Research Orchestrator** (`ai-research-orchestrator`, v0.4.2, MIT, private package) is a **client-only React 19 PWA** for agentic biomedical literature research. It couples **PubMed (NCBI E-utilities)** and **arXiv** retrieval with a **pluggable AI provider layer** (Google Gemini, OpenAI, Anthropic, local Ollama, or the deterministic heuristic fallback) to autonomously run literature reviews: query formulation → live fetch → relevance ranking (live-provider scoring or heuristic BM25+ lexical ranks on a relative 0–100 display scale) → streaming, cited synthesis.
 
 - **Local-first / zero app backend**: all user data (reports, history, settings, knowledge base, collections) lives in the browser's IndexedDB via Dexie 4. There is **no application server** that stores research — in live mode the browser still sends prompts and article metadata to the selected AI provider and calls PubMed/arXiv (see `SECURITY.md` / README).
 - **Direct-to-API**: the browser talks directly to the selected AI provider, `eutils.ncbi.nlm.nih.gov`, and `export.arxiv.org` (see CSP in `index.html`).
@@ -28,10 +28,10 @@ Main features: Orchestrator pipeline, Knowledge Base (dedup, faceted filtering, 
 | Framework / Language | React 19 (Suspense, lazy views), TypeScript 6.0 **strict**                                                                                                  |
 | Build                | Vite 8 (+ `rollup-plugin-visualizer`, terser)                                                                                                               |
 | State                | Redux Toolkit 2 + RTK Query (`apiSlice` = researchApi, `geminiApiSlice` = geminiApi)                                                                        |
-| Local DB             | Dexie 4 + dexie-react-hooks (IndexedDB), single entry `src/services/databaseService.ts`                                                                     |
+| Local DB             | Dexie 4 (IndexedDB), single entry `src/services/databaseService.ts`                                                                                         |
 | AI                   | `@google/genai`, `openai`, `@anthropic-ai/sdk` (lazy-loaded), Ollama `fetch`, **or** heuristic fallback. Default live model: **Gemini `gemini-2.5-flash`**. |
 | Styling              | Tailwind CSS v4 (`@tailwindcss/postcss`), "Cybernetic" glassmorphism design system                                                                          |
-| UI extras            | Framer Motion 12, cmdk (`⌘+K` palette), @tanstack/react-virtual (custom icons; `lucide-react` removed as unused)                                            |
+| UI extras            | Framer Motion 13, custom ⌘+K command palette, @tanstack/react-virtual (custom icons; `lucide-react` removed as unused)                                      |
 | Charts               | Recharts (ADR 0005 — Recharts-only; do not re-add Chart.js)                                                                                                 |
 | Export / sanitize    | jsPDF + marked, DOMPurify                                                                                                                                   |
 | Tests                | Vitest + Testing Library (jsdom), Playwright (**blocking** Chromium + Firefox/WebKit/mobile Chrome + axe)                                                   |
