@@ -5,7 +5,7 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  vite: 8.1.5
+  vite: 8.3.2
   undici: 7.29.1
   ws: 8.21.1
   ip-address: 10.4.0
@@ -335,7 +335,7 @@ packages:
     resolution: {integrity: sha512-w7nGA9SSc0WECzn05yRrw3uN8293I620Kd9x97I0kyyxUjtWxCMmlgmAbS364gJZYvljd0A6iQyAigVV2dOX9A==}
     engines: {node: '>=20.0.0'}
     peerDependencies:
-      vite: 8.1.5
+      vite: 8.3.2
 
   '@csstools/color-helpers@6.1.1':
     resolution: {integrity: sha512-gLNsunvwf3mCi5u5o46/Z/JcJMnhbHSaZ69rkgPzNM3J4s8hWwpPUQB6/tt0EDFyCiWzxANlx+2LJwpYj4zS1w==}
@@ -1175,7 +1175,7 @@ packages:
       '@rolldown/plugin-babel': ^0.1.7 || ^0.2.0
       babel-plugin-react-compiler: ^1.0.0
       oxc-transform-react: ^0.145.0
-      vite: 8.1.5
+      vite: 8.3.2
     peerDependenciesMeta:
       '@rolldown/plugin-babel':
         optional: true
@@ -1205,7 +1205,7 @@ packages:
     resolution: {integrity: sha512-T8sWAIbkSyAjkwTcaEc3Iu0o9A27X1/kdXrizhZkGuSKScRQtRzclfAMpOTcGdXCsqxeWlpGy3XjqaW8CpLORg==}
     peerDependencies:
       msw: ^2.4.9
-      vite: 8.1.5
+      vite: 8.3.2
     peerDependenciesMeta:
       msw:
         optional: true
@@ -3865,7 +3865,7 @@ packages:
       '@vitest/ui': 5.0.3
       happy-dom: '*'
       jsdom: '*'
-      vite: 8.1.5
+      vite: 8.3.2
     peerDependenciesMeta:
       '@edge-runtime/vm':
         optional: true
