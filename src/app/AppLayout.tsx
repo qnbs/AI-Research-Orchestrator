@@ -1,4 +1,4 @@
-import React, { Suspense, memo } from 'react';
+import React, { Suspense, memo, useEffect } from 'react';
 import { Header } from '../components/Header';
 import { OfflineBanner } from '../components/OfflineBanner';
 import { UpdateAvailableBanner } from '../components/UpdateAvailableBanner';
@@ -15,12 +15,15 @@ import { OnboardingView, QuickAddModal, AgentDebugger } from './lazyViews';
 import CommandPalette from '../components/CommandPalette';
 import { useElementHeight } from '../hooks/useElementHeight';
 import { isDeveloperToolsEnabled } from '../store/slices/settingsSlice';
+import { useAppDispatch } from '../store/hooks';
+import { setCommandPaletteSuppressed } from '../store/slices/uiSlice';
 
 /**
  * App shell: banners, chrome, and view routing.
  * State/effects/handlers live in useAppLogic (composed domain hooks).
  */
 const AppLayout: React.FC = () => {
+  const dispatch = useAppDispatch();
   const [chromeRef, chromeHeight] = useElementHeight<HTMLDivElement>();
   const logic = useAppLogic();
   const {
@@ -52,6 +55,11 @@ const AppLayout: React.FC = () => {
     handleConfirmExport,
     t,
   } = logic;
+
+  useEffect(() => {
+    const blocked = Boolean(pendingNavigation || showExportModal);
+    dispatch(setCommandPaletteSuppressed(blocked));
+  }, [dispatch, pendingNavigation, showExportModal]);
 
   if (isSettingsLoading || isLoading || arePresetsLoading) {
     return <FullScreenSpinner label={t('common.loading')} />;

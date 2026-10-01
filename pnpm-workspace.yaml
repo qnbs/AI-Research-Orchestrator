@@ -32,6 +32,7 @@ minimumReleaseAgeExclude:
   - '@babel/core@7.29.1'
   - '@google/genai@2.21.0'
   - framer-motion@13.2.0
+  - framer-motion@13.4.6
   - '@anthropic-ai/sdk@0.130.0'
   - ip-address@10.4.0
 onlyBuiltDependencies:

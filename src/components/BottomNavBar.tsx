@@ -16,6 +16,7 @@ import { QuestionMarkCircleIcon } from './icons/QuestionMarkCircleIcon';
 import { HomeIcon } from './icons/HomeIcon';
 import { SearchIcon } from './icons/SearchIcon';
 import { EllipsisHorizontalIcon } from './icons/EllipsisHorizontalIcon';
+import { captureModalReturnFocus } from '../lib/modalReturnFocus';
 
 interface BottomNavBarProps {
   currentView: View;
@@ -272,8 +273,9 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
               type="button"
               title={item.muted ? reportHint : undefined}
               aria-describedby={item.muted ? reportHintId : undefined}
-              onClick={() => {
+              onClick={(e) => {
                 if (item.command) {
+                  captureModalReturnFocus(e.currentTarget);
                   setIsCommandPaletteOpen(true);
                 } else if (item.view) {
                   onViewChange(item.view);

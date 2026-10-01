@@ -18,6 +18,7 @@ import {
 import { saveNcbiApiKey } from '../services/apiKeyService';
 import type { AIProviderSelection } from '../services/providers/types';
 import { getProviderMeta } from '../services/providers/provider';
+import { isStoredModelValidForProvider } from '../lib/settingsModelValidation';
 import { safeLogError } from '../lib/safeLog';
 
 const VALID_PROVIDERS: AIProviderSelection[] = [
@@ -39,24 +40,6 @@ export interface UseSettingsValue {
   isSettingsLoading: boolean;
 }
 
-function isStoredModelValidForProvider(
-  provider: AIProviderSelection,
-  storedModel: unknown,
-  providerMeta: ReturnType<typeof getProviderMeta>,
-): boolean {
-  if (typeof storedModel !== 'string' || storedModel.trim() === '') {
-    return false;
-  }
-  const model = storedModel.trim();
-  if (provider === 'heuristic') {
-    return model === 'local';
-  }
-  if (provider === 'gemini') {
-    return providerMeta.modelSuggestions.includes(model) || model === providerMeta.defaultModel;
-  }
-  return true;
-}
-
 function mergeSettingsWithDefaults(
   storedSettings: Partial<Settings>,
   baseline: Settings,
@@ -70,11 +53,7 @@ function mergeSettingsWithDefaults(
 
   // Validate model against resolved provider; use provider's default if incompatible
   const storedModel = storedAi?.model;
-  const isModelValidForProvider = isStoredModelValidForProvider(
-    effectiveProvider,
-    storedModel,
-    providerMeta,
-  );
+  const isModelValidForProvider = isStoredModelValidForProvider(effectiveProvider, storedModel);
   const model = isModelValidForProvider ? storedModel!.trim() : providerMeta.defaultModel;
 
   const mergedAi: Settings['ai'] = {

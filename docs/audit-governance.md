@@ -68,7 +68,8 @@ Moderate findings are **tracked but not CI-blocking** because:
 - Never ignore **high** or **critical** in production paths.
 - `pnpm.auditConfig.ignoreGhsas` is allowed only for an unpatched advisory whose
   **every** `pnpm why --json` chain is a documented non-production tool (today:
-  `GHSA-jmr9-qjv8-65gv` via `@lhci/cli` → `extract-zip`).
+  `GHSA-jmr9-qjv8-65gv` and `GHSA-7pqw-9j4j-h8q3` via `@lhci/cli` → `extract-zip` /
+  Lighthouse CI only).
   `pnpm run check:audit-ignore-paths` walks each chain independently — an allowed
   LHCI path does not mask a sibling production path — and fails CI if any chain
   omits `@lhci/cli`, if a chain reaches the app as a production `dependency`, if

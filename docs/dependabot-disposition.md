@@ -170,7 +170,7 @@ Single open Dependabot PR; patch on a production sanitizer. Adopt PR: [#296](htt
 
 ## 2026-10-01 — full Dependabot consolidation (rule 012)
 
-Consolidation PR: **#344** (`cursor/dependabot-d0-consolidation-d4f6`). Supersedes agent PRs #341–#343 and open Dependabot #314–#340 except deferred rows below.
+Consolidation PR: **#344** (`cursor/dependabot-d0-consolidation-d4f6`). Supersedes agent PRs #341–#343 and open Dependabot #314–#340.
 
 | PR                                | Change                               | Disposition                                                                                                 |
 | --------------------------------- | ------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
@@ -183,7 +183,7 @@ Consolidation PR: **#344** (`cursor/dependabot-d0-consolidation-d4f6`). Supersed
 | #321                              | @google/genai → 2.21.0               | **Included** (^2.21.0, exclude for maturity gate)                                                           |
 | #319                              | openai → 7.10.0                      | **Superseded** — consolidated at **7.17.0** (mature)                                                        |
 | #326                              | Vitest 4 → 5                         | **Included** — vitest + `@vitest/coverage-v8` **5.0.3**; `setup.ts` uses `@testing-library/jest-dom/vitest` |
-| #317–#316, #315, #322, #318, #323 | dev patch minors                     | **Included**                                                                                                |
+| #316–#317, #315, #322, #318, #323 | dev patch minors                     | **Included**                                                                                                |
 | #324                              | framer-motion 13.x                   | **Included** — ^13.2.0 (13.4.x) + maturity exclude                                                          |
 | Anthropic SDK bump                | 0.112 → 0.130                        | **Included** — ^0.130.0 + maturity exclude                                                                  |
 

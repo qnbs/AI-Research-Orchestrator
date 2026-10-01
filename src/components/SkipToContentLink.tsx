@@ -9,7 +9,7 @@ const MAIN_CONTENT_ID = 'main-content';
  */
 export const SkipToContentLink: React.FC<
   React.ComponentPropsWithoutRef<'a'> & { inert?: boolean }
-> = ({ inert, ...rest }) => {
+> = ({ inert, onClick, ...rest }) => {
   const { t } = useTranslation();
 
   const handleActivate = (event: React.MouseEvent<HTMLAnchorElement>) => {
@@ -17,6 +17,7 @@ export const SkipToContentLink: React.FC<
     const main = document.getElementById(MAIN_CONTENT_ID);
     if (!main) return;
     main.focus({ preventScroll: false });
+    onClick?.(event);
   };
 
   return (

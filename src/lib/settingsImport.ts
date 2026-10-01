@@ -1,6 +1,7 @@
 import type { Settings } from '../types';
 import { AI_PROVIDERS, getProviderMeta } from '../services/providers/provider';
 import type { AIProviderSelection } from '../services/providers/types';
+import { resolveModelForProvider } from './settingsModelValidation';
 
 const KNOWN_PROVIDER_IDS = Object.keys(AI_PROVIDERS) as AIProviderSelection[];
 
@@ -35,7 +36,7 @@ export function normalizeAiSettingsAfterImport(
     modelInImport !== undefined && typeof modelInImport === 'string' && modelInImport.trim() !== '';
 
   if (modelExplicit) {
-    model = modelInImport.trim();
+    model = resolveModelForProvider(provider, modelInImport);
   } else if (
     providerInImport !== undefined &&
     isKnownAiProviderId(providerInImport) &&

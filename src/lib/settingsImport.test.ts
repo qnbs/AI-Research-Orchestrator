@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { defaultSettings } from '../store/slices/settingsSlice';
+import { getProviderMeta } from '../services/providers/provider';
 import { normalizeAiSettingsAfterImport } from './settingsImport';
 
 describe('normalizeAiSettingsAfterImport', () => {
@@ -49,6 +50,20 @@ describe('normalizeAiSettingsAfterImport', () => {
     );
     expect(result.provider).toBe('openai');
     expect(result.model).toBe('custom-model');
+  });
+
+  it('maps foreign explicit model ids to the provider default on gemini', () => {
+    const geminiBefore = {
+      ...defaultSettings.ai,
+      provider: 'gemini' as const,
+      model: 'gemini-2.5-flash',
+    };
+    const result = normalizeAiSettingsAfterImport(
+      { ...geminiBefore, model: 'gpt-5' },
+      { model: 'gpt-5' },
+      geminiBefore,
+    );
+    expect(result.model).toBe(getProviderMeta('gemini').defaultModel);
   });
 
   it('forces heuristic model to local', () => {
