@@ -25,7 +25,9 @@ export function normalizeAiSettingsAfterImport(
     (isKnownAiProviderId(merged.provider) ? merged.provider : beforeImport.provider) ?? 'gemini';
 
   if (providerInImport !== undefined) {
-    provider = isKnownAiProviderId(providerInImport) ? providerInImport : beforeImport.provider;
+    provider = isKnownAiProviderId(providerInImport)
+      ? providerInImport
+      : (beforeImport.provider ?? 'gemini');
   }
 
   let model = beforeImport.model;
