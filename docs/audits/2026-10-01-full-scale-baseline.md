@@ -36,24 +36,26 @@ This document is the Phase-0 truth snapshot before implementation PRs. Facts wer
 
 ### Direct dependency inventory (declared → resolved at capture)
 
-| Package               | Declared  | Resolved (pnpm) | npm latest (2026-10-01) |
-| --------------------- | --------- | --------------- | ----------------------- |
-| react / react-dom     | ^19.2.8   | 19.2.8          | 19.3.0                  |
-| vite                  | 8.1.5     | 8.1.5           | 8.3.2                   |
-| typescript            | ~6.0.3    | 6.0.x           | 7.0.2                   |
-| vitest                | ^4.1.10   | 4.1.10          | 5.0.3                   |
-| @playwright/test      | ^1.62.1   | 1.62.1          | 1.63.0                  |
-| dompurify             | ^3.4.13   | 3.4.13          | 3.4.16                  |
-| @google/genai         | ^2.13.0   | 2.13.0          | 2.25.0                  |
-| openai                | ^7.2.0    | 7.2.0           | 7.25.0                  |
-| @anthropic-ai/sdk     | ^0.112.3  | 0.112.3         | 0.131.0                 |
-| @reduxjs/toolkit      | ^2.12.0   | 2.12.0          | 2.13.0                  |
-| dexie                 | ^4.4.5    | 4.4.5           | 4.4.6                   |
-| framer-motion         | ^12.38.0  | 12.42.2         | 13.5.0                  |
-| tailwindcss           | ^4.3.3    | 4.3.3           | 4.3.3                   |
-| @tailwindcss/postcss  | ^4.2.4    | 4.3.2           | 4.3.3                   |
-| pnpm (packageManager) | 11.13.1   | —               | 12.x line active        |
-| Node engines          | >=22.12.0 | CI **24** LTS   | Node 26 Current         |
+| Package               | Declared  | Resolved (pnpm)        | npm latest (2026-10-01)  |
+| --------------------- | --------- | ---------------------- | ------------------------ |
+| react / react-dom     | ^19.2.8   | 19.2.8                 | 19.3.0                   |
+| vite                  | 8.1.5     | 8.1.5                  | 8.3.2                    |
+| typescript            | ~6.0.3    | 6.0.x                  | 7.0.2                    |
+| vitest                | ^4.1.10   | 4.1.10                 | 5.0.3                    |
+| @playwright/test      | ^1.62.1   | 1.62.1                 | 1.63.0                   |
+| dompurify             | ^3.4.13   | 3.4.13                 | 3.4.16                   |
+| @google/genai         | ^2.13.0   | 2.13.0                 | 2.25.0                   |
+| openai                | ^7.2.0    | 7.2.0                  | 7.25.0                   |
+| @anthropic-ai/sdk     | ^0.112.3  | 0.112.3                | 0.131.0                  |
+| @reduxjs/toolkit      | ^2.12.0   | 2.12.0                 | 2.13.0                   |
+| dexie                 | ^4.4.5    | 4.4.5                  | 4.4.6                    |
+| framer-motion         | ^12.38.0  | 12.42.2                | 13.5.0                   |
+| tailwindcss           | ^4.3.3    | 4.3.3                  | 4.3.3                    |
+| @tailwindcss/postcss  | ^4.2.4    | 4.3.2                  | 4.3.3                    |
+| pnpm (packageManager) | 11.13.1   | —                      | 12.x line active         |
+| Node engines          | >=22.12.0 | CI **22** (at capture) | Node 24 LTS / 26 Current |
+
+**CI promotion (after capture, not part of this snapshot):** GitHub Actions moved to Node **24** LTS in PR #346. `package.json` `engines` remain `>=22.12.0`; there is no separate Node 22 CI lane (see risk register #12).
 
 **Dexie schema:** 7 (`docs/project-facts.json`). **SW cache version:** `v1`.
 
