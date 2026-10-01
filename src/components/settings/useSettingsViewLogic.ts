@@ -14,6 +14,7 @@ import {
 } from '../../lib/knowledgeBaseImport';
 import { safeLogError } from '../../lib/safeLog';
 import { countResearchPruneCandidates } from '../../lib/knowledgeBaseDedup';
+import { sanitizeImportedAiSettings } from '../../lib/settingsImport';
 import { deriveSettingsErrors } from './deriveSettingsErrors';
 
 const isObject = (item: unknown): item is Record<string, unknown> => {
@@ -320,12 +321,10 @@ export const useSettingsViewLogic = (
             });
             return;
           }
-          if (
-            importedSettings.ai &&
-            importedSettings.ai.model !== 'gemini-2.5-flash' &&
-            importedSettings.ai.model !== 'gemini-3-pro-preview'
-          ) {
-            importedSettings.ai.model = 'gemini-2.5-flash';
+          const sanitizedAi = sanitizeImportedAiSettings(importedSettings.ai);
+          if (sanitizedAi && importedSettings.ai) {
+            importedSettings.ai.provider = sanitizedAi.provider;
+            importedSettings.ai.model = sanitizedAi.model;
           }
           handleConfirmImportSettings(importedSettings);
         } catch (error) {
