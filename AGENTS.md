@@ -35,7 +35,7 @@ Main features: Orchestrator pipeline, Knowledge Base (dedup, faceted filtering, 
 | Charts               | Recharts (ADR 0005 — Recharts-only; do not re-add Chart.js)                                                                                                 |
 | Export / sanitize    | jsPDF + marked, DOMPurify                                                                                                                                   |
 | Tests                | Vitest + Testing Library (jsdom), Playwright (**blocking** Chromium + Firefox/WebKit/mobile Chrome + axe)                                                   |
-| Toolchain            | Node **≥22** (CI **24** LTS), pnpm **11** (`packageManager: pnpm@11.13.1`), ESLint 9 + Prettier, husky + lint-staged                                        |
+| Toolchain            | Node **≥22.12.0** (CI **24** LTS), pnpm **11** (`packageManager: pnpm@11.13.1`), ESLint 9 + Prettier, husky + lint-staged                                   |
 
 ## Runtime Architecture
 
@@ -75,7 +75,7 @@ docs/adr/                # Architecture Decision Records — see docs/adr/README
 ## Build, Test & Quality Commands
 
 ```bash
-pnpm install --frozen-lockfile   # install (Node ≥22, pnpm 11)
+pnpm install --frozen-lockfile   # install (Node ≥22.12.0, pnpm 11)
 pnpm run dev                     # Vite dev server — port 3000, host 0.0.0.0
 pnpm run build                   # production build + CSP hash patching → dist/
 pnpm run preview                 # preview built app — port 4173

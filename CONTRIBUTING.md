@@ -4,7 +4,7 @@ Thank you for improving this project. This document describes how to work on the
 
 ## Prerequisites
 
-- Node.js **22+** (CI uses **Node 24** LTS on GitHub Actions)
+- Node.js **≥22.12.0** (CI uses **Node 24** LTS on GitHub Actions)
 - pnpm 11
 
 ## Getting started
