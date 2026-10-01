@@ -30,7 +30,6 @@ minimumReleaseAgeExclude:
   - protobufjs@7.6.1
   - protobufjs@7.6.3
   - '@babel/core@7.29.1'
-  - '@google/genai@2.25.0'
   - framer-motion@13.2.0
   - framer-motion@13.4.6
   - vite@8.3.2
