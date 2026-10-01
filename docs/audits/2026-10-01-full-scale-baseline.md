@@ -78,7 +78,7 @@ This document is the Phase-0 truth snapshot before implementation PRs. Facts wer
 
 ### Open PRs (18 Dependabot, 0 feature at capture)
 
-Actions/CodeQL (#337–#340), claude-code-action (#338), codecov-action major (#334), pnpm/action-setup (#331), Vitest 5 mocker (#326), DOMPurify (#325), Framer 13 (#324), autoprefixer (#323), jest-dom (#322), GenAI (#321), OpenAI (#319), testing-library/react (#318), tailwind postcss (#317), globals (#316), @types/node (#315), deploy-pages (#314).
+Actions/CodeQL (#337, #339–#340), claude-code-action (#338), codecov-action major (#334), pnpm/action-setup (#331), Vitest 5 mocker (#326), DOMPurify (#325), Framer 13 (#324), autoprefixer (#323), jest-dom (#322), GenAI (#321), OpenAI (#319), testing-library/react (#318), tailwind postcss (#317), globals (#316), @types/node (#315), deploy-pages (#314).
 
 **Open issues:** none listed.
 

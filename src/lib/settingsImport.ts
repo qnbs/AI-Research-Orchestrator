@@ -8,34 +8,39 @@ export function isKnownAiProviderId(value: unknown): value is AIProviderSelectio
   return typeof value === 'string' && (KNOWN_PROVIDER_IDS as string[]).includes(value);
 }
 
-export type SanitizedImportedAiFields = Pick<Settings['ai'], 'provider' | 'model'>;
-
 /**
- * Normalizes AI fields from an imported settings JSON blob.
- * Preserves provider-specific free-text model IDs; only fills defaults when missing/invalid.
+ * Normalizes AI fields after `deepMerge(current, imported)` so partial imports
+ * (e.g. temperature only) keep the active provider/model unless the import
+ * explicitly changes provider or supplies a model id.
  */
-export function sanitizeImportedAiSettings(
-  ai: Partial<Settings['ai']> | undefined,
-): SanitizedImportedAiFields | undefined {
-  if (!ai) return undefined;
+export function normalizeAiSettingsAfterImport(
+  merged: Settings['ai'],
+  importedPartial: Partial<Settings['ai']>,
+  beforeImport: Settings['ai'],
+): Settings['ai'] {
+  const providerInImport = importedPartial.provider;
+  const modelInImport = importedPartial.model;
 
-  const provider: AIProviderSelection = isKnownAiProviderId(ai.provider) ? ai.provider : 'gemini';
-  const meta = getProviderMeta(provider);
+  let provider: AIProviderSelection =
+    (isKnownAiProviderId(merged.provider) ? merged.provider : beforeImport.provider) ?? 'gemini';
 
-  let model = ai.model;
-  if (typeof model !== 'string' || model.trim() === '') {
-    model = meta.defaultModel;
-  } else {
-    model = model.trim();
+  if (providerInImport !== undefined) {
+    provider = isKnownAiProviderId(providerInImport) ? providerInImport : 'gemini';
+  }
+
+  let model = typeof merged.model === 'string' ? merged.model : beforeImport.model;
+  const modelExplicit =
+    modelInImport !== undefined && typeof modelInImport === 'string' && modelInImport.trim() !== '';
+
+  if (modelExplicit) {
+    model = modelInImport.trim();
+  } else if (providerInImport !== undefined && provider !== beforeImport.provider) {
+    model = getProviderMeta(provider).defaultModel;
   }
 
   if (provider === 'heuristic') {
     model = 'local';
   }
 
-  return {
-    ...ai,
-    provider,
-    model,
-  };
+  return { ...merged, provider, model };
 }

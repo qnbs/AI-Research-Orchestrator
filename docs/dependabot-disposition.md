@@ -174,7 +174,7 @@ Consolidation PR: **#344** (`cursor/dependabot-d0-consolidation-d4f6`). Supersed
 
 | PR                                | Change                               | Disposition                                                                                                 |
 | --------------------------------- | ------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
-| #337–#340                         | CodeQL action 4.37.9 → 4.38.2        | **Included** — SHA `2892aa5e…` in `security.yml`                                                            |
+| #337, #339–#340                   | CodeQL action 4.37.9 → 4.38.2        | **Included** — SHA `2892aa5e…` in `security.yml`                                                            |
 | #331                              | pnpm/action-setup 6.0.10 → 6.1.0     | **Included** — SHA `ea17c68d…` all workflows                                                                |
 | #334                              | codecov-action 5.5.5 → 7.1.1         | **Included** — SHA `303a32d7…` in `deploy.yml`                                                              |
 | #314                              | deploy-pages 5.0.0 → 5.0.1           | **Included** — SHA `368f8252…`                                                                              |
