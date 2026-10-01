@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Heuristic eval (Wave G):** German lay-topic query fixture and rank-order smoke in `heuristicEval.ts` (`check:agent-eval`); `agentEval` supports `mustMeshTerms` and `rankedScoresDescending`.
+- **Heuristic eval (Wave G):** Expanded offline fixtures (PubMed validation, DE MeSH lay terms, demo-corpus rank bounds) in `heuristicEval.ts` (`check:agent-eval`); `agentEval` supports `mustMeshTerms` and `rankedScoresDescending`.
 
 ### Changed
 

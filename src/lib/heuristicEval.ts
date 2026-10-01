@@ -69,6 +69,46 @@ export function heuristicEvalFixtures(): EvalCase[] {
       },
     },
     {
+      id: 'heuristic-query-pubmed-valid',
+      description: 'Heuristic PubMed query passes structural validation',
+      actual: buildQuery('aspirin cardiovascular disease prevention').query,
+      expect: { pubmedQuery: true },
+    },
+    {
+      id: 'heuristic-query-de-hypertension',
+      description: 'German lay hypertension maps to Hypertension MeSH',
+      actual: buildQuery('Behandlung von Bluthochdruck'),
+      expect: {
+        type: 'object',
+        requiredKeys: ['query', 'explanation', 'meshTerms'],
+        mustMeshTerms: ['Hypertension'],
+        minStringLength: 8,
+        stringPath: 'query',
+      },
+    },
+    {
+      id: 'heuristic-query-de-oncology-immuno',
+      description: 'German oncology + immunotherapy MeSH mapping',
+      actual: buildQuery('Krebs Immuntherapie'),
+      expect: {
+        type: 'object',
+        requiredKeys: ['query', 'meshTerms'],
+        mustMeshTerms: ['Neoplasms', 'Immunotherapy'],
+      },
+    },
+    {
+      id: 'heuristic-ranked-corpus',
+      description: 'Ranked PMIDs stay inside the demo corpus',
+      actual: { rankedArticles: ranked },
+      expect: {
+        type: 'object',
+        requiredKeys: ['rankedArticles'],
+        rankedCorpusPmids: DEMO_CORPUS.map((a) => a.pmid),
+        minRankedArticles: 1,
+        rankedScoresDescending: true,
+      },
+    },
+    {
       id: 'heuristic-query-de-lay-term',
       description: 'German lay topic maps to MeSH-oriented query tokens',
       actual: buildQuery('Krebs Prävention Screening', {}),
