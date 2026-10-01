@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+### Changed
+
+## [0.4.3] - 2026-10-01
+
+> Post-audit consolidation: Dependabot #344, Waves D–F (#345–#349), agent playbook (#348), Node 24 CI, Vite 8.3.2, GenAI 2.25.0, OpenAI 7.25.0.
+
 ### Changed
 
 - **Toolchain (Wave D):** Vite **8.3.2** (from 8.1.5) with `minimumReleaseAgeExclude` for maturity gate; `pnpm.overrides.vite` aligned so frozen CI install matches `package.json`.
@@ -17,7 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Audit wave closeout (2026-10-01):** `docs/audits/2026-10-01-wave-closeout.md` — Waves D–F disposition, superseded PR list, ruleset 403 maintainer actions.
-  Unit tests in `src/lib/settingsImport.test.ts` for provider-aware model preservation on JSON import.
+- **Agent execution playbook:** `docs/agent-execution-playbook.md` (dual gate, evidence planes; #348).
+- **Settings import sanitization:** Unit tests in `src/lib/settingsImport.test.ts` for provider-aware model preservation on JSON import.
 - **Audit docs (2026-10-01 baseline):** Phase-0 full-scale audit snapshot (`docs/audits/2026-10-01-full-scale-baseline.md`).
 - **Audit docs (2026-09-03 late closeout):** Handover for the residual-audit wave at live `main` `61fda02` (#311 after #309/#310). Execution prompt: `docs/prompts/2026-09-03-late-cursor-grok-audit-perfection-master-prompt.md`. No `v0.4.3` cut.
 - **CodeRabbit GitHub-block note:** `docs/audits/2026-09-04-coderabbit-github-block.md` records the stacked quota + `dismiss_stale_reviews_on_push: false` artifact, the 403 dismiss, and the agent SOP (do not stall on CodeRabbit; `--admin` squash when policy **(d)** holds). Pointer from `docs/pr-merge-gate.md`.
@@ -457,7 +466,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - DevContainer support for GitHub Codespaces
 - Vitest unit tests + Playwright E2E test infrastructure
 
-[Unreleased]: https://github.com/qnbs/AI-Research-Orchestrator/compare/v0.4.2...HEAD
+[Unreleased]: https://github.com/qnbs/AI-Research-Orchestrator/compare/v0.4.3...HEAD
+[0.4.3]: https://github.com/qnbs/AI-Research-Orchestrator/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/qnbs/AI-Research-Orchestrator/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/qnbs/AI-Research-Orchestrator/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/qnbs/AI-Research-Orchestrator/compare/v0.2.1...v0.4.0
