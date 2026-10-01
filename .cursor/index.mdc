@@ -7,7 +7,7 @@ alwaysApply: true
 
 **Purpose:** Client-only PWA for agentic biomedical literature research: PubMed/NCBI, arXiv, multi-provider AI (Gemini / OpenAI / Anthropic / Ollama) or deterministic heuristic fallback, local Knowledge Base, and export — no application backend for user data.
 
-**Stack:** React 19, TypeScript strict, Vite 8, Redux Toolkit, Dexie 4 + dexie-react-hooks (IndexedDB), Tailwind CSS v4, lazy provider SDKs, Marked/DOMPurify, jsPDF, **Recharts only**, Framer Motion, cmdk, Vitest + Testing Library, Playwright E2E (blocking Chromium + blocking Firefox/WebKit/mobile Chrome). Inference: `live | heuristic` (`src/services/nonAi/`, ADR 0007/0009).
+**Stack:** React 19, TypeScript strict, Vite 8, Redux Toolkit, Dexie 4 (IndexedDB), Tailwind CSS v4, lazy provider SDKs, Marked/DOMPurify, jsPDF, **Recharts only**, Framer Motion, custom ⌘+K command palette, Vitest + Testing Library, Playwright E2E (blocking Chromium + blocking Firefox/WebKit/mobile Chrome). Inference: `live | heuristic` (`src/services/nonAi/`, ADR 0007/0009).
 
 **Architecture:** Browser talks directly to the selected AI provider + NCBI E-utilities (+ arXiv); AES-GCM keys via `apiKeyService`; Redux is the single source of truth; Context only hydrates/composes (`SettingsProvider`, KB) — never duplicate the same settings/UI flags. Synthesis trust: corpus-/claim-supported vs unverified narrative draft (ADR 0018). Cancelled/restored reports are `partial`, never `done` (ADR 0021).
 
