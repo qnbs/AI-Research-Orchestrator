@@ -178,7 +178,7 @@ Consolidation PR: **#344** (`cursor/dependabot-d0-consolidation-d4f6`). Supersed
 | #331                              | pnpm/action-setup 6.0.10 → 6.1.0     | **Included** — SHA `ea17c68d…` all workflows                                                                |
 | #334                              | codecov-action 5.5.5 → 7.1.1         | **Included** — SHA `303a32d7…` in `deploy.yml`                                                              |
 | #314                              | deploy-pages 5.0.0 → 5.0.1           | **Included** — SHA `368f8252…`                                                                              |
-| #338                              | claude-code-action 1.0.235 → 1.0.236 | **Superseded** — landed via agent PR after v0.4.3 (SHA `8ce9314…`)                                          |
+| #338                              | claude-code-action 1.0.235 → 1.0.236 | **Merged** via #352 (SHA `8ce9314…`, `basic-ftp` pin)                                                       |
 | #325                              | dompurify 3.4.13 → 3.4.14            | **Superseded** — consolidated at **3.4.16** (Wave C) + `minimumReleaseAgeExclude`                           |
 | #321                              | @google/genai → 2.21.0               | **Included** (^2.21.0, exclude for maturity gate)                                                           |
 | #319                              | openai → 7.10.0                      | **Superseded** — consolidated at **7.17.0** (mature)                                                        |
