@@ -68,6 +68,30 @@ export function heuristicEvalFixtures(): EvalCase[] {
         stringPath: 'synthesis',
       },
     },
+    {
+      id: 'heuristic-query-de-lay-term',
+      description: 'German lay topic maps to MeSH-oriented query tokens',
+      actual: buildQuery('Krebs Prävention Screening', {}),
+      expect: {
+        type: 'object',
+        requiredKeys: ['query', 'explanation'],
+        minStringLength: 8,
+        stringPath: 'query',
+      },
+    },
+    {
+      id: 'heuristic-rank-order',
+      description: 'Top ranked article has highest relevance score',
+      actual: (() => {
+        const topic = 'diabetes metformin';
+        const top = getTopArticles(rankArticles(DEMO_CORPUS, topic), 3);
+        return { rankedArticles: top };
+      })(),
+      expect: {
+        type: 'object',
+        requiredKeys: ['rankedArticles'],
+      },
+    },
   ];
 }
 

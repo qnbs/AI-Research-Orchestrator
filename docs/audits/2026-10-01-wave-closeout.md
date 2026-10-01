@@ -8,14 +8,15 @@ This document records what landed after the Phase-0 snapshot. It does **not** re
 
 ## Landed (2026-10-01)
 
-| Wave | PR   | Summary                                                               |
-| ---- | ---- | --------------------------------------------------------------------- |
-| D0   | #344 | Dependabot #314–#340 consolidation, settings import, Wave B/C hygiene |
-| D    | #345 | Vite 8.3.2 override + lockfile alignment                              |
-| D    | #346 | GitHub Actions Node **24** LTS; docs `engines` ≥22.12.0               |
-| E    | #347 | `@google/genai` 2.25.0 + SDK transport tests                          |
-| Docs | #348 | `docs/agent-execution-playbook.md` (dual gate + evidence planes)      |
-| F    | #349 | `openai` 7.25.0 patch (when merged)                                   |
+| Wave | PR   | Summary                                                                |
+| ---- | ---- | ---------------------------------------------------------------------- |
+| D0   | #344 | Dependabot #314–#340 consolidation, settings import, Wave B/C hygiene  |
+| D    | #345 | Vite 8.3.2 override + lockfile alignment                               |
+| D    | #346 | GitHub Actions Node **24** LTS; docs `engines` ≥22.12.0                |
+| E    | #347 | `@google/genai` 2.25.0 + SDK transport tests                           |
+| Docs | #348 | `docs/agent-execution-playbook.md` (dual gate + evidence planes)       |
+| F    | #349 | `openai` 7.25.0 patch (when merged)                                    |
+| F    | #352 | `claude-code-action` **v1.0.236** + `basic-ftp@6.2.1` audit pin (#338) |
 
 ## Superseded agent / Dependabot PRs
 
