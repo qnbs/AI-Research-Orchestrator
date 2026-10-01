@@ -1,3 +1,10 @@
+# 2026-10-01 — Audit wave D–F closeout
+
+- **Why:** Phase-0 baseline (#341 / #344) tracked Waves D–F and ruleset drift; agent landed #345–#348 and follow-ups on `main`.
+- **What:** Closeout doc `docs/audits/2026-10-01-wave-closeout.md`. Cloud Agent ruleset `PUT` for PWA required check + `dismiss_stale_reviews_on_push` returned **403** (same class as PR #301).
+- **Impact:** Dual gate merges use `--admin` squash when policy holds; maintainer must apply ruleset recipe in `docs/ci-branch-governance.md` with Administration PAT.
+- **Not done:** `v0.4.3` tag until release PR; GitHub topics PUT; maturity exclude removal for Vite/GenAI.
+
 # 2026-09-04 — PR body edit cancels in-flight security audit
 
 - **Why:** On #302 (`fb0166b`) `security.yml` run `33819179270` was canceled mid-`pnpm audit` retry (registry error 23). Required check stayed incomplete while other gates were green.

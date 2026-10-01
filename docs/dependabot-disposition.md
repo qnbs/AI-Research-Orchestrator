@@ -188,3 +188,11 @@ Consolidation PR: **#344** (`cursor/dependabot-d0-consolidation-d4f6`). Supersed
 | Anthropic SDK bump                | 0.112 → 0.130                        | **Included** — ^0.130.0 + maturity exclude                                                                  |
 
 Also bundles audit baseline (#341), settings import P1 (#342), dead deps (#343).
+
+## 2026-10-01 — Wave F (post-consolidation)
+
+| PR   | Change              | Disposition                                    |
+| ---- | ------------------- | ---------------------------------------------- |
+| #349 | openai → **7.25.0** | **Merged** when green — 7.x patch, tests green |
+
+Superseded open PRs **#341**, **#342**, **#343**: content on `main` via **#344**; close with link to `docs/audits/2026-10-01-wave-closeout.md`.

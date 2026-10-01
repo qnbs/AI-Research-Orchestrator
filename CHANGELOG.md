@@ -15,7 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Settings import sanitization:** Unit tests in `src/lib/settingsImport.test.ts` for provider-aware model preservation on JSON import.
+- **Audit wave closeout (2026-10-01):** `docs/audits/2026-10-01-wave-closeout.md` — Waves D–F disposition, superseded PR list, ruleset 403 maintainer actions.
+  Unit tests in `src/lib/settingsImport.test.ts` for provider-aware model preservation on JSON import.
 - **Audit docs (2026-10-01 baseline):** Phase-0 full-scale audit snapshot (`docs/audits/2026-10-01-full-scale-baseline.md`).
 - **Audit docs (2026-09-03 late closeout):** Handover for the residual-audit wave at live `main` `61fda02` (#311 after #309/#310). Execution prompt: `docs/prompts/2026-09-03-late-cursor-grok-audit-perfection-master-prompt.md`. No `v0.4.3` cut.
 - **CodeRabbit GitHub-block note:** `docs/audits/2026-09-04-coderabbit-github-block.md` records the stacked quota + `dismiss_stale_reviews_on_push: false` artifact, the 403 dismiss, and the agent SOP (do not stall on CodeRabbit; `--admin` squash when policy **(d)** holds). Pointer from `docs/pr-merge-gate.md`.

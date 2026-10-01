@@ -252,9 +252,9 @@ rg cmdk dexie-react-hooks semantic\ ranking  # drift probes
 
 - Exact GitHub Pages deploy SHA for live site (not in HTML shell).
 - Full live-site / offline / multi-tab SW suite not executed in Phase-0.
-- Ruleset PUT feasibility from current automation tokens (historically 403).
+- Ruleset PUT feasibility from current automation tokens (**403** on 2026-10-01 — maintainer PAT with Administration: write required; see `docs/audits/2026-10-01-wave-closeout.md`).
 - Socket / Greptile / trial bot availability on next PR heads.
 
 ---
 
-_Next step (2026-10-01):_ #344 merged — close superseded PRs #341–#343 and Dependabot #314–#340. **Wave D (Vite 8.3.2):** landed on this PR (#345); remove the `vite@8.3.2` `minimumReleaseAgeExclude` entry in `pnpm-workspace.yaml` once 8.3.2 satisfies the maturity window. **Wave D (Node 24 CI):** #346. Continue provider catalog/provenance and audit closeout._
+_Next step (2026-10-01):_ Waves **D–F** landed (#345–#348, #349+). **Closeout:** `docs/audits/2026-10-01-wave-closeout.md`. **Maintainer:** ruleset PWA + dismiss-stale PUT; **`v0.4.3`** release PR; superseded PRs #341–#343 / Dependabot disposition comments._
