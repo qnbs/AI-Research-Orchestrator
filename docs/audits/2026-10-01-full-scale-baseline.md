@@ -255,4 +255,4 @@ rg cmdk dexie-react-hooks semantic\ ranking  # drift probes
 
 ---
 
-_Next step:_ Wave A remediation PRs (settings import P1, agent doc truth, dependency hygiene).
+_Next step (2026-10-01):_ #344 merged — close superseded PRs #341–#343 and Dependabot #314–#340; continue Wave D (Node 24 CI, Vite 8.3 when mature), provider catalog/provenance, audit closeout._
