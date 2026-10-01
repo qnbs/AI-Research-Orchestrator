@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Docs:** Wave closeout lists #352–#353; GitHub Release for `v0.4.3`; maturity-exclude retry date documented (vite/genai still gated 2026-10-01).
+- **Supply chain:** Drop `minimumReleaseAgeExclude` for `@google/genai@2.25.0` once the 1440m gate cleared (~2026-10-01 22:53 UTC); `vite@8.3.2` exclude retained until **~2026-10-02 10:14 UTC**.
 
 - **CI (Wave F):** `anthropics/claude-code-action` pinned to **v1.0.236** (`8ce9314…`) in `.github/workflows/claude.yml` (supersedes Dependabot #338).
 - **Security:** `pnpm.overrides.basic-ftp` **6.2.1** (GHSA-c475-qrg2-pj4r; `@lhci/cli` transitive only).
