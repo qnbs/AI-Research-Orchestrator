@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Toolchain (Wave D):** Vite **8.3.2** (from 8.1.5) with `minimumReleaseAgeExclude` for maturity gate; `pnpm.overrides.vite` aligned so frozen CI install matches `package.json`.
 - **CI (Wave D):** GitHub Actions uses **Node 24** LTS (`setup-node`); `package.json` `engines` remain `>=22.12.0`. DevContainer base image and `.nvmrc` use **24**.
 - **Runtime (Wave E):** `@google/genai` **^2.25.0** with `minimumReleaseAgeExclude` for `@google/genai@2.25.0`; installed-SDK HTTP smoke tests in `geminiSdkTransport.test.ts` (stubbed `fetch`, non-mocked package).
+- **Runtime (Wave F):** `openai` **^7.25.0** (from 7.17.0; 7.x patch line, adapter unchanged).
 
 ### Added
 
