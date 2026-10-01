@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Settings import sanitization:** Unit tests in `src/lib/settingsImport.test.ts` for provider-aware model preservation on JSON import.
+- **Audit docs (2026-10-01 baseline):** Phase-0 full-scale audit snapshot (`docs/audits/2026-10-01-full-scale-baseline.md`).
 - **Audit docs (2026-09-03 late closeout):** Handover for the residual-audit wave at live `main` `61fda02` (#311 after #309/#310). Execution prompt: `docs/prompts/2026-09-03-late-cursor-grok-audit-perfection-master-prompt.md`. No `v0.4.3` cut.
 - **CodeRabbit GitHub-block note:** `docs/audits/2026-09-04-coderabbit-github-block.md` records the stacked quota + `dismiss_stale_reviews_on_push: false` artifact, the 403 dismiss, and the agent SOP (do not stall on CodeRabbit; `--admin` squash when policy **(d)** holds). Pointer from `docs/pr-merge-gate.md`.
 - **Audit docs (2026-09-03 late baseline):** Phase 0 evidence for the residual-audit wave at live `main` `0df1b71` (#302). Execution prompt: `docs/prompts/2026-09-03-late-cursor-grok-audit-perfection-master-prompt.md`. No product behavior change. No P0 regression found; first P1 is `NOW-P1-MOBILE-360` (header density already shipped in #299).
@@ -17,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Settings import (P1):** JSON import no longer coerces non-Gemini model IDs to `gemini-2.5-flash`; provider-aware defaults only when the model is missing/blank. **`AGENTS.md`:** ranking wording matches product truth (live vs heuristic BM25+).
+- **Dependency hygiene (Wave B):** Remove unused direct dependency `dexie-react-hooks` (no `src` imports; Dexie via `databaseService` only). Drop stale `cmdk` manual-chunk entry and stack docs — command palette is implemented in `CommandPalette.tsx`.
 - **Capability / scientometric / offline / command-palette honesty (`NOW-P2-CAPABILITY-COPY` / `SCIENTOMETRIC-COPY` / `PWA-OFFLINE` / `CMDK-TEACH`):** Live badge interpolates compact chrome names (`Gemini`, `Ollama`) via `{provider}`. Offline banner and Help glossary distinguish already-fetched KB/heuristic tools from new PubMed/arXiv fetch. Web grounding is labeled Gemini-only. Author H-index tooltip says not official; journal OA rate uses the shared Tooltip (keyboard/SR) and says free full text ≠ journal OA policy. Home + Help teach More → Search commands on phones and distinguish that from first-run onboarding.
 - **Heuristic honesty (`NOW-P2-HEURISTIC-UX` / `RANK` / `QUERY` / `SYNTH`):** Adapter synthesis copy names BM25+ lexical / relative 0–100 ranks instead of “semantic ranking”. Non-demo template Background states extractive-template (not a live-model draft) and names PubMed/arXiv only when those sources are in the corpus. Report markdown keeps `##` section headings; PDF `cleanText` strips ATX markers so exports do not show literal `##`. Query builder tokenizes EN+DE stopwords, resolves multi-word MeSH keys via adjacent phrases, and maps high-value German lay terms (Krebs, Bluthochdruck, Schlaganfall, Herzinfarkt, …) onto the existing compact MeSH dictionary. Status/glossary/cost already teach “heuristic is active, not broken AI”.
 - **i18n + Help glossary (`NOW-P1-I18N-TRUTH` / `NOW-P1-HELP-GLOSSARY`):** View title, cost copy, and presets use Literature review / Literaturrecherche instead of Orchestrator AI. Help glossary adds heuristic, live, partial, and demo entries that match `docs/product-truth-matrix.md`.

@@ -40,9 +40,6 @@ importers:
       dexie:
         specifier: ^4.4.5
         version: 4.4.5
-      dexie-react-hooks:
-        specifier: ^4.4.0
-        version: 4.4.0(dexie@4.4.5)(react@19.2.8)
       dompurify:
         specifier: ^3.4.13
         version: 3.4.13
@@ -1802,12 +1799,6 @@ packages:
 
   devtools-protocol@0.0.1608973:
     resolution: {integrity: sha512-Tpm17fxYzt+J7VrGdc1k8YdRqS3YV7se/M6KeemEqvUbq/n7At1rWVuXMxQgpWkdwSdIEKYbU//Bve+Shm4YNQ==}
-
-  dexie-react-hooks@4.4.0:
-    resolution: {integrity: sha512-ObLXBS5+4BJU8vtSvBx6b9fY6zZYgniAtwxzjCHsUQadgbqYN6935X2/1TWw4Rf2N1aZV1io5/ziox4vKuxABA==}
-    peerDependencies:
-      dexie: '>=4.2.0-alpha.1 <5.0.0'
-      react: '>=16'
 
   dexie@4.4.5:
     resolution: {integrity: sha512-wWCHdihT3dmlUSuNhn5mMZDWSpG0suxjAni7YjjiZdzabZcKmy3uNZGZ7AeYYXBoLbpSXX35fikPLkPC44Osiw==}
@@ -3609,8 +3600,8 @@ packages:
   third-party-web@0.26.7:
     resolution: {integrity: sha512-buUzX4sXC4efFX6xg2bw6/eZsCUh8qQwSavC4D9HpONMFlRbcHhD8Je5qwYdCpViR6q0qla2wPP+t91a2vgolg==}
 
-  third-party-web@0.29.2:
-    resolution: {integrity: sha512-fegtha91tq2DHphyoiBXVHjVi2YG9zFaRnboT9C28tO1en9Y3wJsfspuy40F+u5wl3hHVbw7cnd1b67kEGHb8g==}
+  third-party-web@0.30.0:
+    resolution: {integrity: sha512-p+PfyL5U0ediGzvwPzMSdD9MnC8rHW6nWJJVLIQvqN7RsSqfaZ+7n4c9GILqH36EYR0eXB9CzAeCRnKFr/9uJg==}
 
   through@2.3.8:
     resolution: {integrity: sha512-w89qg7PI8wAdvX60bMDP+bFoD5Dvhm9oLheFp5O4a2QF0cSBGsBX4qZmadPMvVqlLJBBci+WqGGOAPvcDeNSVg==}
@@ -4657,7 +4648,7 @@ snapshots:
   '@paulirish/trace_engine@0.0.53':
     dependencies:
       legacy-javascript: 0.0.1
-      third-party-web: 0.29.2
+      third-party-web: 0.30.0
 
   '@playwright/test@1.62.1':
     dependencies:
@@ -5701,11 +5692,6 @@ snapshots:
   devtools-protocol@0.0.1467305: {}
 
   devtools-protocol@0.0.1608973: {}
-
-  dexie-react-hooks@4.4.0(dexie@4.4.5)(react@19.2.8):
-    dependencies:
-      dexie: 4.4.5
-      react: 19.2.8
 
   dexie@4.4.5: {}
 
@@ -7801,7 +7787,7 @@ snapshots:
 
   third-party-web@0.26.7: {}
 
-  third-party-web@0.29.2: {}
+  third-party-web@0.30.0: {}
 
   through@2.3.8: {}
 
