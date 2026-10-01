@@ -39,6 +39,24 @@ export interface UseSettingsValue {
   isSettingsLoading: boolean;
 }
 
+function isStoredModelValidForProvider(
+  provider: AIProviderSelection,
+  storedModel: unknown,
+  providerMeta: ReturnType<typeof getProviderMeta>,
+): boolean {
+  if (typeof storedModel !== 'string' || storedModel.trim() === '') {
+    return false;
+  }
+  const model = storedModel.trim();
+  if (provider === 'heuristic') {
+    return model === 'local';
+  }
+  if (provider === 'gemini') {
+    return providerMeta.modelSuggestions.includes(model) || model === providerMeta.defaultModel;
+  }
+  return true;
+}
+
 function mergeSettingsWithDefaults(
   storedSettings: Partial<Settings>,
   baseline: Settings,
@@ -52,11 +70,12 @@ function mergeSettingsWithDefaults(
 
   // Validate model against resolved provider; use provider's default if incompatible
   const storedModel = storedAi?.model;
-  const isModelValidForProvider =
-    typeof storedModel === 'string' &&
-    (providerMeta.modelSuggestions.includes(storedModel) ||
-      storedModel === providerMeta.defaultModel);
-  const model = isModelValidForProvider ? storedModel : providerMeta.defaultModel;
+  const isModelValidForProvider = isStoredModelValidForProvider(
+    effectiveProvider,
+    storedModel,
+    providerMeta,
+  );
+  const model = isModelValidForProvider ? storedModel!.trim() : providerMeta.defaultModel;
 
   const mergedAi: Settings['ai'] = {
     ...baseline.ai,

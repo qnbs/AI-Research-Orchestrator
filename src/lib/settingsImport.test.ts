@@ -34,13 +34,20 @@ describe('normalizeAiSettingsAfterImport', () => {
     expect(result.model).toBe('claude-sonnet-4-5');
   });
 
-  it('resets unknown imported provider to gemini but keeps explicit model string', () => {
+  it('preserves current model when import explicitly sets model to blank', () => {
+    const merged = { ...openAiBefore, model: '' };
+    const result = normalizeAiSettingsAfterImport(merged, { model: '' }, openAiBefore);
+    expect(result.provider).toBe('openai');
+    expect(result.model).toBe('gpt-5');
+  });
+
+  it('rejects unknown imported provider and keeps the active provider/model', () => {
     const result = normalizeAiSettingsAfterImport(
       { ...openAiBefore, provider: 'gemini' as const, model: 'custom-model' },
       { provider: 'unknown-vendor' as 'gemini', model: 'custom-model' },
       openAiBefore,
     );
-    expect(result.provider).toBe('gemini');
+    expect(result.provider).toBe('openai');
     expect(result.model).toBe('custom-model');
   });
 

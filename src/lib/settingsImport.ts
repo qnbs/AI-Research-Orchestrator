@@ -25,16 +25,20 @@ export function normalizeAiSettingsAfterImport(
     (isKnownAiProviderId(merged.provider) ? merged.provider : beforeImport.provider) ?? 'gemini';
 
   if (providerInImport !== undefined) {
-    provider = isKnownAiProviderId(providerInImport) ? providerInImport : 'gemini';
+    provider = isKnownAiProviderId(providerInImport) ? providerInImport : beforeImport.provider;
   }
 
-  let model = typeof merged.model === 'string' ? merged.model : beforeImport.model;
+  let model = beforeImport.model;
   const modelExplicit =
     modelInImport !== undefined && typeof modelInImport === 'string' && modelInImport.trim() !== '';
 
   if (modelExplicit) {
     model = modelInImport.trim();
-  } else if (providerInImport !== undefined && provider !== beforeImport.provider) {
+  } else if (
+    providerInImport !== undefined &&
+    isKnownAiProviderId(providerInImport) &&
+    providerInImport !== beforeImport.provider
+  ) {
     model = getProviderMeta(provider).defaultModel;
   }
 

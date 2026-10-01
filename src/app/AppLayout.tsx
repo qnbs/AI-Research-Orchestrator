@@ -11,7 +11,8 @@ import { SkipToContentLink } from '../components/SkipToContentLink';
 import { ContentSpinner, FullScreenSpinner } from './AppSpinners';
 import { useAppLogic } from './useAppLogic';
 import { AppViewRouter } from './AppViewRouter';
-import { OnboardingView, CommandPalette, QuickAddModal, AgentDebugger } from './lazyViews';
+import { OnboardingView, QuickAddModal, AgentDebugger } from './lazyViews';
+import CommandPalette from '../components/CommandPalette';
 import { useElementHeight } from '../hooks/useElementHeight';
 import { isDeveloperToolsEnabled } from '../store/slices/settingsSlice';
 
@@ -127,12 +128,17 @@ const AppLayout: React.FC = () => {
         inert={commandPaletteLocksBackground ? true : undefined}
       />
       {notification && (
-        <Notification
-          {...notification}
-          onClose={() => setNotification(null)}
-          position={settings.notifications.position}
-          duration={settings.notifications.duration}
-        />
+        <div
+          aria-hidden={commandPaletteLocksBackground ? true : undefined}
+          inert={commandPaletteLocksBackground ? true : undefined}
+        >
+          <Notification
+            {...notification}
+            onClose={() => setNotification(null)}
+            position={settings.notifications.position}
+            duration={settings.notifications.duration}
+          />
+        </div>
       )}
       {pendingNavigation && (
         <ConfirmationModal

@@ -11,7 +11,6 @@ export const ResearchView = lazy(() => import('../components/ResearchView'));
 export const AuthorsView = lazy(() => import('../components/AuthorsView'));
 export const OrchestratorView = lazy(() => import('../components/OrchestratorView'));
 export const HomeView = lazy(() => import('../components/HomeView'));
-export const CommandPalette = lazy(() => import('../components/CommandPalette'));
 export const QuickAddModal = lazy(() => import('../components/QuickAddModal'));
 export const JournalsView = lazy(() => import('../components/JournalsView'));
 export const CollectionsView = lazy(() => import('../components/CollectionsView'));

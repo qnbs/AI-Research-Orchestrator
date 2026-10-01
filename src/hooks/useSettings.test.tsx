@@ -143,8 +143,8 @@ describe('useSettings', () => {
       ...defaultSettings,
       ai: {
         ...defaultSettings.ai,
-        provider: 'ollama',
-        model: getProviderMeta('gemini').defaultModel,
+        provider: 'gemini',
+        model: 'gpt-5',
       },
     });
 
@@ -152,7 +152,24 @@ describe('useSettings', () => {
     renderHook(() => SettingsHydrator(), { wrapper: Wrapper });
 
     await waitFor(() => expect(store.getState().settings.isLoading).toBe(false));
-    expect(store.getState().settings.data.ai.provider).toBe('ollama');
-    expect(store.getState().settings.data.ai.model).toBe(getProviderMeta('ollama').defaultModel);
+    expect(store.getState().settings.data.ai.provider).toBe('gemini');
+    expect(store.getState().settings.data.ai.model).toBe(getProviderMeta('gemini').defaultModel);
+  });
+
+  it('SettingsHydrator keeps custom OpenAI model ids across reload', async () => {
+    vi.mocked(getSettingsFromDb).mockResolvedValueOnce({
+      ...defaultSettings,
+      ai: {
+        ...defaultSettings.ai,
+        provider: 'openai',
+        model: 'gpt-5-custom-preview',
+      },
+    });
+
+    const { store, Wrapper } = makeWrapper();
+    renderHook(() => SettingsHydrator(), { wrapper: Wrapper });
+
+    await waitFor(() => expect(store.getState().settings.isLoading).toBe(false));
+    expect(store.getState().settings.data.ai.model).toBe('gpt-5-custom-preview');
   });
 });
