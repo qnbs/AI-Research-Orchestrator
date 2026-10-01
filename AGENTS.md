@@ -19,7 +19,7 @@ Main features: Orchestrator pipeline, Knowledge Base (dedup, faceted filtering, 
 2. **`.cursor/index.mdc`** — always-on project manifest.
 3. **`.cursor/rules/*.mdc`** — contextual rules (Security, APIs, Architecture, UI, QA — numbering scheme in `000-cursor-rules.mdc`).
 4. **`docs/adr/`** — architecture decisions; see `docs/adr/README.md` for the full, current index (0001 state management … **0021** partial-report completion state).
-5. **`docs/ci-branch-governance.md`** + **`docs/pr-merge-gate.md`** + **`docs/project-facts.json`** — required CI checks, dual merge gate (CI + review quiescence including arrival wait), concurrency, ruleset expectations, drift-gated facts.
+5. **`docs/ci-branch-governance.md`** + **`docs/pr-merge-gate.md`** + **`docs/agent-execution-playbook.md`** + **`docs/project-facts.json`** — required CI checks, dual merge gate (CI + review quiescence including arrival wait), agent execution loop, concurrency, ruleset expectations, drift-gated facts.
 
 ## Technology Stack
 
@@ -139,4 +139,4 @@ pnpm run format                  # Prettier write (src + root md/json)
 
 ## Human Documentation Map
 
-- `README.md` — overview & setup (EN/DE) · `CONTRIBUTING.md` — workflow & PR expectations · `docs/pr-merge-gate.md` — dual merge gate (CI + review quiescence, arrival wait) · `CHANGELOG.md` (dated history of what actually shipped — prefer this and `git log`/open GitHub issues over a standalone self-audit doc for "what's left to do"), `SECURITY.md` (threat model) · `docs/` — ADRs, i18n reviews · `.notes/meeting_notes.md` — dated decision log for later sessions.
+- `README.md` — overview & setup (EN/DE) · `CONTRIBUTING.md` — workflow & PR expectations · `docs/pr-merge-gate.md` — dual merge gate (CI + review quiescence, arrival wait) · `docs/agent-execution-playbook.md` — cloud-agent execution loop (dev.to-adapted) · `CHANGELOG.md` (dated history of what actually shipped — prefer this and `git log`/open GitHub issues over a standalone self-audit doc for "what's left to do"), `SECURITY.md` (threat model) · `docs/` — ADRs, i18n reviews · `.notes/meeting_notes.md` — dated decision log for later sessions.

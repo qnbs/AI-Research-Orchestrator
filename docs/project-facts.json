@@ -71,6 +71,7 @@
     "claudeOnDemandWorkflow": true,
     "branchGovernancePath": "docs/ci-branch-governance.md",
     "mergeGatePath": "docs/pr-merge-gate.md",
+    "agentExecutionPlaybookPath": "docs/agent-execution-playbook.md",
     "rulesetName": "mainrules",
     "rulesetId": 20291814,
     "dismissStaleReviewsOnPushExpected": true,

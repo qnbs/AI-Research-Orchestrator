@@ -334,6 +334,42 @@ async function assertMergeGateFacts(facts, agents, errors, io) {
   assertMergeGatePointers(files, configuredPath, errors);
 }
 
+export function assertAgentPlaybookDocument(playbook, path, errors) {
+  const required = [
+    [/dual gate/i, `${path} must document the dual merge gate`],
+    [/evidence plane/i, `${path} must document evidence planes`],
+    [/fail closed/i, `${path} must document fail-closed merge policy`],
+    [/arrival wait/i, `${path} must document the arrival wait`],
+    [/disposition/i, `${path} must mention disposition comments`],
+  ];
+  for (const [pattern, message] of required) {
+    assertMatch(playbook, pattern, message, errors);
+  }
+}
+
+async function assertAgentExecutionPlaybookFacts(facts, agents, errors, io) {
+  if (!facts.ci?.agentExecutionPlaybookPath) {
+    errors.push('docs/project-facts.json ci.agentExecutionPlaybookPath is required');
+    return;
+  }
+  const configuredPath = facts.ci.agentExecutionPlaybookPath;
+  const playbook = await io.readOptional(configuredPath);
+  if (!playbook) {
+    errors.push(`Missing agent execution playbook: ${configuredPath}`);
+    return;
+  }
+  assertAgentPlaybookDocument(playbook, configuredPath, errors);
+  const claude = await io.read('CLAUDE.md');
+  assertMergeGatePointers(
+    [
+      { label: 'AGENTS.md', text: agents },
+      { label: 'CLAUDE.md', text: claude },
+    ],
+    configuredPath,
+    errors,
+  );
+}
+
 function assertGuardedCancelExpression(wf, cancelValue, errors) {
   if (isPullRequestOnlyCancelExpression(cancelValue)) return;
   errors.push(
@@ -558,6 +594,7 @@ export async function runProjectFactsChecks(errors, facts, io) {
   await assertClaudeReviewRemoved(facts, errors, readOptional);
   await assertBranchGovernanceDoc(facts, errors, readOptional);
   await assertMergeGateFacts(facts, agents, errors, { read, readOptional });
+  await assertAgentExecutionPlaybookFacts(facts, agents, errors, { read, readOptional });
   await assertConcurrencyGuards(facts, errors, readOptional, ROOT);
   assertDeepsourceAnalyzer(deepsource, facts, errors);
   assertCoverageThresholds(vitestConfig, agents, facts, errors);
