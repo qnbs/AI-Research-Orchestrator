@@ -167,3 +167,24 @@ Single open Dependabot PR; patch on a production sanitizer. Adopt PR: [#296](htt
 | PR   | Change                    | SemVer | Disposition                                                                                                                                                                                                                                                                                                                                                       | Validation / acceptance evidence                                                                                                                                                          | Status             |
 | ---- | ------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
 | #295 | dompurify 3.4.12 → 3.4.13 | Patch  | **Adopt.** Upstream 3.4.13 fixes hook removal during `IN_PLACE`, a hook clone-guard bypass, and `ownerDocument` clobbering during `IN_PLACE`. Call sites (`ReportDisplay`, `ChatInterface`, `ResearchResultsPanel`, `AuthorProfileView`, `exportText.stripHtmlTags`) use `sanitize` / `RETURN_DOM_FRAGMENT` only — no `IN_PLACE`, no `addHook`. Prefer the patch. | `typecheck` / `lint` / `format:check` on the bump commit; scoped Vitest for `ReportDisplay` + `exportService` HTML-strip path; #295 CI (deploy typecheck/lint/tests + Chromium E2E) green | Superseded by #296 |
+
+## 2026-10-01 — full Dependabot consolidation (rule 012)
+
+Consolidation PR: **#344** (`cursor/dependabot-d0-consolidation-d4f6`). Supersedes agent PRs #341–#343 and open Dependabot #314–#340 except deferred rows below.
+
+| PR                                | Change                               | Disposition                                                                                                 |
+| --------------------------------- | ------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
+| #337–#340                         | CodeQL action 4.37.9 → 4.38.2        | **Included** — SHA `2892aa5e…` in `security.yml`                                                            |
+| #331                              | pnpm/action-setup 6.0.10 → 6.1.0     | **Included** — SHA `ea17c68d…` all workflows                                                                |
+| #334                              | codecov-action 5.5.5 → 7.1.1         | **Included** — SHA `303a32d7…` in `deploy.yml`                                                              |
+| #314                              | deploy-pages 5.0.0 → 5.0.1           | **Included** — SHA `368f8252…`                                                                              |
+| #338                              | claude-code-action 1.0.210 → 1.0.235 | **Included** — SHA `756cc22e…`                                                                              |
+| #325                              | dompurify 3.4.13 → 3.4.14            | **Superseded** — consolidated at **3.4.16** (Wave C) + `minimumReleaseAgeExclude`                           |
+| #321                              | @google/genai → 2.21.0               | **Included** (^2.21.0, exclude for maturity gate)                                                           |
+| #319                              | openai → 7.10.0                      | **Superseded** — consolidated at **7.17.0** (mature)                                                        |
+| #326                              | Vitest 4 → 5                         | **Included** — vitest + `@vitest/coverage-v8` **5.0.3**; `setup.ts` uses `@testing-library/jest-dom/vitest` |
+| #317–#316, #315, #322, #318, #323 | dev patch minors                     | **Included**                                                                                                |
+| #324                              | framer-motion 13.x                   | **Deferred** — `minimumReleaseAge` blocked 13.x at consolidation; stay on 12.42.2                           |
+| Anthropic SDK bump                | 0.112 → 0.131                        | **Deferred** — immature at consolidation; stay ^0.112.3 until retry                                         |
+
+Also bundles audit baseline (#341), settings import P1 (#342), dead deps (#343).
