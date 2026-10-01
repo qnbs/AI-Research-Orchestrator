@@ -388,6 +388,24 @@ describe('agentEval', () => {
       expect: { rankedScoresDescending: true, minRankedArticles: 2 },
     });
     expect(fail.passed).toBe(false);
+    expect(fail.dimensions.find((d) => d.dimension === 'rankedCorpus')?.detail).toMatch(
+      /rank order broken/,
+    );
+  });
+
+  it('fails rankedScoresDescending when relevanceScore is missing', () => {
+    const result = evaluateCase({
+      id: 'rank-score-missing',
+      description: 'missing scores',
+      actual: {
+        rankedArticles: [{ pmid: '1', relevanceScore: 90 }, { pmid: '2' }],
+      },
+      expect: { rankedScoresDescending: true, minRankedArticles: 2 },
+    });
+    expect(result.passed).toBe(false);
+    expect(result.dimensions.find((d) => d.dimension === 'rankedCorpus')?.detail).toMatch(
+      /non-finite relevanceScore/,
+    );
   });
 
   it('requires mustRankPmids in rankedArticles', () => {

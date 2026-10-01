@@ -81,6 +81,112 @@ function getByPath(obj: unknown, path: string): unknown {
   }, obj);
 }
 
+function rankedArticlesFromActual(actual: unknown): {
+  rankedRaw: unknown[];
+  ranked: { pmid?: string; relevanceScore?: number }[];
+} {
+  const obj =
+    actual !== null && typeof actual === 'object' && !Array.isArray(actual)
+      ? (actual as Record<string, unknown>)
+      : null;
+  const rankedRaw = obj && Array.isArray(obj.rankedArticles) ? obj.rankedArticles : [];
+  const ranked = rankedRaw.filter(
+    (r): r is { pmid?: string; relevanceScore?: number } =>
+      r !== null && typeof r === 'object' && !Array.isArray(r),
+  );
+  return { rankedRaw, ranked };
+}
+
+function collectRankedCorpusFailures(actual: unknown, exp: EvalCase['expect']): string[] | null {
+  if (
+    !exp.rankedCorpusPmids?.length &&
+    !exp.mustRankPmids?.length &&
+    exp.minRankedArticles == null &&
+    !exp.rankedScoresDescending
+  ) {
+    return null;
+  }
+
+  const { rankedRaw, ranked } = rankedArticlesFromActual(actual);
+  const failures: string[] = [];
+
+  if (exp.rankedCorpusPmids?.length) {
+    const corpus = new Set(exp.rankedCorpusPmids);
+    const invalid = rankedRaw.filter((r) => {
+      if (!r || typeof r !== 'object' || Array.isArray(r)) return true;
+      const pmid = (r as { pmid?: unknown }).pmid;
+      return typeof pmid !== 'string' || pmid.trim().length === 0 || !corpus.has(pmid);
+    });
+    if (invalid.length) {
+      failures.push(
+        `out-of-corpus: ${invalid
+          .map((r) =>
+            r &&
+            typeof r === 'object' &&
+            !Array.isArray(r) &&
+            typeof (r as { pmid?: unknown }).pmid === 'string'
+              ? (r as { pmid: string }).pmid
+              : '<invalid>',
+          )
+          .join(', ')}`,
+      );
+    }
+  }
+
+  if (exp.minRankedArticles != null && ranked.length < exp.minRankedArticles) {
+    failures.push(`rankedCount=${ranked.length} required>=${exp.minRankedArticles}`);
+  }
+
+  if (exp.mustRankPmids?.length) {
+    const present = new Set(
+      ranked
+        .map((r) => r.pmid)
+        .filter((id): id is string => typeof id === 'string' && id.length > 0),
+    );
+    const missing = exp.mustRankPmids.filter((pmid) => !present.has(pmid));
+    if (missing.length) {
+      failures.push(`missing ranked PMIDs: ${missing.join(', ')}`);
+    }
+  }
+
+  if (exp.rankedScoresDescending && ranked.length > 1) {
+    const scores: number[] = [];
+    for (let i = 0; i < ranked.length; i += 1) {
+      const score = ranked[i].relevanceScore;
+      if (typeof score !== 'number' || !Number.isFinite(score)) {
+        failures.push(`missing or non-finite relevanceScore at index ${i}`);
+        break;
+      }
+      scores.push(score);
+    }
+    if (failures.length === 0) {
+      for (let i = 1; i < scores.length; i += 1) {
+        if (scores[i - 1] < scores[i]) {
+          failures.push(`rank order broken at index ${i}: ${scores[i - 1]} < ${scores[i]}`);
+          break;
+        }
+      }
+    }
+  }
+
+  return failures;
+}
+
+function evalMustMeshTerms(actual: unknown, exp: EvalCase['expect']): EvalDimensionResult | null {
+  if (!exp.mustMeshTerms?.length) return null;
+  const obj =
+    actual !== null && typeof actual === 'object' && !Array.isArray(actual)
+      ? (actual as Record<string, unknown>)
+      : null;
+  const terms = obj && Array.isArray(obj.meshTerms) ? (obj.meshTerms as string[]) : [];
+  const missing = exp.mustMeshTerms.filter((term) => !terms.includes(term));
+  return {
+    dimension: 'requiredFields',
+    passed: missing.length === 0,
+    detail: missing.length ? `missing meshTerms: ${missing.join(', ')}` : undefined,
+  };
+}
+
 /** Evaluate one offline fixture case. */
 export function evaluateCase(testCase: EvalCase): EvalCaseResult {
   const dimensions: EvalDimensionResult[] = [];
@@ -128,80 +234,17 @@ export function evaluateCase(testCase: EvalCase): EvalCaseResult {
     }
   }
 
-  if (
-    exp.rankedCorpusPmids?.length ||
-    exp.mustRankPmids?.length ||
-    exp.minRankedArticles != null ||
-    exp.rankedScoresDescending
-  ) {
-    const obj =
-      actual !== null && typeof actual === 'object' && !Array.isArray(actual)
-        ? (actual as Record<string, unknown>)
-        : null;
-    const rankedRaw = obj && Array.isArray(obj.rankedArticles) ? obj.rankedArticles : [];
-    const ranked = rankedRaw.filter(
-      (r): r is { pmid?: string } => r !== null && typeof r === 'object' && !Array.isArray(r),
-    );
-    const failures: string[] = [];
-
-    if (exp.rankedCorpusPmids?.length) {
-      const corpus = new Set(exp.rankedCorpusPmids);
-      const invalid = rankedRaw.filter((r) => {
-        if (!r || typeof r !== 'object' || Array.isArray(r)) return true;
-        const pmid = (r as { pmid?: unknown }).pmid;
-        return typeof pmid !== 'string' || pmid.trim().length === 0 || !corpus.has(pmid);
-      });
-      if (invalid.length) {
-        failures.push(
-          `out-of-corpus: ${invalid
-            .map((r) =>
-              r &&
-              typeof r === 'object' &&
-              !Array.isArray(r) &&
-              typeof (r as { pmid?: unknown }).pmid === 'string'
-                ? (r as { pmid: string }).pmid
-                : '<invalid>',
-            )
-            .join(', ')}`,
-        );
-      }
-    }
-
-    if (exp.minRankedArticles != null && ranked.length < exp.minRankedArticles) {
-      failures.push(`rankedCount=${ranked.length} required>=${exp.minRankedArticles}`);
-    }
-
-    if (exp.mustRankPmids?.length) {
-      const present = new Set(
-        ranked
-          .map((r) => r.pmid)
-          .filter((id): id is string => typeof id === 'string' && id.length > 0),
-      );
-      const missing = exp.mustRankPmids.filter((pmid) => !present.has(pmid));
-      if (missing.length) {
-        failures.push(`missing ranked PMIDs: ${missing.join(', ')}`);
-      }
-    }
-
-    if (exp.rankedScoresDescending && ranked.length > 1) {
-      for (let i = 1; i < ranked.length; i += 1) {
-        const prev = ranked[i - 1] as { relevanceScore?: number };
-        const cur = ranked[i] as { relevanceScore?: number };
-        const a = typeof prev.relevanceScore === 'number' ? prev.relevanceScore : -1;
-        const b = typeof cur.relevanceScore === 'number' ? cur.relevanceScore : -1;
-        if (a < b) {
-          failures.push(`rank order broken at index ${i}: ${a} < ${b}`);
-          break;
-        }
-      }
-    }
-
+  const rankedFailures = collectRankedCorpusFailures(actual, exp);
+  if (rankedFailures) {
     dimensions.push({
       dimension: 'rankedCorpus',
-      passed: failures.length === 0,
-      detail: failures.length ? failures.join('; ') : undefined,
+      passed: rankedFailures.length === 0,
+      detail: rankedFailures.length ? rankedFailures.join('; ') : undefined,
     });
   }
+
+  const meshDim = evalMustMeshTerms(actual, exp);
+  if (meshDim) dimensions.push(meshDim);
 
   const needsClaimMetrics =
     exp.maxUnsupportedClaimRate != null ||
@@ -391,20 +434,6 @@ export function evaluateCase(testCase: EvalCase): EvalCaseResult {
           : `validity=${citationValidity.toFixed(2)} completeness=${citationCompleteness.toFixed(2)} required=${requiredPresent}`,
       });
     }
-  }
-
-  if (exp.mustMeshTerms?.length) {
-    const obj =
-      actual !== null && typeof actual === 'object' && !Array.isArray(actual)
-        ? (actual as Record<string, unknown>)
-        : null;
-    const terms = obj && Array.isArray(obj.meshTerms) ? (obj.meshTerms as string[]) : [];
-    const missing = exp.mustMeshTerms.filter((term) => !terms.includes(term));
-    dimensions.push({
-      dimension: 'requiredFields',
-      passed: missing.length === 0,
-      detail: missing.length ? `missing meshTerms: ${missing.join(', ')}` : undefined,
-    });
   }
 
   if (exp.stringPath && (exp.minStringLength != null || exp.maxStringLength != null)) {
