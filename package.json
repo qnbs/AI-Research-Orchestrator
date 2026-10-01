@@ -63,7 +63,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.130.0",
-    "@google/genai": "^2.21.0",
+    "@google/genai": "^2.25.0",
     "@reduxjs/toolkit": "^2.13.0",
     "@tanstack/react-virtual": "^3.14.10",
     "dexie": "^4.4.6",
