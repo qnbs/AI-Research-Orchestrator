@@ -2,7 +2,7 @@
 
 **Repository:** `qnbs/AI-Research-Orchestrator`  
 **Capture SHA:** `d8da84b9dd8fa4a6a88af60fa05d1c814960cafc` (post Wave G on `main`)  
-**Execution prompt:** `docs/prompts/2026-10-02-cursor-composer-full-scale-audit-perfection-master-prompt.md` (Wave H handoff adds copy under `docs/prompts/` when #356 merges)
+**Execution prompt:** `docs/prompts/2026-10-02-cursor-composer-full-scale-audit-perfection-master-prompt.md` (landed with Wave H **#356** on `main`).
 
 This Phase-0 snapshot supplements the frozen **2026-10-01** baseline (`docs/audits/2026-10-01-full-scale-baseline.md`). It records verified gaps for Wave A+ without rewriting historical tables.
 

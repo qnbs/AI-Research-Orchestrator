@@ -36,5 +36,7 @@ describe('modelCatalog', () => {
   it('blocks known retired IDs from re-entering the blocklist test set', () => {
     expect(RETIRED_MODEL_IDS.has('claude-opus-4-1')).toBe(true);
     expect(RETIRED_MODEL_IDS.has('gemini-2.0-flash')).toBe(true);
+    expect(RETIRED_MODEL_IDS.has('gemini-3-pro-preview')).toBe(true);
+    expect(RETIRED_MODEL_IDS.has('claude-sonnet-4')).toBe(true);
   });
 });
