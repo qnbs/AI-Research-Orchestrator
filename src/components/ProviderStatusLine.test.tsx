@@ -8,6 +8,10 @@ const inference = vi.hoisted(() => ({
   mode: 'live' as string,
   reason: 'key' as string,
   provider: 'ollama' as string,
+  hasApiKey: true,
+  isOnline: true,
+  forceHeuristic: false,
+  retrieval: { pubmed: 'online' as 'online' | 'offline', arxiv: 'online' as 'online' | 'offline' },
 }));
 
 const settingsState = vi.hoisted(() => ({
@@ -15,8 +19,16 @@ const settingsState = vi.hoisted(() => ({
   customBaseUrl: '' as string,
 }));
 
-vi.mock('../hooks/useInferenceMode', () => ({
-  useInferenceMode: () => inference,
+vi.mock('../hooks/useResearchCapabilities', () => ({
+  useResearchCapabilities: () => ({
+    ...inference,
+    badgeLabel: 'Live',
+    isZeroCost: false,
+    refresh: async () => {},
+    providerReadiness: 'local-ai-ready',
+    canRunFullLiteratureReview: true,
+    canAnalyzeLocalContent: true,
+  }),
 }));
 
 vi.mock('../contexts/SettingsContext', () => ({
@@ -38,6 +50,7 @@ function renderOllamaStatus(model: string, customBaseUrl = '') {
   inference.mode = 'live';
   inference.reason = 'key';
   inference.provider = 'ollama';
+  inference.retrieval = { pubmed: 'online', arxiv: 'online' };
   return render(<ProviderStatusLine />);
 }
 
@@ -75,7 +88,22 @@ describe('ProviderStatusLine', () => {
     inference.mode = 'heuristic';
     inference.reason = 'no-key';
     inference.provider = 'heuristic';
+    inference.retrieval = { pubmed: 'online', arxiv: 'online' };
     render(<ProviderStatusLine />);
     expect(screen.queryByTestId('provider-status-ollama-privacy')).toBeNull();
+    expect(screen.getByTestId('provider-status-retrieval')).toHaveTextContent(
+      'provider.status.retrieval_online',
+    );
+  });
+
+  it('shows retrieval offline copy when the browser is offline', () => {
+    inference.mode = 'live';
+    inference.reason = 'offline';
+    inference.provider = 'gemini';
+    inference.retrieval = { pubmed: 'offline', arxiv: 'offline' };
+    render(<ProviderStatusLine />);
+    expect(screen.getByTestId('provider-status-retrieval')).toHaveTextContent(
+      'provider.status.retrieval_offline',
+    );
   });
 });

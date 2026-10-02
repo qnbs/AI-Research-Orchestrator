@@ -1,5 +1,5 @@
 import React from 'react';
-import { useInferenceMode } from '../hooks/useInferenceMode';
+import { useResearchCapabilities } from '../hooks/useResearchCapabilities';
 import { useTranslation } from '../hooks/useTranslation';
 import { useSettings } from '../contexts/SettingsContext';
 import type { View } from '../types/ui';
@@ -27,7 +27,7 @@ export function ollamaStatusModel(configured: string | undefined): string {
  * Compact AI-source line for Orchestrator / Quick research (NOW-P1-SETTINGS-01).
  */
 export const ProviderStatusLine: React.FC<ProviderStatusLineProps> = ({ onConfigure }) => {
-  const { mode, reason, provider } = useInferenceMode();
+  const { mode, reason, provider, retrieval } = useResearchCapabilities();
   const { settings } = useSettings();
   const { t } = useTranslation();
 
@@ -70,6 +70,12 @@ export const ProviderStatusLine: React.FC<ProviderStatusLineProps> = ({ onConfig
               : 'provider.status.ollama_privacy_remote',
           )}
         </p>
+      )}
+      {!liveOllama && retrieval.pubmed === 'online' && (
+        <p data-testid="provider-status-retrieval">{t('provider.status.retrieval_online')}</p>
+      )}
+      {retrieval.pubmed === 'offline' && (
+        <p data-testid="provider-status-retrieval">{t('provider.status.retrieval_offline')}</p>
       )}
     </div>
   );
