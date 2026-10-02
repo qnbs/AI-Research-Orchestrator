@@ -23,6 +23,9 @@ interface InputFormProps {
   defaultSettings: Settings['defaults'];
   prefilledTopic: string | null;
   onPrefillConsumed: () => void;
+  /** When editing an active brief, re-seed fields from the session input. */
+  seedInput?: ResearchInput | null;
+  onCancelEdit?: () => void;
 }
 
 const FORM_STATE_KEY = 'aiResearchFormState';
@@ -47,6 +50,8 @@ const InputFormComponent: React.FC<InputFormProps> = ({
   defaultSettings,
   prefilledTopic,
   onPrefillConsumed,
+  seedInput,
+  onCancelEdit,
 }) => {
   const [formData, setFormData] = useState<ResearchInput>(() => {
     try {
@@ -159,6 +164,31 @@ const InputFormComponent: React.FC<InputFormProps> = ({
       onPrefillConsumed();
     }
   }, [prefilledTopic, onPrefillConsumed]);
+
+  useEffect(() => {
+    if (!seedInput) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- external session brief re-opened for edit.
+    setFormData({
+      researchTopic: seedInput.researchTopic,
+      dateRange: seedInput.dateRange,
+      articleTypes: [...(seedInput.articleTypes ?? defaultSettings.defaultArticleTypes)],
+      synthesisFocus: seedInput.synthesisFocus,
+      maxArticlesToScan: restoreBoundedNumber(
+        seedInput.maxArticlesToScan,
+        defaultSettings.maxArticlesToScan,
+        MAX_ARTICLES_SCAN_MIN,
+        MAX_ARTICLES_SCAN_MAX,
+      ),
+      topNToSynthesize: restoreBoundedNumber(
+        seedInput.topNToSynthesize,
+        defaultSettings.topNToSynthesize,
+        TOP_N_SYNTHESIZE_MIN,
+        TOP_N_SYNTHESIZE_MAX,
+      ),
+      includeArxiv: Boolean(seedInput.includeArxiv),
+      educationalDemoMode: Boolean(seedInput.educationalDemoMode),
+    });
+  }, [seedInput, defaultSettings]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
@@ -321,6 +351,16 @@ const InputFormComponent: React.FC<InputFormProps> = ({
               {errors.topN}
             </p>
           )}
+
+          {seedInput && onCancelEdit ? (
+            <button
+              type="button"
+              onClick={onCancelEdit}
+              className="w-full py-2.5 px-4 text-sm font-medium rounded-lg border border-border text-text-primary bg-surface hover:bg-surface-hover focus-ring-aa touch-target-aa"
+            >
+              {t('orchestrator.brief.cancel_edit')}
+            </button>
+          ) : null}
 
           <button
             type="submit"

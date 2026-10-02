@@ -14,9 +14,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Heuristic eval (Wave G):** Expanded offline fixtures (PubMed validation, DE MeSH lay terms, demo-corpus rank bounds) in `heuristicEval.ts` (`check:agent-eval`); `agentEval` supports `mustMeshTerms` and `rankedScoresDescending`.
 - **Journey QA (Wave C):** `docs/audits/2026-10-02-journey-qa-evidence.md` — Phase-0 browser evidence (CI inventory + 2026-10-02 agent matrix).
 - **Heuristic eval (Wave C):** German stroke lay-term (`Schlaganfall`) → `Stroke` MeSH fixture.
+- **Orchestrator task state (Wave D):** `orchestratorTaskPhase.ts`, compact `ResearchBriefSummary` after submit; full compose form hidden during active runs (Edit criteria / New search).
 
 ### Changed
 
+- **Orchestrator UX (Wave D):** Report-first hierarchy during generate/stream/complete; collapsible criteria summary with EN+DE brief status lines.
 - **Capability state (Wave B):** `researchCapabilities.ts` separates inference readiness from PubMed/arXiv retrieval; `ProviderStatusLine` shows consistent online/offline retrieval notes (Ollama keeps existing privacy copy).
 - **Orchestrator i18n (Wave A):** Loading sub-phase lines and footer use `orchestratorTranslations` (EN+DE); footer copy avoids hard-coded “AI is…” wording.
 - **Supply chain (Wave H, #356):** Drop `minimumReleaseAgeExclude` for `vite@8.3.2` after the 1440m gate (~2026-10-02 **10:18 UTC**). `@google/genai@2.25.0` exclude dropped in #355 (~2026-10-01 22:53 UTC).
