@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Journey QA (Wave C):** `docs/audits/2026-10-02-journey-qa-evidence.md` — Phase-0 browser evidence (CI inventory + 2026-10-02 agent matrix).
 - **Heuristic eval (Wave C):** German stroke lay-term (`Schlaganfall`) → `Stroke` MeSH fixture.
 - **Orchestrator task state (Wave D):** `orchestratorTaskPhase.ts`, compact `ResearchBriefSummary` after submit; full compose form hidden during active runs (Edit criteria / New search).
-- **A11y state coverage (Wave E):** Blocking axe smoke for research brief / edit-criteria / cancel-edit; keyboard focus on brief actions (`a11y.spec.ts`, `keyboard-focus.spec.ts`); audit `docs/audits/2026-10-02-a11y-state-coverage.md`.
+- **Heuristic eval (Wave F):** Five new `check:agent-eval` fixtures (DE MI/diabetes, EN COVID/heart attack, COVID demo rank) + synthesis honesty tests; audit `docs/audits/2026-10-02-heuristic-eval-expansion.md`.
 
 ### Changed
 
