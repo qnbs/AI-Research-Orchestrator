@@ -283,3 +283,35 @@ describe('InputForm educationalDemoMode', () => {
     expect(document.getElementById('article-type-randomized-controlled-trial')).toBeTruthy();
   });
 });
+
+describe('InputForm brief edit', () => {
+  beforeEach(() => {
+    sessionStorage.clear();
+  });
+
+  it('shows cancel edit when seedInput and onCancelEdit are provided', () => {
+    const onCancelEdit = vi.fn();
+    render(
+      <InputForm
+        onSubmit={vi.fn()}
+        isLoading={false}
+        defaultSettings={defaults}
+        prefilledTopic={null}
+        onPrefillConsumed={vi.fn()}
+        seedInput={{
+          researchTopic: 'stroke',
+          dateRange: '5',
+          articleTypes: [],
+          synthesisFocus: 'overview',
+          maxArticlesToScan: 20,
+          topNToSynthesize: 5,
+          includeArxiv: false,
+          educationalDemoMode: false,
+        }}
+        onCancelEdit={onCancelEdit}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'orchestrator.brief.cancel_edit' }));
+    expect(onCancelEdit).toHaveBeenCalledTimes(1);
+  });
+});

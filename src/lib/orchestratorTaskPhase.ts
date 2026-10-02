@@ -7,16 +7,15 @@ export type OrchestratorTaskPhase =
 export function resolveOrchestratorTaskPhase(args: {
   reportStatus: ReportStatus;
   hasReport: boolean;
-  hasBrief: boolean;
+  /** Reserved for future brief-aware compose detection; idle always maps to compose. */
+  hasBrief?: boolean;
 }): OrchestratorTaskPhase {
-  const { reportStatus, hasReport, hasBrief } = args;
-  if (!hasBrief && reportStatus === 'idle') return 'compose';
+  const { reportStatus, hasReport } = args;
   if (reportStatus === 'generating') return 'running';
   if (reportStatus === 'streaming') return 'streaming';
   if (reportStatus === 'partial') return 'partial';
   if (reportStatus === 'error') return 'error';
   if (reportStatus === 'done' || hasReport) return 'complete';
-  if (reportStatus === 'idle' && hasBrief) return 'compose';
   return 'compose';
 }
 
@@ -51,11 +50,13 @@ export function shouldShowResearchBrief(args: {
   if (args.editingBrief) return false;
   const topic = args.researchTopic?.trim();
   if (!topic) return false;
-  if (args.reportStatus === 'generating' || args.reportStatus === 'streaming') return true;
-  if (args.hasReport) return true;
-  if (args.reportStatus === 'error') return true;
-  if (args.reportStatus === 'partial') return true;
-  return false;
+  return (
+    args.reportStatus === 'generating' ||
+    args.reportStatus === 'streaming' ||
+    args.reportStatus === 'partial' ||
+    args.reportStatus === 'error' ||
+    args.hasReport
+  );
 }
 
 export function shouldShowComposeForm(args: {

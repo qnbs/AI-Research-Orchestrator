@@ -25,6 +25,7 @@ interface InputFormProps {
   onPrefillConsumed: () => void;
   /** When editing an active brief, re-seed fields from the session input. */
   seedInput?: ResearchInput | null;
+  onCancelEdit?: () => void;
 }
 
 const FORM_STATE_KEY = 'aiResearchFormState';
@@ -50,6 +51,7 @@ const InputFormComponent: React.FC<InputFormProps> = ({
   prefilledTopic,
   onPrefillConsumed,
   seedInput,
+  onCancelEdit,
 }) => {
   const [formData, setFormData] = useState<ResearchInput>(() => {
     try {
@@ -349,6 +351,16 @@ const InputFormComponent: React.FC<InputFormProps> = ({
               {errors.topN}
             </p>
           )}
+
+          {seedInput && onCancelEdit ? (
+            <button
+              type="button"
+              onClick={onCancelEdit}
+              className="w-full py-2.5 px-4 text-sm font-medium rounded-lg border border-border text-text-primary bg-surface hover:bg-surface-hover focus-ring-aa touch-target-aa"
+            >
+              {t('orchestrator.brief.cancel_edit')}
+            </button>
+          ) : null}
 
           <button
             type="submit"

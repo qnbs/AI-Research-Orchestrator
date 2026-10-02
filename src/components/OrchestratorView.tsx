@@ -174,6 +174,7 @@ const OrchestratorViewComponent: React.FC<OrchestratorViewProps> = ({
           prefilledTopic={prefilledTopic}
           onPrefillConsumed={onPrefillConsumed}
           seedInput={editingBrief && researchInput ? researchInput : null}
+          onCancelEdit={editingBrief ? () => setEditingBrief(false) : undefined}
         />
       )}
 
