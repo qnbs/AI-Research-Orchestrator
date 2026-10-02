@@ -171,9 +171,11 @@ const PipelineTimeline: React.FC<{
   return (
     <div
       ref={scrollRef}
-      className="flex gap-2 overflow-x-auto snap-x snap-mandatory py-3 mt-4 -mx-4 px-4"
+      className="flex gap-2 overflow-x-auto snap-x snap-mandatory py-3 mt-4 -mx-4 px-4 focus-ring-aa"
       style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
       role="list"
+      // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- axe scrollable-region-focusable; keyboard users must reach overflow timeline
+      tabIndex={0}
       aria-label={t('chrome.loading.pipeline_phases')}
     >
       {phases.map((phase, i) => {
@@ -187,9 +189,9 @@ const PipelineTimeline: React.FC<{
             data-active={isActive}
             role="listitem"
             aria-current={isActive ? 'step' : undefined}
-            initial={{ opacity: 0, y: 8, scale: 0.9 }}
+            initial={false}
             animate={{
-              opacity: isPending ? 0.45 : 1,
+              opacity: 1,
               y: 0,
               scale: isActive ? 1.06 : 1,
             }}
@@ -203,7 +205,7 @@ const PipelineTimeline: React.FC<{
               isActive
                 ? 'border-brand-accent/60 bg-brand-accent/10 text-brand-accent shadow-glow'
                 : '',
-              isPending ? 'border-border/25 bg-surface/20 text-text-secondary/50' : '',
+              isPending ? 'border-border/40 bg-surface/30 text-text-secondary' : '',
             ].join(' ')}
           >
             <span className="text-base leading-none">{isDone ? '✓' : phaseIcon(i)}</span>
@@ -330,7 +332,7 @@ export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
           <p className="text-[10px] text-text-secondary/50 mt-1 md:hidden">{swipeHintText}</p>
         )}
 
-        {footerText && <p className="text-xs text-text-secondary/70 mt-4">{footerText}</p>}
+        {footerText && <p className="text-xs text-text-secondary mt-4">{footerText}</p>}
 
         {cancel && (
           <button

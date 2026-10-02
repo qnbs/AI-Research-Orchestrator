@@ -1,4 +1,6 @@
 import { test, expect, type Page, type Locator } from '@playwright/test';
+import { mockGeminiUnavailable, mockPubMedRoutes } from './fixtures/networkMocks';
+import { waitForResearchBriefSummary } from './a11yHelpers';
 
 /**
  * WS-E keyboard focus walk — focused controls gain a focus-specific
@@ -133,5 +135,31 @@ test.describe('Keyboard focus visibility (WS-E)', () => {
     for (let i = 0; i < 5; i++) {
       await expectTabFocusIndicator(page, `tab stop ${i + 1}`);
     }
+  });
+});
+
+test.describe('Keyboard focus — orchestrator research brief (WS-E)', () => {
+  test.beforeEach(async ({ page }) => {
+    await mockPubMedRoutes(page);
+    await mockGeminiUnavailable(page);
+    await skipOnboarding(page);
+  });
+
+  test('research brief actions show focus rings after run', async ({ page }) => {
+    test.setTimeout(90_000);
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await waitForResearchBriefSummary(page, 'aspirin stroke prevention');
+    await page
+      .getByRole('heading', { name: /Research Report|Forschungsbericht/i })
+      .waitFor({ state: 'visible', timeout: 60_000 });
+    const brief = page.getByTestId('research-brief-summary');
+    await expectFocusIndicator(
+      brief.getByRole('button', { name: /edit criteria|kriterien bearbeiten/i }),
+      'research brief edit criteria',
+    );
+    await expectFocusIndicator(
+      brief.getByRole('button', { name: /^new search$|^neue suche$/i }),
+      'research brief new search',
+    );
   });
 });
