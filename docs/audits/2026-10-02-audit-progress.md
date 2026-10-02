@@ -26,6 +26,6 @@ This addendum records disposition of Phase-0 baseline findings verified on curre
 3. **Wave C (#359)** — journey QA evidence — **merged** (`0067383`).
 4. **Wave D (#360)** — orchestrator task-state brief + compose hiding — **merged** (`e7a6c64`).
 5. **§11 release/truth** — GitHub Release `v0.4.3` body aligned to tag `5ae99748`; audit `docs/audits/2026-10-02-release-truth.md`.
-6. **Wave E (#362)** — a11y state coverage — **merging**.
+6. **Wave E (#362)** — a11y state coverage — **merged** (see `main` after squash).
 7. Heuristic eval corpus expansion (`check:agent-eval`) — ongoing.
 8. Maintainer-only governance (ruleset, topics).
