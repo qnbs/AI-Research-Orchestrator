@@ -15,9 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Journey QA (Wave C):** `docs/audits/2026-10-02-journey-qa-evidence.md` — Phase-0 browser evidence (CI inventory + 2026-10-02 agent matrix).
 - **Heuristic eval (Wave C):** German stroke lay-term (`Schlaganfall`) → `Stroke` MeSH fixture.
 - **Orchestrator task state (Wave D):** `orchestratorTaskPhase.ts`, compact `ResearchBriefSummary` after submit; full compose form hidden during active runs (Edit criteria / New search).
+- **A11y state coverage (Wave E):** Blocking axe smoke for research brief / edit-criteria / cancel-edit; keyboard focus on brief actions (`a11y.spec.ts`, `keyboard-focus.spec.ts`); audit `docs/audits/2026-10-02-a11y-state-coverage.md`.
 
 ### Changed
 
+- **Loading pipeline a11y (Wave E):** Orchestrator loading timeline meets contrast and keyboard scroll expectations (`LoadingIndicator` — focusable phase list, pending chip copy, footer text).
 - **Orchestrator UX (Wave D):** Report-first hierarchy during generate/stream/complete; collapsible criteria summary with EN+DE brief status lines.
 - **Capability state (Wave B):** `researchCapabilities.ts` separates inference readiness from PubMed/arXiv retrieval; `ProviderStatusLine` shows consistent online/offline retrieval notes (Ollama keeps existing privacy copy).
 - **Orchestrator i18n (Wave A):** Loading sub-phase lines and footer use `orchestratorTranslations` (EN+DE); footer copy avoids hard-coded “AI is…” wording.

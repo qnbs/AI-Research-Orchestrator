@@ -37,6 +37,28 @@ export const navigateToViewHash = async (page: Page, viewHash: string): Promise<
   await page.waitForTimeout(1_500);
 };
 
+/** Orchestrator compose form (topic field visible). */
+export const openOrchestratorCompose = async (page: Page): Promise<void> => {
+  await navigateToViewHash(page, '#orchestrator');
+  await page
+    .getByRole('textbox', { name: /primary research topic|primäres forschungsthema/i })
+    .waitFor({ state: 'visible', timeout: 15_000 });
+};
+
+/**
+ * Submit a topic and wait for the post-submit Research brief (Wave D task-state UX).
+ * Caller must install network mocks before navigation (heuristic + optional PubMed).
+ */
+export const waitForResearchBriefSummary = async (page: Page, topic: string): Promise<void> => {
+  await openOrchestratorCompose(page);
+  const topicField = page.getByRole('textbox', {
+    name: /primary research topic|primäres forschungsthema/i,
+  });
+  await topicField.fill(topic);
+  await page.locator('button[type="submit"]').first().click();
+  await page.getByTestId('research-brief-summary').waitFor({ state: 'visible', timeout: 60_000 });
+};
+
 /**
  * Fail on critical/serious axe findings inside `#root` (WCAG 2 A/AA tags only).
  * Moderate/minor noise is intentionally ignored — see meeting notes / P1-5.
