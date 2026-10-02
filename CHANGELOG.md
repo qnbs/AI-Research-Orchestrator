@@ -10,10 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Audit handoff (2026-10-02):** `docs/prompts/2026-10-02-cursor-composer-full-scale-audit-perfection-master-prompt.md` and progress addendum `docs/audits/2026-10-02-audit-progress.md` (baseline finding disposition).
+- **Model catalog (Wave A):** `src/services/providers/modelCatalog.ts` with retired-ID blocklist, `docs/model-catalog-policy.md`, and regression tests; Phase-0 audit snapshot `docs/audits/2026-10-02-full-scale-product-and-engineering-audit.md`.
 - **Heuristic eval (Wave G):** Expanded offline fixtures (PubMed validation, DE MeSH lay terms, demo-corpus rank bounds) in `heuristicEval.ts` (`check:agent-eval`); `agentEval` supports `mustMeshTerms` and `rankedScoresDescending`.
 
 ### Changed
 
+- **Orchestrator i18n (Wave A):** Loading sub-phase lines and footer use `orchestratorTranslations` (EN+DE); footer copy avoids hard-coded “AI is…” wording.
 - **Supply chain (Wave H, #356):** Drop `minimumReleaseAgeExclude` for `vite@8.3.2` after the 1440m gate (~2026-10-02 **10:18 UTC**). `@google/genai@2.25.0` exclude dropped in #355 (~2026-10-01 22:53 UTC).
 
 - **CI (Wave F):** `anthropics/claude-code-action` pinned to **v1.0.236** (`8ce9314…`) in `.github/workflows/claude.yml` (supersedes Dependabot #338).

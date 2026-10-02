@@ -48,48 +48,15 @@ interface OrchestratorViewProps {
   onDiscardCheckpoint: (id: string) => void;
 }
 
-/** Legacy live-path sub-phase guidance (pre-existing English chrome). */
-const LEGACY_PHASE_DETAILS: Record<string, string[]> = {
-  'query-generation': [
-    'Analyzing research topic and user criteria...',
-    'AI is constructing advanced boolean search strings...',
-    'Optimizing queries for relevance...',
-  ],
-  'pubmed-search': [
-    'Connecting to live NCBI PubMed database...',
-    'Submitting best query to retrieve article IDs...',
-    'Compiling list of relevant publications...',
-  ],
-  'pubmed-fetch': [
-    'Requesting abstracts and metadata for found articles...',
-    'Parsing publication data (titles, authors, journals)...',
-    'Preparing real-world data for AI analysis...',
-  ],
-  curation: [
-    'Deduplicating PubMed and arXiv hits...',
-    'Cleaning metadata and classifying article types...',
-    'Preparing the curated corpus for ranking...',
-  ],
-  'arxiv-fetch': [
-    'Querying arXiv for matching preprints...',
-    'Merging preprint metadata into the corpus...',
-  ],
-  ranking: [
-    'AI is reading and scoring each article for relevance...',
-    'Writing relevance explanations based on content...',
-    'Identifying key themes and generating insights...',
-  ],
-  synthesis: [
-    'Selecting top articles for the executive summary...',
-    'Preparing final prompt for narrative synthesis...',
-    'Initializing streaming connection with AI...',
-  ],
-  'synthesis-stream': [
-    'Receiving synthesized text in real-time...',
-    'Building the narrative summary chunk by chunk...',
-  ],
-  finalizing: ['Assembling final report structure...', 'Finishing up...'],
-};
+function orchestratorSubphaseLines(
+  t: ReturnType<typeof useTranslation>['t'],
+  stem: string,
+  count: number,
+): string[] {
+  return Array.from({ length: count }, (_, index) =>
+    t(`orchestrator.subphase.${stem}.${index + 1}` as Parameters<typeof t>[0]),
+  );
+}
 
 const OrchestratorViewComponent: React.FC<OrchestratorViewProps> = ({
   reportStatus,
@@ -133,7 +100,15 @@ const OrchestratorViewComponent: React.FC<OrchestratorViewProps> = ({
   ];
 
   const phaseDetailsById: Record<string, string[]> = {
-    ...LEGACY_PHASE_DETAILS,
+    'query-generation': orchestratorSubphaseLines(t, 'query_generation', 3),
+    'pubmed-search': orchestratorSubphaseLines(t, 'pubmed_search', 3),
+    'pubmed-fetch': orchestratorSubphaseLines(t, 'pubmed_fetch', 3),
+    curation: orchestratorSubphaseLines(t, 'curation', 3),
+    'arxiv-fetch': orchestratorSubphaseLines(t, 'arxiv_fetch', 2),
+    ranking: orchestratorSubphaseLines(t, 'ranking', 3),
+    synthesis: orchestratorSubphaseLines(t, 'synthesis', 3),
+    'synthesis-stream': orchestratorSubphaseLines(t, 'synthesis_stream', 2),
+    finalizing: orchestratorSubphaseLines(t, 'finalizing', 2),
     retrieval: [
       t('orchestrator.subphase.retrieval.1'),
       t('orchestrator.subphase.retrieval.2'),
@@ -202,7 +177,7 @@ const OrchestratorViewComponent: React.FC<OrchestratorViewProps> = ({
           phases={loadingPhases}
           phaseDetails={phaseDetailsById}
           timelineIndex={timelineIndex}
-          footerText="This may take up to a minute. The AI is performing multiple complex steps, including live database searches and synthesis."
+          footerText={t('orchestrator.loading.footer')}
           cancel={{ label: t('orchestrator.cancel.button'), onClick: handleCancelResearch }}
         />
       )}
