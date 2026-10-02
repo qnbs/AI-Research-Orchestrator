@@ -393,7 +393,7 @@ The repository still suggested values approximately like:
 Current official Anthropic platform material at prompt creation indicated:
 
 - Claude Opus 4.1 was retired;
-- Claude Sonnet 4.5 was deprecated;
+- Claude Sonnet 4 was retired; Claude Sonnet 4.5 remained active;
 - newer Sonnet/Opus families were available.
 
 Again, a curated UI must not suggest retired IDs.
