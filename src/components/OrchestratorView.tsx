@@ -1,10 +1,11 @@
-import React, { memo } from 'react';
+import React, { memo, useCallback, useState } from 'react';
 import { InputForm } from './InputForm';
 import { ReportDisplay } from './ReportDisplay';
 import { LoadingIndicator } from './LoadingIndicator';
 import { OrchestratorDashboard } from './OrchestratorDashboard';
 import { Welcome } from './Welcome';
 import { CheckpointResumeBanner } from './CheckpointResumeBanner';
+import { ResearchBriefSummary } from './ResearchBriefSummary';
 import {
   ResearchInput,
   ResearchReport,
@@ -17,6 +18,7 @@ import type { ResearchCheckpoint } from '../lib/researchCheckpoint';
 import { useKnowledgeBase } from '../contexts/KnowledgeBaseContext';
 import { useTranslation } from '../hooks/useTranslation';
 import { XIcon } from './icons/XIcon';
+import { shouldShowComposeForm, shouldShowResearchBrief } from '../lib/orchestratorTaskPhase';
 
 interface OrchestratorViewProps {
   reportStatus: ReportStatus;
@@ -88,6 +90,7 @@ const OrchestratorViewComponent: React.FC<OrchestratorViewProps> = ({
 }) => {
   const { knowledgeBase } = useKnowledgeBase();
   const { t } = useTranslation();
+  const [editingBrief, setEditingBrief] = useState(false);
 
   const loadingPhases = [
     t('orchestrator.phase1'),
@@ -134,16 +137,57 @@ const OrchestratorViewComponent: React.FC<OrchestratorViewProps> = ({
     (reportStatus === 'streaming' || reportStatus === 'done' || reportStatus === 'partial') &&
     report;
   const showResumeBanner = !isProcessing && resumeCheckpoints.length > 0;
+  const hasReport = Boolean(showReport);
+  const showBrief = shouldShowResearchBrief({
+    researchTopic: researchInput?.researchTopic,
+    reportStatus,
+    hasReport,
+    editingBrief,
+  });
+  const showComposeForm = shouldShowComposeForm({
+    showBrief,
+    editingBrief,
+    reportStatus,
+    hasReport: Boolean(report),
+  });
+
+  const onFormSubmit = useCallback(
+    (data: ResearchInput) => {
+      setEditingBrief(false);
+      handleFormSubmit(data);
+    },
+    [handleFormSubmit],
+  );
+
+  const onNewSearchFromBrief = useCallback(() => {
+    setEditingBrief(false);
+    handleNewSearch();
+  }, [handleNewSearch]);
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
-      <InputForm
-        onSubmit={handleFormSubmit}
-        isLoading={isProcessing}
-        defaultSettings={settings.defaults}
-        prefilledTopic={prefilledTopic}
-        onPrefillConsumed={onPrefillConsumed}
-      />
+      {showComposeForm && (
+        <InputForm
+          onSubmit={onFormSubmit}
+          isLoading={isProcessing}
+          defaultSettings={settings.defaults}
+          prefilledTopic={prefilledTopic}
+          onPrefillConsumed={onPrefillConsumed}
+          seedInput={editingBrief && researchInput ? researchInput : null}
+        />
+      )}
+
+      {showBrief && researchInput && (
+        <ResearchBriefSummary
+          input={researchInput}
+          reportStatus={reportStatus}
+          hasReport={hasReport}
+          isSaved={isCurrentReportSaved}
+          isProcessing={isProcessing}
+          onEdit={() => setEditingBrief(true)}
+          onNewSearch={onNewSearchFromBrief}
+        />
+      )}
 
       {showResumeBanner && (
         <CheckpointResumeBanner

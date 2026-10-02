@@ -23,6 +23,7 @@ This addendum records disposition of Phase-0 baseline findings verified on curre
 
 1. **Wave A (#357)** — model catalog + orchestrator loading i18n — **merged** (`6caa00c`).
 2. **Wave B (#358)** — capability matrix + retrieval status copy — **merged** (`7240bc7`).
-3. **Wave C** — journey QA evidence — **#359** (`docs/audits/2026-10-02-journey-qa-evidence.md` + agent artifacts).
-4. Heuristic eval corpus expansion (`check:agent-eval`) — ongoing in Wave C.
-5. Maintainer-only governance (ruleset, topics).
+3. **Wave C (#359)** — journey QA evidence — **merged** (`0067383`).
+4. **Wave D** — orchestrator task-state brief + compose hiding — **in PR** (`cursor/wave-d-task-state-d4f6`).
+5. Heuristic eval corpus expansion (`check:agent-eval`) — ongoing in Wave C.
+6. Maintainer-only governance (ruleset, topics).
