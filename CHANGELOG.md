@@ -9,22 +9,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+## [0.4.4] - 2026-10-02
+
+> Composer 2.5 audit on `main` after tag `v0.4.3` (`5ae99748`): Waves **A–F**, **H**, release-truth (#357–#363, #356, #361). See `docs/audits/2026-10-02-audit-progress.md`.
+
+### Added
+
 - **Audit handoff (2026-10-02):** `docs/prompts/2026-10-02-cursor-composer-full-scale-audit-perfection-master-prompt.md` and progress addendum `docs/audits/2026-10-02-audit-progress.md` (baseline finding disposition).
 - **Model catalog (Wave A):** `src/services/providers/modelCatalog.ts` with retired-ID blocklist, `docs/model-catalog-policy.md`, and regression tests; Phase-0 audit snapshot `docs/audits/2026-10-02-full-scale-product-and-engineering-audit.md`.
 - **Heuristic eval (Wave G):** Expanded offline fixtures (PubMed validation, DE MeSH lay terms, demo-corpus rank bounds) in `heuristicEval.ts` (`check:agent-eval`); `agentEval` supports `mustMeshTerms` and `rankedScoresDescending`.
 - **Journey QA (Wave C):** `docs/audits/2026-10-02-journey-qa-evidence.md` — Phase-0 browser evidence (CI inventory + 2026-10-02 agent matrix).
 - **Heuristic eval (Wave C):** German stroke lay-term (`Schlaganfall`) → `Stroke` MeSH fixture.
 - **Orchestrator task state (Wave D):** `orchestratorTaskPhase.ts`, compact `ResearchBriefSummary` after submit; full compose form hidden during active runs (Edit criteria / New search).
+- **A11y state coverage (Wave E):** Blocking axe smoke for research brief / edit-criteria / cancel-edit; keyboard focus on brief actions; audit `docs/audits/2026-10-02-a11y-state-coverage.md`.
 - **Heuristic eval (Wave F):** Five new `check:agent-eval` fixtures (DE MI/diabetes, EN COVID/heart attack, COVID demo rank) + synthesis honesty tests; audit `docs/audits/2026-10-02-heuristic-eval-expansion.md`.
+- **Release truth (§11):** `docs/audits/2026-10-02-release-truth.md`; GitHub Release `v0.4.3` notes aligned to tag `5ae99748`.
 
 ### Changed
 
-- **Loading pipeline a11y (Wave E):** Orchestrator loading timeline meets contrast and keyboard scroll expectations (`LoadingIndicator` — focusable phase list, pending chip copy, footer text).
+- **Loading pipeline a11y (Wave E):** Orchestrator loading timeline meets contrast and keyboard scroll expectations (`LoadingIndicator`).
 - **Orchestrator UX (Wave D):** Report-first hierarchy during generate/stream/complete; collapsible criteria summary with EN+DE brief status lines.
 - **Capability state (Wave B):** `researchCapabilities.ts` separates inference readiness from PubMed/arXiv retrieval; `ProviderStatusLine` shows consistent online/offline retrieval notes (Ollama keeps existing privacy copy).
 - **Orchestrator i18n (Wave A):** Loading sub-phase lines and footer use `orchestratorTranslations` (EN+DE); footer copy avoids hard-coded “AI is…” wording.
 - **Supply chain (Wave H, #356):** Drop `minimumReleaseAgeExclude` for `vite@8.3.2` after the 1440m gate (~2026-10-02 **10:18 UTC**). `@google/genai@2.25.0` exclude dropped in #355 (~2026-10-01 22:53 UTC).
-
 - **CI (Wave F):** `anthropics/claude-code-action` pinned to **v1.0.236** (`8ce9314…`) in `.github/workflows/claude.yml` (supersedes Dependabot #338).
 - **Security:** `pnpm.overrides.basic-ftp` **6.2.1** (GHSA-c475-qrg2-pj4r; `@lhci/cli` transitive only).
 
@@ -485,7 +494,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - DevContainer support for GitHub Codespaces
 - Vitest unit tests + Playwright E2E test infrastructure
 
-[Unreleased]: https://github.com/qnbs/AI-Research-Orchestrator/compare/v0.4.3...HEAD
+[Unreleased]: https://github.com/qnbs/AI-Research-Orchestrator/compare/v0.4.4...HEAD
+[0.4.4]: https://github.com/qnbs/AI-Research-Orchestrator/compare/v0.4.3...v0.4.4
 [0.4.3]: https://github.com/qnbs/AI-Research-Orchestrator/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/qnbs/AI-Research-Orchestrator/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/qnbs/AI-Research-Orchestrator/compare/v0.4.0...v0.4.1
