@@ -21,6 +21,8 @@ This addendum records disposition of Phase-0 baseline findings verified on curre
 
 ## Next justified slices (Composer 2.5 master prompt)
 
-1. Live-site / journey QA evidence (Phase-0 gap: no recorded browser matrix on baseline capture).
-2. Expand heuristic eval corpus where product-truth gaps remain (ongoing).
-3. Maintainer-only governance items above when PAT available.
+1. **Wave A (#357)** — model catalog + orchestrator loading i18n — **merged** (`6caa00c`).
+2. **Wave B (#358)** — capability matrix + retrieval status copy — **open PR**.
+3. Live-site / journey QA evidence (Phase-0 gap).
+4. Heuristic eval corpus expansion (`check:agent-eval`).
+5. Maintainer-only governance (ruleset, topics).
