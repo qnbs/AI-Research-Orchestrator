@@ -29,6 +29,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.4.3] - 2026-10-01
 
 > Post-audit consolidation: Dependabot #344, Waves D–F (#345–#349), agent playbook (#348), Node 24 CI, Vite 8.3.2, GenAI 2.25.0, OpenAI 7.25.0.
+>
+> **Release truth (2026-10-02):** Tag `v0.4.3` → `5ae99748`. GitHub Release notes were corrected to match this tag only; post-tag audit work stays in `[Unreleased]` until the next semver cut (`docs/audits/2026-10-02-release-truth.md`).
 
 ### Changed
 
