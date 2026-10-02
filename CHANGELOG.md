@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Audit handoff (2026-10-02):** `docs/prompts/2026-10-02-cursor-composer-full-scale-audit-perfection-master-prompt.md` and progress addendum `docs/audits/2026-10-02-audit-progress.md` (baseline finding disposition).
+- **Heuristic eval (Wave G):** Expanded offline fixtures (PubMed validation, DE MeSH lay terms, demo-corpus rank bounds) in `heuristicEval.ts` (`check:agent-eval`); `agentEval` supports `mustMeshTerms` and `rankedScoresDescending`.
 
 ### Changed
 
