@@ -11,6 +11,14 @@ import type {
   ProviderMeta,
 } from './types';
 import { heuristicProviderCapabilities, providerCapabilities } from './types';
+import {
+  ANTHROPIC_DEFAULT_MODEL,
+  ANTHROPIC_MODEL_SUGGESTIONS,
+  GEMINI_DEFAULT_MODEL,
+  GEMINI_MODEL_SUGGESTIONS,
+  OPENAI_DEFAULT_MODEL,
+  OPENAI_MODEL_SUGGESTIONS,
+} from './modelCatalog';
 
 /**
  * Transport-level abstraction for an AI backend.
@@ -56,13 +64,8 @@ export const AI_PROVIDERS: Record<AIProviderSelection, ProviderMeta> = {
   gemini: {
     id: 'gemini',
     label: 'Google Gemini',
-    defaultModel: 'gemini-2.5-flash',
-    modelSuggestions: [
-      'gemini-2.5-flash',
-      'gemini-3-pro-preview',
-      'gemini-2.5-pro',
-      'gemini-2.0-flash',
-    ],
+    defaultModel: GEMINI_DEFAULT_MODEL,
+    modelSuggestions: [...GEMINI_MODEL_SUGGESTIONS],
     capabilities: providerCapabilities({
       webGrounding: true,
       structuredOutput: { nativeJsonSchema: true },
@@ -74,8 +77,8 @@ export const AI_PROVIDERS: Record<AIProviderSelection, ProviderMeta> = {
   openai: {
     id: 'openai',
     label: 'OpenAI',
-    defaultModel: 'gpt-5',
-    modelSuggestions: ['gpt-5', 'gpt-5-mini', 'gpt-4.1', 'gpt-4.1-mini', 'o3', 'o4-mini'],
+    defaultModel: OPENAI_DEFAULT_MODEL,
+    modelSuggestions: [...OPENAI_MODEL_SUGGESTIONS],
     capabilities: providerCapabilities({
       supportsCustomBaseUrl: true,
       structuredOutput: { jsonObjectMode: true, nativeJsonSchema: false },
@@ -88,8 +91,8 @@ export const AI_PROVIDERS: Record<AIProviderSelection, ProviderMeta> = {
   anthropic: {
     id: 'anthropic',
     label: 'Anthropic',
-    defaultModel: 'claude-sonnet-4-5',
-    modelSuggestions: ['claude-sonnet-4-5', 'claude-opus-4-1', 'claude-haiku-4-5'],
+    defaultModel: ANTHROPIC_DEFAULT_MODEL,
+    modelSuggestions: [...ANTHROPIC_MODEL_SUGGESTIONS],
     capabilities: providerCapabilities({
       supportsCustomBaseUrl: true,
       structuredOutput: { jsonObjectMode: true, nativeJsonSchema: false },
