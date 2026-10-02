@@ -97,6 +97,18 @@ export function heuristicEvalFixtures(): EvalCase[] {
       },
     },
     {
+      id: 'heuristic-query-de-stroke',
+      description: 'German lay stroke maps to Stroke MeSH',
+      actual: buildQuery('Schlaganfall Prävention'),
+      expect: {
+        type: 'object',
+        requiredKeys: ['query', 'meshTerms'],
+        mustMeshTerms: ['Stroke'],
+        minStringLength: 8,
+        stringPath: 'query',
+      },
+    },
+    {
       id: 'heuristic-ranked-corpus',
       description: 'Ranked PMIDs stay inside the demo corpus',
       actual: { rankedArticles: ranked },

@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Audit handoff (2026-10-02):** `docs/prompts/2026-10-02-cursor-composer-full-scale-audit-perfection-master-prompt.md` and progress addendum `docs/audits/2026-10-02-audit-progress.md` (baseline finding disposition).
 - **Model catalog (Wave A):** `src/services/providers/modelCatalog.ts` with retired-ID blocklist, `docs/model-catalog-policy.md`, and regression tests; Phase-0 audit snapshot `docs/audits/2026-10-02-full-scale-product-and-engineering-audit.md`.
 - **Heuristic eval (Wave G):** Expanded offline fixtures (PubMed validation, DE MeSH lay terms, demo-corpus rank bounds) in `heuristicEval.ts` (`check:agent-eval`); `agentEval` supports `mustMeshTerms` and `rankedScoresDescending`.
+- **Journey QA (Wave C):** `docs/audits/2026-10-02-journey-qa-evidence.md` — Phase-0 browser evidence (CI inventory + 2026-10-02 agent matrix).
+- **Heuristic eval (Wave C):** German stroke lay-term (`Schlaganfall`) → `Stroke` MeSH fixture.
 
 ### Changed
 
