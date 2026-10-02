@@ -8,20 +8,26 @@ This Phase-0 snapshot supplements the frozen **2026-10-01** baseline (`docs/audi
 
 ## P1 — Settings model catalog drift
 
-| Finding                                                                           | Evidence                                        | Wave                                   |
-| --------------------------------------------------------------------------------- | ----------------------------------------------- | -------------------------------------- |
-| Curated Gemini suggestions included `gemini-3-pro-preview` and `gemini-2.0-flash` | `src/services/providers/provider.ts` pre–Wave A | **A** — `modelCatalog.ts` + policy doc |
-| Curated Anthropic suggestions included retired `claude-opus-4-1`                  | same                                            | **A**                                  |
-| No regression guard for reintroducing retired IDs                                 | missing test                                    | **A** — `modelCatalog.test.ts`         |
+| Finding                                                                           | Evidence                 | Wave            |
+| --------------------------------------------------------------------------------- | ------------------------ | --------------- |
+| Curated Gemini suggestions included `gemini-3-pro-preview` and `gemini-2.0-flash` | `provider.ts` pre–Wave A | **Done (#357)** |
+| Curated Anthropic suggestions included retired `claude-opus-4-1`                  | same                     | **Done (#357)** |
+| No regression guard for reintroducing retired IDs                                 | missing test             | **Done (#357)** |
 
 Defaults remain **`gemini-2.5-flash`** and **`claude-sonnet-4-5`** (cost-aware; no automatic flagship bump).
 
 ## P1 — Orchestrator loading copy (i18n + honesty)
 
-| Finding                                                          | Evidence               | Wave                                     |
-| ---------------------------------------------------------------- | ---------------------- | ---------------------------------------- |
-| Legacy sub-phase strings hardcoded English in `OrchestratorView` | `LEGACY_PHASE_DETAILS` | **A** — `orchestratorTranslations` EN+DE |
-| Loading footer hardcoded English; “AI is…” overclaim             | `footerText` prop      | **A** — `orchestrator.loading.footer`    |
+| Finding                                                          | Evidence               | Wave            |
+| ---------------------------------------------------------------- | ---------------------- | --------------- |
+| Legacy sub-phase strings hardcoded English in `OrchestratorView` | `LEGACY_PHASE_DETAILS` | **Done (#357)** |
+| Loading footer hardcoded English; “AI is…” overclaim             | `footerText` prop      | **Done (#357)** |
+
+## P1 — Capability vs retrieval (Wave B)
+
+| Finding                                                                      | Evidence                           | Wave                                            |
+| ---------------------------------------------------------------------------- | ---------------------------------- | ----------------------------------------------- |
+| `InferenceMode` alone conflates provider path with PubMed/arXiv reachability | `inferenceMode.ts` + status chrome | **B** — `researchCapabilities.ts` + status copy |
 
 ## P2 — Supply chain maturity (resolved Wave H)
 
@@ -37,7 +43,7 @@ Defaults remain **`gemini-2.5-flash`** and **`claude-sonnet-4-5`** (cost-aware; 
 
 ## Next slices (ordered)
 
-1. **Wave B** — capability-state matrix / copy (`InferenceMode` vs retrieval vs Ollama).
+1. **Wave B** — capability-state matrix / copy (`InferenceMode` vs retrieval vs Ollama) — **in progress (#358)**.
 2. **Journey QA** — browser evidence matrix (Phase-0 gap in baseline).
 3. **Heuristic eval** — continue corpus expansion under `check:agent-eval`.
 

@@ -53,6 +53,10 @@ export const journeyTranslations = {
       'Generation stays on this machine. PubMed and arXiv retrieval still use the network when you are online.',
     'provider.status.ollama_privacy_remote':
       'Generation is sent to the configured Ollama endpoint. PubMed and arXiv retrieval still use the network when you are online.',
+    'provider.status.retrieval_online':
+      'Literature retrieval (PubMed / optional arXiv) uses the network even when inference runs locally or heuristically.',
+    'provider.status.retrieval_offline':
+      'Browser offline — new PubMed/arXiv fetch is unavailable. Saved Knowledge Base and heuristic tools on existing reports still work.',
   },
   de: {
     'nav.more': 'Mehr',
@@ -110,5 +114,9 @@ export const journeyTranslations = {
       'Die Generierung bleibt auf diesem Rechner. PubMed- und arXiv-Abfragen nutzen weiterhin das Netzwerk, solange Sie online sind.',
     'provider.status.ollama_privacy_remote':
       'Die Generierung geht an den konfigurierten Ollama-Endpunkt. PubMed- und arXiv-Abfragen nutzen weiterhin das Netzwerk, solange Sie online sind.',
+    'provider.status.retrieval_online':
+      'Literaturabruf (PubMed / optional arXiv) nutzt das Netzwerk — auch bei lokaler oder heuristischer Inferenz.',
+    'provider.status.retrieval_offline':
+      'Browser offline — kein neuer PubMed-/arXiv-Abruf. Gespeicherte Wissensbasis und heuristische Werkzeuge auf vorhandenen Berichten bleiben nutzbar.',
   },
 } as const;
