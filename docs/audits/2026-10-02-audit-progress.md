@@ -27,6 +27,6 @@ This addendum records disposition of Phase-0 baseline findings verified on curre
 4. **Wave D (#360)** — orchestrator task-state brief + compose hiding — **merged** (`e7a6c64`).
 5. **§11 release/truth** — GitHub Release `v0.4.3` body aligned to tag `5ae99748`; audit `docs/audits/2026-10-02-release-truth.md`.
 6. **Wave E (#362)** — a11y state coverage — **merged** (see `main` after squash).
-7. **Wave F (#363)** — heuristic eval expansion — **in PR**.
-8. **0.4.4 release cut** — promote `[Unreleased]` after eval lands.
-9. Maintainer-only governance (ruleset, topics).
+7. **Wave F (#363)** — heuristic eval expansion — **merged** (`f7527ad`).
+8. **Release v0.4.4 (#364)** — semver + CHANGELOG promotion — **in PR**.
+9. Maintainer-only governance (ruleset, topics); PWA perf hardening deferred.
