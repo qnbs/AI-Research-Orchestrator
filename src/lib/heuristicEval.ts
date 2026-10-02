@@ -109,6 +109,62 @@ export function heuristicEvalFixtures(): EvalCase[] {
       },
     },
     {
+      id: 'heuristic-query-de-mi',
+      description: 'German heart attack maps to Myocardial Infarction MeSH',
+      actual: buildQuery('Herzinfarkt Rehabilitation'),
+      expect: {
+        type: 'object',
+        requiredKeys: ['query', 'meshTerms'],
+        mustMeshTerms: ['Myocardial Infarction'],
+        minStringLength: 8,
+        stringPath: 'query',
+      },
+    },
+    {
+      id: 'heuristic-query-de-diabetes',
+      description: 'German diabetes lay term maps to Diabetes Mellitus MeSH',
+      actual: buildQuery('Zuckerkrankheit Insulintherapie'),
+      expect: {
+        type: 'object',
+        requiredKeys: ['query', 'meshTerms'],
+        mustMeshTerms: ['Diabetes Mellitus'],
+      },
+    },
+    {
+      id: 'heuristic-query-en-covid',
+      description: 'COVID topic maps to COVID-19 MeSH',
+      actual: buildQuery('long COVID cognitive symptoms'),
+      expect: {
+        type: 'object',
+        requiredKeys: ['query', 'meshTerms'],
+        mustMeshTerms: ['COVID-19'],
+      },
+    },
+    {
+      id: 'heuristic-query-en-heart-attack',
+      description: 'English lay heart attack maps to Myocardial Infarction MeSH',
+      actual: buildQuery('heart attack aspirin prevention'),
+      expect: {
+        type: 'object',
+        requiredKeys: ['query', 'meshTerms'],
+        mustMeshTerms: ['Myocardial Infarction'],
+      },
+    },
+    {
+      id: 'heuristic-demo-covid-rank',
+      description: 'COVID topic ranks demo corpus COVID fixture highly',
+      actual: (() => {
+        const top = getTopArticles(rankArticles(DEMO_CORPUS, 'COVID vaccine mRNA'), 3);
+        return { rankedArticles: top };
+      })(),
+      expect: {
+        type: 'object',
+        requiredKeys: ['rankedArticles'],
+        mustRankPmids: ['demo:mrna-variants-2022'],
+        rankedScoresDescending: true,
+      },
+    },
+    {
       id: 'heuristic-ranked-corpus',
       description: 'Ranked PMIDs stay inside the demo corpus',
       actual: { rankedArticles: ranked },
