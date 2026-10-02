@@ -32,7 +32,6 @@ minimumReleaseAgeExclude:
   - '@babel/core@7.29.1'
   - framer-motion@13.2.0
   - framer-motion@13.4.6
-  - vite@8.3.2
   - '@anthropic-ai/sdk@0.130.0'
   - ip-address@10.4.0
 onlyBuiltDependencies:

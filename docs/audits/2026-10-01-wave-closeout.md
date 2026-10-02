@@ -19,6 +19,8 @@ This document records what landed after the Phase-0 snapshot. It does **not** re
 | F    | #352 | `claude-code-action` **v1.0.236** + `basic-ftp@6.2.1` audit pin (#338) |
 | G    | #353 | Heuristic eval corpus + closeout docs; `agentEval` semantic predicates |
 
+| G | #355 | Heuristic eval expansion + drop `@google/genai` maturity exclude |
+
 ## Superseded agent / Dependabot PRs
 
 Close with disposition pointing at #344 / this closeout:
@@ -41,7 +43,7 @@ Workflow-level blocking for PWA remains authoritative until the ruleset context 
 
 ## Remaining P2/P3 from baseline (not this closeout)
 
-- Remove `vite@8.3.2` / `@google/genai@2.25.0` maturity excludes when age gate satisfied — **`@google/genai@2.25.0` cleared ~2026-10-01 22:53 UTC** (exclude removed in agent PR). **`vite@8.3.2`** still needs exclude until **~2026-10-02 10:18 UTC** (publish + 1440m).
+- **Maturity excludes:** `@google/genai@2.25.0` cleared **2026-10-01 ~22:53 UTC** (#355); `vite@8.3.2` cleared **2026-10-02 ~10:15 UTC** (Wave H PR). No remaining excludes for those pins.
 - Heuristic eval corpus expansion (Wave F backlog in baseline §11) — partial progress in #353 (`mustMeshTerms`, `rankedScoresDescending`).
 - GitHub repo topics PUT (Administration token).
 - Named **`v0.4.3`** tag after release PR merges (`docs/release-policy.md`) — **tag + [GitHub Release](https://github.com/qnbs/AI-Research-Orchestrator/releases/tag/v0.4.3)** published 2026-10-01.
