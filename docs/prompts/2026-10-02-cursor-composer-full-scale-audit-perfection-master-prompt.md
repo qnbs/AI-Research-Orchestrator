@@ -31,7 +31,7 @@ This is an authorization to:
 - wait/poll for CI where appropriate;
 - continue with independent work while external checks run;
 - converge PRs according to repository policy;
-- merge through the normal, non-bypass path when the repository's dual merge gate is genuinely satisfied and the session's permissions support it;
+- merge through the normal, non-bypass path when the repository's dual merge gate is genuinely satisfied and the session's permissions support it; when a superseded `CHANGES_REQUESTED` review keeps GitHub `mergeStateStatus: BLOCKED` and dismissal returns 403, follow `docs/pr-merge-gate.md` (`gh pr merge --squash --admin` once CI + review quiescence hold on the latest head);
 - perform post-merge verification and housekeeping;
 - move directly into the next justified audit/remediation slice without repeatedly asking the user whether to continue.
 
