@@ -43,8 +43,12 @@ Defaults remain **`gemini-2.5-flash`** and **`claude-sonnet-4-5`** (cost-aware; 
 
 ## Next slices (ordered)
 
-1. **Wave B** — capability-state matrix / copy (`InferenceMode` vs retrieval vs Ollama) — **in progress (#358)**.
-2. **Journey QA** — browser evidence matrix (Phase-0 gap in baseline).
-3. **Heuristic eval** — continue corpus expansion under `check:agent-eval`.
+| Phase-0 journey QA gap | No browser matrix on baseline | **Recorded** — `docs/audits/2026-10-02-journey-qa-evidence.md` (Wave C) |
+
+## Disposition
+
+| Phase-0 gap                   | Status                |
+| ----------------------------- | --------------------- |
+| Journey / browser QA evidence | **Recorded** (Wave C) |
 
 Progress ledger: `docs/audits/2026-10-02-audit-progress.md`.
