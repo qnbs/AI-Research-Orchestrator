@@ -16,6 +16,7 @@
 | §11  | #361 | Release truth audit (`v0.4.3` GitHub Release)            |
 | E    | #362 | A11y state coverage (axe + keyboard)                     |
 | F    | #363 | Heuristic eval expansion (`check:agent-eval` → 45 cases) |
+| —    | #364 | Release **v0.4.4** (semver + CHANGELOG)                  |
 
 ## Open (maintainer / deferred)
 

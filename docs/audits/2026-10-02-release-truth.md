@@ -35,3 +35,12 @@ jq -r .version package.json
 gh release view v0.4.3 --json body,tagName
 git log --oneline v0.4.3..origin/main
 ```
+
+## v0.4.4 cut (2026-10-02)
+
+| Surface                                    | Value                                                                          | Notes                                       |
+| ------------------------------------------ | ------------------------------------------------------------------------------ | ------------------------------------------- |
+| Tag `v0.4.4`                               | `92ccb8e4657c0eb53931aa0103c64506d0cb067a`                                     | Squash merge **#364**                       |
+| `package.json` / `docs/project-facts.json` | `0.4.4`                                                                        | Matches tag                                 |
+| GitHub Release                             | [v0.4.4](https://github.com/qnbs/AI-Research-Orchestrator/releases/tag/v0.4.4) | Tag-scoped notes; compare `v0.4.3...v0.4.4` |
+| Prior tag                                  | `v0.4.3` → `5ae99748`                                                          | Unchanged                                   |
