@@ -31,5 +31,5 @@ This addendum records disposition of Phase-0 baseline findings verified on curre
 8. **Release v0.4.4 (#364)** — semver + CHANGELOG promotion — **merged** (`92ccb8e`); tag **`v0.4.4`** → `92ccb8e4657c0eb53931aa0103c64506d0cb067a`; [GitHub Release](https://github.com/qnbs/AI-Research-Orchestrator/releases/tag/v0.4.4).
 9. **Composer audit closeout** — `docs/audits/2026-10-02-composer-audit-closeout.md` (PRs #356–#364).
 10. **Wave G (2026-10-03):** **#366** merged — production Lighthouse + onboarding/header a11y; closed drafts **#342**, **#343**.
-11. **Release v0.4.5** — semver + §48 `capture:journey-viewports` — **in PR**.
+11. **Release v0.4.5 (#367)** — **merged** (`014959d`); tag **`v0.4.5`**; §48 `capture:journey-viewports`.
 12. Maintainer-only: ruleset `dismiss_stale_reviews_on_push` + PWA required context (agent PUT **403**); optional topic `semantic-search`.
