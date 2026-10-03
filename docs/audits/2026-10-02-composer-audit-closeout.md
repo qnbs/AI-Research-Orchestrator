@@ -22,7 +22,7 @@
 
 - GitHub ruleset: `dismiss_stale_reviews_on_push`, PWA required check on ruleset (cloud agent **403**).
 - GitHub topics PUT (Administration token).
-- Full §48 viewport screenshot grid (optional Playwright maintainer script).
+- §48 viewport grid: `pnpm run capture:journey-viewports` (maintainer; see `docs/audits/viewport-captures/README.md`).
 - Master prompt Wave F (PWA/performance hardening) — production Lighthouse evidence when prioritized.
 
 ## Ledger

@@ -18,6 +18,7 @@ const chromiumLaunch = {
  */
 export default defineConfig({
   testDir: './src/test/e2e',
+  testIgnore: ['**/maintainer/**'],
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
