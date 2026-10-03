@@ -8,7 +8,7 @@
 import { mkdirSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-export const WORKBOX_VERSION = '7.0.0';
+export const WORKBOX_VERSION = '7.4.1';
 
 export const WORKBOX_MODULES = [
   'workbox-core',

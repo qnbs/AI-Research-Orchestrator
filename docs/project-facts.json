@@ -119,7 +119,7 @@
     "policyPath": "docs/release-policy.md",
     "packageVersion": "0.4.5",
     "dexieSchemaVersion": 7,
-    "swCacheVersion": "v1"
+    "swCacheVersion": "v2"
   },
   "sourceIdentifiers": ["pmid", "pmc", "doi", "arxiv"],
   "githubTopics": [

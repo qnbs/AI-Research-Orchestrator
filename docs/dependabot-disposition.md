@@ -201,18 +201,18 @@ Superseded open PRs **#341**, **#342**, **#343**: content on `main` via **#344**
 
 **Inventory (2026-10-03 UTC):** `gh pr list --author app/dependabot` returned **0** open PRs. Dependabot alerts API **403** on the cloud agent token — local `pnpm outdated` used instead.
 
-| Package / area              | Latest vs current | Disposition in consolidation PR                            |
-| --------------------------- | ----------------- | ---------------------------------------------------------- |
-| `openai`                    | 7.27.0            | **Included** (7.x patch)                                   |
-| `@google/genai`             | 2.26.0            | **Included** + maturity exclude                            |
-| `@anthropic-ai/sdk`         | 0.131.0           | **Included** + maturity exclude                            |
-| `marked`, `@tanstack/…`     | patch             | **Included**                                               |
-| Dev: `typescript-eslint`, … | patch/minor       | **Included**                                               |
-| `framer-motion`             | 13.5.0            | **Deferred** — maturity / motion QA                        |
-| `workbox-*`                 | 7.0.0 → 7.4.1     | **Deferred** — vendored `WORKBOX_VERSION` + `workbox:copy` |
-| `eslint` / `@eslint/js`     | 10.x              | **Deferred** — major                                       |
-| `typescript`                | 7.x               | **Deferred** — major                                       |
-| `@types/react`              | 19.3.0            | **Deferred** — types churn                                 |
+| Package / area              | Latest vs current | Disposition in consolidation PR                               |
+| --------------------------- | ----------------- | ------------------------------------------------------------- |
+| `openai`                    | 7.27.0            | **Included** (7.x patch)                                      |
+| `@google/genai`             | 2.26.0            | **Included** + maturity exclude                               |
+| `@anthropic-ai/sdk`         | 0.131.0           | **Included** + maturity exclude                               |
+| `marked`, `@tanstack/…`     | patch             | **Included**                                                  |
+| Dev: `typescript-eslint`, … | patch/minor       | **Included**                                                  |
+| `framer-motion`             | 13.5.0            | **Included** — Wave H PR (+ maturity exclude)                 |
+| `workbox-*`                 | 7.0.0 → 7.4.1     | **Included** — Wave H PR (`workbox:copy`, `CACHE_VERSION` v2) |
+| `eslint` / `@eslint/js`     | 10.x              | **Deferred** — major                                          |
+| `typescript`                | 7.x               | **Deferred** — major                                          |
+| `@types/react`              | 19.3.0            | **Deferred** — types churn                                    |
 
 Consolidation PR: **#369** (`cursor/dependabot-d1-oct2026-patches-d4f6`).
 

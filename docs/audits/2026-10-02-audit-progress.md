@@ -33,4 +33,5 @@ This addendum records disposition of Phase-0 baseline findings verified on curre
 10. **Wave G (2026-10-03):** **#366** merged — production Lighthouse + onboarding/header a11y; closed drafts **#342**, **#343**.
 11. **Release v0.4.5 (#367)** — **merged** (`014959d`); tag **`v0.4.5`**; §48 `capture:journey-viewports`.
 12. **Dependabot (2026-10-03):** **0** open PRs — proactive patch consolidation **#369** **merged** (`docs/dependabot-disposition.md`).
-13. Maintainer-only: ruleset `dismiss_stale_reviews_on_push` + PWA required context (agent PUT **403**); optional topic `semantic-search`.
+13. **Wave H (2026-10-03):** Workbox **7.4.1** + `framer-motion` **13.5** — **in PR**.
+14. Maintainer-only: ruleset `dismiss_stale_reviews_on_push` + PWA required context (agent PUT **403**); optional topic `semantic-search`.
