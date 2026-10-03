@@ -287,7 +287,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
               type="button"
               onClick={toggleLanguage}
               className="p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover font-bold text-xs flex items-center gap-1 focus-ring-aa touch-target-aa"
-              aria-label={t('chrome.aria.toggle_language')}
+              aria-label={t('chrome.aria.language_switch', { current: lang.toUpperCase() })}
             >
               <GlobeAltIcon className="h-4 w-4" />
               {lang.toUpperCase()}
@@ -342,7 +342,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
               type="button"
               onClick={toggleLanguage}
               className="p-2.5 text-text-secondary font-bold text-xs focus-ring-aa touch-target-aa rounded-full"
-              aria-label={t('chrome.aria.toggle_language')}
+              aria-label={t('chrome.aria.language_switch', { current: lang.toUpperCase() })}
             >
               {lang.toUpperCase()}
             </button>

@@ -69,7 +69,7 @@ describe('Header overflow disclosures', () => {
 
   it('labels both language toggles', () => {
     renderHeader(false);
-    expect(screen.getAllByRole('button', { name: 'Toggle Language' })).toHaveLength(2);
+    expect(screen.getAllByRole('button', { name: 'Language EN, switch language' })).toHaveLength(2);
   });
 
   it('keeps the current-view heading for assistive tech', () => {
