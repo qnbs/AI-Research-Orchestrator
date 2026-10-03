@@ -11,9 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Dependencies (2026-10-03):** Patch/minor bumps — `openai` 7.27.0, `@google/genai` 2.26.0, `@anthropic-ai/sdk` 0.131.0, `marked`, `@tanstack/react-virtual`, dev toolchain (`typescript-eslint`, `jsdom`, `prettier`, …). No open Dependabot PRs; proactive consolidation (#369).
-- **PWA (Workbox):** Self-hosted vendor **7.4.1** (`public/workbox-v7.4.1/`, `pnpm run workbox:copy`); runtime cache generation **`v2`** (`CACHE_VERSION` / `swCacheVersion`).
-- **UI motion:** `framer-motion` **13.5.0** (maturity exclude).
+## [0.4.6] - 2026-10-03
+
+> Patch after **v0.4.5** (`014959d`): Dependabot consolidation **#369** + Wave H PWA/motion **#371**.
+
+### Changed
+
+- **Dependencies (#369):** `openai` 7.27.0, `@google/genai` 2.26.0, `@anthropic-ai/sdk` 0.131.0, `marked`, `@tanstack/react-virtual`, dev toolchain patches.
+- **PWA (#371):** Workbox self-hosted vendor **7.4.1**; runtime cache generation **`v2`** (`CACHE_VERSION` / `swCacheVersion`).
+- **UI motion (#371):** `framer-motion` **13.5.0**.
 
 ## [0.4.5] - 2026-10-03
 
@@ -511,7 +517,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - DevContainer support for GitHub Codespaces
 - Vitest unit tests + Playwright E2E test infrastructure
 
-[Unreleased]: https://github.com/qnbs/AI-Research-Orchestrator/compare/v0.4.5...HEAD
+[Unreleased]: https://github.com/qnbs/AI-Research-Orchestrator/compare/v0.4.6...HEAD
+[0.4.6]: https://github.com/qnbs/AI-Research-Orchestrator/compare/v0.4.5...v0.4.6
 [0.4.5]: https://github.com/qnbs/AI-Research-Orchestrator/compare/v0.4.4...v0.4.5
 [0.4.4]: https://github.com/qnbs/AI-Research-Orchestrator/compare/v0.4.3...v0.4.4
 [0.4.3]: https://github.com/qnbs/AI-Research-Orchestrator/compare/v0.4.2...v0.4.3
