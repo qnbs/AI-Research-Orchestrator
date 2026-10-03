@@ -44,3 +44,12 @@ git log --oneline v0.4.3..origin/main
 | `package.json` / `docs/project-facts.json` | `0.4.4`                                                                        | Matches tag                                 |
 | GitHub Release                             | [v0.4.4](https://github.com/qnbs/AI-Research-Orchestrator/releases/tag/v0.4.4) | Tag-scoped notes; compare `v0.4.3...v0.4.4` |
 | Prior tag                                  | `v0.4.3` → `5ae99748`                                                          | Unchanged                                   |
+
+## v0.4.5 cut (2026-10-03)
+
+| Surface                                    | Value                   | Notes                                               |
+| ------------------------------------------ | ----------------------- | --------------------------------------------------- |
+| Tag `v0.4.5`                               | _(set on merge commit)_ | Squash merge release PR after **#366** on `main`    |
+| `package.json` / `docs/project-facts.json` | `0.4.5`                 | Wave G + §48 viewport tooling                       |
+| Prior tag                                  | `v0.4.4` → `92ccb8e`    | Unchanged                                           |
+| Compare                                    | `v0.4.4...v0.4.5`       | Patch: Lighthouse production script, a11y, captures |
