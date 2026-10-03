@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Dependencies (2026-10-03):** Patch/minor bumps — `openai` 7.27.0, `@google/genai` 2.26.0, `@anthropic-ai/sdk` 0.131.0, `marked`, `@tanstack/react-virtual`, dev toolchain (`typescript-eslint`, `jsdom`, `prettier`, …). No open Dependabot PRs; proactive consolidation (rule `012`).
+
 ## [0.4.5] - 2026-10-03
 
 > Patch after **v0.4.4** (`92ccb8e`): Wave G PWA/Lighthouse evidence (#366) + §48 maintainer viewport captures.

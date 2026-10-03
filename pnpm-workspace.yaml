@@ -33,6 +33,8 @@ minimumReleaseAgeExclude:
   - framer-motion@13.2.0
   - framer-motion@13.4.6
   - '@anthropic-ai/sdk@0.130.0'
+  - '@anthropic-ai/sdk@0.131.0'
+  - '@google/genai@2.26.0'
   - ip-address@10.4.0
 onlyBuiltDependencies:
   - '@google/genai'
