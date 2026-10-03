@@ -17,6 +17,8 @@
 | E    | #362 | A11y state coverage (axe + keyboard)                     |
 | F    | #363 | Heuristic eval expansion (`check:agent-eval` → 45 cases) |
 | —    | #364 | Release **v0.4.4** (semver + CHANGELOG)                  |
+| G    | #366 | Production Lighthouse + onboarding a11y                  |
+| —    | #367 | Release **v0.4.5** (patch + §48 viewport tooling)        |
 
 ## Open (maintainer / deferred)
 
