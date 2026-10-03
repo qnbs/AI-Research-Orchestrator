@@ -29,7 +29,7 @@ const StepCard: React.FC<{ icon: React.ReactNode; title: string; children: React
     <div className="flex items-center justify-center h-12 w-12 rounded-full bg-brand-accent/20 text-brand-accent border border-brand-accent/30 mb-4">
       {icon}
     </div>
-    <h3 className="text-lg font-bold text-text-primary mb-2">{title}</h3>
+    <h2 className="text-lg font-bold text-text-primary mb-2">{title}</h2>
     <p className="text-sm text-text-secondary leading-relaxed">{children}</p>
   </div>
 );
@@ -63,7 +63,7 @@ const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete }) => {
             type="button"
             onClick={toggleLanguage}
             className="inline-flex items-center gap-1.5 min-h-11 px-3 py-2 text-xs font-bold text-text-secondary hover:text-text-primary border border-border rounded-lg hover:bg-surface-hover focus-ring-aa"
-            aria-label={t('chrome.aria.toggle_language')}
+            aria-label={t('chrome.aria.language_switch', { current: lang.toUpperCase() })}
           >
             <GlobeAltIcon className="h-4 w-4" />
             {lang.toUpperCase()}

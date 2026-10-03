@@ -196,3 +196,10 @@ Also bundles audit baseline (#341), settings import P1 (#342), dead deps (#343).
 | #349 | openai → **7.25.0** | **Merged** when green — 7.x patch, tests green |
 
 Superseded open PRs **#341**, **#342**, **#343**: content on `main` via **#344**; close with link to `docs/audits/2026-10-01-wave-closeout.md`.
+
+## 2026-10-03 — Stale agent drafts (Wave G)
+
+| PR   | Title                                                | Disposition                                                              |
+| ---- | ---------------------------------------------------- | ------------------------------------------------------------------------ |
+| #342 | fix(settings): preserve provider model IDs on import | **Closed** — superseded by **#344** / on `main` since consolidation      |
+| #343 | chore(deps): dexie-react-hooks + cmdk metadata       | **Closed** — superseded by **#358** (Wave B) and consolidation on `main` |

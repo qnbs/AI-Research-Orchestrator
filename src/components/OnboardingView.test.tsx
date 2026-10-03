@@ -59,13 +59,13 @@ describe('OnboardingView', () => {
 
   it('toggles language from the first screen', () => {
     const { store } = renderOnboarding();
-    fireEvent.click(screen.getByRole('button', { name: 'chrome.aria.toggle_language' }));
+    fireEvent.click(screen.getByRole('button', { name: 'chrome.aria.language_switch' }));
     expect(store.getState().settings.data.appLanguage).toBe('de');
   });
 
   it('toggles language from a German preloaded test store', () => {
     const { store } = renderOnboarding(vi.fn(), 'de');
-    fireEvent.click(screen.getByRole('button', { name: 'chrome.aria.toggle_language' }));
+    fireEvent.click(screen.getByRole('button', { name: 'chrome.aria.language_switch' }));
     expect(store.getState().settings.data.appLanguage).toBe('en');
   });
 });

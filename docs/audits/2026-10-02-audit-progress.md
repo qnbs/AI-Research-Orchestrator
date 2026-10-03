@@ -17,7 +17,7 @@ This addendum records disposition of Phase-0 baseline findings verified on curre
 | Maturity excludes     | P2        | **Resolved**          | `@google/genai@2.25.0` exclude removed #355; `vite@8.3.2` exclude removed **#356** after gate ~2026-10-02 **10:18 UTC**. |
 | PWA ruleset           | P1 drift  | **Open (maintainer)** | Cloud agent 403 on ruleset PUT; workflow job remains blocking.                                                           |
 | dismiss_stale_reviews | P1 drift  | **Open (maintainer)** | Same 403; documented in wave closeout.                                                                                   |
-| GitHub topics         | P2        | **Open (maintainer)** | `docs/project-facts.json` canonical set; PUT needs Administration token.                                                 |
+| GitHub topics         | P2        | **Mostly aligned**    | Live repo has 12/13 canonical topics (missing `semantic-search` only); agent PUT **403**.                                |
 
 ## Next justified slices (Composer 2.5 master prompt)
 
@@ -30,4 +30,5 @@ This addendum records disposition of Phase-0 baseline findings verified on curre
 7. **Wave F (#363)** — heuristic eval expansion — **merged** (`f7527ad`).
 8. **Release v0.4.4 (#364)** — semver + CHANGELOG promotion — **merged** (`92ccb8e`); tag **`v0.4.4`** → `92ccb8e4657c0eb53931aa0103c64506d0cb067a`; [GitHub Release](https://github.com/qnbs/AI-Research-Orchestrator/releases/tag/v0.4.4).
 9. **Composer audit closeout** — `docs/audits/2026-10-02-composer-audit-closeout.md` (PRs #356–#364).
-10. Maintainer-only governance (ruleset, topics); master-prompt PWA/performance hardening deferred until production Lighthouse evidence.
+10. **Wave G (2026-10-03):** Closed superseded draft PRs **#342**, **#343**; production Lighthouse evidence `docs/audits/2026-10-03-production-lighthouse.md`; onboarding/header a11y fixes in open PR.
+11. Maintainer-only: ruleset `dismiss_stale_reviews_on_push` + PWA required context (agent PUT **403**); optional topic `semantic-search`.

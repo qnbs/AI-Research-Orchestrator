@@ -50,7 +50,8 @@
     "check:agent-eval": "vitest run src/lib/agentEval.test.ts src/lib/agentEval.adversarial.test.ts src/lib/heuristicEval.test.ts src/lib/liveOrchestratorEval.test.ts",
     "i18n:ratchet": "node scripts/check-i18n-ratchet.mjs",
     "csp:hashes": "node scripts/patch-csp-hashes.mjs",
-    "test:lighthouse": "pnpm run build && node scripts/run-lighthouse.mjs"
+    "test:lighthouse": "pnpm run build && node scripts/run-lighthouse.mjs",
+    "test:lighthouse:production": "node scripts/run-lighthouse-production.mjs"
   },
   "lint-staged": {
     "*.{ts,tsx}": [

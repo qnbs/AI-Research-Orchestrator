@@ -9,7 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Production Lighthouse:** `pnpm run test:lighthouse:production` + `lighthouserc.production.json`; audit `docs/audits/2026-10-03-production-lighthouse.md`.
+
 ### Changed
+
+- **A11y (onboarding + chrome):** Onboarding step titles use `<h2>`; language toggle accessible name includes the visible locale code (`chrome.aria.language_switch`).
 
 ## [0.4.4] - 2026-10-02
 
