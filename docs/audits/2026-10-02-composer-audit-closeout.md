@@ -19,6 +19,8 @@
 | —    | #364 | Release **v0.4.4** (semver + CHANGELOG)                  |
 | G    | #366 | Production Lighthouse + onboarding a11y                  |
 | —    | #367 | Release **v0.4.5** (patch + §48 viewport tooling)        |
+| H    | #371 | Workbox 7.4.1 + `framer-motion` 13.5 + cache **v2**      |
+| —    | #372 | Release **v0.4.6** (#369 + #371)                         |
 
 ## Open (maintainer / deferred)
 
