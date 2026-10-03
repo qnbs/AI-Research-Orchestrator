@@ -6,7 +6,7 @@ const BASE_PATH = self.location.pathname.replace(/\/[^/]*$/, '').replace(/\/$/, 
 // copied from the workbox-* npm packages via scripts/copy-workbox.mjs
 // (pnpm run workbox:copy) - re-run that script and bump WORKBOX_VERSION
 // together when upgrading.
-const WORKBOX_VERSION = '7.0.0';
+const WORKBOX_VERSION = '7.4.1';
 importScripts(`${BASE_PATH}/workbox-v${WORKBOX_VERSION}/workbox-sw.js`);
 workbox.setConfig({
   debug: false,
@@ -15,7 +15,7 @@ workbox.setConfig({
 
 // Bump on any change to what gets cached or how - activate-time cleanup
 // below removes every runtime cache from a previous version.
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2';
 const CACHE_NAMES = {
   pages: `pages-cache-${CACHE_VERSION}`,
   pubmedApi: `pubmed-api-cache-${CACHE_VERSION}`,

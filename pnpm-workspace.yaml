@@ -32,6 +32,7 @@ minimumReleaseAgeExclude:
   - '@babel/core@7.29.1'
   - framer-motion@13.2.0
   - framer-motion@13.4.6
+  - framer-motion@13.5.0
   - '@anthropic-ai/sdk@0.130.0'
   - '@anthropic-ai/sdk@0.131.0'
   - '@google/genai@2.26.0'
