@@ -49,6 +49,7 @@ junit.xml
 
 # ── Lighthouse CI ─────────────────────────────────────────────────────────────
 .lighthouseci/
+docs/audits/viewport-captures/latest/
 
 # ── OS ────────────────────────────────────────────────────────────────────────
 Thumbs.db

@@ -1,7 +1,7 @@
 {
   "name": "ai-research-orchestrator",
   "private": true,
-  "version": "0.4.4",
+  "version": "0.4.5",
   "description": "Client-only React PWA for PubMed/arXiv literature review with multi-provider AI (or heuristic fallback) and a local IndexedDB knowledge base.",
   "type": "module",
   "packageManager": "pnpm@11.13.1",
@@ -51,7 +51,8 @@
     "i18n:ratchet": "node scripts/check-i18n-ratchet.mjs",
     "csp:hashes": "node scripts/patch-csp-hashes.mjs",
     "test:lighthouse": "pnpm run build && node scripts/run-lighthouse.mjs",
-    "test:lighthouse:production": "node scripts/run-lighthouse-production.mjs"
+    "test:lighthouse:production": "node scripts/run-lighthouse-production.mjs",
+    "capture:journey-viewports": "node scripts/capture-journey-viewports.mjs"
   },
   "lint-staged": {
     "*.{ts,tsx}": [

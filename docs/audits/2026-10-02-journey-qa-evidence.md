@@ -41,7 +41,7 @@ Detailed agent notes: `/opt/cursor/artifacts/journey-qa/journey-qa-report.md`.
 
 ## Follow-ups (non-blocking)
 
-1. Optional maintainer script for full §48 viewport screenshot grid (Playwright `page.setViewportSize`).
+1. **§48 viewport grid:** `pnpm run capture:journey-viewports` → `docs/audits/viewport-captures/README.md` (maintainer; not CI).
 2. Triage CSP `connect-src` warning if it appears on production (verify against `index.html` meta CSP after deploy).
 3. PWA install prompt: ensure `register-sw.js` / `beforeinstallprompt` handler matches browser expectations (dev-only console noise today).
 

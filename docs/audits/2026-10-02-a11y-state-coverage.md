@@ -21,9 +21,9 @@ Runs in existing blocking workflows:
 
 ## Disposition
 
-| Gap                                                   | Status                              |
-| ----------------------------------------------------- | ----------------------------------- |
-| High-value Orchestrator states missing from axe smoke | **Closed** (this wave)              |
-| Full §48 viewport screenshot grid                     | Still **deferred** (journey QA doc) |
+| Gap                                                   | Status                                                          |
+| ----------------------------------------------------- | --------------------------------------------------------------- |
+| High-value Orchestrator states missing from axe smoke | **Closed** (this wave)                                          |
+| Full §48 viewport screenshot grid                     | **Tooling** — `pnpm run capture:journey-viewports` (maintainer) |
 
 Update ledger: `docs/audits/2026-10-02-audit-progress.md`.

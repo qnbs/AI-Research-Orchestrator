@@ -9,7 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+## [0.4.5] - 2026-10-03
+
+> Patch after **v0.4.4** (`92ccb8e`): Wave G PWA/Lighthouse evidence (#366) + §48 maintainer viewport captures.
+
+### Added
+
 - **Production Lighthouse:** `pnpm run test:lighthouse:production` + `lighthouserc.production.json`; audit `docs/audits/2026-10-03-production-lighthouse.md`.
+- **Journey QA (§48):** `pnpm run capture:journey-viewports` (Playwright maintainer spec, excluded from blocking CI); `docs/audits/viewport-captures/README.md`.
 
 ### Changed
 
@@ -498,7 +507,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - DevContainer support for GitHub Codespaces
 - Vitest unit tests + Playwright E2E test infrastructure
 
-[Unreleased]: https://github.com/qnbs/AI-Research-Orchestrator/compare/v0.4.4...HEAD
+[Unreleased]: https://github.com/qnbs/AI-Research-Orchestrator/compare/v0.4.5...HEAD
+[0.4.5]: https://github.com/qnbs/AI-Research-Orchestrator/compare/v0.4.4...v0.4.5
 [0.4.4]: https://github.com/qnbs/AI-Research-Orchestrator/compare/v0.4.3...v0.4.4
 [0.4.3]: https://github.com/qnbs/AI-Research-Orchestrator/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/qnbs/AI-Research-Orchestrator/compare/v0.4.1...v0.4.2
