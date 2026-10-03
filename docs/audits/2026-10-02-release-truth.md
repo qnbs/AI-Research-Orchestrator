@@ -53,3 +53,12 @@ git log --oneline v0.4.3..origin/main
 | `package.json` / `docs/project-facts.json` | `0.4.5`                                                                        | Wave G + §48 viewport tooling |
 | GitHub Release                             | [v0.4.5](https://github.com/qnbs/AI-Research-Orchestrator/releases/tag/v0.4.5) | Compare `v0.4.4...v0.4.5`     |
 | Prior tag                                  | `v0.4.4` → `92ccb8e`                                                           | Unchanged                     |
+
+## v0.4.6 cut (2026-10-03)
+
+| Surface                                    | Value                                                                          | Notes                           |
+| ------------------------------------------ | ------------------------------------------------------------------------------ | ------------------------------- |
+| Tag `v0.4.6`                               | `03f3bd6ba504f63e211d326fe6d5b5eeeccb75f3`                                     | Squash merge **#372**           |
+| `package.json` / `docs/project-facts.json` | `0.4.6`                                                                        | #369 deps + #371 Workbox/motion |
+| GitHub Release                             | [v0.4.6](https://github.com/qnbs/AI-Research-Orchestrator/releases/tag/v0.4.6) | Compare `v0.4.5...v0.4.6`       |
+| Prior tag                                  | `v0.4.5` → `014959d`                                                           | Unchanged                       |
