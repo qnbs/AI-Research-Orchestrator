@@ -43,7 +43,7 @@ Evidence labels used below: **VERIFIED CURRENT**, **VERIFIED HISTORICAL**, **HYP
 | **H3:** Broken workflow registration                                                                                                                                                | **DISPROVEN (current)**      | `gh workflow list` — all workflows **active**; Oct 3–5 PR runs succeeded                                                        |
 | **H4:** Required checks misnamed                                                                                                                                                    | **DISPROVEN as primary gap** | Missing jobs precede any naming mismatch                                                                                        |
 
-**Remediation strategy:** Consolidation PRs from trusted branches (not Dependabot-authored) until H1/H2 resolved; document maintainer settings in `docs/audits/2026-11-03-p0-operational-runbook.md`.
+**Remediation strategy:** Consolidation PRs from trusted branches (not Dependabot-authored) until H1/H2 resolved; document maintainer settings in `docs/audits/2026-11-03-p0-operational-runbook.md`. After maintainer Actions settings update (2026-11-03 ~22:15 CET), an empty push to PR `#407` (`13d8c3f`) **re-triggered** full `pull_request` workflows (Deploy, Security, E2E, a11y, PWA).
 
 ---
 

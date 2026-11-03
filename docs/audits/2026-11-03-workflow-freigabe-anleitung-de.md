@@ -60,3 +60,13 @@ Ohne diesen Schritt bleibt CodeQL rot mit _„Code scanning is not enabled“_.
 - In **Actions** erscheinen neue Runs mit Branch `cursor/p0-audit-recovery-nov2026-33e3`.
 
 Englische technische Details: `docs/audits/2026-11-03-p0-operational-runbook.md`.
+
+## Schritt 5: Wenn Workflows trotzdem nicht starten
+
+Nach einer Settings-Änderung startet GitHub **nicht automatisch** alte PR-Commits neu. Entweder:
+
+1. Am PR **Checks → Re-run all jobs** (falls sichtbar), **oder**
+2. Einen neuen Commit auf den PR-Branch pushen (leerer Commit reicht), **oder**
+3. PR kurz schließen und wieder öffnen (selten nötig).
+
+PR `#407` wurde am 2026-11-03 nach Settings-Fix mit Commit `13d8c3f` (`ci: re-trigger PR workflows…`) erfolgreich neu angestoßen.
