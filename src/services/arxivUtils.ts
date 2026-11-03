@@ -11,6 +11,7 @@ import { ensureArticleIdentifiers } from '../lib/sourceIdentifier';
 
 const ARXIV_BASE = 'https://export.arxiv.org/api/query';
 const ARXIV_TIMEOUT_MS = 18_000;
+const ATOM_FEED_NS = 'http://www.w3.org/2005/Atom';
 
 /** Typed arXiv retrieval outcome (WS-07 / #401). */
 export type ArxivFetchOutcome =
@@ -116,9 +117,7 @@ export async function searchAndFetchArxivDetailed(
     if (doc.querySelector('parsererror')) return empty('parse_error');
 
     const root = doc.documentElement;
-    const isAtomFeed =
-      root?.localName === 'feed' &&
-      (root.namespaceURI === 'http://www.w3.org/2005/Atom' || root.namespaceURI === null);
+    const isAtomFeed = root?.localName === 'feed' && root.namespaceURI === ATOM_FEED_NS;
     if (!isAtomFeed) return empty('parse_error');
 
     const articles = Array.from(doc.getElementsByTagName('entry')).map((entry) =>

@@ -75,10 +75,23 @@ describe('arxivUtils', () => {
     await expect(searchAndFetchArxiv('x', 1)).resolves.toEqual([]);
   });
 
-  it('propagates abort when signal is already aborted after a generic fetch error', async () => {
+  it('returns parse_error for a foreign-namespace feed element', async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      text: async () =>
+        '<?xml version="1.0"?><feed xmlns="http://example.com/not-atom"><entry><title>x</title></entry></feed>',
+    });
+    await expect(searchAndFetchArxivDetailed('x', 1)).resolves.toMatchObject({
+      outcome: 'parse_error',
+    });
+  });
+
+  it('propagates abort when signal aborts inside fetch after call starts', async () => {
     const ac = new AbortController();
-    ac.abort();
-    globalThis.fetch = vi.fn().mockRejectedValue(new Error('network'));
+    globalThis.fetch = vi.fn().mockImplementation(async () => {
+      ac.abort();
+      throw new Error('network');
+    });
     await expect(searchAndFetchArxivDetailed('topic', 1, ac.signal)).rejects.toMatchObject({
       name: 'AbortError',
     });

@@ -218,7 +218,7 @@ Consolidation PR: **#369** (`cursor/dependabot-d1-oct2026-patches-d4f6`).
 
 ## 2026-11-03 — Audit recovery consolidation (PR #407)
 
-**Context:** 18 Dependabot PRs `#375`–`#393` accumulated while PR workflows did not run (Actions approval/settings gap until 2026-11-03). **Consolidation PR:** [#407](https://github.com/qnbs/AI-Research-Orchestrator/pull/407) (`cursor/p0-audit-recovery-nov2026-33e3`).
+**Context:** 18 Dependabot PRs `#375`–`#393` (excluding closed/skipped `#378`) accumulated while PR workflows did not run (Actions approval/settings gap until 2026-11-03). **Consolidation PR:** [#407](https://github.com/qnbs/AI-Research-Orchestrator/pull/407) (`cursor/p0-audit-recovery-nov2026-33e3`).
 
 | PR(s)                        | Area                                           | Disposition                                                                                             |
 | ---------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
