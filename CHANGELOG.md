@@ -9,7 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Audit recovery (2026-11-03):** Phase-0 evidence snapshot, P0 operational runbook (PR CI + CodeQL maintainer steps), Composer master prompt archive under `docs/prompts/`.
+
 ### Changed
+
+- **Supply-chain (#396):** `@lhci/cli` 0.16.0, `dompurify` 3.4.17, `vite` 8.3.3; pnpm overrides for `undici`, `proxy-addr`, `compression`, `source-map-js`, `body-parser`, `zod`; removed stale LHCI `extract-zip` GHSA ignores after the dependency left the tree.
 
 ## [0.4.6] - 2026-10-03
 
