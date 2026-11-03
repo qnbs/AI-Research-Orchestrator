@@ -60,6 +60,6 @@ PR #407 was successfully re-triggered on 2026-11-03 with commit `13d8c3f` after 
 ## Verify success
 
 - **Checks** on the PR: all **ruleset** contexts and **workflow-level** gates in `docs/ci-branch-governance.md` run green (30–60+ minutes), including **`PWA service-worker registration`** from `pwa-e2e.yml` (workflow-level blocking; not yet in ruleset — issue #399).
-- **Actions** shows new runs on branch `cursor/p0-audit-recovery-nov2026-33e3`.
+- **Actions** shows new runs on the **target PR branch** (for example `cursor/p0-audit-recovery-nov2026-33e3` on PR #407).
 
 Technical runbook: `docs/audits/2026-11-03-p0-operational-runbook.md`.

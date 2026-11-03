@@ -41,8 +41,8 @@ Evidence labels used below: **VERIFIED CURRENT**, **VERIFIED HISTORICAL**, **HYP
 | **H1:** Repository **Actions/workflows disabled in settings** (maintainer confirmed, re-enabled 2026-11-03) | **VERIFIED CURRENT**         | PR #407 full `github-actions` suites on `2a857de`; missing runs before fix without YAML drift |
 | **H2:** Stale Dependabot PR heads never re-enqueued after re-enable                                         | **VERIFIED CURRENT**         | `#375` / `#393` still 0 `github-actions` suites until Re-run/rebase/consolidation             |
 | **H3:** Pull request approval policy for outside collaborators (contingency)                                | **HYPOTHESIS**               | Approve workflows on one Dependabot PR; contrast with agent PR                                |
-| **H3:** Broken workflow registration                                                                        | **DISPROVEN (current)**      | `gh workflow list` — all workflows **active**; Oct 3–5 PR runs succeeded                      |
-| **H4:** Required checks misnamed                                                                            | **DISPROVEN as primary gap** | Missing jobs precede any naming mismatch                                                      |
+| **H4:** Broken workflow registration                                                                        | **DISPROVEN (current)**      | `gh workflow list` — all workflows **active**; Oct 3–5 PR runs succeeded                      |
+| **H5:** Required checks misnamed                                                                            | **DISPROVEN as primary gap** | Missing jobs precede any naming mismatch                                                      |
 
 **Remediation strategy:** Consolidation PRs from trusted branches (not Dependabot-authored) until H1/H2 resolved; document maintainer settings in `docs/audits/2026-11-03-p0-operational-runbook.md` and `docs/audits/2026-11-03-workflow-approval-guide.md`.
 

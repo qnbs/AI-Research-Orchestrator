@@ -31,12 +31,13 @@ The repository maintainer **confirmed that GitHub Actions / workflow execution h
 ### Maintainer checklist (UI)
 
 1. Open any blocked Dependabot PR (for example `#375`) → **Checks** tab.
-2. If you see **“Workflow runs awaiting approval”** or **“Approve and run workflows”**, approve once and confirm these jobs start on the **Security** workflow (required **job contexts**, not a single job named “Security”):
-   - `CodeQL`, `Dependency Review`, `pnpm audit (high+)`, `Secret scan (gitleaks)`
-   - `Deploy to GitHub Pages` → `Typecheck, Lint & Tests`, `Production Build`
-   - `E2E Tests` → `Playwright E2E`
-   - `E2E Cross-Browser Smoke` → Firefox / WebKit / mobile Chrome
-   - `A11y Smoke`, `PWA E2E`, `Security`
+2. If you see **“Workflow runs awaiting approval”** or **“Approve and run workflows”**, approve once and confirm the **expected jobs start across the relevant workflows** (required **job contexts** from `docs/ci-branch-governance.md`, not one monolithic “Security” job):
+   - **`security.yml`:** `CodeQL`, `Dependency Review`, `pnpm audit (high+)`, `Secret scan (gitleaks)`
+   - **`deploy.yml`:** `Typecheck, Lint & Tests`, `Production Build`
+   - **`e2e.yml`:** `Playwright E2E`
+   - **`e2e-cross-browser.yml`:** Firefox / WebKit / mobile Chrome
+   - **`a11y.yml`:** Axe critical/serious smoke
+   - **`pwa-e2e.yml`:** `PWA service-worker registration`
 3. Repository **Settings → Actions → General**:
    - Under **Fork pull request workflows**, review **“Require approval for first-time contributors”** vs **all outside collaborators**. Dependabot is often treated as an outside collaborator.
    - Prefer **allowing workflow runs for trusted bot PRs** without disabling required checks on `main`.
@@ -64,7 +65,7 @@ Repository visibility is **public**; this is **not** explained by private-repo l
 
 1. **Settings → Code security and analysis** (or **Security** → **Set up code scanning**).
 2. Enable **code scanning upload entitlement** for this repository. **Do not** enable GitHub **Default setup** if it would replace or duplicate the existing `.github/workflows/security.yml` CodeQL job — use **Advanced setup** / feature enablement that keeps the workflow-driven analysis, or enable upload only so the existing `github/codeql-action/*` steps can publish SARIF.
-3. Confirm the **CodeQL** job on a fresh `pull_request` Security run reaches **Perform CodeQL Analysis** with a successful SARIF upload (verified on PR #407: [run 41720263417](https://github.com/qnbs/AI-Research-Orchestrator/actions/runs/41720263417)).
+3. Confirm the **CodeQL** job on a fresh `pull_request` Security run reaches **Perform CodeQL Analysis** with a successful SARIF upload (verified on PR #407 head `2a857de`: [run 41722216361](https://github.com/qnbs/AI-Research-Orchestrator/actions/runs/41722216361)).
 4. Open **Security → Code scanning alerts** and confirm results ingest (empty is OK; upload must succeed).
 5. Organization policy: ensure code scanning is not disabled at org level for this repo.
 
