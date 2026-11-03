@@ -44,45 +44,66 @@ function parseInlineGhsaList(bracketContents) {
   return ids;
 }
 
-export function parseIgnoreGhsas(yaml) {
-  const ids = [];
-  let inList = false;
-  let inFlowList = false;
-  for (const line of yaml.split('\n')) {
-    const inlineEmpty = line.match(/^\s*ignoreGhsas:\s*\[\s*\]\s*(?:#.*)?$/);
-    if (inlineEmpty) {
-      return [];
+/** @param {string} line @returns {string[] | null} complete list when the line finishes parsing */
+function parseInlineIgnoreGhsasLine(line) {
+  if (/^\s*ignoreGhsas:\s*\[\s*\]\s*(?:#.*)?$/.test(line)) {
+    return [];
+  }
+  const inlineList = line.match(/^\s*ignoreGhsas:\s*\[(.*)\]\s*(?:#.*)?$/);
+  if (inlineList) {
+    return parseInlineGhsaList(inlineList[1]);
+  }
+  return null;
+}
+
+/**
+ * @param {string} line
+ * @param {{ ids: string[], mode: 'scan' | 'block' | 'flow' }} state
+ * @returns {string[] | undefined} when parsing is complete on this line
+ */
+function consumeIgnoreGhsasLine(line, state) {
+  const inline = parseInlineIgnoreGhsasLine(line);
+  if (inline !== null) {
+    return inline;
+  }
+  if (state.mode === 'scan' && /^\s*ignoreGhsas:\s*\[\s*(?:#.*)?$/.test(line)) {
+    state.mode = 'flow';
+    return undefined;
+  }
+  if (state.mode === 'scan' && /^\s*ignoreGhsas:\s*$/.test(line)) {
+    state.mode = 'block';
+    return undefined;
+  }
+  if (state.mode === 'flow') {
+    state.ids.push(...parseInlineGhsaList(line));
+    if (/\]/.test(line)) {
+      state.mode = 'scan';
     }
-    const inlineList = line.match(/^\s*ignoreGhsas:\s*\[(.*)\]\s*(?:#.*)?$/);
-    if (inlineList) {
-      return parseInlineGhsaList(inlineList[1]);
-    }
-    if (/^\s*ignoreGhsas:\s*\[\s*(?:#.*)?$/.test(line)) {
-      inFlowList = true;
-      inList = false;
-      continue;
-    }
-    if (inFlowList) {
-      ids.push(...parseInlineGhsaList(line));
-      if (/\]/.test(line)) {
-        inFlowList = false;
-      }
-      continue;
-    }
-    if (/^\s*ignoreGhsas:\s*$/.test(line)) {
-      inList = true;
-      continue;
-    }
-    if (!inList) continue;
+    return undefined;
+  }
+  if (state.mode === 'block') {
     const item = line.match(new RegExp(`^\\s+-\\s+["']?(${GHSA_ID})["']?\\s*$`));
     if (item) {
-      ids.push(item[1]);
-      continue;
+      state.ids.push(item[1]);
+      return undefined;
     }
-    if (/^\s*$/.test(line) || /^\s+#/.test(line)) continue;
-    break;
+    if (/^\s*$/.test(line) || /^\s+#/.test(line)) {
+      return undefined;
+    }
+    state.mode = 'scan';
   }
-  return ids;
+  return undefined;
+}
+
+export function parseIgnoreGhsas(yaml) {
+  const state = { ids: [], mode: 'scan' };
+  for (const line of yaml.split('\n')) {
+    const done = consumeIgnoreGhsasLine(line, state);
+    if (done !== undefined) {
+      return done;
+    }
+  }
+  return state.ids;
 }
 
 /**
