@@ -1,5 +1,7 @@
 # GitHub Actions auf Pull Requests freigeben (Maintainer)
 
+> **English (authoritative for CI facts):** `docs/audits/2026-11-03-workflow-approval-guide.md` — diese Datei ist eine parallele Kurzanleitung auf Deutsch.
+
 Kurzanleitung für **PR #407** und alle anderen PRs, bei denen **keine** Jobs wie `Typecheck, Lint & Tests` oder `Playwright E2E` starten.
 
 ## Voraussetzungen
@@ -40,7 +42,7 @@ Dann blockiert meist eine **Repository- oder Organisations-Einstellung** (nicht 
 2. Unter **Fork pull request workflows** / **Workflow-Berechtigungen**:
    - **Actions permissions:** „Allow all actions and reusable workflows“ (oder eure org-konforme Variante)
    - Prüfen, ob **Genehmigung für externe Mitwirkende** so streng ist, dass **Dependabot- und Agent-PRs** hängen bleiben. Oft hilft: Genehmigung nur für **First-time contributors**, nicht pauschal für alle „outside collaborators“ — **org-Policy beachten**.
-3. **Settings** → **Actions** → **General** → **Workflow permissions**: „Read and write permissions“ für `GITHUB_TOKEN`, soweit org erlaubt.
+3. **Settings** → **Actions** → **General** → **Workflow permissions**: Repository default **`GITHUB_TOKEN` read-only** beibehalten (Least Privilege). Schreibrechte nur dort, wo Workflows sie explizit brauchen (z. B. `security-events: write` im CodeQL-Job in `security.yml`) — **nicht** pauschal „Read and write permissions“ für alle Workflows aktivieren.
 
 Organisation: zusätzlich **Organization settings → Actions** prüfen (Budget, Disable Actions, Allowed actions).
 
@@ -56,10 +58,10 @@ Ohne diesen Schritt bleibt CodeQL rot mit _„Code scanning is not enabled“_.
 
 ## Erfolg prüfen
 
-- Tab **Checks** auf PR #407: alle **required** Kontexte aus `docs/ci-branch-governance.md` laufen und werden grün (kann 30–60+ Minuten dauern).
+- Tab **Checks** auf PR #407: alle **ruleset-** und **workflow-level** Kontexte aus `docs/ci-branch-governance.md` laufen und werden grün (kann 30–60+ Minuten dauern), einschließlich **`PWA service-worker registration`** (workflow-level, noch nicht im Ruleset #399).
 - In **Actions** erscheinen neue Runs mit Branch `cursor/p0-audit-recovery-nov2026-33e3`.
 
-Englische technische Details: `docs/audits/2026-11-03-p0-operational-runbook.md`.
+Englische technische Details: `docs/audits/2026-11-03-p0-operational-runbook.md` und `docs/audits/2026-11-03-workflow-approval-guide.md`.
 
 ## Schritt 5: Wenn Workflows trotzdem nicht starten
 

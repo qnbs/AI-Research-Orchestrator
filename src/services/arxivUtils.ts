@@ -115,6 +115,12 @@ export async function searchAndFetchArxivDetailed(
 
     if (doc.querySelector('parsererror')) return empty('parse_error');
 
+    const root = doc.documentElement;
+    const isAtomFeed =
+      root?.localName === 'feed' &&
+      (root.namespaceURI === 'http://www.w3.org/2005/Atom' || root.namespaceURI === null);
+    if (!isAtomFeed) return empty('parse_error');
+
     const articles = Array.from(doc.getElementsByTagName('entry')).map((entry) =>
       ensureArticleIdentifiers(entryToRankedArticle(entry) as RankedArticle),
     );

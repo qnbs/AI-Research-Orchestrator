@@ -216,6 +216,21 @@ Superseded open PRs **#341**, **#342**, **#343**: content on `main` via **#344**
 
 Consolidation PR: **#369** (`cursor/dependabot-d1-oct2026-patches-d4f6`).
 
+## 2026-11-03 — Audit recovery consolidation (PR #407)
+
+**Context:** 18 Dependabot PRs `#375`–`#393` accumulated while PR workflows did not run (Actions approval/settings gap until 2026-11-03). **Consolidation PR:** [#407](https://github.com/qnbs/AI-Research-Orchestrator/pull/407) (`cursor/p0-audit-recovery-nov2026-33e3`).
+
+| PR(s)                        | Area                                           | Disposition                                                                                             |
+| ---------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| #375                         | vite 8.3.3                                     | **Superseded** by #407 (`vite` 8.3.3 pin + override)                                                    |
+| #380, #386, #387, #379       | marked, jsdom, @types/node                     | **Superseded** partially — only items touched in #407; close after #407 merge or re-open targeted bumps |
+| #382, #384                   | @google/genai, openai                          | **Deferred** — not in #407 security wave; next consolidation after merge                                |
+| #388–#393                    | react-redux, React, virtual, plugin-react, axe | **Deferred** — wave D4/D5 after #407                                                                    |
+| #376, #377, #381, #385, #389 | Actions / CodeQL action SHAs                   | **Deferred** — wave D2; rebase after #407 merge                                                         |
+| #383                         | claude-code-action                             | **Deferred** — governance-sensitive                                                                     |
+
+**Validation target head:** `a157da1` — full required CI green (Deploy, Security incl. CodeQL + audit, E2E, cross-browser, axe, PWA). Close bot PRs with comment linking #407 after merge.
+
 ## 2026-10-03 — Stale agent drafts (Wave G)
 
 | PR   | Title                                                | Disposition                                                              |

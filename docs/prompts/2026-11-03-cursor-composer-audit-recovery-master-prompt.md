@@ -61,7 +61,7 @@ Read in this order before editing application or policy files:
 3. `AGENTS.md` and `CLAUDE.md` (where conflict exists, follow `AGENTS.md` and the single authoritative merge predicate);
 4. `docs/pr-merge-gate.md`, `docs/ci-branch-governance.md`, `docs/agent-execution-playbook.md`, `docs/audit-governance.md`, `docs/project-facts.json`;
 5. `SECURITY.md`, `CONTRIBUTING.md`, `docs/release-policy.md`, `docs/product-truth-matrix.md`, ADR index and applicable ADRs 0001–0021;
-6. October audit reports, especially `docs/audits/2026-10-02-full-scale-product-and-engineering-audit.md`, `2026-10-02-audit-progress.md` and `2026-10-02-composer-audit-closeout.md`;
+6. October audit reports, especially `docs/audits/2026-10-02-full-scale-product-and-engineering-audit.md`, `docs/audits/2026-10-02-audit-progress.md`, and `docs/audits/2026-10-02-composer-audit-closeout.md`;
 7. The previous Composer handoff `docs/prompts/2026-10-02-cursor-composer-full-scale-audit-perfection-master-prompt.md` — **historical context only; this November prompt supersedes its stale state**.
 
 Suggested discovery commands when terminal and GitHub CLI are available (adapt command syntax to installed CLI and access; do not fabricate output):
@@ -196,7 +196,7 @@ Issue: https://github.com/qnbs/AI-Research-Orchestrator/issues/396
 1. Re-run `pnpm install --frozen-lockfile` on a clean, correct Node/pnpm toolchain. Run `pnpm audit --audit-level=high`, capture complete report and exit code, `pnpm why proxy-addr`, `pnpm why source-map-js`, `pnpm why compression`, and check the exact installed paths in the lockfile. Refresh advisory fixes and exposure, including ALL new advisories, not only October’s three.
 2. Verify whether parent dependency updates or regenerated lockfile can bring patched versions. Prefer upstream, compatible fixes; only use scoped `pnpm.overrides` when necessary, explain why, and run applicable integration/e2e tests. Avoid blind `pnpm update --latest` or override that violates peer dependencies.
 3. Differentiate application-runtime, build-time, CI-only and test-only exposure. Do not downgrade priority solely because a package is dev-only: runner tools and uploaded artifacts form a legitimate attack surface.
-4. Verify `pnpm audit --audit-level=high` actually passes in CI. Existing two ignored highs must have explicit narrowly scoped justification, owners and expiry/reevaluation; run `pnpm run check:audit-ignore-paths` and ensure no new arbitrary ignore category.
+4. Verify `pnpm audit --audit-level=high` actually passes in CI. Any GHSA listed in `pnpm-workspace.yaml` `auditConfig.ignoreGhsas` must have explicit narrowly scoped justification, owners and expiry/reevaluation; run `pnpm run check:audit-ignore-paths` and ensure no new arbitrary ignore category.
 5. Test LHCI, production build, frozen install, Workbox vendor drift, bundle budget, CSS/Tailwind, Playwright/axe, the generated GitHub Pages payload and any security gates touched.
 6. Consider whether scheduled audit will automatically rerun, or trigger a manual audit with same permissions to gather immediate evidence. No claim of remediation until the actual current lockfile audit is green.
 

@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Supply-chain (#396):** `@lhci/cli` 0.16.0, `dompurify` 3.4.17, `vite` 8.3.3; pnpm overrides for `undici`, `proxy-addr`, `compression`, `source-map-js`, `body-parser`, `zod`; removed stale LHCI `extract-zip` GHSA ignores after the dependency left the tree.
+- **Supply-chain (#396):** `@lhci/cli` 0.16.0, `dompurify` 3.4.17, `vite` 8.3.3; pnpm overrides for `undici`, `proxy-addr`, `compression`, `postcss`, `body-parser`, `zod`; removed stale LHCI `extract-zip` GHSA ignores after the dependency left the tree.
 - **Retrieval (#401):** arXiv fetch exposes typed outcomes via `searchAndFetchArxivDetailed`; heuristic retriever counts unavailable arXiv separately from zero-hit searches (`retrievalErrorCount` / partial retrieval status).
 
 ## [0.4.6] - 2026-10-03

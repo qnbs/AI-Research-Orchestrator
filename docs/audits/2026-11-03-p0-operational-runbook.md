@@ -54,8 +54,8 @@ Repository visibility is **public**; this is **not** explained by private-repo l
 ### Maintainer checklist (UI)
 
 1. **Settings → Code security and analysis** (or **Security** → **Set up code scanning**).
-2. Enable **Code scanning** / **CodeQL analysis** for this repository (default setup is compatible with `.github/workflows/security.yml`).
-3. Confirm the **CodeQL** job on a fresh `pull_request` or `workflow_dispatch` Security run reaches **Perform CodeQL Analysis** with a successful SARIF upload.
+2. Enable **code scanning upload entitlement** for this repository. **Do not** enable GitHub **Default setup** if it would replace or duplicate the existing `.github/workflows/security.yml` CodeQL job — use **Advanced setup** / feature enablement that keeps the workflow-driven analysis, or enable upload only so the existing `github/codeql-action/*` steps can publish SARIF.
+3. Confirm the **CodeQL** job on a fresh `pull_request` Security run reaches **Perform CodeQL Analysis** with a successful SARIF upload (verified on PR #407: [run 41720263417](https://github.com/qnbs/AI-Research-Orchestrator/actions/runs/41720263417)).
 4. Open **Security → Code scanning alerts** and confirm results ingest (empty is OK; upload must succeed).
 5. Organization policy: ensure code scanning is not disabled at org level for this repo.
 
@@ -71,8 +71,10 @@ After 2026-10-19, no new `schedule` Security runs appear in Actions history (exp
 
 ## C. Acceptance evidence to attach to issues
 
-| Gate | Pass criterion                                                                                             |
-| ---- | ---------------------------------------------------------------------------------------------------------- |
-| #395 | Screenshot or `gh pr checks` listing **all** required contexts on a current PR head, with Actions run URLs |
-| #397 | Code scanning dashboard shows a run from the latest head; Security job green including upload              |
-| #396 | `pnpm audit (high+)` green on CI for the merged lockfile (see remediation PR)                              |
+Distinguish **GitHub ruleset required contexts** (branch protection ruleset `mainrules`) from **workflow-level blocking gates** documented in `docs/ci-branch-governance.md`. Both must be green on the remediation PR head before merge; only the ruleset contexts block the merge button if missing from the ruleset list.
+
+| Gate | Pass criterion                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| #395 | PR [#407](https://github.com/qnbs/AI-Research-Orchestrator/pull/407) head documents latest green SHA: full **ruleset** contexts + workflow gates including **`PWA service-worker registration`** (`pwa-e2e.yml`, not yet in ruleset #399) — exemplar head `a157da1`: [Deploy](https://github.com/qnbs/AI-Research-Orchestrator/actions/runs/41720263369), [Security](https://github.com/qnbs/AI-Research-Orchestrator/actions/runs/41720263417), E2E / cross-browser / axe / PWA on same SHA |
+| #397 | CodeQL upload green on [Security run 41720263417](https://github.com/qnbs/AI-Research-Orchestrator/actions/runs/41720263417) (`a157da1`)                                                                                                                                                                                                                                                                                                                                                     |
+| #396 | `pnpm audit (high+)` green on same Security run; lockfile remediation in PR #407                                                                                                                                                                                                                                                                                                                                                                                                             |

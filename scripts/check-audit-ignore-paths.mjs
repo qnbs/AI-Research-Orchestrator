@@ -28,16 +28,40 @@ const ALLOWED_AUDIT_IGNORES = {};
  * @param {string} yaml
  * @returns {string[]}
  */
+const GHSA_ID = 'GHSA-[A-Za-z0-9-]+';
+
+/**
+ * @param {string} bracketContents
+ * @returns {string[]}
+ */
+function parseInlineGhsaList(bracketContents) {
+  const ids = [];
+  const re = new RegExp(GHSA_ID, 'g');
+  let match;
+  while ((match = re.exec(bracketContents)) !== null) {
+    ids.push(match[0]);
+  }
+  return ids;
+}
+
 export function parseIgnoreGhsas(yaml) {
   const ids = [];
   let inList = false;
   for (const line of yaml.split('\n')) {
+    const inlineEmpty = line.match(/^\s*ignoreGhsas:\s*\[\s*\]\s*(?:#.*)?$/);
+    if (inlineEmpty) {
+      return [];
+    }
+    const inlineList = line.match(/^\s*ignoreGhsas:\s*\[(.*)\]\s*(?:#.*)?$/);
+    if (inlineList) {
+      return parseInlineGhsaList(inlineList[1]);
+    }
     if (/^\s*ignoreGhsas:\s*$/.test(line)) {
       inList = true;
       continue;
     }
     if (!inList) continue;
-    const item = line.match(/^\s+-\s+["']?(GHSA-[A-Za-z0-9-]+)["']?\s*$/);
+    const item = line.match(new RegExp(`^\\s+-\\s+["']?(${GHSA_ID})["']?\\s*$`));
     if (item) {
       ids.push(item[1]);
       continue;
@@ -178,6 +202,16 @@ function main() {
     fail(
       `quoted GHSA parser fixture failed: ${JSON.stringify({ quotedDouble, quotedSingle })}`,
     );
+  }
+
+  const inlineOne = parseIgnoreGhsas('auditConfig:\n  ignoreGhsas: [GHSA-aaaa-bbbb-cccc]\n');
+  if (inlineOne.length !== 1 || inlineOne[0] !== 'GHSA-aaaa-bbbb-cccc') {
+    fail(`inline GHSA parser fixture failed: ${JSON.stringify(inlineOne)}`);
+  }
+
+  const inlineEmpty = parseIgnoreGhsas('auditConfig:\n  ignoreGhsas: []\n');
+  if (inlineEmpty.length !== 0) {
+    fail(`inline empty ignoreGhsas fixture failed: ${JSON.stringify(inlineEmpty)}`);
   }
 
   const workspace = readFileSync(path.join(ROOT, 'pnpm-workspace.yaml'), 'utf8');

@@ -50,6 +50,17 @@ describe('arxivUtils', () => {
     expect(rows[0].title).toContain('Test Title');
   });
 
+  it('returns parse_error when the response is not an Atom feed', async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      text: async () => '<?xml version="1.0"?><error><message>rate limit</message></error>',
+    });
+    await expect(searchAndFetchArxivDetailed('x', 1)).resolves.toMatchObject({
+      articles: [],
+      outcome: 'parse_error',
+    });
+  });
+
   it('returns http_error outcome on non-OK HTTP without long retry', async () => {
     globalThis.fetch = vi.fn().mockResolvedValue({ ok: false, status: 404 });
     await expect(searchAndFetchArxivDetailed('x', 1)).resolves.toMatchObject({

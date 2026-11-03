@@ -145,6 +145,7 @@ export async function retrieveArticles(
     } catch (error) {
       if (isAbortError(error)) throw toAppError(error, 'arxiv');
       retrievalErrorCount += 1;
+      arxivFetchOutcome = 'network_error';
       safeLogWarn('arXiv search failed:', error);
     }
   }

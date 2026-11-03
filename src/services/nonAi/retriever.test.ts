@@ -213,6 +213,8 @@ describe('retrieveArticles', () => {
 
     expect(result.arxivCount).toBe(0);
     expect(result.arxivArticles).toEqual([]);
+    expect(result.retrievalErrorCount).toBe(1);
+    expect(result.arxivFetchOutcome).toBe('network_error');
   });
 
   it('opens the circuit breaker after repeated pubmed-search failures and keeps degrading gracefully', async () => {
