@@ -17,6 +17,11 @@ export interface CircuitBreakerOptions {
   now?: () => number;
 }
 
+export type WithCircuitBreakerOptions<T> = CircuitBreakerOptions & {
+  /** When the promise resolves, treat matching results as breaker failures (default: all resolves succeed). */
+  isFailure?: (result: T) => boolean;
+};
+
 export class CircuitOpenError extends Error {
   readonly service: string;
 
@@ -147,7 +152,7 @@ export function resetAllCircuitBreakers(): void {
 export async function withCircuitBreaker<T>(
   service: string,
   fn: () => Promise<T>,
-  options?: CircuitBreakerOptions,
+  options?: WithCircuitBreakerOptions<T>,
 ): Promise<T> {
   const breaker = getCircuitBreaker(service, options);
   breaker.assertClosed();
@@ -157,7 +162,11 @@ export async function withCircuitBreaker<T>(
   }
   try {
     const result = await fn();
-    breaker.recordSuccess();
+    if (options?.isFailure?.(result)) {
+      breaker.recordFailure();
+    } else {
+      breaker.recordSuccess();
+    }
     return result;
   } catch (error) {
     if (error instanceof CircuitOpenError) throw error;

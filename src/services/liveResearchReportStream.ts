@@ -142,11 +142,13 @@ Research Topic: ${wrapUntrustedTextBlock('research_topic', topicSafe)}
 
     throwIfAborted(signal);
     // STEP 3b: Fetch arXiv Preprints (if enabled, non-blocking)
+    let arxivRetrievalFailed = false;
     if (input.includeArxiv) {
       yield makePipelineEvent('arxiv-fetch');
       const arxivMax = Math.min(Math.floor(input.maxArticlesToScan / 2), 15);
       const arxivFetch = await searchAndFetchArxivDetailed(topicSafe, arxivMax, signal);
       if (isArxivRetrievalFailure(arxivFetch.outcome)) {
+        arxivRetrievalFailed = true;
         safeLogWarn(
           'arXiv retrieval unavailable during live run:',
           arxivFetch.outcome,
@@ -323,6 +325,7 @@ Research Topic: ${wrapUntrustedTextBlock('research_topic', topicSafe)}
       rankedArticles: grounded.rankedArticles,
       aiGeneratedInsights: grounded.insights,
       overallKeywords: analysisData.overallKeywords,
+      retrievalOutcome: arxivRetrievalFailed ? 'partial_failure' : 'ok',
     };
     yield makePipelineEvent('synthesis', { report: partialReport });
 

@@ -119,8 +119,10 @@ export async function retrieveArticles(
   let arxivFetchOutcome: ArxivFetchOutcome | undefined;
   if (maxArxiv > 0 && !options.signal?.aborted) {
     try {
-      const arxivFetch = await withCircuitBreaker('arxiv', () =>
-        searchAndFetchArxivDetailed(queries[0]?.query ?? '', maxArxiv, options.signal),
+      const arxivFetch = await withCircuitBreaker(
+        'arxiv',
+        () => searchAndFetchArxivDetailed(queries[0]?.query ?? '', maxArxiv, options.signal),
+        { isFailure: (result) => isArxivRetrievalFailure(result.outcome) },
       );
       apiCalls++;
       arxivFetchOutcome = arxivFetch.outcome;

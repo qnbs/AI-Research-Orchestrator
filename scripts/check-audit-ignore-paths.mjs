@@ -47,6 +47,7 @@ function parseInlineGhsaList(bracketContents) {
 export function parseIgnoreGhsas(yaml) {
   const ids = [];
   let inList = false;
+  let inFlowList = false;
   for (const line of yaml.split('\n')) {
     const inlineEmpty = line.match(/^\s*ignoreGhsas:\s*\[\s*\]\s*(?:#.*)?$/);
     if (inlineEmpty) {
@@ -55,6 +56,18 @@ export function parseIgnoreGhsas(yaml) {
     const inlineList = line.match(/^\s*ignoreGhsas:\s*\[(.*)\]\s*(?:#.*)?$/);
     if (inlineList) {
       return parseInlineGhsaList(inlineList[1]);
+    }
+    if (/^\s*ignoreGhsas:\s*\[\s*(?:#.*)?$/.test(line)) {
+      inFlowList = true;
+      inList = false;
+      continue;
+    }
+    if (inFlowList) {
+      ids.push(...parseInlineGhsaList(line));
+      if (/\]/.test(line)) {
+        inFlowList = false;
+      }
+      continue;
     }
     if (/^\s*ignoreGhsas:\s*$/.test(line)) {
       inList = true;
@@ -212,6 +225,13 @@ function main() {
   const inlineEmpty = parseIgnoreGhsas('auditConfig:\n  ignoreGhsas: []\n');
   if (inlineEmpty.length !== 0) {
     fail(`inline empty ignoreGhsas fixture failed: ${JSON.stringify(inlineEmpty)}`);
+  }
+
+  const multilineFlow = parseIgnoreGhsas(
+    'auditConfig:\n  ignoreGhsas: [\n    GHSA-test-aaaa-bbbb\n  ]\n',
+  );
+  if (multilineFlow.length !== 1 || multilineFlow[0] !== 'GHSA-test-aaaa-bbbb') {
+    fail(`multiline flow ignoreGhsas fixture failed: ${JSON.stringify(multilineFlow)}`);
   }
 
   const workspace = readFileSync(path.join(ROOT, 'pnpm-workspace.yaml'), 'utf8');
