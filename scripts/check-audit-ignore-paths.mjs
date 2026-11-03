@@ -22,18 +22,7 @@ const ROOT = fileURLToPath(new URL('..', import.meta.url));
  *
  * @type {Record<string, { packageName: string, mustPassThrough: string }>}
  */
-const ALLOWED_AUDIT_IGNORES = {
-  // Unpatched extract-zip (GHSA-jmr9-qjv8-65gv). Only path: LHCI Chrome unpack.
-  'GHSA-jmr9-qjv8-65gv': {
-    packageName: 'extract-zip',
-    mustPassThrough: '@lhci/cli',
-  },
-  // Second extract-zip advisory (GHSA-7pqw-9j4j-h8q3); same abandoned LHCI-only path.
-  'GHSA-7pqw-9j4j-h8q3': {
-    packageName: 'extract-zip',
-    mustPassThrough: '@lhci/cli',
-  },
-};
+const ALLOWED_AUDIT_IGNORES = {};
 
 /**
  * @param {string} yaml
