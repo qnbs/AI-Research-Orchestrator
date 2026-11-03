@@ -75,6 +75,15 @@ describe('arxivUtils', () => {
     await expect(searchAndFetchArxiv('x', 1)).resolves.toEqual([]);
   });
 
+  it('propagates abort when signal is already aborted after a generic fetch error', async () => {
+    const ac = new AbortController();
+    ac.abort();
+    globalThis.fetch = vi.fn().mockRejectedValue(new Error('network'));
+    await expect(searchAndFetchArxivDetailed('topic', 1, ac.signal)).rejects.toMatchObject({
+      name: 'AbortError',
+    });
+  });
+
   it('aborts during backoff without swallowing AbortError', async () => {
     const ac = new AbortController();
     globalThis.fetch = vi.fn().mockRejectedValue(new Error('network'));

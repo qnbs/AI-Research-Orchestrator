@@ -229,7 +229,7 @@ Consolidation PR: **#369** (`cursor/dependabot-d1-oct2026-patches-d4f6`).
 | #376, #377, #381, #385, #389 | Actions / CodeQL action SHAs                   | **Deferred** — wave D2; rebase after #407 merge                                                         |
 | #383                         | claude-code-action                             | **Deferred** — governance-sensitive                                                                     |
 
-**Validation target head:** `a157da1` — full required CI green (Deploy, Security incl. CodeQL + audit, E2E, cross-browser, axe, PWA). Close bot PRs with comment linking #407 after merge.
+**Validation target head:** `2a857de` — full required CI green (Deploy, Security incl. CodeQL + audit, E2E, cross-browser, axe, PWA). Close bot PRs with comment linking #407 after merge.
 
 ## 2026-10-03 — Stale agent drafts (Wave G)
 

@@ -143,6 +143,9 @@ export async function retrieveArticles(
         articleType: article.articleType ?? 'Preprint',
       }));
     } catch (error) {
+      if (options.signal?.aborted) {
+        throw toAppError(new DOMException('Aborted', 'AbortError'), 'arxiv');
+      }
       if (isAbortError(error)) throw toAppError(error, 'arxiv');
       retrievalErrorCount += 1;
       arxivFetchOutcome = 'network_error';

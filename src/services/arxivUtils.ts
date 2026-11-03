@@ -129,7 +129,10 @@ export async function searchAndFetchArxivDetailed(
       outcome: articles.length > 0 ? 'success_with_results' : 'success_empty',
     };
   } catch (error) {
-    if (isAbortError(error) || signal?.aborted) {
+    if (signal?.aborted) {
+      throw new DOMException('Aborted', 'AbortError');
+    }
+    if (isAbortError(error)) {
       throw error;
     }
     return empty('network_error');

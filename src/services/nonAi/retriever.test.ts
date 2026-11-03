@@ -204,6 +204,21 @@ describe('retrieveArticles', () => {
     expect(result.arxivFetchOutcome).toBe('success_empty');
   });
 
+  it('rethrows STREAM_ABORTED when signal is aborted after a generic arXiv error', async () => {
+    mockPubMed.searchPubMedForIds.mockResolvedValue([]);
+    mockPubMed.fetchArticleDetails.mockResolvedValue([]);
+    const controller = new AbortController();
+    mockArxiv.searchAndFetchArxivDetailed.mockImplementation(async () => {
+      controller.abort();
+      throw new Error('network flake');
+    });
+
+    await expect(
+      retrieveArticles([query('x')], { maxArxiv: 5, signal: controller.signal }),
+    ).rejects.toMatchObject({ code: 'STREAM_ABORTED' });
+    expect(mockArxiv.searchAndFetchArxivDetailed).toHaveBeenCalled();
+  });
+
   it('swallows an arXiv thrown failure and returns empty arxivArticles', async () => {
     mockPubMed.searchPubMedForIds.mockResolvedValue([]);
     mockPubMed.fetchArticleDetails.mockResolvedValue([]);

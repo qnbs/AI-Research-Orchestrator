@@ -13,17 +13,26 @@ This document describes **maintainer account actions** that cannot be completed 
 ### Verified symptom
 
 - Open Dependabot PR heads (for example `#375`) show third-party App checks (Socket, CodeAnt, Semgrep) but **no** GitHub Actions jobs such as `Typecheck, Lint & Tests`, `Playwright E2E`, or `CodeQL`.
-- **Maintainer/agent PR `#407` (2026-11-03)** shows the same pattern: many App check suites queue, but **`github-actions` check suites count = 0** on head `90bd5c5…`.
+- **Maintainer/agent PR `#407` (2026-11-03):** after Actions re-enable + empty push `13d8c3f`, full `github-actions` suites ran on head `2a857de` (see follow-up in phase-0 evidence).
 - `gh run list --workflow=deploy.yml --event pull_request` shows **no** runs after **2026-10-05**, while workflows remain **active**.
 
-### Leading hypothesis
+### Confirmed root cause (2026-11-03, maintainer)
 
-GitHub is **not enqueueing** `pull_request` workflow runs for Dependabot-authored PRs until a maintainer approves them, or an org Actions policy blocks bot-initiated runs.
+The repository maintainer **confirmed that GitHub Actions / workflow execution had been disabled in repository settings** and was **re-enabled** after this gap was reported. That explains missing `pull_request` workflow runs after 2026-10-05 without YAML changes. PR [#407](https://github.com/qnbs/AI-Research-Orchestrator/pull/407) re-trigger (`13d8c3f`) then ran full Deploy / Security / E2E / a11y / PWA workflows on head `2a857de`.
+
+**Separate operational gap:** re-enabling Actions does **not** retroactively enqueue runs on stale Dependabot PR heads (`#375`, `#393`, …). Those heads still show App checks only until **Re-run**, Dependabot rebase, or consolidation supersedes them.
+
+### Contingency diagnostics (only if runs still missing after Actions are enabled)
+
+- **Workflow approval:** “Approve and run workflows” on a blocked PR.
+- **Outside-collaborator / first-time contributor** approval policies (Dependabot often treated as outside collaborator).
+- Org Actions budget or disablement.
 
 ### Maintainer checklist (UI)
 
 1. Open any blocked Dependabot PR (for example `#375`) → **Checks** tab.
-2. If you see **“Workflow runs awaiting approval”** or **“Approve and run workflows”**, approve once and confirm these jobs start:
+2. If you see **“Workflow runs awaiting approval”** or **“Approve and run workflows”**, approve once and confirm these jobs start on the **Security** workflow (required **job contexts**, not a single job named “Security”):
+   - `CodeQL`, `Dependency Review`, `pnpm audit (high+)`, `Secret scan (gitleaks)`
    - `Deploy to GitHub Pages` → `Typecheck, Lint & Tests`, `Production Build`
    - `E2E Tests` → `Playwright E2E`
    - `E2E Cross-Browser Smoke` → Firefox / WebKit / mobile Chrome
@@ -73,8 +82,8 @@ After 2026-10-19, no new `schedule` Security runs appear in Actions history (exp
 
 Distinguish **GitHub ruleset required contexts** (branch protection ruleset `mainrules`) from **workflow-level blocking gates** documented in `docs/ci-branch-governance.md`. Both must be green on the remediation PR head before merge; only the ruleset contexts block the merge button if missing from the ruleset list.
 
-| Gate | Pass criterion                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| #395 | PR [#407](https://github.com/qnbs/AI-Research-Orchestrator/pull/407) head documents latest green SHA: full **ruleset** contexts + workflow gates including **`PWA service-worker registration`** (`pwa-e2e.yml`, not yet in ruleset #399) — exemplar head `a157da1`: [Deploy](https://github.com/qnbs/AI-Research-Orchestrator/actions/runs/41720263369), [Security](https://github.com/qnbs/AI-Research-Orchestrator/actions/runs/41720263417), E2E / cross-browser / axe / PWA on same SHA |
-| #397 | CodeQL upload green on [Security run 41720263417](https://github.com/qnbs/AI-Research-Orchestrator/actions/runs/41720263417) (`a157da1`)                                                                                                                                                                                                                                                                                                                                                     |
-| #396 | `pnpm audit (high+)` green on same Security run; lockfile remediation in PR #407                                                                                                                                                                                                                                                                                                                                                                                                             |
+| Gate | Pass criterion                                                                                                                                                                                                                                                                                                                                                                                |
+| ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| #395 | PR [#407](https://github.com/qnbs/AI-Research-Orchestrator/pull/407) head `2a857de`: ruleset + workflow gates incl. **PWA service-worker registration** — [Deploy 41722216617](https://github.com/qnbs/AI-Research-Orchestrator/actions/runs/41722216617), [Security 41722216361](https://github.com/qnbs/AI-Research-Orchestrator/actions/runs/41722216361), E2E / cross-browser / axe / PWA |
+| #397 | CodeQL upload green on [Security 41722216361](https://github.com/qnbs/AI-Research-Orchestrator/actions/runs/41722216361) (`2a857de`)                                                                                                                                                                                                                                                          |
+| #396 | `pnpm audit (high+)` green on same Security run; lockfile remediation in PR #407                                                                                                                                                                                                                                                                                                              |
