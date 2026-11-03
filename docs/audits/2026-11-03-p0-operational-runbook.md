@@ -13,6 +13,7 @@ This document describes **maintainer account actions** that cannot be completed 
 ### Verified symptom
 
 - Open Dependabot PR heads (for example `#375`) show third-party App checks (Socket, CodeAnt, Semgrep) but **no** GitHub Actions jobs such as `Typecheck, Lint & Tests`, `Playwright E2E`, or `CodeQL`.
+- **Maintainer/agent PR `#407` (2026-11-03)** shows the same pattern: many App check suites queue, but **`github-actions` check suites count = 0** on head `90bd5c5…`.
 - `gh run list --workflow=deploy.yml --event pull_request` shows **no** runs after **2026-10-05**, while workflows remain **active**.
 
 ### Leading hypothesis
