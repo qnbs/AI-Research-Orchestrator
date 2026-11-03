@@ -16,7 +16,8 @@ import type { AIJsonSchema } from './providers/types';
 import { probeOllamaHealth } from './providers/ollamaHealth';
 import { probeOllamaModelMetadata } from '../lib/ollamaModelMetadata';
 import { searchPubMedForIds, fetchArticleDetails } from './pubmedUtils';
-import { searchAndFetchArxiv } from './arxivUtils';
+import { searchAndFetchArxivDetailed, isArxivRetrievalFailure } from './arxivUtils';
+import { safeLogWarn } from '../lib/safeLog';
 import { sanitizePromptFragment } from '../lib/promptSanitize';
 import { resolveApprovedBaseUrl } from '../lib/endpointPolicy';
 import { applyCorpusCitationGrounding } from '../lib/citationGrounding';
@@ -144,9 +145,16 @@ Research Topic: ${wrapUntrustedTextBlock('research_topic', topicSafe)}
     if (input.includeArxiv) {
       yield makePipelineEvent('arxiv-fetch');
       const arxivMax = Math.min(Math.floor(input.maxArticlesToScan / 2), 15);
-      const arxivResults = await searchAndFetchArxiv(topicSafe, arxivMax, signal);
-      if (arxivResults.length > 0) {
-        articleDetails.push(...arxivResults);
+      const arxivFetch = await searchAndFetchArxivDetailed(topicSafe, arxivMax, signal);
+      if (isArxivRetrievalFailure(arxivFetch.outcome)) {
+        safeLogWarn(
+          'arXiv retrieval unavailable during live run:',
+          arxivFetch.outcome,
+          arxivFetch.httpStatus,
+        );
+      }
+      if (arxivFetch.articles.length > 0) {
+        articleDetails.push(...arxivFetch.articles);
       }
     }
 

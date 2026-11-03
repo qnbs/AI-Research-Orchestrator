@@ -13,11 +13,14 @@ vi.mock('../pubmedUtils', () => ({
 }));
 
 const mockArxiv = vi.hoisted(() => ({
-  searchAndFetchArxiv: vi.fn(),
+  searchAndFetchArxivDetailed: vi.fn(),
 }));
 
 vi.mock('../arxivUtils', () => ({
-  searchAndFetchArxiv: (...args: unknown[]) => mockArxiv.searchAndFetchArxiv(...args),
+  searchAndFetchArxivDetailed: (...args: unknown[]) =>
+    mockArxiv.searchAndFetchArxivDetailed(...args),
+  isArxivRetrievalFailure: (outcome: string) =>
+    outcome !== 'success_with_results' && outcome !== 'success_empty',
 }));
 
 vi.mock('../apiKeyService', () => ({
@@ -34,7 +37,10 @@ describe('retrieveArticles', () => {
   beforeEach(() => {
     resetAllCircuitBreakers();
     vi.clearAllMocks();
-    mockArxiv.searchAndFetchArxiv.mockResolvedValue([]);
+    mockArxiv.searchAndFetchArxivDetailed.mockResolvedValue({
+      articles: [],
+      outcome: 'success_empty',
+    });
   });
 
   it('retrieves and fills defaults for PubMed articles', async () => {
@@ -80,14 +86,17 @@ describe('retrieveArticles', () => {
 
     const result = await retrieveArticles([query('x')], { maxArxiv: 0 });
 
-    expect(mockArxiv.searchAndFetchArxiv).not.toHaveBeenCalled();
+    expect(mockArxiv.searchAndFetchArxivDetailed).not.toHaveBeenCalled();
     expect(result.arxivCount).toBe(0);
   });
 
   it('fetches and defaults arXiv results with a preprint score/type', async () => {
     mockPubMed.searchPubMedForIds.mockResolvedValue([]);
     mockPubMed.fetchArticleDetails.mockResolvedValue([]);
-    mockArxiv.searchAndFetchArxiv.mockResolvedValue([{ pmid: 'arxiv:1', title: 'Preprint A' }]);
+    mockArxiv.searchAndFetchArxivDetailed.mockResolvedValue({
+      articles: [{ pmid: 'arxiv:1', title: 'Preprint A' }],
+      outcome: 'success_with_results',
+    });
 
     const result = await retrieveArticles([query('x')], { maxArxiv: 5 });
 
@@ -124,7 +133,10 @@ describe('retrieveArticles', () => {
   it('isolates a fetchArticleDetails failure and still attempts arXiv', async () => {
     mockPubMed.searchPubMedForIds.mockResolvedValue(['1']);
     mockPubMed.fetchArticleDetails.mockRejectedValue(new Error('fetch failed'));
-    mockArxiv.searchAndFetchArxiv.mockResolvedValue([{ pmid: 'arxiv:1', title: 'Preprint' }]);
+    mockArxiv.searchAndFetchArxivDetailed.mockResolvedValue({
+      articles: [{ pmid: 'arxiv:1', title: 'Preprint' }],
+      outcome: 'success_with_results',
+    });
 
     const result = await retrieveArticles([query('x')], { maxArxiv: 5 });
 
@@ -155,17 +167,47 @@ describe('retrieveArticles', () => {
     mockPubMed.searchPubMedForIds.mockResolvedValue([]);
     mockPubMed.fetchArticleDetails.mockResolvedValue([]);
     const abortError = new DOMException('Aborted', 'AbortError');
-    mockArxiv.searchAndFetchArxiv.mockRejectedValue(abortError);
+    mockArxiv.searchAndFetchArxivDetailed.mockRejectedValue(abortError);
 
     await expect(retrieveArticles([query('x')], { maxArxiv: 5 })).rejects.toMatchObject({
       code: 'STREAM_ABORTED',
     });
   });
 
-  it('swallows an arXiv failure and returns empty arxivArticles', async () => {
+  it('counts arXiv network failure toward retrievalErrorCount without conflating empty search', async () => {
+    mockPubMed.searchPubMedForIds.mockResolvedValue(['1']);
+    mockPubMed.fetchArticleDetails.mockResolvedValue([{ pmid: '1', title: 'Pub' }]);
+    mockArxiv.searchAndFetchArxivDetailed.mockResolvedValue({
+      articles: [],
+      outcome: 'network_error',
+    });
+
+    const result = await retrieveArticles([query('x')], { maxArxiv: 5 });
+
+    expect(result.pubmedCount).toBe(1);
+    expect(result.arxivCount).toBe(0);
+    expect(result.retrievalErrorCount).toBe(1);
+    expect(result.arxivFetchOutcome).toBe('network_error');
+  });
+
+  it('does not count arXiv zero-hit search as a retrieval error', async () => {
+    mockPubMed.searchPubMedForIds.mockResolvedValue(['1']);
+    mockPubMed.fetchArticleDetails.mockResolvedValue([{ pmid: '1', title: 'Pub' }]);
+    mockArxiv.searchAndFetchArxivDetailed.mockResolvedValue({
+      articles: [],
+      outcome: 'success_empty',
+    });
+
+    const result = await retrieveArticles([query('x')], { maxArxiv: 5 });
+
+    expect(result.retrievalErrorCount).toBe(0);
+    expect(result.arxivFetchOutcome).toBe('success_empty');
+  });
+
+  it('swallows an arXiv thrown failure and returns empty arxivArticles', async () => {
     mockPubMed.searchPubMedForIds.mockResolvedValue([]);
     mockPubMed.fetchArticleDetails.mockResolvedValue([]);
-    mockArxiv.searchAndFetchArxiv.mockRejectedValue(new Error('arxiv down'));
+    mockArxiv.searchAndFetchArxivDetailed.mockRejectedValue(new Error('arxiv down'));
 
     const result = await retrieveArticles([query('x')], { maxArxiv: 5 });
 

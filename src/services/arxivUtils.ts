@@ -3,16 +3,35 @@
  *
  * Search and fetch preprint articles from the arXiv Atom REST API.
  * https://export.arxiv.org/api/query
- *
- * On CORS / network failure, returns [] so the pipeline continues with
- * PubMed results only — never blocks the main research flow.
  */
 import type { RankedArticle } from '../types';
 import { fetchWithExternalPolicy } from '../lib/externalFetch';
+import { isAbortError } from '../lib/errors';
 import { ensureArticleIdentifiers } from '../lib/sourceIdentifier';
 
 const ARXIV_BASE = 'https://export.arxiv.org/api/query';
 const ARXIV_TIMEOUT_MS = 18_000;
+
+/** Typed arXiv retrieval outcome (WS-07 / #401). */
+export type ArxivFetchOutcome =
+  | 'success_with_results'
+  | 'success_empty'
+  | 'http_error'
+  | 'network_error'
+  | 'parse_error'
+  | 'cancelled';
+
+export interface ArxivFetchResult {
+  articles: Partial<RankedArticle>[];
+  outcome: ArxivFetchOutcome;
+  /** Present when outcome is `http_error`. */
+  httpStatus?: number;
+}
+
+/** True when arXiv was requested but could not be retrieved (not a zero-hit search). */
+export function isArxivRetrievalFailure(outcome: ArxivFetchOutcome): boolean {
+  return outcome !== 'success_with_results' && outcome !== 'success_empty';
+}
 
 /** Convert a single Atom <entry> element to a RankedArticle-compatible record. */
 function entryToRankedArticle(entry: Element): Partial<RankedArticle> {
@@ -54,22 +73,23 @@ function entryToRankedArticle(entry: Element): Partial<RankedArticle> {
     relevanceScore: 0,
     relevanceExplanation: '',
     articleType: 'Preprint',
-    // arxivId is a UnifiedArticle field, not RankedArticle.
-    // pmid prefix 'arxiv:' is used downstream to identify arXiv origin.
   } satisfies Partial<RankedArticle>;
 }
 
 /**
- * Search arXiv for articles matching `topic` and return them as
- * RankedArticle-compatible records (with pmid = "arxiv:<id>").
- *
- * Returns [] silently on any network/CORS/parse failure.
+ * Search arXiv with an explicit outcome (empty results vs unavailable source).
  */
-export async function searchAndFetchArxiv(
+export async function searchAndFetchArxivDetailed(
   topic: string,
   maxResults: number,
   signal?: AbortSignal,
-): Promise<Partial<RankedArticle>[]> {
+): Promise<ArxivFetchResult> {
+  const empty = (outcome: ArxivFetchOutcome, httpStatus?: number): ArxivFetchResult => ({
+    articles: [],
+    outcome,
+    httpStatus,
+  });
+
   try {
     const query = encodeURIComponent(topic);
     const url =
@@ -87,20 +107,41 @@ export async function searchAndFetchArxiv(
         signal,
       },
     );
-    if (!res.ok) return [];
+    if (!res.ok) return empty('http_error', res.status);
 
     const xml = await res.text();
     const parser = new DOMParser();
     const doc = parser.parseFromString(xml, 'application/xml');
 
-    // Detect XML parse errors
-    if (doc.querySelector('parsererror')) return [];
+    if (doc.querySelector('parsererror')) return empty('parse_error');
 
-    return Array.from(doc.getElementsByTagName('entry')).map((entry) =>
+    const articles = Array.from(doc.getElementsByTagName('entry')).map((entry) =>
       ensureArticleIdentifiers(entryToRankedArticle(entry) as RankedArticle),
     );
-  } catch {
-    // Network error, CORS block, timeout, etc. — continue with PubMed only
-    return [];
+    return {
+      articles,
+      outcome: articles.length > 0 ? 'success_with_results' : 'success_empty',
+    };
+  } catch (error) {
+    if (isAbortError(error) || signal?.aborted) {
+      throw error;
+    }
+    return empty('network_error');
   }
+}
+
+/**
+ * Search arXiv for articles matching `topic` and return them as
+ * RankedArticle-compatible records (with pmid = "arxiv:<id>").
+ *
+ * Backward-compatible wrapper — prefer `searchAndFetchArxivDetailed` when
+ * distinguishing empty results from source unavailability.
+ */
+export async function searchAndFetchArxiv(
+  topic: string,
+  maxResults: number,
+  signal?: AbortSignal,
+): Promise<Partial<RankedArticle>[]> {
+  const result = await searchAndFetchArxivDetailed(topic, maxResults, signal);
+  return result.articles;
 }

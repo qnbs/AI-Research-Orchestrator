@@ -10,7 +10,7 @@ vi.mock('../lib/resilience', async (importOriginal) => {
   };
 });
 
-import { searchAndFetchArxiv } from './arxivUtils';
+import { searchAndFetchArxiv, searchAndFetchArxivDetailed } from './arxivUtils';
 
 const atom = `<?xml version="1.0"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
@@ -50,12 +50,21 @@ describe('arxivUtils', () => {
     expect(rows[0].title).toContain('Test Title');
   });
 
-  it('returns empty array on non-OK HTTP without long retry', async () => {
+  it('returns http_error outcome on non-OK HTTP without long retry', async () => {
     globalThis.fetch = vi.fn().mockResolvedValue({ ok: false, status: 404 });
+    await expect(searchAndFetchArxivDetailed('x', 1)).resolves.toMatchObject({
+      articles: [],
+      outcome: 'http_error',
+      httpStatus: 404,
+    });
+  });
+
+  it('searchAndFetchArxiv wrapper returns articles only', async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({ ok: false, status: 503 });
     await expect(searchAndFetchArxiv('x', 1)).resolves.toEqual([]);
   });
 
-  it('aborts during backoff without further fetch attempts', async () => {
+  it('aborts during backoff without swallowing AbortError', async () => {
     const ac = new AbortController();
     globalThis.fetch = vi.fn().mockRejectedValue(new Error('network'));
     sleepAbortableMock.mockImplementation(() => new Promise<void>(() => {}));
@@ -63,7 +72,7 @@ describe('arxivUtils', () => {
     const promise = searchAndFetchArxiv('topic', 1, ac.signal);
     await Promise.resolve();
     ac.abort();
-    await expect(promise).resolves.toEqual([]);
+    await expect(promise).rejects.toMatchObject({ name: 'AbortError' });
     expect(globalThis.fetch).toHaveBeenCalledTimes(1);
   });
 });
