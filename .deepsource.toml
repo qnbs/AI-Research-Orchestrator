@@ -1,10 +1,8 @@
 version = 1
 
 # TypeScript/JavaScript quality is gated by ESLint 9 + tsc in deploy.yml — not DeepSource JS.
-# The DeepSource JavaScript analyzer reports hundreds of false positives (JS-0125 ESM exports,
-# complexity antipatterns). We disable it in TOML and exclude application TS so the GitHub
-# "DeepSource: JavaScript" check stays green even when the dashboard analyzer is still on.
-# See docs/deepsource-javascript-ci.md and docs/deepsource-dashboard-off.md.
+# Dashboard JavaScript analyzer is off (2026-11-04). TOML mirrors that with enabled = false
+# and TS/JS excludes as belt-and-suspenders. ESLint + tsc remain authoritative.
 
 exclude_patterns = [
   ".devcontainer/**",
@@ -38,21 +36,7 @@ test_patterns = [
 
 [[analyzers]]
 name = "javascript"
-enabled = true
-
-  [analyzers.meta]
-  dialect = "typescript"
-  module_system = "es-modules"
-  environment = ["browser", "nodejs", "vitest"]
-  cyclomatic_complexity_threshold = "critical"
-  skip_doc_coverage = [
-    "function-declaration",
-    "function-expression",
-    "arrow-function-expression",
-    "class-declaration",
-    "class-expression",
-    "method-definition",
-  ]
+enabled = false
 
 [[analyzers]]
 name = "docker"
