@@ -7,24 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.7] - 2026-11-04
+
+> Patch after **v0.4.6** (`03f3bd6`): Nov 2026 audit-recovery wave — security pins, dashboard/collections provenance, blocking E2E expansion (10 specs), production smoke evidence.
+
 ### Added
 
-- **Orchestrator (#419):** `orchestrator-checkpoint.spec.ts` — cancel → persisted checkpoint → reload → restore partial (never `done`).
-- **Knowledge Base (#421):** KB CSV export download assertion on selected demo articles.
-- **Audit recovery (2026-11-04):** GitHub Pages production smoke evidence (`docs/audits/2026-11-04-github-pages-production-smoke.md`, #404); README version badge **0.4.6** (#411).
-- **Knowledge Base (#421):** Playwright `knowledge-base.spec.ts` — demo corpus selection and bulk CSV export toolbar on filtered page.
-- **Orchestrator (#419):** Documented WS-24 state/identity matrix (`docs/audits/2026-11-04-orchestrator-state-invariants.md`); regression test for stale stream completion after `handleNewSearch`.
+- **E2E (#408, #419, #421):** Blocking Playwright — `collections.spec.ts` (Dexie + portable export), `knowledge-base.spec.ts` (selection + CSV download), `orchestrator-checkpoint.spec.ts` (cancel → reload → restore partial).
+- **Orchestrator (#419):** WS-24 state/identity matrix (`docs/audits/2026-11-04-orchestrator-state-invariants.md`); unit test for stale stream completion after `handleNewSearch`.
+- **Audit recovery:** GitHub Pages production smoke ledger (`docs/audits/2026-11-04-github-pages-production-smoke.md`, #404); P1 issue disposition (`docs/audits/2026-11-04-p1-issue-disposition.md`).
 
 ### Changed
 
 - **Security (#396):** Pin `brace-expansion@^5.0.0` to **5.0.12** (GHSA-q2hr-2g5m-vwhr) and `^2.0.2` to **2.1.7**; `^1.1.7` remains **1.1.21**. `minimatch` advisories deferred — separate compatibility review.
+- **Dependencies:** React / ReactDOM **^19.3.1** (#440).
 - **DeepSource (#410):** Restored narrow `exclude_patterns` after #436 — only `.devcontainer/Dockerfile` dev noise excluded; Shell again covers `.devcontainer/postCreate.sh`. JavaScript stays `enabled = false`.
 - **DeepSource JavaScript (2026-11-04):** Dashboard analyzer disabled by maintainer; TOML `enabled = false`; drift gate updated.
 - **Dashboard (#409):** OA chart uses open / unknown / closed buckets (missing PMC/OA evidence no longer counts as “closed”). Source chart uses `sourceClass` and retrieval provenance (imported PMID ≠ PubMed); stable bucket colors and EN/DE subtitles.
-- **Collections (#408):** Playwright `collections.spec.ts` — create → reload persistence, portable export local-only copy + metadata JSON shape, delete confirm.
+- **Collections (#408):** Collection membership persists to Dexie; KB deletes prune `entryIds`; local-only portable JSON export (no fake share URLs).
 - **Node engines:** `>=22.19.0` (aligns with `@lhci/cli@0.16.0`; CI uses Node 24 LTS).
 - **Supply-chain (#396):** `@lhci/cli` 0.16.0, `dompurify` 3.4.17, `vite` 8.3.3; pnpm overrides for `undici`, `proxy-addr`, `compression`, `postcss`, `body-parser`, `zod`; removed stale LHCI `extract-zip` GHSA ignores after the dependency left the tree.
 - **Retrieval (#401):** arXiv fetch exposes typed outcomes via `searchAndFetchArxivDetailed`; heuristic retriever counts unavailable arXiv separately from zero-hit searches (`retrievalErrorCount` / partial retrieval status).
+- **Docs / CI inventory:** README badge and `docs/project-facts.json` list **ten** blocking Playwright specs (see `docs/e2e-ci-backlog.md`).
 
 ## [0.4.6] - 2026-10-03
 
@@ -532,7 +536,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - DevContainer support for GitHub Codespaces
 - Vitest unit tests + Playwright E2E test infrastructure
 
-[Unreleased]: https://github.com/qnbs/AI-Research-Orchestrator/compare/v0.4.6...HEAD
+[Unreleased]: https://github.com/qnbs/AI-Research-Orchestrator/compare/v0.4.7...HEAD
+[0.4.7]: https://github.com/qnbs/AI-Research-Orchestrator/compare/v0.4.6...v0.4.7
 [0.4.6]: https://github.com/qnbs/AI-Research-Orchestrator/compare/v0.4.5...v0.4.6
 [0.4.5]: https://github.com/qnbs/AI-Research-Orchestrator/compare/v0.4.4...v0.4.5
 [0.4.4]: https://github.com/qnbs/AI-Research-Orchestrator/compare/v0.4.3...v0.4.4
