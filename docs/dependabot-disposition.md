@@ -240,6 +240,17 @@ Consolidation PR: **#369** (`cursor/dependabot-d1-oct2026-patches-d4f6`).
 
 **Next:** After #423 merge, re-run **one** representative Dependabot update (e.g. `@vitejs/plugin-react`) and confirm `dependency_file_not_resolvable` is gone before batching #398 waves.
 
+## 2026-11-04 — Grouped security updater (post-#423)
+
+**Run:** [41795929084](https://github.com/qnbs/AI-Research-Orchestrator/actions/runs/41795929084) on `53a191f` — `security_update_not_possible` for four advisories blocked by workspace **override pins** (not proxy-agent; nine routine npm_and_yarn jobs succeeded).
+
+| Package                | Override / lock             | Dependabot wants | Disposition                                                                                                                 |
+| ---------------------- | --------------------------- | ---------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| brace-expansion@^1.1.7 | 1.1.20                      | 1.1.21           | **Fixed** — bump override to 1.1.21 (PR security-override-bumps)                                                            |
+| fflate (jspdf)         | 0.8.2                       | 0.8.3            | **Fixed** — `'fflate@^0.8.0': 0.8.3`                                                                                        |
+| ip-address             | 10.4.0                      | 10.7.4           | **Fixed** — override 10.7.4                                                                                                 |
+| minimatch@3 (eslint)   | 3.1.5 (no 3.x patch on npm) | 11.0.1           | **Deferred** — major jump incompatible with eslint@9 minimatch@3 peer tree; `pnpm audit --audit-level=high` clean on `main` |
+
 ## 2026-10-03 — Stale agent drafts (Wave G)
 
 | PR   | Title                                                | Disposition                                                              |
