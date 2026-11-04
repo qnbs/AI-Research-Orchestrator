@@ -149,7 +149,7 @@ importers:
         specifier: ^9.1.7
         version: 9.1.7
       js-yaml:
-        specifier: ^4.3.2
+        specifier: 4.3.2
         version: 4.3.2
       jsdom:
         specifier: ^30.1.1
