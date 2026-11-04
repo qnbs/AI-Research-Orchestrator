@@ -22,21 +22,24 @@ Evidence for **[#404](https://github.com/qnbs/AI-Research-Orchestrator/issues/40
 
 ## Deployed SHA correlation (#404 — required before issue close)
 
-| Item                                                                                                        | Status                                                                   |
-| ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| External browser/HTTP smoke on **current** Pages deployment                                                 | **Recorded** (afternoon ≈ `9a604f2`; **evening `52ab869`**)              |
-| Explicit live-site ↔ **`main` head SHA** attestation (Help → About `formatReleaseLabel()` vs deploy commit) | **Recorded** for **`52ab869`** (2026-11-04 22:59 Europe/Berlin)          |
-| CI `deploy` job success on latest `main`                                                                    | **Necessary but not sufficient** for #404 acceptance                     |
-| Blocking `pwa-e2e.yml` offline shell                                                                        | **Complements** external smoke; does not replace SHA-tied live URL proof |
+| Item                                                                                                        | Status                                                                                |
+| ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| External browser/HTTP smoke on **current** Pages deployment                                                 | **Recorded** (afternoon ≈ `9a604f2`; **`52ab869`**; **`f483e79`**)                    |
+| Explicit live-site ↔ **`main` head SHA** attestation (Help → About `formatReleaseLabel()` vs deploy commit) | **Recorded** for **`f483e79`** — matches **`main`** @ 2026-11-05 ~00:41 Europe/Berlin |
+| CI `deploy` job success on latest `main`                                                                    | **Necessary but not sufficient** for #404 acceptance                                  |
+| Blocking `pwa-e2e.yml` offline shell                                                                        | **Complements** external smoke; does not replace SHA-tied live URL proof              |
 
 ### Probe log (append-only)
 
-| Probe (Europe/Berlin) | `main` / Pages deploy SHA | GitHub Actions `deploy.yml`                | `index.html` Last-Modified (UTC) | HTTP | Live attestation                    | Agent artifacts                                     |
-| --------------------- | ------------------------- | ------------------------------------------ | -------------------------------- | ---- | ----------------------------------- | --------------------------------------------------- |
-| 2026-11-04 afternoon  | ~`9a604f2` lineage        | contemporaneous `main` CI                  | ~2026-11-04 18:16                | 200  | smoke only (no About SHA row)       | `pages-smoke-*.png` (prior run)                     |
-| **2026-11-04 22:59**  | **`52ab869`**             | run **41919411213** @ 2026-11-04 21:47:53Z | **2026-11-04 21:51:10**          | 200  | Help → About **`v0.4.7 (52ab869)`** | `pages-404-home.png`, `pages-404-about-version.png` |
+Each row must record **HTTP 200**, **base-path asset load**, **first-run → shell**, and **About SHA** for the cited deploy. Do **not** close **#404** on CI green alone or on a row whose About SHA ≠ live Pages at close time.
 
-**Disposition:** **#404 acceptance criteria met** for deploy **`52ab869`**. Maintainer may close using `docs/audits/2026-11-04-issue-closure-404-411.md`. Append a new row when `main` advances and live About SHA diverges.
+| Probe (Europe/Berlin) | Deploy SHA    | `deploy.yml` run            | `Last-Modified` (UTC) | HTTP | Base-path assets | First-run shell | About attestation      | Artifacts                                                   |
+| --------------------- | ------------- | --------------------------- | --------------------- | ---- | ---------------- | --------------- | ---------------------- | ----------------------------------------------------------- |
+| 2026-11-04 afternoon  | ~`9a604f2`    | contemporaneous CI          | ~18:16                | 200  | Pass (doc scope) | Pass            | not recorded           | `pages-smoke-*.png`                                         |
+| 2026-11-04 22:59      | **`52ab869`** | **41919411213** @ 21:47:53Z | 21:51:10              | 200  | **Pass**         | **Pass**        | **`v0.4.7 (52ab869)`** | `pages-404-home.png`, `pages-404-about-version.png`         |
+| **2026-11-05 00:41**  | **`f483e79`** | **41935140385** @ 23:37:08Z | **23:41:32**          | 200  | **Pass**         | **Pass**        | **`v0.4.7 (f483e79)`** | `pages-404-f483e79-home.png`, `pages-404-f483e79-about.png` |
+
+**Disposition:** **#404** may close when the maintainer cites the **latest probe row whose About SHA matches live Pages and `main`** (currently **`f483e79`**). If `main` advances again, append a row before closing on the new head.
 
 ## Observations
 
@@ -52,10 +55,11 @@ Screenshots and full narrative live under `/opt/cursor/artifacts/` for the verif
 - `pages-smoke-network.png` — asset path waterfall
 - `pages-smoke-sw.png` — service worker + manifest
 - `pages-404-home.png` — evening probe home (`52ab869`)
-- `pages-404-about-version.png` — Help → About **`v0.4.7 (52ab869)`**
-- `smoke-test-report.md` — step-by-step checklist
+- `pages-404-f483e79-home.png` — post–#452 deploy home (`f483e79`)
+- `pages-404-f483e79-about.png` — Help → About **`v0.4.7 (f483e79)`**
+- `smoke-test-report.md` — step-by-step checklist (prior runs)
 
 ## Disposition
 
-- **#404:** **Ready for maintainer close** — evening external smoke on deploy **`52ab869`** recorded above (About label + deploy run correlation). Do not close on CI alone; use closure comment in `docs/audits/2026-11-04-issue-closure-404-411.md`.
+- **#404:** **Ready for maintainer close** when live About matches **`f483e79`** (probe row 2026-11-05 00:41 Europe/Berlin). Use closure comment in `docs/audits/2026-11-04-issue-closure-404-411.md`; do not close on CI alone.
 - **CI correlation:** Every merge to `main` runs blocking quality, E2E (10 specs), cross-browser, a11y, security, and PWA jobs (`docs/ci-branch-governance.md`).
