@@ -5,11 +5,6 @@ export type DashboardOpenAccessBucket = 'open' | 'closed' | 'unknown';
 
 export type DashboardRetrievalSourceBucket = 'pubmed' | 'arxiv' | 'other';
 
-type ArticleLike = Pick<
-  RankedArticle,
-  'isOpenAccess' | 'pmid' | 'pmcId' | 'retrievalSource' | 'sourceClass'
->;
-
 /**
  * Dashboard OA chart buckets — do not treat missing PMC/OA evidence as toll "closed" access.
  * arXiv and explicit `isOpenAccess` count as open; absent evidence is unknown.
