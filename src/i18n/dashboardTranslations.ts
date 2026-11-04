@@ -44,8 +44,10 @@ export const dashboardTranslations = {
     'dashboard.series.articles': 'Articles',
     'dashboard.oa.open': 'Open Access',
     'dashboard.oa.closed': 'Closed Access',
+    'dashboard.oa.unknown': 'Unknown access',
     'dashboard.source.pubmed': 'PubMed',
     'dashboard.source.arxiv': 'arXiv',
+    'dashboard.source.other': 'Other / imported',
     'dashboard.type.other': 'Other',
 
     'scientometrics.title': 'Scientometric Analysis',
@@ -118,8 +120,10 @@ export const dashboardTranslations = {
     'dashboard.series.articles': 'Artikel',
     'dashboard.oa.open': 'Open Access',
     'dashboard.oa.closed': 'Geschlossen',
+    'dashboard.oa.unknown': 'Zugriff unbekannt',
     'dashboard.source.pubmed': 'PubMed',
     'dashboard.source.arxiv': 'arXiv',
+    'dashboard.source.other': 'Sonstige / importiert',
     'dashboard.type.other': 'Sonstige',
 
     'scientometrics.title': 'Scientometrische Analyse',
