@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Audit recovery (2026-11-03):** Phase-0 evidence snapshot, P0 operational runbook (PR CI + CodeQL maintainer steps). External Composer master prompt archived outside the repo (not in git).
+- **Knowledge Base (#421):** Playwright `knowledge-base.spec.ts` — demo corpus selection and bulk CSV export toolbar on filtered page.
 
 ### Changed
 
