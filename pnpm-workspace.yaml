@@ -40,6 +40,7 @@ minimumReleaseAgeExclude:
   - '@anthropic-ai/sdk@0.130.0'
   - '@anthropic-ai/sdk@0.131.0'
   - '@google/genai@2.26.0'
+  - '@google/genai@2.32.0'
   - ip-address@10.7.4
 onlyBuiltDependencies:
   - '@google/genai'
