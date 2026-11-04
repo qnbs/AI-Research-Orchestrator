@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **DeepSource (#410):** Restored narrow `exclude_patterns` after #436 — only `.devcontainer/Dockerfile` dev noise excluded; Shell again covers `.devcontainer/postCreate.sh`. JavaScript stays `enabled = false`.
 - **DeepSource JavaScript (2026-11-04):** Dashboard analyzer disabled by maintainer; TOML `enabled = false`; drift gate updated.
 - **Dashboard (#409):** OA chart uses open / unknown / closed buckets (missing PMC/OA evidence no longer counts as “closed”). Source chart uses `sourceClass` and retrieval provenance (imported PMID ≠ PubMed); stable bucket colors and EN/DE subtitles.
-- **Collections (#408):** Collection membership mutations persist to IndexedDB; KB entry deletes prune stale `entryIds`. Removed nonfunctional `?collection=` share URLs in favor of honest local-only portable JSON export copy.
+- **Collections (#408):** Playwright `collections.spec.ts` — create → reload persistence, portable export local-only copy + metadata JSON shape, delete confirm.
 - **Node engines:** `>=22.19.0` (aligns with `@lhci/cli@0.16.0`; CI uses Node 24 LTS).
 - **Supply-chain (#396):** `@lhci/cli` 0.16.0, `dompurify` 3.4.17, `vite` 8.3.3; pnpm overrides for `undici`, `proxy-addr`, `compression`, `postcss`, `body-parser`, `zod`; removed stale LHCI `extract-zip` GHSA ignores after the dependency left the tree.
 - **Retrieval (#401):** arXiv fetch exposes typed outcomes via `searchAndFetchArxivDetailed`; heuristic retriever counts unavailable arXiv separately from zero-hit searches (`retrievalErrorCount` / partial retrieval status).

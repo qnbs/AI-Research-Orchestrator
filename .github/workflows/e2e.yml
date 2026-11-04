@@ -70,6 +70,7 @@ jobs:
           src/test/e2e/skip-to-content.spec.ts
           src/test/e2e/journal-hub.spec.ts
           src/test/e2e/provider-flow.spec.ts
+          src/test/e2e/collections.spec.ts
 
       - name: Upload Playwright report
         if: always()

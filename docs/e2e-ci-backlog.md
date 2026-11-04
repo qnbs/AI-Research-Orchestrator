@@ -15,6 +15,7 @@ Suite files (a11y.spec.ts stays on the dedicated `a11y.yml` job):
 - `src/test/e2e/skip-to-content.spec.ts`
 - `src/test/e2e/journal-hub.spec.ts`
 - `src/test/e2e/provider-flow.spec.ts`
+- `src/test/e2e/collections.spec.ts`
 
 Shared helpers live in `src/test/e2e/e2eHelpers.ts`. Network fixtures:
 
