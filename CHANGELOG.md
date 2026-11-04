@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Knowledge Base (#421):** Mobile-visible article search (`HeaderControls`); bulk-delete, reload, and filter/export membership E2E.
+- **Knowledge Base (#421):** Mobile-visible article search (`HeaderControls`); bulk-delete, reload, filter/export membership, and **cross-page selection** E2E; optional **2** articles per page setting.
 - **Docs (#411):** `check:docs-drift` asserts README Version badge matches `package.json`.
 - **Orchestrator (#419):** WS-24 checkpoint discard E2E (banner cleared after reload).
 

@@ -2,13 +2,21 @@
  * Knowledge Base E2E — selection + export toolbar on demo corpus (#421).
  */
 import { readFile } from 'node:fs/promises';
-import { test, expect } from '@playwright/test';
+import { test, expect, type Locator } from '@playwright/test';
 import {
   navigateToKnowledgeBase,
   prepareFirstLaunchDemoKb,
+  setKnowledgeBaseArticlesPerPage,
   waitForKbArticleCount,
   DEMO_KB_UNIQUE_ARTICLE_COUNT,
 } from './e2eHelpers';
+
+const articleTitleFromSelectCheckbox = async (checkbox: Locator): Promise<string> => {
+  const label = (await checkbox.getAttribute('aria-label')) ?? '';
+  const match = label.match(/select article:\s*(.+)/i);
+  expect(match?.[1]).toBeTruthy();
+  return match![1].trim();
+};
 
 test.describe('Knowledge Base selection and export', () => {
   test.beforeEach(async ({ page }) => {
@@ -167,5 +175,34 @@ test.describe('Knowledge Base selection and export', () => {
     expect(csv.toLowerCase()).not.toContain('sglt2');
     const dataRows = csv.split(/\r?\n/).filter((line) => line.trim().length > 0);
     expect(dataRows.length).toBe(2);
+  });
+
+  test('selection on two pages exports both selected articles', async ({ page }) => {
+    await setKnowledgeBaseArticlesPerPage(page, 2);
+    await navigateToKnowledgeBase(page);
+    await waitForKbArticleCount(page, DEMO_KB_UNIQUE_ARTICLE_COUNT);
+    await expect(page.getByText(/Page 1 of 3|Seite 1 von 3/i)).toBeVisible({ timeout: 10_000 });
+
+    const pageOneSelect = page.getByRole('checkbox', { name: /select article:/i }).first();
+    const pageOneTitle = await articleTitleFromSelectCheckbox(pageOneSelect);
+    await pageOneSelect.check();
+    await page.getByRole('button', { name: /^Next$|^Weiter$/i }).click();
+    await expect(page.getByText(/Page 2 of 3|Seite 2 von 3/i)).toBeVisible({ timeout: 10_000 });
+    const pageTwoSelect = page.getByRole('checkbox', { name: /select article:/i }).first();
+    const pageTwoTitle = await articleTitleFromSelectCheckbox(pageTwoSelect);
+    await pageTwoSelect.check();
+    await expect(page.getByText(/2 selected|2 ausgewählt/i)).toBeVisible({ timeout: 10_000 });
+
+    await page.getByRole('button', { name: /export as csv|als csv exportieren/i }).click();
+    const downloadPromise = page.waitForEvent('download');
+    await page.getByRole('button', { name: /Yes, Export|Ja, exportieren/i }).click();
+    const download = await downloadPromise;
+    const csv = await readFile((await download.path())!, 'utf8');
+    const dataRows = csv.split(/\r?\n/).filter((line) => line.trim().length > 0);
+    expect(dataRows.length).toBe(3);
+    expect(dataRows[0]).toMatch(/PMID|Title/i);
+    expect(csv.toLowerCase()).toContain(pageOneTitle.toLowerCase().slice(0, 24));
+    expect(csv.toLowerCase()).toContain(pageTwoTitle.toLowerCase().slice(0, 24));
+    expect(pageOneTitle.toLowerCase()).not.toBe(pageTwoTitle.toLowerCase());
   });
 });

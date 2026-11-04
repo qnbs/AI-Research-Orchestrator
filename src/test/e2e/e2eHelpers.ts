@@ -318,6 +318,15 @@ export async function openSettingsFromChrome(page: Page) {
   }
 }
 
+/** Set Knowledge Base articles-per-page via Settings (persists to Dexie). */
+export async function setKnowledgeBaseArticlesPerPage(page: Page, perPage: 2 | 10 | 20 | 50) {
+  await navigateToView(page, '#settings');
+  await page.getByRole('tab', { name: /Knowledge Base/i }).click();
+  await page.locator('#kb-page').waitFor({ state: 'visible', timeout: 10_000 });
+  await page.locator('#kb-page').selectOption(String(perPage));
+  await page.getByRole('button', { name: /save changes|änderungen speichern/i }).click();
+}
+
 /** Open Help from header chrome (desktop icons or mobile overflow menu). */
 export async function openHelpFromChrome(page: Page) {
   const viewport = page.viewportSize();

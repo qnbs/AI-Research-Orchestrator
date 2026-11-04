@@ -85,6 +85,7 @@ const KbPageSelect: React.FC = () => {
         }
         className="block w-full bg-input-bg border border-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand-accent"
       >
+        <option value={2}>2</option>
         <option value={10}>10</option>
         <option value={20}>20</option>
         <option value={50}>50</option>
