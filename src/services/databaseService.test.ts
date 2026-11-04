@@ -23,6 +23,7 @@ import {
   addCollection,
   updateCollection,
   deleteCollection,
+  removeResearchEntryIdsFromAllCollections,
 } from './databaseService';
 import { defaultSettings } from '../store/slices/settingsSlice';
 import { createResearchCheckpoint } from '../lib/researchCheckpoint';
@@ -192,6 +193,38 @@ describe('databaseService presets and collections', () => {
     expect(listed[0]?.name).toBe('Trial set v2');
     await deleteCollection('col-1');
     await expect(getAllCollections()).resolves.toEqual([]);
+  });
+
+  it('removeResearchEntryIdsFromAllCollections prunes membership', async () => {
+    await addCollection({
+      id: 'col-a',
+      name: 'A',
+      description: '',
+      color: '#000',
+      icon: '📚',
+      entryIds: ['keep', 'drop'],
+      articlePmids: [],
+      createdAt: 1,
+      updatedAt: 1,
+      tags: [],
+    });
+    await addCollection({
+      id: 'col-b',
+      name: 'B',
+      description: '',
+      color: '#111',
+      icon: '📚',
+      entryIds: ['other'],
+      articlePmids: [],
+      createdAt: 2,
+      updatedAt: 2,
+      tags: [],
+    });
+    const touched = await removeResearchEntryIdsFromAllCollections(['drop']);
+    expect(touched).toBe(1);
+    const listed = await getAllCollections();
+    const a = listed.find((c) => c.id === 'col-a');
+    expect(a?.entryIds).toEqual(['keep']);
   });
 });
 

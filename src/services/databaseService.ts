@@ -248,6 +248,33 @@ export const updateCollection = (id: string, changes: Partial<ResearchCollection
   db.collections.update(id, changes);
 /** Delete a collection. */
 export const deleteCollection = (id: string) => db.collections.delete(id);
+/** Fetch one collection by id. */
+export const getCollectionById = (id: string) => db.collections.get(id);
+
+/**
+ * Remove KB entry ids from every collection's membership (referential hygiene when entries are deleted).
+ * @returns number of collections patched
+ */
+export async function removeResearchEntryIdsFromAllCollections(
+  entryIds: string[],
+): Promise<number> {
+  if (entryIds.length === 0) return 0;
+  const drop = new Set(entryIds);
+  let touched = 0;
+  await db.transaction('rw', db.collections, async () => {
+    const all = await db.collections.toArray();
+    for (const col of all) {
+      const entryIdsNext = col.entryIds.filter((id) => !drop.has(id));
+      if (entryIdsNext.length === col.entryIds.length) continue;
+      await db.collections.update(col.id, {
+        entryIds: entryIdsNext,
+        updatedAt: Date.now(),
+      });
+      touched += 1;
+    }
+  });
+  return touched;
+}
 
 // --- Research checkpoint Operations (partial save / resume) ---
 /** Upsert a research checkpoint for soft resume. */

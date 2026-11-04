@@ -1,20 +1,23 @@
 /**
  * Research Collections View – local-first collection management
- * with Framer Motion animations and shareable export links
+ * with Framer Motion animations and portable export (no remote share URLs).
  */
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
 import {
   createCollection,
   deleteCollection,
   updateCollection,
-  generateShareToken,
 } from '../store/slices/collectionsSlice';
 import type { ResearchCollection } from '../types';
 import { useTranslation } from '../hooks/useTranslation';
 import { useUI } from '../hooks/useUI';
 import { ConfirmationModal } from './ConfirmationModal';
+import {
+  buildCollectionPortablePayload,
+  serializeCollectionPortablePayload,
+} from '../lib/collectionPortableExport';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const COLLECTION_COLORS = [
@@ -62,20 +65,19 @@ const CollectionCover: React.FC<{ color: string; icon: string }> = ({ color, ico
   </div>
 );
 
-// ── Share-Link Modal ──────────────────────────────────────────────────────────
-const ShareLinkModal: React.FC<{
+// ── Portable export modal (local-only; no ?collection= URL) ───────────────────
+const CollectionPortableExportModal: React.FC<{
   collection: ResearchCollection;
   onClose: () => void;
 }> = ({ collection, onClose }) => {
   const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
-  const url = collection.shareToken
-    ? `${window.location.origin}?collection=${collection.shareToken}`
-    : null;
+  const exportText = useMemo(() => {
+    return serializeCollectionPortablePayload(buildCollectionPortablePayload(collection));
+  }, [collection]);
 
   const handleCopy = () => {
-    if (!url) return;
-    navigator.clipboard.writeText(url).then(() => {
+    navigator.clipboard.writeText(exportText).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
     });
@@ -102,7 +104,7 @@ const ShareLinkModal: React.FC<{
           <span className="text-3xl">{collection.icon}</span>
           <div className="min-w-0 flex-1">
             <h2 className="text-sm font-semibold text-text-primary truncate">{collection.name}</h2>
-            <p className="text-xs text-text-secondary">{t('collections.share.link_label')}</p>
+            <p className="text-xs text-text-secondary">{t('collections.export.title')}</p>
           </div>
           <button
             type="button"
@@ -114,35 +116,31 @@ const ShareLinkModal: React.FC<{
           </button>
         </div>
 
-        {url ? (
-          <>
-            <div className="bg-surface/60 rounded-xl p-3 border border-border mb-3">
-              <p className="text-xs font-mono text-text-secondary break-all leading-relaxed">
-                {url}
-              </p>
-            </div>
-            <motion.button
-              type="button"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={handleCopy}
-              className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                copied
-                  ? 'bg-accent-green/20 text-accent-green border border-accent-green/30'
-                  : 'bg-brand-accent/90 hover:bg-brand-accent text-brand-text-on-accent'
-              }`}
-            >
-              {copied ? t('collections.share.copied_btn') : t('collections.share.copy')}
-            </motion.button>
-            <p className="text-xs text-text-secondary mt-2 text-center">
-              {t('collections.share.hint')}
-            </p>
-          </>
-        ) : (
-          <p className="text-sm text-text-secondary text-center py-4">
-            {t('collections.share.no_token')}
-          </p>
-        )}
+        <p className="text-xs text-text-secondary mb-3 leading-relaxed">
+          {t('collections.export.local_only')}
+        </p>
+
+        <div className="bg-surface/60 rounded-xl p-3 border border-border mb-3 max-h-40 overflow-y-auto">
+          <pre className="text-[10px] font-mono text-text-secondary whitespace-pre-wrap break-all leading-relaxed">
+            {exportText}
+          </pre>
+        </div>
+        <motion.button
+          type="button"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.97 }}
+          onClick={handleCopy}
+          className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-all ${
+            copied
+              ? 'bg-accent-green/20 text-accent-green border border-accent-green/30'
+              : 'bg-brand-accent/90 hover:bg-brand-accent text-brand-text-on-accent'
+          }`}
+        >
+          {copied ? t('collections.export.copied_btn') : t('collections.export.copy')}
+        </motion.button>
+        <p className="text-xs text-text-secondary mt-2 text-center">
+          {t('collections.export.hint')}
+        </p>
       </motion.div>
     </motion.div>
   );
@@ -207,11 +205,11 @@ const CollectionCard: React.FC<{
               <button
                 type="button"
                 onClick={() => onShare(collection)}
-                title={t('collections.share_aria')}
+                title={t('collections.export_aria')}
                 className="p-1.5 rounded-md text-text-secondary hover:text-brand-accent transition-colors text-xs"
-                aria-label={t('collections.share_aria')}
+                aria-label={t('collections.export_aria')}
               >
-                🔗
+                📤
               </button>
               <button
                 type="button"
@@ -251,11 +249,6 @@ const CollectionCard: React.FC<{
             {collection.tags.length > 0 && (
               <span className="text-accent-cyan truncate">
                 {collection.tags.slice(0, 2).join(', ')}
-              </span>
-            )}
-            {collection.shareToken && (
-              <span className="ml-auto text-accent-green text-[10px] flex items-center gap-0.5">
-                🔒 {t('collections.shared')}
               </span>
             )}
           </div>
@@ -493,15 +486,9 @@ const CollectionsView: React.FC = () => {
     }
   }, [dispatch, deleteTargetId, selectedId, setNotification, t]);
 
-  const handleShare = useCallback(
-    (collection: ResearchCollection) => {
-      if (!collection.shareToken) {
-        dispatch(generateShareToken(collection.id));
-      }
-      setShareTarget(collection.id);
-    },
-    [dispatch],
-  );
+  const handleShare = useCallback((collection: ResearchCollection) => {
+    setShareTarget(collection.id);
+  }, []);
 
   return (
     <div className="flex flex-col h-full gap-6 px-4 py-6 max-w-6xl mx-auto">
@@ -591,7 +578,10 @@ const CollectionsView: React.FC = () => {
           (() => {
             const col = collections.find((c) => c.id === shareTarget);
             return col ? (
-              <ShareLinkModal collection={col} onClose={() => setShareTarget(null)} />
+              <CollectionPortableExportModal
+                collection={col}
+                onClose={() => setShareTarget(null)}
+              />
             ) : null;
           })()}
       </AnimatePresence>

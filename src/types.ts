@@ -440,7 +440,7 @@ export interface ResearchCollection {
   articlePmids: string[]; // individual article pmids
   createdAt: number;
   updatedAt: number;
-  shareToken?: string; // for shareable export links
+  shareToken?: string; // legacy optional field; not used for remote URLs
   tags: string[];
 }
 

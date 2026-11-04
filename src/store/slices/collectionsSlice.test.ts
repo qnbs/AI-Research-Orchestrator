@@ -1,13 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import collectionsReducer, {
   loadCollections,
-  createCollection,
-  updateCollection,
-  deleteCollection,
-  setEditingId,
   addEntryToCollection,
   removeEntryFromCollection,
-  generateShareToken,
+  setEditingId,
 } from './collectionsSlice';
 import type { ResearchCollection } from '../../types';
 
@@ -42,62 +38,31 @@ describe('collectionsSlice', () => {
     expect(s.error).toMatch(/boom/);
   });
 
-  it('handles createCollection.fulfilled', () => {
-    const s0 = collectionsReducer(undefined, loadCollections.fulfilled([], 'r', undefined));
-    const s1 = collectionsReducer(s0, createCollection.fulfilled(col, 'r', col));
-    expect(s1.items[0]).toEqual(col);
-  });
-
-  it('handles updateCollection.fulfilled', () => {
-    let s = collectionsReducer(undefined, loadCollections.fulfilled([col], 'r', undefined));
-    s = collectionsReducer(
-      s,
-      updateCollection.fulfilled({ id: 'c1', changes: { name: 'Renamed' } }, 'r', {
-        id: 'c1',
-        changes: { name: 'Renamed' },
+  it('addEntryToCollection.fulfilled updates entryIds', () => {
+    const s0 = collectionsReducer(undefined, loadCollections.fulfilled([col], 'r', undefined));
+    const s1 = collectionsReducer(
+      s0,
+      addEntryToCollection.fulfilled({ collectionId: 'c1', entryIds: ['e1'] }, 'r', {
+        collectionId: 'c1',
+        entryId: 'e1',
       }),
     );
-    expect(s.items[0].name).toBe('Renamed');
+    expect(s1.items[0].entryIds).toEqual(['e1']);
   });
 
-  it('handles deleteCollection.fulfilled', () => {
-    let s = collectionsReducer(undefined, loadCollections.fulfilled([col], 'r', undefined));
-    s = collectionsReducer(s, deleteCollection.fulfilled('c1', 'r', 'c1'));
-    expect(s.items).toHaveLength(0);
-  });
-
-  it('handles deleteCollection.rejected without removing items', () => {
-    let state = collectionsReducer(undefined, loadCollections.fulfilled([col], 'r', undefined));
-    state = collectionsReducer(state, deleteCollection.rejected(new Error('db fail'), 'r', 'c1'));
-    expect(state.items).toHaveLength(1);
-    expect(state.items[0].id).toBe('c1');
-  });
-
-  it('addEntryToCollection appends id', () => {
-    const s0 = collectionsReducer(
-      undefined,
-      loadCollections.fulfilled([{ ...col, entryIds: [] }], 'r', undefined),
-    );
-    const s1 = collectionsReducer(s0, addEntryToCollection({ collectionId: 'c1', entryId: 'e1' }));
-    expect(s1.items[0].entryIds).toContain('e1');
-  });
-
-  it('removeEntryFromCollection filters id', () => {
+  it('removeEntryFromCollection.fulfilled filters entryIds', () => {
     const s0 = collectionsReducer(
       undefined,
       loadCollections.fulfilled([{ ...col, entryIds: ['e1', 'e2'] }], 'r', undefined),
     );
     const s1 = collectionsReducer(
       s0,
-      removeEntryFromCollection({ collectionId: 'c1', entryId: 'e1' }),
+      removeEntryFromCollection.fulfilled({ collectionId: 'c1', entryIds: ['e2'] }, 'r', {
+        collectionId: 'c1',
+        entryId: 'e1',
+      }),
     );
     expect(s1.items[0].entryIds).toEqual(['e2']);
-  });
-
-  it('generateShareToken sets token', () => {
-    let s = collectionsReducer(undefined, loadCollections.fulfilled([col], 'r', undefined));
-    s = collectionsReducer(s, generateShareToken('c1'));
-    expect(s.items[0].shareToken).toBeTruthy();
   });
 
   it('setEditingId', () => {

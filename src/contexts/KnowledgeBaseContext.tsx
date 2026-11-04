@@ -23,6 +23,7 @@ import {
 import { deleteEntries as deleteEntriesFromDb } from '../services/databaseService';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { setNotification } from '../store/slices/uiSlice';
+import { syncCollectionsAfterKbEntryDeletes } from '../store/slices/collectionsSlice';
 import {
   fetchKnowledgeBase,
   addKbEntry,
@@ -97,6 +98,18 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
     [dispatch],
   );
 
+  const pruneCollectionsForDeletedEntries = useCallback(
+    async (entryIds: string[]) => {
+      if (entryIds.length === 0) return;
+      try {
+        await dispatch(syncCollectionsAfterKbEntryDeletes(entryIds)).unwrap();
+      } catch {
+        /* Collections reload is best-effort; KB delete already succeeded. */
+      }
+    },
+    [dispatch],
+  );
+
   const saveReport = useCallback(
     async (researchInput: ResearchInput, report: ResearchReport): Promise<void> => {
       const timestamp = Date.now();
@@ -162,6 +175,7 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
     if (demoIds.length === 0) return;
     try {
       await deleteEntriesFromDb(demoIds);
+      await pruneCollectionsForDeletedEntries(demoIds);
       await dispatch(fetchKnowledgeBase()).unwrap();
       try {
         localStorage.setItem(DEMO_DISMISS_STORAGE_KEY, '1');
@@ -172,7 +186,7 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
       showNotification('Failed to remove demo data.', 'error');
       throw new Error('Failed to remove demo data');
     }
-  }, [dispatch, knowledgeBase, showNotification]);
+  }, [dispatch, knowledgeBase, showNotification, pruneCollectionsForDeletedEntries]);
 
   const updateEntryTitle = useCallback(
     async (id: string, newTitle: string) => {
@@ -251,11 +265,14 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
       });
 
       if (updates.length > 0) await Promise.all(updates.map((u) => dispatch(updateKbEntry(u))));
-      if (toDeleteIds.length > 0) await deleteEntriesFromDb(toDeleteIds);
+      if (toDeleteIds.length > 0) {
+        await deleteEntriesFromDb(toDeleteIds);
+        await pruneCollectionsForDeletedEntries(toDeleteIds);
+      }
 
       dispatch(fetchKnowledgeBase());
     },
-    [dispatch, knowledgeBase],
+    [dispatch, knowledgeBase, pruneCollectionsForDeletedEntries],
   );
 
   const getArticles = useCallback(
@@ -343,6 +360,7 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
           }
           if (deleteEntryIds.length > 0) {
             await deleteEntriesFromDb(deleteEntryIds);
+            await pruneCollectionsForDeletedEntries(deleteEntryIds);
           }
           dispatch(fetchKnowledgeBase());
           showNotification(t('settings.kb.notification.pruned', { count: pruneCount }));
@@ -356,7 +374,7 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
         showNotification(t('settings.kb.notification.prune_failed'), 'error');
       }
     },
-    [knowledgeBase, dispatch, showNotification, t],
+    [knowledgeBase, dispatch, showNotification, t, pruneCollectionsForDeletedEntries],
   );
 
   const getRecentResearchEntries = useCallback(

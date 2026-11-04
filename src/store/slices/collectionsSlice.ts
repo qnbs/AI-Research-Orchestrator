@@ -5,9 +5,11 @@ import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import type { ResearchCollection } from '../../types';
 import {
   getAllCollections,
+  getCollectionById,
   addCollection,
   updateCollection as dbUpdateCollection,
   deleteCollection as dbDeleteCollection,
+  removeResearchEntryIdsFromAllCollections,
 } from '../../services/databaseService';
 
 interface CollectionsState {
@@ -53,39 +55,51 @@ export const deleteCollection = createAsyncThunk('collections/delete', async (id
   return id;
 });
 
+/** Add a knowledge-base entry id to a collection (persisted). */
+export const addEntryToCollection = createAsyncThunk(
+  'collections/addEntry',
+  async ({ collectionId, entryId }: { collectionId: string; entryId: string }) => {
+    const col = await getCollectionById(collectionId);
+    if (!col) throw new Error('Collection not found');
+    if (col.entryIds.includes(entryId)) {
+      return { collectionId, entryIds: col.entryIds };
+    }
+    const entryIds = [...col.entryIds, entryId];
+    await dbUpdateCollection(collectionId, { entryIds, updatedAt: Date.now() });
+    return { collectionId, entryIds };
+  },
+);
+
+/** Remove a knowledge-base entry id from a collection (persisted). */
+export const removeEntryFromCollection = createAsyncThunk(
+  'collections/removeEntry',
+  async ({ collectionId, entryId }: { collectionId: string; entryId: string }) => {
+    const col = await getCollectionById(collectionId);
+    if (!col) throw new Error('Collection not found');
+    const entryIds = col.entryIds.filter((id) => id !== entryId);
+    if (entryIds.length === col.entryIds.length) {
+      return { collectionId, entryIds: col.entryIds };
+    }
+    await dbUpdateCollection(collectionId, { entryIds, updatedAt: Date.now() });
+    return { collectionId, entryIds };
+  },
+);
+
+/** After KB entries are deleted, prune collection membership and reload from Dexie. */
+export const syncCollectionsAfterKbEntryDeletes = createAsyncThunk(
+  'collections/syncAfterKbDeletes',
+  async (entryIds: string[]) => {
+    await removeResearchEntryIdsFromAllCollections(entryIds);
+    return getAllCollections();
+  },
+);
+
 export const collectionsSlice = createSlice({
   name: 'collections',
   initialState,
   reducers: {
     setEditingId: (state, action: PayloadAction<string | null>) => {
       state.editingId = action.payload;
-    },
-    addEntryToCollection: (
-      state,
-      action: PayloadAction<{ collectionId: string; entryId: string }>,
-    ) => {
-      const col = state.items.find((c) => c.id === action.payload.collectionId);
-      if (col && !col.entryIds.includes(action.payload.entryId)) {
-        col.entryIds.push(action.payload.entryId);
-        col.updatedAt = Date.now();
-      }
-    },
-    removeEntryFromCollection: (
-      state,
-      action: PayloadAction<{ collectionId: string; entryId: string }>,
-    ) => {
-      const col = state.items.find((c) => c.id === action.payload.collectionId);
-      if (col) {
-        col.entryIds = col.entryIds.filter((id) => id !== action.payload.entryId);
-        col.updatedAt = Date.now();
-      }
-    },
-    generateShareToken: (state, action: PayloadAction<string>) => {
-      const col = state.items.find((c) => c.id === action.payload);
-      if (col) {
-        col.shareToken = btoa(`col:${col.id}:${Date.now()}`).replace(/=/g, '');
-        col.updatedAt = Date.now();
-      }
     },
   },
   extraReducers: (builder) => {
@@ -116,11 +130,33 @@ export const collectionsSlice = createSlice({
       })
       .addCase(deleteCollection.fulfilled, (state, action) => {
         state.items = state.items.filter((c) => c.id !== action.payload);
+      })
+      .addCase(addEntryToCollection.fulfilled, (state, action) => {
+        const col = state.items.find((c) => c.id === action.payload.collectionId);
+        if (col) {
+          col.entryIds = action.payload.entryIds;
+          col.updatedAt = Date.now();
+        }
+      })
+      .addCase(addEntryToCollection.rejected, (state, action) => {
+        state.error = action.error.message ?? 'Failed to update collection membership';
+      })
+      .addCase(removeEntryFromCollection.fulfilled, (state, action) => {
+        const col = state.items.find((c) => c.id === action.payload.collectionId);
+        if (col) {
+          col.entryIds = action.payload.entryIds;
+          col.updatedAt = Date.now();
+        }
+      })
+      .addCase(removeEntryFromCollection.rejected, (state, action) => {
+        state.error = action.error.message ?? 'Failed to update collection membership';
+      })
+      .addCase(syncCollectionsAfterKbEntryDeletes.fulfilled, (state, action) => {
+        state.items = action.payload;
       });
   },
 });
 
-export const { setEditingId, addEntryToCollection, removeEntryFromCollection, generateShareToken } =
-  collectionsSlice.actions;
+export const { setEditingId } = collectionsSlice.actions;
 
 export default collectionsSlice.reducer;
