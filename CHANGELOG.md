@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Knowledge Base (#421):** Separate BibTeX and RIS bulk-export toolbar actions; E2E download assertions for `.bib` and `.ris` shapes.
+- **Knowledge Base (#421):** Separate BibTeX and RIS bulk-export toolbar actions; E2E download assertions for `.bib` and `.ris` shapes; bulk-delete confirm E2E on demo corpus.
 
 ### Fixed
 

@@ -102,4 +102,29 @@ test.describe('Knowledge Base selection and export', () => {
     expect(body).toMatch(/^ER {2}- /m);
     expect(body).toContain(selectedTitle.slice(0, 40));
   });
+
+  test('bulk delete removes selected article after confirm', async ({ page }) => {
+    const firstSelect = page.getByRole('checkbox', { name: /select article:/i }).first();
+    const selectLabel = (await firstSelect.getAttribute('aria-label')) ?? '';
+    const selectedTitle = selectLabel.replace(/^select article:\s*/i, '').trim();
+    expect(selectedTitle.length).toBeGreaterThan(3);
+    const selectedCheckboxPattern = new RegExp(
+      selectedTitle.slice(0, 40).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+      'i',
+    );
+
+    await firstSelect.check();
+    await page.getByRole('button', { name: /delete selected|auswahl löschen/i }).click();
+
+    const dialog = page.getByRole('dialog', { name: /delete articles|artikel löschen/i });
+    await expect(dialog).toBeVisible({ timeout: 10_000 });
+    await waitForKbArticleCount(page, DEMO_KB_UNIQUE_ARTICLE_COUNT);
+    await expect(page.getByText(/1 selected|1 ausgewählt/i)).toBeVisible();
+
+    await dialog.getByRole('button', { name: /yes, delete|ja, löschen/i }).click();
+
+    await waitForKbArticleCount(page, DEMO_KB_UNIQUE_ARTICLE_COUNT - 1);
+    await expect(page.getByText(/1 selected|1 ausgewählt/i)).not.toBeVisible();
+    await expect(page.getByRole('checkbox', { name: selectedCheckboxPattern })).toHaveCount(0);
+  });
 });
