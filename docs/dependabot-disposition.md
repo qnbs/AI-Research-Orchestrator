@@ -301,11 +301,11 @@ Nine routine `npm_and_yarn` Dependabot updater jobs on the same SHA also succeed
 
 ## 2026-11-04 — Dependabot wave D5 (provider SDKs)
 
-**D5a — OpenAI:** (branch `cursor/dependabot-wave-d5-openai-33e3`) — `openai` ^7.47.0, supersedes **#384**. Run `pnpm exec vitest run src/services/providers`.
+**D5a — OpenAI:** [#432](https://github.com/qnbs/AI-Research-Orchestrator/pull/432) — **merged** to `main` as `d69b9ff`. Supersedes **#384**.
 
-**D5b — Gemini:** deferred next PR — `@google/genai` ^2.32.0 (**#382**), update `minimumReleaseAgeExclude` as needed.
+**D5b — Gemini:** (branch `cursor/dependabot-wave-d5-genai-33e3`) — `@google/genai` ^2.32.0 + maturity exclude, supersedes **#382**.
 
-**D5c — Claude action:** deferred — **#383** SHA-only bump in `claude.yml` after permissions audit.
+**D5c — Claude action:** deferred — **#383** SHA bump in `claude.yml` after permissions audit.
 
 | PR   | Title                                                | Disposition                                                              |
 | ---- | ---------------------------------------------------- | ------------------------------------------------------------------------ |
