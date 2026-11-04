@@ -22,14 +22,21 @@ Evidence for **[#404](https://github.com/qnbs/AI-Research-Orchestrator/issues/40
 
 ## Deployed SHA correlation (#404 — required before issue close)
 
-| Item                                                                                                                             | Status                                                                   |
-| -------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| External browser/HTTP smoke on **current** Pages deployment                                                                      | **Recorded once** (this doc, afternoon probe ≈ `9a604f2` window)         |
-| Explicit live-site ↔ **`main` head SHA** attestation (e.g. `__APP_VERSION__` / build meta vs `git rev-parse` on deployed commit) | **Not recorded** for post–v0.4.7 heads such as `69834a3` / later         |
-| CI `deploy` job success on latest `main`                                                                                         | **Necessary but not sufficient** for #404 acceptance                     |
-| Blocking `pwa-e2e.yml` offline shell                                                                                             | **Complements** external smoke; does not replace SHA-tied live URL proof |
+| Item                                                                                                        | Status                                                                   |
+| ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| External browser/HTTP smoke on **current** Pages deployment                                                 | **Recorded** (afternoon ≈ `9a604f2`; **evening `52ab869`**)              |
+| Explicit live-site ↔ **`main` head SHA** attestation (Help → About `formatReleaseLabel()` vs deploy commit) | **Recorded** for **`52ab869`** (2026-11-04 22:59 Europe/Berlin)          |
+| CI `deploy` job success on latest `main`                                                                    | **Necessary but not sufficient** for #404 acceptance                     |
+| Blocking `pwa-e2e.yml` offline shell                                                                        | **Complements** external smoke; does not replace SHA-tied live URL proof |
 
-**Disposition:** Keep **#404 open** until a maintainer re-runs authorized external smoke (or equivalent recorded HTTP + first-boot check) and appends **deployed commit SHA**, probe timestamp, and artifact index to this file. Do not close #404 on CI green alone.
+### Probe log (append-only)
+
+| Probe (Europe/Berlin) | `main` / Pages deploy SHA | GitHub Actions `deploy.yml`                | `index.html` Last-Modified (UTC) | HTTP | Live attestation                    | Agent artifacts                                     |
+| --------------------- | ------------------------- | ------------------------------------------ | -------------------------------- | ---- | ----------------------------------- | --------------------------------------------------- |
+| 2026-11-04 afternoon  | ~`9a604f2` lineage        | contemporaneous `main` CI                  | ~2026-11-04 18:16                | 200  | smoke only (no About SHA row)       | `pages-smoke-*.png` (prior run)                     |
+| **2026-11-04 22:59**  | **`52ab869`**             | run **41919411213** @ 2026-11-04 21:47:53Z | **2026-11-04 21:51:10**          | 200  | Help → About **`v0.4.7 (52ab869)`** | `pages-404-home.png`, `pages-404-about-version.png` |
+
+**Disposition:** **#404 acceptance criteria met** for deploy **`52ab869`**. Maintainer may close using `docs/audits/2026-11-04-issue-closure-404-411.md`. Append a new row when `main` advances and live About SHA diverges.
 
 ## Observations
 
@@ -41,12 +48,14 @@ Evidence for **[#404](https://github.com/qnbs/AI-Research-Orchestrator/issues/40
 
 Screenshots and full narrative live under `/opt/cursor/artifacts/` for the verifying agent run:
 
-- `pages-smoke-home.png` — main UI after onboarding
+- `pages-smoke-home.png` — main UI after onboarding (afternoon)
 - `pages-smoke-network.png` — asset path waterfall
 - `pages-smoke-sw.png` — service worker + manifest
+- `pages-404-home.png` — evening probe home (`52ab869`)
+- `pages-404-about-version.png` — Help → About **`v0.4.7 (52ab869)`**
 - `smoke-test-report.md` — step-by-step checklist
 
 ## Disposition
 
-- **#404:** **Remain open** until current-SHA external smoke is appended above. Optional follow-up: Lighthouse on live URL with recorded deploy SHA.
+- **#404:** **Ready for maintainer close** — evening external smoke on deploy **`52ab869`** recorded above (About label + deploy run correlation). Do not close on CI alone; use closure comment in `docs/audits/2026-11-04-issue-closure-404-411.md`.
 - **CI correlation:** Every merge to `main` runs blocking quality, E2E (10 specs), cross-browser, a11y, security, and PWA jobs (`docs/ci-branch-governance.md`).
