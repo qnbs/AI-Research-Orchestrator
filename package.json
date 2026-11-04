@@ -73,7 +73,7 @@
     "framer-motion": "^13.5.0",
     "jspdf": "^4.2.0",
     "marked": "^18.1.2",
-    "openai": "^7.27.0",
+    "openai": "^7.47.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "react-redux": "^9.3.1",

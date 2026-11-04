@@ -297,7 +297,15 @@ Nine routine `npm_and_yarn` Dependabot updater jobs on the same SHA also succeed
 
 ## 2026-11-04 — Dependabot wave D4b (React patch)
 
-**Consolidation PR:** (branch `cursor/dependabot-wave-d4b-react-33e3`) — `react`/`react-dom` ^19.3.1, `@types/react` ^19.3.0. Supersedes **#390**.
+**Consolidation PR:** [#430](https://github.com/qnbs/AI-Research-Orchestrator/pull/430) — **merged** to `main` as `895b703`. Supersedes **#390**.
+
+## 2026-11-04 — Dependabot wave D5 (provider SDKs)
+
+**D5a — OpenAI:** (branch `cursor/dependabot-wave-d5-openai-33e3`) — `openai` ^7.47.0, supersedes **#384**. Run `pnpm exec vitest run src/services/providers`.
+
+**D5b — Gemini:** deferred next PR — `@google/genai` ^2.32.0 (**#382**), update `minimumReleaseAgeExclude` as needed.
+
+**D5c — Claude action:** deferred — **#383** SHA-only bump in `claude.yml` after permissions audit.
 
 | PR   | Title                                                | Disposition                                                              |
 | ---- | ---------------------------------------------------- | ------------------------------------------------------------------------ |
