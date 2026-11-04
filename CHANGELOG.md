@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **DeepSource (#410):** Restored narrow `exclude_patterns` after #436 — only `.devcontainer/Dockerfile` dev noise excluded; Shell again covers `.devcontainer/postCreate.sh`. JavaScript stays `enabled = false`.
+- **Security (#396):** Pin `brace-expansion@^5.0.0` to **5.0.12** (GHSA-q2hr-2g5m-vwhr) and `^2.0.2` to **2.1.7**; `^1.1.7` remains **1.1.21**. `minimatch` advisories deferred — separate compatibility review. Restored narrow `exclude_patterns` after #436 — only `.devcontainer/Dockerfile` dev noise excluded; Shell again covers `.devcontainer/postCreate.sh`. JavaScript stays `enabled = false`.
 - **DeepSource JavaScript (2026-11-04):** Dashboard analyzer disabled by maintainer; TOML `enabled = false`; drift gate updated.
 - **Dashboard (#409):** OA chart uses open / unknown / closed buckets (missing PMC/OA evidence no longer counts as “closed”). Source chart uses `sourceClass` and retrieval provenance (imported PMID ≠ PubMed); stable bucket colors and EN/DE subtitles.
 - **Collections (#408):** Collection membership mutations persist to IndexedDB; KB entry deletes prune stale `entryIds`. Removed nonfunctional `?collection=` share URLs in favor of honest local-only portable JSON export copy.
