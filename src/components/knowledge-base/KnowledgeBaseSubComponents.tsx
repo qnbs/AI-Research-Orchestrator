@@ -248,7 +248,7 @@ export const BulkActionsToolbar: React.FC = () => {
 
   return (
     <div
-      className="sticky top-[112px] z-10 bg-surface/80 backdrop-blur-md p-3 rounded-lg border border-border mb-4 flex justify-between items-center shadow-lg animate-fadeIn"
+      className="sticky top-[112px] z-10 bg-surface/80 backdrop-blur-md p-3 rounded-lg border border-border mb-4 flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center shadow-lg animate-fadeIn"
       style={{ animationDuration: '200ms' }}
     >
       <div className="flex items-center gap-4">
@@ -273,7 +273,7 @@ export const BulkActionsToolbar: React.FC = () => {
           {t('kb.select_all_page')}
         </button>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center justify-end gap-2">
         <button
           type="button"
           onClick={() => setShowDeleteModal(true)}
