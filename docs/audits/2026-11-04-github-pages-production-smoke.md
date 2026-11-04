@@ -18,13 +18,14 @@ Evidence for **[#404](https://github.com/qnbs/AI-Research-Orchestrator/issues/40
 - **URL:** https://qnbs.github.io/AI-Research-Orchestrator/
 - **Probe time:** 2026-11-04 (Europe/Berlin afternoon); `Last-Modified` response header **2026-11-04 ~18:16 UTC** on `index.html`
 - **Repository `main` at probe window:** post-#442 merge (`9a604f2` and contemporaneous Pages deploy from `56edc68` lineage — deploy timestamp aligns with merged main CI, not a stale pre-React-19.3.1 artifact)
-- **Published release tag:** still **v0.4.6** (badge/README drift tracked separately in #411)
+- **Published release tag:** **v0.4.7** (2026-11-04 audit-recovery wave; supersedes v0.4.6 badge-only drift)
 
 ## Observations
 
 - Console: non-blocking CSP `connect-src` warnings for localhost probes (expected on GitHub Pages; live APIs remain in CSP allow-list).
 - No credential-bearing requests observed during anonymous smoke.
-- Offline/update rollback paths: **not exercised** in this pass (PWA lifecycle partially covered by blocking `pwa-e2e.yml` on CI); follow-up if product requires installed-client upgrade matrix.
+- Offline after first visit: **blocking** `pwa-e2e.yml` → `pwa-registration.spec.ts` (preview subpath + offline `#root` visible).
+- **#404:** External production boot **verified** for reachability, assets, CSP-non-blocking load, SW registration, and first-run UX. **Recommend close** with optional follow-up for production Lighthouse-on-live-URL only.
 
 ## Artifact index (Cloud Agent run, not committed to git)
 
@@ -37,5 +38,5 @@ Screenshots and full narrative live under `/opt/cursor/artifacts/` for the verif
 
 ## Disposition
 
-- **#404:** External production boot **verified** for reachability, assets, CSP-non-blocking load, SW registration, and first-run UX. Issue may remain open for optional Lighthouse-on-production / offline-update matrix unless maintainers accept CI + this smoke as sufficient for WS-10 closure.
-- **CI correlation:** `main` post-merge workflows (deploy, e2e, cross-browser, a11y, security, PWA) on `9a604f2` are the authoritative build/deploy gate; this document is the missing **live URL** leg of the acceptance tripod.
+- **#404:** **Recommend close** — live URL smoke (this doc) + CI deploy + blocking PWA offline shell test. Optional follow-up: production Lighthouse with recorded deploy SHA.
+- **CI correlation:** Every merge to `main` runs blocking quality, E2E (10 specs), cross-browser, a11y, security, and PWA jobs (`docs/ci-branch-governance.md`).
