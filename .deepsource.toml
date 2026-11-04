@@ -7,23 +7,27 @@ version = 1
 # See docs/deepsource-javascript-ci.md and docs/deepsource-dashboard-off.md.
 
 exclude_patterns = [
-  ".devcontainer/Dockerfile",
+  ".devcontainer/**",
+  ".github/**",
   "eslint-local-rules/**",
   "scripts/**",
   "scripts/*.mjs",
-  "public/sw.js",
-  "public/register-sw.js",
   "public/**",
   "dist/**",
   "coverage/**",
   "src/**",
   "**/*.ts",
   "**/*.tsx",
+  "**/*.js",
+  "**/*.mjs",
+  "**/*.cjs",
   "vite.config.ts",
   "vitest.config.ts",
   "playwright.config.ts",
   "eslint.config.js",
+  "postcss.config.js",
   "lighthouserc.cjs",
+  "index.html",
 ]
 
 test_patterns = [

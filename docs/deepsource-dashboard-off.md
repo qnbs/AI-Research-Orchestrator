@@ -5,9 +5,10 @@ The **`DeepSource: JavaScript`** GitHub status is controlled by the **DeepSource
 ## Required dashboard steps (~2 minutes)
 
 1. Open [DeepSource → AI-Research-Orchestrator](https://app.deepsource.com/gh/qnbs/AI-Research-Orchestrator).
-2. Go to **Settings → Code Review → Analyzers**.
-3. Find **JavaScript** and **toggle it off**.
-4. (Optional) Under **Quality Gates → Issue Reporting**, limit failure categories to **critical / security** only if re-enabling later.
+2. Go to **Settings → Preferences** and ensure **Use `.deepsource.toml` configuration** (or equivalent TOML-as-source-of-truth toggle) is **on** so git excludes/`enabled = false` apply.
+3. Go to **Settings → Code Review → Analyzers**.
+4. Find **JavaScript** and **toggle it off** (belt-and-suspenders alongside TOML).
+5. (Optional) Under **Quality Gates → Issue Reporting**, limit failure categories to **critical / security** only if re-enabling later.
 
 After toggling off, the next PR push should stop posting `DeepSource: JavaScript` **FAILURE** (check may disappear or turn green).
 
