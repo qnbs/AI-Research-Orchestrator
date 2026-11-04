@@ -5,7 +5,7 @@ version = 1
 # See docs/deepsource-javascript-ci.md and docs/deepsource-dashboard-off.md.
 
 exclude_patterns = [
-  ".devcontainer/**",
+  ".devcontainer/Dockerfile",
   "eslint-local-rules/**",
   "scripts/**",
   "scripts/*.mjs",

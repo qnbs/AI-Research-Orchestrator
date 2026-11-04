@@ -61,8 +61,9 @@ overrides:
   undici: 7.30.1
   # GHSA-jqcg-44mw-7w3h: @lhci/cli > express > proxy-addr (CI-only)
   proxy-addr: 2.0.8
-  # @puppeteer/browsers (LHCI) peers proxy-agent >=8.0.1; strictPeerDependencies
-  # otherwise breaks Dependabot npm_and_yarn jobs on main.
+  # @puppeteer/browsers@3.2.6 (via lighthouse/puppeteer-core) peers proxy-agent >=8.0.1;
+  # @lhci/cli declares ^6.5.0. Pin exact 8.0.1 so strictPeerDependencies + Dependabot
+  # lockfile-only resolution succeed (see docs/deepsource-disposition.md §2026-11-04).
   proxy-agent: 8.0.1
   # GHSA-vc2v-76pw-4v95: @lhci/cli > compression (CI-only)
   compression: 1.8.2
