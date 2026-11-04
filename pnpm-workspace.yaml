@@ -16,6 +16,8 @@ minimumReleaseAgeExclude:
   - brace-expansion@1.1.18
   - brace-expansion@2.1.4
   - brace-expansion@5.0.9
+  - brace-expansion@5.0.12
+  - brace-expansion@2.1.7
   - dompurify@3.4.7
   - dompurify@3.4.6
   - dompurify@3.4.9
@@ -83,12 +85,12 @@ overrides:
   # GHSA-f38q-mgvj-vph7 (<=7.6.2) + GHSA-j3f2-48v5-ccww (<=7.6.4); @google/genai's own
   # range is ^7.5.4, satisfied by 7.6.5
   protobufjs: 7.6.5
-  # GHSA-mh99-v99m-4gvg: DoS via unbounded expansion — three independent major
-  # lines in the tree need separate pins (minimatch@3 → ^1.1.7, minimatch@9 →
-  # ^2.0.2, minimatch@10 → ^5.0.0 via @vitest/coverage-v8 / typescript-eslint).
+  # GHSA-mh99-v99m-4gvg: DoS via unbounded expansion — separate pins per major line.
+  # GHSA-q2hr-2g5m-vwhr (MODERATE): fixed in 1.1.21, 2.1.7, 5.0.12 (not cross-major).
+  # minimatch@3 → ^1.1.7; minimatch@9 → ^2.0.2; minimatch@10 → ^5.0.0 (typescript-eslint / Vitest).
   'brace-expansion@^1.1.7': 1.1.21
-  'brace-expansion@^2.0.2': 2.1.4
-  'brace-expansion@^5.0.0': 5.0.11
+  'brace-expansion@^2.0.2': 2.1.7
+  'brace-expansion@^5.0.0': 5.0.12
   # GHSA (jspdf): fflate <=0.8.2 — patch 0.8.3 (production PDF export path).
   'fflate@^0.8.0': 0.8.3
   # GHSA-w5hq-g745-h8pq: @lhci/cli pins uuid@8.3.2 directly
