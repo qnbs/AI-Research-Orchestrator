@@ -66,4 +66,40 @@ test.describe('Knowledge Base selection and export', () => {
     expect(csv.split(/\r?\n/)[0]).toMatch(/PMID|Title/i);
     expect(csv.length).toBeGreaterThan(20);
   });
+
+  test('BibTeX export downloads @article entry for selection', async ({ page }) => {
+    const firstSelect = page.getByRole('checkbox', { name: /select article:/i }).first();
+    const selectLabel = (await firstSelect.getAttribute('aria-label')) ?? '';
+    const selectedTitle = selectLabel.replace(/^select article:\s*/i, '').trim();
+    expect(selectedTitle.length).toBeGreaterThan(3);
+    await firstSelect.check();
+    await page.getByRole('button', { name: /export as bibtex|als bibtex exportieren/i }).click();
+
+    const downloadPromise = page.waitForEvent('download');
+    await page.getByRole('button', { name: /Yes, Export|Ja, exportieren/i }).click();
+    const download = await downloadPromise;
+    const body = await readFile((await download.path())!, 'utf8');
+    expect(body.match(/@article\{/g)?.length).toBe(1);
+    expect(body).toMatch(/@article\{PMID:/);
+    expect(body).toMatch(/pmid\s*=\s*\{/);
+    expect(body).toContain(selectedTitle.slice(0, 40));
+  });
+
+  test('RIS export downloads TY  - JOUR record for selection', async ({ page }) => {
+    const firstSelect = page.getByRole('checkbox', { name: /select article:/i }).first();
+    const selectLabel = (await firstSelect.getAttribute('aria-label')) ?? '';
+    const selectedTitle = selectLabel.replace(/^select article:\s*/i, '').trim();
+    expect(selectedTitle.length).toBeGreaterThan(3);
+    await firstSelect.check();
+    await page.getByRole('button', { name: /export as ris|als ris exportieren/i }).click();
+
+    const downloadPromise = page.waitForEvent('download');
+    await page.getByRole('button', { name: /Yes, Export|Ja, exportieren/i }).click();
+    const download = await downloadPromise;
+    const body = await readFile((await download.path())!, 'utf8');
+    expect(body.match(/^TY {2}- JOUR/gm)?.length).toBe(1);
+    expect(body).toMatch(/^TY {2}- JOUR/m);
+    expect(body).toMatch(/^ER {2}- /m);
+    expect(body).toContain(selectedTitle.slice(0, 40));
+  });
 });

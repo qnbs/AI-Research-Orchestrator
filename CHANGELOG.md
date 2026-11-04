@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Knowledge Base (#421):** Separate BibTeX and RIS bulk-export toolbar actions; E2E download assertions for `.bib` and `.ris` shapes.
+
+### Fixed
+
+- **Knowledge Base (#421):** Citation toolbar button was labeled “Export as RIS” while exporting BibTeX only; RIS export was unreachable from the UI.
+
 ## [0.4.7] - 2026-11-04
 
 > Patch after **v0.4.6** (`03f3bd6`): Nov 2026 audit-recovery wave — security pins, dashboard/collections provenance, blocking E2E expansion (10 specs), production smoke evidence.

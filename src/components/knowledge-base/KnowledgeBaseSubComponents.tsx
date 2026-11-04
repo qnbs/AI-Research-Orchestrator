@@ -248,7 +248,7 @@ export const BulkActionsToolbar: React.FC = () => {
 
   return (
     <div
-      className="sticky top-[112px] z-10 bg-surface/80 backdrop-blur-md p-3 rounded-lg border border-border mb-4 flex justify-between items-center shadow-lg animate-fadeIn"
+      className="sticky top-[112px] z-10 bg-surface/80 backdrop-blur-md p-3 rounded-lg border border-border mb-4 flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center shadow-lg animate-fadeIn"
       style={{ animationDuration: '200ms' }}
     >
       <div className="flex items-center gap-4">
@@ -273,7 +273,7 @@ export const BulkActionsToolbar: React.FC = () => {
           {t('kb.select_all_page')}
         </button>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center justify-end gap-2">
         <button
           type="button"
           onClick={() => setShowDeleteModal(true)}
@@ -301,10 +301,18 @@ export const BulkActionsToolbar: React.FC = () => {
         <button
           type="button"
           onClick={() => setShowExportModal('bib')}
-          aria-label={t('kb.export_ris')}
+          aria-label={t('kb.export_bib')}
           className="p-2 rounded-md bg-surface hover:bg-surface-hover"
         >
           <CitationIcon className="h-5 w-5" />
+        </button>
+        <button
+          type="button"
+          onClick={() => setShowExportModal('ris')}
+          aria-label={t('kb.export_ris')}
+          className="p-2 rounded-md bg-surface hover:bg-surface-hover"
+        >
+          <DocumentIcon className="h-5 w-5" />
         </button>
       </div>
     </div>
