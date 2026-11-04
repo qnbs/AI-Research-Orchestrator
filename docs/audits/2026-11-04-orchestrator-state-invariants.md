@@ -23,15 +23,15 @@ Workstream **WS-24** / **[#419](https://github.com/qnbs/AI-Research-Orchestrator
 
 ## Test coverage map
 
-| Invariant                        | Primary tests                                                      |
-| -------------------------------- | ------------------------------------------------------------------ |
-| Cancel + partial report ≠ `done` | `useResearchSession.test.tsx`, `researchStreamFailure.test.ts`     |
-| Restore checkpoint = `partial`   | `useResearchSession.test.tsx`, `researchCheckpoint.test.ts`        |
-| Stale restore after new search   | `useResearchSession.test.tsx`                                      |
-| Stale stream after new search    | `useResearchSession.test.tsx` (`ignores stale stream completion…`) |
-| Reopen saved partial vs complete | `useResearchSession.test.tsx`                                      |
-| Checkpoint payload partial stamp | `researchCheckpoint.test.ts`                                       |
+| Invariant                        | Primary tests                                                                     |
+| -------------------------------- | --------------------------------------------------------------------------------- |
+| Cancel + partial report ≠ `done` | `useResearchSession.test.tsx`, `researchStreamFailure.test.ts`                    |
+| Restore checkpoint = `partial`   | `useResearchSession.test.tsx`, `researchCheckpoint.test.ts`                       |
+| Stale restore after new search   | `useResearchSession.test.tsx`                                                     |
+| Stale stream after new search    | `useResearchSession.test.tsx` (`ignores stale stream completion…`)                |
+| Cancel → checkpoint → restore    | `orchestrator-checkpoint.spec.ts`; partial banner/CSV in `agent-flow.spec.ts` §11 |
+| Checkpoint payload partial stamp | `researchCheckpoint.test.ts`                                                      |
 
-## Out of scope (this pass)
+## Out of scope (remaining on #419)
 
-Full browser journey for cancel/resume banner, provider mid-run switch, and IndexedDB upgrade during stream — tracked on #419 / related #403/#406; add Playwright only when a gap is reproduced outside unit coverage.
+Provider mid-run switch, IndexedDB upgrade during stream, and exhaustive transition fuzzing — tracked with #403/#406.

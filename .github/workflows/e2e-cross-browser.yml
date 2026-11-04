@@ -124,6 +124,7 @@ jobs:
           src/test/e2e/provider-flow.spec.ts
           src/test/e2e/collections.spec.ts
           src/test/e2e/knowledge-base.spec.ts
+          src/test/e2e/orchestrator-checkpoint.spec.ts
           --project=${{ matrix.browser }}
 
       - name: Upload Playwright report

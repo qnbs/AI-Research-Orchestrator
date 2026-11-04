@@ -17,6 +17,7 @@ Suite files (a11y.spec.ts stays on the dedicated `a11y.yml` job):
 - `src/test/e2e/provider-flow.spec.ts`
 - `src/test/e2e/collections.spec.ts`
 - `src/test/e2e/knowledge-base.spec.ts`
+- `src/test/e2e/orchestrator-checkpoint.spec.ts`
 
 Shared helpers live in `src/test/e2e/e2eHelpers.ts`. Network fixtures:
 
