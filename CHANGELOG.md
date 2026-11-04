@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Audit recovery (2026-11-03):** Phase-0 evidence snapshot, P0 operational runbook (PR CI + CodeQL maintainer steps). External Composer master prompt archived outside the repo (not in git).
+- **Audit recovery (2026-11-04):** GitHub Pages production smoke evidence (`docs/audits/2026-11-04-github-pages-production-smoke.md`, #404); README version badge aligned to **0.4.6** (#411).
 
 ### Changed
 
