@@ -7,7 +7,7 @@ import collectionsReducer, {
 } from './collectionsSlice';
 import type { ResearchCollection } from '../../types';
 
-const col: ResearchCollection = {
+const testCollection: ResearchCollection = {
   id: 'c1',
   name: 'Test',
   description: '',
@@ -22,44 +22,53 @@ const col: ResearchCollection = {
 
 describe('collectionsSlice', () => {
   it('handles loadCollections.fulfilled', () => {
-    const s = collectionsReducer(undefined, loadCollections.fulfilled([col], 'r'));
-    expect(s.items).toEqual([col]);
-    expect(s.isLoading).toBe(false);
+    const state = collectionsReducer(
+      undefined,
+      loadCollections.fulfilled([testCollection], 'request-1'),
+    );
+    expect(state.items).toEqual([testCollection]);
+    expect(state.isLoading).toBe(false);
   });
 
   it('handles loadCollections.pending and rejected', () => {
-    let s = collectionsReducer(undefined, loadCollections.pending('r'));
-    expect(s.isLoading).toBe(true);
-    s = collectionsReducer(s, loadCollections.rejected(new Error('boom'), 'r', undefined));
-    expect(s.isLoading).toBe(false);
-    expect(s.error).toMatch(/boom/);
+    let state = collectionsReducer(undefined, loadCollections.pending('request-1'));
+    expect(state.isLoading).toBe(true);
+    state = collectionsReducer(
+      state,
+      loadCollections.rejected(new Error('boom'), 'request-1', undefined, 'boom'),
+    );
+    expect(state.isLoading).toBe(false);
+    expect(state.error).toMatch(/boom/);
   });
 
   it('addEntryToCollection.fulfilled updates entryIds', () => {
-    const s0 = collectionsReducer(undefined, loadCollections.fulfilled([col], 'r'));
-    const s1 = collectionsReducer(
-      s0,
-      addEntryToCollection.fulfilled({ collectionId: 'c1', entryIds: ['e1'] }, 'r', {
+    const initial = collectionsReducer(
+      undefined,
+      loadCollections.fulfilled([testCollection], 'request-1'),
+    );
+    const next = collectionsReducer(
+      initial,
+      addEntryToCollection.fulfilled({ collectionId: 'c1', entryIds: ['e1'] }, 'request-1', {
         collectionId: 'c1',
         entryId: 'e1',
       }),
     );
-    expect(s1.items[0].entryIds).toEqual(['e1']);
+    expect(next.items[0].entryIds).toEqual(['e1']);
   });
 
   it('removeEntryFromCollection.fulfilled filters entryIds', () => {
-    const s0 = collectionsReducer(
+    const initial = collectionsReducer(
       undefined,
-      loadCollections.fulfilled([{ ...col, entryIds: ['e1', 'e2'] }], 'r'),
+      loadCollections.fulfilled([{ ...testCollection, entryIds: ['e1', 'e2'] }], 'request-1'),
     );
-    const s1 = collectionsReducer(
-      s0,
-      removeEntryFromCollection.fulfilled({ collectionId: 'c1', entryIds: ['e2'] }, 'r', {
+    const next = collectionsReducer(
+      initial,
+      removeEntryFromCollection.fulfilled({ collectionId: 'c1', entryIds: ['e2'] }, 'request-1', {
         collectionId: 'c1',
         entryId: 'e1',
       }),
     );
-    expect(s1.items[0].entryIds).toEqual(['e2']);
+    expect(next.items[0].entryIds).toEqual(['e2']);
   });
 
   it('setEditingId', () => {

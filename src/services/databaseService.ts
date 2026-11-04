@@ -277,10 +277,7 @@ export const removeResearchEntryIdsFromAllCollections = async (
 };
 
 /** Atomically append an entry id to one collection (read-modify-write in one transaction). */
-export const addEntryIdToCollection = async (
-  collectionId: string,
-  entryId: string,
-): Promise<string[]> =>
+export const addEntryIdToCollection = (collectionId: string, entryId: string): Promise<string[]> =>
   db.transaction('rw', db.collections, async () => {
     const col = await db.collections.get(collectionId);
     if (!col) throw new Error('Collection not found');
@@ -291,7 +288,7 @@ export const addEntryIdToCollection = async (
   });
 
 /** Atomically remove an entry id from one collection. */
-export const removeEntryIdFromCollection = async (
+export const removeEntryIdFromCollection = (
   collectionId: string,
   entryId: string,
 ): Promise<string[]> =>

@@ -20,7 +20,7 @@ import {
   JournalEntry,
   Article,
 } from '../types';
-import { deleteEntries as deleteEntriesFromDb } from '../services/databaseService';
+import { deleteEntries as deleteEntriesFromDb, getAllEntries } from '../services/databaseService';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { setNotification } from '../store/slices/uiSlice';
 import { syncCollectionsAfterKbEntryDeletes } from '../store/slices/collectionsSlice';
@@ -161,8 +161,9 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
   );
 
   const clearKnowledgeBase = useCallback(async () => {
-    const entryIds = knowledgeBase.map((e) => e.id);
     try {
+      const entries = await getAllEntries();
+      const entryIds = entries.map((entry) => entry.id);
       await dispatch(clearKb()).unwrap();
       await pruneCollectionsForDeletedEntries(entryIds);
       markDemoSeedConsumed();
@@ -170,7 +171,7 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
       showNotification('Failed to clear knowledge base.', 'error');
       throw new Error('Failed to clear knowledge base');
     }
-  }, [dispatch, showNotification, knowledgeBase, pruneCollectionsForDeletedEntries]);
+  }, [dispatch, showNotification, pruneCollectionsForDeletedEntries]);
 
   const clearDemoData = useCallback(async () => {
     const demoIds = knowledgeBase.filter((e) => isDemoEntryId(e.id)).map((e) => e.id);
