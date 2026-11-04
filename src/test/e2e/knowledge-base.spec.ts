@@ -144,19 +144,13 @@ test.describe('Knowledge Base selection and export', () => {
   });
 
   test('CSV export keeps selected membership when filter hides the row', async ({ page }) => {
-    // Sidebar search is `hidden md:block`; use desktop viewport for filter UX.
-    await page.setViewportSize({ width: 1280, height: 800 });
-    await page.reload({ waitUntil: 'domcontentloaded' });
-    await navigateToKnowledgeBase(page);
-    await waitForKbArticleCount(page, DEMO_KB_UNIQUE_ARTICLE_COUNT);
-
     const aspirinSelect = page.getByRole('checkbox', {
       name: /select article:.*aspirin/i,
     });
     await expect(aspirinSelect).toBeVisible({ timeout: 30_000 });
     await aspirinSelect.check();
 
-    const search = page.getByPlaceholder(/search articles|artikel suchen/i);
+    const search = page.getByRole('searchbox', { name: /search articles|artikel suchen/i });
     await search.fill('SGLT2');
     await expect(page.getByText(/1 Article Found|1 Artikel gefunden/i)).toBeVisible({
       timeout: 15_000,

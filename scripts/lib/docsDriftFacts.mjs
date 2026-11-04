@@ -640,6 +640,14 @@ export function assertFactsAppVersion(facts, appVersion, errors) {
   errors.push(`docs/project-facts.json appVersion ${facts.appVersion} != package.json ${appVersion}`);
 }
 
+/** README shields badge must track package.json (WS-16 / #411). */
+export function assertReadmeVersionBadge(readme, appVersion, errors) {
+  const needle = `badge/Version-${appVersion}`;
+  if (!readme.includes(needle)) {
+    errors.push(`README.md Version badge must match package.json (expected ${needle})`);
+  }
+}
+
 export function assertPnpmMajorMention(agents, pnpmVersion, errors) {
   if (!pnpmVersion) return;
   assertMatch(

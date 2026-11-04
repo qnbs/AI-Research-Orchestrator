@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Knowledge Base (#421):** Bulk-delete confirm E2E on demo corpus (merged via #449); reload clears selection; CSV export membership invariant when filter hides selected row.
+- **Knowledge Base (#421):** Mobile-visible article search (`HeaderControls`); bulk-delete, reload, and filter/export membership E2E.
+- **Docs (#411):** `check:docs-drift` asserts README Version badge matches `package.json`.
 - **Orchestrator (#419):** WS-24 checkpoint discard E2E (banner cleared after reload).
 
 ### Fixed
