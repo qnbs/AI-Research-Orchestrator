@@ -40,7 +40,7 @@ minimumReleaseAgeExclude:
   - '@anthropic-ai/sdk@0.130.0'
   - '@anthropic-ai/sdk@0.131.0'
   - '@google/genai@2.26.0'
-  - ip-address@10.4.0
+  - ip-address@10.7.4
 onlyBuiltDependencies:
   - '@google/genai'
   - '@tailwindcss/oxide'
@@ -75,7 +75,7 @@ overrides:
   # GHSA-mwp4-54f8-5fhr: Address4 decodes leading-zero octets as decimal while
   # resolvers decode them as octal (SSRF/trust-boundary bypass). Transitive via
   # @lhci/cli's puppeteer-core > proxy-agent > socks chain.
-  ip-address: 10.4.0
+  ip-address: 10.7.4
   # GHSA-6g55-p6wh-862q (incomplete fix, <=8.5.22): attacker-controlled
   # sourceMappingURL reads arbitrary .map files when `from` is unset.
   postcss: 8.5.25
@@ -85,9 +85,11 @@ overrides:
   # GHSA-mh99-v99m-4gvg: DoS via unbounded expansion — three independent major
   # lines in the tree need separate pins (minimatch@3 → ^1.1.7, minimatch@9 →
   # ^2.0.2, minimatch@10 → ^5.0.0 via @vitest/coverage-v8 / typescript-eslint).
-  'brace-expansion@^1.1.7': 1.1.20
+  'brace-expansion@^1.1.7': 1.1.21
   'brace-expansion@^2.0.2': 2.1.4
   'brace-expansion@^5.0.0': 5.0.11
+  # GHSA (jspdf): fflate <=0.8.2 — patch 0.8.3 (production PDF export path).
+  'fflate@^0.8.0': 0.8.3
   # GHSA-w5hq-g745-h8pq: @lhci/cli pins uuid@8.3.2 directly
   uuid: 11.1.1
   # @lhci/cli pulls tmp@0.0.33 / 0.1.0 (GHSA-ph9p-34f9-6g65); pin patched release
