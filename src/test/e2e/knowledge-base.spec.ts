@@ -144,6 +144,12 @@ test.describe('Knowledge Base selection and export', () => {
   });
 
   test('CSV export keeps selected membership when filter hides the row', async ({ page }) => {
+    // Sidebar search is `hidden md:block`; use desktop viewport for filter UX.
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await navigateToKnowledgeBase(page);
+    await waitForKbArticleCount(page, DEMO_KB_UNIQUE_ARTICLE_COUNT);
+
     const aspirinSelect = page.getByRole('checkbox', {
       name: /select article:.*aspirin/i,
     });
