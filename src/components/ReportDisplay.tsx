@@ -235,6 +235,7 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(function R
     report.retrievalOutcome === 'zero_results' ||
     report.retrievalOutcome === 'retrieval_failed' ||
     report.retrievalOutcome === 'offline_without_demo';
+  const isPartialSourceRetrieval = !isPartial && report.retrievalOutcome === 'partial_failure';
   // Demo corpora and cancelled/partial runs must never show green
   // corpus-supported chrome — a partial stream can still carry trustLevel.
   const trustChromeOk = !isPartial && !isDemoCorpus && !isEmptyRetrieval;
@@ -281,6 +282,14 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = React.memo(function R
               className="mb-4 rounded-md border border-border bg-surface-hover px-3 py-2 text-sm text-text-secondary"
             >
               {t('report.emptyRetrieval.banner')}
+            </div>
+          )}
+          {isPartialSourceRetrieval && (
+            <div
+              role="status"
+              className="mb-4 rounded-md border border-amber-500/50 bg-amber-500/10 px-3 py-2 text-sm text-amber-900 dark:text-amber-100"
+            >
+              {t('report.partialRetrieval.banner')}
             </div>
           )}
           <div className="flex justify-between items-start flex-wrap gap-4">

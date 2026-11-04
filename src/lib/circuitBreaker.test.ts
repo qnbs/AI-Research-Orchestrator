@@ -186,6 +186,17 @@ describe('CircuitBreaker', () => {
     }
   });
 
+  it('records resolved values as failures when isFailure matches', async () => {
+    const breaker = getCircuitBreaker('classified-fail', { failureThreshold: 2 });
+    await withCircuitBreaker('classified-fail', async () => ({ ok: false }), {
+      isFailure: (r) => !r.ok,
+    });
+    await withCircuitBreaker('classified-fail', async () => ({ ok: false }), {
+      isFailure: (r) => !r.ok,
+    });
+    expect(breaker.getState()).toBe('open');
+  });
+
   it('getCircuitBreaker returns the same instance for a given service', () => {
     const first = getCircuitBreaker('shared-service', { failureThreshold: 2 });
     const second = getCircuitBreaker('shared-service', { failureThreshold: 99 });

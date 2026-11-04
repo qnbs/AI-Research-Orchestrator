@@ -6,7 +6,11 @@
 import type { RankedArticle } from '../../types';
 import type { RetrievalResult, BuiltQuery } from './types';
 import { searchPubMedForIds, fetchArticleDetails } from '../pubmedUtils';
-import { searchAndFetchArxiv } from '../arxivUtils';
+import {
+  searchAndFetchArxivDetailed,
+  isArxivRetrievalFailure,
+  type ArxivFetchOutcome,
+} from '../arxivUtils';
 import { getNcbiApiKey } from '../apiKeyService';
 import { AppError, toAppError, isAbortError } from '../../lib/errors';
 import { withCircuitBreaker } from '../../lib/circuitBreaker';
@@ -112,14 +116,21 @@ export async function retrieveArticles(
 
   // Search arXiv
   let arxivArticles: RankedArticle[] = [];
+  let arxivFetchOutcome: ArxivFetchOutcome | undefined;
   if (maxArxiv > 0 && !options.signal?.aborted) {
     try {
-      const arxivResults = await withCircuitBreaker('arxiv', () =>
-        searchAndFetchArxiv(queries[0]?.query ?? '', maxArxiv, options.signal),
+      const arxivFetch = await withCircuitBreaker(
+        'arxiv',
+        () => searchAndFetchArxivDetailed(queries[0]?.query ?? '', maxArxiv, options.signal),
+        { isFailure: (result) => isArxivRetrievalFailure(result.outcome) },
       );
       apiCalls++;
-      // Convert Partial<RankedArticle> to RankedArticle with defaults
-      arxivArticles = arxivResults.map((article) => ({
+      arxivFetchOutcome = arxivFetch.outcome;
+      if (isArxivRetrievalFailure(arxivFetch.outcome)) {
+        retrievalErrorCount += 1;
+        safeLogWarn('arXiv retrieval unavailable:', arxivFetch.outcome, arxivFetch.httpStatus);
+      }
+      arxivArticles = arxivFetch.articles.map((article) => ({
         pmid: article.pmid ?? '',
         pmcId: article.pmcId,
         title: article.title ?? '',
@@ -134,8 +145,12 @@ export async function retrieveArticles(
         articleType: article.articleType ?? 'Preprint',
       }));
     } catch (error) {
+      if (options.signal?.aborted) {
+        throw toAppError(new DOMException('Aborted', 'AbortError'), 'arxiv');
+      }
       if (isAbortError(error)) throw toAppError(error, 'arxiv');
       retrievalErrorCount += 1;
+      arxivFetchOutcome = 'network_error';
       safeLogWarn('arXiv search failed:', error);
     }
   }
@@ -147,5 +162,6 @@ export async function retrieveArticles(
     arxivCount: arxivArticles.length,
     apiCalls,
     retrievalErrorCount,
+    arxivFetchOutcome,
   };
 }

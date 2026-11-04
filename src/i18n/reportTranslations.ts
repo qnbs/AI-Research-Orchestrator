@@ -63,6 +63,8 @@ export const reportTranslations = {
       'SYNTHETIC EDUCATIONAL DEMO — NOT RETRIEVED LITERATURE. These records are local fixtures, not PubMed or arXiv results.',
     'report.emptyRetrieval.banner':
       'No retrieved literature in this report. Empty or failed search — demo fixtures were not substituted.',
+    'report.partialRetrieval.banner':
+      'One or more literature providers were unavailable for this run. The report includes only sources retrieved successfully.',
     'report.partial.banner':
       'PARTIAL REPORT — this research run did not finish. Results below are incomplete and have not been fully verified.',
     'report.partial.bannerWithPhase':
@@ -147,6 +149,8 @@ export const reportTranslations = {
       'SYNTHETISCHE BILDUNGS-DEMO — KEINE ABGERUFENE LITERATUR. Diese Einträge sind lokale Fixtures, keine PubMed- oder arXiv-Ergebnisse.',
     'report.emptyRetrieval.banner':
       'Keine abgerufene Literatur in diesem Bericht. Leere oder fehlgeschlagene Suche — Demo-Fixtures wurden nicht substituiert.',
+    'report.partialRetrieval.banner':
+      'Ein oder mehrere Literaturanbieter waren für diesen Lauf nicht verfügbar. Der Bericht enthält nur erfolgreich abgerufene Quellen.',
     'report.partial.banner':
       'TEILBERICHT — dieser Forschungslauf wurde nicht abgeschlossen. Die unten stehenden Ergebnisse sind unvollständig und wurden nicht vollständig verifiziert.',
     'report.partial.bannerWithPhase':

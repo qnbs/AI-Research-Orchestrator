@@ -4,6 +4,7 @@
  */
 
 import type { RankedArticle } from '../../types';
+import type { ArxivFetchOutcome } from '../arxivUtils';
 
 /** Badge string for Non-AI (deterministic) mode outputs. */
 export const HEURISTIC_BADGE = 'Heuristic mode';
@@ -34,6 +35,8 @@ export interface RetrievalResult {
   apiCalls: number;
   /** Non-abort retrieval errors swallowed while attempting sources (P0 quarantine). */
   retrievalErrorCount?: number;
+  /** Last arXiv fetch outcome when arXiv was requested. */
+  arxivFetchOutcome?: ArxivFetchOutcome;
 }
 
 /** Ranking feature weights for BM25/TF-IDF hybrid. */

@@ -13,11 +13,14 @@ vi.mock('../pubmedUtils', () => ({
 }));
 
 const mockArxiv = vi.hoisted(() => ({
-  searchAndFetchArxiv: vi.fn(),
+  searchAndFetchArxivDetailed: vi.fn(),
 }));
 
 vi.mock('../arxivUtils', () => ({
-  searchAndFetchArxiv: (...args: unknown[]) => mockArxiv.searchAndFetchArxiv(...args),
+  searchAndFetchArxivDetailed: (...args: unknown[]) =>
+    mockArxiv.searchAndFetchArxivDetailed(...args),
+  isArxivRetrievalFailure: (outcome: string) =>
+    outcome !== 'success_with_results' && outcome !== 'success_empty',
 }));
 
 vi.mock('../apiKeyService', () => ({
@@ -55,7 +58,10 @@ describe('generateNonAiResearchReportStream', () => {
   beforeEach(() => {
     resetAllCircuitBreakers();
     vi.clearAllMocks();
-    mockArxiv.searchAndFetchArxiv.mockResolvedValue([]);
+    mockArxiv.searchAndFetchArxivDetailed.mockResolvedValue({
+      articles: [],
+      outcome: 'success_empty',
+    });
   });
 
   it('completes a full run with real (mocked) PubMed results, streaming synthesis chunks', async () => {
@@ -107,7 +113,10 @@ describe('generateNonAiResearchReportStream', () => {
         isOpenAccess: true,
       },
     ]);
-    mockArxiv.searchAndFetchArxiv.mockRejectedValue(new Error('arxiv down'));
+    mockArxiv.searchAndFetchArxivDetailed.mockResolvedValue({
+      articles: [],
+      outcome: 'network_error',
+    });
 
     const events = await collectEvents(makeInput({ includeArxiv: true }));
     const reportEvent = events.find((e) => e.report);
@@ -223,9 +232,12 @@ describe('generateNonAiResearchReportStream', () => {
   it('still attempts arXiv when the PubMed article-detail fetch fails', async () => {
     mockPubMed.searchPubMedForIds.mockResolvedValue(['1']);
     mockPubMed.fetchArticleDetails.mockRejectedValue(new Error('details fetch failed'));
-    mockArxiv.searchAndFetchArxiv.mockResolvedValue([
-      { pmid: 'arxiv:1', title: 'A preprint', summary: 'Preprint summary about the topic.' },
-    ]);
+    mockArxiv.searchAndFetchArxivDetailed.mockResolvedValue({
+      articles: [
+        { pmid: 'arxiv:1', title: 'A preprint', summary: 'Preprint summary about the topic.' },
+      ],
+      outcome: 'success_with_results',
+    });
 
     const events = await collectEvents(makeInput({ includeArxiv: true }));
 
@@ -236,9 +248,12 @@ describe('generateNonAiResearchReportStream', () => {
   it('includes arXiv results when includeArxiv is true', async () => {
     mockPubMed.searchPubMedForIds.mockResolvedValue([]);
     mockPubMed.fetchArticleDetails.mockResolvedValue([]);
-    mockArxiv.searchAndFetchArxiv.mockResolvedValue([
-      { pmid: 'arxiv:1', title: 'A preprint', summary: 'Preprint summary about the topic.' },
-    ]);
+    mockArxiv.searchAndFetchArxivDetailed.mockResolvedValue({
+      articles: [
+        { pmid: 'arxiv:1', title: 'A preprint', summary: 'Preprint summary about the topic.' },
+      ],
+      outcome: 'success_with_results',
+    });
 
     const events = await collectEvents(makeInput({ includeArxiv: true }));
 

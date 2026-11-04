@@ -13,6 +13,7 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { parseIgnoreGhsasFromWorkspaceYaml } from '../src/lib/auditIgnoreGhsas.ts';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 
@@ -22,42 +23,7 @@ const ROOT = fileURLToPath(new URL('..', import.meta.url));
  *
  * @type {Record<string, { packageName: string, mustPassThrough: string }>}
  */
-const ALLOWED_AUDIT_IGNORES = {
-  // Unpatched extract-zip (GHSA-jmr9-qjv8-65gv). Only path: LHCI Chrome unpack.
-  'GHSA-jmr9-qjv8-65gv': {
-    packageName: 'extract-zip',
-    mustPassThrough: '@lhci/cli',
-  },
-  // Second extract-zip advisory (GHSA-7pqw-9j4j-h8q3); same abandoned LHCI-only path.
-  'GHSA-7pqw-9j4j-h8q3': {
-    packageName: 'extract-zip',
-    mustPassThrough: '@lhci/cli',
-  },
-};
-
-/**
- * @param {string} yaml
- * @returns {string[]}
- */
-export function parseIgnoreGhsas(yaml) {
-  const ids = [];
-  let inList = false;
-  for (const line of yaml.split('\n')) {
-    if (/^\s*ignoreGhsas:\s*$/.test(line)) {
-      inList = true;
-      continue;
-    }
-    if (!inList) continue;
-    const item = line.match(/^\s+-\s+["']?(GHSA-[A-Za-z0-9-]+)["']?\s*$/);
-    if (item) {
-      ids.push(item[1]);
-      continue;
-    }
-    if (/^\s*$/.test(line) || /^\s+#/.test(line)) continue;
-    break;
-  }
-  return ids;
-}
+const ALLOWED_AUDIT_IGNORES = {};
 
 /**
  * @typedef {{ name: string, depField?: string, deduped?: boolean, dependents?: WhyNode[] }} WhyNode
@@ -178,22 +144,24 @@ function main() {
   runRegressionFixtures();
 
   const sample = 'auditConfig:\n  ignoreGhsas:\n    - GHSA-jmr9-qjv8-65gv\n';
-  const parsedSample = parseIgnoreGhsas(sample);
+  let parsedSample;
+  try {
+    parsedSample = parseIgnoreGhsasFromWorkspaceYaml(sample);
+  } catch (error) {
+    fail(`parser self-check threw: ${error}`);
+  }
   if (parsedSample.length !== 1 || parsedSample[0] !== 'GHSA-jmr9-qjv8-65gv') {
     fail(`parser self-check failed: ${JSON.stringify(parsedSample)}`);
   }
 
-  const quotedDouble = parseIgnoreGhsas('auditConfig:\n  ignoreGhsas:\n    - "GHSA-jmr9-qjv8-65gv"\n');
-  const quotedSingle = parseIgnoreGhsas("auditConfig:\n  ignoreGhsas:\n    - 'GHSA-jmr9-qjv8-65gv'\n");
-  if (quotedDouble[0] !== 'GHSA-jmr9-qjv8-65gv' || quotedSingle[0] !== 'GHSA-jmr9-qjv8-65gv') {
-    fail(
-      `quoted GHSA parser fixture failed: ${JSON.stringify({ quotedDouble, quotedSingle })}`,
-    );
-  }
-
   const workspace = readFileSync(path.join(ROOT, 'pnpm-workspace.yaml'), 'utf8');
   const pkg = JSON.parse(readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
-  const ignored = parseIgnoreGhsas(workspace);
+  let ignored;
+  try {
+    ignored = parseIgnoreGhsasFromWorkspaceYaml(workspace);
+  } catch (error) {
+    fail(String(error));
+  }
 
   for (const ghsa of ignored) {
     const rule = ALLOWED_AUDIT_IGNORES[ghsa];
