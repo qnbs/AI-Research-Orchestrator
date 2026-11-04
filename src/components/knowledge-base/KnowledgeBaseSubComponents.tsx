@@ -301,10 +301,18 @@ export const BulkActionsToolbar: React.FC = () => {
         <button
           type="button"
           onClick={() => setShowExportModal('bib')}
-          aria-label={t('kb.export_ris')}
+          aria-label={t('kb.export_bib')}
           className="p-2 rounded-md bg-surface hover:bg-surface-hover"
         >
           <CitationIcon className="h-5 w-5" />
+        </button>
+        <button
+          type="button"
+          onClick={() => setShowExportModal('ris')}
+          aria-label={t('kb.export_ris')}
+          className="p-2 rounded-md bg-surface hover:bg-surface-hover"
+        >
+          <DocumentIcon className="h-5 w-5" />
         </button>
       </div>
     </div>

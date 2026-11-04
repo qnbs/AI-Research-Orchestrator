@@ -40,6 +40,7 @@ export const kbChromeTranslations = {
     'kb.delete_selected': 'Delete selected',
     'kb.export_pdf': 'Export as PDF',
     'kb.export_csv': 'Export as CSV',
+    'kb.export_bib': 'Export as BibTeX',
     'kb.export_ris': 'Export as RIS',
 
     'article.close': 'Close panel',
@@ -113,6 +114,7 @@ export const kbChromeTranslations = {
     'kb.delete_selected': 'Auswahl löschen',
     'kb.export_pdf': 'Als PDF exportieren',
     'kb.export_csv': 'Als CSV exportieren',
+    'kb.export_bib': 'Als BibTeX exportieren',
     'kb.export_ris': 'Als RIS exportieren',
 
     'article.close': 'Panel schließen',
