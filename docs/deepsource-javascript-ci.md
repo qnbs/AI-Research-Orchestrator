@@ -46,18 +46,18 @@ Org/dashboard **JavaScript** stayed enabled even though git policy assumed “no
 **Repo fix (2026-11-04):**
 
 1. `.deepsource.toml` declares `[[analyzers]] name = "javascript"` with **`enabled = false`** (drift-gated via `check:docs-drift`).
-2. **`exclude_patterns`** include `src/**`, `**/*.ts`, and `**/*.tsx` so the check stays green even if the dashboard analyzer is still toggled on until a maintainer disables it.
-3. Maintainers should still toggle **JavaScript off** under **Settings → Code Review → Analyzers** (`docs/deepsource-dashboard-off.md`) and enable **Preferences → Use TOML configuration** so git remains the source of truth.
+2. **Do not** add repository-wide `src/**` / `**/*.ts` excludes when JS is off — global `exclude_patterns` apply to Docker and Shell too (#410). Narrow excludes (e.g. `.devcontainer/Dockerfile` only) preserve Shell coverage of `.devcontainer/postCreate.sh`.
+3. If the dashboard JavaScript analyzer were re-enabled without `enabled = false`, belt-and-suspenders TS excludes would be needed again — prefer keeping dashboard + TOML off (`docs/deepsource-dashboard-off.md`).
 
 ## Disposition (current)
 
-| Analyzer   | `.deepsource.toml`                  | DeepSource dashboard           | GitHub check              |
-| ---------- | ----------------------------------- | ------------------------------ | ------------------------- |
-| JavaScript | **`enabled = false`** + TS excludes | Should match TOML (toggle off) | Should pass or disappear  |
-| Docker     | `enabled = true`                    | Follows TOML                   | Advisory                  |
-| Shell      | `enabled = true`                    | Follows TOML                   | Advisory                  |
-| ESLint     | —                                   | —                              | Blocking (`deploy.yml`)   |
-| Typecheck  | —                                   | —                              | Blocking (`tsc --noEmit`) |
+| Analyzer   | `.deepsource.toml`                              | DeepSource dashboard           | GitHub check              |
+| ---------- | ----------------------------------------------- | ------------------------------ | ------------------------- |
+| JavaScript | **`enabled = false`** (no app TS in DeepSource) | Should match TOML (toggle off) | Should pass or disappear  |
+| Docker     | `enabled = true`                                | Follows TOML                   | Advisory                  |
+| Shell      | `enabled = true`                                | Follows TOML                   | Advisory                  |
+| ESLint     | —                                               | —                              | Blocking (`deploy.yml`)   |
+| Typecheck  | —                                               | —                              | Blocking (`tsc --noEmit`) |
 
 Re-enable JavaScript only after:
 
