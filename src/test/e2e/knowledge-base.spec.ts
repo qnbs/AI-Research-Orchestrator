@@ -102,4 +102,17 @@ test.describe('Knowledge Base selection and export', () => {
     expect(body).toMatch(/^ER {2}- /m);
     expect(body).toContain(selectedTitle.slice(0, 40));
   });
+
+  test('bulk delete removes selected article after confirm', async ({ page }) => {
+    const firstSelect = page.getByRole('checkbox', { name: /select article:/i }).first();
+    await firstSelect.check();
+    await page.getByRole('button', { name: /delete selected|auswahl löschen/i }).click();
+
+    const dialog = page.getByRole('dialog', { name: /delete articles|artikel löschen/i });
+    await expect(dialog).toBeVisible({ timeout: 10_000 });
+    await dialog.getByRole('button', { name: /yes, delete|ja, löschen/i }).click();
+
+    await waitForKbArticleCount(page, DEMO_KB_UNIQUE_ARTICLE_COUNT - 1);
+    await expect(page.getByText(/1 selected|1 ausgewählt/i)).not.toBeVisible();
+  });
 });
