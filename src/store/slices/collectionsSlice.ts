@@ -5,11 +5,12 @@ import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import type { ResearchCollection } from '../../types';
 import {
   getAllCollections,
-  getCollectionById,
   addCollection,
   updateCollection as dbUpdateCollection,
   deleteCollection as dbDeleteCollection,
   removeResearchEntryIdsFromAllCollections,
+  addEntryIdToCollection,
+  removeEntryIdFromCollection,
 } from '../../services/databaseService';
 
 interface CollectionsState {
@@ -59,13 +60,7 @@ export const deleteCollection = createAsyncThunk('collections/delete', async (id
 export const addEntryToCollection = createAsyncThunk(
   'collections/addEntry',
   async ({ collectionId, entryId }: { collectionId: string; entryId: string }) => {
-    const col = await getCollectionById(collectionId);
-    if (!col) throw new Error('Collection not found');
-    if (col.entryIds.includes(entryId)) {
-      return { collectionId, entryIds: col.entryIds };
-    }
-    const entryIds = [...col.entryIds, entryId];
-    await dbUpdateCollection(collectionId, { entryIds, updatedAt: Date.now() });
+    const entryIds = await addEntryIdToCollection(collectionId, entryId);
     return { collectionId, entryIds };
   },
 );
@@ -74,13 +69,7 @@ export const addEntryToCollection = createAsyncThunk(
 export const removeEntryFromCollection = createAsyncThunk(
   'collections/removeEntry',
   async ({ collectionId, entryId }: { collectionId: string; entryId: string }) => {
-    const col = await getCollectionById(collectionId);
-    if (!col) throw new Error('Collection not found');
-    const entryIds = col.entryIds.filter((id) => id !== entryId);
-    if (entryIds.length === col.entryIds.length) {
-      return { collectionId, entryIds: col.entryIds };
-    }
-    await dbUpdateCollection(collectionId, { entryIds, updatedAt: Date.now() });
+    const entryIds = await removeEntryIdFromCollection(collectionId, entryId);
     return { collectionId, entryIds };
   },
 );

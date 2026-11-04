@@ -276,6 +276,36 @@ export async function removeResearchEntryIdsFromAllCollections(
   return touched;
 }
 
+/** Atomically append an entry id to one collection (read-modify-write in one transaction). */
+export async function addEntryIdToCollection(
+  collectionId: string,
+  entryId: string,
+): Promise<string[]> {
+  return db.transaction('rw', db.collections, async () => {
+    const col = await db.collections.get(collectionId);
+    if (!col) throw new Error('Collection not found');
+    if (col.entryIds.includes(entryId)) return col.entryIds;
+    const entryIds = [...col.entryIds, entryId];
+    await db.collections.update(collectionId, { entryIds, updatedAt: Date.now() });
+    return entryIds;
+  });
+}
+
+/** Atomically remove an entry id from one collection. */
+export async function removeEntryIdFromCollection(
+  collectionId: string,
+  entryId: string,
+): Promise<string[]> {
+  return db.transaction('rw', db.collections, async () => {
+    const col = await db.collections.get(collectionId);
+    if (!col) throw new Error('Collection not found');
+    const entryIds = col.entryIds.filter((id) => id !== entryId);
+    if (entryIds.length === col.entryIds.length) return col.entryIds;
+    await db.collections.update(collectionId, { entryIds, updatedAt: Date.now() });
+    return entryIds;
+  });
+}
+
 // --- Research checkpoint Operations (partial save / resume) ---
 /** Upsert a research checkpoint for soft resume. */
 export const saveResearchCheckpoint = (checkpoint: ResearchCheckpoint) =>

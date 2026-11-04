@@ -161,14 +161,16 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
   );
 
   const clearKnowledgeBase = useCallback(async () => {
+    const entryIds = knowledgeBase.map((e) => e.id);
     try {
       await dispatch(clearKb()).unwrap();
+      await pruneCollectionsForDeletedEntries(entryIds);
       markDemoSeedConsumed();
     } catch {
       showNotification('Failed to clear knowledge base.', 'error');
       throw new Error('Failed to clear knowledge base');
     }
-  }, [dispatch, showNotification]);
+  }, [dispatch, showNotification, knowledgeBase, pruneCollectionsForDeletedEntries]);
 
   const clearDemoData = useCallback(async () => {
     const demoIds = knowledgeBase.filter((e) => isDemoEntryId(e.id)).map((e) => e.id);
