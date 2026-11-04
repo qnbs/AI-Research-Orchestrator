@@ -197,6 +197,10 @@ describe('databaseService presets and collections', () => {
     await expect(getAllCollections()).resolves.toEqual([]);
   });
 
+  it('removeResearchEntryIdsFromAllCollections returns 0 for empty input', async () => {
+    expect(await removeResearchEntryIdsFromAllCollections([])).toBe(0);
+  });
+
   it('removeResearchEntryIdsFromAllCollections prunes membership', async () => {
     await addCollection({
       id: 'col-a',
@@ -270,6 +274,48 @@ describe('databaseService presets and collections', () => {
     const listed = await getAllCollections();
     const target = listed.find((collection) => collection.id === 'col-remove');
     expect(target?.entryIds).toEqual(['b']);
+  });
+
+  it('addEntryIdToCollection is idempotent when entry already exists', async () => {
+    await addCollection({
+      id: 'col-dup',
+      name: 'Dup',
+      description: '',
+      color: '#444',
+      icon: '📚',
+      entryIds: ['e1'],
+      articlePmids: [],
+      createdAt: 1,
+      updatedAt: 1,
+      tags: [],
+    });
+    const ids = await addEntryIdToCollection('col-dup', 'e1');
+    expect(ids).toEqual(['e1']);
+  });
+
+  it('addEntryIdToCollection throws when collection is missing', async () => {
+    await expect(addEntryIdToCollection('missing', 'e1')).rejects.toThrow(/not found/i);
+  });
+
+  it('removeEntryIdFromCollection no-ops when id is absent', async () => {
+    await addCollection({
+      id: 'col-noop',
+      name: 'Noop',
+      description: '',
+      color: '#555',
+      icon: '📚',
+      entryIds: ['only'],
+      articlePmids: [],
+      createdAt: 1,
+      updatedAt: 1,
+      tags: [],
+    });
+    const ids = await removeEntryIdFromCollection('col-noop', 'ghost');
+    expect(ids).toEqual(['only']);
+  });
+
+  it('removeEntryIdFromCollection throws when collection is missing', async () => {
+    await expect(removeEntryIdFromCollection('missing', 'e1')).rejects.toThrow(/not found/i);
   });
 });
 
