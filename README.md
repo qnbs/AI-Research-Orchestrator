@@ -130,8 +130,8 @@ On every **push** to `main` and every **PR** targeting `main`, GitHub Actions ru
 | Gate                                                                            | Workflow                                              |
 | ------------------------------------------------------------------------------- | ----------------------------------------------------- |
 | Typecheck, lint, format, coverage, docs-drift, build, bundle budget, Lighthouse | `deploy.yml`                                          |
-| Playwright E2E (Chromium, eight specs)                                          | `e2e.yml` (**blocking**)                              |
-| Cross-browser E2E (Firefox, WebKit, mobile Chrome — same eight specs)           | `e2e-cross-browser.yml` (**blocking**)                |
+| Playwright E2E (Chromium, nine specs)                                           | `e2e.yml` (**blocking**)                              |
+| Cross-browser E2E (Firefox, WebKit, mobile Chrome — same nine specs)            | `e2e-cross-browser.yml` (**blocking**)                |
 | Axe critical/serious smoke                                                      | `a11y.yml` (**blocking**)                             |
 | PWA service-worker registration (real production build + `vite preview`)        | `pwa-e2e.yml` (**blocking**)                          |
 | CodeQL, Dependency Review, `pnpm audit` (high+), gitleaks                       | `security.yml`                                        |

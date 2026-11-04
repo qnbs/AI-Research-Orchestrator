@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Knowledge Base (#421):** Playwright `knowledge-base.spec.ts` — demo corpus selection and bulk CSV export toolbar on filtered page.
 - **Orchestrator (#419):** Documented WS-24 state/identity matrix (`docs/audits/2026-11-04-orchestrator-state-invariants.md`); regression test for stale stream completion after `handleNewSearch`.
 
 ### Changed
