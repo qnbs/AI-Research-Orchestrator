@@ -124,6 +124,28 @@ const MultiSelectFilter: React.FC<{
   );
 };
 
+const KbArticleSearchInput: React.FC<{ id: string; className?: string }> = ({
+  id,
+  className = '',
+}) => {
+  const { t } = useTranslation();
+  const { filter, onFilterChange } = useKnowledgeBaseView();
+  return (
+    <div className={`relative ${className}`}>
+      <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-secondary pointer-events-none" />
+      <input
+        id={id}
+        type="search"
+        aria-label={t('kb.search_aria')}
+        placeholder={t('kb.search_placeholder')}
+        value={filter.searchTerm}
+        onChange={(e) => onFilterChange({ searchTerm: e.target.value })}
+        className="w-full bg-input-bg border border-border rounded-md py-1.5 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-accent"
+      />
+    </div>
+  );
+};
+
 export const SidebarFilters: React.FC = () => {
   const { t } = useTranslation();
   const { filter, onFilterChange, topics, tags, articleTypes, journals } = useKnowledgeBaseView();
@@ -132,16 +154,7 @@ export const SidebarFilters: React.FC = () => {
       className={`w-64 flex-shrink-0 space-y-4 ${STICKY_BELOW_CHROME_CLASS} self-start hidden md:block`}
     >
       <h3 className="text-lg font-semibold text-text-primary">{t('kb.filters')}</h3>
-      <div className="relative">
-        <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-secondary" />
-        <input
-          type="text"
-          placeholder={t('kb.search_placeholder')}
-          value={filter.searchTerm}
-          onChange={(e) => onFilterChange({ searchTerm: e.target.value })}
-          className="w-full bg-input-bg border border-border rounded-md py-1.5 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-accent"
-        />
-      </div>
+      <KbArticleSearchInput id="kb-article-search-sidebar" />
       <MultiSelectFilter
         title={t('kb.filter.topics')}
         options={topics}
@@ -194,41 +207,44 @@ export const HeaderControls: React.FC = () => {
   const { filteredArticles, sortOrder, setSortOrder, viewMode, setViewMode } =
     useKnowledgeBaseView();
   return (
-    <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
-      <h2 className="text-2xl font-bold brand-gradient-text">
-        {t(filteredArticles.length === 1 ? 'kb.articles_found_one' : 'kb.articles_found_other', {
-          count: filteredArticles.length,
-        })}
-      </h2>
-      <div className="flex items-center gap-2">
-        <select
-          value={sortOrder}
-          onChange={(e) => setSortOrder(e.target.value as 'relevance' | 'newest')}
-          aria-label={t('kb.sort.label')}
-          className="bg-input-bg border border-border rounded-md p-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-accent"
-        >
-          <option value="relevance">{t('kb.sort.relevance')}</option>
-          <option value="newest">{t('kb.sort.newest')}</option>
-        </select>
-        <div className="flex items-center bg-input-bg border border-border rounded-md p-1">
-          <button
-            type="button"
-            onClick={() => setViewMode('grid')}
-            aria-label={t('kb.view.grid')}
-            aria-pressed={viewMode === 'grid'}
-            className={`p-1 rounded ${viewMode === 'grid' ? 'bg-brand-accent text-white' : 'hover:bg-surface'}`}
+    <div className="flex flex-col gap-4 mb-4">
+      <KbArticleSearchInput id="kb-article-search-mobile" className="md:hidden" />
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+        <h2 className="text-2xl font-bold brand-gradient-text">
+          {t(filteredArticles.length === 1 ? 'kb.articles_found_one' : 'kb.articles_found_other', {
+            count: filteredArticles.length,
+          })}
+        </h2>
+        <div className="flex items-center gap-2">
+          <select
+            value={sortOrder}
+            onChange={(e) => setSortOrder(e.target.value as 'relevance' | 'newest')}
+            aria-label={t('kb.sort.label')}
+            className="bg-input-bg border border-border rounded-md p-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-accent"
           >
-            <GridViewIcon className="h-5 w-5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => setViewMode('list')}
-            aria-label={t('kb.view.list')}
-            aria-pressed={viewMode === 'list'}
-            className={`p-1 rounded ${viewMode === 'list' ? 'bg-brand-accent text-white' : 'hover:bg-surface'}`}
-          >
-            <ListViewIcon className="h-5 w-5" />
-          </button>
+            <option value="relevance">{t('kb.sort.relevance')}</option>
+            <option value="newest">{t('kb.sort.newest')}</option>
+          </select>
+          <div className="flex items-center bg-input-bg border border-border rounded-md p-1">
+            <button
+              type="button"
+              onClick={() => setViewMode('grid')}
+              aria-label={t('kb.view.grid')}
+              aria-pressed={viewMode === 'grid'}
+              className={`p-1 rounded ${viewMode === 'grid' ? 'bg-brand-accent text-white' : 'hover:bg-surface'}`}
+            >
+              <GridViewIcon className="h-5 w-5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('list')}
+              aria-label={t('kb.view.list')}
+              aria-pressed={viewMode === 'list'}
+              className={`p-1 rounded ${viewMode === 'list' ? 'bg-brand-accent text-white' : 'hover:bg-surface'}`}
+            >
+              <ListViewIcon className="h-5 w-5" />
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -9,6 +9,7 @@ import {
   assertMatch,
   assertNoMatch,
   assertPnpmMajorMention,
+  assertReadmeVersionBadge,
   escapeRegExp,
   extractTopLevelCancelInProgress,
   failIfErrors,
@@ -164,6 +165,7 @@ async function runDocsDrift() {
   assertAgentGuideVersions(agents, claude, indexMdc, security, appVersion, viteMajor, viteSpec, errors);
   assertPnpmMajorMention(agents, pnpmVersion, errors);
   assertFactsAppVersion(facts, appVersion, errors);
+  assertReadmeVersionBadge(await read('README.md'), appVersion, errors);
 
   await runProjectFactsChecks(errors, facts, {
     read,

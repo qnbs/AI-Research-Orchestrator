@@ -17,15 +17,25 @@ Evidence for **[#404](https://github.com/qnbs/AI-Research-Orchestrator/issues/40
 
 - **URL:** https://qnbs.github.io/AI-Research-Orchestrator/
 - **Probe time:** 2026-11-04 (Europe/Berlin afternoon); `Last-Modified` response header **2026-11-04 ~18:16 UTC** on `index.html`
-- **Repository `main` at probe window:** post-#442 merge (`9a604f2` and contemporaneous Pages deploy from `56edc68` lineage — deploy timestamp aligns with merged main CI, not a stale pre-React-19.3.1 artifact)
+- **Repository `main` at external probe:** post-#442 merge (`9a604f2` lineage — Pages deploy timestamp aligned with contemporaneous `main` CI, not a stale pre-React-19.3.1 artifact)
 - **Published release tag:** **v0.4.7** (2026-11-04 audit-recovery wave; supersedes v0.4.6 badge-only drift)
+
+## Deployed SHA correlation (#404 — required before issue close)
+
+| Item                                                                                                                             | Status                                                                   |
+| -------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| External browser/HTTP smoke on **current** Pages deployment                                                                      | **Recorded once** (this doc, afternoon probe ≈ `9a604f2` window)         |
+| Explicit live-site ↔ **`main` head SHA** attestation (e.g. `__APP_VERSION__` / build meta vs `git rev-parse` on deployed commit) | **Not recorded** for post–v0.4.7 heads such as `69834a3` / later         |
+| CI `deploy` job success on latest `main`                                                                                         | **Necessary but not sufficient** for #404 acceptance                     |
+| Blocking `pwa-e2e.yml` offline shell                                                                                             | **Complements** external smoke; does not replace SHA-tied live URL proof |
+
+**Disposition:** Keep **#404 open** until a maintainer re-runs authorized external smoke (or equivalent recorded HTTP + first-boot check) and appends **deployed commit SHA**, probe timestamp, and artifact index to this file. Do not close #404 on CI green alone.
 
 ## Observations
 
 - Console: non-blocking CSP `connect-src` warnings for localhost probes (expected on GitHub Pages; live APIs remain in CSP allow-list).
 - No credential-bearing requests observed during anonymous smoke.
 - Offline after first visit: **blocking** `pwa-e2e.yml` → `pwa-registration.spec.ts` (preview subpath + offline `#root` visible).
-- **#404:** External production boot **verified** for reachability, assets, CSP-non-blocking load, SW registration, and first-run UX. **Recommend close** with optional follow-up for production Lighthouse-on-live-URL only.
 
 ## Artifact index (Cloud Agent run, not committed to git)
 
@@ -38,5 +48,5 @@ Screenshots and full narrative live under `/opt/cursor/artifacts/` for the verif
 
 ## Disposition
 
-- **#404:** **Recommend close** — live URL smoke (this doc) + CI deploy + blocking PWA offline shell test. Optional follow-up: production Lighthouse with recorded deploy SHA.
+- **#404:** **Remain open** until current-SHA external smoke is appended above. Optional follow-up: Lighthouse on live URL with recorded deploy SHA.
 - **CI correlation:** Every merge to `main` runs blocking quality, E2E (10 specs), cross-browser, a11y, security, and PWA jobs (`docs/ci-branch-governance.md`).
