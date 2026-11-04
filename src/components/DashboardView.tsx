@@ -28,8 +28,10 @@ import { useTranslation } from '../hooks/useTranslation';
 import {
   countDashboardOpenAccessBuckets,
   countDashboardRetrievalSources,
+  DASHBOARD_OA_BUCKET_COLORS,
+  DASHBOARD_SOURCE_BUCKET_COLORS,
 } from '../lib/dashboardArticleMetrics';
-import { DASHBOARD_ACCENT, dashboardAccentFill } from './dashboardChartTheme';
+import { dashboardAccentFill } from './dashboardChartTheme';
 import {
   ChartCard,
   CyberTooltip,
@@ -282,7 +284,12 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({ onFilterChange, 
           </ResponsiveContainer>
         </ChartCard>
 
-        <ChartCard title={t('dashboard.chart.oa')} exportName="open-access.svg" chartRef={refOA}>
+        <ChartCard
+          title={t('dashboard.chart.oa')}
+          subtitle={t('dashboard.chart.oa_sub')}
+          exportName="open-access.svg"
+          chartRef={refOA}
+        >
           <ResponsiveContainer width="100%" height={270}>
             <PieChart>
               <Pie
@@ -300,13 +307,7 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({ onFilterChange, 
                 {data.oa.map((row) => (
                   <Cell
                     key={row.bucket}
-                    fill={
-                      row.bucket === 'open'
-                        ? '#34d399'
-                        : row.bucket === 'unknown'
-                          ? '#fbbf24'
-                          : '#7d8590'
-                    }
+                    fill={DASHBOARD_OA_BUCKET_COLORS[row.bucket]}
                     fillOpacity={row.bucket === 'unknown' ? 0.75 : 0.85}
                     stroke="transparent"
                   />
@@ -338,12 +339,10 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({ onFilterChange, 
                 label={({ percent }) => `${((percent ?? 0) * 100).toFixed(1)}%`}
                 labelLine={{ stroke: 'rgba(125,133,144,0.4)' }}
               >
-                {data.source.map((row, index) => (
+                {data.source.map((row) => (
                   <Cell
                     key={row.bucket}
-                    fill={
-                      index === 0 ? DASHBOARD_ACCENT : CHART_PALETTE[index % CHART_PALETTE.length]
-                    }
+                    fill={DASHBOARD_SOURCE_BUCKET_COLORS[row.bucket]}
                     fillOpacity={0.85}
                     stroke="transparent"
                   />

@@ -23,45 +23,93 @@ const base = (over: Partial<RankedArticle>): RankedArticle => ({
 });
 
 describe('dashboardArticleMetrics', () => {
-  it('classifies arXiv and explicit OA as open', () => {
+  it('classifies arXiv and free-full-text flags as open', () => {
     expect(
       classifyDashboardOpenAccess(
-        base({ pmid: 'arxiv:2301.00001', articleId: { type: 'arxiv', value: '2301.00001' } }),
+        base({
+          pmid: 'arxiv:2301.00001',
+          articleId: { type: 'arxiv', value: '2301.00001' },
+          sourceClass: 'arxiv-retrieved',
+        }),
       ),
     ).toBe('open');
-    expect(classifyDashboardOpenAccess(base({ isOpenAccess: true }))).toBe('open');
+    expect(classifyDashboardOpenAccess(base({ isOpenAccess: true, pmcId: 'PMC123' }))).toBe('open');
   });
 
   it('does not treat missing OA evidence as closed', () => {
-    expect(classifyDashboardOpenAccess(base({ isOpenAccess: false, pmcId: undefined }))).toBe(
-      'unknown',
-    );
+    expect(classifyDashboardOpenAccess(base({ isOpenAccess: false }))).toBe('unknown');
+    const { isOpenAccess: _omit, ...withoutOaFlag } = base({});
+    expect(classifyDashboardOpenAccess(withoutOaFlag as RankedArticle)).toBe('unknown');
     const counts = countDashboardOpenAccessBuckets([
       base({ isOpenAccess: true }),
       base({ pmid: '2', articleId: { type: 'pmid', value: '2' }, isOpenAccess: false }),
     ]);
-    expect(counts.open).toBe(1);
-    expect(counts.unknown).toBe(1);
-    expect(counts.closed).toBe(0);
+    expect(counts).toMatchObject({ open: 1, unknown: 1, closed: 0 });
   });
 
-  it('classifies retrieval sources without labeling all non-arXiv as PubMed', () => {
-    expect(classifyDashboardRetrievalSource(base({ pmid: '99' }))).toBe('pubmed');
+  it('uses sourceClass for retrieval provenance', () => {
     expect(
       classifyDashboardRetrievalSource(
-        base({ pmid: 'arxiv:2301.00002', articleId: { type: 'arxiv', value: '2301.00002' } }),
+        base({ pmid: '999', sourceClass: 'pubmed-retrieved', retrievalSource: 'pubmed_efetch' }),
       ),
-    ).toBe('arxiv');
+    ).toBe('pubmed');
     expect(
       classifyDashboardRetrievalSource(
-        base({ pmid: 'doi:10.1/x', articleId: { type: 'doi', value: '10.1/x' } }),
+        base({
+          pmid: '888',
+          sourceClass: 'user-imported',
+          articleId: { type: 'pmid', value: '888' },
+        }),
       ),
     ).toBe('other');
+    expect(
+      classifyDashboardRetrievalSource(
+        base({
+          pmid: '777',
+          sourceClass: 'demo-synthetic',
+          articleId: { type: 'demo', value: '777' },
+        }),
+      ),
+    ).toBe('other');
+    expect(
+      classifyDashboardRetrievalSource(
+        base({
+          pmid: 'arxiv:2301.00002',
+          articleId: { type: 'arxiv', value: '2301.00002' },
+          sourceClass: 'arxiv-retrieved',
+        }),
+      ),
+    ).toBe('arxiv');
+  });
+
+  it('does not label legacy PMID-only records as PubMed without retrieval provenance', () => {
+    expect(classifyDashboardRetrievalSource(base({ pmid: '12345' }))).toBe('other');
+    expect(
+      classifyDashboardRetrievalSource(
+        base({
+          pmid: '12345',
+          retrievalSource: 'pubmed_esummary',
+          sourceClass: 'pubmed-retrieved',
+        }),
+      ),
+    ).toBe('pubmed');
+  });
+
+  it('aggregates mixed corpus counts', () => {
     const sources = countDashboardRetrievalSources([
-      base({ pmid: '1' }),
-      base({ pmid: 'arxiv:2301.00003', articleId: { type: 'arxiv', value: '2301.00003' } }),
-      base({ pmid: 'doi:10.2/y', articleId: { type: 'doi', value: '10.2/y' } }),
+      base({ pmid: '1', sourceClass: 'pubmed-retrieved', retrievalSource: 'pubmed_efetch' }),
+      base({
+        pmid: 'arxiv:2301.00003',
+        articleId: { type: 'arxiv', value: '2301.00003' },
+        sourceClass: 'arxiv-retrieved',
+      }),
+      base({
+        pmid: 'doi:10.2/y',
+        articleId: { type: 'doi', value: '10.2/y' },
+        sourceClass: 'user-imported',
+      }),
+      base({ pmid: '99999' }),
     ]);
-    expect(sources).toEqual({ pubmed: 1, arxiv: 1, other: 1 });
+    expect(sources).toEqual({ pubmed: 1, arxiv: 1, other: 2 });
   });
 });

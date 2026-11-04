@@ -16,8 +16,10 @@ export const dashboardTranslations = {
     'dashboard.chart.types': 'Article Types',
     'dashboard.chart.types_sub': 'Click to filter',
     'dashboard.chart.oa': 'Open Access Ratio',
+    'dashboard.chart.oa_sub':
+      'Open = arXiv or free-full-text flag (often PMC); unknown = not assessed; closed access is omitted until evidence exists.',
     'dashboard.chart.source': 'Source Distribution',
-    'dashboard.chart.source_sub': 'PubMed vs arXiv preprints',
+    'dashboard.chart.source_sub': 'PubMed-retrieved vs arXiv vs other/imported/demo',
     'dashboard.chart.keywords': 'Keyword Clusters',
     'dashboard.chart.keywords_sub': '{count} keywords — cell size = frequency',
     'dashboard.chart.coauthors': 'Co-authorship Network',
@@ -92,8 +94,10 @@ export const dashboardTranslations = {
     'dashboard.chart.types': 'Artikeltypen',
     'dashboard.chart.types_sub': 'Zum Filtern anklicken',
     'dashboard.chart.oa': 'Open-Access-Anteil',
+    'dashboard.chart.oa_sub':
+      'Open = arXiv oder Free-Full-Text-Flag (oft PMC); unbekannt = nicht bewertet; geschlossen entfällt ohne Evidenz.',
     'dashboard.chart.source': 'Quellenverteilung',
-    'dashboard.chart.source_sub': 'PubMed vs. arXiv-Preprints',
+    'dashboard.chart.source_sub': 'PubMed-abgerufen vs. arXiv vs. sonstige/importiert/demo',
     'dashboard.chart.keywords': 'Keyword-Cluster',
     'dashboard.chart.keywords_sub': '{count} Keywords — Zellengröße = Häufigkeit',
     'dashboard.chart.coauthors': 'Koautorenschafts-Netzwerk',

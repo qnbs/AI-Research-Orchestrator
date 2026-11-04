@@ -1,25 +1,36 @@
-import type { AggregatedArticle, RankedArticle } from '../types';
-import { isArxivArticle, resolveArticleId } from './sourceIdentifier';
+import type { AggregatedArticle, ArticleSourceClass, RankedArticle } from '../types';
+import { isArxivArticle } from './sourceIdentifier';
 
 export type DashboardOpenAccessBucket = 'open' | 'closed' | 'unknown';
 
 export type DashboardRetrievalSourceBucket = 'pubmed' | 'arxiv' | 'other';
 
+type ArticleLike = RankedArticle | AggregatedArticle;
+
+const RETRIEVAL_OTHER: ReadonlySet<ArticleSourceClass> = new Set([
+  'user-imported',
+  'demo-synthetic',
+  'offline-placeholder',
+]);
+
 /**
- * Dashboard OA chart buckets — do not treat missing PMC/OA evidence as toll "closed" access.
- * arXiv and explicit `isOpenAccess` count as open; absent evidence is unknown.
+ * Dashboard OA buckets — missing evidence is unknown, not toll "closed".
+ * "Open" means arXiv or a corpus free-full-text flag (`isOpenAccess`, often PMC-linked),
+ * not a legal OA rights determination (see dashboard.chart.oa_sub).
  */
-export const classifyDashboardOpenAccess = (
-  article: RankedArticle | AggregatedArticle,
-): DashboardOpenAccessBucket => {
-  if (isArxivArticle(article)) return 'open';
-  if (article.isOpenAccess) return 'open';
+export const classifyDashboardOpenAccess = (article: ArticleLike): DashboardOpenAccessBucket => {
+  if (isArxivArticle(article) || article.sourceClass === 'arxiv-retrieved') {
+    return 'open';
+  }
+  if (article.isOpenAccess) {
+    return 'open';
+  }
   return 'unknown';
 };
 
 /** Count OA buckets for pie/table export (stable key order). */
 export const countDashboardOpenAccessBuckets = (
-  articles: ReadonlyArray<RankedArticle | AggregatedArticle>,
+  articles: ReadonlyArray<ArticleLike>,
 ): Record<DashboardOpenAccessBucket, number> => {
   const counts: Record<DashboardOpenAccessBucket, number> = {
     open: 0,
@@ -33,19 +44,29 @@ export const countDashboardOpenAccessBuckets = (
 };
 
 /**
- * Source distribution for dashboard — arXiv vs PubMed-retrieved vs other/imported/demo.
+ * Retrieval provenance for dashboard — `sourceClass` wins over legacy PMID shape.
+ * A PMID on an imported/demo record is not labeled verified PubMed retrieval.
  */
 export const classifyDashboardRetrievalSource = (
-  article: RankedArticle | AggregatedArticle,
+  article: ArticleLike,
 ): DashboardRetrievalSourceBucket => {
+  const sourceClass = article.sourceClass;
+  if (sourceClass === 'arxiv-retrieved') return 'arxiv';
+  if (sourceClass === 'pubmed-retrieved') return 'pubmed';
+  if (sourceClass && RETRIEVAL_OTHER.has(sourceClass)) return 'other';
+
   if (isArxivArticle(article)) return 'arxiv';
-  const id = resolveArticleId(article);
-  if (id.type === 'pmid') return 'pubmed';
+  if (
+    article.retrievalSource === 'pubmed_efetch' ||
+    article.retrievalSource === 'pubmed_esummary'
+  ) {
+    return 'pubmed';
+  }
   return 'other';
 };
 
 export const countDashboardRetrievalSources = (
-  articles: AggregatedArticle[] | RankedArticle[],
+  articles: ReadonlyArray<ArticleLike>,
 ): Record<DashboardRetrievalSourceBucket, number> => {
   const counts: Record<DashboardRetrievalSourceBucket, number> = {
     pubmed: 0,
@@ -56,4 +77,17 @@ export const countDashboardRetrievalSources = (
     counts[classifyDashboardRetrievalSource(article)] += 1;
   }
   return counts;
+};
+
+/** Stable pie colors keyed by bucket (not slice index). */
+export const DASHBOARD_SOURCE_BUCKET_COLORS: Record<DashboardRetrievalSourceBucket, string> = {
+  pubmed: '#1f6feb',
+  arxiv: '#a371f7',
+  other: '#7d8590',
+};
+
+export const DASHBOARD_OA_BUCKET_COLORS: Record<DashboardOpenAccessBucket, string> = {
+  open: '#34d399',
+  unknown: '#fbbf24',
+  closed: '#7d8590',
 };

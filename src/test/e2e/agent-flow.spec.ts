@@ -20,6 +20,13 @@ import {
   waitForKbArticleCount,
   DEMO_KB_UNIQUE_ARTICLE_COUNT,
 } from './e2eHelpers';
+import { dashboardTranslations } from '../../i18n/dashboardTranslations';
+import { createDemoKnowledgeBaseEntries } from '../../services/nonAi/sampleData';
+import {
+  countDashboardOpenAccessBuckets,
+  countDashboardRetrievalSources,
+} from '../../lib/dashboardArticleMetrics';
+import type { RankedArticle } from '../../types';
 import {
   mockAgentPipelineApis,
   mockGeminiHangingSynthesis,
@@ -343,6 +350,50 @@ test.describe('5. Knowledge Base View', () => {
       }
       await expect(sidebar.first()).toBeHidden({ timeout: 10_000 });
     });
+  });
+});
+
+test.describe('5b. Dashboard provenance charts', () => {
+  test('source and OA subtitles plus sr-only data tables with demo KB', async ({ page }) => {
+    test.setTimeout(420_000);
+    const dashEn = dashboardTranslations.en;
+    const articleMap = new Map<string, RankedArticle>();
+    for (const entry of createDemoKnowledgeBaseEntries()) {
+      for (const article of entry.articles) {
+        const existing = articleMap.get(article.pmid);
+        if (!existing || article.relevanceScore > existing.relevanceScore) {
+          articleMap.set(article.pmid, article);
+        }
+      }
+    }
+    const demoArticles = [...articleMap.values()];
+    const oaCounts = countDashboardOpenAccessBuckets(demoArticles);
+    const sourceCounts = countDashboardRetrievalSources(demoArticles);
+    const oaRowCount = (['open', 'unknown', 'closed'] as const).filter(
+      (bucket) => oaCounts[bucket] > 0,
+    ).length;
+    const sourceRowCount = (['pubmed', 'arxiv', 'other'] as const).filter(
+      (bucket) => sourceCounts[bucket] > 0,
+    ).length;
+
+    await prepareFirstLaunchDemoKb(page);
+    await navigateToView(page, '#dashboard');
+    await expect(page.getByText(dashEn['dashboard.chart.source_sub'], { exact: true })).toBeVisible(
+      { timeout: 45_000 },
+    );
+    await expect(page.getByText(dashEn['dashboard.chart.oa_sub'], { exact: true })).toBeVisible({
+      timeout: 10_000,
+    });
+
+    const a11yTables = page.getByLabel(dashEn['dashboard.a11y.tables']);
+    const oaTable = a11yTables.getByRole('table', { name: dashEn['dashboard.a11y.oa_caption'] });
+    const sourceTable = a11yTables.getByRole('table', {
+      name: dashEn['dashboard.a11y.source_caption'],
+    });
+    await expect(oaTable.locator('tbody tr')).toHaveCount(oaRowCount);
+    await expect(sourceTable.locator('tbody tr')).toHaveCount(sourceRowCount);
+    expect(sourceRowCount).toBeGreaterThan(0);
+    expect(oaRowCount).toBeGreaterThan(0);
   });
 });
 
