@@ -1,9 +1,9 @@
-/** Collections view chrome (cards, form, share modal). */
+/** Collections view chrome (cards, form, portable export modal). */
 export const collectionTranslations = {
   en: {
     'nav.collections': 'Collections',
     'collections.title': 'Research Collections',
-    'collections.subtitle': 'Organize your knowledge into curated, shareable collections.',
+    'collections.subtitle': 'Organize saved reports and articles into collections on this device.',
     'collections.new': 'New Collection',
     'collections.empty.title': 'No collections yet',
     'collections.empty.desc':
@@ -13,8 +13,14 @@ export const collectionTranslations = {
     'collections.delete.confirm': 'Delete this collection?',
     'collections.delete.title': 'Delete collection?',
     'collections.delete.action': 'Delete',
-    'collections.share': 'Generate share link',
-    'collections.copied': 'Link copied to clipboard!',
+    'collections.export_aria': 'Export collection metadata',
+    'collections.export.title': 'Portable export',
+    'collections.export.local_only':
+      'Collections stay in this browser only. There is no cloud link—copy this JSON to back up metadata or move it manually to another device.',
+    'collections.export.copy': 'Copy JSON',
+    'collections.export.copied_btn': 'Copied!',
+    'collections.export.hint':
+      'Import is not automatic yet; restoring membership on another device requires a future import flow.',
     'collections.form.icon': 'Icon',
     'collections.form.color': 'Color',
     'collections.selectCard': 'Select collection',
@@ -22,7 +28,6 @@ export const collectionTranslations = {
     'collections.form.tags_placeholder': 'immunology, oncology, AI',
     'collections.form.desc_placeholder': 'What is this collection about?',
     'collections.loading': 'Loading collections…',
-    'collections.share_aria': 'Share collection',
     'collections.edit_aria': 'Edit collection',
     'collections.delete_aria': 'Delete collection',
     'collections.reports_one': '{count} report',
@@ -37,13 +42,6 @@ export const collectionTranslations = {
     'collections.form.create_btn': 'Create',
     'collections.form.color_aria': 'Color {color}',
     'collections.untitled': 'Untitled',
-    'collections.share.link_label': 'Shareable export link',
-    'collections.share.copy': 'Copy link',
-    'collections.share.copied_btn': 'Copied!',
-    'collections.share.hint': 'Anyone with this link can view the collection.',
-    'collections.share.no_token':
-      'No share token yet — close and click the share button on the card to generate one.',
-    'collections.shared': 'Shared',
     'collections.icon.books': 'Books',
     'collections.icon.microscope': 'Microscope',
     'collections.icon.brain': 'Brain',
@@ -59,7 +57,7 @@ export const collectionTranslations = {
   de: {
     'nav.collections': 'Sammlungen',
     'collections.title': 'Forschungssammlungen',
-    'collections.subtitle': 'Organisieren Sie Ihr Wissen in kuratierten, teilbaren Sammlungen.',
+    'collections.subtitle': 'Berichte und Artikel in Sammlungen auf diesem Gerät organisieren.',
     'collections.new': 'Neue Sammlung',
     'collections.empty.title': 'Noch keine Sammlungen',
     'collections.empty.desc':
@@ -69,8 +67,14 @@ export const collectionTranslations = {
     'collections.delete.confirm': 'Diese Sammlung löschen?',
     'collections.delete.title': 'Sammlung löschen?',
     'collections.delete.action': 'Löschen',
-    'collections.share': 'Freigabelink erstellen',
-    'collections.copied': 'Link in Zwischenablage kopiert!',
+    'collections.export_aria': 'Sammlungsmetadaten exportieren',
+    'collections.export.title': 'Portabler Export',
+    'collections.export.local_only':
+      'Sammlungen bleiben nur in diesem Browser. Es gibt keinen Cloud-Link—kopieren Sie dieses JSON zur Sicherung oder zum manuellen Transfer.',
+    'collections.export.copy': 'JSON kopieren',
+    'collections.export.copied_btn': 'Kopiert!',
+    'collections.export.hint':
+      'Import ist noch nicht automatisch; Wiederherstellung auf einem anderen Gerät erfordert einen künftigen Import.',
     'collections.form.icon': 'Symbol',
     'collections.form.color': 'Farbe',
     'collections.selectCard': 'Sammlung auswählen',
@@ -78,7 +82,6 @@ export const collectionTranslations = {
     'collections.form.tags_placeholder': 'Immunologie, Onkologie, KI',
     'collections.form.desc_placeholder': 'Worum geht es in dieser Sammlung?',
     'collections.loading': 'Sammlungen werden geladen…',
-    'collections.share_aria': 'Sammlung teilen',
     'collections.edit_aria': 'Sammlung bearbeiten',
     'collections.delete_aria': 'Sammlung löschen',
     'collections.reports_one': '{count} Bericht',
@@ -93,13 +96,6 @@ export const collectionTranslations = {
     'collections.form.create_btn': 'Erstellen',
     'collections.form.color_aria': 'Farbe {color}',
     'collections.untitled': 'Ohne Titel',
-    'collections.share.link_label': 'Teilbarer Export-Link',
-    'collections.share.copy': 'Link kopieren',
-    'collections.share.copied_btn': 'Kopiert!',
-    'collections.share.hint': 'Jeder mit diesem Link kann die Sammlung einsehen.',
-    'collections.share.no_token':
-      'Noch kein Freigabe-Token — schließen und auf der Karte teilen klicken, um eines zu erzeugen.',
-    'collections.shared': 'Geteilt',
     'collections.icon.books': 'Bücher',
     'collections.icon.microscope': 'Mikroskop',
     'collections.icon.brain': 'Gehirn',

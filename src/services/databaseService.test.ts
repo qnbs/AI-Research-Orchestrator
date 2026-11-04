@@ -23,6 +23,9 @@ import {
   addCollection,
   updateCollection,
   deleteCollection,
+  removeResearchEntryIdsFromAllCollections,
+  addEntryIdToCollection,
+  removeEntryIdFromCollection,
 } from './databaseService';
 import { defaultSettings } from '../store/slices/settingsSlice';
 import { createResearchCheckpoint } from '../lib/researchCheckpoint';
@@ -192,6 +195,127 @@ describe('databaseService presets and collections', () => {
     expect(listed[0]?.name).toBe('Trial set v2');
     await deleteCollection('col-1');
     await expect(getAllCollections()).resolves.toEqual([]);
+  });
+
+  it('removeResearchEntryIdsFromAllCollections returns 0 for empty input', async () => {
+    expect(await removeResearchEntryIdsFromAllCollections([])).toBe(0);
+  });
+
+  it('removeResearchEntryIdsFromAllCollections prunes membership', async () => {
+    await addCollection({
+      id: 'col-a',
+      name: 'A',
+      description: '',
+      color: '#000',
+      icon: '📚',
+      entryIds: ['keep', 'drop'],
+      articlePmids: [],
+      createdAt: 1,
+      updatedAt: 1,
+      tags: [],
+    });
+    await addCollection({
+      id: 'col-b',
+      name: 'B',
+      description: '',
+      color: '#111',
+      icon: '📚',
+      entryIds: ['other'],
+      articlePmids: [],
+      createdAt: 2,
+      updatedAt: 2,
+      tags: [],
+    });
+    const touched = await removeResearchEntryIdsFromAllCollections(['drop']);
+    expect(touched).toBe(1);
+    const listed = await getAllCollections();
+    const collectionA = listed.find((collection) => collection.id === 'col-a');
+    expect(collectionA?.entryIds).toEqual(['keep']);
+  });
+
+  it('addEntryIdToCollection merges concurrent adds without losing ids', async () => {
+    await addCollection({
+      id: 'col-concurrent',
+      name: 'Concurrent',
+      description: '',
+      color: '#222',
+      icon: '📚',
+      entryIds: [],
+      articlePmids: [],
+      createdAt: 1,
+      updatedAt: 1,
+      tags: [],
+    });
+    await Promise.all([
+      addEntryIdToCollection('col-concurrent', 'e1'),
+      addEntryIdToCollection('col-concurrent', 'e2'),
+      addEntryIdToCollection('col-concurrent', 'e3'),
+    ]);
+    const listed = await getAllCollections();
+    const concurrent = listed.find((collection) => collection.id === 'col-concurrent');
+    expect(concurrent?.entryIds.sort()).toEqual(['e1', 'e2', 'e3']);
+  });
+
+  it('removeEntryIdFromCollection drops one id atomically', async () => {
+    await addCollection({
+      id: 'col-remove',
+      name: 'Remove one',
+      description: '',
+      color: '#333',
+      icon: '📚',
+      entryIds: ['a', 'b'],
+      articlePmids: [],
+      createdAt: 1,
+      updatedAt: 1,
+      tags: [],
+    });
+    const nextIds = await removeEntryIdFromCollection('col-remove', 'a');
+    expect(nextIds).toEqual(['b']);
+    const listed = await getAllCollections();
+    const target = listed.find((collection) => collection.id === 'col-remove');
+    expect(target?.entryIds).toEqual(['b']);
+  });
+
+  it('addEntryIdToCollection is idempotent when entry already exists', async () => {
+    await addCollection({
+      id: 'col-dup',
+      name: 'Dup',
+      description: '',
+      color: '#444',
+      icon: '📚',
+      entryIds: ['e1'],
+      articlePmids: [],
+      createdAt: 1,
+      updatedAt: 1,
+      tags: [],
+    });
+    const ids = await addEntryIdToCollection('col-dup', 'e1');
+    expect(ids).toEqual(['e1']);
+  });
+
+  it('addEntryIdToCollection throws when collection is missing', async () => {
+    await expect(addEntryIdToCollection('missing', 'e1')).rejects.toThrow(/not found/i);
+  });
+
+  it('removeEntryIdFromCollection no-ops when id is absent', async () => {
+    await addCollection({
+      id: 'col-noop',
+      name: 'Noop',
+      description: '',
+      color: '#555',
+      icon: '📚',
+      entryIds: ['only'],
+      articlePmids: [],
+      createdAt: 1,
+      updatedAt: 1,
+      tags: [],
+    });
+    const ids = await removeEntryIdFromCollection('col-noop', 'ghost');
+    expect(ids).toEqual(['only']);
+  });
+
+  it('removeEntryIdFromCollection throws when collection is missing', async () => {
+    await expect(removeEntryIdFromCollection('missing', 'e1')).rejects.toThrow(/not found/i);
   });
 });
 
