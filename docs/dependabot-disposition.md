@@ -232,6 +232,14 @@ Consolidation PR: **#369** (`cursor/dependabot-d1-oct2026-patches-d4f6`).
 
 **Validation target head (historical):** `2a857de` — first full required CI green after Actions re-enable ([Deploy 41722216617](https://github.com/qnbs/AI-Research-Orchestrator/actions/runs/41722216617)). **Current #407 head** must pass the same required matrix and review gate before post-merge Dependabot cleanup; do not treat `2a857de` as the live validation SHA after later fix commits.
 
+## 2026-11-04 — Post-merge peer resolution (PR #423)
+
+**Context:** After #407 merge to `361842c1`, ten Dependabot `npm_and_yarn` update jobs on `main` failed with shared `ERR_PNPM_PEER_DEP_ISSUES` (`proxy-agent@6.5.0` vs `@puppeteer/browsers@3.2.6` peer `>=8.0.1`). App CI on `361842c1` remained green (including WebKit cross-browser).
+
+**Repair PR:** [#423](https://github.com/qnbs/AI-Research-Orchestrator/pull/423) — workspace override `proxy-agent: 8.0.1`, DeepSource exclude `.devcontainer/Dockerfile`, Dockerfile `SHELL pipefail`. **Evidence:** Dependabot-style `pnpm install --lockfile-only` repro green; LHCI autorun in [deploy 41792029000](https://github.com/qnbs/AI-Research-Orchestrator/actions/runs/41792029000).
+
+**Next:** After #423 merge, re-run **one** representative Dependabot update (e.g. `@vitejs/plugin-react`) and confirm `dependency_file_not_resolvable` is gone before batching #398 waves.
+
 ## 2026-10-03 — Stale agent drafts (Wave G)
 
 | PR   | Title                                                | Disposition                                                              |
