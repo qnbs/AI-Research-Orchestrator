@@ -24,15 +24,15 @@ Tracks **valid** findings fixed in-repo vs. intentional exclusions. Autofix PRs 
 | JS-0125           | `scripts/lib/*.mjs`    | Module parse errors; use top-level `scripts/*.mjs` instead                |
 | JS-0757           | Modal `autoFocus`      | Intentional in focus-trapped modals (`eslint-disable` + a11y rationale)   |
 
-## GitHub check vs dashboard (2026-11-04, PR #407 head `8f4d665`)
+## GitHub check vs dashboard (2026-11-04 remediation)
 
-| Context                  | Observation                                                                                                                                                                                                                                                                                                                            |
-| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **GitHub commit status** | `DeepSource: Docker` + `DeepSource: Shell` **success**; **no** `DeepSource: JavaScript` context on the PR head (TOML has no JS analyzer block).                                                                                                                                                                                        |
-| **Dashboard JavaScript** | When the dashboard analyzer is still enabled org-wide, the UI can show red JS findings on PR/`main` even though merge policy treats JS as advisory (`docs/deepsource-javascript-ci.md`, `docs/audit-governance.md`). Maintainer fix: disable JS under **Settings → Code Review → Analyzers** — see `docs/deepsource-dashboard-off.md`. |
-| **AI Review**            | `@deepsourcebot review` attempts on #407; address actionable Docker/Shell + AI Review items in the correction loop.                                                                                                                                                                                                                    |
-| **Docker @ `361842c`**   | DOK-DL3008/DOK-DL4006 on `.devcontainer/Dockerfile` — dev-only; **#423** excludes only `.devcontainer/Dockerfile` in `.deepsource.toml` (Shell still scans `.devcontainer/postCreate.sh`) + `SHELL pipefail` in Dockerfile.                                                                                                            |
-| **Dependabot on main**   | See `docs/dependabot-disposition.md` §2026-11-04 (**#423**): `proxy-agent: 8.0.1` override + Dependabot lockfile-only repro.                                                                                                                                                                                                           |
+| Context                  | Observation                                                                                                                                                                                                                 |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **GitHub commit status** | After explicit `javascript enabled = false` + TS/`src/**` excludes in `.deepsource.toml`, `DeepSource: JavaScript` should **pass or disappear** on the next analysis. Docker + Shell remain advisory.                       |
+| **Dashboard JavaScript** | Still toggle **off** under **Settings → Code Review → Analyzers** and prefer **Use TOML configuration** so git policy wins — see `docs/deepsource-dashboard-off.md`.                                                        |
+| **AI Review**            | `@deepsourcebot review` attempts on #407; address actionable Docker/Shell + AI Review items in the correction loop.                                                                                                         |
+| **Docker @ `361842c`**   | DOK-DL3008/DOK-DL4006 on `.devcontainer/Dockerfile` — dev-only; **#423** excludes only `.devcontainer/Dockerfile` in `.deepsource.toml` (Shell still scans `.devcontainer/postCreate.sh`) + `SHELL pipefail` in Dockerfile. |
+| **Dependabot on main**   | See `docs/dependabot-disposition.md` §2026-11-04 (**#423**): `proxy-agent: 8.0.1` override + Dependabot lockfile-only repro.                                                                                                |
 
 ## Autofix PR disposition (#148–#160)
 

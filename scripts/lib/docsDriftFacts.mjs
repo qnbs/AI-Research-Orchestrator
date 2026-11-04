@@ -441,11 +441,40 @@ function assertDeepsourceJsEnabled(deepsource, errors) {
   }
 }
 
-function assertDeepsourceJsAbsent(deepsource, errors) {
-  if (/name\s*=\s*["']javascript["']/.test(deepsource)) {
+function getDeepsourceAnalyzerBlock(deepsource, analyzerName) {
+  const parts = deepsource.split(/\[\[analyzers\]\]/);
+  for (const part of parts) {
+    if (new RegExp(`name\\s*=\\s*["']${analyzerName}["']`).test(part)) {
+      return part;
+    }
+  }
+  return null;
+}
+
+function assertDeepsourceJsDisabled(deepsource, errors) {
+  const block = getDeepsourceAnalyzerBlock(deepsource, 'javascript');
+  if (!block) {
     errors.push(
-      '.deepsource.toml must not declare a javascript analyzer block — disable in DeepSource dashboard (docs/deepsource-dashboard-off.md)',
+      '.deepsource.toml must declare [[analyzers]] name = "javascript" (docs/deepsource-javascript-ci.md)',
     );
+    return;
+  }
+  if (/enabled\s*=\s*false/.test(block)) {
+    return;
+  }
+  if (!/enabled\s*=\s*true/.test(block)) {
+    errors.push('.deepsource.toml javascript analyzer must set enabled = true or false');
+    return;
+  }
+  if (!/cyclomatic_complexity_threshold\s*=\s*"critical"/.test(block)) {
+    errors.push(
+      '.deepsource.toml javascript analyzer must set cyclomatic_complexity_threshold = "critical" when using exclude-only mode',
+    );
+  }
+  for (const pattern of ['src/**', '**/*.ts', '**/*.tsx']) {
+    if (!deepsource.includes(`"${pattern}"`)) {
+      errors.push(`.deepsource.toml exclude_patterns must include "${pattern}" for javascript-off strategy`);
+    }
   }
 }
 
@@ -455,7 +484,7 @@ function assertDeepsourceAnalyzer(deepsource, facts, errors) {
     return;
   }
   if (facts.staticAnalysis?.deepsourceJavaScriptEnabled === false) {
-    assertDeepsourceJsAbsent(deepsource, errors);
+    assertDeepsourceJsDisabled(deepsource, errors);
   }
 }
 

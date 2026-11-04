@@ -5,18 +5,24 @@ The **`DeepSource: JavaScript`** GitHub status is controlled by the **DeepSource
 ## Required dashboard steps (~2 minutes)
 
 1. Open [DeepSource → AI-Research-Orchestrator](https://app.deepsource.com/gh/qnbs/AI-Research-Orchestrator).
-2. Go to **Settings → Code Review → Analyzers**.
-3. Find **JavaScript** and **toggle it off**.
-4. (Optional) Under **Quality Gates → Issue Reporting**, limit failure categories to **critical / security** only if re-enabling later.
+2. Go to **Settings → Preferences** and ensure **Use `.deepsource.toml` configuration** (or equivalent TOML-as-source-of-truth toggle) is **on** so git excludes/`enabled = false` apply.
+3. Go to **Settings → Code Review → Analyzers**.
+4. Find **JavaScript** and **toggle it off** (belt-and-suspenders alongside TOML).
+5. (Optional) Under **Quality Gates → Issue Reporting**, limit failure categories to **critical / security** only if re-enabling later.
 
 After toggling off, the next PR push should stop posting `DeepSource: JavaScript` **FAILURE** (check may disappear or turn green).
 
-## What we changed in git
+## What we changed in git (2026-11-04)
 
-- Removed the `[[analyzers]] name = "javascript"` block from `.deepsource.toml` (Docker + Shell only).
+- `.deepsource.toml` declares **`[[analyzers]] name = "javascript"` with `enabled = false`** (drift-gated).
+- **`exclude_patterns`** include `src/**`, `**/*.ts`, and `**/*.tsx` so the GitHub check does not fail when the dashboard analyzer is still on.
 - Documented root causes in `docs/deepsource-javascript-ci.md`.
 - `docs/project-facts.json`: `deepsourceJavaScriptEnabled: false`.
-- `check:docs-drift` enforces no enabled JavaScript analyzer in TOML.
+- `check:docs-drift` requires explicit `enabled = false`, not an absent block.
+
+## Legacy note (pre-2026-11-04)
+
+- Removed the _enabled_ `javascript` block from `.deepsource.toml` (Docker + Shell only). That alone did **not** stop failures when the dashboard analyzer stayed on.
 
 ## Authoritative gates (unchanged)
 

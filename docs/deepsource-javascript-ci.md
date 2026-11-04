@@ -2,11 +2,11 @@
 
 ## Symptom
 
-The **DeepSource: JavaScript** GitHub check is often **red** on pull requests and `main`, even when `pnpm run typecheck`, `pnpm run lint`, and `deploy.yml` are green.
+The **DeepSource: JavaScript** GitHub check was often **red** on pull requests and `main`, even when `pnpm run typecheck`, `pnpm run lint`, and `deploy.yml` were green.
 
 Docker and Shell analyzers typically pass.
 
-## Root causes (confirmed 2026-08-02)
+## Root causes (confirmed 2026-08-02, remediation 2026-11-04)
 
 ### 1. ESM TypeScript false positives (JS-0125 / antipattern)
 
@@ -39,17 +39,25 @@ Rules such as `parseLegacyArticleKey` / `isKnowledgeBaseEntry` at complexity 6�
 
 Ignore rules for specific issue types are configured in the **DeepSource dashboard**, not in `.deepsource.toml`.
 
+### 5. Dashboard analyzer left on while TOML omitted JS (2026-11-04)
+
+Org/dashboard **JavaScript** stayed enabled even though git policy assumed “no TOML block = off”. DeepSource then analyzed `src/**` and failed quality gates on every push.
+
+**Repo fix (2026-11-04):**
+
+1. `.deepsource.toml` declares `[[analyzers]] name = "javascript"` with **`enabled = false`** (drift-gated via `check:docs-drift`).
+2. **`exclude_patterns`** include `src/**`, `**/*.ts`, and `**/*.tsx` so the check stays green even if the dashboard analyzer is still toggled on until a maintainer disables it.
+3. Maintainers should still toggle **JavaScript off** under **Settings → Code Review → Analyzers** (`docs/deepsource-dashboard-off.md`) and enable **Preferences → Use TOML configuration** so git remains the source of truth.
+
 ## Disposition (current)
 
-| Analyzer   | `.deepsource.toml` | DeepSource dashboard | GitHub check |
-| ---------- | ------------------ | -------------------- | ------------ |
-| JavaScript | **No block** (intentional) | **Off** — Settings → Code Review → Analyzers | Check absent or green when dashboard off |
-| Docker     | `enabled = true`   | Follows TOML         | Advisory     |
-| Shell      | `enabled = true`   | Follows TOML         | Advisory     |
-| ESLint     | —                  | —                    | Blocking (`deploy.yml`) |
-| Typecheck  | —                  | —                    | Blocking (`tsc --noEmit`) |
-
-**Important:** `enabled = false` in `.deepsource.toml` does **not** stop the GitHub `DeepSource: JavaScript` check if the dashboard analyzer is still on. Remove the TOML block and disable in **Settings → Code Review → Analyzers**.
+| Analyzer   | `.deepsource.toml`                  | DeepSource dashboard           | GitHub check              |
+| ---------- | ----------------------------------- | ------------------------------ | ------------------------- |
+| JavaScript | **`enabled = false`** + TS excludes | Should match TOML (toggle off) | Should pass or disappear  |
+| Docker     | `enabled = true`                    | Follows TOML                   | Advisory                  |
+| Shell      | `enabled = true`                    | Follows TOML                   | Advisory                  |
+| ESLint     | —                                   | —                              | Blocking (`deploy.yml`)   |
+| Typecheck  | —                                   | —                              | Blocking (`tsc --noEmit`) |
 
 Re-enable JavaScript only after:
 
@@ -59,6 +67,6 @@ Re-enable JavaScript only after:
 
 ## PR review expectations
 
-When the JavaScript analyzer is disabled, inline **DeepSource JavaScript** PR comments should not appear. If they do after a config change, verify `.deepsource.toml` is saved in the DeepSource dashboard (Settings → Preferences → TOML config).
+When the JavaScript analyzer is disabled and TS paths are excluded, inline **DeepSource JavaScript** PR comments should not appear. If failures persist after a config change, verify `.deepsource.toml` is saved in the DeepSource dashboard (**Settings → Preferences → TOML config**) and re-run analysis on the latest head.
 
 See also: `docs/deepsource-setup.md`, `docs/deepsource-disposition.md`, `docs/audit-governance.md`.

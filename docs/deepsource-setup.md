@@ -13,7 +13,7 @@ Team AI Review for this repository is **on-demand**. Static analysis checks alon
 
 ## JavaScript analyzer — **disabled** (2026-08-02)
 
-The JavaScript analyzer is **not declared** in `.deepsource.toml`. Disable it in the **DeepSource dashboard** — see **`docs/deepsource-dashboard-off.md`** and **`docs/deepsource-javascript-ci.md`**.
+The JavaScript analyzer is **`enabled = false`** in `.deepsource.toml` with application TS excluded. Also disable it in the **DeepSource dashboard** — see **`docs/deepsource-dashboard-off.md`** and **`docs/deepsource-javascript-ci.md`**.
 
 **Authoritative JS/TS gates** in this repository:
 

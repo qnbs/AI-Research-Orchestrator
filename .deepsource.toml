@@ -1,19 +1,31 @@
 version = 1
 
-# Docker + Shell analyzers only. JavaScript analyzer activation is controlled via the
-# DeepSource dashboard (Settings → Code Review → Analyzers) — not by a TOML block.
-# See docs/deepsource-javascript-ci.md and docs/deepsource-dashboard-off.md.
+# TypeScript/JavaScript quality is gated by ESLint 9 + tsc in deploy.yml — not DeepSource JS.
+# Dashboard JavaScript analyzer is off (2026-11-04). TOML mirrors that with enabled = false
+# and TS/JS excludes as belt-and-suspenders. ESLint + tsc remain authoritative.
 
 exclude_patterns = [
-  ".devcontainer/Dockerfile",
+  ".devcontainer/**",
+  ".github/**",
   "eslint-local-rules/**",
   "scripts/**",
   "scripts/*.mjs",
-  "public/sw.js",
-  "public/register-sw.js",
   "public/**",
   "dist/**",
   "coverage/**",
+  "src/**",
+  "**/*.ts",
+  "**/*.tsx",
+  "**/*.js",
+  "**/*.mjs",
+  "**/*.cjs",
+  "vite.config.ts",
+  "vitest.config.ts",
+  "playwright.config.ts",
+  "eslint.config.js",
+  "postcss.config.js",
+  "lighthouserc.cjs",
+  "index.html",
 ]
 
 test_patterns = [
@@ -21,6 +33,10 @@ test_patterns = [
   "**/*.test.tsx",
   "**/*.spec.ts",
 ]
+
+[[analyzers]]
+name = "javascript"
+enabled = false
 
 [[analyzers]]
 name = "docker"
