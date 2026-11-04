@@ -18,6 +18,7 @@ Evidence for **[#404](https://github.com/qnbs/AI-Research-Orchestrator/issues/40
 - **URL:** https://qnbs.github.io/AI-Research-Orchestrator/
 - **Probe time:** 2026-11-04 (Europe/Berlin afternoon); `Last-Modified` response header **2026-11-04 ~18:16 UTC** on `index.html`
 - **Repository `main` at probe window:** post-#442 merge (`9a604f2` and contemporaneous Pages deploy from `56edc68` lineage — deploy timestamp aligns with merged main CI, not a stale pre-React-19.3.1 artifact)
+- **Post–v0.4.7 `main` (2026-11-04 evening, Europe/Berlin):** `69834a3` — same Pages URL and pipeline; additional changes are test/docs-only (#448–#450); no separate production smoke re-run required for closure **#404** (CI deploy + PWA E2E remain authoritative between smoke probes).
 - **Published release tag:** **v0.4.7** (2026-11-04 audit-recovery wave; supersedes v0.4.6 badge-only drift)
 
 ## Observations

@@ -127,4 +127,45 @@ test.describe('Knowledge Base selection and export', () => {
     await expect(page.getByText(/1 selected|1 ausgewählt/i)).not.toBeVisible();
     await expect(page.getByRole('checkbox', { name: selectedCheckboxPattern })).toHaveCount(0);
   });
+
+  test('reload clears knowledge base selection state', async ({ page }) => {
+    const firstSelect = page.getByRole('checkbox', { name: /select article:/i }).first();
+    await firstSelect.check();
+    await expect(page.getByText(/1 selected|1 ausgewählt/i)).toBeVisible({ timeout: 10_000 });
+
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await navigateToKnowledgeBase(page);
+    await waitForKbArticleCount(page, DEMO_KB_UNIQUE_ARTICLE_COUNT);
+
+    await expect(page.getByText(/1 selected|1 ausgewählt/i)).not.toBeVisible();
+    await expect(
+      page.getByRole('button', { name: /delete selected|auswahl löschen/i }),
+    ).not.toBeVisible();
+  });
+
+  test('CSV export keeps selected membership when filter hides the row', async ({ page }) => {
+    const aspirinSelect = page.getByRole('checkbox', {
+      name: /select article:.*aspirin/i,
+    });
+    await expect(aspirinSelect).toBeVisible({ timeout: 30_000 });
+    await aspirinSelect.check();
+
+    const search = page.getByPlaceholder(/search articles|artikel suchen/i);
+    await search.fill('SGLT2');
+    await expect(page.getByText(/1 Article Found|1 Artikel gefunden/i)).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(aspirinSelect).not.toBeVisible();
+    await expect(page.getByText(/1 selected|1 ausgewählt/i)).toBeVisible();
+
+    await page.getByRole('button', { name: /export as csv|als csv exportieren/i }).click();
+    const downloadPromise = page.waitForEvent('download');
+    await page.getByRole('button', { name: /Yes, Export|Ja, exportieren/i }).click();
+    const download = await downloadPromise;
+    const csv = await readFile((await download.path())!, 'utf8');
+    expect(csv.toLowerCase()).toContain('aspirin');
+    expect(csv.toLowerCase()).not.toContain('sglt2');
+    const dataRows = csv.split(/\r?\n/).filter((line) => line.trim().length > 0);
+    expect(dataRows.length).toBe(2);
+  });
 });
