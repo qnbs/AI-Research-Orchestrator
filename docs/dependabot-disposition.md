@@ -289,9 +289,11 @@ Nine routine `npm_and_yarn` Dependabot updater jobs on the same SHA also succeed
 
 ## 2026-11-04 — Dependabot wave D3 (dev/test patches)
 
-**Consolidation PR:** (branch `cursor/dependabot-wave-d3-devtest-33e3`) — `@types/node` ^26.6.6, `jsdom` ^30.1.3, `@vitejs/plugin-react` ^6.1.2, `@axe-core/playwright` ^4.14.0. Supersedes **#386**, **#392**, **#393**, **#387**; close **#379** as duplicate of **#387**.
+**Consolidation PR:** [#428](https://github.com/qnbs/AI-Research-Orchestrator/pull/428) — **merged** to `main` as `c33742f`. Supersedes **#386**, **#392**, **#393**, **#387**; close **#379** as duplicate of **#387**.
 
-**Duplicate @types/node:** merge **#387** via D3; close **#379** as duplicate.
+## 2026-11-04 — Dependabot wave D4 (runtime patch bumps)
+
+**Consolidation PR:** (branch `cursor/dependabot-wave-d4-app-patches-33e3`) — `marked` ^18.1.2, `react-redux` ^9.3.1, `@tanstack/react-virtual` ^3.14.24. Supersedes **#380**, **#388**, **#391**. **#390** (react + `@types/react`) deferred to separate PR.
 
 | PR   | Title                                                | Disposition                                                              |
 | ---- | ---------------------------------------------------- | ------------------------------------------------------------------------ |
