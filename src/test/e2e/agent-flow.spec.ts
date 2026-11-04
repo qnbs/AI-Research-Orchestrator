@@ -346,6 +346,19 @@ test.describe('5. Knowledge Base View', () => {
   });
 });
 
+test.describe('5b. Dashboard provenance charts', () => {
+  test('source and OA subtitles plus sr-only data tables with demo KB', async ({ page }) => {
+    test.setTimeout(420_000);
+    await prepareFirstLaunchDemoKb(page);
+    await navigateToView(page, '#dashboard');
+    await expect(page.getByText(/PubMed-retrieved vs arXiv vs other\/imported\/demo/i)).toBeVisible(
+      { timeout: 45_000 },
+    );
+    await expect(page.getByText(/unknown = not assessed/i)).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByLabel(/data tables for accessibility/i)).toBeAttached();
+  });
+});
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // 6. COMMAND PALETTE
 // ═══════════════════════════════════════════════════════════════════════════════
