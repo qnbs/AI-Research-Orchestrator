@@ -86,7 +86,7 @@ Replace `N` with the PR number. After fixes, resolve threads via GraphQL `resolv
 - **Arrival wait (PR #299):** Required CI + quality gates were green and threads were empty; the PR was merged while CodeAnt was still “🔄 Reviewing…” and Greptile had not arrived. A P2 (missing **Impact** on a meeting-note entry) landed after merge. Thread count 0 is not quiescence if a bot is still arriving.
 - **Heavy same-PR bot activity can rate-limit reviews on other PRs.** CodeRabbit fair-usage appears repo/org-wide. If two PRs land together, budget the wait.
 - **Sourcery budget (2026-09):** Do not `@sourcery-ai review` while 250k diff-characters / 7 days is exhausted. Sourcery cannot stand in for CodeRabbit in that window — use `011` clause **(c)** or **(d)**.
-- **DeepSource noise:** JavaScript analyzer is off in the DeepSource dashboard; `.deepsource.toml` has no `javascript` block (`docs/deepsource-dashboard-off.md`).
+- **DeepSource noise:** JavaScript analyzer is **`enabled = false` in `.deepsource.toml`** with TS excludes; toggle off in dashboard if checks persist (`docs/deepsource-dashboard-off.md`).
 
 ## Related docs
 

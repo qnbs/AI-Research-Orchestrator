@@ -441,11 +441,29 @@ function assertDeepsourceJsEnabled(deepsource, errors) {
   }
 }
 
-function assertDeepsourceJsAbsent(deepsource, errors) {
-  if (/name\s*=\s*["']javascript["']/.test(deepsource)) {
+function getDeepsourceAnalyzerBlock(deepsource, analyzerName) {
+  const parts = deepsource.split(/\[\[analyzers\]\]/);
+  for (const part of parts) {
+    if (new RegExp(`name\\s*=\\s*["']${analyzerName}["']`).test(part)) {
+      return part;
+    }
+  }
+  return null;
+}
+
+function assertDeepsourceJsDisabled(deepsource, errors) {
+  const block = getDeepsourceAnalyzerBlock(deepsource, 'javascript');
+  if (!block) {
     errors.push(
-      '.deepsource.toml must not declare a javascript analyzer block — disable in DeepSource dashboard (docs/deepsource-dashboard-off.md)',
+      '.deepsource.toml must declare [[analyzers]] name = "javascript" with enabled = false (docs/deepsource-javascript-ci.md)',
     );
+    return;
+  }
+  if (!/enabled\s*=\s*false/.test(block)) {
+    errors.push('.deepsource.toml javascript analyzer must set enabled = false');
+  }
+  if (/enabled\s*=\s*true/.test(block)) {
+    errors.push('.deepsource.toml must not enable the javascript analyzer');
   }
 }
 
@@ -455,7 +473,7 @@ function assertDeepsourceAnalyzer(deepsource, facts, errors) {
     return;
   }
   if (facts.staticAnalysis?.deepsourceJavaScriptEnabled === false) {
-    assertDeepsourceJsAbsent(deepsource, errors);
+    assertDeepsourceJsDisabled(deepsource, errors);
   }
 }
 

@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **DeepSource JavaScript (2026-11-04):** Explicit `enabled = false` analyzer block plus TS/`src/**` excludes in `.deepsource.toml` so the GitHub check stops failing when the dashboard analyzer is still on; drift gate updated.
 - **Collections (#408):** Collection membership mutations persist to IndexedDB; KB entry deletes prune stale `entryIds`. Removed nonfunctional `?collection=` share URLs in favor of honest local-only portable JSON export copy.
 - **Node engines:** `>=22.19.0` (aligns with `@lhci/cli@0.16.0`; CI uses Node 24 LTS).
 - **Supply-chain (#396):** `@lhci/cli` 0.16.0, `dompurify` 3.4.17, `vite` 8.3.3; pnpm overrides for `undici`, `proxy-addr`, `compression`, `postcss`, `body-parser`, `zod`; removed stale LHCI `extract-zip` GHSA ignores after the dependency left the tree.
