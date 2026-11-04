@@ -104,4 +104,27 @@ describe('parseIgnoreGhsas (deprecated standalone snippets)', () => {
       ),
     ).toEqual(['GHSA-abcd-efgh-ijkl', 'GHSA-mnop-qrst-uvwx']);
   });
+
+  it('returns empty when standalone snippet omits ignoreGhsas', () => {
+    expect(parseIgnoreGhsas('ignoreGhsas: []\n')).toEqual([]);
+  });
+
+  it('fails closed on malformed standalone snippet', () => {
+    expect(() => parseIgnoreGhsas('ignoreGhsas: not-a-list\n')).toThrow(AuditIgnoreParseError);
+    expect(() => parseIgnoreGhsas('ignoreGhsas:\n  - bad-id\n')).toThrow(AuditIgnoreParseError);
+  });
+});
+
+describe('parseIgnoreGhsasFromWorkspaceYaml edge cases', () => {
+  it('rejects non-mapping auditConfig', () => {
+    expect(() => parseIgnoreGhsasFromWorkspaceYaml('auditConfig: []\n')).toThrow(
+      AuditIgnoreParseError,
+    );
+  });
+
+  it('rejects non-string sequence entries', () => {
+    expect(() =>
+      parseIgnoreGhsasFromWorkspaceYaml('auditConfig:\n  ignoreGhsas:\n    - 123\n'),
+    ).toThrow(AuditIgnoreParseError);
+  });
 });

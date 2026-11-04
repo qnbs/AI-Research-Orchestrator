@@ -9,33 +9,48 @@ export class AuditIgnoreParseError extends Error {
   }
 }
 
-/**
- * Parse `auditConfig.ignoreGhsas` from a pnpm-workspace.yaml document.
- * Fail closed on malformed YAML, wrong types, or invalid advisory IDs.
- */
-export function parseIgnoreGhsasFromWorkspaceYaml(yamlText: string): string[] {
+function loadYamlMapping(
+  yamlText: string,
+  parseErrorLabel: string,
+  rootErrorLabel: string,
+): Record<string, unknown> {
   let root: unknown;
   try {
     root = load(yamlText);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    throw new AuditIgnoreParseError(`pnpm-workspace.yaml YAML parse failed: ${message}`);
+    throw new AuditIgnoreParseError(`${parseErrorLabel}: ${message}`);
   }
 
   if (root === null || typeof root !== 'object' || Array.isArray(root)) {
-    throw new AuditIgnoreParseError('pnpm-workspace.yaml root must be a mapping');
+    throw new AuditIgnoreParseError(rootErrorLabel);
   }
 
-  const auditConfig = (root as Record<string, unknown>).auditConfig;
+  return root as Record<string, unknown>;
+}
+
+function readAuditConfigIgnoreGhsas(root: Record<string, unknown>): unknown {
+  const auditConfig = root.auditConfig;
   if (auditConfig === undefined) {
-    return [];
+    return undefined;
   }
   if (auditConfig === null || typeof auditConfig !== 'object' || Array.isArray(auditConfig)) {
     throw new AuditIgnoreParseError('auditConfig must be a mapping');
   }
+  return (auditConfig as Record<string, unknown>).ignoreGhsas;
+}
 
-  const ignoreGhsas = (auditConfig as Record<string, unknown>).ignoreGhsas;
-  return coerceGhsaSequence(ignoreGhsas, 'auditConfig.ignoreGhsas');
+/**
+ * Parse `auditConfig.ignoreGhsas` from a pnpm-workspace.yaml document.
+ * Fail closed on malformed YAML, wrong types, or invalid advisory IDs.
+ */
+export function parseIgnoreGhsasFromWorkspaceYaml(yamlText: string): string[] {
+  const root = loadYamlMapping(
+    yamlText,
+    'pnpm-workspace.yaml YAML parse failed',
+    'pnpm-workspace.yaml root must be a mapping',
+  );
+  return coerceGhsaSequence(readAuditConfigIgnoreGhsas(root), 'auditConfig.ignoreGhsas');
 }
 
 function coerceGhsaSequence(ignoreGhsas: unknown, fieldLabel: string): string[] {
@@ -60,25 +75,19 @@ function coerceGhsaSequence(ignoreGhsas: unknown, fieldLabel: string): string[] 
 }
 
 function parseStandaloneIgnoreGhsasList(yamlSnippet: string): string[] {
-  let root: unknown;
-  try {
-    root = load(yamlSnippet);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    throw new AuditIgnoreParseError(`ignoreGhsas snippet YAML parse failed: ${message}`);
-  }
-
-  if (root === null || typeof root !== 'object' || Array.isArray(root)) {
-    throw new AuditIgnoreParseError('ignoreGhsas snippet root must be a mapping');
-  }
-
-  return coerceGhsaSequence((root as Record<string, unknown>).ignoreGhsas, 'ignoreGhsas');
+  const root = loadYamlMapping(
+    yamlSnippet,
+    'ignoreGhsas snippet YAML parse failed',
+    'ignoreGhsas snippet root must be a mapping',
+  );
+  return coerceGhsaSequence(root.ignoreGhsas, 'ignoreGhsas');
 }
 
 /** @deprecated Use parseIgnoreGhsasFromWorkspaceYaml — kept for script self-check snippets. */
 export function parseIgnoreGhsas(yamlSnippet: string): string[] {
-  const firstLine = yamlSnippet.trimStart().split('\n')[0] ?? '';
-  if (/^\s*ignoreGhsas:/.test(firstLine) && !/^\s*auditConfig:/.test(yamlSnippet.trimStart())) {
+  const trimmed = yamlSnippet.trimStart();
+  const firstLine = trimmed.split('\n')[0] ?? '';
+  if (/^\s*ignoreGhsas:/.test(firstLine) && !/^\s*auditConfig:/.test(trimmed)) {
     return parseStandaloneIgnoreGhsasList(yamlSnippet);
   }
   return parseIgnoreGhsasFromWorkspaceYaml(yamlSnippet);
