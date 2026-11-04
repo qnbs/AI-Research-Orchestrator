@@ -165,6 +165,52 @@ describe('useResearchSession handleCancelResearch', () => {
   });
 });
 
+describe('useResearchSession generation supersession', () => {
+  it('ignores stale stream completion after handleNewSearch superseded the generation', async () => {
+    let releaseStream: (() => void) | undefined;
+    vi.mocked(generateResearchReportStream).mockImplementationOnce(
+      async function* (_data, _aiSettings, signal) {
+        if (!signal) return;
+        capturedSignal = signal;
+        yield {
+          phaseId: 'ranking',
+          phase: 'Phase 4: Ranking articles...',
+          report: partialReport,
+        };
+        await new Promise<void>((resolve) => {
+          releaseStream = resolve;
+        });
+      },
+    );
+
+    const { result } = renderSession();
+
+    let formSubmitPromise: Promise<void> | undefined;
+    await act(async () => {
+      formSubmitPromise = result.current.handleFormSubmit(input);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(result.current.reportStatus).toBe('streaming');
+
+    await act(async () => {
+      result.current.handleNewSearch();
+    });
+    expect(result.current.reportStatus).toBe('idle');
+    expect(result.current.report).toBeNull();
+
+    await act(async () => {
+      releaseStream?.();
+      await formSubmitPromise;
+    });
+
+    expect(result.current.reportStatus).toBe('idle');
+    expect(result.current.reportStatus).not.toBe('done');
+    expect(result.current.report).toBeNull();
+  });
+});
+
 describe('useResearchSession handleRestoreCheckpoint', () => {
   it('restores a checkpoint as partial, never done', async () => {
     const { result } = renderSession();
