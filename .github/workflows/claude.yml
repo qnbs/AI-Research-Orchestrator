@@ -36,8 +36,8 @@ jobs:
           persist-credentials: false
 
       - name: Claude Code
-        # anthropics/claude-code-action@v1 — SHA for v1.0.236 (supersedes Dependabot #338)
-        uses: anthropics/claude-code-action@8ce9314fa9a404564fa7e954cd84f25bcba2b829
+        # anthropics/claude-code-action@v1 — SHA for v1.0.266 (supersedes Dependabot #383)
+        uses: anthropics/claude-code-action@d535f5172dec02b204866b393d6b20b9b2aaf98d
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           # Interactive @claude mentions need read + edit tools (this job has contents: write).
