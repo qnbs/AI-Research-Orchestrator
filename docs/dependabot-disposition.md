@@ -281,9 +281,13 @@ Nine routine `npm_and_yarn` Dependabot updater jobs on the same SHA also succeed
 
 ## 2026-11-04 — Dependabot wave D2 (Actions SHA pins)
 
-**Consolidation PR:** [#425](https://github.com/qnbs/AI-Research-Orchestrator/pull/425) — **merged** to `main` as `81b7b28`. Supersedes Dependabot **#376** / **#377**; close those bot PRs with link to #425 when token allows.
+**Consolidation PR:** [#425](https://github.com/qnbs/AI-Research-Orchestrator/pull/425) — **merged** to `main` as `81b7b28`. Supersedes Dependabot **#376** / **#377** (both closed).
 
-**Duplicate @types/node:** **#379** and **#387** both target `@types/node 26.6.6` — merge exactly one in a later wave; close the other as duplicate.
+## 2026-11-04 — Dependabot wave D2b (CodeQL Action SHAs)
+
+**Consolidation PR:** (branch `cursor/dependabot-wave-d2-codeql-33e3`) — bumps `github/codeql-action` **init**, **autobuild**, and **analyze** together to `@9b3254085494b55a0f7c4c2b3d2d52cc712ce370` (Dependabot **#381**, **#385**, **#389**). All three components must move in lockstep (historical CodeQL version mismatch failures).
+
+**Duplicate @types/node:** **#379** and **#387** — defer to wave D3 dev/test consolidation; close **#379** as duplicate of **#387** after merge.
 
 | PR   | Title                                                | Disposition                                                              |
 | ---- | ---------------------------------------------------- | ------------------------------------------------------------------------ |

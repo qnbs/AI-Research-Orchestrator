@@ -43,18 +43,18 @@ jobs:
 
       - name: Initialize CodeQL
         # github/codeql-action/init@v4
-        uses: github/codeql-action/init@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2
+        uses: github/codeql-action/init@9b3254085494b55a0f7c4c2b3d2d52cc712ce370
         with:
           languages: javascript-typescript
           queries: security-extended
 
       - name: Autobuild
         # github/codeql-action/autobuild@v4
-        uses: github/codeql-action/autobuild@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2
+        uses: github/codeql-action/autobuild@9b3254085494b55a0f7c4c2b3d2d52cc712ce370
 
       - name: Perform CodeQL Analysis
         # github/codeql-action/analyze@v4
-        uses: github/codeql-action/analyze@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2
+        uses: github/codeql-action/analyze@9b3254085494b55a0f7c4c2b3d2d52cc712ce370
         with:
           category: "/language:javascript-typescript"
 
