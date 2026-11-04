@@ -281,7 +281,7 @@ Nine routine `npm_and_yarn` Dependabot updater jobs on the same SHA also succeed
 
 ## 2026-11-04 — Dependabot wave D2 (Actions SHA pins)
 
-**Consolidation PR:** [#425](https://github.com/qnbs/AI-Research-Orchestrator/pull/425) (`cursor/dependabot-wave-d2-actions-33e3`) — supersedes Dependabot **#376** (`actions/upload-artifact`) and **#377** (`actions/setup-node`) with pinned SHAs matching those PRs across `deploy.yml`, `e2e.yml`, `e2e-cross-browser.yml`, `a11y.yml`, `pwa-e2e.yml`, and `security.yml`. One merge candidate; close #376/#377 with link after dual gate.
+**Consolidation PR:** [#425](https://github.com/qnbs/AI-Research-Orchestrator/pull/425) — **merged** to `main` as `81b7b28`. Supersedes Dependabot **#376** / **#377**; close those bot PRs with link to #425 when token allows.
 
 **Duplicate @types/node:** **#379** and **#387** both target `@types/node 26.6.6` — merge exactly one in a later wave; close the other as duplicate.
 
