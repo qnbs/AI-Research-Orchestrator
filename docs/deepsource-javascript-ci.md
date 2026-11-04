@@ -46,7 +46,7 @@ Org/dashboard **JavaScript** stayed enabled even though git policy assumed “no
 **Repo fix (2026-11-04):**
 
 1. `.deepsource.toml` declares `[[analyzers]] name = "javascript"` with **`enabled = false`** (drift-gated via `check:docs-drift`).
-2. **Do not** add repository-wide `src/**` / `**/*.ts` excludes when JS is off — global `exclude_patterns` apply to Docker and Shell too (#410). Narrow excludes (e.g. `.devcontainer/Dockerfile` only) preserve Shell coverage of `.devcontainer/postCreate.sh`.
+2. **Do not** add repository-wide `.devcontainer/**`, `src/**`, or `**/*.ts` excludes when JS is off — global `exclude_patterns` apply to Docker and Shell too (#436/#410). Narrow excludes (e.g. `.devcontainer/Dockerfile` only) preserve Shell coverage of `.devcontainer/postCreate.sh`.
 3. If the dashboard JavaScript analyzer were re-enabled without `enabled = false`, belt-and-suspenders TS excludes would be needed again — prefer keeping dashboard + TOML off (`docs/deepsource-dashboard-off.md`).
 
 ## Disposition (current)

@@ -15,7 +15,7 @@ After toggling off, the next PR push should stop posting `DeepSource: JavaScript
 ## What we changed in git (2026-11-04)
 
 - `.deepsource.toml` declares **`[[analyzers]] name = "javascript"` with `enabled = false`** (drift-gated).
-- **Avoid** repository-wide `src/**` excludes when JS is off — they also exclude files from Docker/Shell (#410). Narrow patterns (e.g. `.devcontainer/Dockerfile` only) remain.
+- **Avoid** repository-wide `.devcontainer/**` or `src/**` excludes when JS is off — global patterns apply to Docker/Shell too (#410). Narrow patterns (e.g. `.devcontainer/Dockerfile` only) remain.
 - Documented root causes in `docs/deepsource-javascript-ci.md`.
 - `docs/project-facts.json`: `deepsourceJavaScriptEnabled: false`.
 - `check:docs-drift` requires explicit `enabled = false`, not an absent block.
