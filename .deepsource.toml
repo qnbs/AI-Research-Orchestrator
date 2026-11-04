@@ -1,31 +1,19 @@
 version = 1
 
 # TypeScript/JavaScript quality is gated by ESLint 9 + tsc in deploy.yml — not DeepSource JS.
-# Dashboard JavaScript analyzer is off (2026-11-04). TOML mirrors that with enabled = false
-# and TS/JS excludes as belt-and-suspenders. ESLint + tsc remain authoritative.
+# Dashboard JavaScript analyzer is off (2026-11-04). TOML mirrors that with enabled = false.
+# Docker + Shell stay enabled; exclude only dev Dockerfile noise — not .devcontainer/postCreate.sh.
 
 exclude_patterns = [
-  ".devcontainer/**",
-  ".github/**",
+  ".devcontainer/Dockerfile",
   "eslint-local-rules/**",
   "scripts/**",
   "scripts/*.mjs",
+  "public/sw.js",
+  "public/register-sw.js",
   "public/**",
   "dist/**",
   "coverage/**",
-  "src/**",
-  "**/*.ts",
-  "**/*.tsx",
-  "**/*.js",
-  "**/*.mjs",
-  "**/*.cjs",
-  "vite.config.ts",
-  "vitest.config.ts",
-  "playwright.config.ts",
-  "eslint.config.js",
-  "postcss.config.js",
-  "lighthouserc.cjs",
-  "index.html",
 ]
 
 test_patterns = [
