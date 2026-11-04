@@ -321,3 +321,7 @@ Nine routine `npm_and_yarn` Dependabot updater jobs on the same SHA also succeed
 | `brace-expansion@^5.0.0` | 5.0.11 (GHSA-q2hr-2g5m-vwhr) | override 5.0.12        | **Fixed** in security PR            |
 | `brace-expansion@^2.0.2` | override 2.1.4               | 2.1.7                  | **Fixed** — stale override          |
 | `minimatch`              | 3.1.5 + 10.2.6               | cross-major suggestion | **Deferred** — separate #396 review |
+
+## 2026-11-04 — Brace-expansion fix landed (#441 → `493bef9`)
+
+**PR:** [#441](https://github.com/qnbs/AI-Research-Orchestrator/pull/441) — merged to `main`. Grouped Dependabot security job [41876634139](https://github.com/qnbs/AI-Research-Orchestrator/actions/runs/41876634139) may still report `security_update_not_possible` for **`minimatch` only**; `brace-expansion` is resolved via workspace overrides (`5.0.12`, `2.1.7`, `1.1.21`). `pnpm audit --audit-level=high` on `main` remains clean; default-severity audit may still list moderate **`minimatch`** / **`glob`** on LHCI and eslint dev paths — **no global `minimatch@11` override** without eslint/typescript-eslint compatibility proof (#396 ledger above).
