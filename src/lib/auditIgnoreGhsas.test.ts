@@ -47,12 +47,13 @@ describe('parseIgnoreGhsasFromWorkspaceYaml', () => {
     ]);
   });
 
-  it('detects advisory after commented bracket in flow-style list', () => {
+  it('detects advisory after commented bracket in multiline flow-style list', () => {
     const yaml = `auditConfig:
-  ignoreGhsas:
-    - GHSA-aaaa-bbbb-cccc
-    # ] decoy
-    - GHSA-dddd-eeee-ffff
+  ignoreGhsas: [
+    GHSA-aaaa-bbbb-cccc,
+    # ] decoy in comment
+    GHSA-dddd-eeee-ffff
+  ]
 `;
     expect(parseIgnoreGhsasFromWorkspaceYaml(yaml)).toEqual([
       'GHSA-aaaa-bbbb-cccc',

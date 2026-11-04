@@ -93,7 +93,7 @@ Evidence labels used below: **VERIFIED CURRENT**, **VERIFIED HISTORICAL**, **HYP
 
 ## Next actions (execution order)
 
-1. Land P0 remediation PR (security lockfile + runbooks + prompt archive).
-2. Confirm **full** required CI on maintainer/agent PR head (validates #395 contrast with Dependabot).
-3. Maintainer: enable Code scanning + approve Dependabot workflow runs (runbook).
+1. Land P0 remediation PR (security lockfile + runbooks).
+2. Confirm **full** required CI on latest maintainer/agent PR head (validates #395 contrast with Dependabot).
+3. Maintainer: approve Dependabot workflow runs where still blocked; validate bot PR checks after merge (runbook).
 4. Resume Dependabot convergence (#398) via consolidation, not blind merge of blocked bot PRs.
