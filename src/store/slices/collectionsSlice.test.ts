@@ -22,24 +22,21 @@ const col: ResearchCollection = {
 
 describe('collectionsSlice', () => {
   it('handles loadCollections.fulfilled', () => {
-    const s = collectionsReducer(undefined, loadCollections.fulfilled([col], 'r', undefined));
+    const s = collectionsReducer(undefined, loadCollections.fulfilled([col], 'r'));
     expect(s.items).toEqual([col]);
     expect(s.isLoading).toBe(false);
   });
 
   it('handles loadCollections.pending and rejected', () => {
-    let s = collectionsReducer(undefined, loadCollections.pending('r', undefined));
+    let s = collectionsReducer(undefined, loadCollections.pending('r'));
     expect(s.isLoading).toBe(true);
-    s = collectionsReducer(
-      s,
-      loadCollections.rejected(new Error('boom'), 'r', undefined, undefined),
-    );
+    s = collectionsReducer(s, loadCollections.rejected(new Error('boom'), 'r', undefined));
     expect(s.isLoading).toBe(false);
     expect(s.error).toMatch(/boom/);
   });
 
   it('addEntryToCollection.fulfilled updates entryIds', () => {
-    const s0 = collectionsReducer(undefined, loadCollections.fulfilled([col], 'r', undefined));
+    const s0 = collectionsReducer(undefined, loadCollections.fulfilled([col], 'r'));
     const s1 = collectionsReducer(
       s0,
       addEntryToCollection.fulfilled({ collectionId: 'c1', entryIds: ['e1'] }, 'r', {
@@ -53,7 +50,7 @@ describe('collectionsSlice', () => {
   it('removeEntryFromCollection.fulfilled filters entryIds', () => {
     const s0 = collectionsReducer(
       undefined,
-      loadCollections.fulfilled([{ ...col, entryIds: ['e1', 'e2'] }], 'r', undefined),
+      loadCollections.fulfilled([{ ...col, entryIds: ['e1', 'e2'] }], 'r'),
     );
     const s1 = collectionsReducer(
       s0,
@@ -66,7 +63,7 @@ describe('collectionsSlice', () => {
   });
 
   it('setEditingId', () => {
-    const s = collectionsReducer(undefined, setEditingId('x'));
-    expect(s.editingId).toBe('x');
+    const nextState = collectionsReducer(undefined, setEditingId('x'));
+    expect(nextState.editingId).toBe('x');
   });
 });

@@ -10,24 +10,21 @@ export type CollectionPortablePayload = {
   >;
 };
 
-export function buildCollectionPortablePayload(
+export const buildCollectionPortablePayload = (
   collection: ResearchCollection,
-): CollectionPortablePayload {
-  return {
-    schemaVersion: 1,
-    exportedAt: new Date().toISOString(),
-    collection: {
-      name: collection.name,
-      description: collection.description,
-      color: collection.color,
-      icon: collection.icon,
-      tags: collection.tags,
-      entryIds: collection.entryIds,
-      articlePmids: collection.articlePmids,
-    },
-  };
-}
+): CollectionPortablePayload => ({
+  schemaVersion: 1,
+  exportedAt: new Date().toISOString(),
+  collection: {
+    name: collection.name,
+    description: collection.description,
+    color: collection.color,
+    icon: collection.icon,
+    tags: collection.tags,
+    entryIds: collection.entryIds,
+    articlePmids: collection.articlePmids,
+  },
+});
 
-export function serializeCollectionPortablePayload(payload: CollectionPortablePayload): string {
-  return JSON.stringify(payload, null, 2);
-}
+export const serializeCollectionPortablePayload = (payload: CollectionPortablePayload): string =>
+  JSON.stringify(payload, null, 2);

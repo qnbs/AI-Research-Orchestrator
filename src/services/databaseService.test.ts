@@ -24,6 +24,8 @@ import {
   updateCollection,
   deleteCollection,
   removeResearchEntryIdsFromAllCollections,
+  addEntryIdToCollection,
+  removeEntryIdFromCollection,
 } from './databaseService';
 import { defaultSettings } from '../store/slices/settingsSlice';
 import { createResearchCheckpoint } from '../lib/researchCheckpoint';
@@ -223,8 +225,51 @@ describe('databaseService presets and collections', () => {
     const touched = await removeResearchEntryIdsFromAllCollections(['drop']);
     expect(touched).toBe(1);
     const listed = await getAllCollections();
-    const a = listed.find((c) => c.id === 'col-a');
-    expect(a?.entryIds).toEqual(['keep']);
+    const collectionA = listed.find((collection) => collection.id === 'col-a');
+    expect(collectionA?.entryIds).toEqual(['keep']);
+  });
+
+  it('addEntryIdToCollection merges concurrent adds without losing ids', async () => {
+    await addCollection({
+      id: 'col-concurrent',
+      name: 'Concurrent',
+      description: '',
+      color: '#222',
+      icon: '📚',
+      entryIds: [],
+      articlePmids: [],
+      createdAt: 1,
+      updatedAt: 1,
+      tags: [],
+    });
+    await Promise.all([
+      addEntryIdToCollection('col-concurrent', 'e1'),
+      addEntryIdToCollection('col-concurrent', 'e2'),
+      addEntryIdToCollection('col-concurrent', 'e3'),
+    ]);
+    const listed = await getAllCollections();
+    const concurrent = listed.find((collection) => collection.id === 'col-concurrent');
+    expect(concurrent?.entryIds.sort()).toEqual(['e1', 'e2', 'e3']);
+  });
+
+  it('removeEntryIdFromCollection drops one id atomically', async () => {
+    await addCollection({
+      id: 'col-remove',
+      name: 'Remove one',
+      description: '',
+      color: '#333',
+      icon: '📚',
+      entryIds: ['a', 'b'],
+      articlePmids: [],
+      createdAt: 1,
+      updatedAt: 1,
+      tags: [],
+    });
+    const nextIds = await removeEntryIdFromCollection('col-remove', 'a');
+    expect(nextIds).toEqual(['b']);
+    const listed = await getAllCollections();
+    const target = listed.find((collection) => collection.id === 'col-remove');
+    expect(target?.entryIds).toEqual(['b']);
   });
 });
 
