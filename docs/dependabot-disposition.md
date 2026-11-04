@@ -311,3 +311,13 @@ Nine routine `npm_and_yarn` Dependabot updater jobs on the same SHA also succeed
 | ---- | ---------------------------------------------------- | ------------------------------------------------------------------------ |
 | #342 | fix(settings): preserve provider model IDs on import | **Closed** — superseded by **#344** / on `main` since consolidation      |
 | #343 | chore(deps): dexie-react-hooks + cmdk metadata       | **Closed** — superseded by **#358** (Wave B) and consolidation on `main` |
+
+## 2026-11-04 — Grouped security updater post-#440 (`56edc68`)
+
+**Run:** [41876634139](https://github.com/qnbs/AI-Research-Orchestrator/actions/runs/41876634139) — `security_update_not_possible` for `brace-expansion` and `minimatch`. `pnpm audit --audit-level=high` on `main` remains clean.
+
+| Package                  | Lock before                  | Fix                    | Disposition                         |
+| ------------------------ | ---------------------------- | ---------------------- | ----------------------------------- |
+| `brace-expansion@^5.0.0` | 5.0.11 (GHSA-q2hr-2g5m-vwhr) | override 5.0.12        | **Fixed** in security PR            |
+| `brace-expansion@^2.0.2` | override 2.1.4               | 2.1.7                  | **Fixed** — stale override          |
+| `minimatch`              | 3.1.5 + 10.2.6               | cross-major suggestion | **Deferred** — separate #396 review |
