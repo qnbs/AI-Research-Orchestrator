@@ -25,7 +25,10 @@ import { DocumentPlusIcon } from './icons/DocumentPlusIcon';
 import { DatabaseIcon } from './icons/DatabaseIcon';
 import { useKnowledgeBase } from '../contexts/KnowledgeBaseContext';
 import { useTranslation } from '../hooks/useTranslation';
-import { isArxivArticle } from '../lib/sourceIdentifier';
+import {
+  countDashboardOpenAccessBuckets,
+  countDashboardRetrievalSources,
+} from '../lib/dashboardArticleMetrics';
 import { DASHBOARD_ACCENT, dashboardAccentFill } from './dashboardChartTheme';
 import {
   ChartCard,
@@ -92,16 +95,18 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({ onFilterChange, 
         value,
       }));
 
-    const oaCount = articles.filter((a) => a.isOpenAccess).length;
+    const oaCounts = countDashboardOpenAccessBuckets(articles);
     const oa = [
-      { name: t('dashboard.oa.open'), value: oaCount },
-      { name: t('dashboard.oa.closed'), value: articles.length - oaCount },
-    ];
+      { bucket: 'open' as const, name: t('dashboard.oa.open'), value: oaCounts.open },
+      { bucket: 'unknown' as const, name: t('dashboard.oa.unknown'), value: oaCounts.unknown },
+      { bucket: 'closed' as const, name: t('dashboard.oa.closed'), value: oaCounts.closed },
+    ].filter((row) => row.value > 0);
 
-    const arxivCount = articles.filter((a) => isArxivArticle(a)).length;
+    const sourceCounts = countDashboardRetrievalSources(articles);
     const source = [
-      { name: t('dashboard.source.pubmed'), value: articles.length - arxivCount },
-      { name: t('dashboard.source.arxiv'), value: arxivCount },
+      { bucket: 'pubmed' as const, name: t('dashboard.source.pubmed'), value: sourceCounts.pubmed },
+      { bucket: 'arxiv' as const, name: t('dashboard.source.arxiv'), value: sourceCounts.arxiv },
+      { bucket: 'other' as const, name: t('dashboard.source.other'), value: sourceCounts.other },
     ].filter((s) => s.value > 0);
 
     const kwMap = new Map<string, number>();
@@ -292,8 +297,20 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({ onFilterChange, 
                 label={({ percent }) => `${((percent ?? 0) * 100).toFixed(1)}%`}
                 labelLine={{ stroke: 'rgba(125,133,144,0.4)' }}
               >
-                <Cell fill="#34d399" fillOpacity={0.85} stroke="transparent" />
-                <Cell fill="#7d8590" fillOpacity={0.5} stroke="transparent" />
+                {data.oa.map((row) => (
+                  <Cell
+                    key={row.bucket}
+                    fill={
+                      row.bucket === 'open'
+                        ? '#34d399'
+                        : row.bucket === 'unknown'
+                          ? '#fbbf24'
+                          : '#7d8590'
+                    }
+                    fillOpacity={row.bucket === 'unknown' ? 0.75 : 0.85}
+                    stroke="transparent"
+                  />
+                ))}
               </Pie>
               <Tooltip content={(props) => <CyberTooltip {...props} />} />
               <Legend iconType="circle" iconSize={8} formatter={mutedLegendFormatter} />
@@ -321,8 +338,16 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({ onFilterChange, 
                 label={({ percent }) => `${((percent ?? 0) * 100).toFixed(1)}%`}
                 labelLine={{ stroke: 'rgba(125,133,144,0.4)' }}
               >
-                <Cell fill={DASHBOARD_ACCENT} fillOpacity={0.85} stroke="transparent" />
-                <Cell fill={CHART_PALETTE[1]} fillOpacity={0.85} stroke="transparent" />
+                {data.source.map((row, index) => (
+                  <Cell
+                    key={row.bucket}
+                    fill={
+                      index === 0 ? DASHBOARD_ACCENT : CHART_PALETTE[index % CHART_PALETTE.length]
+                    }
+                    fillOpacity={0.85}
+                    stroke="transparent"
+                  />
+                ))}
               </Pie>
               <Tooltip content={(props) => <CyberTooltip {...props} />} />
               <Legend iconType="circle" iconSize={8} formatter={mutedLegendFormatter} />
@@ -408,7 +433,7 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({ onFilterChange, 
             { key: 'value', label: t('dashboard.a11y.articles'), render: (r) => r.value },
           ]}
           rows={data.oa}
-          rowKey={(r) => r.name}
+          rowKey={(r) => r.bucket}
         />
         <ChartAccessibleTable
           caption={t('dashboard.a11y.source_caption')}
@@ -417,7 +442,7 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({ onFilterChange, 
             { key: 'value', label: t('dashboard.a11y.articles'), render: (r) => r.value },
           ]}
           rows={data.source}
-          rowKey={(r) => r.name}
+          rowKey={(r) => r.bucket}
         />
         {data.keywords.length > 0 && (
           <ChartAccessibleTable
