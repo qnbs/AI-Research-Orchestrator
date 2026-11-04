@@ -96,4 +96,12 @@ describe('parseIgnoreGhsas (deprecated standalone snippets)', () => {
   it('still delegates full workspace snippets to the strict parser', () => {
     expect(parseIgnoreGhsas('auditConfig:\n  ignoreGhsas: []\n')).toEqual([]);
   });
+
+  it('parses YAML comments inside a standalone list', () => {
+    expect(
+      parseIgnoreGhsas(
+        'ignoreGhsas:\n  - GHSA-abcd-efgh-ijkl\n  # trailing note\n  - GHSA-mnop-qrst-uvwx\n',
+      ),
+    ).toEqual(['GHSA-abcd-efgh-ijkl', 'GHSA-mnop-qrst-uvwx']);
+  });
 });

@@ -35,19 +35,21 @@ export function parseIgnoreGhsasFromWorkspaceYaml(yamlText: string): string[] {
   }
 
   const ignoreGhsas = (auditConfig as Record<string, unknown>).ignoreGhsas;
+  return coerceGhsaSequence(ignoreGhsas, 'auditConfig.ignoreGhsas');
+}
+
+function coerceGhsaSequence(ignoreGhsas: unknown, fieldLabel: string): string[] {
   if (ignoreGhsas === undefined) {
     return [];
   }
   if (!Array.isArray(ignoreGhsas)) {
-    throw new AuditIgnoreParseError('auditConfig.ignoreGhsas must be a YAML sequence');
+    throw new AuditIgnoreParseError(`${fieldLabel} must be a YAML sequence`);
   }
 
   const ids: string[] = [];
   for (const entry of ignoreGhsas) {
     if (typeof entry !== 'string') {
-      throw new AuditIgnoreParseError(
-        `auditConfig.ignoreGhsas entries must be strings; got ${typeof entry}`,
-      );
+      throw new AuditIgnoreParseError(`${fieldLabel} entries must be strings; got ${typeof entry}`);
     }
     if (!GHSA_ID.test(entry)) {
       throw new AuditIgnoreParseError(`Invalid GHSA advisory id: ${entry}`);
@@ -58,31 +60,19 @@ export function parseIgnoreGhsasFromWorkspaceYaml(yamlText: string): string[] {
 }
 
 function parseStandaloneIgnoreGhsasList(yamlSnippet: string): string[] {
-  const ids: string[] = [];
-  let inList = false;
-  for (const line of yamlSnippet.split('\n')) {
-    if (/^\s*ignoreGhsas:\s*$/.test(line)) {
-      inList = true;
-      continue;
-    }
-    if (!inList) {
-      continue;
-    }
-    const item = line.match(/^\s+-\s+["']?(GHSA-[A-Za-z0-9-]+)["']?\s*$/);
-    if (item) {
-      const id = item[1];
-      if (!GHSA_ID.test(id)) {
-        throw new AuditIgnoreParseError(`Invalid GHSA advisory id: ${id}`);
-      }
-      ids.push(id);
-      continue;
-    }
-    if (/^\s*$/.test(line) || /^\s+#/.test(line)) {
-      continue;
-    }
-    break;
+  let root: unknown;
+  try {
+    root = load(yamlSnippet);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new AuditIgnoreParseError(`ignoreGhsas snippet YAML parse failed: ${message}`);
   }
-  return ids;
+
+  if (root === null || typeof root !== 'object' || Array.isArray(root)) {
+    throw new AuditIgnoreParseError('ignoreGhsas snippet root must be a mapping');
+  }
+
+  return coerceGhsaSequence((root as Record<string, unknown>).ignoreGhsas, 'ignoreGhsas');
 }
 
 /** @deprecated Use parseIgnoreGhsasFromWorkspaceYaml — kept for script self-check snippets. */
