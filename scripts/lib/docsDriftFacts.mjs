@@ -455,15 +455,26 @@ function assertDeepsourceJsDisabled(deepsource, errors) {
   const block = getDeepsourceAnalyzerBlock(deepsource, 'javascript');
   if (!block) {
     errors.push(
-      '.deepsource.toml must declare [[analyzers]] name = "javascript" with enabled = false (docs/deepsource-javascript-ci.md)',
+      '.deepsource.toml must declare [[analyzers]] name = "javascript" (docs/deepsource-javascript-ci.md)',
     );
     return;
   }
-  if (!/enabled\s*=\s*false/.test(block)) {
-    errors.push('.deepsource.toml javascript analyzer must set enabled = false');
+  if (/enabled\s*=\s*false/.test(block)) {
+    return;
   }
-  if (/enabled\s*=\s*true/.test(block)) {
-    errors.push('.deepsource.toml must not enable the javascript analyzer');
+  if (!/enabled\s*=\s*true/.test(block)) {
+    errors.push('.deepsource.toml javascript analyzer must set enabled = true or false');
+    return;
+  }
+  if (!/cyclomatic_complexity_threshold\s*=\s*"critical"/.test(block)) {
+    errors.push(
+      '.deepsource.toml javascript analyzer must set cyclomatic_complexity_threshold = "critical" when using exclude-only mode',
+    );
+  }
+  for (const pattern of ['src/**', '**/*.ts', '**/*.tsx']) {
+    if (!deepsource.includes(`"${pattern}"`)) {
+      errors.push(`.deepsource.toml exclude_patterns must include "${pattern}" for javascript-off strategy`);
+    }
   }
 }
 

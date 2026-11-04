@@ -38,7 +38,21 @@ test_patterns = [
 
 [[analyzers]]
 name = "javascript"
-enabled = false
+enabled = true
+
+  [analyzers.meta]
+  dialect = "typescript"
+  module_system = "es-modules"
+  environment = ["browser", "nodejs", "vitest"]
+  cyclomatic_complexity_threshold = "critical"
+  skip_doc_coverage = [
+    "function-declaration",
+    "function-expression",
+    "arrow-function-expression",
+    "class-declaration",
+    "class-expression",
+    "method-definition",
+  ]
 
 [[analyzers]]
 name = "docker"
