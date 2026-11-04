@@ -341,7 +341,9 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({ onFilterChange, 
                 {data.source.map((row, index) => (
                   <Cell
                     key={row.bucket}
-                    fill={index === 0 ? DASHBOARD_ACCENT : CHART_PALETTE[index % CHART_PALETTE.length]}
+                    fill={
+                      index === 0 ? DASHBOARD_ACCENT : CHART_PALETTE[index % CHART_PALETTE.length]
+                    }
                     fillOpacity={0.85}
                     stroke="transparent"
                   />
