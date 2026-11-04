@@ -377,7 +377,7 @@ export interface Settings {
   };
   knowledgeBase: {
     defaultView: 'grid' | 'list';
-    articlesPerPage: 10 | 20 | 50;
+    articlesPerPage: 2 | 10 | 20 | 50;
     defaultSort: 'relevance' | 'newest';
   };
   hasCompletedOnboarding: boolean;
