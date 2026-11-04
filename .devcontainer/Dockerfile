@@ -4,6 +4,8 @@
 # ==============================================================================
 FROM node:24-bookworm-slim
 
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
 LABEL org.opencontainers.image.title="AI Research Orchestrator DevContainer"
 LABEL org.opencontainers.image.description="React 19 · TypeScript · Tailwind v4 · Framer Motion · RTK Query · Playwright"
 LABEL org.opencontainers.image.licenses="MIT"

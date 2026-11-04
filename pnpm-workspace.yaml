@@ -61,6 +61,9 @@ overrides:
   undici: 7.30.1
   # GHSA-jqcg-44mw-7w3h: @lhci/cli > express > proxy-addr (CI-only)
   proxy-addr: 2.0.8
+  # @puppeteer/browsers (LHCI) peers proxy-agent >=8.0.1; strictPeerDependencies
+  # otherwise breaks Dependabot npm_and_yarn jobs on main.
+  proxy-agent: 8.0.1
   # GHSA-vc2v-76pw-4v95: @lhci/cli > compression (CI-only)
   compression: 1.8.2
   # GHSA-27r3-jxmh-p828: @lhci/cli > express > body-parser (CI-only)
