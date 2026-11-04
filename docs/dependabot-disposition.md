@@ -251,7 +251,39 @@ Consolidation PR: **#369** (`cursor/dependabot-d1-oct2026-patches-d4f6`).
 | ip-address             | 10.4.0                      | 10.7.4           | **Fixed** — override 10.7.4                                                                                                 |
 | minimatch@3 (eslint)   | 3.1.5 (no 3.x patch on npm) | 11.0.1           | **Deferred** — major jump incompatible with eslint@9 minimatch@3 peer tree; `pnpm audit --audit-level=high` clean on `main` |
 
-## 2026-10-03 — Stale agent drafts (Wave G)
+## 2026-11-04 — Post-#424 main health (`d6c7160`)
+
+**Merge:** [#424](https://github.com/qnbs/AI-Research-Orchestrator/pull/424) — brace-expansion 1.1.21, fflate 0.8.3, ip-address 10.7.4.
+
+**Required CI on `d6c7160366175373cc92e1457be7b1565ba9716f` (all success):**
+
+| Workflow                                        | Run ID                                                                                   |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Deploy to GitHub Pages                          | [41798079042](https://github.com/qnbs/AI-Research-Orchestrator/actions/runs/41798079042) |
+| Security                                        | [41798078893](https://github.com/qnbs/AI-Research-Orchestrator/actions/runs/41798078893) |
+| E2E Tests                                       | [41798078848](https://github.com/qnbs/AI-Research-Orchestrator/actions/runs/41798078848) |
+| E2E Cross-Browser Smoke (Firefox/WebKit/mobile) | [41798078872](https://github.com/qnbs/AI-Research-Orchestrator/actions/runs/41798078872) |
+| A11y Smoke                                      | [41798078823](https://github.com/qnbs/AI-Research-Orchestrator/actions/runs/41798078823) |
+| PWA E2E                                         | [41798078928](https://github.com/qnbs/AI-Research-Orchestrator/actions/runs/41798078928) |
+
+Nine routine `npm_and_yarn` Dependabot updater jobs on the same SHA also succeeded. **Grouped Dependabot security updater:** no new run observed on `d6c7160` after #424 (prior failure [41795929084](https://github.com/qnbs/AI-Research-Orchestrator/actions/runs/41795929084) on `53a191f` was addressed by #424 for three of four packages). Live GitHub Pages first-boot HTTP probe remains **not verified** ([#404](https://github.com/qnbs/AI-Research-Orchestrator/issues/404)).
+
+### `minimatch@3.1.5` — evidence ledger (#396)
+
+| Finding                | Detail                                                                                                                                                                                               |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Advisory               | [GHSA-g3hv-75wg-m249](https://github.com/advisories/GHSA-g3hv-75wg-m249) marks `<11.0.1` affected; maintainer note targets v10.2.6 algorithm (`firstPhasePreProcess` / `optimizationLevel >= 2`).    |
+| Installed `3.1.5`      | **Dev-only** via `eslint@9` → `@eslint/config-array` / `@eslint/eslintrc` / legacy `glob@7` (LHCI). **Not** in production browser bundle.                                                            |
+| Also present           | `minimatch@10.2.6` via `typescript-eslint` → `@typescript-eslint/typescript-estree` → `glob@13` (Lighthouse/Sentry dev chain).                                                                       |
+| Full audit             | `pnpm audit` (default severity) still reports **moderate** `minimatch` and nested `brace-expansion@4.x` under LHCI/typescript-eslint paths; `pnpm audit --audit-level=high` remains clean on `main`. |
+| Upstream clarification | [advisory-database#10811](https://github.com/github/advisory-database/issues/10811) open — do not duplicate.                                                                                         |
+| Disposition            | **Potential overbroad advisory range for v3.1.5; awaiting authoritative correction.** Do **not** override `minimatch@3` → `11` without compatibility proof.                                          |
+
+## 2026-11-04 — Dependabot wave D2 (Actions SHA pins)
+
+**Consolidation PR:** [#425](https://github.com/qnbs/AI-Research-Orchestrator/pull/425) (`cursor/dependabot-wave-d2-actions-33e3`) — supersedes Dependabot **#376** (`actions/upload-artifact`) and **#377** (`actions/setup-node`) with pinned SHAs matching those PRs across `deploy.yml`, `e2e.yml`, `e2e-cross-browser.yml`, `a11y.yml`, `pwa-e2e.yml`, and `security.yml`. One merge candidate; close #376/#377 with link after dual gate.
+
+**Duplicate @types/node:** **#379** and **#387** both target `@types/node 26.6.6` — merge exactly one in a later wave; close the other as duplicate.
 
 | PR   | Title                                                | Disposition                                                              |
 | ---- | ---------------------------------------------------- | ------------------------------------------------------------------------ |
