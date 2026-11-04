@@ -9,7 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Audit recovery (2026-11-04):** GitHub Pages production smoke evidence (`docs/audits/2026-11-04-github-pages-production-smoke.md`, #404); README version badge aligned to **0.4.6** (#411).
+- **Orchestrator (#419):** `orchestrator-checkpoint.spec.ts` — cancel → persisted checkpoint → reload → restore partial (never `done`).
+- **Knowledge Base (#421):** KB CSV export download assertion on selected demo articles.
+- **Audit recovery (2026-11-04):** GitHub Pages production smoke evidence (`docs/audits/2026-11-04-github-pages-production-smoke.md`, #404); README version badge **0.4.6** (#411).
 - **Knowledge Base (#421):** Playwright `knowledge-base.spec.ts` — demo corpus selection and bulk CSV export toolbar on filtered page.
 - **Orchestrator (#419):** Documented WS-24 state/identity matrix (`docs/audits/2026-11-04-orchestrator-state-invariants.md`); regression test for stale stream completion after `handleNewSearch`.
 

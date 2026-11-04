@@ -1,6 +1,7 @@
 /**
  * Knowledge Base E2E — selection + export toolbar on demo corpus (#421).
  */
+import { readFile } from 'node:fs/promises';
 import { test, expect } from '@playwright/test';
 import {
   navigateToKnowledgeBase,
@@ -49,5 +50,20 @@ test.describe('Knowledge Base selection and export', () => {
     await expect(
       page.getByRole('button', { name: /export as csv|als csv exportieren/i }),
     ).toBeEnabled();
+  });
+
+  test('CSV export downloads selected articles with header row', async ({ page }) => {
+    const firstSelect = page.getByRole('checkbox', { name: /select article:/i }).first();
+    await firstSelect.check();
+    await page.getByRole('button', { name: /export as csv|als csv exportieren/i }).click();
+
+    const downloadPromise = page.waitForEvent('download');
+    await page.getByRole('button', { name: /Yes, Export|Ja, exportieren/i }).click();
+    const download = await downloadPromise;
+    const csvPath = await download.path();
+    expect(csvPath).toBeTruthy();
+    const csv = await readFile(csvPath!, 'utf8');
+    expect(csv.split(/\r?\n/)[0]).toMatch(/PMID|Title/i);
+    expect(csv.length).toBeGreaterThan(20);
   });
 });
