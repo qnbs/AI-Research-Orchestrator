@@ -38,6 +38,8 @@ describe('dashboardArticleMetrics', () => {
 
   it('does not treat missing OA evidence as closed', () => {
     expect(classifyDashboardOpenAccess(base({ isOpenAccess: false }))).toBe('unknown');
+    const { isOpenAccess: _omit, ...withoutOaFlag } = base({});
+    expect(classifyDashboardOpenAccess(withoutOaFlag as RankedArticle)).toBe('unknown');
     const counts = countDashboardOpenAccessBuckets([
       base({ isOpenAccess: true }),
       base({ pmid: '2', articleId: { type: 'pmid', value: '2' }, isOpenAccess: false }),
