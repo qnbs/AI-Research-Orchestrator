@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { AuditIgnoreParseError, parseIgnoreGhsasFromWorkspaceYaml } from './auditIgnoreGhsas';
+import {
+  AuditIgnoreParseError,
+  parseIgnoreGhsas,
+  parseIgnoreGhsasFromWorkspaceYaml,
+} from './auditIgnoreGhsas';
 
 describe('parseIgnoreGhsasFromWorkspaceYaml', () => {
   it('returns empty when auditConfig or ignoreGhsas is absent', () => {
@@ -79,5 +83,17 @@ describe('parseIgnoreGhsasFromWorkspaceYaml', () => {
     expect(() => parseIgnoreGhsasFromWorkspaceYaml('auditConfig:\n  ignoreGhsas: [\n')).toThrow(
       AuditIgnoreParseError,
     );
+  });
+});
+
+describe('parseIgnoreGhsas (deprecated standalone snippets)', () => {
+  it('parses a standalone ignoreGhsas block list', () => {
+    expect(
+      parseIgnoreGhsas('ignoreGhsas:\n  - GHSA-abcd-efgh-ijkl\n  - GHSA-mnop-qrst-uvwx\n'),
+    ).toEqual(['GHSA-abcd-efgh-ijkl', 'GHSA-mnop-qrst-uvwx']);
+  });
+
+  it('still delegates full workspace snippets to the strict parser', () => {
+    expect(parseIgnoreGhsas('auditConfig:\n  ignoreGhsas: []\n')).toEqual([]);
   });
 });

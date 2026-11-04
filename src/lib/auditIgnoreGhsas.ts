@@ -57,7 +57,39 @@ export function parseIgnoreGhsasFromWorkspaceYaml(yamlText: string): string[] {
   return ids;
 }
 
+function parseStandaloneIgnoreGhsasList(yamlSnippet: string): string[] {
+  const ids: string[] = [];
+  let inList = false;
+  for (const line of yamlSnippet.split('\n')) {
+    if (/^\s*ignoreGhsas:\s*$/.test(line)) {
+      inList = true;
+      continue;
+    }
+    if (!inList) {
+      continue;
+    }
+    const item = line.match(/^\s+-\s+["']?(GHSA-[A-Za-z0-9-]+)["']?\s*$/);
+    if (item) {
+      const id = item[1];
+      if (!GHSA_ID.test(id)) {
+        throw new AuditIgnoreParseError(`Invalid GHSA advisory id: ${id}`);
+      }
+      ids.push(id);
+      continue;
+    }
+    if (/^\s*$/.test(line) || /^\s+#/.test(line)) {
+      continue;
+    }
+    break;
+  }
+  return ids;
+}
+
 /** @deprecated Use parseIgnoreGhsasFromWorkspaceYaml — kept for script self-check snippets. */
 export function parseIgnoreGhsas(yamlSnippet: string): string[] {
+  const firstLine = yamlSnippet.trimStart().split('\n')[0] ?? '';
+  if (/^\s*ignoreGhsas:/.test(firstLine) && !/^\s*auditConfig:/.test(yamlSnippet.trimStart())) {
+    return parseStandaloneIgnoreGhsasList(yamlSnippet);
+  }
   return parseIgnoreGhsasFromWorkspaceYaml(yamlSnippet);
 }
