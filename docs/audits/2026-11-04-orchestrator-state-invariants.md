@@ -36,3 +36,7 @@ Workstream **WS-24** / **[#419](https://github.com/qnbs/AI-Research-Orchestrator
 ## Out of scope (remaining on #419)
 
 Provider mid-run switch, IndexedDB upgrade during stream, and exhaustive transition fuzzing — tracked with #403/#406.
+
+## Disposition (2026-11-05)
+
+**In-scope** matrix rows are covered by unit specs and blocking E2E (**#454**, `agent-flow.spec.ts` §11). Maintainer may close **#419** for this slice using `docs/audits/2026-11-04-issue-closure-419-421.md` when #403/#406 are explicitly deferred.
