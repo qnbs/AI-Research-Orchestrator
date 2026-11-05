@@ -1,3 +1,12 @@
+# Meeting notes
+
+# 2026-11-05 — Nov audit-recovery session closeout (v0.4.7)
+
+- **Why:** P1 wave after **v0.4.7** (#421→#404→#419→#396/#409→#410); user requested session wrap + GitHub issue curation.
+- **What:** Merged **#460** (`ad79048`) maintainer close pack; live Pages probe **`v0.4.7 (ad79048)`** (deploy **41994485907**). Docs: `docs/audits/2026-11-05-session-closeout.md`, `docs/audits/2026-11-05-github-issue-curation.md` (paste comments — agent **403** on issues). **#409** / **#383** already closed on GitHub.
+- **Impact:** Maintainer batch-close **#404, #411, #408, #396, #419, #421** with linked copy-paste; **#410** DeepSource slice vs WS-15 split documented; **#403/#406** deferred.
+- **Not done:** Agent cannot close issues; ruleset **#399** PUT still maintainer-only; open PR **#461** (post-460 probe + #408 close doc) pending merge.
+
 # 2026-10-01 — Audit wave D–F closeout
 
 - **Why:** Phase-0 baseline (#341 / #344) tracked Waves D–F and ruleset drift; agent landed #345–#348 and follow-ups on `main`.

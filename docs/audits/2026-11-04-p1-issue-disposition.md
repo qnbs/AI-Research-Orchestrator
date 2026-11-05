@@ -6,10 +6,10 @@ Canonical release: **`v0.4.7`** (2026-11-04) — audit-recovery wave after **v0.
 
 | Issue                                                               | WS    | Disposition                                                                                                           | Evidence                                                            |
 | ------------------------------------------------------------------- | ----- | --------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| [#404](https://github.com/qnbs/AI-Research-Orchestrator/issues/404) | WS-10 | **Ready for maintainer close** — live About **`05e1c93`** matches `main` (probe 2026-11-05 08:34 CET)                 | `docs/audits/2026-11-04-github-pages-production-smoke.md`           |
+| [#404](https://github.com/qnbs/AI-Research-Orchestrator/issues/404) | WS-10 | **Ready for maintainer close** — live About **`ad79048`** matches `main` (probe 2026-11-05 09:31 CET)                 | `docs/audits/2026-11-04-github-pages-production-smoke.md`           |
 | [#411](https://github.com/qnbs/AI-Research-Orchestrator/issues/411) | —     | **Ready for maintainer close** — README badge in `check:docs-drift` + **0.4.7** inventory (#451)                      | `docs/audits/2026-11-04-issue-closure-404-411.md`                   |
-| [#408](https://github.com/qnbs/AI-Research-Orchestrator/issues/408) | —     | **Acceptance slice done** — Dexie + portable export + `collections.spec.ts`                                           | **v0.4.7** CHANGELOG                                                |
-| [#409](https://github.com/qnbs/AI-Research-Orchestrator/issues/409) | —     | **Ready for maintainer close (dashboard slice)** — OA/source charts + E2E §5b (#438)                                  | `docs/audits/2026-11-05-issue-closure-409.md`                       |
+| [#408](https://github.com/qnbs/AI-Research-Orchestrator/issues/408) | —     | **Ready for maintainer close** — Dexie + portable export + `collections.spec.ts`                                      | `docs/audits/2026-11-05-issue-closure-408.md`                       |
+| [#409](https://github.com/qnbs/AI-Research-Orchestrator/issues/409) | —     | **Closed on GitHub** — dashboard slice; evidence `docs/audits/2026-11-05-issue-closure-409.md` (#438)                 | merged prior to 2026-11-05 curation                                 |
 | [#410](https://github.com/qnbs/AI-Research-Orchestrator/issues/410) | —     | **Ready for maintainer close (DeepSource slice)** — #439 TOML + verification doc                                      | `docs/audits/2026-11-05-issue-closure-410.md`                       |
 | [#419](https://github.com/qnbs/AI-Research-Orchestrator/issues/419) | WS-24 | **Ready for maintainer close (in-scope slice)** — matrix + unit + checkpoint E2E (**#454**); out-of-scope: #403/#406  | `docs/audits/2026-11-04-orchestrator-state-invariants.md`, **#454** |
 | [#421](https://github.com/qnbs/AI-Research-Orchestrator/issues/421) | WS-26 | **Ready for maintainer close (E2E slice)** — KB export/delete/reload/filter/pagination/virtualization (**#448–#455**) | `docs/audits/2026-11-04-issue-closure-419-421.md`                   |
@@ -25,4 +25,6 @@ Dual gate (`docs/pr-merge-gate.md`) on every PR; CodeRabbit rate-limit **(d)** w
 
 ## Maintainer batch index
 
-All ready closes: **`docs/audits/2026-11-05-maintainer-close-pack-all.md`**.
+All ready closes: **`docs/audits/2026-11-05-maintainer-close-pack-all.md`**.  
+Issue comments (maintainer paste): **`docs/audits/2026-11-05-github-issue-curation.md`**.  
+Session wrap: **`docs/audits/2026-11-05-session-closeout.md`**.

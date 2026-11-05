@@ -24,8 +24,8 @@ Evidence for **[#404](https://github.com/qnbs/AI-Research-Orchestrator/issues/40
 
 | Item                                                                                                        | Status                                                                                |
 | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| External browser/HTTP smoke on **current** Pages deployment                                                 | **Recorded** (≈ `9a604f2`; **`52ab869`**; **`f483e79`**; **`05e1c93`**)               |
-| Explicit live-site ↔ **`main` head SHA** attestation (Help → About `formatReleaseLabel()` vs deploy commit) | **Recorded** for **`05e1c93`** — matches **`main`** @ 2026-11-05 ~08:34 Europe/Berlin |
+| External browser/HTTP smoke on **current** Pages deployment                                                 | **Recorded** (through **`ad79048`**)                                                  |
+| Explicit live-site ↔ **`main` head SHA** attestation (Help → About `formatReleaseLabel()` vs deploy commit) | **Recorded** for **`ad79048`** — matches **`main`** @ 2026-11-05 ~09:31 Europe/Berlin |
 | CI `deploy` job success on latest `main`                                                                    | **Necessary but not sufficient** for #404 acceptance                                  |
 | Blocking `pwa-e2e.yml` offline shell                                                                        | **Complements** external smoke; does not replace SHA-tied live URL proof              |
 
@@ -39,8 +39,9 @@ Each row must record **HTTP 200**, **base-path asset load**, **first-run → she
 | 2026-11-04 22:59      | **`52ab869`** | **41919411213** @ 21:47:53Z | 21:51:10              | 200  | **Pass**         | **Pass**        | **`v0.4.7 (52ab869)`** | `pages-404-home.png`, `pages-404-about-version.png`         |
 | **2026-11-05 00:41**  | **`f483e79`** | **41935140385** @ 23:37:08Z | **23:41:32**          | 200  | **Pass**         | **Pass**        | **`v0.4.7 (f483e79)`** | `pages-404-f483e79-home.png`, `pages-404-f483e79-about.png` |
 | **2026-11-05 08:34**  | **`05e1c93`** | **41984538088** @ 07:03:24Z | **07:06:51**          | 200  | **Pass**         | **Pass**        | **`v0.4.7 (05e1c93)`** | `pages-404-05e1c93-home.png`, `pages-404-05e1c93-about.png` |
+| **2026-11-05 09:31**  | **`ad79048`** | **41994485907** @ 08:26:34Z | **08:30:36**          | 200  | **Pass**         | **Pass**        | **`v0.4.7 (ad79048)`** | `pages-404-ad79048-about.png`                               |
 
-**Disposition:** **#404** may close when the maintainer cites the **latest probe row whose About SHA matches live Pages and `main`** (currently **`05e1c93`**). If `main` advances again, append a row before closing on the new head.
+**Disposition:** **#404** may close when the maintainer cites the **latest probe row whose About SHA matches live Pages and `main`** (currently **`ad79048`**). If `main` advances again, append a row before closing on the new head.
 
 ## Observations
 
@@ -59,10 +60,10 @@ Screenshots and full narrative live under `/opt/cursor/artifacts/` for the verif
 - `pages-404-f483e79-home.png` — post–#452 deploy home (`f483e79`)
 - `pages-404-f483e79-about.png` — Help → About **`v0.4.7 (f483e79)`**
 - `pages-404-05e1c93-home.png` — post–#457 deploy home (`05e1c93`)
-- `pages-404-05e1c93-about.png` — Help → About **`v0.4.7 (05e1c93)`**
+- `pages-404-ad79048-about.png` — post–#460 deploy About **`v0.4.7 (ad79048)`**
 - `smoke-test-report.md` — step-by-step checklist (prior runs)
 
 ## Disposition
 
-- **#404:** **Ready for maintainer close** when live About matches **`05e1c93`** (probe row 2026-11-05 08:34 Europe/Berlin). Use closure comment in `docs/audits/2026-11-04-issue-closure-404-411.md`; do not close on CI alone.
+- **#404:** **Ready for maintainer close** when live About matches **`ad79048`** (probe row 2026-11-05 09:31 Europe/Berlin). Use closure comment in `docs/audits/2026-11-04-issue-closure-404-411.md`; do not close on CI alone.
 - **CI correlation:** Every merge to `main` runs blocking quality, E2E (10 specs), cross-browser, a11y, security, and PWA jobs (`docs/ci-branch-governance.md`).
