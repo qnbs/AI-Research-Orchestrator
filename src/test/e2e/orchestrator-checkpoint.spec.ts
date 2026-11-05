@@ -5,16 +5,16 @@ import { test, expect, type Locator, type Page } from '@playwright/test';
 import { navigateToView, seedFakeGeminiApiKey, skipOnboarding } from './e2eHelpers';
 import { mockGeminiHangingSynthesis, mockPubMedRoutes } from './fixtures/networkMocks';
 
-async function openOrchestratorWithInterruptedCheckpoint(
-  page: Page,
-  topic: string,
-): Promise<Locator> {
+async function prepareOrchestratorForCancelFlow(page: Page) {
   await mockPubMedRoutes(page);
   await mockGeminiHangingSynthesis(page);
   await skipOnboarding(page);
   await seedFakeGeminiApiKey(page);
   await navigateToView(page, '#orchestrator');
+}
 
+async function cancelResearchToPartialReport(page: Page, topic: string) {
+  await prepareOrchestratorForCancelFlow(page);
   await page.locator('#researchTopic').fill(topic);
   await page.locator('button[type="submit"]').first().click();
 
@@ -31,17 +31,24 @@ async function openOrchestratorWithInterruptedCheckpoint(
   await expect(
     page.getByRole('status').filter({ hasText: /PARTIAL REPORT|TEILBERICHT/ }),
   ).toBeVisible({ timeout: 20_000 });
+}
 
-  await page.reload({ waitUntil: 'domcontentloaded' });
-  await page.locator('header').waitFor({ state: 'visible', timeout: 20_000 });
-  await navigateToView(page, '#orchestrator');
-
+async function expectInterruptedCheckpointBanner(page: Page, topic: string): Promise<Locator> {
   const banner = page.getByRole('region', {
     name: /Interrupted research|Unterbrochene Recherche/i,
   });
   await expect(banner).toBeVisible({ timeout: 20_000 });
   await expect(banner.getByText(topic, { exact: false })).toBeVisible({ timeout: 10_000 });
   return banner;
+}
+
+async function openOrchestratorWithInterruptedCheckpoint(
+  page: Page,
+  topic: string,
+): Promise<Locator> {
+  await cancelResearchToPartialReport(page, topic);
+  await reloadOrchestrator(page);
+  return expectInterruptedCheckpointBanner(page, topic);
 }
 
 async function reloadOrchestrator(page: Page) {
@@ -69,6 +76,31 @@ test.describe('Orchestrator checkpoint resume', () => {
     ).toBeVisible({ timeout: 10_000 });
 
     await expect(banner).toHaveCount(0, { timeout: 10_000 });
+  });
+
+  test('new search after cancel clears partial UI but checkpoint survives reload', async ({
+    page,
+  }) => {
+    test.setTimeout(120_000);
+    const topic = 'COVID cognition new search checkpoint e2e';
+    await cancelResearchToPartialReport(page, topic);
+
+    const partialStatus = page
+      .getByRole('status')
+      .filter({ hasText: /PARTIAL REPORT|TEILBERICHT/ });
+
+    await page
+      .getByTestId('research-brief-summary')
+      .getByRole('button', { name: /^New Search$|^Neue Suche$/i })
+      .click();
+
+    await expect(partialStatus).toHaveCount(0, { timeout: 10_000 });
+    await expect(
+      page.getByRole('heading', { name: /Research Report|Forschungsbericht/i }),
+    ).toHaveCount(0, { timeout: 10_000 });
+
+    await reloadOrchestrator(page);
+    await expectInterruptedCheckpointBanner(page, topic);
   });
 
   test('discard clears checkpoint; reload does not show resume banner', async ({ page }) => {
