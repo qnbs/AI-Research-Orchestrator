@@ -325,3 +325,15 @@ Nine routine `npm_and_yarn` Dependabot updater jobs on the same SHA also succeed
 ## 2026-11-04 — Brace-expansion fix landed (#441 → `493bef9`)
 
 **PR:** [#441](https://github.com/qnbs/AI-Research-Orchestrator/pull/441) — merged to `main`. Grouped Dependabot security job [41876634139](https://github.com/qnbs/AI-Research-Orchestrator/actions/runs/41876634139) may still report `security_update_not_possible` for **`minimatch` only**; `brace-expansion` is resolved via workspace overrides (`5.0.12`, `2.1.7`, `1.1.21`). `pnpm audit --audit-level=high` on `main` remains clean; default-severity audit may still list moderate **`minimatch`** / **`glob`** on LHCI and eslint dev paths — **no global `minimatch@11` override** without eslint/typescript-eslint compatibility proof (#396 ledger above).
+
+## 2026-11-05 — #396 closure refresh (`4c75740`)
+
+**Evidence doc:** `docs/audits/2026-11-05-minimatch-396-evidence.md`. **Maintainer close text:** `docs/audits/2026-11-05-issue-closure-396.md`.
+
+| Check                           | Result on `main`                                                 |
+| ------------------------------- | ---------------------------------------------------------------- |
+| `pnpm audit --audit-level=high` | **exit 0** (2 moderate `minimatch` dev-only at default severity) |
+| `minimatch@3.1.5`               | eslint@9 dev tree — **deferred** (ledger unchanged)              |
+| `minimatch@10.2.6`              | typescript-eslint / LHCI dev — within patched 10.x line          |
+
+**Disposition:** **#396 ready for maintainer close** — high gate green; minimatch deferral documented, not ignored.
