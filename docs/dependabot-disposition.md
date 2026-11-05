@@ -305,7 +305,7 @@ Nine routine `npm_and_yarn` Dependabot updater jobs on the same SHA also succeed
 
 **D5b — Gemini:** [#433](https://github.com/qnbs/AI-Research-Orchestrator/pull/433) — **merged** to `main` as `aa506fa`. Supersedes **#382**.
 
-**D5c — Claude action:** (branch `cursor/dependabot-wave-d5c-claude-action-33e3`) — SHA v1.0.266; permissions unchanged. Supersedes **#383**.
+**D5c — Claude action:** **merged** [#398](https://github.com/qnbs/AI-Research-Orchestrator/pull/398) to `main` as `0359cd0` — `anthropics/claude-code-action` SHA for **v1.0.266**; permissions unchanged. Supersedes **#383** (close with link).
 
 | PR   | Title                                                | Disposition                                                              |
 | ---- | ---------------------------------------------------- | ------------------------------------------------------------------------ |
