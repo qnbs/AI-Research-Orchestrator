@@ -327,6 +327,84 @@ export async function setKnowledgeBaseArticlesPerPage(page: Page, perPage: 2 | 1
   await page.getByRole('button', { name: /save changes|änderungen speichern/i }).click();
 }
 
+/** Matches `VIRTUAL_THRESHOLD` in `KnowledgeBaseSubComponents.tsx` (list virtual scroll). */
+export const KB_LIST_VIRTUALIZATION_THRESHOLD = 30;
+
+/** Seed a synthetic journal entry with `articleCount` unique PMIDs for virtualization E2E. */
+export async function prepareKnowledgeBaseVirtualizationCorpus(
+  page: Page,
+  articleCount = KB_LIST_VIRTUALIZATION_THRESHOLD,
+) {
+  await skipOnboarding(page);
+  await waitForKnowledgeBaseStore(page);
+  await page.evaluate(async (count) => {
+    try {
+      localStorage.setItem('aro.demoDataSeeded', '1');
+      localStorage.setItem('aro.demoDataDismissed', '1');
+    } catch {
+      /* ignore */
+    }
+
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const req = indexedDB.open('AIResearchAppDatabase');
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error ?? new Error('indexedDB open failed'));
+    });
+
+    if (!db.objectStoreNames.contains('knowledgeBaseEntries')) {
+      db.close();
+      throw new Error('knowledgeBaseEntries store missing');
+    }
+
+    await new Promise<void>((resolve, reject) => {
+      const tx = db.transaction('knowledgeBaseEntries', 'readwrite');
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error ?? new Error('indexedDB clear failed'));
+      tx.objectStore('knowledgeBaseEntries').clear();
+    });
+
+    const articles = Array.from({ length: count }, (_, i) => ({
+      pmid: `e2e:virtual-${String(i + 1).padStart(3, '0')}`,
+      title: `[E2E virtual] Synthetic article ${i + 1}`,
+      authors: 'Virtual Author',
+      journal: 'E2E Journal',
+      pubYear: '2024',
+      summary: 'Synthetic KB fixture for virtualization E2E.',
+      relevanceScore: 0,
+      relevanceExplanation: '',
+      keywords: ['e2e', 'virtualization'],
+      isOpenAccess: true,
+      articleType: 'Other',
+    }));
+
+    const entry = {
+      id: 'e2e-virtual-corpus',
+      title: '[E2E] Virtual scroll corpus',
+      timestamp: Date.now(),
+      articles,
+      sourceType: 'journal',
+      journalProfile: {
+        name: 'E2E Journal',
+        issn: '0000-0000',
+        description: 'Synthetic journal profile for E2E virtualization.',
+        oaPolicy: 'Gold',
+        focusAreas: ['e2e'],
+      },
+    };
+
+    await new Promise<void>((resolve, reject) => {
+      const tx = db.transaction('knowledgeBaseEntries', 'readwrite');
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error ?? new Error('indexedDB put failed'));
+      tx.objectStore('knowledgeBaseEntries').put(entry);
+    });
+    db.close();
+  }, articleCount);
+
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.locator('header').waitFor({ state: 'visible', timeout: 20_000 });
+}
+
 /** Open Help from header chrome (desktop icons or mobile overflow menu). */
 export async function openHelpFromChrome(page: Page) {
   const viewport = page.viewportSize();

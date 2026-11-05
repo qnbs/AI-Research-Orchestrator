@@ -6,6 +6,8 @@ import { test, expect, type Locator } from '@playwright/test';
 import {
   navigateToKnowledgeBase,
   prepareFirstLaunchDemoKb,
+  KB_LIST_VIRTUALIZATION_THRESHOLD,
+  prepareKnowledgeBaseVirtualizationCorpus,
   setKnowledgeBaseArticlesPerPage,
   waitForKbArticleCount,
   DEMO_KB_UNIQUE_ARTICLE_COUNT,
@@ -204,5 +206,23 @@ test.describe('Knowledge Base selection and export', () => {
     expect(csv.toLowerCase()).toContain(pageOneTitle.toLowerCase().slice(0, 24));
     expect(csv.toLowerCase()).toContain(pageTwoTitle.toLowerCase().slice(0, 24));
     expect(pageOneTitle.toLowerCase()).not.toBe(pageTwoTitle.toLowerCase());
+  });
+});
+
+test.describe('Knowledge Base large corpus (#421)', () => {
+  test('list view shows virtualized scroll at threshold', async ({ page }) => {
+    test.setTimeout(420_000);
+    await prepareKnowledgeBaseVirtualizationCorpus(page);
+    await navigateToKnowledgeBase(page);
+    await waitForKbArticleCount(page, KB_LIST_VIRTUALIZATION_THRESHOLD);
+    await page.getByRole('button', { name: /list view|listenansicht/i }).click();
+    await expect(
+      page.getByText(
+        new RegExp(`${KB_LIST_VIRTUALIZATION_THRESHOLD} articles · virtualized scroll`, 'i'),
+      ),
+    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('list', { name: /article list|artikelliste/i })).toBeVisible({
+      timeout: 10_000,
+    });
   });
 });
