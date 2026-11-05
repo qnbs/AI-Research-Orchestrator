@@ -71,6 +71,52 @@ test.describe('Orchestrator checkpoint resume', () => {
     await expect(banner).toHaveCount(0, { timeout: 10_000 });
   });
 
+  test('new search after cancel clears partial UI but checkpoint survives reload', async ({
+    page,
+  }) => {
+    test.setTimeout(120_000);
+    const topic = 'COVID cognition new search checkpoint e2e';
+    await mockPubMedRoutes(page);
+    await mockGeminiHangingSynthesis(page);
+    await skipOnboarding(page);
+    await seedFakeGeminiApiKey(page);
+    await navigateToView(page, '#orchestrator');
+
+    await page.locator('#researchTopic').fill(topic);
+    await page.locator('button[type="submit"]').first().click();
+
+    await expect(
+      page.getByRole('button', { name: /Cancel research|Recherche abbrechen/i }),
+    ).toBeVisible({ timeout: 20_000 });
+    await expect(
+      page.getByRole('heading', { name: /Research Report|Forschungsbericht/i }),
+    ).toBeVisible({ timeout: 45_000 });
+    await page.getByRole('button', { name: /Cancel research|Recherche abbrechen/i }).click();
+
+    const partialStatus = page
+      .getByRole('status')
+      .filter({ hasText: /PARTIAL REPORT|TEILBERICHT/ });
+    await expect(partialStatus).toBeVisible({ timeout: 20_000 });
+
+    await page
+      .getByTestId('research-brief-summary')
+      .getByRole('button', { name: /^New Search$|^Neue Suche$/i })
+      .click();
+
+    await expect(partialStatus).toHaveCount(0, { timeout: 10_000 });
+    await expect(
+      page.getByRole('heading', { name: /Research Report|Forschungsbericht/i }),
+    ).toHaveCount(0, { timeout: 10_000 });
+
+    await reloadOrchestrator(page);
+
+    const banner = page.getByRole('region', {
+      name: /Interrupted research|Unterbrochene Recherche/i,
+    });
+    await expect(banner).toBeVisible({ timeout: 20_000 });
+    await expect(banner.getByText(topic, { exact: false })).toBeVisible({ timeout: 10_000 });
+  });
+
   test('discard clears checkpoint; reload does not show resume banner', async ({ page }) => {
     test.setTimeout(120_000);
     const topic = 'COVID cognition discard checkpoint e2e';

@@ -23,14 +23,15 @@ Workstream **WS-24** / **[#419](https://github.com/qnbs/AI-Research-Orchestrator
 
 ## Test coverage map
 
-| Invariant                        | Primary tests                                                                     |
-| -------------------------------- | --------------------------------------------------------------------------------- |
-| Cancel + partial report ≠ `done` | `useResearchSession.test.tsx`, `researchStreamFailure.test.ts`                    |
-| Restore checkpoint = `partial`   | `useResearchSession.test.tsx`, `researchCheckpoint.test.ts`                       |
-| Stale restore after new search   | `useResearchSession.test.tsx`                                                     |
-| Stale stream after new search    | `useResearchSession.test.tsx` (`ignores stale stream completion…`)                |
-| Cancel → checkpoint → restore    | `orchestrator-checkpoint.spec.ts`; partial banner/CSV in `agent-flow.spec.ts` §11 |
-| Checkpoint payload partial stamp | `researchCheckpoint.test.ts`                                                      |
+| Invariant                           | Primary tests                                                                     |
+| ----------------------------------- | --------------------------------------------------------------------------------- |
+| Cancel + partial report ≠ `done`    | `useResearchSession.test.tsx`, `researchStreamFailure.test.ts`                    |
+| Restore checkpoint = `partial`      | `useResearchSession.test.tsx`, `researchCheckpoint.test.ts`                       |
+| Stale restore after new search      | `useResearchSession.test.tsx`                                                     |
+| Stale stream after new search       | `useResearchSession.test.tsx` (`ignores stale stream completion…`)                |
+| Cancel → checkpoint → restore       | `orchestrator-checkpoint.spec.ts`; partial banner/CSV in `agent-flow.spec.ts` §11 |
+| Cancel → new search → reload banner | `orchestrator-checkpoint.spec.ts` (`new search after cancel…`)                    |
+| Checkpoint payload partial stamp    | `researchCheckpoint.test.ts`                                                      |
 
 ## Out of scope (remaining on #419)
 
