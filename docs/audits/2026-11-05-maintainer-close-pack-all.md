@@ -10,22 +10,22 @@ Cloud Agent integration **cannot** close GitHub issues or Dependabot PRs (`403`)
 
 ## Close now (evidence complete)
 
-| Issue                                                               | Topic                                               | Closure doc                                              |
-| ------------------------------------------------------------------- | --------------------------------------------------- | -------------------------------------------------------- |
-| [#404](https://github.com/qnbs/AI-Research-Orchestrator/issues/404) | WS-10 Pages / PWA smoke                             | `docs/audits/2026-11-04-issue-closure-404-411.md` § #404 |
-| [#411](https://github.com/qnbs/AI-Research-Orchestrator/issues/411) | Version / docs drift                                | same file § #411                                         |
-| [#408](https://github.com/qnbs/AI-Research-Orchestrator/issues/408) | Collections Dexie + export + E2E                    | `docs/audits/2026-11-05-issue-closure-408.md`            |
-| [#396](https://github.com/qnbs/AI-Research-Orchestrator/issues/396) | Security audit / minimatch                          | `docs/audits/2026-11-05-issue-closure-396.md`            |
-| [#409](https://github.com/qnbs/AI-Research-Orchestrator/issues/409) | Dashboard provenance slice                          | `docs/audits/2026-11-05-issue-closure-409.md`            |
-| [#410](https://github.com/qnbs/AI-Research-Orchestrator/issues/410) | DeepSource slice (WS-15 lane stays open separately) | `docs/audits/2026-11-05-issue-closure-410.md`            |
-| [#419](https://github.com/qnbs/AI-Research-Orchestrator/issues/419) | Orchestrator invariants slice                       | `docs/audits/2026-11-04-issue-closure-419-421.md` § #419 |
-| [#421](https://github.com/qnbs/AI-Research-Orchestrator/issues/421) | Knowledge Base E2E slice                            | same file § #421                                         |
+| Issue                                                               | Topic                                       | Closure doc                                                                  |
+| ------------------------------------------------------------------- | ------------------------------------------- | ---------------------------------------------------------------------------- |
+| [#404](https://github.com/qnbs/AI-Research-Orchestrator/issues/404) | WS-10 Pages / PWA smoke                     | `docs/audits/2026-11-04-issue-closure-404-411.md` § #404                     |
+| [#411](https://github.com/qnbs/AI-Research-Orchestrator/issues/411) | Version / docs drift                        | same file § #411                                                             |
+| [#408](https://github.com/qnbs/AI-Research-Orchestrator/issues/408) | Collections Dexie + export + E2E            | `docs/audits/2026-11-05-issue-closure-408.md`                                |
+| [#396](https://github.com/qnbs/AI-Research-Orchestrator/issues/396) | Security audit / minimatch                  | `docs/audits/2026-11-05-issue-closure-396.md`                                |
+| [#409](https://github.com/qnbs/AI-Research-Orchestrator/issues/409) | Dashboard provenance slice                  | **Already closed on GitHub** — `docs/audits/2026-11-05-issue-closure-409.md` |
+| [#410](https://github.com/qnbs/AI-Research-Orchestrator/issues/410) | DeepSource slice (WS-15 lane may stay open) | `docs/audits/2026-11-05-issue-closure-410.md`                                |
+| [#419](https://github.com/qnbs/AI-Research-Orchestrator/issues/419) | Orchestrator invariants slice               | `docs/audits/2026-11-04-issue-closure-419-421.md` § #419                     |
+| [#421](https://github.com/qnbs/AI-Research-Orchestrator/issues/421) | Knowledge Base E2E slice                    | same file § #421                                                             |
 
 ## Dependabot / PR hygiene
 
-| Item                                | Action                                                                                           |
-| ----------------------------------- | ------------------------------------------------------------------------------------------------ |
-| Dependabot **#383** (Claude action) | **Close** — superseded by merged **#398** (D5c, `0359cd0`); see `docs/dependabot-disposition.md` |
+| Item                                | Action                                            |
+| ----------------------------------- | ------------------------------------------------- |
+| Dependabot **#383** (Claude action) | **Already closed** — superseded by **#398** (D5c) |
 
 ## Explicitly deferred (do not fold into #419 close without ack)
 
@@ -60,8 +60,8 @@ pnpm audit --audit-level=high    # exit 0
 2. **#408** (Collections slice)
 3. **#396** (security gate)
 4. **#419** + **#421** (test slices; cite #403/#406 deferred)
-5. **#409** (dashboard slice)
-6. **#410** (DeepSource config slice)
-7. **#383** (Dependabot duplicate)
+5. **#410** (DeepSource config slice; WS-15 optional stay-open)
+6. Comment **#394** portfolio checkpoint
 
-P1 ledger: `docs/audits/2026-11-04-p1-issue-disposition.md`.
+P1 ledger: `docs/audits/2026-11-04-p1-issue-disposition.md`.  
+**Maintainer issue comments:** `docs/audits/2026-11-05-github-issue-curation.md`.
