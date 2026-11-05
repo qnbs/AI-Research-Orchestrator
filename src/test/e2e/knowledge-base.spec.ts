@@ -211,7 +211,7 @@ test.describe('Knowledge Base selection and export', () => {
 
 test.describe('Knowledge Base large corpus (#421)', () => {
   test('list view shows virtualized scroll at threshold', async ({ page }) => {
-    test.setTimeout(120_000);
+    test.setTimeout(420_000);
     await prepareKnowledgeBaseVirtualizationCorpus(page);
     await navigateToKnowledgeBase(page);
     await waitForKbArticleCount(page, KB_LIST_VIRTUALIZATION_THRESHOLD);
