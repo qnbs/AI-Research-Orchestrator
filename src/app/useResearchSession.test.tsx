@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act, waitFor } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import { useResearchSession } from './useResearchSession';
@@ -165,6 +165,46 @@ describe('useResearchSession handleCancelResearch', () => {
   });
 });
 
+describe('useResearchSession manual save fingerprint', () => {
+  it('does not mark saved when the report mutates while saveReport is in flight', async () => {
+    let finishSave: (() => void) | undefined;
+    const saveReport = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          finishSave = resolve;
+        }),
+    );
+
+    const { result } = renderSession({ saveReport });
+
+    await act(async () => {
+      result.current.setLocalResearchInput(input);
+      result.current.setReport(partialReport);
+    });
+
+    let savePromise: Promise<void> | undefined;
+    await act(async () => {
+      savePromise = result.current.handleSaveReport();
+      await Promise.resolve();
+    });
+
+    expect(saveReport).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      result.current.setReport((prev) =>
+        prev ? { ...prev, synthesis: `${prev.synthesis} mutated` } : prev,
+      );
+    });
+
+    await act(async () => {
+      finishSave?.();
+      await savePromise;
+    });
+
+    expect(result.current.isCurrentReportSaved).toBe(false);
+  });
+});
+
 describe('useResearchSession generation supersession', () => {
   it('does not mark a new run saved when a deferred auto-save from an old run resolves (F-02)', async () => {
     vi.mocked(generateResearchReportStream).mockImplementationOnce(async function* () {
@@ -214,6 +254,86 @@ describe('useResearchSession generation supersession', () => {
     expect(result.current.reportStatus).toBe('idle');
   });
 
+  it('shows an error notification when auto-save fails for the active generation', async () => {
+    vi.mocked(generateResearchReportStream).mockImplementationOnce(async function* () {
+      yield {
+        phaseId: 'finalizing',
+        phase: 'Finalizing...',
+        report: { ...partialReport, synthesis: 'Done' },
+      };
+    });
+
+    const saveReport = vi.fn().mockRejectedValueOnce(new Error('indexeddb failed'));
+    const setNotification = vi.fn();
+    const { result } = renderSession({
+      autoSaveReports: true,
+      saveReport,
+      setNotification,
+    });
+
+    await act(async () => {
+      await result.current.handleFormSubmit(input);
+    });
+
+    expect(saveReport).toHaveBeenCalledTimes(1);
+    expect(setNotification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'error',
+        message: 'settings.kb.notification.save_failed',
+      }),
+    );
+  });
+
+  it('does not surface auto-save failure notification after the run was superseded (F-02)', async () => {
+    let releaseSave: (() => void) | undefined;
+    const saveReport = vi.fn(
+      () =>
+        new Promise<void>((resolve, reject) => {
+          releaseSave = () => reject(new Error('indexeddb failed'));
+        }),
+    );
+    const setNotification = vi.fn();
+
+    vi.mocked(generateResearchReportStream).mockImplementationOnce(async function* () {
+      yield {
+        phaseId: 'finalizing',
+        phase: 'Finalizing...',
+        report: { ...partialReport, synthesis: 'Run A' },
+      };
+    });
+
+    const { result } = renderSession({
+      autoSaveReports: true,
+      saveReport,
+      setNotification,
+    });
+
+    let formSubmitPromise: Promise<void> | undefined;
+    await act(async () => {
+      formSubmitPromise = result.current.handleFormSubmit(input);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(saveReport).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      result.current.handleNewSearch();
+    });
+
+    await act(async () => {
+      releaseSave?.();
+      await formSubmitPromise;
+    });
+
+    expect(
+      setNotification.mock.calls.some(
+        (call) =>
+          call[0]?.type === 'error' && call[0]?.message === 'settings.kb.notification.save_failed',
+      ),
+    ).toBe(false);
+  });
+
   it('ignores stale stream completion after handleNewSearch superseded the generation', async () => {
     let releaseStream: (() => void) | undefined;
     vi.mocked(generateResearchReportStream).mockImplementationOnce(
@@ -256,6 +376,103 @@ describe('useResearchSession generation supersession', () => {
     expect(result.current.reportStatus).toBe('idle');
     expect(result.current.reportStatus).not.toBe('done');
     expect(result.current.report).toBeNull();
+  });
+});
+
+describe('useResearchSession manual save failure', () => {
+  it('surfaces error notification and haptic error when saveReport rejects', async () => {
+    const saveReport = vi.fn().mockRejectedValueOnce(new Error('indexeddb failed'));
+    const setNotification = vi.fn();
+    const haptic = vi.fn();
+    const { result } = renderSession({ saveReport, setNotification, haptic });
+
+    await act(async () => {
+      result.current.setLocalResearchInput(input);
+      result.current.setReport(partialReport);
+    });
+
+    await act(async () => {
+      await result.current.handleSaveReport();
+    });
+
+    expect(setNotification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'error',
+        message: 'settings.kb.notification.save_failed',
+      }),
+    );
+    expect(haptic).toHaveBeenCalledWith('error');
+  });
+});
+
+describe('useResearchSession streaming fingerprint', () => {
+  it('clears saved acknowledgement when synthesis chunks arrive after a mid-stream manual save', async () => {
+    let releaseMidStream: (() => void) | undefined;
+    vi.mocked(generateResearchReportStream).mockImplementationOnce(async function* () {
+      yield {
+        phaseId: 'ranking',
+        phase: 'Phase 4: Ranking articles...',
+        report: partialReport,
+      };
+      await new Promise<void>((resolve) => {
+        releaseMidStream = resolve;
+      });
+      yield {
+        phaseId: 'synthesis',
+        phase: 'Writing synthesis...',
+        synthesisChunk: 'late chunk',
+      };
+      yield {
+        phaseId: 'finalizing',
+        phase: 'Finalizing...',
+        report: {
+          ...partialReport,
+          synthesis: 'late chunk',
+        },
+      };
+    });
+
+    const saveReport = vi.fn().mockResolvedValue(undefined);
+    const { result } = renderSession({
+      // Avoid auto-save setting “saved” at completion while we assert mid-stream (F-02).
+      autoSaveReports: false,
+      saveReport,
+    });
+
+    let formSubmitPromise: Promise<void> | undefined;
+    await act(async () => {
+      formSubmitPromise = result.current.handleFormSubmit(input);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(result.current.reportStatus).toBe('streaming');
+
+    await act(async () => {
+      await result.current.handleSaveReport();
+    });
+    expect(saveReport).toHaveBeenCalledTimes(1);
+    expect(result.current.isCurrentReportSaved).toBe(true);
+
+    await act(async () => {
+      releaseMidStream?.();
+      // Let the in-flight `for await` consume the synthesis chunk (microtasks).
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    await waitFor(() => {
+      expect(result.current.report?.synthesis).toContain('late chunk');
+    });
+    expect(result.current.isCurrentReportSaved).toBe(false);
+
+    await act(async () => {
+      await formSubmitPromise;
+    });
+
+    expect(result.current.reportStatus).toBe('done');
+    expect(saveReport).toHaveBeenCalledTimes(1);
+    expect(result.current.isCurrentReportSaved).toBe(false);
   });
 });
 

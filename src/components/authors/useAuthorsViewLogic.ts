@@ -17,6 +17,7 @@ import {
 } from '../../store/slices/apiSlice';
 import { safeLogError } from '../../lib/safeLog';
 import { buildAuthorMetricsFromCorpus } from '../../lib/authorIdentity';
+import { KnowledgeBasePersistError } from '../../lib/knowledgeBasePersistError';
 
 const authorPhaseKeys = [
   'authors.phase.search',
@@ -131,6 +132,7 @@ export const useAuthorsViewLogic = (
       setError(null);
       setView('landing');
 
+      let builtProfile: AuthorProfile | undefined;
       try {
         setLoadingPhase(authorLoadingPhases[3]);
         const allArticleDetails = await triggerGetDetails({ pmids: cluster.pmids }).unwrap();
@@ -154,7 +156,7 @@ export const useAuthorsViewLogic = (
           cluster.publicationCount,
         );
 
-        const profile: AuthorProfile = {
+        builtProfile = {
           name: cluster.nameVariant,
           affiliations: [cluster.primaryAffiliation],
           metrics,
@@ -163,14 +165,22 @@ export const useAuthorsViewLogic = (
           publications: allArticleDetails as RankedArticle[],
         };
 
-        await saveAuthorProfile({ authorName: profile.name }, profile);
+        await saveAuthorProfile({ authorName: builtProfile.name }, builtProfile);
 
         if (isMounted.current && !signal.aborted) {
-          setAuthorProfile(profile);
+          setAuthorProfile(builtProfile);
           setView('profile');
         }
       } catch (err) {
         if (signal.aborted) return;
+        if (err instanceof KnowledgeBasePersistError) {
+          safeLogError('Failed to persist author profile (analysis succeeded)', err);
+          if (isMounted.current && builtProfile) {
+            setAuthorProfile(builtProfile);
+            setView('profile');
+          }
+          return;
+        }
         safeLogError('Failed to build author profile', err);
         if (isMounted.current) {
           setError(t('authors.error.profile_build'));
