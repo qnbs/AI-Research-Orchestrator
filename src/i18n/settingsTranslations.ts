@@ -158,6 +158,8 @@ export const settingsTranslations = {
     'settings.kb.notification.no_prune_candidates':
       'No research articles found with a score below {score}.',
     'settings.kb.notification.prune_failed': 'Failed to prune articles.',
+    'settings.kb.notification.save_failed':
+      'Could not save to the Knowledge Base. Your report is still on screen; try again.',
     'settings.kb.presets.title': 'Research Presets',
     'settings.kb.presets.desc': 'Manage your saved research form settings for quick access.',
     'settings.kb.presets.empty':
@@ -442,6 +444,8 @@ export const settingsTranslations = {
     'settings.kb.notification.no_prune_candidates':
       'Keine Recherche-Artikel mit einem Score unter {score} gefunden.',
     'settings.kb.notification.prune_failed': 'Bereinigung der Artikel fehlgeschlagen.',
+    'settings.kb.notification.save_failed':
+      'Speichern in der Wissensdatenbank fehlgeschlagen. Der Bericht bleibt sichtbar; versuchen Sie es erneut.',
     'settings.kb.presets.title': 'Recherche-Presets',
     'settings.kb.presets.desc':
       'Gespeicherte Rechercheformular-Einstellungen für schnellen Zugriff verwalten.',
