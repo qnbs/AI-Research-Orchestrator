@@ -122,9 +122,14 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
         input: researchInput,
         report,
       };
-      await dispatch(addKbEntry(newEntry));
+      try {
+        await dispatch(addKbEntry(newEntry)).unwrap();
+      } catch {
+        showNotification(t('settings.kb.notification.save_failed'), 'error');
+        throw new Error('Knowledge Base save failed');
+      }
     },
-    [dispatch],
+    [dispatch, showNotification, t],
   );
 
   const saveAuthorProfile = useCallback(
@@ -139,9 +144,14 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
         input,
         profile,
       };
-      await dispatch(addKbEntry(newEntry));
+      try {
+        await dispatch(addKbEntry(newEntry)).unwrap();
+      } catch {
+        showNotification(t('settings.kb.notification.save_failed'), 'error');
+        throw new Error('Knowledge Base save failed');
+      }
     },
-    [dispatch],
+    [dispatch, showNotification, t],
   );
 
   const saveJournalProfile = useCallback(
@@ -155,9 +165,14 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
         articles: articles,
         journalProfile: profile,
       };
-      await dispatch(addKbEntry(newEntry));
+      try {
+        await dispatch(addKbEntry(newEntry)).unwrap();
+      } catch {
+        showNotification(t('settings.kb.notification.save_failed'), 'error');
+        throw new Error('Knowledge Base save failed');
+      }
     },
-    [dispatch],
+    [dispatch, showNotification, t],
   );
 
   const clearKnowledgeBase = useCallback(async () => {
@@ -323,9 +338,14 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
 
   const addKnowledgeBaseEntries = useCallback(
     async (entries: KnowledgeBaseEntry[]) => {
-      await dispatch(importKbEntries(entries));
+      try {
+        await dispatch(importKbEntries(entries)).unwrap();
+      } catch {
+        showNotification(t('settings.kb.notification.save_failed'), 'error');
+        throw new Error('Knowledge Base save failed');
+      }
     },
-    [dispatch],
+    [dispatch, showNotification, t],
   );
 
   const addSingleArticleReport = useCallback(

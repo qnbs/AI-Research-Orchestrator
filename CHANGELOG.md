@@ -16,6 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **Knowledge Base (#421):** Citation toolbar button was labeled “Export as RIS” while exporting BibTeX only; RIS export was unreachable from the UI.
+- **Knowledge Base (#403, WS-28 / #463 F-01):** Saving reports, profiles, and imports now uses `dispatch(…).unwrap()` so rejected IndexedDB writes surface an error instead of resolving; orchestrator auto-save and manual save no longer mark the run “saved” when persistence fails. Added EN/DE `settings.kb.notification.save_failed` copy and a Vitest guard in `KnowledgeBaseContext.test.tsx`.
+
+### Added
+
+- **Audit (#463):** Skeleton `docs/audits/state-machine-register.md` and `docs/audits/state-machine-defect-ledger.md` for WS-28 inventory tracking.
 
 ## [0.4.7] - 2026-11-04
 

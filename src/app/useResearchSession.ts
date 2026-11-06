@@ -346,8 +346,16 @@ export function useResearchSession({
         setReportStatus('done');
 
         if (autoSaveReports) {
-          await saveReport(data, completeReport);
-          setIsCurrentReportSaved(true);
+          try {
+            await saveReport(data, completeReport);
+            setIsCurrentReportSaved(true);
+          } catch {
+            setNotification({
+              id: Date.now(),
+              type: 'error',
+              message: t('settings.kb.notification.save_failed'),
+            });
+          }
         }
       } catch (err) {
         await handleResearchStreamFailure({
@@ -392,11 +400,20 @@ export function useResearchSession({
 
   const handleSaveReport = useCallback(async () => {
     if (report && localResearchInput) {
-      await saveReport(localResearchInput, report);
-      setIsCurrentReportSaved(true);
-      haptic('success');
+      try {
+        await saveReport(localResearchInput, report);
+        setIsCurrentReportSaved(true);
+        haptic('success');
+      } catch {
+        setNotification({
+          id: Date.now(),
+          type: 'error',
+          message: t('settings.kb.notification.save_failed'),
+        });
+        haptic('error');
+      }
     }
-  }, [report, localResearchInput, saveReport, haptic]);
+  }, [report, localResearchInput, saveReport, haptic, setNotification, t]);
 
   /**
    * Cancels the in-flight stream without superseding it (generationIdRef is left
