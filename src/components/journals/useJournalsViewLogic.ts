@@ -13,6 +13,7 @@ import { Article, JournalCandidate, JournalProfile } from '../../types';
 import { useGetFeaturedJournalsQuery } from '../../store/slices/apiSlice';
 import type { TranslationKey } from '../../hooks/useTranslation';
 import { safeLogWarn } from '../../lib/safeLog';
+import { KnowledgeBasePersistError } from '../../lib/knowledgeBasePersistError';
 
 const journalPhaseKeys = [
   'journals.phase.disambiguate',
@@ -148,7 +149,14 @@ export const useJournalsViewLogic = (
       setJournalProfile(profile);
       setFoundArticles(articles);
       setView('profile');
-      await saveJournalProfile(profile, articles);
+      try {
+        await saveJournalProfile(profile, articles);
+      } catch (err) {
+        if (err instanceof KnowledgeBasePersistError) {
+          return;
+        }
+        throw err;
+      }
     },
     [topic, onlyOa, settings.ai, saveJournalProfile, t],
   );

@@ -7,7 +7,39 @@ import { KnowledgeBaseProvider, useKnowledgeBase } from './KnowledgeBaseContext'
 import knowledgeBaseReducer from '../store/slices/knowledgeBaseSlice';
 import uiReducer from '../store/slices/uiSlice';
 import * as databaseService from '../services/databaseService';
-import type { ResearchInput, ResearchReport, KnowledgeBaseEntry } from '../types';
+import type {
+  ResearchInput,
+  ResearchReport,
+  KnowledgeBaseEntry,
+  AuthorProfile,
+  AuthorProfileInput,
+  JournalProfile,
+} from '../types';
+import { KnowledgeBasePersistError } from '../lib/knowledgeBasePersistError';
+
+const minimalAuthorProfile: AuthorProfile = {
+  name: 'Author',
+  affiliations: [],
+  metrics: {
+    hIndex: null,
+    totalCitations: null,
+    publicationCount: 0,
+    publicationsPerYear: {},
+    publicationsAsFirstAuthor: 0,
+    publicationsAsLastAuthor: 0,
+  },
+  careerSummary: '',
+  coreConcepts: [],
+  publications: [],
+};
+
+const minimalJournalProfile: JournalProfile = {
+  name: 'Journal',
+  issn: '',
+  description: '',
+  oaPolicy: '',
+  focusAreas: [],
+};
 
 vi.mock('../hooks/useDemoKnowledgeBaseSeed', () => ({
   useDemoKnowledgeBaseSeed: vi.fn(),
@@ -92,8 +124,7 @@ describe('KnowledgeBaseProvider', () => {
         caught = e;
       }
     });
-    expect(caught).toBeInstanceOf(Error);
-    expect((caught as Error).message).toBe('Knowledge Base save failed');
+    expect(caught).toBeInstanceOf(KnowledgeBasePersistError);
 
     await waitFor(() => {
       const n = store.getState().ui.notification;
@@ -133,7 +164,77 @@ describe('KnowledgeBaseProvider', () => {
         importErr = e;
       }
     });
-    expect(importErr).toBeInstanceOf(Error);
-    expect((importErr as Error).message).toBe('Knowledge Base save failed');
+    expect(importErr).toBeInstanceOf(KnowledgeBasePersistError);
+  });
+
+  it('saveAuthorProfile succeeds without error notification when persistence succeeds', async () => {
+    const store = makeTestStore();
+    const { result } = renderHook(() => useKnowledgeBase(), {
+      wrapper: createWrapper(store),
+    });
+
+    await waitFor(() => {
+      expect(store.getState().knowledgeBase.isLoading).toBe(false);
+    });
+
+    await act(async () => {
+      const input: AuthorProfileInput = { authorName: 'Author' };
+      await result.current.saveAuthorProfile(input, minimalAuthorProfile);
+    });
+
+    const n = store.getState().ui.notification;
+    expect(n?.type).not.toBe('error');
+  });
+
+  it('saveAuthorProfile rejects with KnowledgeBasePersistError when addEntry fails', async () => {
+    vi.mocked(databaseService.addEntry).mockRejectedValueOnce(new Error('indexeddb failed'));
+    const store = makeTestStore();
+    const { result } = renderHook(() => useKnowledgeBase(), {
+      wrapper: createWrapper(store),
+    });
+
+    await waitFor(() => {
+      expect(store.getState().knowledgeBase.isLoading).toBe(false);
+    });
+
+    let caught: unknown;
+    await act(async () => {
+      try {
+        const input: AuthorProfileInput = { authorName: 'Author' };
+        await result.current.saveAuthorProfile(input, minimalAuthorProfile);
+      } catch (e) {
+        caught = e;
+      }
+    });
+
+    expect(caught).toBeInstanceOf(KnowledgeBasePersistError);
+    await waitFor(() => {
+      expect(store.getState().ui.notification?.message).toBe(
+        'settings.kb.notification.save_failed',
+      );
+    });
+  });
+
+  it('saveJournalProfile rejects with KnowledgeBasePersistError when addEntry fails', async () => {
+    vi.mocked(databaseService.addEntry).mockRejectedValueOnce(new Error('indexeddb failed'));
+    const store = makeTestStore();
+    const { result } = renderHook(() => useKnowledgeBase(), {
+      wrapper: createWrapper(store),
+    });
+
+    await waitFor(() => {
+      expect(store.getState().knowledgeBase.isLoading).toBe(false);
+    });
+
+    let caught: unknown;
+    await act(async () => {
+      try {
+        await result.current.saveJournalProfile(minimalJournalProfile, []);
+      } catch (e) {
+        caught = e;
+      }
+    });
+
+    expect(caught).toBeInstanceOf(KnowledgeBasePersistError);
   });
 });

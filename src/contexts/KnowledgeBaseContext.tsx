@@ -42,6 +42,7 @@ import {
   buildResearchPrunePlan,
   countDuplicateArticleGroups,
 } from '../lib/knowledgeBaseDedup';
+import { KnowledgeBasePersistError } from '../lib/knowledgeBasePersistError';
 
 interface KnowledgeBaseContextType {
   knowledgeBase: KnowledgeBaseEntry[];
@@ -126,7 +127,7 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
         await dispatch(addKbEntry(newEntry)).unwrap();
       } catch {
         showNotification(t('settings.kb.notification.save_failed'), 'error');
-        throw new Error('Knowledge Base save failed');
+        throw new KnowledgeBasePersistError();
       }
     },
     [dispatch, showNotification, t],
@@ -148,7 +149,7 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
         await dispatch(addKbEntry(newEntry)).unwrap();
       } catch {
         showNotification(t('settings.kb.notification.save_failed'), 'error');
-        throw new Error('Knowledge Base save failed');
+        throw new KnowledgeBasePersistError();
       }
     },
     [dispatch, showNotification, t],
@@ -169,7 +170,7 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
         await dispatch(addKbEntry(newEntry)).unwrap();
       } catch {
         showNotification(t('settings.kb.notification.save_failed'), 'error');
-        throw new Error('Knowledge Base save failed');
+        throw new KnowledgeBasePersistError();
       }
     },
     [dispatch, showNotification, t],
@@ -342,7 +343,7 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
         await dispatch(importKbEntries(entries)).unwrap();
       } catch {
         showNotification(t('settings.kb.notification.save_failed'), 'error');
-        throw new Error('Knowledge Base save failed');
+        throw new KnowledgeBasePersistError();
       }
     },
     [dispatch, showNotification, t],
