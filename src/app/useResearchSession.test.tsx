@@ -166,6 +166,54 @@ describe('useResearchSession handleCancelResearch', () => {
 });
 
 describe('useResearchSession generation supersession', () => {
+  it('does not mark a new run saved when a deferred auto-save from an old run resolves (F-02)', async () => {
+    vi.mocked(generateResearchReportStream).mockImplementationOnce(async function* () {
+      yield {
+        phaseId: 'finalizing',
+        phase: 'Finalizing...',
+        report: { ...partialReport, synthesis: 'Run A synthesis' },
+      };
+    });
+
+    let releaseSave: (() => void) | undefined;
+    const saveReport = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          releaseSave = resolve;
+        }),
+    );
+
+    const { result } = renderSession({
+      autoSaveReports: true,
+      saveReport,
+    });
+
+    let formSubmitPromise: Promise<void> | undefined;
+
+    await act(async () => {
+      formSubmitPromise = result.current.handleFormSubmit(input);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(saveReport).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      result.current.handleNewSearch();
+    });
+
+    expect(result.current.isCurrentReportSaved).toBe(false);
+    expect(result.current.reportStatus).toBe('idle');
+
+    await act(async () => {
+      releaseSave?.();
+      await formSubmitPromise;
+    });
+
+    expect(result.current.isCurrentReportSaved).toBe(false);
+    expect(result.current.reportStatus).toBe('idle');
+  });
+
   it('ignores stale stream completion after handleNewSearch superseded the generation', async () => {
     let releaseStream: (() => void) | undefined;
     vi.mocked(generateResearchReportStream).mockImplementationOnce(

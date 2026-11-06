@@ -348,8 +348,13 @@ export function useResearchSession({
         if (autoSaveReports) {
           try {
             await saveReport(data, completeReport);
-            setIsCurrentReportSaved(true);
+            // Await can let a newer run start (new search); only acknowledge save
+            // for this generation (F-02).
+            if (generationIdRef.current === currentGenId) {
+              setIsCurrentReportSaved(true);
+            }
           } catch {
+            if (generationIdRef.current !== currentGenId) return;
             setNotification({
               id: Date.now(),
               type: 'error',
