@@ -40,6 +40,10 @@ export const authorTranslations = {
     'authors.disambiguation.topics': 'Top Topics:',
     'authors.na': 'N/A',
     'authors.profile.back': 'Back to Search',
+    'authors.profile.save_failed_banner':
+      'Could not save this profile to the Knowledge Base (local storage). Your analysis is still shown — retry when storage is available.',
+    'authors.profile.retry_save': 'Retry save to Knowledge Base',
+    'authors.profile.retrying_save': 'Saving…',
     'authors.profile.affiliation_missing': 'Affiliation not available',
     'authors.profile.orcid': 'ORCID:',
     'authors.profile.metrics.publications': 'Publications',
@@ -131,6 +135,10 @@ export const authorTranslations = {
     'authors.disambiguation.topics': 'Top-Themen:',
     'authors.na': 'k. A.',
     'authors.profile.back': 'Zurück zur Suche',
+    'authors.profile.save_failed_banner':
+      'Profil konnte nicht in der Wissensbasis (lokaler Speicher) gespeichert werden. Die Analyse bleibt sichtbar — bitte später erneut speichern.',
+    'authors.profile.retry_save': 'Erneut in Wissensbasis speichern',
+    'authors.profile.retrying_save': 'Speichern…',
     'authors.profile.affiliation_missing': 'Zugehörigkeit nicht verfügbar',
     'authors.profile.orcid': 'ORCID:',
     'authors.profile.metrics.publications': 'Publikationen',

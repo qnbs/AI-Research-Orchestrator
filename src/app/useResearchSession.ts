@@ -1,4 +1,11 @@
-import { useState, useCallback, useRef, type Dispatch, type SetStateAction } from 'react';
+import {
+  useState,
+  useCallback,
+  useRef,
+  useEffect,
+  type Dispatch,
+  type SetStateAction,
+} from 'react';
 import { useAppDispatch } from '../store/hooks';
 import {
   startNewTrace,
@@ -37,6 +44,7 @@ import {
 import type { PipelinePhaseId } from '../types/pipelineEvents';
 import { PIPELINE_PHASE_LABEL, PIPELINE_TIMELINE_INDEX } from '../types/pipelineEvents';
 import { safeLogError } from '../lib/safeLog';
+import { computeReportSaveFingerprint } from '../lib/reportSaveFingerprint';
 
 interface NotificationState {
   id: number;
@@ -48,7 +56,11 @@ export interface UseResearchSessionArgs {
   aiSettings: Settings['ai'];
   autoSaveReports: boolean;
   setCurrentView: (view: View) => void;
-  saveReport: (input: ResearchInput, report: ResearchReport) => Promise<void>;
+  saveReport: (
+    input: ResearchInput,
+    report: ResearchReport,
+    options?: { notifyOnError?: boolean },
+  ) => Promise<void>;
   setNotification: (n: NotificationState | null) => void;
   t: (key: TranslationKey | (string & {}), values?: Record<string, string | number>) => string;
   haptic: (kind?: HapticPreset) => void;
@@ -85,6 +97,23 @@ export function useResearchSession({
 
   const generationIdRef = useRef(0);
   const streamAbortRef = useRef<AbortController | null>(null);
+  /** Matches the in-memory report snapshot last acknowledged as durably saved (KB). */
+  const reportSaveFingerprintRef = useRef<string | null>(null);
+  const reportRef = useRef(report);
+  const localResearchInputRef = useRef(localResearchInput);
+
+  useEffect(() => {
+    reportRef.current = report;
+  }, [report]);
+
+  useEffect(() => {
+    localResearchInputRef.current = localResearchInput;
+  }, [localResearchInput]);
+
+  const invalidateAcknowledgedSave = useCallback(() => {
+    setIsCurrentReportSaved(false);
+    reportSaveFingerprintRef.current = null;
+  }, []);
 
   const notifyCheckpointDeleteFailure = useCallback(
     (err: unknown) => {
@@ -148,6 +177,7 @@ export function useResearchSession({
       setError(ckpt.errorMessage ?? null);
       setCurrentPhase(ckpt.phase);
       setIsCurrentReportSaved(false);
+      reportSaveFingerprintRef.current = null;
       setCurrentView('orchestrator');
       setResumeCheckpoints((prev) => prev.filter((c) => c.id !== ckpt.id));
       setNotification({
@@ -170,6 +200,7 @@ export function useResearchSession({
       setLocalResearchInput(data);
       setCurrentView('orchestrator');
       setIsCurrentReportSaved(false);
+      reportSaveFingerprintRef.current = null;
       setCurrentPhase('');
       setCurrentPhaseId(null);
       setTimelineIndex(0);
@@ -296,6 +327,7 @@ export function useResearchSession({
           // (Non-AI emits full synthesis on the report and again as chunks).
           if (synthesisChunk) {
             finalSynthesis += synthesisChunk;
+            invalidateAcknowledgedSave();
             setReport((prev) => (prev ? { ...prev, synthesis: finalSynthesis } : null));
           }
         }
@@ -342,12 +374,36 @@ export function useResearchSession({
             'narrative-extracted',
           );
         }
+        // Partial → final transitions (and any late grounded fields) must not keep a
+        // prior fingerprint acknowledgement for an older snapshot (F-02).
+        invalidateAcknowledgedSave();
         setReport(completeReport);
+        // Keep ref in sync before the auto-save await — `useEffect` runs after commit,
+        // so fingerprint checks would otherwise compare against a stale snapshot.
+        reportRef.current = completeReport;
         setReportStatus('done');
 
         if (autoSaveReports) {
-          await saveReport(data, completeReport);
-          setIsCurrentReportSaved(true);
+          try {
+            const fpAtQueue = computeReportSaveFingerprint(data, completeReport);
+            await saveReport(data, completeReport, { notifyOnError: false });
+            // Await can let a newer run start (new search); only acknowledge save
+            // for this generation (F-02).
+            if (generationIdRef.current === currentGenId) {
+              const fpNow = computeReportSaveFingerprint(data, reportRef.current ?? completeReport);
+              if (fpAtQueue !== null && fpAtQueue === fpNow) {
+                setIsCurrentReportSaved(true);
+                reportSaveFingerprintRef.current = fpNow;
+              }
+            }
+          } catch {
+            if (generationIdRef.current !== currentGenId) return;
+            setNotification({
+              id: Date.now(),
+              type: 'error',
+              message: t('settings.kb.notification.save_failed'),
+            });
+          }
         }
       } catch (err) {
         await handleResearchStreamFailure({
@@ -377,6 +433,7 @@ export function useResearchSession({
       setNotification,
       t,
       onCheckpointsChanged,
+      invalidateAcknowledgedSave,
     ],
   );
 
@@ -392,11 +449,31 @@ export function useResearchSession({
 
   const handleSaveReport = useCallback(async () => {
     if (report && localResearchInput) {
-      await saveReport(localResearchInput, report);
-      setIsCurrentReportSaved(true);
-      haptic('success');
+      const inputSnap = localResearchInput;
+      const reportSnap = report;
+      const fpAtStart = computeReportSaveFingerprint(inputSnap, reportSnap);
+      if (!fpAtStart) return;
+      try {
+        await saveReport(inputSnap, reportSnap, { notifyOnError: false });
+        const fpAfter = computeReportSaveFingerprint(
+          localResearchInputRef.current,
+          reportRef.current,
+        );
+        if (fpAfter === fpAtStart) {
+          setIsCurrentReportSaved(true);
+          reportSaveFingerprintRef.current = fpAfter;
+          haptic('success');
+        }
+      } catch {
+        setNotification({
+          id: Date.now(),
+          type: 'error',
+          message: t('settings.kb.notification.save_failed'),
+        });
+        haptic('error');
+      }
     }
-  }, [report, localResearchInput, saveReport, haptic]);
+  }, [report, localResearchInput, saveReport, haptic, setNotification, t]);
 
   /**
    * Cancels the in-flight stream without superseding it (generationIdRef is left
@@ -417,6 +494,7 @@ export function useResearchSession({
     setReportStatus('idle');
     setError(null);
     setIsCurrentReportSaved(false);
+    reportSaveFingerprintRef.current = null;
     setCurrentPhase('');
     setCurrentPhaseId(null);
     setTimelineIndex(0);
@@ -435,6 +513,7 @@ export function useResearchSession({
       setReportStatus(entry.report.completionStatus === 'partial' ? 'partial' : 'done');
       setError(null);
       setIsCurrentReportSaved(true);
+      reportSaveFingerprintRef.current = computeReportSaveFingerprint(entry.input, entry.report);
       setCurrentView('orchestrator');
     },
     [setCurrentView],
@@ -454,6 +533,8 @@ export function useResearchSession({
           ),
         };
       });
+      setIsCurrentReportSaved(false);
+      reportSaveFingerprintRef.current = null;
     },
     [updateTags],
   );
@@ -462,6 +543,7 @@ export function useResearchSession({
     localResearchInput,
     setLocalResearchInput,
     report,
+    setReport,
     reportStatus,
     error,
     currentPhase,
