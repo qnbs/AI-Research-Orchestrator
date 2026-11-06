@@ -56,7 +56,11 @@ export interface UseResearchSessionArgs {
   aiSettings: Settings['ai'];
   autoSaveReports: boolean;
   setCurrentView: (view: View) => void;
-  saveReport: (input: ResearchInput, report: ResearchReport) => Promise<void>;
+  saveReport: (
+    input: ResearchInput,
+    report: ResearchReport,
+    options?: { notifyOnError?: boolean },
+  ) => Promise<void>;
   setNotification: (n: NotificationState | null) => void;
   t: (key: TranslationKey | (string & {}), values?: Record<string, string | number>) => string;
   haptic: (kind?: HapticPreset) => void;
@@ -382,7 +386,7 @@ export function useResearchSession({
         if (autoSaveReports) {
           try {
             const fpAtQueue = computeReportSaveFingerprint(data, completeReport);
-            await saveReport(data, completeReport);
+            await saveReport(data, completeReport, { notifyOnError: false });
             // Await can let a newer run start (new search); only acknowledge save
             // for this generation (F-02).
             if (generationIdRef.current === currentGenId) {
@@ -450,7 +454,7 @@ export function useResearchSession({
       const fpAtStart = computeReportSaveFingerprint(inputSnap, reportSnap);
       if (!fpAtStart) return;
       try {
-        await saveReport(inputSnap, reportSnap);
+        await saveReport(inputSnap, reportSnap, { notifyOnError: false });
         const fpAfter = computeReportSaveFingerprint(
           localResearchInputRef.current,
           reportRef.current,
