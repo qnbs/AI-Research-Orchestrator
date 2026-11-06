@@ -2,7 +2,7 @@
 
 The Cloud Agent integration **cannot** post issue comments or close issues (`403`). Paste the sections below on GitHub when executing batch closes.
 
-**Reference `main`:** **`ad79048`** (merge **#460**). After merging open doc PR **#461**, re-check `git rev-parse --short HEAD` and live About before closing **#404**.
+**Reference `main`:** **`cb6091c`** (merge **#461**; blocking CI green). Live About matches head.
 
 **Index:** `docs/audits/2026-11-05-maintainer-close-pack-all.md`
 
@@ -25,7 +25,7 @@ The Cloud Agent integration **cannot** post issue comments or close issues (`403
 ```markdown
 **Nov 2026 audit wave — disposition: close**
 
-External production smoke on **deployed SHA `ad79048`** recorded in `docs/audits/2026-11-04-github-pages-production-smoke.md` (Help → About **`v0.4.7 (ad79048)`**, HTTP 200, deploy run **41994485907**, plus blocking CI/PWA matrix). Consolidated close pack **#460**. Release **v0.4.7** (#447).
+External production smoke on **deployed SHA `cb6091c`** recorded in `docs/audits/2026-11-04-github-pages-production-smoke.md` (Help → About **`v0.4.7 (cb6091c)`**, HTTP 200, deploy run **41996820315**, blocking CI/PWA green on `main`). Session closeout **#461**. Release **v0.4.7** (#447).
 ```
 
 ---
@@ -118,7 +118,7 @@ Blocking Playwright on `knowledge-base.spec.ts`: export/delete/reload/filter/pag
 ```markdown
 **Nov 2026 audit wave — portfolio checkpoint**
 
-Merged **v0.4.7** recovery on `main` (`ad79048`). P1 slices ready for batch close: #404, #411, #408, #396, #419, #421; #409 closed; #410 DeepSource slice documented. Deferred: #403, #406. Session closeout: `docs/audits/2026-11-05-session-closeout.md`.
+Merged **v0.4.7** recovery on `main` (**`cb6091c`**, CI green). P1 slices ready for batch close: #404, #411, #408, #396, #419, #421; #409 closed; #410 DeepSource slice documented. Deferred: #403, #406. Session closeout: `docs/audits/2026-11-05-session-closeout.md`.
 ```
 
 ---
