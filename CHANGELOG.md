@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Orchestrator (#419, WS-28 / #463 F-02):** After auto-save awaits `saveReport`, the session sets “saved” only if the same generation is still active — a deferred finish cannot mark a newer “New search” run as saved; superseded runs skip the save-failed toast. Covered by `useResearchSession.test.tsx`.
 - **Orchestrator (WS-28):** Manual save compares `reportSaveFingerprint` before/after `saveReport` so a completed save does not flip “saved” if the in-memory report changed during the await (e.g. streaming or tag edits). Tag updates clear the saved fingerprint; streaming synthesis updates and partial→final completion invalidate an earlier fingerprint match.
 - **Authors / Journals (#412, #413):** Failed KB persistence throws `KnowledgeBasePersistError`; analysis pipelines keep the on-screen profile when only IndexedDB fails (no return to landing).
-- **KB tests:** `KnowledgeBaseContext.test.tsx` covers successful author save and `KnowledgeBasePersistError` for author/journal failures; `knowledgeBasePersistError.ts` is the shared error type.
+- **KB tests:** `KnowledgeBaseContext.test.tsx` covers successful author save and `KnowledgeBasePersistError` for author/journal failures; `knowledgeBasePersistError.ts` is the shared error type; `reportSaveFingerprint.test.ts` / `knowledgeBasePersistError.test.ts` cover the fingerprint and error helpers.
 
 ### Added
 
