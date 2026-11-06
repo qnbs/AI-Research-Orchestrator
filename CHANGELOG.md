@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Knowledge Base (#421):** Citation toolbar button was labeled “Export as RIS” while exporting BibTeX only; RIS export was unreachable from the UI.
 - **Knowledge Base (#403, WS-28 / #463 F-01):** Saving reports, profiles, and imports now uses `dispatch(…).unwrap()` so rejected IndexedDB writes surface an error instead of resolving; orchestrator auto-save and manual save no longer mark the run “saved” when persistence fails. Added EN/DE `settings.kb.notification.save_failed` copy and a Vitest guard in `KnowledgeBaseContext.test.tsx`.
+- **Orchestrator (#419, WS-28 / #463 F-02):** After auto-save awaits `saveReport`, the session sets “saved” only if the same generation is still active — a deferred finish cannot mark a newer “New search” run as saved; superseded runs skip the save-failed toast. Covered by `useResearchSession.test.tsx`.
 
 ### Added
 
