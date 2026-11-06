@@ -49,7 +49,11 @@ interface KnowledgeBaseContextType {
   uniqueArticles: AggregatedArticle[];
   getArticles: (sourceType?: 'all' | 'research' | 'author' | 'journal') => AggregatedArticle[];
   getRecentResearchEntries: (count: number) => ResearchEntry[];
-  saveReport: (researchInput: ResearchInput, report: ResearchReport) => Promise<void>;
+  saveReport: (
+    researchInput: ResearchInput,
+    report: ResearchReport,
+    options?: { notifyOnError?: boolean },
+  ) => Promise<void>;
   saveAuthorProfile: (input: AuthorProfileInput, profile: AuthorProfile) => Promise<void>;
   saveJournalProfile: (profile: JournalProfile, articles: Article[]) => Promise<void>;
   clearKnowledgeBase: () => Promise<void>;
@@ -112,7 +116,12 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
   );
 
   const saveReport = useCallback(
-    async (researchInput: ResearchInput, report: ResearchReport): Promise<void> => {
+    async (
+      researchInput: ResearchInput,
+      report: ResearchReport,
+      options?: { notifyOnError?: boolean },
+    ): Promise<void> => {
+      const notifyOnError = options?.notifyOnError !== false;
       const timestamp = Date.now();
       const newEntry: ResearchEntry = {
         id: `${timestamp}-${Math.random()}`,
@@ -126,7 +135,9 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
       try {
         await dispatch(addKbEntry(newEntry)).unwrap();
       } catch {
-        showNotification(t('settings.kb.notification.save_failed'), 'error');
+        if (notifyOnError) {
+          showNotification(t('settings.kb.notification.save_failed'), 'error');
+        }
         throw new KnowledgeBasePersistError();
       }
     },

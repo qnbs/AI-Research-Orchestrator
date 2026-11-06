@@ -68,6 +68,9 @@ export const useAuthorsViewLogic = (
     { name: string; description: string }[] | null
   >(null);
 
+  /** IndexedDB failed after analysis; profile stays on screen — user can retry without re-running AI. */
+  const [persistSaveFailed, setPersistSaveFailed] = useState(false);
+
   const authorLoadingPhases = useMemo(() => authorPhaseKeys.map((k) => t(k)), [t]);
 
   const authorPhaseDetails = useMemo(() => {
@@ -130,6 +133,7 @@ export const useAuthorsViewLogic = (
       const signal = beginProfileRequest();
       setIsLoading(true);
       setError(null);
+      setPersistSaveFailed(false);
       setView('landing');
 
       let builtProfile: AuthorProfile | undefined;
@@ -168,6 +172,7 @@ export const useAuthorsViewLogic = (
         await saveAuthorProfile({ authorName: builtProfile.name }, builtProfile);
 
         if (isMounted.current && !signal.aborted) {
+          setPersistSaveFailed(false);
           setAuthorProfile(builtProfile);
           setView('profile');
         }
@@ -176,6 +181,7 @@ export const useAuthorsViewLogic = (
         if (err instanceof KnowledgeBasePersistError) {
           safeLogError('Failed to persist author profile (analysis succeeded)', err);
           if (isMounted.current && builtProfile) {
+            setPersistSaveFailed(true);
             setAuthorProfile(builtProfile);
             setView('profile');
           }
@@ -202,12 +208,29 @@ export const useAuthorsViewLogic = (
     ],
   );
 
+  const retryPersistAuthorProfile = useCallback(async () => {
+    const profile = authorProfile;
+    if (!profile) return;
+    try {
+      await saveAuthorProfile({ authorName: profile.name }, profile);
+      if (isMounted.current) {
+        setPersistSaveFailed(false);
+      }
+    } catch (err) {
+      if (err instanceof KnowledgeBasePersistError) {
+        return;
+      }
+      throw err;
+    }
+  }, [authorProfile, saveAuthorProfile]);
+
   const handleSearch = useCallback(
     async (name: string) => {
       const signal = beginSearchRequest();
       profileAbortRef.current?.abort();
       setIsLoading(true);
       setError(null);
+      setPersistSaveFailed(false);
       setAuthorQuery(name);
       setAuthorClusters(null);
       setAuthorProfile(null);
@@ -301,6 +324,7 @@ export const useAuthorsViewLogic = (
     setError(null);
     setAuthorClusters(null);
     setAuthorProfile(null);
+    setPersistSaveFailed(false);
   }, []);
 
   return {
@@ -311,6 +335,8 @@ export const useAuthorsViewLogic = (
     error,
     authorClusters,
     authorProfile,
+    persistSaveFailed,
+    retryPersistAuthorProfile,
     isSuggesting,
     suggestionError,
     suggestedAuthors,

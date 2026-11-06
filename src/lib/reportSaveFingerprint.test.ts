@@ -38,14 +38,36 @@ describe('computeReportSaveFingerprint', () => {
     expect(computeReportSaveFingerprint(minimalInput, null)).toBeNull();
   });
 
-  it('changes when synthesis length changes', () => {
+  it('changes when synthesis text changes (including same-length edits)', () => {
     const a = computeReportSaveFingerprint(minimalInput, baseReport);
     const b = computeReportSaveFingerprint(minimalInput, {
       ...baseReport,
       synthesis: `${baseReport.synthesis}x`,
     });
+    const sameLen = computeReportSaveFingerprint(minimalInput, {
+      ...baseReport,
+      synthesis: 'hallo',
+    });
     expect(a).not.toBeNull();
     expect(b).not.toBeNull();
+    expect(a).not.toBe(b);
+    expect(a).not.toBe(sameLen);
+  });
+
+  it('changes when custom tags on a ranked article change', () => {
+    const a = computeReportSaveFingerprint(minimalInput, baseReport);
+    const b = computeReportSaveFingerprint(minimalInput, {
+      ...baseReport,
+      rankedArticles: baseReport.rankedArticles.map((x) =>
+        x.pmid === '1' ? { ...x, customTags: ['a'] } : x,
+      ),
+    });
+    expect(a).not.toBe(b);
+  });
+
+  it('changes when research input fields change', () => {
+    const a = computeReportSaveFingerprint(minimalInput, baseReport);
+    const b = computeReportSaveFingerprint({ ...minimalInput, topNToSynthesize: 2 }, baseReport);
     expect(a).not.toBe(b);
   });
 
