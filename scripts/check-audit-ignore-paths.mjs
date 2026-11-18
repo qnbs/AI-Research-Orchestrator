@@ -63,6 +63,40 @@ export function walkChains(node, prefix = []) {
 }
 
 /**
+ * @param {string[]} names
+ * @param {{ mustPassThrough?: string, mustPassThroughAny?: string[] }} rule
+ */
+function chainHasAllowedAncestor(names, rule) {
+  if (rule.mustPassThroughAny?.length) {
+    return rule.mustPassThroughAny.some((needle) => names.includes(needle));
+  }
+  return Boolean(rule.mustPassThrough && names.includes(rule.mustPassThrough));
+}
+
+/**
+ * @param {string[]} names
+ * @param {{ mustPassThrough?: string, mustPassThroughAny?: string[] }} rule
+ */
+function expectedAncestorLabel(rule) {
+  return rule.mustPassThroughAny?.join(' | ') ?? rule.mustPassThrough;
+}
+
+/**
+ * @param {ChainEntry} chain
+ * @param {{ packageName: string, appName: string }} rule
+ * @param {string} rendered
+ * @returns {string | null}
+ */
+function chainAppDevOnlyError(chain, rule, rendered) {
+  const app = [...chain].reverse().find((entry) => entry.name === rule.appName);
+  if (!app || app.depField === 'devDependencies') {
+    return null;
+  }
+  const classification = app.depField ?? 'missing depField';
+  return `${rule.packageName} reaches ${rule.appName} via ${classification}: ${rendered}`;
+}
+
+/**
  * @param {ChainEntry[][]} chains
  * @param {{ packageName: string, mustPassThrough?: string, mustPassThroughAny?: string[], appName: string }} rule
  * @returns {string | null} error message, or null when every chain is allowed
@@ -74,20 +108,11 @@ export function assertChains(chains, rule) {
   for (const chain of chains) {
     const names = chain.map((entry) => entry.name);
     const rendered = names.join(' → ');
-    const passesPath = rule.mustPassThroughAny
-      ? rule.mustPassThroughAny.some((needle) => names.includes(needle))
-      : rule.mustPassThrough && names.includes(rule.mustPassThrough);
-    if (!passesPath) {
-      const expected = rule.mustPassThroughAny?.join(' | ') ?? rule.mustPassThrough;
-      return `disallowed path (missing ${expected}): ${rendered}`;
+    if (!chainHasAllowedAncestor(names, rule)) {
+      return `disallowed path (missing ${expectedAncestorLabel(rule)}): ${rendered}`;
     }
-    const app = [...chain].reverse().find((entry) => entry.name === rule.appName);
-    if (app) {
-      if (app.depField !== 'devDependencies') {
-        const classification = app.depField ?? 'missing depField';
-        return `${rule.packageName} reaches ${rule.appName} via ${classification}: ${rendered}`;
-      }
-    }
+    const appError = chainAppDevOnlyError(chain, rule, rendered);
+    if (appError) return appError;
   }
   return null;
 }
