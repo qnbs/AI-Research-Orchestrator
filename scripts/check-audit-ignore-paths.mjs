@@ -21,9 +21,24 @@ const ROOT = fileURLToPath(new URL('..', import.meta.url));
  * Allow-list for `auditConfig.ignoreGhsas`. Adding a GHSA to the workspace
  * file without a matching entry here fails CI.
  *
- * @type {Record<string, { packageName: string, mustPassThrough: string }>}
+ * @type {Record<string, { packageName: string, mustPassThrough?: string, mustPassThroughAny?: string[], appName: string }>}
  */
-const ALLOWED_AUDIT_IGNORES = {};
+const ALLOWED_AUDIT_IGNORES = {
+  // GHSA-fc5q-39xc-vjpf: patched npm is >=4.0.8 but unreleased (2026-11-18). Mitigation: picomatch@3.0.2 override.
+  'GHSA-fc5q-39xc-vjpf': {
+    packageName: 'picomatch',
+    mustPassThroughAny: [
+      'vite',
+      'vitest',
+      'lint-staged',
+      'rollup-plugin-visualizer',
+      'tinyglobby',
+      'typescript-eslint',
+      '@typescript-eslint/eslint-plugin',
+    ],
+    appName: 'ai-research-orchestrator',
+  },
+};
 
 /**
  * @typedef {{ name: string, depField?: string, deduped?: boolean, dependents?: WhyNode[] }} WhyNode
@@ -49,7 +64,7 @@ export function walkChains(node, prefix = []) {
 
 /**
  * @param {ChainEntry[][]} chains
- * @param {{ packageName: string, mustPassThrough: string, appName: string }} rule
+ * @param {{ packageName: string, mustPassThrough?: string, mustPassThroughAny?: string[], appName: string }} rule
  * @returns {string | null} error message, or null when every chain is allowed
  */
 export function assertChains(chains, rule) {
@@ -59,8 +74,12 @@ export function assertChains(chains, rule) {
   for (const chain of chains) {
     const names = chain.map((entry) => entry.name);
     const rendered = names.join(' → ');
-    if (!names.includes(rule.mustPassThrough)) {
-      return `disallowed path (missing ${rule.mustPassThrough}): ${rendered}`;
+    const passesPath = rule.mustPassThroughAny
+      ? rule.mustPassThroughAny.some((needle) => names.includes(needle))
+      : rule.mustPassThrough && names.includes(rule.mustPassThrough);
+    if (!passesPath) {
+      const expected = rule.mustPassThroughAny?.join(' | ') ?? rule.mustPassThrough;
+      return `disallowed path (missing ${expected}): ${rendered}`;
     }
     const app = [...chain].reverse().find((entry) => entry.name === rule.appName);
     if (app?.depField && app.depField !== 'devDependencies') {
@@ -191,6 +210,7 @@ function main() {
     const pathError = assertChains(chains, {
       packageName: rule.packageName,
       mustPassThrough: rule.mustPassThrough,
+      mustPassThroughAny: rule.mustPassThroughAny,
       appName: pkg.name,
     });
     if (pathError) fail(`${ghsa}: ${pathError}`);
