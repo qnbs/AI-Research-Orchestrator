@@ -21,9 +21,24 @@ const ROOT = fileURLToPath(new URL('..', import.meta.url));
  * Allow-list for `auditConfig.ignoreGhsas`. Adding a GHSA to the workspace
  * file without a matching entry here fails CI.
  *
- * @type {Record<string, { packageName: string, mustPassThrough: string }>}
+ * @type {Record<string, { packageName: string, mustPassThrough?: string, mustPassThroughAny?: string[], appName: string }>}
  */
-const ALLOWED_AUDIT_IGNORES = {};
+const ALLOWED_AUDIT_IGNORES = {
+  // GHSA-fc5q-39xc-vjpf: temporary dev-only acceptance (affected <=4.0.7; no advisory-confirmed npm fix yet).
+  'GHSA-fc5q-39xc-vjpf': {
+    packageName: 'picomatch',
+    mustPassThroughAny: [
+      'vite',
+      'vitest',
+      'lint-staged',
+      'rollup-plugin-visualizer',
+      'tinyglobby',
+      'typescript-eslint',
+      '@typescript-eslint/eslint-plugin',
+    ],
+    appName: 'ai-research-orchestrator',
+  },
+};
 
 /**
  * @typedef {{ name: string, depField?: string, deduped?: boolean, dependents?: WhyNode[] }} WhyNode
@@ -48,8 +63,42 @@ export function walkChains(node, prefix = []) {
 }
 
 /**
+ * @param {string[]} names
+ * @param {{ mustPassThrough?: string, mustPassThroughAny?: string[] }} rule
+ */
+function chainHasAllowedAncestor(names, rule) {
+  if (rule.mustPassThroughAny?.length) {
+    return rule.mustPassThroughAny.some((needle) => names.includes(needle));
+  }
+  return Boolean(rule.mustPassThrough && names.includes(rule.mustPassThrough));
+}
+
+/**
+ * @param {string[]} names
+ * @param {{ mustPassThrough?: string, mustPassThroughAny?: string[] }} rule
+ */
+function expectedAncestorLabel(rule) {
+  return rule.mustPassThroughAny?.join(' | ') ?? rule.mustPassThrough;
+}
+
+/**
+ * @param {ChainEntry} chain
+ * @param {{ packageName: string, appName: string }} rule
+ * @param {string} rendered
+ * @returns {string | null}
+ */
+function chainAppDevOnlyError(chain, rule, rendered) {
+  const app = [...chain].reverse().find((entry) => entry.name === rule.appName);
+  if (!app || app.depField === 'devDependencies') {
+    return null;
+  }
+  const classification = app.depField ?? 'missing depField';
+  return `${rule.packageName} reaches ${rule.appName} via ${classification}: ${rendered}`;
+}
+
+/**
  * @param {ChainEntry[][]} chains
- * @param {{ packageName: string, mustPassThrough: string, appName: string }} rule
+ * @param {{ packageName: string, mustPassThrough?: string, mustPassThroughAny?: string[], appName: string }} rule
  * @returns {string | null} error message, or null when every chain is allowed
  */
 export function assertChains(chains, rule) {
@@ -59,13 +108,11 @@ export function assertChains(chains, rule) {
   for (const chain of chains) {
     const names = chain.map((entry) => entry.name);
     const rendered = names.join(' → ');
-    if (!names.includes(rule.mustPassThrough)) {
-      return `disallowed path (missing ${rule.mustPassThrough}): ${rendered}`;
+    if (!chainHasAllowedAncestor(names, rule)) {
+      return `disallowed path (missing ${expectedAncestorLabel(rule)}): ${rendered}`;
     }
-    const app = [...chain].reverse().find((entry) => entry.name === rule.appName);
-    if (app?.depField && app.depField !== 'devDependencies') {
-      return `${rule.packageName} reaches ${rule.appName} via ${app.depField}: ${rendered}`;
-    }
+    const appError = chainAppDevOnlyError(chain, rule, rendered);
+    if (appError) return appError;
   }
   return null;
 }
@@ -191,6 +238,7 @@ function main() {
     const pathError = assertChains(chains, {
       packageName: rule.packageName,
       mustPassThrough: rule.mustPassThrough,
+      mustPassThroughAny: rule.mustPassThroughAny,
       appName: pkg.name,
     });
     if (pathError) fail(`${ghsa}: ${pathError}`);

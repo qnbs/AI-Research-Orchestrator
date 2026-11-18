@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- **Vite dev server (GHSA-p4f5-76q4-ffq7, CVE pending):** Bump `vite` from **8.3.3** to **8.3.7** (patched range for 8.3.x) via root dependency and `pnpm-workspace.yaml` override. Addresses critical RCE when the dev server is network-exposed (`server.host` / `--host`). **Production static builds are unaffected.**
+- **pnpm audit (GHSA-fc5q-39xc-vjpf):** Temporary dev-only audit ignore until an advisory-confirmed **picomatch** fix replaces all affected lockfile resolutions (registry currently lists `>=4.0.8` but that release is not published yet; resolved **4.0.7** via `vite`).
+
 ### Added
 
 - **Knowledge Base (#421):** Mobile-visible article search (`HeaderControls`); bulk-delete, reload, filter/export membership, **cross-page selection**, and **virtualized list** E2E; optional **2** articles per page setting.
