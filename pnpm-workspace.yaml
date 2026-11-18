@@ -123,6 +123,6 @@ overrides:
 # @lhci/cli@0.16.0 no longer pulls extract-zip; prior GHSA ignores removed (2026-11-03).
 auditConfig:
   ignoreGhsas:
-    # GHSA-fc5q-39xc-vjpf: registry lists patched >=4.0.8 but npm has no 4.0.8 yet;
-    # picomatch pinned to 3.0.2 above. Dev-tool paths only — see check-audit-ignore-paths.mjs.
+    # GHSA-fc5q-39xc-vjpf: temporary dev-only acceptance (advisory: affected <=4.0.7, no patched
+    # npm release yet). Remove when an advisory-confirmed fix replaces all affected resolutions.
     - GHSA-fc5q-39xc-vjpf

@@ -24,7 +24,7 @@ const ROOT = fileURLToPath(new URL('..', import.meta.url));
  * @type {Record<string, { packageName: string, mustPassThrough?: string, mustPassThroughAny?: string[], appName: string }>}
  */
 const ALLOWED_AUDIT_IGNORES = {
-  // GHSA-fc5q-39xc-vjpf: patched npm is >=4.0.8 but unreleased (2026-11-18). Mitigation: picomatch@3.0.2 override.
+  // GHSA-fc5q-39xc-vjpf: temporary dev-only acceptance (affected <=4.0.7; no advisory-confirmed npm fix yet).
   'GHSA-fc5q-39xc-vjpf': {
     packageName: 'picomatch',
     mustPassThroughAny: [
@@ -82,8 +82,11 @@ export function assertChains(chains, rule) {
       return `disallowed path (missing ${expected}): ${rendered}`;
     }
     const app = [...chain].reverse().find((entry) => entry.name === rule.appName);
-    if (app?.depField && app.depField !== 'devDependencies') {
-      return `${rule.packageName} reaches ${rule.appName} via ${app.depField}: ${rendered}`;
+    if (app) {
+      if (app.depField !== 'devDependencies') {
+        const classification = app.depField ?? 'missing depField';
+        return `${rule.packageName} reaches ${rule.appName} via ${classification}: ${rendered}`;
+      }
     }
   }
   return null;
