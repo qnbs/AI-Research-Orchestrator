@@ -67,7 +67,7 @@
     "@anthropic-ai/sdk": "^0.131.0",
     "@google/genai": "^2.32.0",
     "@reduxjs/toolkit": "^2.13.0",
-    "@tanstack/react-virtual": "^3.14.24",
+    "@tanstack/react-virtual": "^3.14.26",
     "dexie": "^4.4.6",
     "dompurify": "^3.4.17",
     "framer-motion": "^13.5.0",
