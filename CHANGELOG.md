@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 
 - **Vite dev server (GHSA-p4f5-76q4-ffq7, CVE pending):** Bump `vite` from **8.3.3** to **8.3.7** (patched range for 8.3.x) via root dependency and `pnpm-workspace.yaml` override. Addresses critical RCE when the dev server is network-exposed (`server.host` / `--host`). **Production static builds are unaffected.**
-- **pnpm audit (GHSA-fc5q-39xc-vjpf):** Pin `picomatch@3.0.2` and document a dev-only audit ignore until npm publishes **4.0.8** (vite’s declared `^4.0.7` line).
+- **pnpm audit (GHSA-fc5q-39xc-vjpf):** Document a dev-only audit ignore until npm publishes **picomatch@4.0.8** (vite’s declared `^4.0.7` line; resolved **4.0.7** in lockfile).
 
 ### Added
 
