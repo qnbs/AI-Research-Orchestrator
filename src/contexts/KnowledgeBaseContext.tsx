@@ -353,7 +353,7 @@ export const KnowledgeBaseProvider: React.FC<{ children: ReactNode }> = ({ child
       try {
         await dispatch(importKbEntries(entries)).unwrap();
       } catch {
-        showNotification(t('settings.kb.notification.save_failed'), 'error');
+        showNotification(t('settings.kb.notification.import_failed'), 'error');
         throw new KnowledgeBasePersistError();
       }
     },

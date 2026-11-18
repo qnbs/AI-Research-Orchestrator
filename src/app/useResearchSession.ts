@@ -521,22 +521,32 @@ export function useResearchSession({
 
   const handleTagsUpdate = useCallback(
     async (pmid: string, newTags: string[]) => {
+      const wasSaved = isCurrentReportSaved;
       await updateTags(pmid, newTags);
       setReport((prevReport) => {
         if (!prevReport || !prevReport.rankedArticles.some((a) => a.pmid === pmid)) {
           return prevReport;
         }
-        return {
+        const nextReport = {
           ...prevReport,
           rankedArticles: prevReport.rankedArticles.map((a) =>
             a.pmid === pmid ? { ...a, customTags: newTags } : a,
           ),
         };
+        if (wasSaved) {
+          reportSaveFingerprintRef.current = computeReportSaveFingerprint(
+            localResearchInput,
+            nextReport,
+          );
+        }
+        return nextReport;
       });
-      setIsCurrentReportSaved(false);
-      reportSaveFingerprintRef.current = null;
+      if (!wasSaved) {
+        setIsCurrentReportSaved(false);
+        reportSaveFingerprintRef.current = null;
+      }
     },
-    [updateTags],
+    [updateTags, isCurrentReportSaved, localResearchInput],
   );
 
   return {
