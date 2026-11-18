@@ -68,9 +68,16 @@ const ProfileAccordion: React.FC<{
 };
 
 export const AuthorProfileView: React.FC = () => {
-  const { authorProfile: profile, handleReset: onReset } = useAuthorsView();
+  const {
+    authorProfile: profile,
+    handleReset: onReset,
+    persistSaveFailed,
+    retryPersistAuthorProfile,
+  } = useAuthorsView();
   const { settings } = useSettings();
   const { t } = useTranslation();
+
+  const [isRetryingSave, setIsRetryingSave] = useState(false);
 
   const topCoAuthors = useMemo(() => {
     if (!profile) return [];
@@ -114,7 +121,7 @@ export const AuthorProfileView: React.FC = () => {
 
   return (
     <div className="animate-fadeIn space-y-8 pt-2">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <button
           type="button"
           onClick={onReset}
@@ -123,6 +130,28 @@ export const AuthorProfileView: React.FC = () => {
           <ChevronLeftIcon className="h-4 w-4 mr-1" />
           {t('authors.profile.back')}
         </button>
+        {persistSaveFailed ? (
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-text-primary">
+            <span className="flex-1">{t('authors.profile.save_failed_banner')}</span>
+            <button
+              type="button"
+              disabled={isRetryingSave}
+              onClick={async () => {
+                setIsRetryingSave(true);
+                try {
+                  await retryPersistAuthorProfile();
+                } finally {
+                  setIsRetryingSave(false);
+                }
+              }}
+              className="shrink-0 rounded-md border border-amber-600/50 bg-background/80 px-3 py-1.5 text-sm font-medium text-text-primary hover:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-accent disabled:opacity-60"
+            >
+              {isRetryingSave
+                ? t('authors.profile.retrying_save')
+                : t('authors.profile.retry_save')}
+            </button>
+          </div>
+        ) : null}
       </div>
 
       <div className="bg-surface p-8 rounded-xl border border-border shadow-lg">

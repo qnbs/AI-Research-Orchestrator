@@ -13,6 +13,7 @@ import { Article, JournalCandidate, JournalProfile } from '../../types';
 import { useGetFeaturedJournalsQuery } from '../../store/slices/apiSlice';
 import type { TranslationKey } from '../../hooks/useTranslation';
 import { safeLogWarn } from '../../lib/safeLog';
+import { KnowledgeBasePersistError } from '../../lib/knowledgeBasePersistError';
 
 const journalPhaseKeys = [
   'journals.phase.disambiguate',
@@ -65,6 +66,9 @@ export const useJournalsViewLogic = (
     { name: string; description: string }[] | null
   >(null);
 
+  /** IndexedDB failed after analysis; profile stays visible — user can retry without re-running. */
+  const [persistSaveFailed, setPersistSaveFailed] = useState(false);
+
   const { settings } = useSettings();
   const { saveJournalProfile } = useKnowledgeBase();
   const { setNotification } = useUI();
@@ -90,6 +94,7 @@ export const useJournalsViewLogic = (
   useEffect(() => {
     if (initialEntry) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- consumes an external one-shot "restore this entry" signal, acknowledging via onViewedInitialEntry.
+      setPersistSaveFailed(false);
       setJournalProfile(initialEntry.profile);
       setFoundArticles(initialEntry.articles);
       setJournalName(initialEntry.profile.name);
@@ -127,6 +132,7 @@ export const useJournalsViewLogic = (
    */
   const runAnalysis = useCallback(
     async (name: string) => {
+      setPersistSaveFailed(false);
       setLoadingPhase(t('journals.phase.articles'));
       let articles: Article[] = [];
       try {
@@ -148,10 +154,38 @@ export const useJournalsViewLogic = (
       setJournalProfile(profile);
       setFoundArticles(articles);
       setView('profile');
-      await saveJournalProfile(profile, articles);
+      try {
+        await saveJournalProfile(profile, articles);
+        if (isMounted.current) {
+          setPersistSaveFailed(false);
+        }
+      } catch (err) {
+        if (err instanceof KnowledgeBasePersistError) {
+          if (isMounted.current) {
+            setPersistSaveFailed(true);
+          }
+          return;
+        }
+        throw err;
+      }
     },
     [topic, onlyOa, settings.ai, saveJournalProfile, t],
   );
+
+  const retryPersistJournalProfile = useCallback(async () => {
+    if (!journalProfile || !foundArticles) return;
+    try {
+      await saveJournalProfile(journalProfile, foundArticles);
+      if (isMounted.current) {
+        setPersistSaveFailed(false);
+      }
+    } catch (err) {
+      if (err instanceof KnowledgeBasePersistError) {
+        return;
+      }
+      throw err;
+    }
+  }, [journalProfile, foundArticles, saveJournalProfile]);
 
   /** Step 1: disambiguate the entered journal name, then analyze or ask. */
   const handleSearch = useCallback(
@@ -164,6 +198,7 @@ export const useJournalsViewLogic = (
 
       setIsLoading(true);
       setError(null);
+      setPersistSaveFailed(false);
       setSuggestionError(null);
       setJournalProfile(null);
       setFoundArticles(null);
@@ -205,6 +240,7 @@ export const useJournalsViewLogic = (
     async (candidate: JournalCandidate) => {
       setIsLoading(true);
       setError(null);
+      setPersistSaveFailed(false);
       setCandidates(null);
       setJournalName(candidate.name);
       try {
@@ -269,6 +305,7 @@ export const useJournalsViewLogic = (
   const handleReset = useCallback(() => {
     setView('landing');
     setError(null);
+    setPersistSaveFailed(false);
     setCandidates(null);
     setJournalProfile(null);
     setFoundArticles(null);
@@ -355,6 +392,8 @@ export const useJournalsViewLogic = (
     loadingPhase,
     journalProfile,
     foundArticles,
+    persistSaveFailed,
+    retryPersistJournalProfile,
     candidates,
     error,
     isSuggesting,

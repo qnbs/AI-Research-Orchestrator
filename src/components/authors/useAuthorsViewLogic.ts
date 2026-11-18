@@ -17,6 +17,7 @@ import {
 } from '../../store/slices/apiSlice';
 import { safeLogError } from '../../lib/safeLog';
 import { buildAuthorMetricsFromCorpus } from '../../lib/authorIdentity';
+import { KnowledgeBasePersistError } from '../../lib/knowledgeBasePersistError';
 
 const authorPhaseKeys = [
   'authors.phase.search',
@@ -66,6 +67,9 @@ export const useAuthorsViewLogic = (
   const [suggestedAuthors, setSuggestedAuthors] = useState<
     { name: string; description: string }[] | null
   >(null);
+
+  /** IndexedDB failed after analysis; profile stays on screen — user can retry without re-running AI. */
+  const [persistSaveFailed, setPersistSaveFailed] = useState(false);
 
   const authorLoadingPhases = useMemo(() => authorPhaseKeys.map((k) => t(k)), [t]);
 
@@ -129,8 +133,10 @@ export const useAuthorsViewLogic = (
       const signal = beginProfileRequest();
       setIsLoading(true);
       setError(null);
+      setPersistSaveFailed(false);
       setView('landing');
 
+      let builtProfile: AuthorProfile | undefined;
       try {
         setLoadingPhase(authorLoadingPhases[3]);
         const allArticleDetails = await triggerGetDetails({ pmids: cluster.pmids }).unwrap();
@@ -154,7 +160,7 @@ export const useAuthorsViewLogic = (
           cluster.publicationCount,
         );
 
-        const profile: AuthorProfile = {
+        builtProfile = {
           name: cluster.nameVariant,
           affiliations: [cluster.primaryAffiliation],
           metrics,
@@ -163,14 +169,24 @@ export const useAuthorsViewLogic = (
           publications: allArticleDetails as RankedArticle[],
         };
 
-        await saveAuthorProfile({ authorName: profile.name }, profile);
+        await saveAuthorProfile({ authorName: builtProfile.name }, builtProfile);
 
         if (isMounted.current && !signal.aborted) {
-          setAuthorProfile(profile);
+          setPersistSaveFailed(false);
+          setAuthorProfile(builtProfile);
           setView('profile');
         }
       } catch (err) {
         if (signal.aborted) return;
+        if (err instanceof KnowledgeBasePersistError) {
+          safeLogError('Failed to persist author profile (analysis succeeded)', err);
+          if (isMounted.current && builtProfile) {
+            setPersistSaveFailed(true);
+            setAuthorProfile(builtProfile);
+            setView('profile');
+          }
+          return;
+        }
         safeLogError('Failed to build author profile', err);
         if (isMounted.current) {
           setError(t('authors.error.profile_build'));
@@ -192,12 +208,29 @@ export const useAuthorsViewLogic = (
     ],
   );
 
+  const retryPersistAuthorProfile = useCallback(async () => {
+    const profile = authorProfile;
+    if (!profile) return;
+    try {
+      await saveAuthorProfile({ authorName: profile.name }, profile);
+      if (isMounted.current) {
+        setPersistSaveFailed(false);
+      }
+    } catch (err) {
+      if (err instanceof KnowledgeBasePersistError) {
+        return;
+      }
+      throw err;
+    }
+  }, [authorProfile, saveAuthorProfile]);
+
   const handleSearch = useCallback(
     async (name: string) => {
       const signal = beginSearchRequest();
       profileAbortRef.current?.abort();
       setIsLoading(true);
       setError(null);
+      setPersistSaveFailed(false);
       setAuthorQuery(name);
       setAuthorClusters(null);
       setAuthorProfile(null);
@@ -291,6 +324,7 @@ export const useAuthorsViewLogic = (
     setError(null);
     setAuthorClusters(null);
     setAuthorProfile(null);
+    setPersistSaveFailed(false);
   }, []);
 
   return {
@@ -301,6 +335,8 @@ export const useAuthorsViewLogic = (
     error,
     authorClusters,
     authorProfile,
+    persistSaveFailed,
+    retryPersistAuthorProfile,
     isSuggesting,
     suggestionError,
     suggestedAuthors,

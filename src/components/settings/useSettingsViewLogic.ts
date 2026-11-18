@@ -359,7 +359,11 @@ export const useSettingsViewLogic = (
 
   const handleConfirmKnowledgeBaseImport = useCallback(
     async (entries: KnowledgeBaseEntry[], quarantine: KnowledgeBaseImportQuarantine) => {
-      await addKnowledgeBaseEntries(entries);
+      try {
+        await addKnowledgeBaseEntries(entries);
+      } catch {
+        return;
+      }
       setModalState(null);
       let message = t('settings.toast.kb_imported', { count: entries.length });
       if (quarantine.trustDowngradedCount > 0) {

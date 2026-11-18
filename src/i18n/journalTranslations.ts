@@ -36,6 +36,10 @@ export const journalTranslations = {
     'journals.match.abbreviation': 'Abbreviation',
     'journals.match.partial': 'Partial',
     'journals.profile.new_analysis': 'New Analysis',
+    'journals.profile.save_failed_banner':
+      'Could not save this profile to the Knowledge Base (local storage). Your analysis is still shown — retry when storage is available.',
+    'journals.profile.retry_save': 'Retry save to Knowledge Base',
+    'journals.profile.retrying_save': 'Saving…',
     'journals.profile.publisher': 'Publisher',
     'journals.profile.focus_areas': 'Focus Areas',
     'journals.oa.full': 'Full Open Access',
@@ -119,6 +123,10 @@ export const journalTranslations = {
     'journals.match.abbreviation': 'Abkürzung',
     'journals.match.partial': 'Teilweise',
     'journals.profile.new_analysis': 'Neue Analyse',
+    'journals.profile.save_failed_banner':
+      'Profil konnte nicht in der Wissensbasis (lokaler Speicher) gespeichert werden. Die Analyse bleibt sichtbar — bitte später erneut speichern.',
+    'journals.profile.retry_save': 'Erneut in Wissensbasis speichern',
+    'journals.profile.retrying_save': 'Speichern…',
     'journals.profile.publisher': 'Verlag',
     'journals.profile.focus_areas': 'Schwerpunkte',
     'journals.oa.full': 'Vollständig Open Access',

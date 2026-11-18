@@ -113,21 +113,54 @@ interface JournalProfileViewProps {
 }
 
 export const JournalProfileView: React.FC<JournalProfileViewProps> = ({ onStartResearch }) => {
-  const { journalProfile: profile, foundArticles, topic, handleReset } = useJournalsView();
+  const {
+    journalProfile: profile,
+    foundArticles,
+    topic,
+    handleReset,
+    persistSaveFailed,
+    retryPersistJournalProfile,
+  } = useJournalsView();
   const { t } = useTranslation();
+
+  const [isRetryingSave, setIsRetryingSave] = useState(false);
 
   if (!profile) return null;
 
   return (
     <div className="space-y-6 animate-fadeIn pt-2">
-      <button
-        type="button"
-        onClick={handleReset}
-        className="inline-flex items-center text-sm font-medium text-text-secondary hover:text-brand-accent transition-colors"
-      >
-        <ChevronLeftIcon className="h-4 w-4 mr-1" />
-        {t('journals.profile.new_analysis')}
-      </button>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <button
+          type="button"
+          onClick={handleReset}
+          className="inline-flex items-center text-sm font-medium text-text-secondary hover:text-brand-accent transition-colors"
+        >
+          <ChevronLeftIcon className="h-4 w-4 mr-1" />
+          {t('journals.profile.new_analysis')}
+        </button>
+        {persistSaveFailed ? (
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-text-primary max-w-full sm:max-w-xl">
+            <span className="flex-1">{t('journals.profile.save_failed_banner')}</span>
+            <button
+              type="button"
+              disabled={isRetryingSave}
+              onClick={async () => {
+                setIsRetryingSave(true);
+                try {
+                  await retryPersistJournalProfile();
+                } finally {
+                  setIsRetryingSave(false);
+                }
+              }}
+              className="shrink-0 rounded-md border border-amber-600/50 bg-background/80 px-3 py-1.5 text-sm font-medium text-text-primary hover:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-accent disabled:opacity-60"
+            >
+              {isRetryingSave
+                ? t('journals.profile.retrying_save')
+                : t('journals.profile.retry_save')}
+            </button>
+          </div>
+        ) : null}
+      </div>
 
       {/* Journal Header Card */}
       <div className="bg-surface p-6 rounded-lg border border-border shadow-sm relative overflow-hidden">
